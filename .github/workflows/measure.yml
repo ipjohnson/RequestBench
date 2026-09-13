@@ -85,10 +85,6 @@ jobs:
           fi
           echo "run=yes" >> "$GITHUB_OUTPUT"
 
-      - name: Calibrator, opening reading
-        if: steps.gate.outputs.run == 'yes'
-        run: echo "TODO: fixed native calibrator is not built; drift is unchecked this run"
-
       - name: Run the ladder
         if: steps.gate.outputs.run == 'yes'
         env:

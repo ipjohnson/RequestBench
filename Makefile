@@ -1,4 +1,4 @@
-.PHONY: fixture plan build validate conform run report clean help
+.PHONY: fixture plan build lint validate conform run report clean help
 SHARD ?= node
 TARGETS ?= node-http,fastify,express
 SECONDS ?=
@@ -21,6 +21,9 @@ build: ## build container images for a shard  (SHARD=go TARGETS=net-http,gin,ech
 	  docker build -q -f targets/$(SHARD)/Dockerfile --build-arg TARGET=$$dir \
 	    -t rb/$(SHARD)-$$t . >/dev/null; \
 	done
+
+lint: ## parse every workflow file
+	python3 harness/lintyaml.py
 
 validate: ## boot and conform every target in a shard, no load  (SHARD= TARGETS= MODE=)
 	python3 harness/run.py --shard $(SHARD) --targets $(TARGETS) --mode $(MODE) --validate-only
