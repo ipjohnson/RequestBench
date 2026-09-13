@@ -57,9 +57,11 @@
           "p50_us": 315
         }
       },
+      "framework": "node-http",
       "rungs": {
         "1": {
           "achieved_rps": 499,
+          "baseline_saturated": false,
           "dropped": 0,
           "errors": 0,
           "offered_rps": 500,
@@ -68,10 +70,12 @@
           "p999_us": 5243,
           "p99_ratio": 1.0,
           "p99_us": 1536,
+          "saturated": false,
           "status_mismatch": 0
         },
         "2": {
           "achieved_rps": 1498,
+          "baseline_saturated": false,
           "dropped": 0,
           "errors": 0,
           "offered_rps": 1500,
@@ -80,10 +84,12 @@
           "p999_us": 6519,
           "p99_ratio": 1.0,
           "p99_us": 1536,
+          "saturated": false,
           "status_mismatch": 0
         },
         "3": {
           "achieved_rps": 2995,
+          "baseline_saturated": false,
           "dropped": 0,
           "errors": 0,
           "offered_rps": 3000,
@@ -92,10 +98,12 @@
           "p999_us": 12531,
           "p99_ratio": 1.0,
           "p99_us": 1800,
+          "saturated": false,
           "status_mismatch": 0
         },
         "4": {
           "achieved_rps": 5988,
+          "baseline_saturated": false,
           "dropped": 48,
           "errors": 0,
           "offered_rps": 6000,
@@ -104,10 +112,12 @@
           "p999_us": 216973,
           "p99_ratio": 1.0,
           "p99_us": 42775,
+          "saturated": false,
           "status_mismatch": 0
         },
         "5": {
           "achieved_rps": 8244,
+          "baseline_saturated": true,
           "dropped": 223434,
           "errors": 0,
           "offered_rps": 12000,
@@ -116,10 +126,13 @@
           "p999_us": 303815,
           "p99_ratio": 1.0,
           "p99_us": 234859,
+          "saturated": true,
           "status_mismatch": 0
         }
       },
-      "target": "node-http"
+      "target": "node-http",
+      "target_runtime": "",
+      "version": ""
     },
     {
       "families": {
@@ -156,9 +169,11 @@
           "p50_us": 334
         }
       },
+      "framework": "fastify",
       "rungs": {
         "1": {
           "achieved_rps": 499,
+          "baseline_saturated": false,
           "dropped": 0,
           "errors": 0,
           "offered_rps": 500,
@@ -167,10 +182,12 @@
           "p999_us": 6782,
           "p99_ratio": 1.1042,
           "p99_us": 1696,
+          "saturated": false,
           "status_mismatch": 0
         },
         "2": {
           "achieved_rps": 1498,
+          "baseline_saturated": false,
           "dropped": 0,
           "errors": 0,
           "offered_rps": 1500,
@@ -179,10 +196,12 @@
           "p999_us": 9311,
           "p99_ratio": 1.5156,
           "p99_us": 2328,
+          "saturated": false,
           "status_mismatch": 0
         },
         "3": {
           "achieved_rps": 2995,
+          "baseline_saturated": false,
           "dropped": 0,
           "errors": 0,
           "offered_rps": 3000,
@@ -191,10 +210,12 @@
           "p999_us": 13835,
           "p99_ratio": 3.6939,
           "p99_us": 6649,
+          "saturated": false,
           "status_mismatch": 0
         },
         "4": {
           "achieved_rps": 5988,
+          "baseline_saturated": false,
           "dropped": 82,
           "errors": 0,
           "offered_rps": 6000,
@@ -203,10 +224,12 @@
           "p999_us": 200450,
           "p99_ratio": 1.4283,
           "p99_us": 61094,
+          "saturated": false,
           "status_mismatch": 0
         },
         "5": {
           "achieved_rps": 8094,
+          "baseline_saturated": true,
           "dropped": 232498,
           "errors": 0,
           "offered_rps": 12000,
@@ -215,10 +238,13 @@
           "p999_us": 297858,
           "p99_ratio": 1.0404,
           "p99_us": 244347,
+          "saturated": true,
           "status_mismatch": 0
         }
       },
-      "target": "fastify"
+      "target": "fastify",
+      "target_runtime": "",
+      "version": ""
     },
     {
       "families": {
@@ -255,9 +281,11 @@
           "p50_us": 416
         }
       },
+      "framework": "express",
       "rungs": {
         "1": {
           "achieved_rps": 499,
+          "baseline_saturated": false,
           "dropped": 0,
           "errors": 0,
           "offered_rps": 500,
@@ -266,10 +294,12 @@
           "p999_us": 6022,
           "p99_ratio": 1.1719,
           "p99_us": 1800,
+          "saturated": false,
           "status_mismatch": 0
         },
         "2": {
           "achieved_rps": 1498,
+          "baseline_saturated": false,
           "dropped": 0,
           "errors": 0,
           "offered_rps": 1500,
@@ -278,10 +308,12 @@
           "p999_us": 6782,
           "p99_ratio": 1.0612,
           "p99_us": 1630,
+          "saturated": false,
           "status_mismatch": 0
         },
         "3": {
           "achieved_rps": 2995,
+          "baseline_saturated": false,
           "dropped": 0,
           "errors": 0,
           "offered_rps": 3000,
@@ -290,10 +322,12 @@
           "p999_us": 10909,
           "p99_ratio": 1.2189,
           "p99_us": 2194,
+          "saturated": false,
           "status_mismatch": 0
         },
         "4": {
           "achieved_rps": 5986,
+          "baseline_saturated": false,
           "dropped": 215,
           "errors": 0,
           "offered_rps": 6000,
@@ -302,10 +336,12 @@
           "p999_us": 275175,
           "p99_ratio": 3.0918,
           "p99_us": 132252,
+          "saturated": false,
           "status_mismatch": 0
         },
         "5": {
           "achieved_rps": 6188,
+          "baseline_saturated": true,
           "dropped": 347072,
           "errors": 0,
           "offered_rps": 12000,
@@ -314,10 +350,13 @@
           "p999_us": 342145,
           "p99_ratio": 1.3195,
           "p99_us": 309892,
+          "saturated": true,
           "status_mismatch": 0
         }
       },
-      "target": "express"
+      "target": "express",
+      "target_runtime": "",
+      "version": ""
     }
   ],
   "tracked": true
