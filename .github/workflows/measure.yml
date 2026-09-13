@@ -1,0 +1,149 @@
+# Out-of-band measurement. Never runs on a pull request: a shared runner cannot produce a
+# timing worth acting on, and two measurements must never overlap on the same machine.
+#
+# One language per night, alternating blend and capability weeks. The schedule lives in
+# spec/matrix.json and is resolved by harness/rotation.py, so this file stays dumb.
+name: measure
+
+on:
+  schedule:
+    - cron: "0 2 * * 1"   # Mon - java
+    - cron: "0 2 * * 2"   # Tue - go
+    - cron: "0 2 * * 3"   # Wed - node
+    - cron: "0 2 * * 4"   # Thu - python
+    - cron: "0 2 * * 5"   # Fri - dotnet
+    - cron: "0 2 * * 6"   # Sat - rust
+    - cron: "0 2 * * 0"   # Sun - anchor sweep
+  workflow_dispatch:
+    inputs:
+      runner:
+        description: Runner label. Keep requestbench for anything you intend to keep.
+        default: requestbench
+        type: string
+      shard:
+        description: Shard to measure, or auto to follow the rotation.
+        default: auto
+        type: string
+      date:
+        description: Pretend it is this date when resolving the rotation (YYYY-MM-DD).
+        default: ""
+        type: string
+      seconds:
+        description: Override rung duration. Leave empty for the full 60s rungs.
+        default: ""
+        type: string
+      rungs:
+        description: Comma separated rung numbers. Leave empty for all five.
+        default: ""
+        type: string
+
+permissions:
+  contents: write
+
+# One measurement at a time on this machine, ever. A queued run waits; it never overlaps.
+concurrency:
+  group: requestbench-measure
+  cancel-in-progress: false
+
+jobs:
+  measure:
+    runs-on: ${{ github.event.inputs.runner || 'requestbench' }}
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.13" }
+
+      - name: Resolve tonight's shard and suite
+        id: rot
+        run: |
+          python3 harness/rotation.py ${{ github.event.inputs.date }} > /tmp/rot.json
+          cat /tmp/rot.json
+          SHARD=$(jq -r .shard /tmp/rot.json)
+          if [ "${{ github.event.inputs.shard }}" != "auto" ] && [ -n "${{ github.event.inputs.shard }}" ]; then
+            SHARD="${{ github.event.inputs.shard }}"
+            python3 -c "
+          import json,sys
+          from harness.rotation import MATRIX
+          lang = MATRIX['languages']['$SHARD']
+          print(','.join([lang['baseline']] + lang['frameworks']))
+          " > /tmp/targets.txt 2>/dev/null || jq -r .targets /tmp/rot.json > /tmp/targets.txt
+          else
+            jq -r .targets /tmp/rot.json > /tmp/targets.txt
+          fi
+          {
+            echo "shard=$SHARD"
+            echo "suite=$(jq -r .suite /tmp/rot.json)"
+            echo "targets=$(cat /tmp/targets.txt)"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Skip what is not built yet
+        id: gate
+        run: |
+          SHARD='${{ steps.rot.outputs.shard }}'
+          SUITE='${{ steps.rot.outputs.suite }}'
+          if [ "$SUITE" = "capability" ]; then
+            echo "capability suites are not implemented; nothing to measure tonight"
+            echo "run=no" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          if [ "$SHARD" = "anchor" ]; then
+            echo "the anchor sweep needs multi-shard support in run.py; not implemented"
+            echo "run=no" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          if [ ! -f "targets/$SHARD/Dockerfile" ]; then
+            echo "shard $SHARD has no targets yet"
+            echo "run=no" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          echo "run=yes" >> "$GITHUB_OUTPUT"
+
+      - name: Calibrator, opening reading
+        if: steps.gate.outputs.run == 'yes'
+        run: echo "TODO: fixed native calibrator is not built; drift is unchecked this run"
+
+      - name: Run the ladder
+        if: steps.gate.outputs.run == 'yes'
+        env:
+          RB_CPUS: ${{ vars.RB_CPUS || '2' }}
+        run: |
+          python3 harness/run.py \
+            --shard '${{ steps.rot.outputs.shard }}' \
+            --targets '${{ steps.rot.outputs.targets }}' \
+            --mode docker \
+            ${{ github.event.inputs.seconds && format('--seconds {0}', github.event.inputs.seconds) || '' }} \
+            ${{ github.event.inputs.rungs && format('--rungs {0}', github.event.inputs.rungs) || '' }}
+
+      - name: Summarize
+        if: steps.gate.outputs.run == 'yes'
+        id: sum
+        run: |
+          RAW=$(ls -t results/*.jsonl | head -1)
+          NAME=$(basename "$RAW" .jsonl)
+          TRACKED=""
+          [ "${{ github.event.inputs.runner || 'requestbench' }}" = "requestbench" ] && TRACKED="--tracked"
+          python3 harness/summarize.py "$RAW" $TRACKED \
+            --runner "${{ github.event.inputs.runner || 'requestbench' }}" \
+            --out "results/summary/$NAME.json"
+          gzip -9 -c "$RAW" > "/tmp/$NAME.jsonl.gz"
+          echo "name=$NAME" >> "$GITHUB_OUTPUT"
+
+      - name: Upload raw samples
+        if: steps.gate.outputs.run == 'yes'
+        uses: actions/upload-artifact@v4
+        with:
+          name: raw-${{ steps.sum.outputs.name }}
+          path: /tmp/${{ steps.sum.outputs.name }}.jsonl.gz
+          retention-days: 90
+
+      - name: Commit the summary
+        if: steps.gate.outputs.run == 'yes'
+        run: |
+          git config user.name  "requestbench"
+          git config user.email "requestbench@users.noreply.github.com"
+          git add results/summary
+          if git diff --cached --quiet; then
+            echo "no summary change"; exit 0
+          fi
+          git commit -m "Record ${{ steps.rot.outputs.shard }} ${{ steps.rot.outputs.suite }} run ${{ steps.sum.outputs.name }}"
+          git pull --rebase --autostash origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"

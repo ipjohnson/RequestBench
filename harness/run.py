@@ -24,7 +24,8 @@ class Local:
     """Run a target as a host process. The fast edit loop, and what CI validates with."""
 
     def __init__(self, shard, name):
-        self.shard, self.name, self.proc = shard, name, None
+        self.shard, self.name, self.proc, self.fh = shard, name, None, None
+        self.log = ROOT / "results" / (".target-%s-%s.log" % (shard, name))
 
     def _argv(self):
         d = target_dir(self.name)
@@ -37,10 +38,22 @@ class Local:
 
     def start(self):
         argv, cwd, extra = self._argv()
+        # Both streams go to a file, never to a pipe. A pipe nobody drains fills its 64KB
+        # buffer and blocks the target forever on write, which is exactly what Gin does:
+        # it prints a full stack trace to stderr on every panic, and /boom panics 64 times
+        # during conformance. The file also survives the run, so a boot failure is readable.
+        self.log.parent.mkdir(exist_ok=True)
+        self.fh = self.log.open("wb")
         self.proc = subprocess.Popen(argv, cwd=cwd, env={**os.environ, **extra},
-                                     stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
+                                     stdout=self.fh, stderr=subprocess.STDOUT,
                                      start_new_session=True)
         return self
+
+    def tail(self, n=15):
+        try:
+            return "\n".join(self.log.read_text(errors="replace").splitlines()[-n:])
+        except OSError:
+            return "(no log)"
 
     def alive(self):
         return self.proc.poll() is None
@@ -51,6 +64,8 @@ class Local:
             self.proc.wait(timeout=10)
         except (ProcessLookupError, subprocess.TimeoutExpired):
             pass
+        if self.fh:
+            self.fh.close()
 
 
 class Container:
@@ -179,8 +194,14 @@ def main():
         t = launcher(a.mode, a.shard, target).start()
         try:
             # `go run` compiles on first launch, which no boot budget should punish.
-            wait_healthy(t, 240 if (a.mode == "local" and a.shard == "go")
-                            else LADDER["boot_timeout_s"])
+            try:
+                wait_healthy(t, 240 if (a.mode == "local" and a.shard == "go")
+                                else LADDER["boot_timeout_s"])
+            except RuntimeError as e:
+                print("  BOOT FAILED: %s" % e)
+                if hasattr(t, "tail"):
+                    print("  --- target log ---\n%s" % t.tail())
+                continue
             print("  booted")
             if not a.skip_conform:
                 ok, line = conform()

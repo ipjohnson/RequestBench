@@ -5,3 +5,5 @@ results/*.ndjson
 .venv/
 *.pyc
 .DS_Store
+!results/summary/
+results/.target-*.log
