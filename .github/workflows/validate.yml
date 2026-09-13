@@ -1,0 +1,102 @@
+# Validation only. A PR proves every target still answers all 40 endpoints identically.
+# No load is generated here: timings from a shared CI runner would be noise, and the
+# rotation measures on a dedicated host.
+name: validate
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  spec:
+    name: spec is reproducible
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.13" }
+      - name: Regenerate fixture and plan
+        run: |
+          python3 harness/make_fixture.py
+          python3 harness/plan.py
+      - name: Fail if generated files drifted from what is committed
+        run: |
+          if ! git diff --quiet -- spec/fixture.json spec/plan.json; then
+            echo "spec/fixture.json or spec/plan.json is stale. Run 'make fixture plan' and commit."
+            git --no-pager diff --stat -- spec/fixture.json spec/plan.json
+            exit 1
+          fi
+          echo "fixture and plan match their generators"
+
+  node:
+    name: node shard conforms
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "24", cache: npm, cache-dependency-path: targets/node/package-lock.json }
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.13" }
+      - run: npm ci --omit=dev --no-audit --no-fund
+        working-directory: targets/node
+      - name: Boot and conform every node target
+        run: python3 harness/run.py --shard node --targets node-http,fastify,express --validate-only
+      - name: Fail if the reference fingerprints drifted
+        run: |
+          node targets/node/baseline/server.js & SRV=$!
+          for i in $(seq 1 40); do
+            curl -sf http://127.0.0.1:8080/health >/dev/null && break || sleep 0.25
+          done
+          python3 harness/conform.py 127.0.0.1:8080 --quiet \
+            --fingerprint spec/fingerprint.node-http.json
+          kill $SRV
+          if ! git diff --quiet -- spec/fingerprint.node-http.json; then
+            echo "the committed reference fingerprints no longer match the baseline."
+            echo "Every other target is compared against this file, so regenerating it"
+            echo "silently would move all six targets at once. Commit it deliberately."
+            git --no-pager diff -- spec/fingerprint.node-http.json
+            exit 1
+          fi
+          echo "reference fingerprints unchanged"
+
+  go:
+    name: go shard conforms
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: { go-version: "1.25", cache-dependency-path: targets/go/go.sum }
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.13" }
+      - run: go build ./...
+        working-directory: targets/go
+      - name: Boot and conform every go target against the node reference
+        run: python3 harness/run.py --shard go --targets net-http,gin,echo --validate-only
+
+  images:
+    name: container images build
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { shard: node, target: baseline }
+          - { shard: node, target: fastify }
+          - { shard: go,   target: baseline }
+          - { shard: go,   target: gin }
+          - { shard: go,   target: echo }
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build ${{ matrix.shard }}/${{ matrix.target }}
+        run: |
+          docker build -f targets/${{ matrix.shard }}/Dockerfile \
+            --build-arg TARGET=${{ matrix.target }} \
+            -t rb/${{ matrix.shard }}-${{ matrix.target }} .

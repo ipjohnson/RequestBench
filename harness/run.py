@@ -3,7 +3,10 @@
   python3 harness/run.py --shard node --targets node-http,fastify,express
   python3 harness/run.py --shard node --targets fastify --seconds 20 --rungs 3,5
 """
-import argparse, json, os, pathlib, platform, signal, socket, subprocess, sys, time, uuid
+import argparse, functools, json, os, pathlib, platform, signal, socket, subprocess, sys, time, uuid
+
+# Long runs are watched live; block-buffered stdout hides progress for minutes.
+print = functools.partial(print, flush=True)
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 SPEC = ROOT / "spec"
@@ -11,20 +14,89 @@ LADDER = json.loads((SPEC / "ladder.json").read_text())
 MATRIX = json.loads((SPEC / "matrix.json").read_text())
 PORT = int(os.environ.get("RB_PORT", "8080"))
 
-# Local (non-container) launchers. The container path replaces this map, not the flow.
-LAUNCH = {
-    "node": lambda name: ["node", str(ROOT / "targets" / "node" /
-                                      ("baseline" if name == "node-http" else name) / "server.js")],
-}
+def target_dir(name):
+    """Baselines live in baseline/ whatever their shard calls them."""
+    return "baseline" if name in ("node-http", "net-http", "raw-asgi", "raw-kestrel",
+                                  "bare-netty", "hyper") else name
+
+
+class Local:
+    """Run a target as a host process. The fast edit loop, and what CI validates with."""
+
+    def __init__(self, shard, name):
+        self.shard, self.name, self.proc = shard, name, None
+
+    def _argv(self):
+        d = target_dir(self.name)
+        if self.shard == "node":
+            return ["node", str(ROOT / "targets/node" / d / "server.js")], ROOT, {}
+        if self.shard == "go":
+            return (["go", "run", "./" + d], ROOT / "targets/go",
+                    {"RB_FIXTURE": str(ROOT / "spec/fixture.json")})
+        raise SystemExit("shard %r has no local launcher; use --mode docker" % self.shard)
+
+    def start(self):
+        argv, cwd, extra = self._argv()
+        self.proc = subprocess.Popen(argv, cwd=cwd, env={**os.environ, **extra},
+                                     stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
+                                     start_new_session=True)
+        return self
+
+    def alive(self):
+        return self.proc.poll() is None
+
+    def stop(self):
+        try:
+            os.killpg(os.getpgid(self.proc.pid), signal.SIGTERM)
+            self.proc.wait(timeout=10)
+        except (ProcessLookupError, subprocess.TimeoutExpired):
+            pass
+
+
+class Container:
+    """Run a target as a container with a pinned CPU budget. What the rotation uses."""
+    CPUS = os.environ.get("RB_CPUS", "2")
+
+    def __init__(self, shard, name):
+        self.shard, self.name = shard, name
+        self.cname = "rb-%s-%s" % (shard, name)
+        self.image = "rb/%s-%s" % (shard, name)
+
+    def build(self):
+        subprocess.run(["docker", "build", "-q",
+                        "-f", str(ROOT / "targets" / self.shard / "Dockerfile"),
+                        "--build-arg", "TARGET=" + target_dir(self.name),
+                        "-t", self.image, "."],
+                       cwd=ROOT, check=True, capture_output=True)
+        return self
+
+    def start(self):
+        subprocess.run(["docker", "rm", "-f", self.cname], capture_output=True)
+        subprocess.run(["docker", "run", "-d", "--rm", "--name", self.cname,
+                        "--cpus", self.CPUS, "-p", "%d:8080" % PORT, self.image],
+                       check=True, capture_output=True)
+        return self
+
+    def alive(self):
+        out = subprocess.run(["docker", "inspect", "-f", "{{.State.Running}}", self.cname],
+                             capture_output=True, text=True)
+        return out.stdout.strip() == "true"
+
+    def stop(self):
+        subprocess.run(["docker", "stop", "-t", "3", self.cname], capture_output=True)
+
+
+def launcher(mode, shard, name):
+    return Local(shard, name) if mode == "local" else Container(shard, name).build()
 
 def warmup_class(shard):
     return "jit" if shard in MATRIX["warmup_classes"]["jit"] else "steady"
 
-def wait_healthy(proc, timeout):
+def wait_healthy(target, timeout):
     deadline = time.time() + timeout
     while time.time() < deadline:
-        if proc.poll() is not None:
-            raise RuntimeError("target exited during boot (rc=%s)" % proc.returncode)
+        if not target.alive():
+            raise RuntimeError("target exited during boot")
         try:
             with socket.create_connection(("127.0.0.1", PORT), timeout=0.5):
                 return round(time.time() - (deadline - timeout), 2)
@@ -73,6 +145,9 @@ def main():
     ap.add_argument("--rungs", default="", help="comma separated rung numbers, default all")
     ap.add_argument("--workers", type=int, default=6)
     ap.add_argument("--skip-conform", action="store_true")
+    ap.add_argument("--mode", choices=["local", "docker"], default="local")
+    ap.add_argument("--validate-only", action="store_true",
+                    help="boot and conform every target, then stop; no load is generated")
     a = ap.parse_args()
 
     rungs = [r for r in LADDER["rungs"]
@@ -89,23 +164,33 @@ def main():
     baseline = MATRIX["languages"][a.shard]["baseline"]
     rows = [env_fingerprint(run_id, a.shard, baseline)]
 
-    print("run %s   shard=%s  warmup=%ss (%s)  rungs=%s"
-          % (run_id, a.shard, warm_s, wclass, [r["rung"] for r in rungs]))
+    rows[0]["mode"] = a.mode
+    if a.mode == "docker":
+        rows[0]["cpus"] = Container.CPUS
+    if a.validate_only:
+        print("run %s   shard=%s  mode=%s  VALIDATE ONLY" % (run_id, a.shard, a.mode))
+    else:
+        print("run %s   shard=%s  mode=%s  warmup=%ss (%s)  rungs=%s"
+              % (run_id, a.shard, a.mode, warm_s, wclass, [r["rung"] for r in rungs]))
 
+    conformed = 0
     for target in a.targets.split(","):
         print("\n=== %s ===" % target)
-        proc = subprocess.Popen(LAUNCH[a.shard](target), cwd=ROOT,
-                                stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
-                                start_new_session=True)
+        t = launcher(a.mode, a.shard, target).start()
         try:
-            wait_healthy(proc, LADDER["boot_timeout_s"])
+            # `go run` compiles on first launch, which no boot budget should punish.
+            wait_healthy(t, 240 if (a.mode == "local" and a.shard == "go")
+                            else LADDER["boot_timeout_s"])
             print("  booted")
             if not a.skip_conform:
                 ok, line = conform()
                 print("  conformance: %s" % line)
                 if not ok:
-                    print("  SKIPPED: target does not conform")
+                    print("  FAILED: target does not conform")
                     continue
+                conformed += 1
+            if a.validate_only:
+                continue
             print("  warmup %ss @ %s rps" % (warm_s, LADDER["warmup"]["rps"]))
             run_gen(LADDER["warmup"]["rps"], warm_s, a.workers, record=False)
 
@@ -132,12 +217,18 @@ def main():
                              "status_mismatch": res["status_mismatch"], **{
                                  k: o[k] for k in ("count", "p50_us", "p90_us", "p99_us", "p999_us")}})
         finally:
-            try:
-                os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
-            except ProcessLookupError:
-                pass
-            proc.wait(timeout=10)
+            t.stop()
             time.sleep(1.0)   # cooldown so the next target does not inherit a warm socket table
+
+    if a.validate_only:
+        n = len(a.targets.split(","))
+        print("\n%d/%d targets conform" % (conformed, n))
+        return 0 if conformed == n else 1
+
+    if a.validate_only:
+        want = len(a.targets.split(","))
+        print("\n%d/%d targets conform" % (conformed, want))
+        return 0 if conformed == want else 1
 
     with out_path.open("w") as f:
         for row in rows:

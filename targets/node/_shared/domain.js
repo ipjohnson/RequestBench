@@ -86,7 +86,8 @@ export function listCustomers(q) {
   let rows = customers;
   if (q.q) rows = rows.filter((c) => c.name.includes(q.q) || c.email.includes(q.q));
   const key = q.sort === "created" ? "created" : "name";
-  rows = rows.slice().sort((a, b) => (a[key] < b[key] ? -1 : a[key] > b[key] ? 1 : 0));
+  rows = rows.slice().sort((a, b) =>
+    a[key] < b[key] ? -1 : a[key] > b[key] ? 1 : a.id - b.id);
   return { total: rows.length, sort: key, items: rows.slice(0, 50) };
 }
 export function search(q) {
@@ -96,7 +97,7 @@ export function search(q) {
   const hits = products.filter((p) => p.name.includes(term));
   const key = q.sort === "total" ? "price_cents" : "name";
   const dir = q.dir === "desc" ? -1 : 1;
-  hits.sort((a, b) => (a[key] < b[key] ? -dir : a[key] > b[key] ? dir : 0));
+  hits.sort((a, b) => (a[key] < b[key] ? -dir : a[key] > b[key] ? dir : a.id - b.id));
   return { term, limit, offset, sort: key, total: hits.length,
            items: hits.slice(offset, offset + limit) };
 }
@@ -130,7 +131,7 @@ export function regionReport(region) {
   return {
     region, customers: cs.length, orders: os.length,
     revenue_cents: os.reduce((s, o) => s + o.total_cents, 0),
-    top: os.slice().sort((a, b) => b.total_cents - a.total_cents).slice(0, 10)
+    top: os.slice().sort((a, b) => b.total_cents - a.total_cents || a.id - b.id).slice(0, 10)
            .map((o) => ({ id: o.id, total_cents: o.total_cents })),
   };
 }
@@ -145,7 +146,8 @@ export function dashboard() {
     products: products.length, customers: customers.length, orders: orders.length,
     revenue_cents: orders.reduce((s, o) => s + o.total_cents, 0),
     by_status: orders.reduce((m, o) => ((m[o.status] = (m[o.status] ?? 0) + 1), m), {}),
-    by_region: [...customersByRegion].map(([r, cs]) => ({ region: r, customers: cs.length })),
+    by_region: [...customersByRegion].map(([r, cs]) => ({ region: r, customers: cs.length }))
+                  .sort((a, b) => (a.region < b.region ? -1 : 1)),
   };
 }
 
