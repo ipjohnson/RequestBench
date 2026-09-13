@@ -62,8 +62,9 @@ jobs:
       - name: Fail if the reference fingerprints drifted
         run: |
           node targets/node/baseline/server.js & SRV=$!
-          for i in $(seq 1 40); do
-            curl -sf http://127.0.0.1:8080/health >/dev/null && break || sleep 0.25
+          for _ in $(seq 1 40); do
+            if curl -sf http://127.0.0.1:8080/health >/dev/null; then break; fi
+            sleep 0.25
           done
           python3 harness/conform.py 127.0.0.1:8080 --quiet \
             --fingerprint spec/fingerprint.node-http.json

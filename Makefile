@@ -22,8 +22,10 @@ build: ## build container images for a shard  (SHARD=go TARGETS=net-http,gin,ech
 	    -t rb/$(SHARD)-$$t . >/dev/null; \
 	done
 
-lint: ## parse every workflow file
+lint: ## parse every workflow file, and run actionlint when it is installed
 	python3 harness/lintyaml.py
+	@command -v actionlint >/dev/null && actionlint -color || \
+	  echo "  (actionlint not installed; CI runs it. see docs/runner.md)"
 
 validate: ## boot and conform every target in a shard, no load  (SHARD= TARGETS= MODE=)
 	python3 harness/run.py --shard $(SHARD) --targets $(TARGETS) --mode $(MODE) --validate-only
