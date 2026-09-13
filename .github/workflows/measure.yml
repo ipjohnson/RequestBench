@@ -124,12 +124,16 @@ jobs:
           retention-days: 90
 
   collect:
-    name: commit summaries
+    name: record summaries
     needs: measure
-    if: always() && needs.measure.result != 'cancelled'
+    if: always() && needs.measure.result == 'success'
     runs-on: ubuntu-latest
     steps:
+      # The results branch is orphan and data-only: nothing watches it, so a nightly
+      # measurement adds no commit to main's history and triggers no CI.
       - uses: actions/checkout@v4
+        with:
+          ref: results
 
       - name: Download every shard's summary
         uses: actions/download-artifact@v4
@@ -144,18 +148,18 @@ jobs:
           shopt -s nullglob
           files=(/tmp/summaries/*.json)
           if [ ${#files[@]} -eq 0 ]; then
-            echo "no summaries produced; nothing to commit"
+            echo "no full-ladder summaries produced; nothing to record"
             exit 0
           fi
-          mkdir -p results/summary
-          cp "${files[@]}" results/summary/
+          mkdir -p summary
+          cp "${files[@]}" summary/
           git config user.name  "requestbench"
           git config user.email "requestbench@users.noreply.github.com"
-          git add results/summary
+          git add summary
           if git diff --cached --quiet; then
             echo "no summary change"
             exit 0
           fi
-          git commit -m "Record measurement summaries from run ${{ github.run_id }}"
-          git pull --rebase --autostash origin "${GITHUB_REF_NAME}"
-          git push origin "HEAD:${GITHUB_REF_NAME}"
+          git commit -m "Record ${#files[@]} summary file(s) from run ${{ github.run_id }}"
+          git pull --rebase --autostash origin results
+          git push origin HEAD:results

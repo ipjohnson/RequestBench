@@ -1,0 +1,61 @@
+# Render the results site.
+#
+# Triggered by measure finishing rather than by a push to the results branch: that branch
+# is orphan and carries no .github directory, so a push to it triggers nothing at all.
+name: pages
+
+on:
+  workflow_run:
+    workflows: [measure]
+    types: [completed]
+  push:
+    branches: [main]
+    paths:
+      - site/**
+      - .github/workflows/pages.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the generator
+        uses: actions/checkout@v4
+
+      - name: Check out the data
+        uses: actions/checkout@v4
+        with:
+          ref: results
+          path: _results
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Build the site
+        run: python3 site/build.py --summaries _results/summary --out site/dist
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
