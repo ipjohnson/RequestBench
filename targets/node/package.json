@@ -1,0 +1,7 @@
+{
+  "name": "rb-node-targets",
+  "private": true,
+  "type": "module",
+  "comment": "Local dev shares one node_modules. Container builds give each target its own.",
+  "dependencies": { "express": "^5.1.0", "fastify": "^5.2.0" }
+}

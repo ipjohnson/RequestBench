@@ -1,0 +1,12 @@
+{
+  "version": "matrix-v1",
+  "warmup_classes": { "jit": ["java", "dotnet"], "steady": ["go", "node", "python", "rust"] },
+  "languages": {
+    "java":   { "runtime": "temurin:25",     "baseline": "bare-netty", "frameworks": ["spring-boot","quarkus","micronaut","helidon-se","vertx","javalin"] },
+    "go":     { "runtime": "golang:1.25",    "baseline": "net-http",   "frameworks": ["gin","echo","fiber","chi","gorilla-mux","huma"] },
+    "node":   { "runtime": "node:24",        "baseline": "node-http",  "frameworks": ["express","fastify","hono","nestjs-fastify","koa","h3"] },
+    "python": { "runtime": "python:3.13",    "baseline": "raw-asgi",   "frameworks": ["fastapi","litestar","starlette","django-asgi","flask","sanic"] },
+    "dotnet": { "runtime": "dotnet/sdk:10.0","baseline": "raw-kestrel","frameworks": ["minimal-apis","aspnet-mvc","fastendpoints","carter","servicestack","wolverine-http","hardened"] },
+    "rust":   { "runtime": "rust:1.90",      "baseline": "hyper",      "frameworks": ["axum","actix-web","rocket","poem","salvo","warp"] }
+  }
+}

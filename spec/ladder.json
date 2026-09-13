@@ -1,0 +1,14 @@
+{
+  "version": "ladder-v1",
+  "warmup": { "rps": 1000, "seconds": { "jit": 90, "steady": 30 } },
+  "rungs": [
+    { "rung": 1, "rps": 500,   "seconds": 60, "purpose": "unloaded latency floor" },
+    { "rung": 2, "rps": 1500,  "seconds": 60, "purpose": "light load" },
+    { "rung": 3, "rps": 3000,  "seconds": 60, "purpose": "typical load" },
+    { "rung": 4, "rps": 6000,  "seconds": 60, "purpose": "approaching the knee" },
+    { "rung": 5, "rps": 12000, "seconds": 60, "purpose": "saturation behaviour" }
+  ],
+  "boot_timeout_s": 20,
+  "teardown_s": 20,
+  "min_requests_per_endpoint": 10000
+}

@@ -1,0 +1,484 @@
+{
+  "version": "blend-v1",
+  "note": "Weights are integer shares out of 10000. Generators never fill params themselves; they replay spec/plan.json, which harness/plan.py derives from this file and the fixture. 'correlate' names a strategy that keeps related ids consistent.",
+  "fixture": {
+    "products": {
+      "min": 1,
+      "max": 50
+    },
+    "customers": {
+      "min": 1,
+      "max": 200
+    },
+    "orders": {
+      "min": 1,
+      "max": 1000
+    },
+    "lines": {
+      "min": 1,
+      "max": 10
+    },
+    "regions": [
+      "north",
+      "south",
+      "east",
+      "west"
+    ],
+    "categories": [
+      "tools",
+      "garden",
+      "kitchen",
+      "outdoor",
+      "office"
+    ],
+    "statuses": [
+      "open",
+      "paid",
+      "shipped",
+      "cancelled"
+    ]
+  },
+  "families": {
+    "plaintext": {
+      "share": 800,
+      "exercises": "dispatch floor, no serialization"
+    },
+    "json_read": {
+      "share": 2400,
+      "exercises": "serializer, response buffering"
+    },
+    "body_validate": {
+      "share": 1800,
+      "exercises": "parser, schema validation, error paths"
+    },
+    "path_params": {
+      "share": 1400,
+      "exercises": "router under 40 registered routes"
+    },
+    "query_paging": {
+      "share": 1200,
+      "exercises": "query string parsing, coercion"
+    },
+    "nested_fetch": {
+      "share": 1000,
+      "exercises": "deeper middleware chain, composition"
+    },
+    "write_echo": {
+      "share": 900,
+      "exercises": "round-trip parse and re-serialize"
+    },
+    "error_paths": {
+      "share": 500,
+      "exercises": "404 and 422 handling cost"
+    }
+  },
+  "endpoints": [
+    {
+      "id": "pt.plaintext",
+      "family": "plaintext",
+      "share": 400,
+      "method": "GET",
+      "path": "/plaintext",
+      "expect": 200
+    },
+    {
+      "id": "pt.health",
+      "family": "plaintext",
+      "share": 400,
+      "method": "GET",
+      "path": "/health",
+      "expect": 200
+    },
+    {
+      "id": "jr.json_small",
+      "family": "json_read",
+      "share": 400,
+      "method": "GET",
+      "path": "/json/small",
+      "expect": 200
+    },
+    {
+      "id": "jr.product",
+      "family": "json_read",
+      "share": 400,
+      "method": "GET",
+      "path": "/products/{product}",
+      "expect": 200
+    },
+    {
+      "id": "jr.customer",
+      "family": "json_read",
+      "share": 400,
+      "method": "GET",
+      "path": "/customers/{customer}",
+      "expect": 200
+    },
+    {
+      "id": "jr.order",
+      "family": "json_read",
+      "share": 400,
+      "method": "GET",
+      "path": "/orders/{order}",
+      "expect": 200
+    },
+    {
+      "id": "jr.product_list",
+      "family": "json_read",
+      "share": 400,
+      "method": "GET",
+      "path": "/products",
+      "expect": 200
+    },
+    {
+      "id": "jr.order_lines",
+      "family": "json_read",
+      "share": 400,
+      "method": "GET",
+      "path": "/orders/{order}/lines",
+      "expect": 200
+    },
+    {
+      "id": "bv.order",
+      "family": "body_validate",
+      "share": 300,
+      "method": "POST",
+      "path": "/orders/validate",
+      "body": "order_draft",
+      "expect": 200
+    },
+    {
+      "id": "bv.customer",
+      "family": "body_validate",
+      "share": 300,
+      "method": "POST",
+      "path": "/customers/validate",
+      "body": "customer_draft",
+      "expect": 200
+    },
+    {
+      "id": "bv.product",
+      "family": "body_validate",
+      "share": 300,
+      "method": "POST",
+      "path": "/products/validate",
+      "body": "product_draft",
+      "expect": 200
+    },
+    {
+      "id": "bv.rejected",
+      "family": "body_validate",
+      "share": 300,
+      "method": "POST",
+      "path": "/orders/validate",
+      "body": "order_invalid",
+      "expect": 422
+    },
+    {
+      "id": "bv.echo_small",
+      "family": "body_validate",
+      "share": 300,
+      "method": "POST",
+      "path": "/echo",
+      "body": "echo_400b",
+      "expect": 200
+    },
+    {
+      "id": "bv.echo_large",
+      "family": "body_validate",
+      "share": 300,
+      "method": "POST",
+      "path": "/echo",
+      "body": "echo_32kb",
+      "expect": 200
+    },
+    {
+      "id": "pp.cust_orders",
+      "family": "path_params",
+      "share": 234,
+      "method": "GET",
+      "path": "/customers/{customer}/orders",
+      "expect": 200,
+      "correlate": "customer_any"
+    },
+    {
+      "id": "pp.cust_order",
+      "family": "path_params",
+      "share": 233,
+      "method": "GET",
+      "path": "/customers/{customer}/orders/{order}",
+      "expect": 200,
+      "correlate": "order_chain"
+    },
+    {
+      "id": "pp.prod_reviews",
+      "family": "path_params",
+      "share": 233,
+      "method": "GET",
+      "path": "/products/{product}/reviews",
+      "expect": 200
+    },
+    {
+      "id": "pp.region_custs",
+      "family": "path_params",
+      "share": 233,
+      "method": "GET",
+      "path": "/regions/{region}/customers",
+      "expect": 200
+    },
+    {
+      "id": "pp.order_line",
+      "family": "path_params",
+      "share": 233,
+      "method": "GET",
+      "path": "/orders/{order}/lines/{line}",
+      "expect": 200,
+      "correlate": "order_line"
+    },
+    {
+      "id": "pp.deep",
+      "family": "path_params",
+      "share": 234,
+      "method": "GET",
+      "path": "/regions/{region}/customers/{customer}/orders/{order}/lines/{line}",
+      "expect": 200,
+      "correlate": "order_chain"
+    },
+    {
+      "id": "qp.orders_page",
+      "family": "query_paging",
+      "share": 240,
+      "method": "GET",
+      "path": "/orders?page={page}&size={size}",
+      "expect": 200
+    },
+    {
+      "id": "qp.products_filter",
+      "family": "query_paging",
+      "share": 240,
+      "method": "GET",
+      "path": "/products?category={category}&min_price={minp}&max_price={maxp}",
+      "expect": 200
+    },
+    {
+      "id": "qp.customers_sort",
+      "family": "query_paging",
+      "share": 240,
+      "method": "GET",
+      "path": "/customers?q={term}&sort={sort}",
+      "expect": 200
+    },
+    {
+      "id": "qp.orders_status",
+      "family": "query_paging",
+      "share": 240,
+      "method": "GET",
+      "path": "/orders?status={status}&page={page}&size={size}",
+      "expect": 200
+    },
+    {
+      "id": "qp.search",
+      "family": "query_paging",
+      "share": 240,
+      "method": "GET",
+      "path": "/search?q={term}&limit={size}&offset={page}&sort={sort}&dir=asc",
+      "expect": 200
+    },
+    {
+      "id": "nf.cust_summary",
+      "family": "nested_fetch",
+      "share": 200,
+      "method": "GET",
+      "path": "/customers/{customer}/summary",
+      "expect": 200
+    },
+    {
+      "id": "nf.order_full",
+      "family": "nested_fetch",
+      "share": 200,
+      "method": "GET",
+      "path": "/orders/{order}/full",
+      "expect": 200
+    },
+    {
+      "id": "nf.region_report",
+      "family": "nested_fetch",
+      "share": 200,
+      "method": "GET",
+      "path": "/regions/{region}/report",
+      "expect": 200
+    },
+    {
+      "id": "nf.prod_related",
+      "family": "nested_fetch",
+      "share": 200,
+      "method": "GET",
+      "path": "/products/{product}/related",
+      "expect": 200
+    },
+    {
+      "id": "nf.dashboard",
+      "family": "nested_fetch",
+      "share": 200,
+      "method": "GET",
+      "path": "/dashboard",
+      "expect": 200
+    },
+    {
+      "id": "we.create_order",
+      "family": "write_echo",
+      "share": 180,
+      "method": "POST",
+      "path": "/orders",
+      "body": "order_draft",
+      "expect": 201
+    },
+    {
+      "id": "we.replace_order",
+      "family": "write_echo",
+      "share": 180,
+      "method": "PUT",
+      "path": "/orders/{order}",
+      "body": "order_draft",
+      "expect": 200
+    },
+    {
+      "id": "we.patch_customer",
+      "family": "write_echo",
+      "share": 180,
+      "method": "PATCH",
+      "path": "/customers/{customer}",
+      "body": "customer_patch",
+      "expect": 200
+    },
+    {
+      "id": "we.add_line",
+      "family": "write_echo",
+      "share": 180,
+      "method": "POST",
+      "path": "/orders/{order}/lines",
+      "body": "line_draft",
+      "expect": 201
+    },
+    {
+      "id": "we.delete_line",
+      "family": "write_echo",
+      "share": 180,
+      "method": "DELETE",
+      "path": "/orders/{order}/lines/{line}",
+      "expect": 204,
+      "correlate": "order_line"
+    },
+    {
+      "id": "ep.missing_order",
+      "family": "error_paths",
+      "share": 100,
+      "method": "GET",
+      "path": "/orders/999999",
+      "expect": 404
+    },
+    {
+      "id": "ep.unmatched",
+      "family": "error_paths",
+      "share": 100,
+      "method": "GET",
+      "path": "/no/such/route",
+      "expect": 404
+    },
+    {
+      "id": "ep.malformed",
+      "family": "error_paths",
+      "share": 100,
+      "method": "POST",
+      "path": "/orders",
+      "body": "malformed",
+      "expect": 422
+    },
+    {
+      "id": "ep.boom",
+      "family": "error_paths",
+      "share": 100,
+      "method": "GET",
+      "path": "/boom",
+      "expect": 500
+    },
+    {
+      "id": "ep.forbidden",
+      "family": "error_paths",
+      "share": 100,
+      "method": "GET",
+      "path": "/forbidden",
+      "expect": 403
+    }
+  ],
+  "params": {
+    "product": {
+      "kind": "int_range",
+      "from": "fixture.products"
+    },
+    "customer": {
+      "kind": "int_range",
+      "from": "fixture.customers"
+    },
+    "order": {
+      "kind": "int_range",
+      "from": "fixture.orders"
+    },
+    "line": {
+      "kind": "int_range",
+      "from": "fixture.lines"
+    },
+    "region": {
+      "kind": "choice",
+      "from": "fixture.regions"
+    },
+    "category": {
+      "kind": "choice",
+      "from": "fixture.categories"
+    },
+    "status": {
+      "kind": "choice",
+      "from": "fixture.statuses"
+    },
+    "page": {
+      "kind": "int_range",
+      "min": 0,
+      "max": 20
+    },
+    "size": {
+      "kind": "choice",
+      "values": [
+        10,
+        25,
+        50
+      ]
+    },
+    "minp": {
+      "kind": "int_range",
+      "min": 1,
+      "max": 40
+    },
+    "maxp": {
+      "kind": "int_range",
+      "min": 41,
+      "max": 200
+    },
+    "term": {
+      "kind": "choice",
+      "values": [
+        "ring",
+        "bolt",
+        "seed",
+        "pan",
+        "desk"
+      ]
+    },
+    "sort": {
+      "kind": "choice",
+      "values": [
+        "name",
+        "created",
+        "total"
+      ]
+    }
+  }
+}

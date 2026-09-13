@@ -1,0 +1,68 @@
+// RequestBench target: Fastify. Framework wiring only; all behaviour comes from _shared/domain.js.
+import Fastify from "fastify";
+import * as d from "../_shared/domain.js";
+
+const app = Fastify({ logger: false, disableRequestLogging: true });
+const send = (reply, v, status = 200) =>
+  v === d.NOT_FOUND ? reply.code(404).send({ error: "not_found" }) : reply.code(status).send(v);
+
+app.get("/plaintext", (_, reply) => reply.type("text/plain").send("Hello, World!"));
+app.get("/health",    (_, reply) => reply.type("text/plain").send("ok"));
+app.get("/json/small", () => d.jsonSmall());
+
+app.get("/products",  (req) => d.listProducts(req.query));
+app.get("/customers", (req) => d.listCustomers(req.query));
+app.get("/orders",    (req) => d.listOrders(req.query));
+app.get("/search",    (req) => d.search(req.query));
+app.get("/dashboard", () => d.dashboard());
+app.get("/boom", () => { throw new d.Boom(); });
+app.get("/forbidden", (_, reply) => reply.code(403).send({ error: "forbidden" }));
+
+app.get("/products/:pid",  (req, reply) => send(reply, d.getProduct(req.params.pid)));
+app.get("/customers/:cid", (req, reply) => send(reply, d.getCustomer(req.params.cid)));
+app.get("/orders/:oid",    (req, reply) => send(reply, d.getOrder(req.params.oid)));
+
+app.get("/products/:pid/reviews",  (req, reply) => send(reply, d.getProductReviews(req.params.pid)));
+app.get("/products/:pid/related",  (req, reply) => send(reply, d.relatedProducts(req.params.pid)));
+app.get("/customers/:cid/orders",  (req, reply) => send(reply, d.getCustomerOrders(req.params.cid)));
+app.get("/customers/:cid/summary", (req, reply) => send(reply, d.customerSummary(req.params.cid)));
+app.get("/orders/:oid/lines",      (req, reply) => send(reply, d.getOrderLines(req.params.oid)));
+app.get("/orders/:oid/full",       (req, reply) => send(reply, d.orderFull(req.params.oid)));
+app.get("/regions/:r/customers",   (req, reply) => send(reply, d.getRegionCustomers(req.params.r)));
+app.get("/regions/:r/report",      (req, reply) => send(reply, d.regionReport(req.params.r)));
+
+app.get("/customers/:cid/orders/:oid", (req, reply) =>
+  send(reply, d.getCustomerOrder(req.params.cid, req.params.oid)));
+app.get("/orders/:oid/lines/:lid", (req, reply) =>
+  send(reply, d.getOrderLine(req.params.oid, req.params.lid)));
+app.get("/regions/:r/customers/:cid/orders/:oid/lines/:lid", (req, reply) =>
+  send(reply, d.getOrderLine(req.params.oid, req.params.lid)));
+
+app.post("/orders/validate",    (req) => d.validateOrder(req.body));
+app.post("/customers/validate", (req) => d.validateCustomer(req.body));
+app.post("/products/validate",  (req) => d.validateProduct(req.body));
+app.post("/echo",               (req) => d.echo(req.body));
+app.post("/orders", (req, reply) => reply.code(201).send(d.validateOrder(req.body)));
+app.post("/orders/:oid/lines", (req, reply) =>
+  d.getOrder(req.params.oid) === d.NOT_FOUND
+    ? reply.code(404).send({ error: "not_found" })
+    : reply.code(201).send(d.validateLine(req.body)));
+app.put("/orders/:oid", (req, reply) =>
+  d.getOrder(req.params.oid) === d.NOT_FOUND
+    ? reply.code(404).send({ error: "not_found" })
+    : reply.send({ id: Number(req.params.oid), ...d.validateOrder(req.body) }));
+app.patch("/customers/:cid", (req, reply) =>
+  send(reply, d.patchCustomer(req.params.cid, req.body)));
+app.delete("/orders/:oid/lines/:lid", (req, reply) =>
+  d.getOrderLine(req.params.oid, req.params.lid) === d.NOT_FOUND
+    ? reply.code(404).send({ error: "not_found" })
+    : reply.code(204).send());
+
+app.setNotFoundHandler((_, reply) => reply.code(404).send({ error: "not_found" }));
+app.setErrorHandler((err, _, reply) =>
+  err instanceof d.ValidationError
+    ? reply.code(422).send({ error: "validation_failed", errors: err.errors })
+    : reply.code(500).send({ error: "internal", message: err.message }));
+
+app.listen({ port: Number(process.env.PORT ?? 8080), host: "0.0.0.0" })
+   .then((a) => console.log(`fastify listening on ${a}`));
