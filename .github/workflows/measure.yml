@@ -58,25 +58,13 @@ jobs:
       - name: Resolve tonight's shard and suite
         id: rot
         run: |
-          python3 harness/rotation.py ${{ github.event.inputs.date }} > /tmp/rot.json
-          cat /tmp/rot.json
-          SHARD=$(jq -r .shard /tmp/rot.json)
-          if [ "${{ github.event.inputs.shard }}" != "auto" ] && [ -n "${{ github.event.inputs.shard }}" ]; then
-            SHARD="${{ github.event.inputs.shard }}"
-            python3 -c "
-          import json,sys
-          from harness.rotation import MATRIX
-          lang = MATRIX['languages']['$SHARD']
-          print(','.join([lang['baseline']] + lang['frameworks']))
-          " > /tmp/targets.txt 2>/dev/null || jq -r .targets /tmp/rot.json > /tmp/targets.txt
-          else
-            jq -r .targets /tmp/rot.json > /tmp/targets.txt
-          fi
-          {
-            echo "shard=$SHARD"
-            echo "suite=$(jq -r .suite /tmp/rot.json)"
-            echo "targets=$(cat /tmp/targets.txt)"
-          } >> "$GITHUB_OUTPUT"
+          python3 harness/rotation.py \
+            --date "${{ inputs.date }}" \
+            --shard "${{ inputs.shard || 'auto' }}" | tee /dev/stderr
+          python3 harness/rotation.py \
+            --date "${{ inputs.date }}" \
+            --shard "${{ inputs.shard || 'auto' }}" \
+            --github-output >> "$GITHUB_OUTPUT"
 
       - name: Skip what is not built yet
         id: gate

@@ -3,11 +3,13 @@
 The schedule lives here rather than in YAML so it is testable and so a workflow only has
 to ask. Day of week picks the shard; ISO week parity picks the suite.
 
-  python3 harness/rotation.py            # tonight
-  python3 harness/rotation.py 2026-09-21 # a specific night
-  python3 harness/rotation.py --calendar # the whole fortnight
+  python3 harness/rotation.py                     # tonight
+  python3 harness/rotation.py --date 2026-09-21   # a specific night
+  python3 harness/rotation.py --shard go          # override the shard, keep the suite
+  python3 harness/rotation.py --github-output     # key=value lines for $GITHUB_OUTPUT
+  python3 harness/rotation.py --calendar          # the whole fortnight
 """
-import datetime as dt, json, pathlib, sys
+import argparse, datetime as dt, json, pathlib, sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 MATRIX = json.loads((ROOT / "spec" / "matrix.json").read_text())
@@ -28,6 +30,16 @@ def resolve(day: dt.date):
         out["warmup_class"] = ("jit" if shard in MATRIX["warmup_classes"]["jit"] else "steady")
     return out
 
+def override_shard(r, shard):
+    """Keep the night's suite, but measure a shard the operator named."""
+    lang = MATRIX["languages"][shard]
+    r["shard"] = shard
+    r["targets"] = ",".join([lang["baseline"]] + lang["frameworks"])
+    r["warmup_class"] = "jit" if shard in MATRIX["warmup_classes"]["jit"] else "steady"
+    r["overridden"] = True
+    return r
+
+
 def main(argv):
     if "--calendar" in argv:
         start = dt.date.today()
@@ -38,8 +50,24 @@ def main(argv):
             print("%-12s %-5d %-9s %-11s %s"
                   % (r["date"], r["iso_week"], r["shard"], r["suite"], r["targets"][:52]))
         return 0
-    day = dt.date.fromisoformat(argv[1]) if len(argv) > 1 else dt.date.today()
-    print(json.dumps(resolve(day)))
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--date", default="")
+    ap.add_argument("--shard", default="auto")
+    ap.add_argument("--github-output", action="store_true",
+                    help="emit key=value lines instead of JSON")
+    a = ap.parse_args(argv[1:])
+
+    day = dt.date.fromisoformat(a.date) if a.date else dt.date.today()
+    r = resolve(day)
+    if a.shard and a.shard != "auto":
+        if a.shard not in MATRIX["languages"]:
+            sys.exit("unknown shard %r; known: %s" % (a.shard, ", ".join(MATRIX["languages"])))
+        r = override_shard(r, a.shard)
+    if a.github_output:
+        for k in ("date", "shard", "suite", "targets"):
+            print("%s=%s" % (k, r[k]))
+    else:
+        print(json.dumps(r))
     return 0
 
 if __name__ == "__main__":

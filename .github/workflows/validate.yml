@@ -36,6 +36,16 @@ jobs:
           fi
           echo "fixture and plan match their generators"
 
+  workflows:
+    name: workflow files parse
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: actionlint
+        run: |
+          bash <(curl -sSf https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
+          ./actionlint -color
+
   node:
     name: node shard conforms
     runs-on: ubuntu-latest
