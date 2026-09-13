@@ -163,6 +163,8 @@ def main():
     ap.add_argument("--mode", choices=["local", "docker"], default="local")
     ap.add_argument("--validate-only", action="store_true",
                     help="boot and conform every target, then stop; no load is generated")
+    ap.add_argument("--emit-path", metavar="FILE",
+                    help="write the results file path here, so callers need not glob")
     a = ap.parse_args()
 
     rungs = [r for r in LADDER["rungs"]
@@ -255,6 +257,8 @@ def main():
         for row in rows:
             f.write(json.dumps(row) + "\n")
     print("\nwrote %s  (%d rows, %.0f KB)" % (out_path, len(rows), out_path.stat().st_size / 1024))
+    if a.emit_path:
+        pathlib.Path(a.emit_path).write_text(str(out_path))
     return 0
 
 if __name__ == "__main__":

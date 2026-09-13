@@ -94,6 +94,7 @@ jobs:
             --shard '${{ steps.rot.outputs.shard }}' \
             --targets '${{ steps.rot.outputs.targets }}' \
             --mode docker \
+            --emit-path /tmp/rb-result-path \
             ${{ github.event.inputs.seconds && format('--seconds {0}', github.event.inputs.seconds) || '' }} \
             ${{ github.event.inputs.rungs && format('--rungs {0}', github.event.inputs.rungs) || '' }}
 
@@ -101,7 +102,7 @@ jobs:
         if: steps.gate.outputs.run == 'yes'
         id: sum
         run: |
-          RAW=$(ls -t results/*.jsonl | head -1)
+          RAW=$(cat /tmp/rb-result-path)
           NAME=$(basename "$RAW" .jsonl)
           TRACKED=""
           [ "${{ github.event.inputs.runner || 'requestbench' }}" = "requestbench" ] && TRACKED="--tracked"
