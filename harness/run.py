@@ -3,7 +3,7 @@
   python3 harness/run.py --shard node --targets node-http,fastify,express
   python3 harness/run.py --shard node --targets fastify --seconds 20 --rungs 3,5
 """
-import argparse, functools, json, os, pathlib, platform, shutil, signal, socket, subprocess, sys, time, uuid
+import argparse, functools, http.client, json, os, pathlib, platform, shutil, signal, subprocess, sys, time, uuid
 
 # Long runs are watched live; block-buffered stdout hides progress for minutes.
 print = functools.partial(print, flush=True)
@@ -125,16 +125,31 @@ def warmup_class(shard):
     return "jit" if shard in MATRIX["warmup_classes"]["jit"] else "steady"
 
 def wait_healthy(target, timeout):
-    deadline = time.time() + timeout
+    """Wait for a 200 from /health, not merely for the port to accept.
+
+    `docker run -p` publishes the port before the process inside has bound, so a TCP
+    connect succeeds while the app is still starting. Conformance would then fire its
+    first requests into a socket nobody is reading and record an empty body as that
+    endpoint's fingerprint, which surfaces later as a body mismatch on whichever
+    endpoints happened to land in the gap.
+    """
+    start = time.time()
+    deadline = start + timeout
     while time.time() < deadline:
         if not target.alive():
             raise RuntimeError("target exited during boot")
         try:
-            with socket.create_connection(("127.0.0.1", PORT), timeout=0.5):
-                return round(time.time() - (deadline - timeout), 2)
-        except OSError:
-            time.sleep(0.05)
-    raise RuntimeError("target never became healthy in %ss" % timeout)
+            c = http.client.HTTPConnection("127.0.0.1", PORT, timeout=1.0)
+            c.request("GET", "/health")
+            r = c.getresponse()
+            body = r.read()
+            c.close()
+            if r.status == 200 and body:
+                return round(time.time() - start, 2)
+        except (OSError, http.client.HTTPException):
+            pass
+        time.sleep(0.1)
+    raise RuntimeError("target never answered /health with 200 in %ss" % timeout)
 
 def run_gen(rate, seconds, workers, record=True):
     # Histograms go through a file rather than the pipe: a full rung is megabytes of

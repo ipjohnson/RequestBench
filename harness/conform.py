@@ -57,13 +57,17 @@ def main():
             seen[status] += 1
             if status != ep["expect"] and bad is None:
                 bad = "expected %d, got %d on %s" % (ep["expect"], status, path)
-            prints.setdefault(ep["id"], canonical(raw, ctype))
+            # Only a response that actually arrived with the right status may define the
+            # endpoint's fingerprint; otherwise a single early hiccup gets recorded as the
+            # reference body and every later comparison reports drift that is not real.
+            if status == ep["expect"]:
+                prints.setdefault(ep["id"], canonical(raw, ctype))
 
         ok = set(seen) == {ep["expect"]}
         if not ok:
             failures.append((ep["id"], bad or "mixed statuses %s" % dict(seen)))
         note = ""
-        if ref and ep["id"] in ref and ref[ep["id"]] != prints[ep["id"]]:
+        if ref and ep["id"] in ref and ep["id"] in prints and ref[ep["id"]] != prints[ep["id"]]:
             note, _ = "  <- body differs from reference", drift.append(ep["id"])
         if not a.quiet:
             print("  %s %-18s %-6s %-3d instances  %s%s" %
