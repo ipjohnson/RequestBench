@@ -24,7 +24,8 @@
         "vertx",
         "javalin"
       ],
-      "anchor": "spring-boot"
+      "anchor": "spring-boot",
+      "implemented": []
     },
     "go": {
       "runtime": "golang:1.25",
@@ -37,7 +38,11 @@
         "gorilla-mux",
         "huma"
       ],
-      "anchor": "gin"
+      "anchor": "gin",
+      "implemented": [
+        "gin",
+        "echo"
+      ]
     },
     "node": {
       "runtime": "node:24",
@@ -50,7 +55,11 @@
         "koa",
         "h3"
       ],
-      "anchor": "fastify"
+      "anchor": "fastify",
+      "implemented": [
+        "fastify",
+        "express"
+      ]
     },
     "python": {
       "runtime": "python:3.13",
@@ -63,7 +72,8 @@
         "flask",
         "sanic"
       ],
-      "anchor": "fastapi"
+      "anchor": "fastapi",
+      "implemented": []
     },
     "dotnet": {
       "runtime": "dotnet/sdk:10.0",
@@ -77,7 +87,8 @@
         "wolverine-http",
         "hardened"
       ],
-      "anchor": "minimal-apis"
+      "anchor": "minimal-apis",
+      "implemented": []
     },
     "rust": {
       "runtime": "rust:1.90",
@@ -90,7 +101,8 @@
         "salvo",
         "warp"
       ],
-      "anchor": "axum"
+      "anchor": "axum",
+      "implemented": []
     }
   },
   "rotation": {
@@ -108,5 +120,6 @@
       "odd": "blend",
       "even": "capability"
     }
-  }
+  },
+  "note": "'frameworks' is the plan of record. 'implemented' is what actually exists and is what any runner attempts; a shard with an empty list is skipped."
 }

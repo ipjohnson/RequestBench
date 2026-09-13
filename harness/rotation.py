@@ -25,17 +25,25 @@ def resolve(day: dt.date):
         out["targets"] = ",".join("%s:%s" % (l, MATRIX["languages"][l]["anchor"])
                                   for l in MATRIX["languages"])
     else:
-        lang = MATRIX["languages"][shard]
-        out["targets"] = ",".join([lang["baseline"]] + lang["frameworks"])
-        out["warmup_class"] = ("jit" if shard in MATRIX["warmup_classes"]["jit"] else "steady")
+        out.update(shard_targets(shard))
     return out
+
+
+def shard_targets(shard):
+    """Only what exists. 'frameworks' is the plan; 'implemented' is what a runner can boot."""
+    lang = MATRIX["languages"][shard]
+    built = lang.get("implemented", [])
+    return {
+        "shard": shard,
+        "targets": ",".join([lang["baseline"]] + built) if built else "",
+        "planned": ",".join([lang["baseline"]] + lang["frameworks"]),
+        "built": len(built),
+        "warmup_class": "jit" if shard in MATRIX["warmup_classes"]["jit"] else "steady",
+    }
 
 def override_shard(r, shard):
     """Keep the night's suite, but measure a shard the operator named."""
-    lang = MATRIX["languages"][shard]
-    r["shard"] = shard
-    r["targets"] = ",".join([lang["baseline"]] + lang["frameworks"])
-    r["warmup_class"] = "jit" if shard in MATRIX["warmup_classes"]["jit"] else "steady"
+    r.update(shard_targets(shard))
     r["overridden"] = True
     return r
 
@@ -65,7 +73,8 @@ def main(argv):
         r = override_shard(r, a.shard)
     if a.github_output:
         for k in ("date", "shard", "suite", "targets"):
-            print("%s=%s" % (k, r[k]))
+            print("%s=%s" % (k, r.get(k, "")))
+        print("built=%d" % r.get("built", 0))
     else:
         print(json.dumps(r))
     return 0

@@ -66,6 +66,7 @@ def main():
         "suite": env["suite"], "epoch": env["epoch"], "mode": env.get("mode", "local"),
         "runner": a.runner, "tracked": a.tracked,
         "host": env["host"], "cpu": env["cpu"], "cores": env["cores"],
+        "sut_cpus": env.get("sut_cpus", ""), "gen_cpus": env.get("gen_cpus", ""),
         "runtime": env["runtime"], "generator": env["generator"],
         "baseline": base, "rungs": rung_ids, "targets": [],
     }

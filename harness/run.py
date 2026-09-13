@@ -3,7 +3,7 @@
   python3 harness/run.py --shard node --targets node-http,fastify,express
   python3 harness/run.py --shard node --targets fastify --seconds 20 --rungs 3,5
 """
-import argparse, functools, json, os, pathlib, platform, signal, socket, subprocess, sys, time, uuid
+import argparse, functools, json, os, pathlib, platform, shutil, signal, socket, subprocess, sys, time, uuid
 
 # Long runs are watched live; block-buffered stdout hides progress for minutes.
 print = functools.partial(print, flush=True)
@@ -68,9 +68,22 @@ class Local:
             self.fh.close()
 
 
+def cpu_model():
+    """platform.processor() is empty on Linux, and the runner's CPU is the single most
+    useful thing to know when a hosted machine's numbers look unlike last night's."""
+    try:
+        for line in pathlib.Path("/proc/cpuinfo").read_text().splitlines():
+            if line.startswith("model name"):
+                return line.split(":", 1)[1].strip()
+    except OSError:
+        pass
+    return platform.processor() or platform.machine()
+
+
 class Container:
     """Run a target as a container with a pinned CPU budget. What the rotation uses."""
     CPUS = os.environ.get("RB_CPUS", "2")
+    CPUSET = os.environ.get("RB_SUT_CPUS", "")
 
     def __init__(self, shard, name):
         self.shard, self.name = shard, name
@@ -87,8 +100,12 @@ class Container:
 
     def start(self):
         subprocess.run(["docker", "rm", "-f", self.cname], capture_output=True)
-        subprocess.run(["docker", "run", "-d", "--rm", "--name", self.cname,
-                        "--cpus", self.CPUS, "-p", "%d:8080" % PORT, self.image],
+        argv = ["docker", "run", "-d", "--rm", "--name", self.cname, "--cpus", self.CPUS]
+        if self.CPUSET:
+            # Keeping the target and the load generator off each other's cores is the
+            # difference between measuring a framework and measuring contention.
+            argv += ["--cpuset-cpus", self.CPUSET]
+        subprocess.run(argv + ["-p", "%d:8080" % PORT, self.image],
                        check=True, capture_output=True)
         return self
 
@@ -126,6 +143,9 @@ def run_gen(rate, seconds, workers, record=True):
     cmd = ["node", str(ROOT / "gen" / "blend.mjs"), "--target", "127.0.0.1:%d" % PORT,
            "--rate", str(rate), "--seconds", str(seconds), "--workers", str(workers),
            "--maxInflight", "1024", "--out", str(tmp)]
+    gen_cpus = os.environ.get("RB_GEN_CPUS", "")
+    if gen_cpus and shutil.which("taskset"):
+        cmd = ["taskset", "-c", gen_cpus] + cmd
     if not record:
         cmd += ["--record", "false"]
     try:
@@ -145,12 +165,13 @@ def conform():
 
 def env_fingerprint(run_id, shard, baseline):
     return {"kind": "env", "run_id": run_id, "shard": shard, "baseline": baseline,
-            "host": platform.node(), "cpu": platform.processor() or platform.machine(),
+            "host": platform.node(), "cpu": cpu_model(),
             "cores": os.cpu_count(), "platform": platform.platform(),
+            "sut_cpus": os.environ.get("RB_SUT_CPUS", ""),
+            "gen_cpus": os.environ.get("RB_GEN_CPUS", ""),
             "runtime": subprocess.run(["node", "-v"], capture_output=True, text=True)
                         .stdout.strip(),
-            "generator": "blend.mjs/node", "epoch": 1, "suite": "blend-v1",
-            "note": "co-located generator and target; not an admissible production run"}
+            "generator": "blend.mjs/node", "epoch": 1, "suite": "blend-v1"}
 
 def main():
     ap = argparse.ArgumentParser()
