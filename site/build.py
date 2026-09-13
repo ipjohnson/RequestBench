@@ -85,6 +85,8 @@ tr.baseline td.name { color: var(--ink); }
         color: var(--tealtext); white-space: nowrap; }
 .ratio { font-family: var(--f-mono); }
 .ratio.up { color: var(--amber); }
+td.dead { color: var(--ink3); text-decoration: line-through;
+          text-decoration-color: var(--rule2); }
 .chart { background: var(--surface); border: 1px solid var(--rule); border-radius: 3px;
          padding: 18px; margin-top: 18px; }
 .legend { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 14px;
@@ -128,9 +130,12 @@ def latest_per_shard(runs):
             best[r["shard"]] = r
     return dict(sorted(best.items()))
 
-def ratio_cell(v):
+def ratio_cell(v, dead=False):
     if v is None:
         return '<td class="ratio">&mdash;</td>'
+    if dead:
+        return ('<td class="ratio dead" title="the baseline was saturated at this rate, '
+                'so this ratio compares two overloaded systems">%.2fx</td>' % v)
     cls = "ratio up" if v > 1.15 else "ratio"
     return '<td class="%s">%.2fx</td>' % (cls, v)
 
@@ -147,7 +152,10 @@ def shard_table(run):
             if not d:
                 cells.append("<td>&mdash;</td><td>&mdash;</td>")
                 continue
-            cells.append("<td>%d us</td>%s" % (d["p50_us"], ratio_cell(d["p50_ratio"])))
+            dead = d.get("baseline_saturated", False)
+            cells.append('<td%s>%d us</td>%s'
+                         % (' class="dead"' if dead else "", d["p50_us"],
+                            ratio_cell(d["p50_ratio"], dead)))
         label = esc(t["target"]) + (' <span class="pill">baseline</span>' if is_base else "")
         ver = '<td class="ver">%s</td>' % (esc(t.get("version") or "\u2014"))
         rows.append('<tr class="%s"><td class="name">%s</td>%s%s</tr>'
@@ -247,12 +255,19 @@ def render(runs):
                     "smoke test and never enters the series, so the first full run on the "
                     "schedule will populate this page.</div>")
     for shard, run in latest.items():
-        mid = run["rungs"][len(run["rungs"]) // 2]
+        # Chart the highest rate at which the baseline was still keeping up; a saturated
+        # rung says more about the runner's core count than about any framework.
+        clean = [rn for rn in run["rungs"]
+                 if not any(t["rungs"].get(str(rn), {}).get("baseline_saturated")
+                            for t in run["targets"])]
+        mid = clean[-1] if clean else run["rungs"][len(run["rungs"]) // 2]
         body.append(
             "<section>"
             '<div class="shead"><h2>%s</h2><span class="pill">%s</span></div>'
             '<p class="sub">%s &middot; %s, %d cores &middot; baseline <code>%s</code> '
-            "&middot; p50 and its ratio to that baseline, lower is better.</p>"
+            "&middot; p50 and its ratio to that baseline, lower is better. "
+            "Struck-through rates are ones where the baseline itself was dropping "
+            "requests, so the ratio there compares two overloaded systems.</p>"
             "%s<h3 style=\"font-size:13px;text-transform:uppercase;letter-spacing:.07em;"
             "color:var(--ink2);margin:28px 0 10px\">By endpoint family at %s rps</h3>%s"
             "%s</section>"

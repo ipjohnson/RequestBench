@@ -29,6 +29,16 @@ def pct(counts, p):
 def ratio(v, base):
     return round(v / base, 4) if base else None
 
+
+# Past this fraction of dropped requests the baseline itself is past its knee, and a ratio
+# to it compares two saturated systems rather than measuring framework overhead.
+SATURATION = 0.01
+
+
+def saturated(rung_row):
+    offered = rung_row["offered_rps"] * rung_row["seconds"]
+    return offered > 0 and rung_row["dropped"] / offered > SATURATION
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("path")
@@ -80,7 +90,10 @@ def main():
             r, b = by.get((t, rn)), by.get((base, rn))
             if not r:
                 continue
+            base_sat = saturated(b) if b else False
             entry["rungs"][str(rn)] = {
+                "baseline_saturated": base_sat,
+                "saturated": saturated(r),
                 "offered_rps": r["offered_rps"], "achieved_rps": r["achieved_rps"],
                 "p50_us": r["p50_us"], "p99_us": r["p99_us"], "p999_us": r["p999_us"],
                 "dropped": r["dropped"], "errors": r["errors"],
