@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"runtime"
 
 	"github.com/gin-gonic/gin"
 	d "github.com/ianjohnson/requestbench/targets/go/_shared"
@@ -69,6 +70,10 @@ func main() {
 	get("/orders", func(c *gin.Context) (any, error) { return d.ListOrders(q(c)), nil })
 	get("/search", func(c *gin.Context) (any, error) { return d.Search(q(c)), nil })
 	get("/dashboard", func(*gin.Context) (any, error) { return d.Dashboard(), nil })
+	r.GET("/__meta", func(c *gin.Context) {
+		c.JSON(200, gin.H{"framework": "gin", "version": gin.Version,
+			"runtime": runtime.Version()})
+	})
 	r.GET("/boom", func(*gin.Context) { panic(d.Boom{}) })
 	r.GET("/forbidden", func(c *gin.Context) { c.JSON(403, gin.H{"error": "forbidden"}) })
 

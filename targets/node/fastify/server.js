@@ -1,6 +1,11 @@
 // RequestBench target: Fastify. Framework wiring only; all behaviour comes from _shared/domain.js.
 import Fastify from "fastify";
+import { createRequire } from "node:module";
 import * as d from "../_shared/domain.js";
+
+const require = createRequire(import.meta.url);
+const meta = { framework: "fastify", version: require("fastify/package.json").version,
+               runtime: "node " + process.versions.node };
 
 const app = Fastify({ logger: false, disableRequestLogging: true });
 const send = (reply, v, status = 200) =>
@@ -9,6 +14,7 @@ const send = (reply, v, status = 200) =>
 app.get("/plaintext", (_, reply) => reply.type("text/plain").send("Hello, World!"));
 app.get("/health",    (_, reply) => reply.type("text/plain").send("ok"));
 app.get("/json/small", () => d.jsonSmall());
+app.get("/__meta", () => meta);
 
 app.get("/products",  (req) => d.listProducts(req.query));
 app.get("/customers", (req) => d.listCustomers(req.query));

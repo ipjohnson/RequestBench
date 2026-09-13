@@ -1,6 +1,11 @@
 // RequestBench target: Express 5. Framework wiring only; behaviour from _shared/domain.js.
 import express from "express";
+import { createRequire } from "node:module";
 import * as d from "../_shared/domain.js";
+
+const require = createRequire(import.meta.url);
+const meta = { framework: "express", version: require("express/package.json").version,
+               runtime: "node " + process.versions.node };
 
 const app = express();
 app.disable("x-powered-by");        // every production deployment does this
@@ -13,6 +18,7 @@ const send = (res, v, status = 200) =>
 app.get("/plaintext", (_, res) => res.type("text/plain").send("Hello, World!"));
 app.get("/health",    (_, res) => res.type("text/plain").send("ok"));
 app.get("/json/small", (_, res) => res.json(d.jsonSmall()));
+app.get("/__meta", (_, res) => res.json(meta));
 
 app.get("/products",  (req, res) => res.json(d.listProducts(req.query)));
 app.get("/customers", (req, res) => res.json(d.listCustomers(req.query)));

@@ -41,6 +41,7 @@ def main():
     rows = [json.loads(l) for l in pathlib.Path(a.path).read_text().splitlines() if l.strip()]
     env = next(r for r in rows if r["kind"] == "env")
     rungs = [r for r in rows if r["kind"] == "rung"]
+    meta = {r["target"]: r for r in rows if r["kind"] == "target"}
     samples = [r for r in rows if r["kind"] == "sample"]
     base = env["baseline"]
     targets = list(dict.fromkeys(r["target"] for r in rungs))
@@ -71,7 +72,10 @@ def main():
         "baseline": base, "rungs": rung_ids, "targets": [],
     }
     for t in targets:
-        entry = {"target": t, "rungs": {}, "families": {}}
+        m = meta.get(t, {})
+        entry = {"target": t, "framework": m.get("framework", t),
+                 "version": m.get("version", ""), "target_runtime": m.get("runtime", ""),
+                 "rungs": {}, "families": {}}
         for rn in rung_ids:
             r, b = by.get((t, rn)), by.get((base, rn))
             if not r:

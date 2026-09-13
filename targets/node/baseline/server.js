@@ -7,6 +7,12 @@ import * as d from "../_shared/domain.js";
 
 const PORT = Number(process.env.PORT ?? 8080);
 
+// Reported so a point on the results chart can be attributed to a version rather than
+// to a different runner. Deliberately outside spec/endpoints.json: it is not part of
+// the measured surface and must not be conformance-checked.
+const meta = { framework: "node-http", version: process.versions.node,
+               runtime: "node " + process.versions.node };
+
 function json(res, status, body) {
   const buf = Buffer.from(JSON.stringify(body));
   res.writeHead(status, { "content-type": "application/json",
@@ -49,6 +55,7 @@ function route(req, res, seg, q, body) {
         case "orders":    return json(res, 200, d.listOrders(q));
         case "search":    return json(res, 200, d.search(q));
         case "dashboard": return json(res, 200, d.dashboard());
+        case "__meta":    return json(res, 200, meta);
         case "boom":      throw new d.Boom();
         case "forbidden": return json(res, 403, { error: "forbidden" });
       }

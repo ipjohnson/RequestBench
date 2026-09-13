@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"runtime"
 
 	d "github.com/ianjohnson/requestbench/targets/go/_shared"
 )
@@ -111,6 +112,10 @@ func main() {
 	})
 	mux.HandleFunc("GET /dashboard", func(w http.ResponseWriter, _ *http.Request) {
 		writeJSON(w, 200, d.Dashboard())
+	})
+	mux.HandleFunc("GET /__meta", func(w http.ResponseWriter, _ *http.Request) {
+		writeJSON(w, 200, map[string]string{"framework": "net/http",
+			"version": runtime.Version(), "runtime": runtime.Version()})
 	})
 	mux.HandleFunc("GET /boom", func(http.ResponseWriter, *http.Request) { panic(d.Boom{}) })
 	mux.HandleFunc("GET /forbidden", func(w http.ResponseWriter, _ *http.Request) {

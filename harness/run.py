@@ -171,6 +171,23 @@ def run_gen(rate, seconds, workers, record=True):
     finally:
         tmp.unlink(missing_ok=True)
 
+def read_meta():
+    """Ask the target what it is. /__meta is outside the blend spec on purpose: it is not
+    measured and not conformance-checked, it exists so a point on the results chart can be
+    attributed to a framework version rather than to a different runner."""
+    try:
+        c = http.client.HTTPConnection("127.0.0.1", PORT, timeout=3)
+        c.request("GET", "/__meta")
+        r = c.getresponse()
+        body = r.read()
+        c.close()
+        if r.status == 200:
+            return json.loads(body)
+    except (OSError, http.client.HTTPException, ValueError):
+        pass
+    return {}
+
+
 def conform():
     out = subprocess.run([sys.executable, str(ROOT / "harness" / "conform.py"),
                           "127.0.0.1:%d" % PORT, "--quiet",
@@ -240,7 +257,15 @@ def main():
                 if hasattr(t, "tail"):
                     print("  --- target log ---\n%s" % t.tail())
                 continue
-            print("  booted")
+            meta = read_meta()
+            if meta:
+                print("  booted   %s %s on %s" % (meta.get("framework", target),
+                                                  meta.get("version", "?"),
+                                                  meta.get("runtime", "?")))
+                rows.append({"kind": "target", "run_id": run_id, "shard": a.shard,
+                             "target": target, **meta})
+            else:
+                print("  booted   (no /__meta; version unknown)")
             if not a.skip_conform:
                 ok, line = conform()
                 print("  conformance: %s" % line)

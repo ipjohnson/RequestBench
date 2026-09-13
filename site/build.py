@@ -79,6 +79,7 @@ tbody tr:last-child td { border-bottom: none; }
 td.name { font-weight: 600; white-space: nowrap; }
 tr.baseline td { color: var(--ink2); }
 tr.baseline td.name { color: var(--ink); }
+.ver { font-family: var(--f-mono); font-size: 12px; color: var(--ink2); }
 .pill { display: inline-block; font-family: var(--f-mono); font-size: 11px;
         padding: 2px 7px; border-radius: 2px; background: var(--tealsoft);
         color: var(--tealtext); white-space: nowrap; }
@@ -148,10 +149,11 @@ def shard_table(run):
                 continue
             cells.append("<td>%d us</td>%s" % (d["p50_us"], ratio_cell(d["p50_ratio"])))
         label = esc(t["target"]) + (' <span class="pill">baseline</span>' if is_base else "")
-        rows.append('<tr class="%s"><td class="name">%s</td>%s</tr>'
-                    % ("baseline" if is_base else "", label, "".join(cells)))
-    return ('<div class="scroll"><table><thead><tr><th>target</th>%s</tr></thead>'
-            "<tbody>%s</tbody></table></div>" % (head, "".join(rows)))
+        ver = '<td class="ver">%s</td>' % (esc(t.get("version") or "\u2014"))
+        rows.append('<tr class="%s"><td class="name">%s</td>%s%s</tr>'
+                    % ("baseline" if is_base else "", label, ver, "".join(cells)))
+    return ('<div class="scroll"><table><thead><tr><th>target</th><th>version</th>%s</tr>'
+            "</thead><tbody>%s</tbody></table></div>" % (head, "".join(rows)))
 
 def family_table(run):
     fams = sorted({f for t in run["targets"] for f in t["families"]})
@@ -179,14 +181,15 @@ def history_chart(runs, shard, rung):
                 continue
             d = t["rungs"].get(str(rung))
             if d and d["p50_ratio"]:
-                pts[t["target"]].append((r["run_id"][:10], d["p50_ratio"]))
+                pts[t["target"]].append((r["run_id"][:10], d["p50_ratio"],
+                                         t.get("version", "")))
     if not any(len(v) > 1 for v in pts.values()):
         n = max((len(v) for v in pts.values()), default=0)
         return ('<div class="note">Ratio history needs more than one tracked run. '
                 "There %s so far.</div>"
                 % ("is 1" if n == 1 else "are %d" % n))
     W, H, PAD = 900, 220, 38
-    allv = [v for s in pts.values() for _, v in s]
+    allv = [v for s in pts.values() for _, v, _ in s]
     lo, hi = min(1.0, min(allv)) * 0.95, max(allv) * 1.08
     n = max(len(v) for v in pts.values())
     x = lambda i: PAD + (W - 2 * PAD) * (i / max(1, n - 1))
@@ -203,22 +206,36 @@ def history_chart(runs, shard, rung):
     for i, (name, series) in enumerate(sorted(pts.items())):
         col = SERIES[i % len(SERIES)]
         d = " ".join("%s %.1f %.1f" % ("M" if j == 0 else "L", x(j), y(v))
-                     for j, (_, v) in enumerate(series))
+                     for j, (_, v, _) in enumerate(series))
         parts.append('<path d="%s" fill="none" stroke="%s" stroke-width="2" '
                      'stroke-linejoin="round"/>' % (d, col))
-        for j, (_, v) in enumerate(series):
-            parts.append('<circle cx="%.1f" cy="%.1f" r="3.5" fill="%s"/>' % (x(j), y(v), col))
-    labels = sorted({d for s in pts.values() for d, _ in s})
+        prev = None
+        for j, (_, v, ver) in enumerate(series):
+            # A hollow ring marks the first run on a new framework version, so a step in
+            # the line can be told apart from runner-to-runner noise.
+            changed = prev is not None and ver and ver != prev
+            prev = ver or prev
+            if changed:
+                parts.append('<circle cx="%.1f" cy="%.1f" r="5.5" fill="var(--surface)" '
+                             'stroke="%s" stroke-width="2"/>' % (x(j), y(v), col))
+                parts.append('<text x="%.1f" y="%.1f" fill="%s" font-size="9" '
+                             'font-family="var(--f-mono)" text-anchor="middle">%s</text>'
+                             % (x(j), y(v) - 11, col, esc(ver)))
+            else:
+                parts.append('<circle cx="%.1f" cy="%.1f" r="3.5" fill="%s"/>'
+                             % (x(j), y(v), col))
+    labels = sorted({d for s in pts.values() for d, _, _ in s})
     for j, lab in enumerate(labels[:n]):
         parts.append('<text x="%.1f" y="%d" fill="var(--ink3)" font-size="10" '
                      'font-family="var(--f-mono)" text-anchor="middle">%s</text>'
                      % (x(j), H - 12, esc(lab)))
     parts.append("</svg>")
-    legend = "".join('<span><b style="background:%s"></b>%s</span>'
-                     % (SERIES[i % len(SERIES)], esc(k))
+    legend = "".join('<span><b style="background:%s"></b>%s <span class="ver">%s</span></span>'
+                     % (SERIES[i % len(SERIES)], esc(k), esc(pts[k][-1][2] or ""))
                      for i, k in enumerate(sorted(pts)))
-    return ('<div class="chart">%s<div class="legend">%s</div></div>'
-            % ("".join(parts), legend))
+    return ('<div class="chart">%s<div class="legend">%s'
+            '<span style="color:var(--ink3)">hollow ring = first run on a new version</span>'
+            "</div></div>" % ("".join(parts), legend))
 
 def render(runs):
     latest = latest_per_shard(runs)

@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"runtime"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -73,6 +74,10 @@ func main() {
 	get("/orders", func(c echo.Context) (any, error) { return d.ListOrders(q(c)), nil })
 	get("/search", func(c echo.Context) (any, error) { return d.Search(q(c)), nil })
 	get("/dashboard", func(echo.Context) (any, error) { return d.Dashboard(), nil })
+	e.GET("/__meta", func(c echo.Context) error {
+		return c.JSON(200, H{"framework": "echo", "version": echo.Version,
+			"runtime": runtime.Version()})
+	})
 	e.GET("/boom", func(echo.Context) error { panic(d.Boom{}) })
 	e.GET("/forbidden", func(c echo.Context) error { return c.JSON(403, H{"error": "forbidden"}) })
 
