@@ -2,13 +2,25 @@
 //
 // `listen` starts Fastify's own server, which is what people deploy. `handler` is
 // Fastify's routing exposed as a plain (req, res), which is what a function host invokes.
+//
+// Every feature family here uses Fastify's own facility rather than an if in the handler,
+// and each one is scoped to its own routes. Compression registered globally would put a
+// "did they ask?" check on all forty-two endpoints and contaminate the baseline the
+// compressed rows are measured against, which is the whole reason those rows have their
+// own paths instead of riding on /json with an accept-encoding header.
 import Fastify from "fastify";
+import compress from "@fastify/compress";
+import view from "@fastify/view";
+import handlebars from "handlebars";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { pkgVersion } from "../_shared/version.js";
 import { hostMeta } from "../_shared/host.js";
 import * as d from "../_shared/domain.js";
 
+const here = dirname(fileURLToPath(import.meta.url));
 const meta = { framework: "fastify", version: pkgVersion("fastify"),
-               runtime: "node " + process.versions.node };
+               runtime: "node " + process.versions.node, template: "handlebars" };
 
 const app = Fastify({ logger: false, disableRequestLogging: true });
 
@@ -23,65 +35,112 @@ app.addContentTypeParser("application/json", (req, payload, done) => {
     catch { done(new d.ValidationError([{ field: "body", rule: "json" }])); }
   });
 });
+
 const send = (reply, v, status = 200) =>
   v === d.NOT_FOUND ? reply.code(404).send({ error: "not_found" }) : reply.code(status).send(v);
+const small = () => d.payload("small");
+
+// ---- baseline, json, parameters, query, headers, middleware --------------------------
 
 app.get("/plaintext", (_, reply) => reply.type("text/plain").send("Hello, World!"));
 app.get("/health",    (_, reply) => reply.type("text/plain").send("ok"));
-app.get("/json/small", () => d.jsonSmall());
-app.get("/__meta", () => ({ ...meta, ...hostMeta() }));
+app.get("/__meta",    () => ({ ...meta, ...hostMeta() }));
 
-app.get("/products",  (req) => d.listProducts(req.query));
-app.get("/customers", (req) => d.listCustomers(req.query));
-app.get("/orders",    (req) => d.listOrders(req.query));
-app.get("/search",    (req) => d.search(req.query));
-app.get("/dashboard", () => d.dashboard());
-app.get("/boom", () => { throw new d.Boom(); });
-app.get("/forbidden", (_, reply) => reply.code(403).send({ error: "forbidden" }));
+app.get("/json/small",  () => d.payload("small"));
+app.get("/json/medium", () => d.payload("medium"));
+app.get("/json/large",  () => d.payload("large"));
 
-app.get("/products/:pid",  (req, reply) => send(reply, d.getProduct(req.params.pid)));
-app.get("/customers/:cid", (req, reply) => send(reply, d.getCustomer(req.params.cid)));
-app.get("/orders/:oid",    (req, reply) => send(reply, d.getOrder(req.params.oid)));
+app.get("/parameters/static/segment/literal", small);
+app.get("/parameters/:one", small);
+app.get("/parameters/:one/with-second/:two", small);
 
-app.get("/products/:pid/reviews",  (req, reply) => send(reply, d.getProductReviews(req.params.pid)));
-app.get("/products/:pid/related",  (req, reply) => send(reply, d.relatedProducts(req.params.pid)));
-app.get("/customers/:cid/orders",  (req, reply) => send(reply, d.getCustomerOrders(req.params.cid)));
-app.get("/customers/:cid/summary", (req, reply) => send(reply, d.customerSummary(req.params.cid)));
-app.get("/orders/:oid/lines",      (req, reply) => send(reply, d.getOrderLines(req.params.oid)));
-app.get("/orders/:oid/full",       (req, reply) => send(reply, d.orderFull(req.params.oid)));
-app.get("/regions/:r/customers",   (req, reply) => send(reply, d.getRegionCustomers(req.params.r)));
-app.get("/regions/:r/report",      (req, reply) => send(reply, d.regionReport(req.params.r)));
+app.get("/query/one",  (req) => d.coerceOne(req.query));
+app.get("/query/many", (req) => d.coerceMany(req.query));
 
-app.get("/customers/:cid/orders/:oid", (req, reply) =>
-  send(reply, d.getCustomerOrder(req.params.cid, req.params.oid)));
-app.get("/orders/:oid/lines/:lid", (req, reply) =>
-  send(reply, d.getOrderLine(req.params.oid, req.params.lid)));
-app.get("/regions/:r/customers/:cid/orders/:oid/lines/:lid", (req, reply) =>
-  send(reply, d.getOrderLine(req.params.oid, req.params.lid)));
+// The handler reads no header at all, so headers.many minus headers.few is the cost of
+// materialising 27 nobody asked for.
+app.get("/headers", small);
 
-app.post("/orders/validate",    (req) => d.validateOrder(req.body));
-app.post("/customers/validate", (req) => d.validateCustomer(req.body));
-app.post("/products/validate",  (req) => d.validateProduct(req.body));
-app.post("/echo",               (req) => d.echo(req.body));
-app.post("/orders", (req, reply) =>
-  reply.code(201).header("location", "/orders/" + d.NEXT_ORDER_ID).send(d.validateOrder(req.body)));
-app.post("/orders/:oid/lines", (req, reply) => {
-  const o = d.getOrder(req.params.oid);
-  if (o === d.NOT_FOUND) return reply.code(404).send({ error: "not_found" });
-  return reply.code(201)
-    .header("location", `/orders/${req.params.oid}/lines/${o.lines.length + 1}`)
-    .send(d.validateLine(req.body));
+// Fastify's middleware is its hooks, and a route-level hook array is how you scope them to
+// one route. Each layer calls done() and does nothing else.
+const noop = (_req, _reply, done) => done();
+const layers = (n) => Array.from({ length: n }, () => noop);
+app.get("/middleware/none", small);
+app.get("/middleware/four", { onRequest: layers(4) }, small);
+app.get("/middleware/sixteen", { onRequest: layers(16) }, small);
+
+// ---- authorized: a route-scoped onRequest hook, not an if in the handler --------------
+
+const requireToken = (req, reply, done) => {
+  if (d.tokenOk(req.headers.authorization)) return done();
+  reply.code(403).send({ error: "forbidden" });
+};
+app.get("/authorized/small", { onRequest: requireToken }, small);
+
+// ---- compressed: @fastify/compress, registered in its own encapsulated scope ----------
+
+app.register(async (scope) => {
+  // Threshold is left at the plugin's own default. Whether a framework bothers to compress
+  // a body too small to benefit is one of the things compressed.small is there to show, so
+  // forcing it here would erase the answer.
+  await scope.register(compress, {
+    encodings: ["gzip"], zlibOptions: { level: d.GZIP_LEVEL },
+  });
+  for (const size of ["small", "medium", "large"])
+    scope.get("/compressed/" + size, (_, reply) =>
+      reply.header("x-rb-serial", d.nextSerial()).send(d.payload(size)));
 });
-app.put("/orders/:oid", (req, reply) =>
+
+// ---- cached: validator headers and the conditional, scoped the same way ---------------
+
+app.register(async (scope) => {
+  // The ETag is pinned in the fixture, so this measures emitting the header and comparing
+  // it rather than hashing the body. @fastify/etag would compute its own and could not
+  // produce the pinned value, which is why the hook is written out.
+  scope.addHook("onRequest", (req, reply, done) => {
+    const etag = d.etagOf(req.url.slice(req.url.lastIndexOf("/") + 1));
+    reply.header("etag", etag).header("cache-control", "public, max-age=60")
+         .header("x-rb-serial", d.nextSerial());
+    if (req.headers["if-none-match"] === etag) return reply.code(304).send();
+    done();
+  });
+  for (const size of ["small", "medium", "large"])
+    scope.get("/cached/" + size, () => d.payload(size));
+});
+
+// ---- body: bind, validate, and the two rejection contracts ---------------------------
+
+app.post("/body/bind/small",  (req) => d.bindEcho(req.body));
+app.post("/body/bind/medium", (req) => d.bindEcho(req.body));
+app.post("/body/validate/small",  (req) => d.validateOrder(req.body));
+app.post("/body/validate/medium", (req) => d.validateOrder(req.body));
+app.post("/body/validate/first-error", (req) => d.validateOrder(req.body, true));
+
+// ---- domain --------------------------------------------------------------------------
+
+app.get("/domain/orders", (req) => d.domainFilter(req.query));
+app.get("/domain/orders/:oid", (req, reply) => send(reply, d.getOrder(req.params.oid)));
+app.get("/domain/customers/:cid/summary", (req, reply) => send(reply, d.domainJoin(req.params.cid)));
+app.get("/domain/regions/:r/report", (req, reply) => send(reply, d.domainAggregate(req.params.r)));
+app.post("/domain/orders", (req, reply) =>
+  reply.code(201).header("location", "/domain/orders/" + d.NEXT_ORDER_ID)
+       .send(d.validateOrder(req.body)));
+app.put("/domain/orders/:oid", (req, reply) =>
   d.getOrder(req.params.oid) === d.NOT_FOUND
     ? reply.code(404).send({ error: "not_found" })
     : reply.send({ id: Number(req.params.oid), ...d.validateOrder(req.body) }));
-app.patch("/customers/:cid", (req, reply) =>
+app.patch("/domain/customers/:cid", (req, reply) =>
   send(reply, d.patchCustomer(req.params.cid, req.body)));
-app.delete("/orders/:oid/lines/:lid", (req, reply) =>
+app.delete("/domain/orders/:oid/lines/:lid", (req, reply) =>
   d.getOrderLine(req.params.oid, req.params.lid) === d.NOT_FOUND
     ? reply.code(404).send({ error: "not_found" })
     : reply.code(204).send());
+
+// ---- template: the engine named in /__meta, through Fastify's own view plugin ---------
+
+app.register(view, { engine: { handlebars }, root: join(here, "views") });
+app.get("/template/small",  (_, reply) => reply.view("items.hbs", d.payload("small")));
+app.get("/template/medium", (_, reply) => reply.view("items.hbs", d.payload("medium")));
 
 app.setNotFoundHandler((_, reply) => reply.code(404).send({ error: "not_found" }));
 app.setErrorHandler((err, _, reply) =>
