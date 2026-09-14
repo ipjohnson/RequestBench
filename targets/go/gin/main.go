@@ -79,19 +79,25 @@ func layers(n int) []gin.HandlerFunc {
 	return out
 }
 
-// validators sets the cache headers and answers the conditional. The ETag is pinned in the
-// fixture, so what this measures is emitting the header and comparing it rather than
-// hashing the body; hash cost belongs in Suite B's static-content suite.
-func validators(c *gin.Context) {
-	etag := d.ETagOf(c.Param("size"))
-	c.Header("etag", etag)
-	c.Header("cache-control", cacheable)
-	c.Header("x-rb-serial", d.NextSerial())
-	if c.GetHeader("if-none-match") == etag {
-		c.AbortWithStatus(304)
-		return
+// validatorsFor sets the cache headers and answers the conditional for one size. The ETag
+// is pinned in the fixture, so what this measures is emitting the header and comparing it
+// rather than hashing the body; hash cost belongs in Suite B's static-content suite.
+//
+// The size is closed over rather than read back out of the path, and the comparison
+// requires a non-empty header. Matching a missing if-none-match against an empty ETag
+// answers 304 to a client that never asked a conditional question.
+func validatorsFor(size string) gin.HandlerFunc {
+	etag := d.ETagOf(size)
+	return func(c *gin.Context) {
+		c.Header("etag", etag)
+		c.Header("cache-control", cacheable)
+		c.Header("x-rb-serial", d.NextSerial())
+		if inm := c.GetHeader("if-none-match"); inm != "" && inm == etag {
+			c.AbortWithStatus(304)
+			return
+		}
+		c.Next()
 	}
-	c.Next()
 }
 
 func main() {
@@ -114,7 +120,15 @@ func main() {
 	r.NoRoute(func(c *gin.Context) { c.JSON(404, gin.H{"error": "not_found"}) })
 	r.SetHTMLTemplate(template.Must(template.New("items.tmpl").Parse(itemsTemplate)))
 
-	small := func(c *gin.Context) { c.JSON(200, d.Payload("small")) }
+	sizes := []string{"small", "medium", "large"}
+	// The response is read once and served from the closure rather than looked up per
+	// request: the map lookup is not what any of these endpoints is measuring, and every
+	// other target reaches its payload the same way.
+	payload := func(size string) gin.HandlerFunc {
+		body := d.Payload(size)
+		return func(c *gin.Context) { c.JSON(200, body) }
+	}
+	small := payload("small")
 
 	// ---- baseline, json, parameters, query, headers ---------------------------------
 
@@ -126,7 +140,13 @@ func main() {
 		c.JSON(200, m)
 	})
 
-	r.GET("/json/:size", func(c *gin.Context) { c.JSON(200, d.Payload(c.Param("size"))) })
+	// Static routes, not /json/:size. The size set is fixed, so a capture would make Gin
+	// pay radix parameter cost on the family every other target serves from a static
+	// route, and json.small is the denominator most of the set is read against. It would
+	// also answer 200 with an empty payload for a size that does not exist.
+	for _, size := range sizes {
+		r.GET("/json/"+size, payload(size))
+	}
 
 	r.GET("/parameters/static/segment/literal", small)
 	r.GET("/parameters/:one", small)
@@ -155,21 +175,27 @@ func main() {
 	// whether a framework bothers to compress a body too small to benefit is what
 	// compressed.gzip_small is in the set to show, so forcing it would erase the answer.
 	comp := r.Group("/compressed", gzip.Gzip(d.GzipLevel))
-	comp.GET("/:size", func(c *gin.Context) {
-		c.Header("x-rb-serial", d.NextSerial())
-		c.JSON(200, d.Payload(c.Param("size")))
-	})
+	for _, size := range sizes {
+		body := d.Payload(size)
+		comp.GET("/"+size, func(c *gin.Context) {
+			c.Header("x-rb-serial", d.NextSerial())
+			c.JSON(200, body)
+		})
+	}
 
 	// ---- cached: validator headers and the conditional, scoped the same way ---------
 
-	cached := r.Group("/cached", validators)
-	cached.GET("/:size", func(c *gin.Context) { c.JSON(200, d.Payload(c.Param("size"))) })
+	cached := r.Group("/cached")
+	for _, size := range sizes {
+		cached.GET("/"+size, validatorsFor(size), payload(size))
+	}
 
 	// ---- template -------------------------------------------------------------------
 
-	r.GET("/template/:size", func(c *gin.Context) {
-		c.HTML(200, "items.tmpl", d.Payload(c.Param("size")))
-	})
+	for _, size := range []string{"small", "medium"} {
+		body := d.Payload(size)
+		r.GET("/template/"+size, func(c *gin.Context) { c.HTML(200, "items.tmpl", body) })
+	}
 
 	// ---- body: bind, validate, and the two rejection contracts ----------------------
 
@@ -185,9 +211,11 @@ func main() {
 	}
 	// bind parses and binds without validating, so validate minus bind is the validator
 	// alone rather than the validator plus the parse.
-	r.POST("/body/bind/:size", withBody(func(c *gin.Context, m map[string]any) {
-		c.JSON(200, d.BindEcho(m))
-	}))
+	for _, size := range []string{"small", "medium"} {
+		r.POST("/body/bind/"+size, withBody(func(c *gin.Context, m map[string]any) {
+			c.JSON(200, d.BindEcho(m))
+		}))
+	}
 	r.POST("/body/validate/small", withBody(func(c *gin.Context, m map[string]any) {
 		v, err := d.ValidateOrder(m)
 		ok(c, v, err, 200)
