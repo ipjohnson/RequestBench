@@ -4,6 +4,8 @@ go 1.26
 
 require (
 	github.com/GoogleCloudPlatform/functions-framework-go v1.9.2
+	github.com/aws/aws-lambda-go v1.55.0
+	github.com/awslabs/aws-lambda-go-api-proxy v0.16.2
 	github.com/gin-gonic/gin v1.12.0
 	github.com/go-chi/chi/v5 v5.3.2
 	github.com/gofiber/fiber/v3 v3.5.0

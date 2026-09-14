@@ -179,5 +179,5 @@ func main() {
 		c.Status(204)
 	})
 
-	hosts.Serve("gin", r)
+	hosts.Serve("gin", r, nil)
 }
