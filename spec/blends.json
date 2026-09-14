@@ -19,7 +19,10 @@
       "why": "What blend-v1 covered: dispatch, serialization, routing, body handling, query parsing, application work and errors, with every feature family zeroed. The old series has no successor that carries its numbers, but this one carries its shape.",
       "weights": {
         "authorized.allowed": 0, "authorized.denied": 0,
-        "compressed.small": 0, "compressed.medium": 0, "compressed.large": 0,
+        "compressed.identity_small": 0, "compressed.identity_medium": 0,
+        "compressed.identity_large": 0,
+        "compressed.gzip_small": 0, "compressed.gzip_medium": 0,
+        "compressed.gzip_large": 0,
         "cached.small": 0, "cached.medium": 0, "cached.large": 0, "cached.revalidate": 0,
         "headers.few": 0, "headers.many": 0,
         "middleware.none": 0, "middleware.four": 0, "middleware.sixteen": 0,

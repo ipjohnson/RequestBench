@@ -25,7 +25,7 @@ why `conform.py` fingerprints every response and refuses to measure a target tha
 
 ## Layout
 
-    spec/endpoints.json   42 endpoints in 13 families, drawn uniformly
+    spec/endpoints.json   45 endpoints in 13 families, drawn uniformly
     spec/blends.json      weight vectors, applied when an aggregate is composed
     spec/ladder.json      five rungs, 500 -> 12000 rps, 60s each
     spec/matrix.json      languages, frameworks, baselines, warmup class
@@ -96,7 +96,7 @@ nightly framework update, and nineteen targets across three languages. Node has
 gorilla/mux and Fiber. Java has bare Netty, Spring Boot, Quarkus, Micronaut, Helidon SE,
 Vert.x and Javalin.
 
-`node-http` implements the forty-two endpoints of `blend-v2` and is the contract each
+`node-http` implements the forty-five endpoints of `blend-v2` and is the contract each
 framework then has to meet with its own facilities. The other eighteen still answer
 `blend-v1`, which they fingerprint-match each other on, so the conformance gate fails
 against them until they are rewired.
