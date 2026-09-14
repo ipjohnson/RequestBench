@@ -43,7 +43,11 @@ const inIdx = new Uint16Array(Buffer.from(seq.instance_index, "base64").buffer.s
 const eps = plan.endpoints;
 
 const LAMBDA_PATH = "/2015-03-31/functions/function/invocations";
-const agent = new http.Agent({ keepAlive: true, maxSockets: 1 });
+// noDelay matters more than it looks. Writing a body and then ending is two writes, which
+// Nagle holds until the peer ACKs, and a delayed ACK can sit for ~10ms. That time lands
+// between requests rather than inside one, so elapsed inflates while every percentile
+// stays normal -- the exact shape of the bogus 61s and 1186s runs.
+const agent = new http.Agent({ keepAlive: true, maxSockets: 1, noDelay: true });
 
 function build(i) {
   const ep = eps[epIdx[i % epIdx.length]];
@@ -74,17 +78,20 @@ function build(i) {
   };
 }
 
+let timeouts = 0;
 const hist = eps.map(() => new Uint32Array(NBUCKETS));
 const counts = new Uint32Array(eps.length);
 const mismatch = new Uint32Array(eps.length);
 const errors = new Uint32Array(eps.length);
+
+const TIMEOUT_MS = Number(argv.timeout ?? 10000);
 
 function once(i, record) {
   const { opts, payload, ep, unwrap } = build(i);
   const idx = epIdx[i % epIdx.length];
   return new Promise((resolve) => {
     const t0 = process.hrtime.bigint();
-    const req = http.request(opts, (res) => {
+    const req = http.request({ ...opts, timeout: TIMEOUT_MS }, (res) => {
       const chunks = [];
       res.on("data", (c) => chunks.push(c));
       res.on("end", () => {
@@ -102,9 +109,11 @@ function once(i, record) {
         resolve();
       });
     });
+    // Without this one stuck socket silently eats the run: elapsed balloons while every
+    // recorded percentile stays normal, because a stall that never completes is never a sample.
+    req.on("timeout", () => { timeouts++; req.destroy(); });
     req.on("error", () => { if (record) errors[idx]++; resolve(); });
-    if (payload) req.write(payload);
-    req.end();
+    req.end(payload);   // one write, not two, so there is nothing for Nagle to hold
   });
 }
 
@@ -123,7 +132,7 @@ const out = {
   target: `${host}:${port}`, requested: count, completed: done,
   warmup, elapsed_s: Number(elapsed.toFixed(3)),
   achieved_rps: Math.round(done / elapsed),
-  errors: errors.reduce((s, e) => s + e, 0),
+  errors: errors.reduce((s, e) => s + e, 0), timeouts,
   status_mismatch: mismatch.reduce((s, m) => s + m, 0),
   overall: { count: done, p50_us: percentile(all, done, 50), p90_us: percentile(all, done, 90),
              p99_us: percentile(all, done, 99), p999_us: percentile(all, done, 99.9) },

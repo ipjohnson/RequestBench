@@ -3,7 +3,7 @@
   python3 harness/run.py --shard node --targets node-http,fastify,express
   python3 harness/run.py --shard node --targets fastify --seconds 20 --rungs 3,5
 """
-import argparse, collections, functools, http.client, json, os, pathlib, platform, re, shutil, signal, subprocess, sys, time, uuid
+import argparse, collections, functools, http.client, json, os, pathlib, platform, re, shutil, signal, socket, subprocess, sys, time, uuid
 
 # Long runs are watched live; block-buffered stdout hides progress for minutes.
 print = functools.partial(print, flush=True)
@@ -215,6 +215,17 @@ def run_gen(rate, seconds, workers, record=True):
     finally:
         tmp.unlink(missing_ok=True)
 
+def wait_port_free(port, timeout):
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        with socket.socket() as s:
+            s.settimeout(0.3)
+            if s.connect_ex(("127.0.0.1", port)) != 0:
+                return True
+        time.sleep(0.2)
+    return False
+
+
 def read_meta():
     """Ask the target what it is. /__meta is outside the blend spec on purpose: it is not
     measured and not conformance-checked, it exists so a point on the results chart can be
@@ -404,6 +415,9 @@ def main():
                 print("  serial  %s requests in %6.2fs -> %5d rps   p50 %5dus  p99 %6dus"
                       % (f"{res['completed']:,}", res["elapsed_s"], res["achieved_rps"],
                          o["p50_us"], o["p99_us"]))
+                if res.get("timeouts"):
+                    print("  WARNING: %d request(s) timed out; elapsed is not trustworthy"
+                          % res["timeouts"])
                 billed = billed_durations(t.logs()) if hasattr(t, "logs") else {}
                 if billed:
                     print("  billed  %s"
@@ -456,7 +470,11 @@ def main():
                                  k: o[k] for k in ("count", "p50_us", "p90_us", "p99_us", "p999_us")}})
         finally:
             t.stop()
-            time.sleep(1.0)   # cooldown so the next target does not inherit a warm socket table
+            # A survivor still holding the port makes the next target contend with it, which
+            # showed up as a wildly inflated elapsed time with normal-looking percentiles.
+            if not wait_port_free(PORT, 15):
+                print("  WARNING: port %d still held after teardown" % PORT)
+            time.sleep(0.5)   # cooldown so the next target does not inherit a warm socket table
 
     if a.validate_only:
         n = len(a.targets.split(","))

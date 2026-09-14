@@ -55,7 +55,8 @@ if (!isMainThread) {
   const { eps, cum } = loadPlan();
 
   const agent = new http.Agent({ keepAlive: true, maxSockets: maxInflight,
-                                 maxFreeSockets: maxInflight, scheduling: "fifo" });
+                                 maxFreeSockets: maxInflight, scheduling: "fifo",
+                                 noDelay: true });
   const hist = eps.map(() => new Uint32Array(NBUCKETS));
   const counts = new Uint32Array(eps.length);
   const errors = new Uint32Array(eps.length);
@@ -91,8 +92,7 @@ if (!isMainThread) {
       });
     });
     req.on("error", () => { inflight--; done++; errors[idx]++; });
-    if (ep.body) req.write(ep.body);
-    req.end();
+    req.end(ep.body);   // one write, not two, so there is nothing for Nagle to hold
   }
 
   function tick() {

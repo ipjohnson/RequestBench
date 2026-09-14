@@ -16,6 +16,35 @@ HEADER_RULES = {
 ALWAYS = [("content-type", "present", "every response must declare its type"),
           ("content-length", "present", "every response must declare its length")]
 NO_BODY = {204, 304}
+LAMBDA_INVOKE = "/2015-03-31/functions/function/invocations"
+
+
+def as_event(method, path, body):
+    """An API Gateway v2 event, shaped the same way gen/serial.mjs shapes it."""
+    qi = path.find("?")
+    raw_path = path if qi == -1 else path[:qi]
+    qs = "" if qi == -1 else path[qi + 1:]
+    from urllib.parse import parse_qsl
+    return json.dumps({
+        "version": "2.0", "rawPath": raw_path, "rawQueryString": qs,
+        "queryStringParameters": dict(parse_qsl(qs)),
+        "headers": {"content-type": "application/json"},
+        "requestContext": {"http": {"method": method, "path": raw_path}},
+        "body": body, "isBase64Encoded": False,
+    })
+
+
+def unwrap(raw):
+    """Turn the Lambda result envelope back into (status, headers, body), so the
+    fingerprint and the header contract are compared on the same ground as any other
+    host. A response that differs across hosts is a bug, not a host characteristic."""
+    env = json.loads(raw)
+    hdrs = list((env.get("headers") or {}).items())
+    body = env.get("body") or ""
+    if env.get("isBase64Encoded"):
+        import base64 as _b64
+        return env["statusCode"], hdrs, _b64.b64decode(body)
+    return env["statusCode"], hdrs, body.encode()
 
 
 def header_bytes(headers):
@@ -75,6 +104,9 @@ def main():
     ap.add_argument("--quiet", action="store_true")
     ap.add_argument("--exemplars", metavar="FILE",
                     help="write one captured request/response pair per endpoint here")
+    ap.add_argument("--encoding", choices=["http", "lambda"], default="http",
+                    help="lambda posts an API Gateway v2 event to the RIE invocations "
+                         "endpoint and unwraps the returned envelope")
     ap.add_argument("--skip-headers", action="store_true",
                     help="do not enforce the response header contract")
     a = ap.parse_args()
@@ -103,10 +135,21 @@ def main():
         seen, bad = collections.Counter(), None
         for path in paths:
             try:
-                conn.request(ep["method"], path, body=body, headers=headers)
-                r = conn.getresponse()
-                raw, status, ctype = r.read(), r.status, r.headers.get("content-type")
-                hdrs = list(r.headers.items())
+                if a.encoding == "lambda":
+                    event = as_event(ep["method"], path, body)
+                    conn.request("POST", LAMBDA_INVOKE, body=event,
+                                 headers={"content-type": "application/json"})
+                    r = conn.getresponse()
+                    envelope = r.read()
+                    if r.status != 200:
+                        raise RuntimeError("RIE returned %d" % r.status)
+                    status, hdrs, raw = unwrap(envelope)
+                    ctype = dict((k.lower(), v) for k, v in hdrs).get("content-type")
+                else:
+                    conn.request(ep["method"], path, body=body, headers=headers)
+                    r = conn.getresponse()
+                    raw, status, ctype = r.read(), r.status, r.headers.get("content-type")
+                    hdrs = list(r.headers.items())
             except Exception as e:
                 conn.close()
                 conn = http.client.HTTPConnection(host, int(port or 80), timeout=15)
