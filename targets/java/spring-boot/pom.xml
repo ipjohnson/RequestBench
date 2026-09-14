@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>dev.requestbench</groupId>
+    <artifactId>rb-java</artifactId>
+    <version>1.0.0</version>
+  </parent>
+
+  <artifactId>rb-spring-boot</artifactId>
+  <name>RequestBench target: Spring Boot</name>
+
+  <dependencies>
+    <dependency>
+      <groupId>dev.requestbench</groupId>
+      <artifactId>rb-hosts</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <!-- Spring Boot repackages in place, so naming the artifact here is what puts the
+         runnable jar at the same target/server.jar every other target produces. -->
+    <finalName>server</finalName>
+    <plugins>
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+        <!-- Not inherited from spring-boot-starter-parent, which is not this pom's parent,
+             so the plugin is pinned to the same property the deps job moves. -->
+        <version>${spring-boot.version}</version>
+        <executions>
+          <execution>
+            <goals><goal>repackage</goal></goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>

@@ -1,6 +1,5 @@
 package rb.vertx;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.web.Router;
@@ -46,12 +45,8 @@ public final class Main {
     return out;
   }
 
-  private static JsonNode body(RoutingContext ctx) {
-    try {
-      return Json.MAPPER.readTree(ctx.body().asString());
-    } catch (Exception e) {
-      throw Errors.Validation.json();
-    }
+  private static Map<String, Object> body(RoutingContext ctx) {
+    return Json.body(ctx.body().asString());
   }
 
   private static void fail(RoutingContext ctx, Throwable t) {

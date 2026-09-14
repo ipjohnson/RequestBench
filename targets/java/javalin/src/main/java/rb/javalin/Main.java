@@ -1,6 +1,5 @@
 package rb.javalin;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import io.javalin.Javalin;
 import io.javalin.config.JavalinConfig;
 import io.javalin.http.Context;
@@ -51,9 +50,10 @@ public final class Main {
     Javalin.create(Main::configure).start(Hosts.port());
   }
 
-  static JsonNode body(Context ctx) {
+  @SuppressWarnings("unchecked")
+  static Map<String, Object> body(Context ctx) {
     try {
-      return ctx.bodyAsClass(JsonNode.class);
+      return ctx.bodyAsClass(Map.class);
     } catch (RuntimeException e) {
       throw Errors.Validation.json();
     }

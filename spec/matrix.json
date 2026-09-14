@@ -26,9 +26,10 @@
       ],
       "anchor": "spring-boot",
       "implemented": [
-        "javalin",
+        "spring-boot",
+        "helidon-se",
         "vertx",
-        "helidon-se"
+        "javalin"
       ]
     },
     "go": {

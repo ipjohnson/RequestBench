@@ -1,6 +1,5 @@
 package rb.baseline;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
@@ -97,13 +96,12 @@ public final class Main {
     private static Result handle(FullHttpRequest req) {
       QueryStringDecoder url = new QueryStringDecoder(req.uri());
       String method = req.method().name();
-      JsonNode body = null;
+      Map<String, Object> body = null;
       if (Router.hasBody(method) && req.content().isReadable()) {
         try {
-          body = Json.MAPPER.readTree(
-              req.content().toString(io.netty.util.CharsetUtil.UTF_8));
-        } catch (Exception e) {
-          return Result.validationFailed(Errors.Validation.json().errors());
+          body = Json.body(req.content().toString(io.netty.util.CharsetUtil.UTF_8));
+        } catch (Errors.Validation e) {
+          return Result.validationFailed(e.errors());
         }
       }
       Map<String, List<String>> q = url.parameters();

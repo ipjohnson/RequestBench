@@ -150,6 +150,9 @@ def main():
                  # numbers with the framework version unchanged, so it is recorded next to
                  # it rather than left to the lockfile.
                  "adapter": m.get("adapter", ""),
+                 # Which JSON library did the serializing. Frameworks in one language do
+                 # not always agree, and the choice moves the numbers.
+                 "serializer": m.get("serializer", ""),
                  "rungs": {}, "families": {}, "families_by_rung": {}}
         base = base_of.get(t)
         for rn in rung_ids:

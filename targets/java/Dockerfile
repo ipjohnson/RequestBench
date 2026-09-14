@@ -17,6 +17,7 @@ COPY targets/java/baseline/pom.xml baseline/
 COPY targets/java/javalin/pom.xml javalin/
 COPY targets/java/vertx/pom.xml vertx/
 COPY targets/java/helidon-se/pom.xml helidon-se/
+COPY targets/java/spring-boot/pom.xml spring-boot/
 RUN mvn -B -q -pl ${TARGET} -am dependency:go-offline
 
 COPY targets/java/shared/src shared/src

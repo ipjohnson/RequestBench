@@ -28,11 +28,16 @@
     <module>javalin</module>
     <module>vertx</module>
     <module>helidon-se</module>
+    <module>spring-boot</module>
   </modules>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.release>25</maven.compiler.release>
+    <!-- Spring, Micronaut and Quarkus all bind path variables and query parameters by
+         their declared name. Without this the name is not in the class file and every
+         parameterised route fails at runtime, not at build time. -->
+    <maven.compiler.parameters>true</maven.compiler.parameters>
 
     <!-- Frameworks. The deps job moves these, patch and minor only. -->
     <netty.version>4.2.18.Final</netty.version>

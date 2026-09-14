@@ -241,6 +241,7 @@ def load_exemplars(d):
             }
         out[key] = {"framework": doc.get("framework", ""), "version": doc.get("version", ""),
                     "adapter": doc.get("adapter", ""),
+                    "serializer": doc.get("serializer", ""),
                     "endpoints": eps}
     return out
 
@@ -331,6 +332,7 @@ const METRICS = {
 const COLS = [
   {id: 'version', label: 'version',     def: true,  cls: 'sub',   get: r => r.version || '\u2014'},
   {id: 'adapter', label: 'adapter',     def: false, cls: 'sub',   get: r => r.adapter || '\u2014'},
+  {id: 'serializer', label: 'serializer', def: false, cls: 'sub', get: r => r.serializer || '\u2014'},
   {id: 'value',   label: '',            def: true,  pin: true,    get: r => r.value},
   {id: 'ratio',   label: 'vs baseline', def: true,  cls: 'ratio', get: r => r.ratio},
   {id: 'n',       label: 'samples',     def: true,  cls: 'sub',   get: r => r.n},
@@ -440,7 +442,8 @@ function rows() {
     if (!st.langs.has(t.language)) continue;
     const isBase = t.target === t.baseline;
     const base = {target: t.target, language: t.language, version: t.version || '',
-                  adapter: t.adapter || '', isBase, key: t.language + ':' + t.target};
+                  adapter: t.adapter || '', serializer: t.serializer || '',
+                  isBase, key: t.language + ':' + t.target};
     const push = o => { const r = {...base, ...o}; Object.assign(r, wireFor(r)); out.push(r); };
     if (st.gran === 'blend') {
       const d = t.rungs[rn]; if (!d) continue;

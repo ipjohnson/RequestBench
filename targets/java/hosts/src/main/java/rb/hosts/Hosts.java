@@ -79,13 +79,28 @@ public final class Hosts {
     return f == null || f.isEmpty() ? "../../spec/fixture.json" : f;
   }
 
+  /**
+   * The JSON library a target actually serializes with.
+   *
+   * Java frameworks do not agree on one: Spring Boot 4 ships Jackson 3 while Javalin,
+   * Vert.x and Helidon are on Jackson 2. That moves a target's numbers with the framework
+   * version unchanged, which is the same reason the adapter is recorded, so it is recorded
+   * rather than left to whoever reads the pom.
+   */
+  private static String serializer = "jackson " + VERSIONS.getProperty("jackson", "");
+
+  public static void serializer(String name) {
+    serializer = name;
+  }
+
   /** What a target answers on /__meta. */
   public static Map<String, String> meta(String framework, String version) {
-    Map<String, String> m = new LinkedHashMap<>(4);
+    Map<String, String> m = new LinkedHashMap<>(5);
     m.put("framework", framework);
     m.put("version", version);
     m.put("runtime", runtime());
     m.put("adapter", String.join(" + ", ADAPTERS));
+    m.put("serializer", serializer);
     return m;
   }
 

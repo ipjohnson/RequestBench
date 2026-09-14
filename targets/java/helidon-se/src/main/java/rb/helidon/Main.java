@@ -1,6 +1,5 @@
 package rb.helidon;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import io.helidon.common.parameters.Parameters;
 import io.helidon.webserver.WebServer;
 import io.helidon.webserver.http.HttpRouting;
@@ -43,9 +42,10 @@ public final class Main {
     return req.path().pathParameters().first(name).orElse("");
   }
 
-  private static JsonNode body(ServerRequest req) {
+  @SuppressWarnings("unchecked")
+  private static Map<String, Object> body(ServerRequest req) {
     try {
-      return req.content().as(JsonNode.class);
+      return req.content().as(Map.class);
     } catch (RuntimeException e) {
       throw Errors.Validation.json();
     }

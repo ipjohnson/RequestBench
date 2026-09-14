@@ -1,6 +1,5 @@
 package rb.baseline;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import java.util.List;
 import java.util.Map;
 import rb.domain.Domain;
@@ -21,7 +20,7 @@ public final class Router {
   private Router() {}
 
   public static Result route(String method, String[] seg, Map<String, List<String>> q,
-                             JsonNode body) {
+                             Map<String, Object> body) {
     try {
       return dispatch(method, seg, q, body);
     } catch (NotFound e) {
@@ -32,7 +31,7 @@ public final class Router {
   }
 
   private static Result dispatch(String method, String[] seg, Map<String, List<String>> q,
-                                 JsonNode body) {
+                                 Map<String, Object> body) {
     int n = seg.length;
     switch (method) {
       case "GET" -> {

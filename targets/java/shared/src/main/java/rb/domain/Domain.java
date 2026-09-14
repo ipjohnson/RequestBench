@@ -1,6 +1,5 @@
 package rb.domain;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -339,17 +338,31 @@ public final class Domain {
   // bodies, so a reordered check here shows up as a conformance failure.
 
   /** Node's Number.isInteger: 1.0 counts, 1.5 does not. */
-  private static boolean isInt(JsonNode v) {
-    if (v == null || !v.isNumber()) {
+  private static boolean isInt(Object v) {
+    if (!(v instanceof Number n)) {
       return false;
     }
-    double d = v.doubleValue();
+    double d = n.doubleValue();
     return !Double.isNaN(d) && !Double.isInfinite(d) && d == Math.floor(d);
   }
 
-  private static void required(List<FieldError> errs, JsonNode body, String field, String type) {
-    JsonNode v = body == null ? null : body.get(field);
-    if (v == null || v.isNull()) {
+  private static int intValue(Object v) {
+    return ((Number) v).intValue();
+  }
+
+  /**
+   * A parsed request body is a plain JDK Map, which is what go calls map[string]any and
+   * node simply parses. Binding it to a Jackson tree type would tie the shared domain to
+   * one Jackson major version, and the frameworks do not agree on one: Spring Boot 4 ships
+   * Jackson 3 while Javalin, Vert.x and Helidon are on Jackson 2.
+   */
+  private static Object field(Map<String, Object> body, String name) {
+    return body == null ? null : body.get(name);
+  }
+
+  private static void required(List<FieldError> errs, Map<String, Object> body, String field, String type) {
+    Object v = field(body, field);
+    if (v == null) {
       errs.add(new FieldError(field, "required"));
       return;
     }
@@ -360,12 +373,12 @@ public final class Domain {
         }
       }
       case "string" -> {
-        if (!v.isTextual()) {
+        if (!(v instanceof String)) {
           errs.add(new FieldError(field, "string"));
         }
       }
       case "array" -> {
-        if (!v.isArray()) {
+        if (!(v instanceof List)) {
           errs.add(new FieldError(field, "array"));
         }
       }
@@ -378,24 +391,28 @@ public final class Domain {
     return p == null ? 0 : p.priceCents();
   }
 
-  public static ValidatedOrder validateOrder(JsonNode body) {
+  @SuppressWarnings("unchecked")
+  private static Object lineField(Object line, String name) {
+    return line instanceof Map<?, ?> m ? ((Map<String, Object>) m).get(name) : null;
+  }
+
+  public static ValidatedOrder validateOrder(Map<String, Object> body) {
     List<FieldError> errs = new ArrayList<>();
     required(errs, body, "customer_id", "int");
     required(errs, body, "status", "string");
     required(errs, body, "lines", "array");
-    JsonNode rawLines = body == null ? null : body.get("lines");
-    if (rawLines != null && rawLines.isArray()) {
+    List<?> rawLines = field(body, "lines") instanceof List<?> l ? l : null;
+    if (rawLines != null) {
       if (rawLines.isEmpty()) {
         errs.add(new FieldError("lines", "min_length"));
       }
       for (int i = 0; i < rawLines.size(); i++) {
-        JsonNode l = rawLines.get(i);
-        JsonNode pid = l == null ? null : l.get("product_id");
-        JsonNode qty = l == null ? null : l.get("qty");
+        Object pid = lineField(rawLines.get(i), "product_id");
+        Object qty = lineField(rawLines.get(i), "qty");
         if (!isInt(pid)) {
           errs.add(new FieldError("lines[" + i + "].product_id", "int"));
         }
-        if (!isInt(qty) || qty.intValue() < 1) {
+        if (!isInt(qty) || intValue(qty) < 1) {
           errs.add(new FieldError("lines[" + i + "].qty", "min"));
         }
       }
@@ -406,77 +423,73 @@ public final class Domain {
     List<Line> lines = new ArrayList<>(rawLines.size());
     int total = 0;
     for (int i = 0; i < rawLines.size(); i++) {
-      JsonNode l = rawLines.get(i);
-      int pid = l.get("product_id").intValue();
-      int qty = l.get("qty").intValue();
+      int pid = intValue(lineField(rawLines.get(i), "product_id"));
+      int qty = intValue(lineField(rawLines.get(i), "qty"));
       int unit = unitCents(pid);
       lines.add(new Line(i + 1, pid, qty, unit, unit * qty));
       total += unit * qty;
     }
-    return new ValidatedOrder(body.get("customer_id").intValue(),
-                              body.get("status").textValue(), lines, total);
+    return new ValidatedOrder(intValue(field(body, "customer_id")),
+                              (String) field(body, "status"), lines, total);
   }
 
-  public static ValidatedCustomer validateCustomer(JsonNode body) {
+  public static ValidatedCustomer validateCustomer(Map<String, Object> body) {
     List<FieldError> errs = new ArrayList<>();
     required(errs, body, "name", "string");
     required(errs, body, "email", "string");
     required(errs, body, "region", "string");
-    JsonNode email = body == null ? null : body.get("email");
-    if (email != null && email.isTextual() && !email.textValue().contains("@")) {
+    Object email = field(body, "email");
+    if (email instanceof String s && !s.contains("@")) {
       errs.add(new FieldError("email", "format"));
     }
     if (!errs.isEmpty()) {
       throw new Validation(errs);
     }
-    return new ValidatedCustomer(body.get("name").textValue().trim(),
-                                 email.textValue().toLowerCase(java.util.Locale.ROOT),
-                                 body.get("region").textValue());
+    return new ValidatedCustomer(((String) field(body, "name")).trim(),
+                                 ((String) email).toLowerCase(java.util.Locale.ROOT),
+                                 (String) field(body, "region"));
   }
 
-  public static ValidatedProduct validateProduct(JsonNode body) {
+  public static ValidatedProduct validateProduct(Map<String, Object> body) {
     List<FieldError> errs = new ArrayList<>();
     required(errs, body, "name", "string");
     required(errs, body, "category", "string");
     required(errs, body, "price_cents", "int");
-    JsonNode price = body == null ? null : body.get("price_cents");
-    if (isInt(price) && price.intValue() < 0) {
+    Object price = field(body, "price_cents");
+    if (isInt(price) && intValue(price) < 0) {
       errs.add(new FieldError("price_cents", "min"));
     }
     if (!errs.isEmpty()) {
       throw new Validation(errs);
     }
-    return new ValidatedProduct(body.get("name").textValue(),
-                                body.get("category").textValue(), price.intValue());
+    return new ValidatedProduct((String) field(body, "name"),
+                                (String) field(body, "category"), intValue(price));
   }
 
-  public static Line validateLine(JsonNode body) {
+  public static Line validateLine(Map<String, Object> body) {
     List<FieldError> errs = new ArrayList<>();
     required(errs, body, "product_id", "int");
     required(errs, body, "qty", "int");
     if (!errs.isEmpty()) {
       throw new Validation(errs);
     }
-    int pid = body.get("product_id").intValue();
-    int qty = body.get("qty").intValue();
+    int pid = intValue(field(body, "product_id"));
+    int qty = intValue(field(body, "qty"));
     int unit = unitCents(pid);
     return new Line(1, pid, qty, unit, unit * qty);
   }
 
-  public static Customer patchCustomer(String cid, JsonNode body) {
+  public static Customer patchCustomer(String cid, Map<String, Object> body) {
     Customer c = getCustomer(cid);
-    JsonNode name = body == null ? null : body.get("name");
-    JsonNode region = body == null ? null : body.get("region");
     // Node spreads the body over the customer only when the field is truthy, so an empty
     // string leaves the original in place.
-    String newName = name != null && name.isTextual() && !name.textValue().isEmpty()
-        ? name.textValue() : c.name();
-    String newRegion = region != null && region.isTextual() && !region.textValue().isEmpty()
-        ? region.textValue() : c.region();
+    String newName = field(body, "name") instanceof String s && !s.isEmpty() ? s : c.name();
+    String newRegion = field(body, "region") instanceof String s && !s.isEmpty()
+        ? s : c.region();
     return new Customer(c.id(), newName, c.email(), newRegion, c.created());
   }
 
-  public static EchoResult echo(JsonNode body) {
+  public static EchoResult echo(Map<String, Object> body) {
     return new EchoResult(body, Json.bytes(body).length);
   }
 }
