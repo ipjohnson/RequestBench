@@ -24,8 +24,7 @@ import (
 )
 
 func meta() map[string]string {
-	return map[string]string{"framework": "net/http", "version": runtime.Version(),
-		"runtime": runtime.Version()}
+	return hosts.Meta("net/http", runtime.Version())
 }
 
 func split(path string) []string {

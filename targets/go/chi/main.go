@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"runtime"
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
@@ -99,8 +98,7 @@ func main() {
 		w.Write([]byte("ok"))
 	})
 	get("/__meta", func(*http.Request) (any, error) {
-		return map[string]string{"framework": "chi", "version": chiVersion(),
-			"runtime": runtime.Version()}, nil
+		return hosts.Meta("chi", hosts.ModVersion("github.com/go-chi/chi")), nil
 	})
 	get("/json/small", func(*http.Request) (any, error) { return d.JSONSmall(), nil })
 	get("/products", func(r *http.Request) (any, error) { return d.ListProducts(q(r)), nil })

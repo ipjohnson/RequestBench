@@ -60,13 +60,13 @@ jobs:
         working-directory: targets/node
 
       - name: Resolve every target this host supports
-        id: rot
+        id: resolve
         run: |
-          python3 harness/rotation.py --host "${{ matrix.host }}" --github-output >> "$GITHUB_OUTPUT"
-          python3 harness/rotation.py --host "${{ matrix.host }}"
+          python3 harness/hosts.py --host "${{ matrix.host }}" --github-output >> "$GITHUB_OUTPUT"
+          python3 harness/hosts.py --host "${{ matrix.host }}"
 
       - name: Record the machine
-        if: steps.rot.outputs.built != '0'
+        if: steps.resolve.outputs.built != '0'
         run: |
           echo "cores: $(nproc)"
           grep -m1 "model name" /proc/cpuinfo || true
@@ -82,7 +82,7 @@ jobs:
           fi
 
       - name: Measure
-        if: steps.rot.outputs.built != '0'
+        if: steps.resolve.outputs.built != '0'
         env:
           RB_HOST: ${{ matrix.host }}
           RB_CPUS: "2"
@@ -90,7 +90,7 @@ jobs:
           RB_GEN_CPUS: "2,3"
         run: |
           python3 harness/run.py \
-            --targets "${{ steps.rot.outputs.targets }}" \
+            --targets "${{ steps.resolve.outputs.targets }}" \
             --mode docker \
             --workers 2 \
             --count "${{ github.event.inputs.count || '40000' }}" \
@@ -99,7 +99,7 @@ jobs:
 
       - name: Summarize
         id: sum
-        if: steps.rot.outputs.built != '0'
+        if: steps.resolve.outputs.built != '0'
         run: |
           RAW=$(cat /tmp/rb-result-path)
           NAME=$(basename "$RAW" .jsonl)
@@ -116,7 +116,7 @@ jobs:
           python3 harness/report.py "$RAW"
 
       - name: Upload raw samples
-        if: steps.rot.outputs.built != '0'
+        if: steps.resolve.outputs.built != '0'
         uses: actions/upload-artifact@v4
         with:
           name: raw-${{ steps.sum.outputs.name }}
@@ -124,7 +124,7 @@ jobs:
           retention-days: 90
 
       - name: Upload summary
-        if: steps.rot.outputs.built != '0' && steps.full.outputs.yes == 'true'
+        if: steps.resolve.outputs.built != '0' && steps.full.outputs.yes == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: summary-${{ matrix.host }}

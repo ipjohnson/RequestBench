@@ -9,4 +9,4 @@ shows it here as a diff: a new header, a different framing, a byte more or less 
 
 Regenerate with:
 
-    python3 harness/conform.py 127.0.0.1:8080 --exemplars results/exemplars/<shard>-<target>.json
+    python3 harness/conform.py 127.0.0.1:8080 --exemplars results/exemplars/<language>-<target>.json

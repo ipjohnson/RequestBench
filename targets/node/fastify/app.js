@@ -4,6 +4,7 @@
 // Fastify's routing exposed as a plain (req, res), which is what a function host invokes.
 import Fastify from "fastify";
 import { pkgVersion } from "../_shared/version.js";
+import { hostMeta } from "../_shared/host.js";
 import * as d from "../_shared/domain.js";
 
 const meta = { framework: "fastify", version: pkgVersion("fastify"),
@@ -28,7 +29,7 @@ const send = (reply, v, status = 200) =>
 app.get("/plaintext", (_, reply) => reply.type("text/plain").send("Hello, World!"));
 app.get("/health",    (_, reply) => reply.type("text/plain").send("ok"));
 app.get("/json/small", () => d.jsonSmall());
-app.get("/__meta", () => meta);
+app.get("/__meta", () => ({ ...meta, ...hostMeta() }));
 
 app.get("/products",  (req) => d.listProducts(req.query));
 app.get("/customers", (req) => d.listCustomers(req.query));

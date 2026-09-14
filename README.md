@@ -5,15 +5,15 @@ each measured against a bare baseline in its own runtime, so what gets published
 overhead a framework adds rather than an absolute number that only describes the machine
 it ran on.
 
-The full design, the fourteen-night rotation, and the capability suites are in
-[docs/plan.md](docs/plan.md).
+The full design and the capability suites are in [docs/plan.md](docs/plan.md).
 
 ## Two rules the whole thing rests on
 
-**Nothing absolute is ever published.** Every shard runs a bare baseline written in that
-shard's own language (`net/http`, bare Netty, `node:http`, raw ASGI, raw Kestrel, `hyper`)
-alongside the frameworks. Results are ratios to it. That divides out machine speed and how
-the runtime behaved on that machine that night, and what remains is framework overhead.
+**Nothing absolute is ever published.** Every run carries a bare baseline for each language
+in it, written in that language (`net/http`, bare Netty, `node:http`, raw ASGI, raw Kestrel,
+`hyper`), booted alongside the frameworks. Results are ratios to it. That divides out machine
+speed and how the runtime behaved on that machine that night, and what remains is framework
+overhead.
 
 **Behaviour is shared, wiring is not.** Within a language, every target imports the same
 domain module and differs only in how routes are bound to it. If two targets disagree about
@@ -34,15 +34,15 @@ why `conform.py` fingerprints every response and refuses to measure a target tha
 ## Comparing across languages
 
 Within a language, a framework is reported as a ratio to that language's bare baseline,
-which divides out the machine. Across languages there is no shared denominator, so ratios
-from two different shards cannot be put side by side.
+which divides out the machine. Across languages there is no shared denominator, so two
+ratios measured on different machines cannot be put side by side.
 
-The `cross` job is the answer: one runner, every implemented target in every language,
-booted back to back. Nothing about the machine changes between targets, so the absolute
-numbers from that single run are comparable across languages. It is the only place the
-site ranks languages against each other.
+Runs are split by execution host, never by language, which is what makes the comparison
+possible. One job is one host and boots every implemented target in every language back to
+back, so nothing about the machine changes between targets and the absolute numbers from
+that single run are comparable across languages.
 
-    python3 harness/rotation.py --cross          # what it would run
+    python3 harness/hosts.py --host container    # what that job would run
     python3 harness/run.py --mode docker \
       --targets go:net-http,go:gin,node:node-http,node:fastify
 
@@ -52,15 +52,15 @@ targets. The full 43-target plan fits; adding the capability suites would not.
 ## Running it
 
     make plan
-    make run SECONDS=12 RUNGS=1,3,5                    # node, host processes, quick loop
-    make build SHARD=go TARGETS=net-http,gin,echo      # container images
-    make run SHARD=go TARGETS=net-http,gin,echo MODE=docker
-    make run                                           # full ladder, 5 x 60s
+    make run SECONDS=12 RUNGS=1,3,5                        # node, host processes, quick loop
+    make build TARGETS=go:net-http,go:gin,go:echo          # container images
+    make run TARGETS=go:net-http,go:gin,go:echo MODE=docker
+    make run                                               # full ladder, 5 x 60s
     make report
 
 `MODE=local` runs targets as host processes, which is the fast edit loop. `MODE=docker`
 builds an image per target and runs it with a pinned CPU budget (`RB_CPUS`, default 2),
-which is what the rotation uses. Go, Java and Rust only have a container path, since the
+which is what measurement uses. Go, Java and Rust only have a container path, since the
 image carries the toolchain.
 
 ## Why the generator is written rather than bought
@@ -81,13 +81,19 @@ target at that rung and therefore cancels in the ratio.
 
 Working: the spec and plan, the conformance gate with cross-target response fingerprinting,
 the open-loop generator with per-endpoint histograms, the orchestrator in both host and
-container mode, the ratio aggregator, and six targets across two shards — Node
-(`node-http`, Fastify, Express) and Go (`net-http`, Gin, Echo).
+container mode, the ratio aggregator, the nightly measurement split by execution host, and
+twelve targets across two languages. Node has `node-http`, Fastify, Express, Hono, Koa and
+h3. Go has `net-http`, Gin, Echo, chi, gorilla/mux and Fiber.
 
-All six fingerprint-match each other on all 40 endpoints, across two languages.
+All twelve fingerprint-match each other on all 40 endpoints, across two languages.
 
-Not built yet: the other four language shards, the ten capability suites, the machine
-calibrator, and the CI rotation.
+Three execution hosts are implemented: the container contract, the GCP Functions Framework,
+and the Lambda runtime interface emulator. Two targets do not cover all three. Fiber runs
+only as a container, because it is fasthttp rather than an `http.Handler`. Koa has no Lambda
+entry, because its body parser does not see a request body through serverless-express.
+
+Not built yet: the other four languages, the ten capability suites, and the machine
+calibrator.
 
 The current numbers are **not admissible** under the plan's own rules: the generator runs on
 the same machine as the target, there is no calibrator, and no host is pinned. They prove

@@ -6,6 +6,8 @@
 //
 // The bare baseline has no adapter: it reads the event itself, which is what makes it the
 // floor for this host rather than a translation of the container one.
+import { useAdapter } from "../_shared/host.js";
+
 const target = process.env.RB_TARGET ?? "baseline";
 const app = await import(`../${target}/app.js`);
 
@@ -15,9 +17,14 @@ if (app.lambda) {
 } else if (target === "fastify") {
   const { default: awsLambdaFastify } = await import("@fastify/aws-lambda");
   invoke = awsLambdaFastify(app.app);
+  useAdapter("@fastify/aws-lambda");
 } else {
+  // handler, not app: serverless-express wants a (req, res) listener, which every target
+  // exports and which the Functions Framework is already given. Passing the framework
+  // object worked only for Express, whose app is itself a listener.
   const { default: serverlessExpress } = await import("@codegenie/serverless-express");
-  invoke = serverlessExpress({ app: app.app });
+  invoke = serverlessExpress({ app: app.handler });
+  useAdapter("@codegenie/serverless-express");
 }
 
 export const handler = (event, context) => invoke(event, context);

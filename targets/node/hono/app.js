@@ -2,6 +2,7 @@
 import { Hono } from "hono";
 import { serve, getRequestListener } from "@hono/node-server";
 import { pkgVersion } from "../_shared/version.js";
+import { hostMeta } from "../_shared/host.js";
 import * as d from "../_shared/domain.js";
 
 const meta = { framework: "hono", version: pkgVersion("hono"),
@@ -13,7 +14,7 @@ const send = (c, v, status = 200) =>
 
 app.get("/plaintext", (c) => c.text("Hello, World!"));
 app.get("/health", (c) => c.text("ok"));
-app.get("/__meta", (c) => c.json(meta));
+app.get("/__meta", (c) => c.json({ ...meta, ...hostMeta() }));
 app.get("/json/small", (c) => c.json(d.jsonSmall()));
 
 app.get("/products", (c) => c.json(d.listProducts(c.req.query())));

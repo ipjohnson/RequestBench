@@ -3,6 +3,7 @@
 // An Express app already is a (req, res) function, so the host handler is the app itself.
 import express from "express";
 import { pkgVersion } from "../_shared/version.js";
+import { hostMeta } from "../_shared/host.js";
 import * as d from "../_shared/domain.js";
 
 const meta = { framework: "express", version: pkgVersion("express"),
@@ -19,7 +20,7 @@ const send = (res, v, status = 200) =>
 app.get("/plaintext", (_, res) => res.type("text/plain").send("Hello, World!"));
 app.get("/health",    (_, res) => res.type("text/plain").send("ok"));
 app.get("/json/small", (_, res) => res.json(d.jsonSmall()));
-app.get("/__meta", (_, res) => res.json(meta));
+app.get("/__meta", (_, res) => res.json({ ...meta, ...hostMeta() }));
 
 app.get("/products",  (req, res) => res.json(d.listProducts(req.query)));
 app.get("/customers", (req, res) => res.json(d.listCustomers(req.query)));

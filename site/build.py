@@ -222,7 +222,7 @@ def load_exemplars(d):
     """
     out = {}
     for f in sorted(pathlib.Path(d).rglob("*.json")):
-        key = f.stem                      # <shard>-<target>@<host>
+        key = f.stem                      # <language>-<target>@<host>
         try:
             doc = json.loads(f.read_text())
         except json.JSONDecodeError:
@@ -240,8 +240,21 @@ def load_exemplars(d):
                 "sb": res["body"][:700], "tr": res.get("truncated") or len(res["body"]) > 700,
             }
         out[key] = {"framework": doc.get("framework", ""), "version": doc.get("version", ""),
+                    "adapter": doc.get("adapter", ""),
                     "endpoints": eps}
     return out
+
+
+def carry_forward(r):
+    """Summaries written before runs were split by host carried the language as "shard"."""
+    if "language" not in r and "shard" in r:
+        r["language"] = r.pop("shard")
+    if "languages" not in r and "shards" in r:
+        r["languages"] = r.pop("shards")
+    for t in r.get("targets", []):
+        if "language" not in t and "shard" in t:
+            t["language"] = t.pop("shard")
+    return r
 
 
 def load(d):
@@ -251,7 +264,7 @@ def load(d):
         if f.name.startswith("."):
             continue
         try:
-            runs.append(json.loads(f.read_text()))
+            runs.append(carry_forward(json.loads(f.read_text())))
         except json.JSONDecodeError:
             print("  skipping unreadable %s" % f, file=sys.stderr)
     runs.sort(key=lambda r: r["run_id"])
@@ -303,7 +316,7 @@ async function fetchHostRuns(host) {
 
 const tracked = RB.runs.filter(r => r.tracked);
 const hosts   = [...new Set(manifest.map(m => m.exec_host))].sort();
-const langs   = [...new Set(tracked.flatMap(r => r.targets.map(t => t.shard)))].sort();
+const langs   = [...new Set(tracked.flatMap(r => r.targets.map(t => t.language)))].sort();
 
 const METRICS = {
   p50_us: {label: 'p50', unit: 'us'}, p90_us: {label: 'p90', unit: 'us'},
@@ -317,6 +330,7 @@ const METRICS = {
    detail dialog, so hiding a column narrows the view without losing the number. */
 const COLS = [
   {id: 'version', label: 'version',     def: true,  cls: 'sub',   get: r => r.version || '\u2014'},
+  {id: 'adapter', label: 'adapter',     def: false, cls: 'sub',   get: r => r.adapter || '\u2014'},
   {id: 'value',   label: '',            def: true,  pin: true,    get: r => r.value},
   {id: 'ratio',   label: 'vs baseline', def: true,  cls: 'ratio', get: r => r.ratio},
   {id: 'n',       label: 'samples',     def: true,  cls: 'sub',   get: r => r.n},
@@ -377,14 +391,14 @@ const esc = t => String(t).replace(/[&<>"]/g, c =>
   ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
 
 /* ---- wire data, aggregated to whatever granularity is on screen ---- */
-/* Exemplars are keyed <shard>-<target>@<host>: the same framework on two hosts puts
+/* Exemplars are keyed <language>-<target>@<host>: the same framework on two hosts puts
    different things on the wire, which is the point of the host axis. */
-/* Exemplars are keyed <shard>-<target>@<host> and fetched when a dialog asks for one. */
+/* Exemplars are keyed <language>-<target>@<host> and fetched when a dialog asks for one. */
 const wireKeyFor = (r) => {
   const run = latest(), host = (run && run.exec_host) || 'container';
   const idx = RB.wireIndex || {};
-  const k = `${r.shard}-${r.target}@${host}`;
-  return idx[k] ? k : (idx[`${r.shard}-${r.target}`] ? `${r.shard}-${r.target}` : null);
+  const k = `${r.language}-${r.target}@${host}`;
+  return idx[k] ? k : (idx[`${r.language}-${r.target}`] ? `${r.language}-${r.target}` : null);
 };
 const wireCache = new Map();
 const wireDoc = (r) => {
@@ -423,10 +437,10 @@ function rows() {
   const out = [];
   const q = st.q.trim().toLowerCase();
   for (const t of run.targets) {
-    if (!st.langs.has(t.shard)) continue;
+    if (!st.langs.has(t.language)) continue;
     const isBase = t.target === t.baseline;
-    const base = {target: t.target, shard: t.shard, version: t.version || '',
-                  isBase, key: t.shard + ':' + t.target};
+    const base = {target: t.target, language: t.language, version: t.version || '',
+                  adapter: t.adapter || '', isBase, key: t.language + ':' + t.target};
     const push = o => { const r = {...base, ...o}; Object.assign(r, wireFor(r)); out.push(r); };
     if (st.gran === 'blend') {
       const d = t.rungs[rn]; if (!d) continue;
@@ -458,7 +472,7 @@ function rows() {
   const {col, dir} = st.sort;
   const spec = COLS.find(c => c.id === col);
   const get = r => col === 'name' ? (r.label + r.detail)
-                 : col === 'lang' ? r.shard
+                 : col === 'lang' ? r.language
                  : spec ? spec.get(r) : r[col];
   out.sort((a, b) => {
     let x = get(a), y = get(b);
@@ -542,7 +556,7 @@ function render() {
     const w = r.value != null && isFinite(r.value) ? Math.max(1.5, 100 * r.value / worst) : 0;
     const tds = vc.map(c => {
       if (c.id === 'bar')
-        return `<td class="barcell"><div class="bar${r.isBase ? ' b' : ''}" style="width:${w}%;background:${r.isBase ? '' : langColour[r.shard]}"></div></td>`;
+        return `<td class="barcell"><div class="bar${r.isBase ? ' b' : ''}" style="width:${w}%;background:${r.isBase ? '' : langColour[r.language]}"></div></td>`;
       const v = c.get(r);
       const extra = c.id === 'value' && r.dead ? ' dead'
                   : c.id === 'ratio' ? (r.isBase ? ' base' : (v > 1.15 ? ' up' : '')) : '';
@@ -550,8 +564,8 @@ function render() {
     }).join('');
     return `<tr data-key="${esc(r.key)}" tabindex="0">
       <td class="rank">${i + 1}</td>
-      <td class="name l"><span class="swatch" style="background:${langColour[r.shard]}"></span>${esc(r.label)}${r.isBase ? '<span class="pill">baseline</span>' : ''}</td>
-      <td class="sub l">${esc(r.detail || r.shard)}</td>${tds}</tr>`;
+      <td class="name l"><span class="swatch" style="background:${langColour[r.language]}"></span>${esc(r.label)}${r.isBase ? '<span class="pill">baseline</span>' : ''}</td>
+      <td class="sub l">${esc(r.detail || r.language)}</td>${tds}</tr>`;
   }).join('') || `<tr><td colspan="${vc.length + 3}" class="empty">${emptyWhy(run)}</td></tr>`;
   document.getElementById('count').textContent = `${rs.length} rows`;
 
@@ -579,7 +593,7 @@ function renderHostNote(rs) {
       const pairs = [];
       for (const r of rs) {
         if (r.detail) continue;
-        const t = ref.targets.find(x => x.shard === r.shard && x.target === r.target);
+        const t = ref.targets.find(x => x.language === r.language && x.target === r.target);
         const d = t && t.rungs[refRn];
         if (d && d.p50_us && r.p50) pairs.push([r.label, r.p50 / d.p50_us]);
       }
@@ -631,7 +645,7 @@ async function openDetail(key) {
     <div class="wirehead"><strong>${esc(r.label)}</strong>
       <span class="ver">${esc(r.version || '')}</span>
       ${r.detail ? `<span class="pill">${esc(r.detail)}</span>` : ''}
-      <span class="wmeta">${esc(r.shard)}${doc ? ' \u00b7 ' + esc(doc.framework) : ''}</span></div>
+      <span class="wmeta">${esc(r.language)}${doc ? ' \u00b7 ' + esc(doc.framework) : ''}</span></div>
     <div class="fields">${fields}</div>
     ${exchange}`;
   document.getElementById('dlg').showModal();
@@ -657,7 +671,7 @@ function renderTime(rs, langColour) {
   runs.forEach(run => {
     const rn = (st.rung && run.rungs.map(String).includes(st.rung)) ? st.rung : pickRung(run);
     run.targets.forEach(t => {
-      const base = t.shard + ':' + t.target;
+      const base = t.language + ':' + t.target;
       keys.forEach(k => {
         const [kb, det] = k.split('|');
         if (kb !== base) return;
@@ -672,7 +686,7 @@ function renderTime(rs, langColour) {
         }
         if (v == null) return;
         if (!series.has(k)) series.set(k, []);
-        series.get(k).push({date: run.date, v, ver: t.version || ''});
+        series.get(k).push({date: run.date, v, ver: t.version || '', adapter: t.adapter || ''});
       });
     });
   });
@@ -697,13 +711,17 @@ function renderTime(rs, langColour) {
   live.forEach(([k, pts], idx) => {
     const c = cols[idx % cols.length];
     g += `<path d="${pts.map((pt, i) => (i ? 'L' : 'M') + ' ' + X(i).toFixed(1) + ' ' + Y(pt.v).toFixed(1)).join(' ')}" fill="none" stroke="${c}" stroke-width="2" stroke-linejoin="round"/>`;
-    let prev = null;
+    let prev = null, prevAd = null;
     pts.forEach((pt, i) => {
-      const changed = prev !== null && pt.ver && pt.ver !== prev;
+      const newVer = prev !== null && pt.ver && pt.ver !== prev;
+      const newAd = prevAd !== null && pt.adapter !== prevAd;
+      const changed = newVer || newAd;
+      const label = newVer ? pt.ver : 'via ' + pt.adapter.split(' ').pop();
       prev = pt.ver || prev;
+      prevAd = pt.adapter;
       const anchor = i === 0 ? 'start' : i >= n - 1 ? 'end' : 'middle';
       g += changed
-        ? `<circle cx="${X(i).toFixed(1)}" cy="${Y(pt.v).toFixed(1)}" r="5.5" fill="var(--surface)" stroke="${c}" stroke-width="2"/><text x="${X(i).toFixed(1)}" y="${(Y(pt.v) - 11).toFixed(1)}" fill="${c}" font-size="9" font-family="var(--f-mono)" text-anchor="${anchor}">${esc(pt.ver)}</text>`
+        ? `<circle cx="${X(i).toFixed(1)}" cy="${Y(pt.v).toFixed(1)}" r="5.5" fill="var(--surface)" stroke="${c}" stroke-width="2"/><text x="${X(i).toFixed(1)}" y="${(Y(pt.v) - 11).toFixed(1)}" fill="${c}" font-size="9" font-family="var(--f-mono)" text-anchor="${anchor}">${esc(label)}</text>`
         : `<circle cx="${X(i).toFixed(1)}" cy="${Y(pt.v).toFixed(1)}" r="3.2" fill="${c}"/>`;
     });
   });
@@ -717,7 +735,7 @@ function renderTime(rs, langColour) {
   const legend = live.map(([k], i) =>
     `<span><b style="background:${cols[i % cols.length]}"></b>${esc(k.replace('|', ' · '))}</span>`).join('');
   el.innerHTML = g + '<div class="legend">' + legend +
-    '<span style="color:var(--ink3)">hollow ring = new framework version</span></div>';
+    '<span style="color:var(--ink3)">hollow ring = new framework or adapter version</span></div>';
 }
 
 /* ---- wiring ---- */
@@ -788,7 +806,7 @@ def slug(run_id):
 def manifest_entry(r):
     """Just enough to populate the controls and decide what to fetch."""
     return {"id": r["run_id"], "file": "data/%s.json.gz" % slug(r["run_id"]),
-            "date": r.get("date", ""), "shard": r.get("shard", ""),
+            "date": r.get("date", ""), "language": r.get("language", ""),
             "exec_host": r.get("exec_host") or "container",
             "suite": r.get("suite", ""), "tracked": bool(r.get("tracked")),
             "cpu": r.get("cpu", ""), "cores": r.get("cores", 0)}

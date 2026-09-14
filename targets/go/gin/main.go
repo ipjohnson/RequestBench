@@ -5,7 +5,6 @@ import (
 	"errors"
 	"log"
 	"os"
-	"runtime"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -72,8 +71,7 @@ func main() {
 	get("/search", func(c *gin.Context) (any, error) { return d.Search(q(c)), nil })
 	get("/dashboard", func(*gin.Context) (any, error) { return d.Dashboard(), nil })
 	r.GET("/__meta", func(c *gin.Context) {
-		c.JSON(200, gin.H{"framework": "gin", "version": gin.Version,
-			"runtime": runtime.Version()})
+		c.JSON(200, hosts.Meta("gin", gin.Version))
 	})
 	r.GET("/boom", func(*gin.Context) { panic(d.Boom{}) })
 	r.GET("/forbidden", func(c *gin.Context) { c.JSON(403, gin.H{"error": "forbidden"}) })

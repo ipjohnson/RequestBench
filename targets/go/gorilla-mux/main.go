@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"runtime"
 	"strconv"
 
 	"github.com/gorilla/mux"
@@ -100,8 +99,7 @@ func main() {
 		w.Write([]byte("ok"))
 	}).Methods("GET")
 	get("/__meta", func(*http.Request) (any, error) {
-		return map[string]string{"framework": "gorilla-mux", "version": muxVersion(),
-			"runtime": runtime.Version()}, nil
+		return hosts.Meta("gorilla-mux", hosts.ModVersion("github.com/gorilla/mux")), nil
 	})
 	get("/json/small", func(*http.Request) (any, error) { return d.JSONSmall(), nil })
 	get("/products", func(r *http.Request) (any, error) { return d.ListProducts(q(r)), nil })

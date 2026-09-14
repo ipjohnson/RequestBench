@@ -1,7 +1,7 @@
 """RequestBench orchestrator: boot, gate, warm, ladder, record, tear down.
 
-  python3 harness/run.py --shard node --targets node-http,fastify,express
-  python3 harness/run.py --shard node --targets fastify --seconds 20 --rungs 3,5
+  python3 harness/run.py --language node --targets node-http,fastify,express
+  python3 harness/run.py --language node --targets fastify --seconds 20 --rungs 3,5
 """
 import argparse, collections, functools, http.client, json, os, pathlib, platform, re, shutil, signal, socket, subprocess, sys, time, uuid
 
@@ -32,14 +32,17 @@ def lambda_event(method, path):
     """
     return json.dumps({
         "version": "2.0", "rawPath": path, "rawQueryString": "",
-        "queryStringParameters": {}, "headers": {"content-type": "application/json"},
+        "queryStringParameters": {},
+        # A real API Gateway event always carries host. An adapter that rebuilds a URL
+        # from the request answers 400 without it, before the framework sees anything.
+        "headers": {"content-type": "application/json", "host": "rb.invalid"},
         "requestContext": {"http": {"method": method, "path": path}},
         "isBase64Encoded": False,
     })
 
 
 def target_dir(name):
-    """Baselines live in baseline/ whatever their shard calls them."""
+    """Baselines live in baseline/ whatever their language calls them."""
     return "baseline" if name in ("node-http", "net-http", "raw-asgi", "raw-kestrel",
                                   "bare-netty", "hyper") else name
 
@@ -47,15 +50,15 @@ def target_dir(name):
 class Local:
     """Run a target as a host process. The fast edit loop, and what CI validates with."""
 
-    def __init__(self, shard, name):
-        self.shard, self.name, self.proc, self.fh = shard, name, None, None
-        self.log = ROOT / "results" / (".target-%s-%s.log" % (shard, name))
+    def __init__(self, language, name):
+        self.language, self.name, self.proc, self.fh = language, name, None, None
+        self.log = ROOT / "results" / (".target-%s-%s.log" % (language, name))
 
     def _argv(self):
         """A target is a framework plus a host, and the host decides what starts it."""
         d = target_dir(self.name)
         host = os.environ.get("RB_HOST", "container")
-        if self.shard == "node":
+        if self.language == "node":
             nd = ROOT / "targets/node"
             env = {"RB_TARGET": d, "RB_HOST": host}
             if host == "container":
@@ -67,12 +70,12 @@ class Local:
                          "--target=rb", "--source=_hosts/gcp-func.mjs",
                          "--port=%d" % PORT], nd, env)
             raise SystemExit("node has no launcher for host %r" % host)
-        if self.shard == "go":
+        if self.language == "go":
             if host != "container":
                 raise SystemExit("go has no launcher for host %r yet" % host)
             return (["go", "run", "./" + d], ROOT / "targets/go",
                     {"RB_FIXTURE": str(ROOT / "spec/fixture.json"), "RB_HOST": host})
-        raise SystemExit("shard %r has no local launcher; use --mode docker" % self.shard)
+        raise SystemExit("language %r has no local launcher; use --mode docker" % self.language)
 
     def start(self):
         argv, cwd, extra = self._argv()
@@ -119,24 +122,24 @@ def cpu_model():
 
 
 class Container:
-    """Run a target as a container with a pinned CPU budget. What the rotation uses."""
+    """Run a target as a container with a pinned CPU budget. What measurement uses."""
     CPUS = os.environ.get("RB_CPUS", "2")
     CPUSET = os.environ.get("RB_SUT_CPUS", "")
 
-    def __init__(self, shard, name):
-        self.shard, self.name = shard, name
+    def __init__(self, language, name):
+        self.language, self.name = language, name
         self.host = os.environ.get("RB_HOST", "container")
-        special = (ROOT / "targets" / shard / ("Dockerfile." + self.host.split("-")[0])).exists()
+        special = (ROOT / "targets" / language / ("Dockerfile." + self.host.split("-")[0])).exists()
         suffix = "-" + self.host.split("-")[0] if special else ""
-        self.cname = "rb-%s-%s%s" % (shard, name, suffix)
-        self.image = "rb/%s-%s%s" % (shard, name, suffix)
+        self.cname = "rb-%s-%s%s" % (language, name, suffix)
+        self.image = "rb/%s-%s%s" % (language, name, suffix)
 
     def build(self):
         # Only a host that needs a different base image gets its own Dockerfile. Go serves
         # gcp-func from the same binary, switching on RB_HOST, so it reuses the default.
-        dockerfile = ROOT / "targets" / self.shard / ("Dockerfile." + self.host.split("-")[0])
+        dockerfile = ROOT / "targets" / self.language / ("Dockerfile." + self.host.split("-")[0])
         if self.host == "container" or not dockerfile.exists():
-            dockerfile = ROOT / "targets" / self.shard / "Dockerfile"
+            dockerfile = ROOT / "targets" / self.language / "Dockerfile"
         subprocess.run(["docker", "build", "-q", "-f", str(dockerfile),
                         "--build-arg", "TARGET=" + target_dir(self.name),
                         "-t", self.image, "."],
@@ -145,7 +148,10 @@ class Container:
 
     def start(self):
         subprocess.run(["docker", "rm", "-f", self.cname], capture_output=True)
-        argv = ["docker", "run", "-d", "--rm", "--name", self.cname, "--cpus", self.CPUS]
+        argv = ["docker", "run", "-d", "--rm", "--name", self.cname, "--cpus", self.CPUS,
+                # Without this a target defaults to the container host whatever it was
+                # asked for, and the run records the wrong host against real numbers.
+                "-e", "RB_HOST=" + self.host]
         if self.CPUSET:
             # Keeping the target and the load generator off each other's cores is the
             # difference between measuring a framework and measuring contention.
@@ -167,11 +173,11 @@ class Container:
         subprocess.run(["docker", "stop", "-t", "3", self.cname], capture_output=True)
 
 
-def launcher(mode, shard, name):
-    return Local(shard, name) if mode == "local" else Container(shard, name).build()
+def launcher(mode, language, name):
+    return Local(language, name) if mode == "local" else Container(language, name).build()
 
-def warmup_class(shard):
-    return "jit" if shard in MATRIX["warmup_classes"]["jit"] else "steady"
+def warmup_class(language):
+    return "jit" if language in MATRIX["warmup_classes"]["jit"] else "steady"
 
 def wait_healthy(target, timeout):
     """Wait for a 200 from /health, not merely for the port to accept.
@@ -295,14 +301,19 @@ def billed_durations(text):
 
 
 def conform():
-    out = subprocess.run([sys.executable, str(ROOT / "harness" / "conform.py"),
-                          "127.0.0.1:%d" % PORT, "--quiet",
-                          "--compare", str(SPEC / "fingerprint.node-http.json")],
-                         capture_output=True, text=True, cwd=ROOT)
+    # The gate has to speak the host's encoding. A RIE container serves only the
+    # invocations endpoint, so plain HTTP reaches nothing and every target fails.
+    argv = [sys.executable, str(ROOT / "harness" / "conform.py"),
+            "127.0.0.1:%d" % PORT, "--quiet",
+            "--compare", str(SPEC / "fingerprint.node-http.json")]
+    encoding = ENCODING_FOR_HOST.get(os.environ.get("RB_HOST", "container"), "http")
+    if encoding != "http":
+        argv += ["--encoding", encoding]
+    out = subprocess.run(argv, capture_output=True, text=True, cwd=ROOT)
     return out.returncode == 0, out.stdout.strip().splitlines()[-1] if out.stdout else out.stderr
 
-def env_fingerprint(run_id, shard, baseline):
-    return {"kind": "env", "run_id": run_id, "shard": shard, "baseline": baseline,
+def env_fingerprint(run_id, language, baseline):
+    return {"kind": "env", "run_id": run_id, "language": language, "baseline": baseline,
             "host": platform.node(), "cpu": cpu_model(),
             "cores": os.cpu_count(), "platform": platform.platform(),
             "exec_host": os.environ.get("RB_HOST", "container"),
@@ -314,10 +325,10 @@ def env_fingerprint(run_id, shard, baseline):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--shard", help="single shard; omit when --targets is fully qualified")
+    ap.add_argument("--language", help="single language; omit when --targets is fully qualified")
     ap.add_argument("--targets", required=True,
-                    help="comma separated. Either bare names with --shard, or "
-                         "shard:target pairs to measure several languages in one run")
+                    help="comma separated. Either bare names with --language, or "
+                         "language:target pairs to measure several languages in one run")
     ap.add_argument("--seconds", type=int, default=0, help="override rung duration")
     ap.add_argument("--rungs", default="", help="comma separated rung numbers, default all")
     ap.add_argument("--workers", type=int, default=6)
@@ -343,35 +354,35 @@ def main():
         if not entry:
             continue
         if ":" in entry:
-            sh, _, name = entry.partition(":")
-        elif a.shard:
-            sh, name = a.shard, entry
+            lang, _, name = entry.partition(":")
+        elif a.language:
+            lang, name = a.language, entry
         else:
-            sys.exit("target %r has no shard: pass --shard or write shard:target" % entry)
-        if sh not in MATRIX["languages"]:
-            sys.exit("unknown shard %r in target %r" % (sh, entry))
-        pairs.append((sh, name))
+            sys.exit("target %r has no language: pass --language or write language:target" % entry)
+        if lang not in MATRIX["languages"]:
+            sys.exit("unknown language %r in target %r" % (lang, entry))
+        pairs.append((lang, name))
     if not pairs:
         sys.exit("no targets")
-    shards = list(dict.fromkeys(sh for sh, _ in pairs))
-    baselines = {sh: MATRIX["languages"][sh]["baseline"] for sh in shards}
+    languages = list(dict.fromkeys(lang for lang, _ in pairs))
+    baselines = {lang: MATRIX["languages"][lang]["baseline"] for lang in languages}
 
     rungs = [r for r in LADDER["rungs"]
              if not a.rungs or str(r["rung"]) in a.rungs.split(",")]
     secs = a.seconds or None
-    warm_s = max(LADDER["warmup"]["seconds"][warmup_class(sh)] for sh in shards)
+    warm_s = max(LADDER["warmup"]["seconds"][warmup_class(lang)] for lang in languages)
     if a.seconds:
         warm_s = max(5, a.seconds // 2)
 
-    tag = shards[0] if len(shards) == 1 else "x-" + "-".join(shards)
+    tag = languages[0] if len(languages) == 1 else "x-" + "-".join(languages)
     run_id = "%s.%s.%s" % (time.strftime("%Y-%m-%dT%H:%MZ", time.gmtime()), tag,
                            uuid.uuid4().hex[:6])
     out_path = ROOT / "results" / ("%s.jsonl" % run_id.replace(":", ""))
     out_path.parent.mkdir(exist_ok=True)
-    rows = [env_fingerprint(run_id, tag, baselines[shards[0]])]
-    rows[0]["shards"] = shards
+    rows = [env_fingerprint(run_id, tag, baselines[languages[0]])]
+    rows[0]["languages"] = languages
     rows[0]["baselines"] = baselines
-    rows[0]["cross_language"] = len(shards) > 1
+    rows[0]["cross_language"] = len(languages) > 1
 
     rows[0]["mode"] = a.mode
     if a.mode == "docker":
@@ -380,7 +391,7 @@ def main():
     suite = a.suite if a.suite != "auto" else SUITE_FOR_HOST.get(host, "blend")
     encoding = ENCODING_FOR_HOST.get(host, "http")
     rows[0]["suite"] = "serial-v1" if suite == "serial" else "blend-v1"
-    what = "shard=%s" % shards[0] if len(shards) == 1 else "shards=%s" % ",".join(shards)
+    what = "language=%s" % languages[0] if len(languages) == 1 else "languages=%s" % ",".join(languages)
     if a.validate_only:
         print("run %s   %s  mode=%s  VALIDATE ONLY" % (run_id, what, a.mode))
     elif suite == "serial":
@@ -391,13 +402,13 @@ def main():
               % (run_id, what, a.mode, warm_s, [r["rung"] for r in rungs], len(pairs)))
 
     conformed = 0
-    for shard, target in pairs:
-        print("\n=== %s%s ===" % (("%s:" % shard) if len(shards) > 1 else "", target))
-        t = launcher(a.mode, shard, target).start()
+    for language, target in pairs:
+        print("\n=== %s%s ===" % (("%s:" % language) if len(languages) > 1 else "", target))
+        t = launcher(a.mode, language, target).start()
         try:
             # `go run` compiles on first launch, which no boot budget should punish.
             try:
-                wait_healthy(t, 240 if (a.mode == "local" and shard == "go")
+                wait_healthy(t, 240 if (a.mode == "local" and language == "go")
                                 else LADDER["boot_timeout_s"])
             except RuntimeError as e:
                 print("  BOOT FAILED: %s" % e)
@@ -406,10 +417,12 @@ def main():
                 continue
             meta = read_meta()
             if meta:
-                print("  booted   %s %s on %s" % (meta.get("framework", target),
-                                                  meta.get("version", "?"),
-                                                  meta.get("runtime", "?")))
-                rows.append({"kind": "target", "run_id": run_id, "shard": shard,
+                print("  booted   %s %s on %s%s" % (meta.get("framework", target),
+                                                    meta.get("version", "?"),
+                                                    meta.get("runtime", "?"),
+                                                    " via " + meta["adapter"]
+                                                    if meta.get("adapter") else ""))
+                rows.append({"kind": "target", "run_id": run_id, "language": language,
                              "target": target,
                              "host": os.environ.get("RB_HOST", "container"), **meta})
             else:
@@ -439,7 +452,7 @@ def main():
                           % "  ".join("%dms x%s" % (k, f"{v:,}") for k, v in billed.items()))
                 for ep in res["endpoints"]:
                     rows.append({"kind": "sample", "run_id": run_id, "epoch": 1,
-                                 "suite": "serial-v1", "arm": None, "shard": shard,
+                                 "suite": "serial-v1", "arm": None, "language": language,
                                  "host": host, "target": target, "rung": 1,
                                  "offered_rps": 0, "achieved_rps": res["achieved_rps"],
                                  "seconds": res["elapsed_s"], "endpoint": ep["id"],
@@ -447,7 +460,7 @@ def main():
                                  "errors": ep["errors"], "mismatch": ep["mismatch"],
                                  "p50_us": ep["p50_us"], "p99_us": ep["p99_us"],
                                  "hist_b64": ep["hist_b64"]})
-                rows.append({"kind": "rung", "run_id": run_id, "shard": shard,
+                rows.append({"kind": "rung", "run_id": run_id, "language": language,
                              "target": target, "rung": 1, "offered_rps": 0,
                              "achieved_rps": res["achieved_rps"],
                              "seconds": res["elapsed_s"], "dropped": 0,
@@ -470,14 +483,14 @@ def main():
                          res["dropped"], res["errors"]))
                 for ep in res["endpoints"]:
                     rows.append({"kind": "sample", "run_id": run_id, "epoch": 1,
-                                 "suite": "blend-v1", "arm": None, "shard": shard,
+                                 "suite": "blend-v1", "arm": None, "language": language,
                                  "target": target, "rung": r["rung"], "offered_rps": r["rps"],
                                  "achieved_rps": res["achieved_rps"], "seconds": dur,
                                  "endpoint": ep["id"], "family": ep["family"],
                                  "count": ep["count"], "errors": ep["errors"],
                                  "mismatch": ep["mismatch"], "p50_us": ep["p50_us"],
                                  "p99_us": ep["p99_us"], "hist_b64": ep["hist_b64"]})
-                rows.append({"kind": "rung", "run_id": run_id, "shard": shard, "target": target,
+                rows.append({"kind": "rung", "run_id": run_id, "language": language, "target": target,
                              "rung": r["rung"], "offered_rps": r["rps"],
                              "achieved_rps": res["achieved_rps"], "seconds": dur,
                              "dropped": res["dropped"], "errors": res["errors"],
@@ -495,11 +508,6 @@ def main():
         n = len(a.targets.split(","))
         print("\n%d/%d targets conform" % (conformed, n))
         return 0 if conformed == n else 1
-
-    if a.validate_only:
-        want = len(a.targets.split(","))
-        print("\n%d/%d targets conform" % (conformed, want))
-        return 0 if conformed == want else 1
 
     with out_path.open("w") as f:
         for row in rows:
