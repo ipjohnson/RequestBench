@@ -6,7 +6,7 @@ rather than surfacing later as an unexplained latency difference.
 
   python3 harness/conform.py 127.0.0.1:8080 [--fingerprint f.json] [--compare ref.json]
 """
-import json, sys, hashlib, pathlib, argparse, http.client, collections, zlib
+import json, sys, hashlib, pathlib, argparse, http.client, collections, re, zlib
 
 # What a response has to carry regardless of framework. Latency says nothing about any of
 # it, and frameworks differ more here than anywhere else.
@@ -145,8 +145,17 @@ def canonical(raw, ctype):
             return "unparseable-json"
     if "html" in (ctype or ""):
         # Five template engines cannot agree on formatting without every template being
-        # contorted to match, so the spec pins content and leaves whitespace free.
-        raw = b" ".join(raw.split())
+        # contorted to match, so the spec pins content and leaves whitespace free: same
+        # elements, same order, same values.
+        #
+        # Collapsing runs is not enough on its own to make it free. It leaves an engine's
+        # indentation as a space where a string concat has nothing, so the two still differ
+        # and no engine could ever match. Whitespace at an element boundary goes entirely;
+        # whitespace inside text is collapsed and kept, because there it is content.
+        raw = re.sub(rb"\s+", b" ", raw)
+        raw = re.sub(rb">\s+", b">", raw)
+        raw = re.sub(rb"\s+<", b"<", raw)
+        raw = raw.strip()
     return hashlib.sha256(raw).hexdigest()[:16]
 
 def main():
