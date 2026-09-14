@@ -317,9 +317,13 @@ function pickRung(run) {
   const clean = rs.filter(rn => !run.targets.some(t => (t.rungs[rn] || {}).baseline_saturated));
   return clean.length ? clean[clean.length - 1] : rs[Math.floor(rs.length / 2)];
 }
-const offered = (run, rn) => {
-  for (const t of run.targets) if (t.rungs[rn]) return t.rungs[rn].offered_rps;
-  return rn;
+/* A serial run has no offered rate: it replays a pinned order one at a time, so the
+   control names the suite rather than a rate that does not exist. */
+const isSerial = run => (run.suite || '').startsWith('serial');
+const rateLabel = (run, rn) => {
+  if (isSerial(run)) return 'serial, one at a time';
+  for (const t of run.targets) if (t.rungs[rn]) return t.rungs[rn].offered_rps.toLocaleString() + ' rps';
+  return String(rn);
 };
 const esc = t => String(t).replace(/[&<>"]/g, c =>
   ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
@@ -433,7 +437,8 @@ function render() {
   document.getElementById('host').innerHTML =
       hosts.map(h => `<option${h === st.host ? ' selected' : ''}>${h}</option>`).join('');
   document.getElementById('rung').innerHTML = run ? rungsOf(run).map(r =>
-      `<option value="${r}"${r === rn ? ' selected' : ''}>${offered(run, r).toLocaleString()} rps</option>`).join('') : '';
+      `<option value="${r}"${r === rn ? ' selected' : ''}>${rateLabel(run, r)}</option>`).join('') : '';
+  document.getElementById('runglabel').textContent = isSerial(run) ? 'Suite' : 'Offered rate';
   document.getElementById('metric').value = st.metric;
   document.querySelectorAll('.seg button[data-gran]').forEach(b =>
       b.setAttribute('aria-pressed', b.dataset.gran === st.gran));
@@ -455,7 +460,8 @@ function render() {
     writeHash(); return;
   }
   document.getElementById('meta').textContent =
-      `${run.date} \u00b7 ${run.cpu}, ${run.cores} cores \u00b7 ${rs.length} rows \u00b7 click a row for detail`;
+      `${run.date} \u00b7 ${run.cpu}, ${run.cores} cores \u00b7 ${run.exec_host || 'container'}`
+      + ` \u00b7 ${isSerial(run) ? 'serial' : 'rate ladder'} \u00b7 ${rs.length} rows \u00b7 click a row for detail`;
 
   const vc = visibleCols();
   const label = c => c.id === 'value' ? METRICS[st.metric].label : c.label;
@@ -686,7 +692,7 @@ target against the bare baseline in its own language.</p>
 <div class="controls">
   <div class="ctl"><label for="host">Execution host</label>
     <select id="host"></select></div>
-  <div class="ctl"><label for="rung">Offered rate</label>
+  <div class="ctl"><label for="rung" id="runglabel">Offered rate</label>
     <select id="rung"></select></div>
   <div class="ctl"><label for="metric">Metric</label>
     <select id="metric">
