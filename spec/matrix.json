@@ -168,7 +168,8 @@
   },
   "hosts_implemented": {
     "java": [
-      "container"
+      "container",
+      "lambda-rie"
     ],
     "go": [
       "container",
@@ -182,18 +183,42 @@
     ]
   },
   "host_exceptions": {
-    "node:koa": {
-      "excluded": [
-        "lambda-rie"
-      ],
-      "why": "koa-bodyparser does not see the body through serverless-express, so the five body-carrying endpoints do not match. Unwired rather than unable: it conforms under gcp-func."
-    },
     "go:fiber": {
       "excluded": [
         "gcp-func",
         "lambda-rie"
       ],
       "why": "fasthttp, not an http.Handler"
+    },
+    "java:helidon-se": {
+      "excluded": [
+        "lambda-rie"
+      ],
+      "why": "no first-party Lambda adapter, and no servlet to bridge. Same reason as vertx."
+    },
+    "java:javalin": {
+      "excluded": [
+        "lambda-rie"
+      ],
+      "why": "no first-party Lambda adapter. Javalin is a servlet on Jetty, so the generic servlet bridge would fit, but wiring it is a shim this has not written yet. Unwired rather than unable."
+    },
+    "java:quarkus": {
+      "excluded": [
+        "lambda-rie"
+      ],
+      "why": "quarkus-amazon-lambda-http packages for the custom-runtime zip layout, not the lambda/java base image: its rewritten netty-common is missing classes that layout supplies. Unwired rather than unable; it needs the provided:al2023 base the go targets use."
+    },
+    "java:vertx": {
+      "excluded": [
+        "lambda-rie"
+      ],
+      "why": "no first-party Lambda adapter, and no servlet to bridge. A hand-written event-to-request shim would measure the shim rather than Vert.x."
+    },
+    "node:koa": {
+      "excluded": [
+        "lambda-rie"
+      ],
+      "why": "koa-bodyparser does not see the body through serverless-express, so the five body-carrying endpoints do not match. Unwired rather than unable: it conforms under gcp-func."
     }
   }
 }

@@ -25,8 +25,10 @@ RUN mvn -B -q -pl ${TARGET} -am dependency:go-offline
 COPY targets/java/shared/src shared/src
 COPY targets/java/hosts/src hosts/src
 COPY targets/java/${TARGET}/src ${TARGET}/src
+# Shaded targets produce server.jar; Quarkus names its uber jar server-runner.jar. One
+# ENTRYPOINT covers both because whichever was built lands at the same path.
 RUN mvn -B -q -pl ${TARGET} -am -DskipTests package \
- && cp ${TARGET}/target/server.jar /server.jar
+ && cp "$(ls ${TARGET}/target/server.jar ${TARGET}/target/server-runner.jar 2>/dev/null | head -1)" /server.jar
 
 FROM eclipse-temurin:${JAVA_VERSION}-jre
 ARG TARGET=baseline

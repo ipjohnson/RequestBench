@@ -33,7 +33,72 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-web</artifactId>
     </dependency>
+    <!-- Host: lambda-rie. The adapter people actually deploy in front of Spring Boot,
+         rather than a generic shim. Unused under the container host, where Spring serves
+         its own socket. -->
+    <dependency>
+      <groupId>com.amazonaws.serverless</groupId>
+      <artifactId>aws-serverless-java-container-springboot4</artifactId>
+      <version>${aws-serverless-container.version}</version>
+    </dependency>
   </dependencies>
+
+  <profiles>
+    <!--
+      Host: lambda-rie. A Spring Boot executable jar keeps its classes under BOOT-INF and
+      is launched by Boot's own loader, which the Lambda runtime does not use: it looks for
+      the handler class on a plain classpath and does not find it. A Lambda deployment
+      shades instead, which is what aws-serverless-java-container's own samples do.
+    -->
+    <profile>
+      <id>lambda</id>
+      <properties>
+        <spring-boot.repackage.skip>true</spring-boot.repackage.skip>
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-shade-plugin</artifactId>
+            <executions>
+              <execution>
+                <phase>package</phase>
+                <goals><goal>shade</goal></goals>
+                <configuration>
+                  <outputFile>${project.build.directory}/server.jar</outputFile>
+                  <transformers>
+                    <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                    <!-- Spring's component and autoconfiguration indexes are spread across
+                         every starter jar, so the shaded jar has to keep all of them. -->
+                    <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                      <resource>META-INF/spring.factories</resource>
+                    </transformer>
+                    <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                      <resource>META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports</resource>
+                    </transformer>
+                    <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                      <resource>META-INF/spring/aot.factories</resource>
+                    </transformer>
+                  </transformers>
+                  <filters>
+                    <filter>
+                      <artifact>*:*</artifact>
+                      <excludes>
+                        <exclude>META-INF/*.SF</exclude>
+                        <exclude>META-INF/*.DSA</exclude>
+                        <exclude>META-INF/*.RSA</exclude>
+                        <exclude>module-info.class</exclude>
+                      </excludes>
+                    </filter>
+                  </filters>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 
   <build>
     <!-- Spring Boot repackages in place, so naming the artifact here is what puts the
