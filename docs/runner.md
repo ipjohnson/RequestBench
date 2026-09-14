@@ -1,7 +1,7 @@
 # Running measurements out of band
 
 Validation runs on every pull request. Measurement does not: validation proves every target
-still answers all 40 endpoints identically, and a timing taken while other jobs share the
+still answers every endpoint identically, and a timing taken while other jobs share the
 runner is not worth keeping.
 
 ## What the schedule does
@@ -57,7 +57,7 @@ pinned sequence the serial suite replays.
 compiles. Scope is patch and minor; a major changes the wiring, which is hand-written.
 
 Conformance is deliberately not run there. The gate is `validate.yml` on the pull request,
-which boots every target and fingerprints all 40 endpoints. A second job watches those
+which boots every target and fingerprints every endpoint. A second job watches those
 checks so the scheduled run goes red when an update breaks one.
 
 Opening that pull request needs a `DEPS_TOKEN` secret, a fine-grained token with Contents

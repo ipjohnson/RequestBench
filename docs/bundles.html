@@ -1,0 +1,412 @@
+<title>Target Bundles</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root {
+  --ground: #F4F5F2; --surface: #FCFCFB; --surface2: #EDEFEA;
+  --ink: #121917; --ink2: #58655F; --ink3: #66716A;
+  --rule: #DCE0DB; --rule2: #C3C9C2;
+  --teal: #00836E; --tealtext: #00705E; --tealsoft: #DCEBE6;
+  --amber: #A6670C; --ambersoft: #F6ECDB;
+  --crimson: #A03E5C; --crimsonsoft: #F3E3E8;
+  --onfill: #FFFFFF;
+  --f-display: "Newsreader", Georgia, serif;
+  --f-body: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --ground: #121513; --surface: #1A1E1B; --surface2: #232823;
+  --ink: #E8ECE7; --ink2: #9AA59E; --ink3: #949E98;
+  --rule: #2A302C; --rule2: #3A423C;
+  --teal: #35AD97; --tealtext: #35AD97; --tealsoft: #17302B;
+  --amber: #DDA03C; --ambersoft: #2C2314;
+  --crimson: #C05A78; --crimsonsoft: #2E1A20;
+  --onfill: #101614;
+} }
+:root[data-theme="dark"] {
+  --ground: #121513; --surface: #1A1E1B; --surface2: #232823;
+  --ink: #E8ECE7; --ink2: #9AA59E; --ink3: #949E98;
+  --rule: #2A302C; --rule2: #3A423C;
+  --teal: #35AD97; --tealtext: #35AD97; --tealsoft: #17302B;
+  --amber: #DDA03C; --ambersoft: #2C2314;
+  --crimson: #C05A78; --crimsonsoft: #2E1A20;
+  --onfill: #101614;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--ground); color: var(--ink);
+       font-family: var(--f-body); font-size: 15px; line-height: 1.6;
+       -webkit-font-smoothing: antialiased; }
+.page { max-width: 880px; margin: 0 auto;
+        padding-inline: clamp(16px, 4vw, 40px); padding-block: clamp(28px, 5vw, 56px) 72px; }
+a { color: var(--tealtext); }
+code, .mono { font-family: var(--f-mono); font-size: .92em; }
+code { background: var(--surface2); padding: 1px 4px; border-radius: 2px; }
+
+.eyebrow { font-family: var(--f-mono); font-size: 11px; letter-spacing: .13em;
+           text-transform: uppercase; color: var(--ink3);
+           display: flex; gap: 12px; align-items: center; margin: 0 0 14px; }
+.eyebrow::after { content: ""; flex: 1; height: 1px; background: var(--rule2); }
+h1 { font-family: var(--f-display); font-weight: 600; letter-spacing: -.02em;
+     font-size: clamp(30px, 5vw, 44px); line-height: 1.05; margin: 0 0 16px;
+     text-wrap: balance; }
+.lede { font-family: var(--f-display); font-size: clamp(16px, 2vw, 19px);
+        color: var(--ink2); max-width: 62ch; margin: 0; }
+h2 { font-family: var(--f-display); font-weight: 600; font-size: 25px;
+     letter-spacing: -.01em; margin: 0 0 4px; text-wrap: balance; }
+h3 { font-family: var(--f-body); font-weight: 600; font-size: 16px; margin: 0 0 6px; }
+section > h3 { margin-top: 34px; padding-top: 12px; border-top: 1px solid var(--rule);
+               font-family: var(--f-display); font-size: 19px; }
+p { margin: 0 0 14px; max-width: 68ch; }
+p:last-child { margin-bottom: 0; }
+
+section { margin-top: 52px; }
+.sectionhead { border-top: 2px solid var(--ink); padding-top: 14px; margin-bottom: 24px; }
+.sectionhead .num { font-family: var(--f-mono); font-size: 11px; letter-spacing: .12em;
+                    color: var(--ink3); text-transform: uppercase; display: block; margin-bottom: 8px; }
+.sectionhead p { color: var(--ink2); margin: 6px 0 0; }
+
+.meta { display: flex; flex-wrap: wrap; gap: 8px 28px; margin-top: 26px;
+        padding-top: 18px; border-top: 1px solid var(--rule); }
+.meta div { display: flex; flex-direction: column; gap: 2px; }
+.meta dt { font-family: var(--f-mono); font-size: 10px; letter-spacing: .1em;
+           text-transform: uppercase; color: var(--ink3); }
+.meta dd { margin: 0; font-size: 14px; }
+
+.scroll { overflow-x: auto; border: 1px solid var(--rule); border-radius: 3px;
+          margin: 18px 0; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th, td { padding: 7px 11px; text-align: left; border-bottom: 1px solid var(--rule);
+         vertical-align: top; }
+th { font-family: var(--f-mono); font-size: 10px; letter-spacing: .09em;
+     text-transform: uppercase; color: var(--ink3); font-weight: 500;
+     background: var(--surface2); white-space: nowrap; }
+tbody tr:last-child td { border-bottom: none; }
+td.m { font-family: var(--f-mono); font-size: 12.5px; white-space: nowrap; }
+td.w { font-family: var(--f-mono); font-size: 12.5px; }
+td.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap;
+       font-family: var(--f-mono); font-size: 12.5px; }
+.role { font-family: var(--f-mono); font-size: 10px; letter-spacing: .07em;
+        text-transform: uppercase; padding: 1px 6px; border-radius: 2px; white-space: nowrap;
+        background: var(--surface2); color: var(--ink3); }
+.role.code { background: var(--tealsoft); color: var(--tealtext); }
+.role.prose { background: var(--ambersoft); color: var(--amber); }
+
+pre { font-family: var(--f-mono); font-size: 12.5px; line-height: 1.55;
+      background: var(--surface); border: 1px solid var(--rule); border-radius: 3px;
+      padding: 16px 18px; overflow-x: auto; margin: 18px 0; color: var(--ink2); }
+pre b { color: var(--tealtext); font-weight: 500; }
+pre i { color: var(--ink3); font-style: normal; }
+
+/* the anatomy of a rendered page: a label rail beside what it holds */
+.anat { display: grid; grid-template-columns: 170px 1fr; gap: 1px;
+        background: var(--rule); border: 1px solid var(--rule);
+        border-radius: 3px; margin: 18px 0; overflow: hidden; }
+.anat > * { background: var(--surface); padding: 11px 14px; }
+.anat dt { font-family: var(--f-mono); font-size: 11px; color: var(--tealtext);
+           background: var(--surface2); }
+.anat dd { margin: 0; font-size: 14px; color: var(--ink2); }
+.anat dd b { color: var(--ink); font-weight: 600; }
+@media (max-width: 560px) {
+  .anat { grid-template-columns: 1fr; }
+  .anat dt { border-top: 2px solid var(--rule2); }
+}
+
+ol.steps { list-style: none; counter-reset: s; padding: 0; margin: 18px 0 0; }
+ol.steps li { counter-increment: s; position: relative; padding-left: 38px;
+              margin-bottom: 16px; }
+ol.steps li::before { content: counter(s); position: absolute; left: 0; top: 1px;
+  font-family: var(--f-mono); font-size: 11px; width: 24px; height: 24px;
+  display: grid; place-items: center; border: 1px solid var(--rule2);
+  border-radius: 99px; color: var(--ink3); }
+ol.steps h3 { margin-bottom: 2px; }
+ol.steps p { font-size: 14.5px; color: var(--ink2); margin: 0; }
+
+.note { background: var(--ambersoft); border: 1px solid var(--amber);
+        border-radius: 3px; padding: 16px 18px; margin: 18px 0; }
+.note h3 { color: var(--amber); }
+.note p { font-size: 14.5px; }
+
+footer { margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--rule);
+         font-size: 13px; color: var(--ink3); }
+@media (max-width: 560px) { .meta { gap: 14px 20px; } }
+</style>
+
+<div class="page">
+
+<p class="eyebrow">RequestBench · design</p>
+<h1>Target Bundles</h1>
+<p class="lede">What each target ships besides its code, how a run pins exactly which version it measured, and what the site renders from that.</p>
+
+<dl class="meta">
+  <div><dt>Date</dt><dd>14 September 2026</dd></div>
+  <div><dt>Adds</dt><dd><code>bundle-v1</code>, a per-target file manifest per run</dd></div>
+  <div><dt>Targets</dt><dd>19 implemented, 43 planned</dd></div>
+  <div><dt>Status</dt><dd>Proposed. Nothing implemented.</dd></div>
+</dl>
+
+<section>
+<div class="sectionhead">
+  <span class="num">§1 · The gap</span>
+  <h2>A number with no link to its code</h2>
+  <p>Every published ratio is produced by a specific version of a specific file, and nothing in the record says which.</p>
+</div>
+
+<p>A run writes an <code>env</code> row and one <code>target</code> row per target. The target row carries <code>framework</code>, <code>version</code>, <code>runtime</code>, <code>adapter</code> and <code>serializer</code> — everything about the dependency, nothing about the code that calls it. The run id ends in six hex characters that look like a content hash and are not: <code>harness/run.py:398</code> is <code>uuid.uuid4().hex[:6]</code>, a nonce to keep two runs in the same minute from colliding.</p>
+
+<p>So when a target's ratio steps between two nights, the first question — did the wiring change, or did the machine? — cannot be answered from the record. It has to be reconstructed by hand from git log, and only if someone remembers to look.</p>
+
+<p><code>docs/plan.html</code> already specifies the fix and it was never built. Its invalidation table lists <em>framework app source</em> against <em>re-measure that one target, both suites</em>, with the mechanism given as <em>content hash</em>. This document is that row, plus the two things it turns out to need: the file set has to be defined before it can be hashed, and the thing worth showing a reader is not a hash.</p>
+</section>
+
+<section>
+<div class="sectionhead">
+  <span class="num">§2 · The bundle</span>
+  <h2>Code, prose, and the manifest that resolved it</h2>
+  <p>A bundle is every file that decides how a target behaves, plus the prose that explains it.</p>
+</div>
+
+<p>Bundles are small. Fastify is one file of wiring; Gin is one; Spring Boot is two plus a POM. The shared domain is three more, and it belongs in every Node target's bundle because a change there moves all six at once.</p>
+
+<div class="scroll">
+<table>
+<thead><tr><th>Role</th><th>What it holds</th><th>Example</th><th class="n">Files</th></tr></thead>
+<tbody>
+<tr><td><span class="role code">source</span></td><td>The target's own wiring. The only thing that differs between frameworks in a language.</td><td class="w">targets/node/fastify/app.js</td><td class="n">1–3</td></tr>
+<tr><td><span class="role code">shared</span></td><td>The domain module every target in the language calls. Changing it moves every target at once, which is why it is in each of their bundles.</td><td class="w">targets/node/_shared/domain.js</td><td class="n">1–3</td></tr>
+<tr><td><span class="role code">manifest</span></td><td>The dependency declaration the version was resolved from.</td><td class="w">targets/node/package.json</td><td class="n">1–2</td></tr>
+<tr><td><span class="role code">config</span></td><td>Framework configuration that is not code. Where a feature is often turned on.</td><td class="w">…/micronaut/src/main/resources/application.properties</td><td class="n">0–2</td></tr>
+<tr><td><span class="role code">host</span></td><td>The entry point for an execution host, where the target has a separate one.</td><td class="w">targets/java/spring-boot/…/rb/lambda/Handler.java</td><td class="n">0–3</td></tr>
+<tr><td><span class="role prose">prose</span></td><td><b>New.</b> Hand-written. What this framework is, how it is wired here, and what is unusual about it.</td><td class="w">targets/node/fastify/README.md</td><td class="n">1</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>The prose is the part that does not exist yet and is the reason to build any of this. A reader who opens Fastify wants to know what they are looking at before they read a route table: that it compiles a JSON Schema per route and that this benchmark deliberately bypasses that by handing <code>req.body</code> to the shared validator, that its content-type parser is overridden here so a function host can hand it a pre-parsed body, that <code>@fastify/compress</code> is registered non-globally so the rest of the blend is unaffected. None of that is recoverable from the code, and all of it is the answer to "why is this row where it is."</p>
+
+<p>One README per target, roughly a screen of text, reviewed in a diff like everything else. It sits in the bundle, so it is hashed and versioned with the code it describes.</p>
+</section>
+
+<section>
+<div class="sectionhead">
+  <span class="num">§3 · Determinism</span>
+  <h2>The hash has to be reproducible or it is worse than nothing</h2>
+  <p>A hash that shifts for reasons unrelated to the code would report changes that did not happen, and the first false alarm retires the whole mechanism.</p>
+</div>
+
+<p>Five rules, versioned together as <code>bundle-v1</code>, because changing any of them silently reissues every hash in the series.</p>
+
+<div class="scroll">
+<table>
+<thead><tr><th>Rule</th><th>Why this way</th></tr></thead>
+<tbody>
+<tr><td class="w">File set comes from <code>git ls-files</code> over the bundle's roots, never a filesystem walk</td><td>A walk picks up whatever is on disk: an editor backup, <code>.DS_Store</code>, a stale build artifact, <code>node_modules</code>. Git's index is the definition of what is committed, and it is identical on every machine that checks out the same commit.</td></tr>
+<tr><td class="w">Paths repo-relative, forward slashes, sorted bytewise</td><td>Directory order differs between filesystems, and locale-aware sorting differs between machines. Bytewise on a normalised path is the same everywhere.</td></tr>
+<tr><td class="w">SHA-256 over raw file bytes, hex, full digest</td><td>No truncation: these are per-file identities in a series kept for years, and the manifest is small enough that sixty-four characters cost nothing.</td></tr>
+<tr><td class="w"><code>.gitattributes</code> pins <code>* text=auto eol=lf</code></td><td>Without it a Windows checkout produces CRLF, every file hash changes, and every target looks rewritten. This is the failure mode most likely to actually happen.</td></tr>
+<tr><td class="w">Bundle hash is SHA-256 over the canonical manifest text, one <code>&lt;hash&gt;&nbsp;&nbsp;&lt;path&gt;</code> line per file in sorted order</td><td>Hashing a JSON serialisation would make the hash depend on key order, spacing and how a language's encoder escapes. A line-oriented canonical form has one representation.</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>Two rollups, not one</h3>
+
+<p>Per-file hashes mean any subset can be rolled up after the fact, and two subsets are worth naming. <code>code_hash</code> covers <code>source</code>, <code>shared</code>, <code>manifest</code>, <code>config</code> and <code>host</code>. <code>bundle_hash</code> covers those and <code>prose</code>.</p>
+
+<p>Regression attribution uses <code>code_hash</code>, so that correcting a typo in a README does not read as a target that changed. Page rendering uses <code>bundle_hash</code>, so that a corrected README does produce a new page. Keeping both is free once the manifest lists files individually, and conflating them would make one of the two behaviours wrong.</p>
+</section>
+
+<section>
+<div class="sectionhead">
+  <span class="num">§4 · The manifest</span>
+  <h2>What a run writes down</h2>
+  <p>One manifest per target per run, content-addressed so an unchanged target writes nothing new.</p>
+</div>
+
+<pre>{
+  "bundle_version": "bundle-v1",
+  "target":     "node:fastify",
+  <b>"bundle_hash"</b>: "sha256:9f2c…",        <i>every file, prose included</i>
+  <b>"code_hash"</b>:   "sha256:41ab…",        <i>every file except prose</i>
+  "commit":     "3c545cd…",
+  "framework":  { "name": "fastify", "version": "5.12.4", "license": "MIT",
+                  "repo": "https://github.com/fastify/fastify",
+                  "homepage": "https://fastify.dev/" },
+  "files": [
+    { "path": "targets/node/_shared/domain.js", "role": "shared",   "bytes": 9316, "hash": "sha256:…" },
+    { "path": "targets/node/_shared/host.js",   "role": "shared",   "bytes":  742, "hash": "sha256:…" },
+    { "path": "targets/node/fastify/README.md", "role": "prose",    "bytes": 1840, "hash": "sha256:…" },
+    { "path": "targets/node/fastify/app.js",    "role": "source",   "bytes": 4108, "hash": "sha256:…" },
+    { "path": "targets/node/package.json",      "role": "manifest", "bytes":  711, "hash": "sha256:…" }
+  ]
+}</pre>
+
+<p>The run record gains three fields and nothing else: <code>bundle_hash</code> and <code>code_hash</code> on each <code>target</code> row, beside <code>serializer</code>, and <code>commit</code> plus <code>repo</code> on the <code>env</code> row. That is about ninety values for a forty-three target run, well under a kilobyte, and it is what makes every past run answerable.</p>
+
+<p><code>repo</code> is the <code>owner/name</code> slug, taken from <code>GITHUB_REPOSITORY</code> when a run is in Actions and parsed from <code>git remote get-url origin</code> otherwise. It is recorded rather than hard-coded so a fork's pages link to the fork's own code, and it is what turns the manifest into something clickable — see §7.</p>
+
+<p>Manifests themselves are written once per distinct <code>bundle_hash</code>, not once per run. A manifest is five to ten file entries, roughly a kilobyte; a full set across forty-three targets is about forty kilobytes, and a night where nobody edited a target adds nothing at all. That is the same content-addressing argument as the quantile summaries in <code>docs/blend-v2.html</code>: nightly cost should track how often things change, not how often they are measured.</p>
+
+<h3>Where the content itself comes from</h3>
+
+<p>The manifest holds hashes, not file contents. The site build runs inside the repository and therefore has the full history, so it resolves each path with <code>git show &lt;commit&gt;:&lt;path&gt;</code> and checks what comes back against the recorded hash. Storing contents as well would duplicate git for no gain.</p>
+
+<p>This has one real failure mode and it should behave loudly. If history no longer holds a path — the file was moved, or the branch was rewritten — the hash will not verify, and the page says the source for that run is unavailable rather than rendering today's file under an old number. Silently showing the wrong code is the thing this whole design exists to prevent, so the check is not optional.</p>
+</section>
+
+<section>
+<div class="sectionhead">
+  <span class="num">§5 · Framework metadata</span>
+  <h2>Derived at run time, not declared by hand</h2>
+  <p>Repository, licence and homepage are already sitting in the resolved dependency tree at the moment a run boots.</p>
+</div>
+
+<div class="scroll">
+<table>
+<thead><tr><th>Language</th><th>Source</th><th>Yields</th></tr></thead>
+<tbody>
+<tr><td class="m">node</td><td class="w">node_modules/&lt;pkg&gt;/package.json</td><td>version, license, homepage, repository. Present after the <code>npm ci</code> the run already does.</td></tr>
+<tr><td class="m">go</td><td class="w">go.mod module path</td><td>The repository directly: <code>github.com/gin-gonic/gin</code> is both the import path and the repo. Licence from the module cache.</td></tr>
+<tr><td class="m">java</td><td class="w">the resolved POM in the local Maven repository</td><td><code>&lt;url&gt;</code>, <code>&lt;scm&gt;</code> and <code>&lt;licenses&gt;</code>, after the build Maven has already run.</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Deriving beats declaring here for the same reason the framework version is already derived rather than written into <code>matrix.json</code>: a declared repository URL is correct until the day it is not, and nothing would notice. It also means a framework that moves its repository is reported correctly the next night with no pull request.</p>
+
+<p>What stays declared in <code>spec/matrix.json</code> is the thing no manifest knows: which mechanism each target used for each feature, and why a target has none. That declaration already exists in <code>docs/blend-v2.html</code> for the feature families, and the framework page is where it gets read.</p>
+</section>
+
+<section>
+<div class="sectionhead">
+  <span class="num">§6 · The framework page</span>
+  <h2>What a reader gets when they click a row</h2>
+  <p>A short README rather than a code dump. The full source is a link; the page is the orientation.</p>
+</div>
+
+<dl class="anat">
+  <dt>Identity</dt><dd>The project's logo, then <b>Fastify 5.12.4</b> · node 24 · MIT · repository, homepage and docs, from the manifest. The version is the one that was measured, not the one on npm today.</dd>
+  <dt>Prose</dt><dd>The hand-written README. What this framework is, how it is wired here, what is unusual. The only part a person writes.</dd>
+  <dt>Standing</dt><dd>Its current ratio, its rank within its language, and its own history. Links back to the table it came from.</dd>
+  <dt>Handlers</dt><dd>Three snippets, chosen rather than arbitrary: <span class="mono">json.small</span> for the plainest possible route, <span class="mono">parameters.two</span> for captures, and one feature wiring. Defaulted, overridable per target where the default is unrepresentative. Each one links out to those exact lines on GitHub at the commit that was measured, so reading further is one click rather than a search.</dd>
+  <dt>Features</dt><dd>One row per feature family: the declared mechanism, the dependency that provides it, and the configuration snippet. This is where <span class="mono">@fastify/compress, route-scoped</span> sits next to Spring's <span class="mono">server.compression.enabled</span>.</dd>
+  <dt>Bundle</dt><dd>The file list with per-file hashes, and which files changed since the previous run. Usually empty, which is the point: when it is not, it is the first thing to read.</dd>
+</dl>
+
+<h3>Logos</h3>
+
+<p>The mark is what makes a row recognisable before the name is read, and it is the one asset on the page that cannot be derived: no package manifest carries a logo field. Four decisions make forty-three of them tractable.</p>
+
+<div class="scroll">
+<table>
+<thead><tr><th>Decision</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td class="w">Vendored into <code>site/logos/</code>, never hot-linked</td><td>A hot-linked mark breaks when a project reorganises its site, and it points every visitor's browser at someone else's server. Vendoring also means the page renders offline and from a build artifact.</td></tr>
+<tr><td class="w">Recorded in <code>site/logos/index.json</code>: source URL, licence or brand-guideline URL, the date fetched, and whether redistribution is permitted</td><td>Using a mark to identify the thing being benchmarked is ordinary nominative use, which is what every comparison does. Some projects still publish brand terms that restrict redistribution, and a few have none at all. Recording the answer per logo takes one line and makes the question answerable later without re-deriving it.</td></tr>
+<tr><td class="w">Normalised to a fixed box on a neutral tile, SVG preferred</td><td>Forty-three marks arrive at every aspect ratio, some square glyphs, some wide wordmarks. A fixed box with padding makes a grid of them read as one system. The tile matters more than it sounds: plenty of logos are dark-on-transparent and disappear entirely on a dark ground, and a fixed tile background guarantees contrast in both themes without needing a second variant of every mark.</td></tr>
+<tr><td class="w">A monogram fallback, rendered from the framework name in the page's own type</td><td>Some targets have no logo — <code>net-http</code> and <code>node-http</code> are standard libraries, not products. Others have terms that do not permit vendoring. A typographic fallback covers both without leaving a hole in the grid, and it is a deliberate placeholder rather than a broken image.</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Logos stay out of the bundle, for the same reason prose stays out of <code>code_hash</code>. A logo is a property of the framework, not of the target's wiring, and swapping one should not read as a target that changed. They live under <code>site/</code> with the rest of the presentation, and the gate checks only that every target resolves either a vendored mark or a declared fallback reason.</p>
+
+<h3>Comparison, which is the other half</h3>
+
+<p>The same data transposed gives the two views worth having. An <b>endpoint page</b> stacks every target's wiring for one endpoint, grouped by language — because the domain logic is shared, what remains is only the wiring, so three lines of Fastify sit legibly beside three lines of Gin and a Spring annotation. A <b>feature page</b> does it for a mechanism rather than a route: for each target, the declared mechanism, the dependency line, the configuration, and the route it is scoped to.</p>
+
+<p>The feature page is the one that explains the numbers. A reader looking at the compression column can see that one target buffers the whole response and another streams it, stated as code rather than inferred from a bar.</p>
+</section>
+
+<section>
+<div class="sectionhead">
+  <span class="num">§7 · Extraction</span>
+  <h2>Snippets come from the path, not from markers</h2>
+  <p>Measured against the nineteen implemented targets rather than assumed.</p>
+</div>
+
+<p>An endpoint's wiring can be found by matching its spec path as a regex that tolerates any capture syntax — <code>:one</code>, <code>{one}</code>, <code>&lt;one&gt;</code> — then expanding from that line backward through annotations and forward to balanced delimiters. Run against all nineteen targets, every framework target resolves 38 of 40 endpoints. The two it misses are the same two everywhere and they are correct misses: one is a value on a route that already exists, the other is deliberately unregistered. Annotations and route tables both work, across sixteen frameworks in three languages.</p>
+
+<p>The baselines resolve 4 of 40, and that is the real finding. They dispatch with a segment switch — <code>switch (seg[0]) { case "plaintext": … }</code> — so there is no path literal anywhere to anchor on.</p>
+
+<div class="scroll">
+<table>
+<thead><tr><th>Case</th><th class="n">Coverage</th><th>Treatment</th></tr></thead>
+<tbody>
+<tr><td class="w">16 framework targets</td><td class="n">38 / 40</td><td>Derived. No annotation.</td></tr>
+<tr><td class="w">6 baselines</td><td class="n">4 / 40</td><td>Markers, one per <code>case</code> block and naming several ids at once, so roughly twenty per baseline rather than forty.</td></tr>
+<tr><td class="w">Feature configuration</td><td class="n">—</td><td>Markers. There is no path to anchor on, and the configuration is often in another file entirely.</td></tr>
+<tr><td class="w">Routeless endpoints</td><td class="n">2</td><td>A spec field, not a marker: <code>errors.not_found</code> points at <code>domain.lookup</code>'s route, <code>errors.unmatched</code> at the framework's 404 handler.</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Two checks keep an extraction honest. Every snippet must contain the path it claims to implement, which catches a wrong expansion instead of shipping it. And a path that matches in more than one place is an error rather than a first-match, because the prototype's first-match rule is exactly how a comment or a test would get rendered as the implementation.</p>
+
+<h3>Every snippet is a link into GitHub</h3>
+
+<p>The expansion already computes where a snippet starts and ends, so recording those two numbers costs nothing and makes each snippet addressable in the browser. A snippet record is the path, the line range, and the hash of the file it came from.</p>
+
+<pre>{ "endpoint": "json.small", "target": "node:fastify",
+  "path": "targets/node/fastify/app.js", <b>"start_line": 30, "end_line": 30</b>,
+  "hash": "sha256:…" }          <i>the file's hash, from the bundle manifest</i>
+
+<i>composed at render time from env.repo + env.commit + the record above:</i>
+<b>https://github.com/</b>ipjohnson/RequestBench<b>/blob/</b>853ae6c…<b>/</b>targets/node/fastify/app.js<b>#L30</b></pre>
+
+<p>Four rules about that URL. It is composed at render time rather than stored, because the parts are data and the template is presentation; storing full URLs would bloat every record and hard-code the host. It always uses the full forty-character SHA rather than a branch name, so a link from a run in March still opens the code that ran in March. It uses <code>blob</code> rather than <code>raw</code>, so the reader gets highlighting and the range highlighted in place, and can browse outward from there. And a single-line snippet emits <code>#L30</code> rather than <code>#L30-L30</code>, which is what GitHub's own copy-link produces.</p>
+
+<p>The link is emitted only when the file's recorded hash verifies against the content at that commit. A mismatch means the line numbers describe different bytes than the ones measured, so the link would open real code at the wrong lines — the most convincing way to be wrong. The page shows the snippet without a link in that case and says why.</p>
+
+<p>One practical limit: a permalink to a commit that was never pushed returns a 404. Nightly runs are Actions runs on a pushed commit, so this only affects local runs, and a local run is already marked a smoke test and never recorded. Where the commit is not on a remote, the page renders the snippet and omits the link rather than guessing at a branch.</p>
+</section>
+
+<section>
+<div class="sectionhead">
+  <span class="num">§8 · Machinery</span>
+  <h2>What this adds</h2>
+</div>
+
+<div class="scroll">
+<table>
+<thead><tr><th>File</th><th>Change</th></tr></thead>
+<tbody>
+<tr><td class="m">.gitattributes</td><td>New. <code>* text=auto eol=lf</code>. Without it the hashes are not reproducible across checkouts, which makes everything else here unreliable.</td></tr>
+<tr><td class="m">harness/bundle.py</td><td>New. Resolves a target's roots to a file list through <code>git ls-files</code>, hashes each file, derives the framework metadata from the resolved dependency tree, and emits the manifest. Called by <code>run.py</code> per target and standalone for the site build.</td></tr>
+<tr><td class="m">harness/run.py</td><td>Write <code>bundle_hash</code> and <code>code_hash</code> on each <code>target</code> row and <code>commit</code> plus <code>repo</code> on the <code>env</code> row. This is the only change that has to land before the next run to be worth anything, because it is the only one that cannot be backfilled.</td></tr>
+<tr><td class="m">harness/snippets.py</td><td>New. Derives endpoint wiring from spec paths, reads markers for the baselines and the feature configuration, records each snippet's line range, and enforces the two checks in §7.</td></tr>
+<tr><td class="m">spec/matrix.json</td><td>Bundle roots per target, where the convention does not cover it, and the per-feature mechanism declarations <code>docs/blend-v2.html</code> already calls for.</td></tr>
+<tr><td class="m">targets/&lt;lang&gt;/&lt;target&gt;/README.md</td><td>New, one per target. Nineteen to write now, forty-three eventually. The largest piece of work here and the only part that is not mechanical.</td></tr>
+<tr><td class="m">site/logos/</td><td>New. One normalised mark per target plus <code>index.json</code> recording each one's source, terms and fetch date. Outside the bundle on purpose.</td></tr>
+<tr><td class="m">site/build.py</td><td>Framework pages, endpoint comparison pages, feature comparison pages. Resolves file content from git at the recorded commit and verifies it against the manifest. Renders the monogram fallback where no mark is vendored.</td></tr>
+<tr><td class="m">.github/workflows/validate.yml</td><td>Coverage gate, the same shape as the conformance matrix: every target resolves a snippet for every endpoint it implements, every snippet contains its own path, every target has a README, every declared feature dependency exists in that target's manifest, and every target resolves a logo or a declared reason it has none.</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="note">
+<h3>One ordering constraint</h3>
+<p>Everything here except the run-record fields can be built later and applied to the code as it stands. <code>bundle_hash</code>, <code>code_hash</code> and <code>commit</code> cannot: a run that did not record them cannot have them added afterwards, because the point of the record is what was true at the moment it was measured. Every night that passes without them is a night whose numbers stay unattributable.</p>
+</div>
+</section>
+
+<section>
+<div class="sectionhead">
+  <span class="num">§9 · Sequence</span>
+  <h2>Order of work</h2>
+</div>
+
+<ol class="steps">
+<li><h3><code>.gitattributes</code>, then <code>bundle.py</code>, then the run fields</h3><p>The line-ending pin has to precede the first hash or the first cross-platform checkout invalidates everything. These three are small and they are the only time-sensitive part.</p></li>
+<li><h3>The snippet extractor and its gate</h3><p>Derivation for the framework targets, markers for the six baselines. The gate goes in at the same time, because an extractor without coverage enforcement quietly stops covering things.</p></li>
+<li><h3>Feature markers and the mechanism declarations</h3><p>Follows the feature families in <code>docs/blend-v2.html</code> landing in the targets. Marking a registration that does not exist yet is not possible.</p></li>
+<li><h3>The READMEs</h3><p>Nineteen of them. Worth writing as each target is touched for the blend-v2 wiring rather than as a batch afterwards, because that is when the unusual parts are fresh.</p></li>
+<li><h3>Framework pages, then the comparison views</h3><p>The single-target page first, since it needs only one manifest and one README to be worth looking at. Logos can be collected in one pass at any point, since nothing depends on them. Endpoint and feature comparison pages come free from the same data once more than one target is done.</p></li>
+</ol>
+</section>
+
+<footer>
+Written 14 September 2026 against <code>lang/java</code> at <code>853ae6c</code>. Line references were accurate at that commit. Extraction coverage in §7 was measured against the nineteen implemented targets. Companion to <code>docs/blend-v2.html</code>, which designs the endpoint set these bundles implement, and to <code>docs/plan.html</code>, whose invalidation table names the content hash this document specifies.
+</footer>
+
+</div>

@@ -1,0 +1,701 @@
+<title>Blend v2 Endpoints</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root {
+  --ground: #F4F5F2; --surface: #FCFCFB; --surface2: #EDEFEA;
+  --ink: #121917; --ink2: #58655F; --ink3: #66716A;
+  --rule: #DCE0DB; --rule2: #C3C9C2;
+  --teal: #00836E; --tealtext: #00705E; --tealsoft: #DCEBE6;
+  --amber: #A6670C; --ambersoft: #F6ECDB;
+  --crimson: #A03E5C; --crimsonsoft: #F3E3E8;
+  --onfill: #FFFFFF;
+  --f-display: "Newsreader", Georgia, serif;
+  --f-body: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --ground: #121513; --surface: #1A1E1B; --surface2: #232823;
+  --ink: #E8ECE7; --ink2: #9AA59E; --ink3: #949E98;
+  --rule: #2A302C; --rule2: #3A423C;
+  --teal: #35AD97; --tealtext: #35AD97; --tealsoft: #17302B;
+  --amber: #DDA03C; --ambersoft: #2C2314;
+  --crimson: #C05A78; --crimsonsoft: #2E1A20;
+  --onfill: #101614;
+} }
+:root[data-theme="dark"] {
+  --ground: #121513; --surface: #1A1E1B; --surface2: #232823;
+  --ink: #E8ECE7; --ink2: #9AA59E; --ink3: #949E98;
+  --rule: #2A302C; --rule2: #3A423C;
+  --teal: #35AD97; --tealtext: #35AD97; --tealsoft: #17302B;
+  --amber: #DDA03C; --ambersoft: #2C2314;
+  --crimson: #C05A78; --crimsonsoft: #2E1A20;
+  --onfill: #101614;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--ground); color: var(--ink);
+       font-family: var(--f-body); font-size: 15px; line-height: 1.6;
+       -webkit-font-smoothing: antialiased; }
+.page { max-width: 880px; margin: 0 auto;
+        padding-inline: clamp(16px, 4vw, 40px); padding-block: clamp(28px, 5vw, 56px) 72px; }
+a { color: var(--tealtext); }
+code, .mono { font-family: var(--f-mono); font-size: .92em; }
+code { background: var(--surface2); padding: 1px 4px; border-radius: 2px; }
+
+.eyebrow { font-family: var(--f-mono); font-size: 11px; letter-spacing: .13em;
+           text-transform: uppercase; color: var(--ink3);
+           display: flex; gap: 12px; align-items: center; margin: 0 0 14px; }
+.eyebrow::after { content: ""; flex: 1; height: 1px; background: var(--rule2); }
+h1 { font-family: var(--f-display); font-weight: 600; letter-spacing: -.02em;
+     font-size: clamp(30px, 5vw, 44px); line-height: 1.05; margin: 0 0 16px;
+     text-wrap: balance; }
+.lede { font-family: var(--f-display); font-size: clamp(16px, 2vw, 19px);
+        color: var(--ink2); max-width: 62ch; margin: 0; }
+h2 { font-family: var(--f-display); font-weight: 600; font-size: 25px;
+     letter-spacing: -.01em; margin: 0 0 4px; text-wrap: balance; }
+h3 { font-family: var(--f-body); font-weight: 600; font-size: 16px; margin: 0 0 6px; }
+section > h3 { margin-top: 34px; padding-top: 12px; border-top: 1px solid var(--rule);
+               font-family: var(--f-display); font-size: 19px; }
+p { margin: 0 0 14px; max-width: 68ch; }
+p:last-child { margin-bottom: 0; }
+
+section { margin-top: 52px; }
+.sectionhead { border-top: 2px solid var(--ink); padding-top: 14px; margin-bottom: 24px; }
+.sectionhead .num { font-family: var(--f-mono); font-size: 11px; letter-spacing: .12em;
+                    color: var(--ink3); text-transform: uppercase; display: block; margin-bottom: 8px; }
+.sectionhead p { color: var(--ink2); margin: 6px 0 0; }
+
+.meta { display: flex; flex-wrap: wrap; gap: 8px 28px; margin-top: 26px;
+        padding-top: 18px; border-top: 1px solid var(--rule); }
+.meta div { display: flex; flex-direction: column; gap: 2px; }
+.meta dt { font-family: var(--f-mono); font-size: 10px; letter-spacing: .1em;
+           text-transform: uppercase; color: var(--ink3); }
+.meta dd { margin: 0; font-size: 14px; }
+
+/* the derivation: base endpoint, the one factor added, the endpoint that results */
+.derive { display: grid; grid-template-columns: 1fr auto 1fr; gap: 1px;
+          background: var(--rule); border: 1px solid var(--rule);
+          border-radius: 3px; margin: 20px 0; overflow: hidden; }
+.derive > * { background: var(--surface); padding: 9px 13px; font-size: 13px;
+              display: flex; align-items: center; }
+.derive .hd { background: var(--surface2); font-family: var(--f-mono); font-size: 10px;
+              letter-spacing: .09em; text-transform: uppercase; color: var(--ink3); }
+.derive .f { font-family: var(--f-mono); font-size: 12.5px; }
+.derive .plus { color: var(--tealtext); white-space: nowrap; justify-content: center; }
+.derive .out { font-family: var(--f-mono); font-size: 12.5px; color: var(--tealtext); }
+@media (max-width: 560px) {
+  .derive { grid-template-columns: 1fr; }
+  .derive .hd { display: none; }
+  .derive .plus { justify-content: flex-start; }
+  .derive .out { border-bottom: 2px solid var(--rule2); }
+}
+
+/* one block per family: what it is, the rows, and the three lines that define the delta */
+.grp { border: 1px solid var(--rule); border-radius: 3px; background: var(--surface);
+       margin-bottom: 20px; overflow: hidden; }
+/* a family that is measured but carries no weight in the published aggregate */
+.grp.unweighted { border-color: var(--amber); }
+.grp.unweighted .grphead { background: var(--ambersoft); }
+.zero { font-family: var(--f-mono); font-size: 10px; letter-spacing: .07em;
+        text-transform: uppercase; padding: 1px 6px; border-radius: 2px;
+        background: var(--ambersoft); color: var(--amber); white-space: nowrap; }
+.grp.unweighted .zero { background: var(--surface); }
+.grphead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px;
+           padding: 14px 16px 12px; border-bottom: 1px solid var(--rule); }
+.grphead h3 { font-family: var(--f-mono); font-size: 14px; margin: 0; letter-spacing: -.01em; }
+.grphead .cnt { font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .07em;
+                text-transform: uppercase; color: var(--ink3); margin-left: auto;
+                white-space: nowrap; font-variant-numeric: tabular-nums; }
+.grphead .job { flex-basis: 100%; font-size: 14px; color: var(--ink2); margin: 0; }
+.grp .scroll { border: none; border-radius: 0; margin: 0; }
+.holds { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+         gap: 1px; background: var(--rule); border-top: 1px solid var(--rule); }
+.holds div { background: var(--surface2); padding: 10px 16px; }
+.holds dt { font-family: var(--f-mono); font-size: 9.5px; letter-spacing: .1em;
+            text-transform: uppercase; color: var(--ink3); margin-bottom: 2px; }
+.holds dd { margin: 0; font-size: 13px; color: var(--ink2); }
+.holds dd .mono { font-size: 12px; color: var(--ink); }
+
+.scroll { overflow-x: auto; border: 1px solid var(--rule); border-radius: 3px;
+          margin: 18px 0; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th, td { padding: 7px 11px; text-align: left; border-bottom: 1px solid var(--rule);
+         vertical-align: top; }
+th { font-family: var(--f-mono); font-size: 10px; letter-spacing: .09em;
+     text-transform: uppercase; color: var(--ink3); font-weight: 500;
+     background: var(--surface2); white-space: nowrap; }
+tbody tr:last-child td { border-bottom: none; }
+td.m { font-family: var(--f-mono); font-size: 12.5px; white-space: nowrap; }
+td.w { font-family: var(--f-mono); font-size: 12.5px; }
+td.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap;
+       font-family: var(--f-mono); font-size: 12.5px; }
+td.base { font-family: var(--f-mono); font-size: 11.5px; color: var(--ink3); white-space: nowrap; }
+tr.cut td { color: var(--ink3); }
+tr.cut td.m:first-child { text-decoration: line-through; }
+.v { font-family: var(--f-mono); font-size: 10px; letter-spacing: .07em;
+     text-transform: uppercase; padding: 1px 6px; border-radius: 2px; white-space: nowrap; }
+.v.new { background: var(--tealsoft); color: var(--tealtext); }
+.v.cut { background: var(--crimsonsoft); color: var(--crimson); }
+.v.keep { background: var(--ambersoft); color: var(--amber); }
+
+pre { font-family: var(--f-mono); font-size: 12.5px; line-height: 1.55;
+      background: var(--surface); border: 1px solid var(--rule); border-radius: 3px;
+      padding: 16px 18px; overflow-x: auto; margin: 18px 0; color: var(--ink2); }
+pre b { color: var(--tealtext); font-weight: 500; }
+pre i { color: var(--ink3); font-style: normal; }
+
+ol.steps { list-style: none; counter-reset: s; padding: 0; margin: 18px 0 0; }
+ol.steps li { counter-increment: s; position: relative; padding-left: 38px;
+              margin-bottom: 16px; }
+ol.steps li::before { content: counter(s); position: absolute; left: 0; top: 1px;
+  font-family: var(--f-mono); font-size: 11px; width: 24px; height: 24px;
+  display: grid; place-items: center; border: 1px solid var(--rule2);
+  border-radius: 99px; color: var(--ink3); }
+ol.steps h3 { margin-bottom: 2px; }
+ol.steps p { font-size: 14.5px; color: var(--ink2); margin: 0; }
+
+.note { background: var(--ambersoft); border: 1px solid var(--amber);
+        border-radius: 3px; padding: 16px 18px; margin: 18px 0; }
+.note h3 { color: var(--amber); }
+.note p { font-size: 14.5px; }
+
+footer { margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--rule);
+         font-size: 13px; color: var(--ink3); }
+@media (max-width: 560px) {
+  .meta { gap: 14px 20px; }
+}
+</style>
+
+<div class="page">
+
+<p class="eyebrow">RequestBench · design</p>
+<h1>Blend v2 Endpoints</h1>
+<p class="lede">The endpoint set as it should be: forty-two endpoints whose names say what they test, built by adding one feature at a time to a fixed JSON response, sampled evenly, and weighted only when someone asks for an aggregate.</p>
+
+<dl class="meta">
+  <div><dt>Date</dt><dd>14 September 2026</dd></div>
+  <div><dt>Replaces</dt><dd><code>blend-v1</code>, 40 endpoints, 8 families</dd></div>
+  <div><dt>Proposes</dt><dd><code>blend-v2</code>, 42 endpoints, 13 families</dd></div>
+  <div><dt>Sampling</dt><dd>Uniform. 32,857 requests per endpoint per run.</dd></div>
+  <div><dt>Status</dt><dd>Proposed. Nothing implemented.</dd></div>
+</dl>
+
+<section>
+<div class="sectionhead">
+  <span class="num">§1 · The rule</span>
+  <h2>The path is the name of the test</h2>
+  <p>One rule generates the whole set, and it is the only thing worth memorising.</p>
+</div>
+
+<p>Today an endpoint id says where it sits in a taxonomy and its path says what resource it returns. Neither says what is being measured. <code>nf.dashboard</code> serves <code>/dashboard</code>; the family note says it exercises "a deeper middleware chain", which you cannot recover from either string. <code>jr.product</code> serves <code>/products/{product}</code> and <code>pp.cust_orders</code> serves <code>/customers/{customer}/orders</code>; they sit in different families but both are a GET with a path capture, and nothing explains the split.</p>
+
+<p>In v2 the first path segment names the thing under test and the rest names the arm. <code>/compressed/medium</code> is the medium payload with compression on. <code>/parameters/{one}/with-second/{two}</code> is the router carrying two captures. The id is the same words with a dot, so <code>compressed.medium</code> and <code>parameters.two</code> need no lookup table.</p>
+
+<p>The rule that makes the names honest is the one underneath: <b>every feature endpoint is a baseline endpoint plus exactly one factor.</b> The response payload is a controlled variable with three fixed values, and a feature family reuses one of them unchanged. Subtracting the base from the arm leaves the feature and nothing else.</p>
+
+<div class="derive">
+  <span class="hd">Base</span><span class="hd">Add one factor</span><span class="hd">Endpoint</span>
+  <span class="f">/json/small</span><span class="plus">+ bearer token</span><span class="out">/authorized/small</span>
+  <span class="f">/json/medium</span><span class="plus">+ gzip -6</span><span class="out">/compressed/medium</span>
+  <span class="f">/json/large</span><span class="plus">+ ETag</span><span class="out">/cached/large</span>
+  <span class="f">/cached/large</span><span class="plus">+ If-None-Match</span><span class="out">304, no body</span>
+  <span class="f">/json/small</span><span class="plus">+ two captures</span><span class="out">/parameters/{one}/…</span>
+  <span class="f">/json/small</span><span class="plus">+ 16 no-op layers</span><span class="out">/middleware/sixteen</span>
+  <span class="f">/body/bind/small</span><span class="plus">+ validation</span><span class="out">/body/validate/small</span>
+</div>
+
+<p>Two consequences are worth stating before the set, because they look like mistakes otherwise. Some endpoints share a path and differ only in the request: <code>authorized.allowed</code> and <code>authorized.denied</code> are both <code>GET /authorized/small</code>, separated by whether the bearer token is the right one. That is deliberate. Routing cost has to be identical for the delta to be the authorization outcome, and the only way to hold routing constant is to use the same route. The id carries the distinction, and <code>spec/plan.json</code> already supports two endpoints over one path — <code>bv.order</code> and <code>bv.rejected</code> both post to <code>/orders/validate</code> today.</p>
+
+<p>The other is that features get their own paths rather than riding on the JSON routes. <code>/compressed/small</code> exists instead of sending <code>accept-encoding: gzip</code> to <code>/json/small</code>, because compression wired globally puts a "did they ask?" check on every response in the blend and contaminates the baseline it is measured against. Feature wiring is scoped to the feature's routes.</p>
+
+<p>Finally, being in the set and being in an aggregate are separated. Two endpoints render templates, and templates cannot be ranked across languages — Thymeleaf, Handlebars and <code>html/template</code> are different products. They are sampled exactly like everything else, on the same process microseconds from their own comparison point, and they are simply absent from the weight vector of any blend meant to rank. §5 is how that works.</p>
+</section>
+
+<section>
+<div class="sectionhead">
+  <span class="num">§2 · Payloads</span>
+  <h2>Three responses, and everything reuses them</h2>
+  <p>The payload is the controlled variable. It has three values and they are generated, committed and identical in every language.</p>
+</div>
+
+<p><code>harness/make_fixture.py</code> gains a <code>payloads</code> key holding all three, built from the same seeded generator that already produces the products and orders. Each is an object with a fixed envelope and an array of records, so the three differ in record count and in nothing else. Shape is deliberately not crossed with size here; a flat-versus-nested pair would need its own arm and does not exist in v2.</p>
+
+<div class="scroll">
+<table>
+<thead><tr><th>Payload</th><th class="n">Records</th><th class="n">Bytes</th><th class="n">gzip −6</th><th class="n">Ratio</th><th>Regime it sits in</th></tr></thead>
+<tbody>
+<tr><td class="m">small</td><td class="n">1</td><td class="n">125</td><td class="n">125</td><td class="n">1.00</td><td>One write. Fits any buffer. Compressing it is pure loss.</td></tr>
+<tr><td class="m">medium</td><td class="n">89</td><td class="n">8,131</td><td class="n">1,392</td><td class="n">0.17</td><td>Inside a default 16&nbsp;KiB socket buffer, past any stack buffer.</td></tr>
+<tr><td class="m">large</td><td class="n">1,425</td><td class="n">131,360</td><td class="n">18,896</td><td class="n">0.14</td><td>Several writes. Framing and partial-write handling show up.</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Record counts are the pinned quantity; the byte counts are what those counts produce and are stated so a reader can check <code>content-length</code> against them. They were computed against the proposed generator, not measured from a target. Sizes sit safely inside a regime rather than on a boundary — probing where the boundary is needs more than three points and is a different question.</p>
+
+<p>The records are distinct rather than fifty fixture products cycled. Cycling compresses 26:1 and would make gzip look free; distinct records land at 7:1, which is ordinary for JSON. The small payload is the one that earns its slot twice over: gzip −6 turns 125 bytes into 125 bytes, so <code>compressed.small</code> minus <code>json.small</code> is the cost a framework pays to achieve nothing, which is exactly the threshold behaviour worth exposing.</p>
+
+<p>Request bodies use small and medium only. A 131&nbsp;KB request body at rung 5 would move 1.5&nbsp;GB/s across loopback and measure the kernel. Response bodies do use large: <code>json.large</code>, <code>compressed.large</code> and <code>cached.large</code> together move about 110&nbsp;MB/s at rung 5, which loopback carries comfortably and which is the first thing to check if rung 5 ever looks strange.</p>
+</section>
+
+<section>
+<div class="sectionhead">
+  <span class="num">§3 · The set</span>
+  <h2>Forty-two endpoints in thirteen families</h2>
+  <p>Each block gives the family's job, its rows, and the three lines that define what its deltas mean. <code>Base</code> is the endpoint to subtract. There is no weight column: every endpoint is drawn with equal probability, and what counts toward an aggregate is decided in <code>spec/blends.json</code> rather than here.</p>
+</div>
+
+<div class="grp">
+  <div class="grphead"><h3>baseline</h3><span class="cnt">1 endpoint</span>
+    <p class="job">The dispatch floor. No serialization, no body, no captures, no headers read.</p></div>
+  <div class="scroll"><table>
+  <thead><tr><th>Id</th><th>Method</th><th>Path</th><th class="n">Expect</th><th>Base</th></tr></thead>
+  <tbody>
+  <tr><td class="m">baseline.plaintext</td><td class="m">GET</td><td class="w">/plaintext</td><td class="n">200</td><td class="base">—</td></tr>
+  </tbody></table></div>
+  <dl class="holds">
+    <div><dt>Held constant</dt><dd>Everything. This is the floor.</dd></div>
+    <div><dt>Varies</dt><dd>Nothing.</dd></div>
+    <div><dt>The delta reads</dt><dd>Subtracted from <span class="mono">json.small</span> it isolates serialization from dispatch.</dd></div>
+  </dl>
+</div>
+
+<div class="grp">
+  <div class="grphead"><h3>json</h3><span class="cnt">3 endpoints</span>
+    <p class="job">The denominator for every feature family. One fixture read, one serialize, one write.</p></div>
+  <div class="scroll"><table>
+  <thead><tr><th>Id</th><th>Method</th><th>Path</th><th class="n">Expect</th><th>Base</th></tr></thead>
+  <tbody>
+  <tr><td class="m">json.small</td><td class="m">GET</td><td class="w">/json/small</td><td class="n">200</td><td class="base">—</td></tr>
+  <tr><td class="m">json.medium</td><td class="m">GET</td><td class="w">/json/medium</td><td class="n">200</td><td class="base">json.small</td></tr>
+  <tr><td class="m">json.large</td><td class="m">GET</td><td class="w">/json/large</td><td class="n">200</td><td class="base">json.small</td></tr>
+  </tbody></table></div>
+  <dl class="holds">
+    <div><dt>Held constant</dt><dd>Shape, route depth, handler work.</dd></div>
+    <div><dt>Varies</dt><dd>Response bytes, 125 → 8K → 131K.</dd></div>
+    <div><dt>The delta reads</dt><dd>Where the size regime changes: one write against several, and whether framing switches to chunked.</dd></div>
+  </dl>
+</div>
+
+<div class="grp">
+  <div class="grphead"><h3>parameters</h3><span class="cnt">3 endpoints</span>
+    <p class="job">The router under forty registered routes. All three return the small payload.</p></div>
+  <div class="scroll"><table>
+  <thead><tr><th>Id</th><th>Method</th><th>Path</th><th class="n">Expect</th><th>Base</th></tr></thead>
+  <tbody>
+  <tr><td class="m">parameters.static</td><td class="m">GET</td><td class="w">/parameters/static/segment/literal</td><td class="n">200</td><td class="base">json.small</td></tr>
+  <tr><td class="m">parameters.one</td><td class="m">GET</td><td class="w">/parameters/{one}</td><td class="n">200</td><td class="base">json.small</td></tr>
+  <tr><td class="m">parameters.two</td><td class="m">GET</td><td class="w">/parameters/{one}/with-second/{two}</td><td class="n">200</td><td class="base">parameters.static</td></tr>
+  </tbody></table></div>
+  <dl class="holds">
+    <div><dt>Held constant</dt><dd>Response bytes. Segment depth, across the pair that matters.</dd></div>
+    <div><dt>Varies</dt><dd>Capture count: 0, 1, 2.</dd></div>
+    <div><dt>The delta reads</dt><dd><span class="mono">two − static</span> is capture cost at four segments with depth removed. <span class="mono">one − json.small</span> is one capture plus one segment, and is not pure.</dd></div>
+  </dl>
+</div>
+
+<div class="grp">
+  <div class="grphead"><h3>authorized</h3><span class="cnt">2 endpoints</span>
+    <p class="job">The framework's own authorization mechanism, on the small payload. Not an <code>if</code> in the handler.</p></div>
+  <div class="scroll"><table>
+  <thead><tr><th>Id</th><th>Method</th><th>Path / request</th><th class="n">Expect</th><th>Base</th></tr></thead>
+  <tbody>
+  <tr><td class="m">authorized.allowed</td><td class="m">GET</td><td class="w">/authorized/small<br><span class="base">authorization: Bearer &lt;valid&gt;</span></td><td class="n">200</td><td class="base">json.small</td></tr>
+  <tr><td class="m">authorized.denied</td><td class="m">GET</td><td class="w">/authorized/small<br><span class="base">authorization: Bearer &lt;wrong&gt;</span></td><td class="n">403</td><td class="base">authorized.allowed</td></tr>
+  </tbody></table></div>
+  <dl class="holds">
+    <div><dt>Held constant</dt><dd>Route, response payload, token length.</dd></div>
+    <div><dt>Varies</dt><dd>The auth layer; then whether the token matches.</dd></div>
+    <div><dt>The delta reads</dt><dd>Plumbing cost with crypto removed. The denial arm shows whether the framework builds the full principal before rejecting.</dd></div>
+  </dl>
+</div>
+
+<div class="grp">
+  <div class="grphead"><h3>compressed</h3><span class="cnt">3 endpoints</span>
+    <p class="job">Outbound gzip at a pinned level. The request carries <code>accept-encoding: gzip</code> and <code>cache-control: no-cache</code>.</p></div>
+  <div class="scroll"><table>
+  <thead><tr><th>Id</th><th>Method</th><th>Path</th><th class="n">Expect</th><th>Base</th></tr></thead>
+  <tbody>
+  <tr><td class="m">compressed.small</td><td class="m">GET</td><td class="w">/compressed/small</td><td class="n">200</td><td class="base">json.small</td></tr>
+  <tr><td class="m">compressed.medium</td><td class="m">GET</td><td class="w">/compressed/medium</td><td class="n">200</td><td class="base">json.medium</td></tr>
+  <tr><td class="m">compressed.large</td><td class="m">GET</td><td class="w">/compressed/large</td><td class="n">200</td><td class="base">json.large</td></tr>
+  </tbody></table></div>
+  <dl class="holds">
+    <div><dt>Held constant</dt><dd>Payload, codec, compression level.</dd></div>
+    <div><dt>Varies</dt><dd>Compression on or off, crossed with size.</dd></div>
+    <div><dt>The delta reads</dt><dd>Buffer-whole against stream, and whether a framework compresses a body too small to benefit.</dd></div>
+  </dl>
+</div>
+
+<div class="grp">
+  <div class="grphead"><h3>cached</h3><span class="cnt">4 endpoints</span>
+    <p class="job">Validator headers and the conditional request. Same payloads, plus an <code>ETag</code> and a <code>cache-control</code>.</p></div>
+  <div class="scroll"><table>
+  <thead><tr><th>Id</th><th>Method</th><th>Path / request</th><th class="n">Expect</th><th>Base</th></tr></thead>
+  <tbody>
+  <tr><td class="m">cached.small</td><td class="m">GET</td><td class="w">/cached/small</td><td class="n">200</td><td class="base">json.small</td></tr>
+  <tr><td class="m">cached.medium</td><td class="m">GET</td><td class="w">/cached/medium</td><td class="n">200</td><td class="base">json.medium</td></tr>
+  <tr><td class="m">cached.large</td><td class="m">GET</td><td class="w">/cached/large</td><td class="n">200</td><td class="base">json.large</td></tr>
+  <tr><td class="m">cached.revalidate</td><td class="m">GET</td><td class="w">/cached/large<br><span class="base">if-none-match: "&lt;pinned&gt;"</span></td><td class="n">304</td><td class="base">cached.large</td></tr>
+  </tbody></table></div>
+  <dl class="holds">
+    <div><dt>Held constant</dt><dd>Payload, and the ETag value itself, which is pinned in the fixture.</dd></div>
+    <div><dt>Varies</dt><dd>Validator headers present; then whether the client already has it.</dd></div>
+    <div><dt>The delta reads</dt><dd>What a revalidation saves. A 304 that costs nearly what the 200 costs means the framework re-read the body to answer it.</dd></div>
+  </dl>
+</div>
+
+<div class="grp">
+  <div class="grphead"><h3>body</h3><span class="cnt">6 endpoints</span>
+    <p class="job">Parser, validator and the two rejection contracts, with size crossed against validation.</p></div>
+  <div class="scroll"><table>
+  <thead><tr><th>Id</th><th>Method</th><th>Path</th><th class="n">Expect</th><th>Base</th></tr></thead>
+  <tbody>
+  <tr><td class="m">body.bind_small</td><td class="m">POST</td><td class="w">/body/bind/small</td><td class="n">200</td><td class="base">—</td></tr>
+  <tr><td class="m">body.bind_medium</td><td class="m">POST</td><td class="w">/body/bind/medium</td><td class="n">200</td><td class="base">body.bind_small</td></tr>
+  <tr><td class="m">body.validate_small</td><td class="m">POST</td><td class="w">/body/validate/small</td><td class="n">200</td><td class="base">body.bind_small</td></tr>
+  <tr><td class="m">body.validate_medium</td><td class="m">POST</td><td class="w">/body/validate/medium</td><td class="n">200</td><td class="base">body.bind_medium</td></tr>
+  <tr><td class="m">body.rejected_all</td><td class="m">POST</td><td class="w">/body/validate/small<br><span class="base">invalid payload</span></td><td class="n">422</td><td class="base">body.validate_small</td></tr>
+  <tr><td class="m">body.rejected_first</td><td class="m">POST</td><td class="w">/body/validate/first-error<br><span class="base">same invalid payload</span></td><td class="n">422</td><td class="base">body.rejected_all</td></tr>
+  </tbody></table></div>
+  <dl class="holds">
+    <div><dt>Held constant</dt><dd>The request body across each pair. The rejected pair shares one payload.</dd></div>
+    <div><dt>Varies</dt><dd>Validation on or off; body size; the error contract.</dd></div>
+    <div><dt>The delta reads</dt><dd>Validation alone, since the bind arm still parses and binds. <span class="mono">rejected_all − rejected_first</span> is what short-circuiting saves, stated as a number rather than granted as a discount.</dd></div>
+  </dl>
+</div>
+
+<div class="grp">
+  <div class="grphead"><h3>query</h3><span class="cnt">2 endpoints</span>
+    <p class="job">Query string parsing and coercion, isolated from anything the values are used for.</p></div>
+  <div class="scroll"><table>
+  <thead><tr><th>Id</th><th>Method</th><th>Path</th><th class="n">Expect</th><th>Base</th></tr></thead>
+  <tbody>
+  <tr><td class="m">query.one</td><td class="m">GET</td><td class="w">/query/one?page={page}</td><td class="n">200</td><td class="base">json.small</td></tr>
+  <tr><td class="m">query.many</td><td class="m">GET</td><td class="w">/query/many?page={page}&amp;size={size}&amp;…<br><span class="base">eight parameters, mixed types</span></td><td class="n">200</td><td class="base">query.one</td></tr>
+  </tbody></table></div>
+  <dl class="holds">
+    <div><dt>Held constant</dt><dd>Route, and the work done with the values: none beyond echoing them coerced.</dd></div>
+    <div><dt>Varies</dt><dd>Parameter count, 1 against 8.</dd></div>
+    <div><dt>The delta reads</dt><dd>Per-parameter parse and coercion cost. The response must echo the coerced values, or the parse can be skipped.</dd></div>
+  </dl>
+</div>
+
+<div class="grp">
+  <div class="grphead"><h3>headers</h3><span class="cnt">2 endpoints</span>
+    <p class="job">Whether the request header map is built eagerly or on demand. One route, two request shapes.</p></div>
+  <div class="scroll"><table>
+  <thead><tr><th>Id</th><th>Method</th><th>Path / request</th><th class="n">Expect</th><th>Base</th></tr></thead>
+  <tbody>
+  <tr><td class="m">headers.few</td><td class="m">GET</td><td class="w">/headers<br><span class="base">3 request headers</span></td><td class="n">200</td><td class="base">json.small</td></tr>
+  <tr><td class="m">headers.many</td><td class="m">GET</td><td class="w">/headers<br><span class="base">30 request headers</span></td><td class="n">200</td><td class="base">headers.few</td></tr>
+  </tbody></table></div>
+  <dl class="holds">
+    <div><dt>Held constant</dt><dd>Route, response, and the handler, which must read no header at all.</dd></div>
+    <div><dt>Varies</dt><dd>How many headers arrive.</dd></div>
+    <div><dt>The delta reads</dt><dd>Near zero means lazy. A clear positive means the framework materialised 27 headers nobody asked for.</dd></div>
+  </dl>
+</div>
+
+<div class="grp">
+  <div class="grphead"><h3>middleware</h3><span class="cnt">3 endpoints</span>
+    <p class="job">Per-layer dispatch cost. Real framework middleware, registered on the route, each layer calling the next and doing nothing else.</p></div>
+  <div class="scroll"><table>
+  <thead><tr><th>Id</th><th>Method</th><th>Path</th><th class="n">Expect</th><th>Base</th></tr></thead>
+  <tbody>
+  <tr><td class="m">middleware.none</td><td class="m">GET</td><td class="w">/middleware/none</td><td class="n">200</td><td class="base">json.small</td></tr>
+  <tr><td class="m">middleware.four</td><td class="m">GET</td><td class="w">/middleware/four</td><td class="n">200</td><td class="base">middleware.none</td></tr>
+  <tr><td class="m">middleware.sixteen</td><td class="m">GET</td><td class="w">/middleware/sixteen</td><td class="n">200</td><td class="base">middleware.none</td></tr>
+  </tbody></table></div>
+  <dl class="holds">
+    <div><dt>Held constant</dt><dd>Response, route depth, handler.</dd></div>
+    <div><dt>Varies</dt><dd>Layer count: 0, 4, 16.</dd></div>
+    <div><dt>The delta reads</dt><dd><span class="mono">(sixteen − none) / 16</span> is the number people actually want when they ask what a layer costs. Two points also show whether it is linear.</dd></div>
+  </dl>
+</div>
+
+<div class="grp">
+  <div class="grphead"><h3>domain</h3><span class="cnt">8 endpoints</span>
+    <p class="job">The one family that looks like an application. Four read shapes over the fixture and four write methods.</p></div>
+  <div class="scroll"><table>
+  <thead><tr><th>Id</th><th>Method</th><th>Path</th><th class="n">Expect</th><th>Base</th></tr></thead>
+  <tbody>
+  <tr><td class="m">domain.lookup</td><td class="m">GET</td><td class="w">/domain/orders/{order}</td><td class="n">200</td><td class="base">—</td></tr>
+  <tr><td class="m">domain.filter</td><td class="m">GET</td><td class="w">/domain/orders?status={status}&amp;page={page}&amp;size={size}</td><td class="n">200</td><td class="base">—</td></tr>
+  <tr><td class="m">domain.join</td><td class="m">GET</td><td class="w">/domain/customers/{customer}/summary</td><td class="n">200</td><td class="base">—</td></tr>
+  <tr><td class="m">domain.aggregate</td><td class="m">GET</td><td class="w">/domain/regions/{region}/report</td><td class="n">200</td><td class="base">—</td></tr>
+  <tr><td class="m">domain.create</td><td class="m">POST</td><td class="w">/domain/orders</td><td class="n">201</td><td class="base">—</td></tr>
+  <tr><td class="m">domain.replace</td><td class="m">PUT</td><td class="w">/domain/orders/{order}</td><td class="n">200</td><td class="base">domain.create</td></tr>
+  <tr><td class="m">domain.patch</td><td class="m">PATCH</td><td class="w">/domain/customers/{customer}</td><td class="n">200</td><td class="base">—</td></tr>
+  <tr><td class="m">domain.delete</td><td class="m">DELETE</td><td class="w">/domain/orders/{order}/lines/{line}</td><td class="n">204</td><td class="base">—</td></tr>
+  </tbody></table></div>
+  <dl class="holds">
+    <div><dt>Held constant</dt><dd>Nothing. These are not pairs and carry no <code>base</code>.</dd></div>
+    <div><dt>Varies</dt><dd>Handler work, named by the id: lookup, filter, join, aggregate.</dd></div>
+    <div><dt>The delta reads</dt><dd>Nothing subtractive. This family exists so the blend contains realistic handler work, and so the write methods and their status codes are covered at all.</dd></div>
+  </dl>
+</div>
+
+<div class="grp">
+  <div class="grphead"><h3>errors</h3><span class="cnt">3 endpoints</span>
+    <p class="job">The three 4xx paths that have distinct machinery behind them.</p></div>
+  <div class="scroll"><table>
+  <thead><tr><th>Id</th><th>Method</th><th>Path</th><th class="n">Expect</th><th>Base</th></tr></thead>
+  <tbody>
+  <tr><td class="m">errors.not_found</td><td class="m">GET</td><td class="w">/domain/orders/999999</td><td class="n">404</td><td class="base">domain.lookup</td></tr>
+  <tr><td class="m">errors.unmatched</td><td class="m">GET</td><td class="w">/errors/unmatched<br><span class="base">no route registered here</span></td><td class="n">404</td><td class="base">—</td></tr>
+  <tr><td class="m">errors.malformed</td><td class="m">POST</td><td class="w">/body/validate/small<br><span class="base">bytes that are not JSON</span></td><td class="n">422</td><td class="base">body.rejected_all</td></tr>
+  </tbody></table></div>
+  <dl class="holds">
+    <div><dt>Held constant</dt><dd>Route and payload, against each error's own base.</dd></div>
+    <div><dt>Varies</dt><dd>Where the request fails: router, handler, parser.</dd></div>
+    <div><dt>The delta reads</dt><dd><span class="mono">not_found − lookup</span> is the raise-and-serialize path. <span class="mono">malformed − rejected_all</span> separates a parser failure from a schema failure. <span class="mono">unmatched</span> stands alone and shows whether a routing miss short-circuits before the middleware chain or walks all of it.</dd></div>
+  </dl>
+</div>
+
+<div class="grp unweighted">
+  <div class="grphead"><h3>template</h3><span class="zero">not rankable</span><span class="cnt">2 endpoints</span>
+    <p class="job">Server-side rendering of the same data the JSON endpoints serialize. Sampled like everything else; absent from any blend meant to rank across languages.</p></div>
+  <div class="scroll"><table>
+  <thead><tr><th>Id</th><th>Method</th><th>Path</th><th class="n">Expect</th><th>Base</th></tr></thead>
+  <tbody>
+  <tr><td class="m">template.small</td><td class="m">GET</td><td class="w">/template/small</td><td class="n">200</td><td class="base">json.small</td></tr>
+  <tr><td class="m">template.medium</td><td class="m">GET</td><td class="w">/template/medium</td><td class="n">200</td><td class="base">json.medium</td></tr>
+  </tbody></table></div>
+  <dl class="holds">
+    <div><dt>Held constant</dt><dd>The model. One record, then eighty-nine, exactly as <span class="mono">json.*</span> serializes them.</dd></div>
+    <div><dt>Varies</dt><dd>The renderer: JSON serializer against template engine.</dd></div>
+    <div><dt>The delta reads</dt><dd>Engine throughput including view resolution and model binding. Readable within a language, never across one, which is why no ranking blend carries it.</dd></div>
+  </dl>
+</div>
+
+<p>Templates are the case that separating sampling from weighting was for. <code>docs/plan.html</code> keeps them out of the blend because they "would swamp a blended aggregate with their own response sizes", and because the row is partly an engine benchmark: Thymeleaf, Razor, Handlebars, <code>html/template</code> and Tera are separate products, so the number has to be reported with the engine named. Both objections are about the <em>aggregate</em>, not the measurement. Suite B answers them by moving templates to a separate night, where the two arms sit minutes apart on one process. Sampling them evenly and leaving them out of the ranking vectors answers them better: the arms sit microseconds apart in the same stream, and the number still never reaches a ranking.</p>
+
+<p>Byte-identical output across five template engines is the hard part, and forcing it would mean contorting every template. So <code>conform.py</code> gains a second canonicalizer: for <code>text/html</code> it collapses runs of whitespace before hashing, the way it already sorts keys for <code>application/json</code> at line 95. Content is pinned — same elements, same order, same values, generated into the fixture — and whitespace is free. If two engines still cannot agree on content, the endpoint is per-engine and the spec should say so rather than quietly ranking a Handlebars target against a Thymeleaf one.</p>
+
+<p>The 500 is gone. <code>ep.boom</code> measured stack-trace capture policy, which is configuration rather than framework, and Suite B already runs <code>unhandled-500</code> against <code>ok-200</code> on one process where the comparison holds. The 403 survives as <code>authorized.denied</code>, where it finally has a mechanism behind it instead of being a constant-cost status write. And <code>/health</code> leaves the blend but keeps its route: <code>harness/run.py:194</code> uses it as the readiness probe, so it is infrastructure, like <code>/__meta</code>, and infrastructure is not measured.</p>
+</section>
+
+<section>
+<div class="sectionhead">
+  <span class="num">§4 · Contracts</span>
+  <h2>What has to be pinned, and to what</h2>
+  <p>A feature endpoint is only a clean delta if the feature itself is constant across forty-three targets. Each of these is a line in the spec, not a convention.</p>
+</div>
+
+<div class="scroll">
+<table>
+<thead><tr><th>Pinned</th><th>Value</th><th>Because</th></tr></thead>
+<tbody>
+<tr><td class="m">Codec and level</td><td>gzip, level 6, every language</td><td>Compression cost is dominated by codec and level, not by framework. An unpinned codec makes <code>compressed.*</code> a zlib benchmark.</td></tr>
+<tr><td class="m">ETag value</td><td>Literal in the fixture, <code>sha256(body)[:16]</code>, strong and quoted</td><td>A pre-resolved <code>if-none-match</code> cannot be built unless every target emits the same ETag. It also means the hashing is not measured, only the header emission and the comparison, which is the framework's actual contribution for a static body. Hash cost belongs in Suite B's static-content suite.</td></tr>
+<tr><td class="m">Bearer token</td><td>Opaque 32-hex constant in the fixture; the denial arm differs in the last character</td><td>Crypto cost is not framework cost, and Suite B already pins a JWT arm. A wrong token of equal length makes the comparison walk the whole string rather than fail on length.</td></tr>
+<tr><td class="m">Freshness counter</td><td><code>x-rb-serial</code>, monotonic per process, on every <code>compressed.*</code> and <code>cached.*</code> response</td><td>Proves the handler ran and the response was not served from a cache anywhere in the path. It lives in a header, not the body, so the body fingerprint is untouched. <code>conform.py</code> asserts it advances across the instances, which turns it into a gate rather than something to eyeball.</td></tr>
+<tr><td class="m">Bind and echo response</td><td><code>{"fields":&lt;leaf count&gt;,"bytes":&lt;n&gt;,"echo":&lt;parsed body&gt;}</code></td><td>Without a field derived from the parsed structure, a target can pipe request bytes to the response and never parse. Key order will not do it: <code>conform.py:95</code> sorts keys before hashing, so a reordering is invisible to the fingerprint. The leaf count is a traversal, identical in every language, living in the shared domain.</td></tr>
+<tr><td class="m">Validator implementation</td><td>Single pass, fixed field order, no reflection, no regex unless the spec asks for one</td><td>Within a language the validator is one compiled function and cancels out. Across languages they are hand-written, so whoever writes the Java one sets a constant offset on every <code>body.*</code> row for every Java framework.</td></tr>
+<tr><td class="m">Domain handler work</td><td>Filter evaluates the predicate over the live list per request; join walks the lines; aggregate folds every matching order. No precomputation, no memoization.</td><td>Conformance compares bytes, and a precomputed page produces the same bytes as a computed one. This is the family where two conforming implementations can do wildly different amounts of work.</td></tr>
+<tr><td class="m">Template and model</td><td>One template, one model, the expected output generated into the fixture. Whitespace free, content pinned. Each target declares its engine in <code>/__meta</code>.</td><td>The delta is only readable within a language, so the engine has to be named next to the number the way the serializer already is. The declared engine is also what stops a target quietly emitting the HTML from a string concat and calling it rendering.</td></tr>
+<tr><td class="m">Feature wiring</td><td>The framework's own facility, scoped to the feature's routes. Where a framework only offers a global hook, it uses it and declares so in <code>spec/matrix.json</code>.</td><td>An <code>if</code> in the handler measures the language, not the framework — the whole point of <code>authorized</code> and <code>cached</code> is the framework's plumbing. The declaration follows how the function-host exclusions are already recorded.</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="note">
+<h3>The memoization hole gets closed at the same time</h3>
+<p><code>harness/plan.py:13</code> sets <code>INSTANCES = 64</code>, so each endpoint has sixty-four pre-resolved requests and no more. A target could precompute all sixty-four responses at boot and reduce every endpoint to a dispatch and a write, and conformance could not see it, because identical bytes are the whole point of the fingerprint. Raise it to 512. <code>spec/plan.json</code> is 89&nbsp;KB today and would reach roughly 700&nbsp;KB, which is cheap, and the freshness counter makes the feature families detect it outright.</p>
+</div>
+</section>
+
+<section>
+<div class="sectionhead">
+  <span class="num">§5 · Blends</span>
+  <h2>Sample evenly, weight afterwards</h2>
+  <p>The endpoint set is not a traffic simulation, so the request stream should not pretend to be one. Every endpoint is drawn with equal probability, and every opinion about traffic lives in a weight vector applied when the aggregate is composed.</p>
+</div>
+
+<p><code>blend-v1</code> gives each endpoint a <code>share</code> that decides two unrelated things at once: how often it is drawn, and how much it counts in the aggregate. The second falls out of the first, because <code>gen/blend.mjs:180</code> sums every per-endpoint histogram into <code>overall</code> unconditionally. Being in the stream is being in the blend, and the weights were assigned by judgement rather than measured from any real application, so a guess about traffic is baked irreversibly into data collection.</p>
+
+<p>v2 drops <code>share</code> and draws uniformly. The endpoint set becomes a set rather than a mix, and the arithmetic improves on its own.</p>
+
+<div class="scroll">
+<table>
+<thead><tr><th>Per endpoint, per run</th><th class="n">blend-v1 weighted</th><th class="n">v2 uniform</th><th>Consequence</th></tr></thead>
+<tbody>
+<tr><td class="w">Requests, weakest endpoint</td><td class="n">13,800</td><td class="n">32,857</td><td>The endpoint with the thinnest tail gets 2.4× the samples it does today.</td></tr>
+<tr><td class="w">Requests, strongest endpoint</td><td class="n">82,800</td><td class="n">32,857</td><td>Still 3.3× the 10,000 floor. Nothing loses resolution that had any.</td></tr>
+<tr><td class="w">Spread across the set</td><td class="n">6×</td><td class="n">1×</td><td>Percentile confidence stops varying by endpoint.</td></tr>
+<tr><td class="w">Samples behind p99</td><td class="n">138 … 828</td><td class="n">329</td><td>Every endpoint's p99 rests on the same number of observations.</td></tr>
+<tr><td class="w">Samples behind p99.9</td><td class="n">14 … 83</td><td class="n">33</td><td>Thin everywhere. See the ceiling below.</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>The 10,000-request floor in <code>spec/ladder.json</code> stops being a design constraint to check and becomes an automatic property: 1.38M requests over 42 endpoints is 32,857 each, clearing it 3.3× without anyone arranging it.</p>
+
+<p>Composition simplifies too. With every <code>n</code> equal, scaling a histogram by <code>w / n</code> is scaling it by <code>w</code>, and merging the raw histograms untouched <em>is</em> the uniform blend. There is no longer a sampling field and a weighting field to keep consistent — there is one weight vector, applied at the end, and the raw data underneath it has no opinion in it at all.</p>
+
+<pre>uniform blend   = sum of h[i]                 <i>no scaling; this is the data as collected</i>
+weighted blend  = sum of h[i] * w[i]          <i>w from spec/blends.json, normalised</i>
+p50 … p99       = <b>percentiles of the merged histogram</b>
+p50_ratio       = <b>percentile(merged_target) / percentile(merged_baseline)</b>
+                                              <i>same vector composes both sides</i></pre>
+
+<p>Families end up weighted by how many endpoints they hold — <code>domain</code> at 8 of 42, <code>headers</code> at 2 — which is the right default, because a family with more arms is a family testing more distinct things. Anyone who disagrees says so in a weight vector rather than in the sampler.</p>
+
+<h3>Which blend is the headline</h3>
+
+<p><code>uniform</code>, and this is the one recommendation in this section that is not merely mechanical.</p>
+
+<p><code>docs/plan.html</code> already records why: "per-endpoint latency is not independent of the mix, because changing the mix changes the JIT state that produced it. Reweighting after the fact does not recover comparability." That is true, and it applies to every weighted blend in the list below — each one describes what those endpoints did under a uniform mix, not what they would do under its own. <code>uniform</code> is the single blend where the approximation is zero, because it is the mix that was actually run. Publishing it as the headline also ends the argument about whether the weights flatter somebody, permanently, because there are none.</p>
+
+<p><code>spec/blends.json</code> then holds the weighted vectors as alternate views. <code>harness/summarize.py</code> has every per-endpoint histogram in memory when it writes a summary, so computing five aggregates instead of one costs a few hundred bytes and no measurement time.</p>
+
+<div class="scroll">
+<table>
+<thead><tr><th>Blend</th><th>Weight vector</th><th>Answers</th></tr></thead>
+<tbody>
+<tr><td class="m">uniform</td><td>1 on all 42</td><td>The published headline. The average endpoint, with no traffic opinion and no reweighting error.</td></tr>
+<tr><td class="m">core</td><td>Feature families zeroed: <code>baseline</code>, <code>json</code>, <code>parameters</code>, <code>body</code>, <code>query</code>, <code>domain</code>, <code>errors</code></td><td>What <code>blend-v1</code> covered, so the old series has a successor that means roughly the same thing.</td></tr>
+<tr><td class="m">features</td><td>Only <code>authorized</code>, <code>compressed</code>, <code>cached</code>, <code>headers</code>, <code>middleware</code>, <code>template</code></td><td>Frameworks that are quick at dispatch and slow at everything a real service turns on.</td></tr>
+<tr><td class="m">read-only</td><td>GETs only; <code>body</code>, the <code>domain</code> writes and <code>errors.malformed</code> zeroed</td><td>A service behind a cache, where reads dominate and the write path barely runs.</td></tr>
+<tr><td class="m">rankable</td><td><code>template</code> zeroed, everything else 1</td><td>Templates are partly an engine benchmark and cannot be compared across languages. This is <code>uniform</code> with that one row removed.</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Adding a blend is a pull request against a JSON file and a re-summarise of samples already on disk. No re-measurement.</p>
+
+<h3>The ceiling is p99 per endpoint, p99.9 for the blend</h3>
+
+<p>At 32,857 requests an endpoint's p99 rests on 329 observations, which is sound, and its p99.9 rests on 33, which is not. <code>docs/plan.html</code> already draws this line — "fine for a median, shaky for p99, and useless for p99.9" — and uniform sampling moves every endpoint to the same side of it. So per-endpoint rows publish p50, p90 and p99 and stop.</p>
+
+<p>The blend is a different population. Merged across 42 endpoints it holds 1.38M samples, so its p99.9 rests on 1,380 observations. That one is real and worth keeping: rung 5 exists to watch saturation, and saturation shows up in the tail before it shows up anywhere else. Dropping p99.9 would blind the rung that the ladder climbs to reach.</p>
+
+<h3>What to ship so the browser can compose</h3>
+
+<p>Composing a blend in the browser needs the per-endpoint distributions, not their percentiles. Shipping the full 920-bucket histogram is the obvious way and the wrong one: measured against a real run, an endpoint's histogram occupies 47 buckets at a hundred samples and 354 at a few thousand, so at full-run counts it is near 400 and sparse encoding saves little. A fixed-size quantile summary is both smaller and, unlike a sparse histogram, does not grow as the distribution spreads.</p>
+
+<p>Two shapes were tested against the full histograms from a real run, composing a weighted blend from the summaries and comparing it to the same blend composed from the histograms.</p>
+
+<div class="scroll">
+<table>
+<thead><tr><th>Per-endpoint summary</th><th class="n">Bytes</th><th class="n">p50</th><th class="n">p90</th><th class="n">p99</th><th class="n">p99.9</th></tr></thead>
+<tbody>
+<tr><td class="w">920-bucket histogram, dense</td><td class="n">4,908</td><td class="n">exact</td><td class="n">exact</td><td class="n">exact</td><td class="n">exact</td></tr>
+<tr><td class="w">100 points, 1% apart</td><td class="n">400</td><td class="n">0.00%</td><td class="n">0.88%</td><td class="n">2.49%</td><td class="n">13.67%</td></tr>
+<tr><td class="w">122 points, tail-weighted</td><td class="n">488</td><td class="n">0.00%</td><td class="n">0.66%</td><td class="n">0.44%</td><td class="n">0.22%</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Mean absolute error against the composed full histogram, over nine target-and-rung pairs; the worst single case for the tail-weighted set was 1.96%. Both are base64 byte counts at three bytes per value, which holds microsecond times up to sixteen seconds.</p>
+
+<p>Take the tail-weighted set: 1% steps to p90, 0.5% to p99, 0.1% to p99.9, 0.02% beyond. It costs 88 bytes more than the even one and it is the difference between a blend p99.9 that is usable and one that is off by 14%. Each point carries the width of the interval it represents as its weight, which is what makes an uneven set compose correctly — weighting uneven points evenly produces errors of several hundred percent at p90, which is how this was nearly got wrong.</p>
+
+<p>The bill is small enough that no rung has to be dropped. 4.4&nbsp;MB is the raw figure and nothing is served raw: git stores blobs zlib-compressed and Pages negotiates content-encoding on the wire, so the number that matters is the compressed one at both ends.</p>
+
+<div class="scroll">
+<table>
+<thead><tr><th>Encoding</th><th class="n">Raw</th><th class="n">gzip −9</th><th class="n">brotli −11</th><th>Note</th></tr></thead>
+<tbody>
+<tr><td class="w">JSON array of integers</td><td class="n">4.4 MB</td><td class="n">0.98 MB</td><td class="n">0.80 MB</td><td>Readable and diffable. No decode step in the browser.</td></tr>
+<tr><td class="w">base64 of 3-byte values</td><td class="n">3.5 MB</td><td class="n">0.92 MB</td><td class="n">0.77 MB</td><td>4% smaller compressed, and opaque in a diff.</td></tr>
+<tr><td class="w">JSON array of deltas</td><td class="n">3.1 MB</td><td class="n">1.17 MB</td><td class="n">0.99 MB</td><td>Smallest raw, largest compressed.</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Measured by compressing the 360 real histograms in <code>results/2026-09-13T2254Z.go.2b3f0e.jsonl</code> and scaling per-histogram to a full run of 9,030. Delta encoding losing to plain integers is the result worth keeping: latency values recur heavily across endpoints and targets, which gives the compressor long repeated matches, and differencing destroys exactly those matches to save bytes the compressor was already removing. Hand-rolled compaction ahead of a real compressor made the file 19% bigger.</p>
+
+<p>So: plain JSON integer arrays, all five rungs, committed uncompressed. Roughly 1&nbsp;MB per run at rest and on the wire, against a current summary of 47&nbsp;KB for six targets and about 335&nbsp;KB at forty-three. Brotli saves a further 15% and is not worth a manual compression step — <code>DecompressionStream</code> handles gzip and deflate but not brotli, and leaving the file plain means Pages negotiates the encoding and the page just calls <code>fetch().json()</code>. This also matches what <code>harness/summarize.py</code> already says about its own output: nothing is dropped for size, because the repository is public and neither storage nor Actions minutes is billed.</p>
+</section>
+
+<section>
+<div class="sectionhead">
+  <span class="num">§6 · Migration</span>
+  <h2>What happens to the forty that exist</h2>
+  <p>Thirteen of the current ids survive under a new name. The rest are absorbed, and eighteen endpoints are new.</p>
+</div>
+
+<div class="scroll">
+<table>
+<thead><tr><th>blend-v1</th><th></th><th>blend-v2</th><th>Note</th></tr></thead>
+<tbody>
+<tr><td class="m">pt.plaintext</td><td><span class="v keep">renamed</span></td><td class="m">baseline.plaintext</td><td>Path unchanged. <code>/plaintext</code> keeps the name the industry already knows it by.</td></tr>
+<tr><td class="m">jr.json_small</td><td><span class="v keep">renamed</span></td><td class="m">json.small</td><td>Path unchanged. Payload changes from <code>{"message":…}</code> to the one-record shape.</td></tr>
+<tr><td class="m">pt.health</td><td><span class="v cut">not measured</span></td><td class="m">—</td><td>Route stays; it is the readiness probe at <code>harness/run.py:194</code>.</td></tr>
+<tr><td class="m">jr.product, jr.customer, jr.order</td><td><span class="v keep">merged</span></td><td class="m">domain.lookup</td><td>Three lookups over three collections measured one thing three times.</td></tr>
+<tr><td class="m">jr.product_list, jr.order_lines</td><td><span class="v keep">merged</span></td><td class="m">domain.filter</td><td>Absorbed into the filter arm, with the per-request work now pinned.</td></tr>
+<tr><td class="m">pp.* (6)</td><td><span class="v keep">merged</span></td><td class="m">parameters.* (3)</td><td>Six domain-shaped capture routes become three arms that differ in capture count alone.</td></tr>
+<tr><td class="m">qp.* (5)</td><td><span class="v keep">merged</span></td><td class="m">query.* (2), domain.filter</td><td>Parsing separates from the filtering the parsed values fed.</td></tr>
+<tr><td class="m">nf.* (5)</td><td><span class="v keep">merged</span></td><td class="m">middleware.* (3), domain.join, domain.aggregate</td><td>The stated purpose was "a deeper middleware chain" and nothing pinned the depth. Now it is 0, 4, 16.</td></tr>
+<tr><td class="m">bv.* (6)</td><td><span class="v keep">recast</span></td><td class="m">body.* (6)</td><td>Three validators over three entities become one validator crossed with size and two rejection contracts.</td></tr>
+<tr><td class="m">we.* (5)</td><td><span class="v keep">merged</span></td><td class="m">domain.create / replace / patch / delete</td><td>Four methods, four status codes, one fewer endpoint.</td></tr>
+<tr><td class="m">ep.missing_order</td><td><span class="v keep">renamed</span></td><td class="m">errors.not_found</td><td>Now carries <code>domain.lookup</code> as its base.</td></tr>
+<tr><td class="m">ep.unmatched</td><td><span class="v keep">renamed</span></td><td class="m">errors.unmatched</td><td>Path moves to <code>/errors/unmatched</code>, still with no route registered.</td></tr>
+<tr><td class="m">ep.malformed</td><td><span class="v keep">renamed</span></td><td class="m">errors.malformed</td><td>Now unparseable bytes rather than a schema violation, which <code>body.rejected_all</code> covers.</td></tr>
+<tr class="cut"><td class="m">ep.boom</td><td><span class="v cut">cut</span></td><td class="m">—</td><td>Measured stack-trace capture policy. Suite B has it as an arm where the comparison holds.</td></tr>
+<tr><td class="m">ep.forbidden</td><td><span class="v keep">recast</span></td><td class="m">authorized.denied</td><td>A 403 with a mechanism behind it instead of a constant-cost status write.</td></tr>
+<tr><td class="m">—</td><td><span class="v new">new</span></td><td class="m">18 endpoints</td><td><code>json.medium</code>, <code>json.large</code>, <code>parameters.static</code>, <code>authorized.*</code>, <code>compressed.*</code>, <code>cached.*</code>, <code>body.bind_*</code>, <code>body.rejected_first</code>, <code>query.*</code>, <code>headers.*</code>, <code>middleware.*</code></td></tr>
+<tr><td class="m">—</td><td><span class="v new">new</span></td><td class="m">template.* (2)</td><td>Sampled evenly, carried by no ranking blend. Suite B's template arms can stay or retire into these; they answer the same question with the arms minutes apart instead of microseconds.</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>This bumps the epoch, and the sampling change bumps it on its own: the endpoints in the stream shape the runtime state every one of them is measured in, which is the point of running a blend rather than a sequence of isolated benchmarks. Nothing measured under <code>blend-v1</code> sits on the same chart as anything measured under <code>blend-v2</code>. The one consolation is that <code>core</code> weights v2 down to roughly what v1 covered, so the shape of the old series has a successor even though the numbers do not carry across.</p>
+</section>
+
+<section>
+<div class="sectionhead">
+  <span class="num">§7 · Machinery</span>
+  <h2>What the harness has to grow</h2>
+  <p>Two changes repeated across a lot of files. Requests carry headers now, and nothing in the pipeline currently sends any. And the aggregate is composed rather than inherited.</p>
+</div>
+
+<div class="scroll">
+<table>
+<thead><tr><th>File</th><th>Change</th></tr></thead>
+<tbody>
+<tr><td class="m">spec/endpoints.json</td><td>New families and endpoints. <code>share</code> is deleted outright. Endpoints gain <code>headers</code>, <code>base</code>, <code>varies</code> and <code>payload</code>. <code>base</code> and <code>varies</code> are what let the site compute a delta column instead of the reader finding two rows and subtracting.</td></tr>
+<tr><td class="m">spec/blends.json</td><td>New. One weight vector per named blend over the endpoint ids, plus which one is published. The only file anyone edits to change what an aggregate means, and the only place a traffic opinion is allowed to live.</td></tr>
+<tr><td class="m">harness/make_fixture.py</td><td>Emit <code>payloads.small/medium/large</code>, each one's ETag, and the bearer token. Committed with everything else, because identical data across forty-three targets is a correctness requirement.</td></tr>
+<tr><td class="m">harness/plan.py</td><td>Carry <code>headers</code> into <code>plan.json</code>. Add the thirty-header set. Raise <code>INSTANCES</code> from 64 to 512.</td></tr>
+<tr><td class="m">gen/blend.mjs</td><td>Draw uniformly, which deletes the cumulative share table at lines 38-49 and the binary search at line 47. Merge per-endpoint headers into the request; line 76 builds a header object only when the endpoint has a body. Do not decompress the response; <code>res.resume()</code> already discards it, so server-side cost is measured without paying for client-side inflate. <code>overall</code> at line 180 stays, relabelled as every request in the stream — it is a diagnostic now, not the headline.</td></tr>
+<tr><td class="m">gen/serial.mjs</td><td>Same, plus the headers have to go into the API Gateway event rather than onto the socket.</td></tr>
+<tr><td class="m">harness/conform.py</td><td>Send per-endpoint headers. Gunzip before fingerprinting, because gzip output differs between zlib, Java's <code>Deflater</code> and Go's <code>compress/flate</code> at the same level, while the decompressed bytes must not. Collapse whitespace before hashing <code>text/html</code>, so five template engines can agree on content without agreeing on formatting. Assert <code>x-rb-serial</code> advances. 304 needs no work: it is already in <code>NO_BODY</code> at line 19.</td></tr>
+<tr><td class="m">harness/summarize.py</td><td>Compose each named blend from the per-endpoint histograms it already holds, rather than reading the generator's <code>overall</code>. Drop per-endpoint p99.9 and keep it for the blend. Emit the tail-weighted quantile summary for every rung, as plain integer arrays, uncompressed.</td></tr>
+<tr><td class="m">harness/sequence.py</td><td>Draw uniformly, which deletes the cumulative table and its binary search here too. The serial suite replays the same fixed order, so every endpoint is measured on the function hosts as well.</td></tr>
+<tr><td class="m">targets/&lt;lang&gt;/_shared/</td><td>Payload getters, the leaf-count echo, the first-error validator, the token compare. Three files: <code>domain.js</code>, <code>domain.go</code>, and the Java equivalent.</td></tr>
+<tr><td class="m">targets/&lt;lang&gt;/&lt;fw&gt;/</td><td>The bill. Nineteen targets today, forty-three planned, each gaining roughly a dozen routes plus four feature wirings that have to use the framework's own facility.</td></tr>
+<tr><td class="m">spec/matrix.json</td><td>Per-target declarations where a framework can only wire a feature globally, following how the function-host exclusions are already recorded.</td></tr>
+<tr><td class="m">site/build.py</td><td>A blend selector, defaulting to <code>default</code> and carried in the URL hash like every other piece of view state. One page per endpoint, an index that drills down, and a link from the results table, where the detail cell renders the id as plain text today. The delta column comes from <code>base</code> and <code>varies</code>. A zero-weight endpoint gets its row and its pages, marked as outside the aggregate.</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section>
+<div class="sectionhead">
+  <span class="num">§8 · Sequence</span>
+  <h2>Order of work</h2>
+  <p>The expensive thing is the target wiring, and it is expensive in proportion to how many targets exist when it starts.</p>
+</div>
+
+<ol class="steps">
+<li><h3>Fixture and spec first</h3><p>Payloads, ETags, token, then <code>endpoints.json</code> rewritten whole. Everything downstream reads these two, and they are the cheapest things in the set to change.</p></li>
+<li><h3>Headers through the pipeline</h3><p><code>plan.py</code>, both generators, <code>conform.py</code>. Until a request can carry a header, four of the thirteen families cannot exist.</p></li>
+<li><h3>Uniform sampling and named blends</h3><p><code>blends.json</code>, a uniform draw, and the composed aggregate in <code>summarize.py</code>. Worth doing early and out of order: it removes more code than it adds, touches nothing the target authors touch, and applies to <code>blend-v1</code> as it stands.</p></li>
+<li><h3>One target end to end</h3><p><code>node:node-http</code>, the baseline. It has no framework facilities to use, so it establishes the contract each framework then has to meet with its own.</p></li>
+<li><h3>Then one framework per language</h3><p>Fastify, Gin, Spring Boot. These are where the feature wirings are least alike, so they will find whatever the spec left ambiguous.</p></li>
+<li><h3>Then the remaining fifteen</h3><p>Mechanical once three languages have a worked example, and the point at which conformance across forty-two endpoints starts earning its keep again.</p></li>
+<li><h3>Endpoint pages, the delta column, the blend selector</h3><p><code>base</code>, <code>varies</code> and the named blends are already in the spec by then, so the site can state "costs 41&nbsp;µs over <code>json.medium</code>" as generated text rather than leaving the reader to subtract, and can offer five aggregates rather than one.</p></li>
+<li><h3>The arbitrary composer</h3><p>Quantile summaries into the summary file, then the endpoint selector in the browser. Independent of all of the above and cheap enough that it need not wait for any of it.</p></li>
+</ol>
+</section>
+
+<footer>
+Written 14 September 2026 against <code>lang/java</code> at <code>853ae6c</code>. Line references were accurate at that commit. Companion to <code>docs/plan.html</code>, which covers the suite rotation and the capability deltas, and successor to <code>docs/endpoints.html</code>, which argued the decisions this document states.
+</footer>
+
+</div>
