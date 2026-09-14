@@ -82,9 +82,14 @@ class Local:
             if host != "container":
                 raise SystemExit("java has no local launcher for host %r; use --mode docker"
                                  % host)
-            jar = ROOT / "targets/java" / d / "target" / "server.jar"
-            if not jar.exists():
-                raise SystemExit("%s is not built; run 'make java'" % jar)
+            # Shaded targets produce server.jar; Quarkus names its uber jar
+            # server-runner.jar. Both Dockerfiles take whichever exists, and so does this.
+            built = ROOT / "targets/java" / d / "target"
+            jar = next((built / n for n in ("server.jar", "server-runner.jar")
+                        if (built / n).exists()), None)
+            if jar is None:
+                raise SystemExit("no server.jar or server-runner.jar in %s; run 'make java'"
+                                 % built)
             return (["java", "-jar", str(jar)], ROOT / "targets/java",
                     {"RB_FIXTURE": str(ROOT / "spec/fixture.json"), "RB_HOST": host})
         raise SystemExit("language %r has no local launcher; use --mode docker" % self.language)
