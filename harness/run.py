@@ -331,7 +331,15 @@ def conform():
     if encoding != "http":
         argv += ["--encoding", encoding]
     out = subprocess.run(argv, capture_output=True, text=True, cwd=ROOT)
-    return out.returncode == 0, out.stdout.strip().splitlines()[-1] if out.stdout else out.stderr
+    lines = [l.strip() for l in out.stdout.strip().splitlines() if l.strip()]
+    # The summary line is what says how bad it is. Reporting the last line reported whichever
+    # diagnostic happened to print last, so a target failing forty-one endpoints announced
+    # itself as one body mismatch.
+    i = next((k for k in reversed(range(len(lines))) if "endpoints conform" in lines[k]), None)
+    if i is None:
+        return out.returncode == 0, lines[-1] if lines else out.stderr
+    why = "   " + lines[i + 1] if i + 1 < len(lines) else ""
+    return out.returncode == 0, lines[i] + why
 
 def env_fingerprint(run_id, languages, baselines):
     return {"kind": "env", "run_id": run_id, "languages": languages, "baselines": baselines,
