@@ -264,6 +264,7 @@ function rows() {
     } else {
       const eps = t.endpoints || {};
       const order = run.endpoint_order || [];
+      if (!order.length || !Object.keys(eps).length) continue;
       const fam = run.endpoint_family || [];
       const arr = k => (eps[k] && eps[k][rn]) || [];
       const p50s = arr('p50_us'), p99s = arr('p99_us'), vals = arr(st.metric), cnt = arr('count');
@@ -289,6 +290,17 @@ function rows() {
     return dir * (x - y);
   });
   return {run, rn, rows: out};
+}
+
+/* A run summarized before per-endpoint detail existed has no endpoints to drill into.
+   Saying so beats rendering an empty table that looks like a bug. */
+function emptyWhy(run, rn) {
+  if (st.gran === 'endpoint' && !(run.endpoint_order || []).length)
+    return `This run predates per-endpoint detail, so it can only be read at blend or family level. Later runs carry all 40 endpoints.`;
+  if (st.gran === 'endpoint' && !run.targets.some(t => Object.keys(t.endpoints || {}).length))
+    return `No per-endpoint data was recorded for this run.`;
+  if (!st.langs.size) return 'No languages selected.';
+  return 'Nothing matches those filters.';
 }
 
 const fmt = v => v == null ? '&mdash;'
@@ -347,7 +359,7 @@ function render() {
       <td class="sub">${(r.n ?? 0).toLocaleString()}</td>
       <td class="barcell"><div class="bar${r.isBase ? ' b' : ''}" style="width:${w}%%;background:${r.isBase ? '' : langColour[r.shard]}"></div></td>
     </tr>`;
-  }).join('') || '<tr><td colspan="8" class="empty">Nothing matches those filters.</td></tr>';
+  }).join('') || `<tr><td colspan="8" class="empty">${emptyWhy(run, rn)}</td></tr>`;
   document.getElementById('count').textContent = `${rs.length} rows`;
 
   renderTime(rs, langColour);
