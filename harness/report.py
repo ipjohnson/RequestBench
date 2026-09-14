@@ -41,9 +41,9 @@ def main():
     env = next(r for r in rows if r["kind"] == "env")
     samples = [r for r in rows if r["kind"] == "sample"]
     rungs = [r for r in rows if r["kind"] == "rung"]
-    baselines = env.get("baselines") or {env["shard"]: env["baseline"]}
-    shard_of = {r["target"]: r.get("shard", env["shard"]) for r in rungs}
-    base_of = {t: baselines.get(shard_of[t], env["baseline"]) for t in shard_of}
+    baselines = env.get("baselines") or {env["language"]: env["baseline"]}
+    language_of = {r["target"]: r.get("language", env["language"]) for r in rungs}
+    base_of = {t: baselines.get(language_of[t], env["baseline"]) for t in language_of}
     base = env["baseline"]
     targets = list(dict.fromkeys(r["target"] for r in rungs))
     missing = {b for b in base_of.values()} - set(targets)
@@ -69,7 +69,7 @@ def main():
         head += " %-26s" % ("rung %d @ %s rps" % (rn, any_row["offered_rps"]))
     print(head)
     for t in targets:
-        tag = t if len(baselines) == 1 else "%s:%s" % (shard_of.get(t, "?"), t)
+        tag = t if len(baselines) == 1 else "%s:%s" % (language_of.get(t, "?"), t)
         line = "  %-16s" % tag
         tb = base_of.get(t, base)
         for rn in rung_ids:

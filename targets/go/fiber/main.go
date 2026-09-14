@@ -1,7 +1,7 @@
 // RequestBench target: Fiber v3. Behaviour from _shared.
 //
 // Fiber runs on fasthttp rather than net/http, so none of the other Go targets' helpers
-// apply; this is the only shard member that does not speak http.ResponseWriter.
+// apply; this is the only go target that does not speak http.ResponseWriter.
 package main
 
 import (
@@ -75,8 +75,11 @@ func main() {
 	app.Get("/plaintext", func(c fiber.Ctx) error { return c.Type("txt").SendString("Hello, World!") })
 	app.Get("/health", func(c fiber.Ctx) error { return c.Type("txt").SendString("ok") })
 	get("/__meta", func(fiber.Ctx) (any, error) {
+		// No adapter line: Fiber is fasthttp, so it runs only under container, and
+		// importing the host package would link the function-host libraries into a
+		// binary that never calls them.
 		return fiber.Map{"framework": "fiber", "version": fiber.Version,
-			"runtime": runtime.Version()}, nil
+			"runtime": runtime.Version(), "adapter": ""}, nil
 	})
 	get("/json/small", func(fiber.Ctx) (any, error) { return d.JSONSmall(), nil })
 	get("/products", func(c fiber.Ctx) (any, error) { return d.ListProducts(query(c)), nil })

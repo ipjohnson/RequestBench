@@ -28,7 +28,7 @@ def as_event(method, path, body):
     return json.dumps({
         "version": "2.0", "rawPath": raw_path, "rawQueryString": qs,
         "queryStringParameters": dict(parse_qsl(qs)),
-        "headers": {"content-type": "application/json"},
+        "headers": {"content-type": "application/json", "host": "rb.invalid"},
         "requestContext": {"http": {"method": method, "path": raw_path}},
         "body": body, "isBase64Encoded": False,
     })
@@ -39,7 +39,10 @@ def unwrap(raw):
     fingerprint and the header contract are compared on the same ground as any other
     host. A response that differs across hosts is a bug, not a host characteristic."""
     env = json.loads(raw)
-    hdrs = list((env.get("headers") or {}).items())
+    # The envelope is JSON, so an adapter can give a header value as a number where HTTP
+    # would always have given a string. Normalise here, once, rather than in every reader.
+    hdrs = [(k, v if isinstance(v, str) else str(v))
+            for k, v in (env.get("headers") or {}).items()]
     body = env.get("body") or ""
     if env.get("isBase64Encoded"):
         import base64 as _b64
@@ -217,7 +220,8 @@ def main():
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text(json.dumps({
             "framework": meta.get("framework", ""), "version": meta.get("version", ""),
-            "runtime": meta.get("runtime", ""), "blend": PLAN["version"],
+            "runtime": meta.get("runtime", ""), "adapter": meta.get("adapter", ""),
+            "blend": PLAN["version"],
             "endpoints": exemplars,
         }, indent=1))
         print("  exemplars -> %s (%d endpoints, %.1f KB)"

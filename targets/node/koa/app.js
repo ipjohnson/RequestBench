@@ -3,6 +3,7 @@ import Koa from "koa";
 import Router from "@koa/router";
 import bodyParser from "koa-bodyparser";
 import { pkgVersion } from "../_shared/version.js";
+import { hostMeta } from "../_shared/host.js";
 import * as d from "../_shared/domain.js";
 
 const meta = { framework: "koa", version: pkgVersion("koa"),
@@ -49,7 +50,7 @@ const send = (ctx, v, status = 200) => {
 
 router.get("/plaintext", (ctx) => { ctx.type = "text/plain"; ctx.body = "Hello, World!"; });
 router.get("/health", (ctx) => { ctx.type = "text/plain"; ctx.body = "ok"; });
-router.get("/__meta", (ctx) => { ctx.body = meta; });
+router.get("/__meta", (ctx) => { ctx.body = { ...meta, ...hostMeta() }; });
 router.get("/json/small", (ctx) => { ctx.body = d.jsonSmall(); });
 
 router.get("/products", (ctx) => { ctx.body = d.listProducts(ctx.query); });

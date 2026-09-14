@@ -79,9 +79,9 @@ def main():
     samples = [r for r in rows if r["kind"] == "sample"]
     # A cross-language run has one baseline per language. Ratios are always within a
     # language; the absolutes are what carry across, because nothing moved between targets.
-    baselines = env.get("baselines") or {env["shard"]: env["baseline"]}
-    shard_of = {r["target"]: r.get("shard", env["shard"]) for r in rungs}
-    base_of = {t: baselines.get(shard_of[t], env["baseline"]) for t in shard_of}
+    baselines = env.get("baselines") or {env["language"]: env["baseline"]}
+    language_of = {r["target"]: r.get("language", env["language"]) for r in rungs}
+    base_of = {t: baselines.get(language_of[t], env["baseline"]) for t in language_of}
     targets = list(dict.fromkeys(r["target"] for r in rungs))
     by = {(r["target"], r["rung"]): r for r in rungs}
     rung_ids = sorted({r["rung"] for r in rungs})
@@ -111,7 +111,7 @@ def main():
             fam_p50[key][f] = pct(merged, 50)
 
     out = {
-        "run_id": env["run_id"], "date": env["run_id"][:10], "shard": env["shard"],
+        "run_id": env["run_id"], "date": env["run_id"][:10], "language": env["language"],
         "suite": env["suite"], "epoch": env["epoch"], "mode": env.get("mode", "local"),
         "runner": a.runner, "tracked": a.tracked,
         "exec_host": env.get("exec_host") or "container",
@@ -119,7 +119,7 @@ def main():
         "sut_cpus": env.get("sut_cpus", ""), "gen_cpus": env.get("gen_cpus", ""),
         "runtime": env["runtime"], "generator": env["generator"],
         "baseline": env["baseline"], "baselines": baselines,
-        "shards": env.get("shards", [env["shard"]]),
+        "languages": env.get("languages", [env["language"]]),
         "cross_language": env.get("cross_language", False),
         "rungs": rung_ids, "targets": [],
         # Declared once. Per-target endpoint arrays are parallel to this, which keeps the
@@ -129,11 +129,15 @@ def main():
     }
     for t in targets:
         m = meta.get(t, {})
-        entry = {"target": t, "shard": shard_of.get(t, env["shard"]),
+        entry = {"target": t, "language": language_of.get(t, env["language"]),
                  "exec_host": meta.get(t, {}).get("host", env.get("host", "container")),
                  "baseline": base_of.get(t, env["baseline"]),
                  "framework": m.get("framework", t),
                  "version": m.get("version", ""), "target_runtime": m.get("runtime", ""),
+                 # What the host put in front of the framework. A bump here moves the
+                 # numbers with the framework version unchanged, so it is recorded next to
+                 # it rather than left to the lockfile.
+                 "adapter": m.get("adapter", ""),
                  "rungs": {}, "families": {}, "families_by_rung": {}}
         base = base_of.get(t, env["baseline"])
         for rn in rung_ids:

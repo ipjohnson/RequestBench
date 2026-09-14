@@ -5,8 +5,10 @@ WORKDIR /app
 COPY targets/node/package.json targets/node/package-lock.json ./targets/node/
 RUN cd targets/node && npm ci --omit=dev --no-audit --no-fund
 COPY targets/node/_shared ./targets/node/_shared
+COPY targets/node/_hosts ./targets/node/_hosts
 COPY targets/node/${TARGET} ./targets/node/app
 COPY spec/fixture.json ./spec/fixture.json
-ENV PORT=8080 RB_FIXTURE=/app/spec/fixture.json
+# Whatever the target is called, it is copied to app/, so one entrypoint covers them all.
+ENV PORT=8080 RB_TARGET=app RB_FIXTURE=/app/spec/fixture.json
 EXPOSE 8080
-CMD ["node", "targets/node/app/server.js"]
+CMD ["node", "targets/node/_hosts/container.mjs"]

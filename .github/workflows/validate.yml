@@ -1,6 +1,6 @@
 # Validation only. A PR proves every target still answers all 40 endpoints identically.
-# No load is generated here: timings from a shared CI runner would be noise, and the
-# rotation measures on a dedicated host.
+# No load is generated here: timings from a shared CI runner would be noise.
+# Measurement is its own workflow, and it splits by execution host rather than by language.
 name: validate
 
 on:
@@ -47,7 +47,7 @@ jobs:
           ./actionlint -color
 
   node:
-    name: node shard conforms
+    name: node targets conform
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -58,7 +58,7 @@ jobs:
       - run: npm ci --omit=dev --no-audit --no-fund
         working-directory: targets/node
       - name: Boot and conform every node target
-        run: python3 harness/run.py --shard node --targets node-http,fastify,express --validate-only
+        run: python3 harness/run.py --language node --targets node-http,fastify,express --validate-only
       - name: Fail if the reference fingerprints drifted
         run: |
           RB_TARGET=baseline PORT=8080 node targets/node/_hosts/container.mjs & SRV=$!
@@ -79,18 +79,18 @@ jobs:
           echo "reference fingerprints unchanged"
 
   go:
-    name: go shard conforms
+    name: go targets conform
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
-        with: { go-version: "1.25", cache-dependency-path: targets/go/go.sum }
+        with: { go-version: "1.26", cache-dependency-path: targets/go/go.sum }
       - uses: actions/setup-python@v5
         with: { python-version: "3.13" }
       - run: go build ./...
         working-directory: targets/go
       - name: Boot and conform every go target against the node reference
-        run: python3 harness/run.py --shard go --targets net-http,gin,echo --validate-only
+        run: python3 harness/run.py --language go --targets net-http,gin,echo --validate-only
 
   images:
     name: container images build
@@ -99,15 +99,32 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { shard: node, target: baseline }
-          - { shard: node, target: fastify }
-          - { shard: go,   target: baseline }
-          - { shard: go,   target: gin }
-          - { shard: go,   target: echo }
+          - { language: node, target: baseline }
+          - { language: node, target: fastify }
+          - { language: go,   target: baseline }
+          - { language: go,   target: gin }
+          - { language: go,   target: echo }
     steps:
       - uses: actions/checkout@v4
-      - name: Build ${{ matrix.shard }}/${{ matrix.target }}
+      - name: Build ${{ matrix.language }}/${{ matrix.target }}
         run: |
-          docker build -f targets/${{ matrix.shard }}/Dockerfile \
+          docker build -f targets/${{ matrix.language }}/Dockerfile \
             --build-arg TARGET=${{ matrix.target }} \
-            -t rb/${{ matrix.shard }}-${{ matrix.target }} .
+            -t rb/${{ matrix.language }}-${{ matrix.target }} .
+
+      # Building only proves the Dockerfile parses. A CMD left pointing at a file that had
+      # been deleted built clean and was unrunnable, so the image has to actually answer.
+      - name: Boot it and ask what it is
+        run: |
+          docker run -d --rm --name rb-smoke -p 8080:8080 \
+            rb/${{ matrix.language }}-${{ matrix.target }}
+          for _ in $(seq 1 60); do
+            if curl -sf http://127.0.0.1:8080/health >/dev/null; then break; fi
+            sleep 0.5
+          done
+          if ! curl -sf http://127.0.0.1:8080/health >/dev/null; then
+            docker logs rb-smoke
+            exit 1
+          fi
+          curl -s http://127.0.0.1:8080/__meta
+          docker stop rb-smoke

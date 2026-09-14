@@ -111,23 +111,7 @@
       "implemented": []
     }
   },
-  "rotation": {
-    "note": "Day of week picks the shard; ISO week parity picks the suite.",
-    "days": {
-      "1": "java",
-      "2": "go",
-      "3": "node",
-      "4": "python",
-      "5": "dotnet",
-      "6": "rust",
-      "7": "anchor"
-    },
-    "suites": {
-      "odd": "blend",
-      "even": "capability"
-    }
-  },
-  "note": "'frameworks' is the plan of record. 'implemented' is what actually exists and is what any runner attempts; a shard with an empty list is skipped.",
+  "note": "'frameworks' is the plan of record. 'implemented' is what actually exists and is what any runner attempts; a language with an empty list is skipped.",
   "hosts": {
     "container": {
       "runs": "the framework's own server",
@@ -188,6 +172,12 @@
     ]
   },
   "host_exceptions": {
+    "node:koa": {
+      "excluded": [
+        "lambda-rie"
+      ],
+      "why": "koa-bodyparser does not see the body through serverless-express, so the five body-carrying endpoints do not match. Unwired rather than unable: it conforms under gcp-func."
+    },
     "go:fiber": {
       "excluded": [
         "gcp-func",

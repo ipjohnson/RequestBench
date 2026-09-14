@@ -1,6 +1,7 @@
 // RequestBench target: h3 v2. Behaviour from _shared/domain.js.
 import { H3, toNodeHandler, serve } from "h3";
 import { pkgVersion } from "../_shared/version.js";
+import { hostMeta } from "../_shared/host.js";
 import * as d from "../_shared/domain.js";
 
 const meta = { framework: "h3", version: pkgVersion("h3"),
@@ -31,7 +32,7 @@ const send = (e, v, status = 200) =>
 
 app.get("/plaintext", (e) => { e.res.headers.set("content-type", "text/plain"); return "Hello, World!"; });
 app.get("/health", (e) => { e.res.headers.set("content-type", "text/plain"); return "ok"; });
-app.get("/__meta", () => meta);
+app.get("/__meta", () => ({ ...meta, ...hostMeta() }));
 app.get("/json/small", () => d.jsonSmall());
 
 app.get("/products", (e) => d.listProducts(Q(e)));

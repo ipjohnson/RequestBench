@@ -10,6 +10,7 @@
 // The Lambda path is hand-written rather than a shim over the HTTP path, because the
 // point of a bare baseline is to be the floor for its host, not a translation of another.
 import { createServer } from "node:http";
+import { hostMeta } from "../_shared/host.js";
 import * as d from "../_shared/domain.js";
 
 const JSON_CT = { "content-type": "application/json" };
@@ -33,7 +34,7 @@ function route(method, seg, q, body) {
       switch (seg[0]) {
         case "plaintext": return text(200, "Hello, World!");
         case "health":    return text(200, "ok");
-        case "__meta":    return json(200, meta);
+        case "__meta":    return json(200, { ...meta, ...hostMeta() });
         case "products":  return json(200, d.listProducts(q));
         case "customers": return json(200, d.listCustomers(q));
         case "orders":    return json(200, d.listOrders(q));

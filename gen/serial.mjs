@@ -66,7 +66,8 @@ function build(i) {
     : Object.fromEntries(new URLSearchParams(path.slice(qi + 1)));
   const event = JSON.stringify({
     version: "2.0", rawPath, rawQueryString: qi === -1 ? "" : path.slice(qi + 1),
-    queryStringParameters: query, headers: { "content-type": "application/json" },
+    queryStringParameters: query,
+    headers: { "content-type": "application/json", host: "rb.invalid" },
     requestContext: { http: { method: ep.method, path: rawPath } },
     body: ep.body ?? undefined, isBase64Encoded: false,
   });

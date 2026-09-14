@@ -5,7 +5,6 @@ import (
 	"errors"
 	"log"
 	"os"
-	"runtime"
 	"strconv"
 
 	hosts "github.com/ianjohnson/requestbench/targets/go/_hosts"
@@ -76,8 +75,7 @@ func main() {
 	get("/search", func(c echo.Context) (any, error) { return d.Search(q(c)), nil })
 	get("/dashboard", func(echo.Context) (any, error) { return d.Dashboard(), nil })
 	e.GET("/__meta", func(c echo.Context) error {
-		return c.JSON(200, H{"framework": "echo", "version": echo.Version,
-			"runtime": runtime.Version()})
+		return c.JSON(200, hosts.Meta("echo", echo.Version))
 	})
 	e.GET("/boom", func(echo.Context) error { panic(d.Boom{}) })
 	e.GET("/forbidden", func(c echo.Context) error { return c.JSON(403, H{"error": "forbidden"}) })

@@ -1,0 +1,17 @@
+# Host: gcp-func. The Functions Framework brings the server, so the entrypoint is its CLI
+# and not the framework's own listen. Go needs no equivalent: it starts the Functions
+# Framework from the same binary, switching on RB_HOST.
+#   docker build -f targets/node/Dockerfile.gcp --build-arg TARGET=fastify -t rb/node-fastify-gcp .
+FROM node:24-alpine
+ARG TARGET=baseline
+WORKDIR /app/targets/node
+COPY targets/node/package.json targets/node/package-lock.json ./
+RUN npm ci --omit=dev --no-audit --no-fund
+COPY targets/node/_shared ./_shared
+COPY targets/node/_hosts ./_hosts
+COPY targets/node/${TARGET} ./app
+COPY spec/fixture.json /app/spec/fixture.json
+ENV PORT=8080 RB_TARGET=app RB_HOST=gcp-func RB_FIXTURE=/app/spec/fixture.json
+EXPOSE 8080
+CMD ["node_modules/.bin/functions-framework", "--target=rb", \
+     "--source=_hosts/gcp-func.mjs", "--port=8080"]
