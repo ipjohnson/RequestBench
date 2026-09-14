@@ -1,0 +1,35 @@
+# Host: lambda-rie for Java. The AWS base image carries the Runtime Interface Client and,
+# when not running in Lambda, the Runtime Interface Emulator, so nothing here is a stand-in.
+#   docker build -f targets/java/Dockerfile.lambda --build-arg TARGET=baseline -t rb/java-bare-netty-lambda .
+ARG JAVA_VERSION=25
+FROM maven:3.9-eclipse-temurin-${JAVA_VERSION} AS build
+ARG TARGET=baseline
+WORKDIR /src
+COPY targets/java/pom.xml ./
+COPY targets/java/shared/pom.xml shared/
+COPY targets/java/hosts/pom.xml hosts/
+COPY targets/java/baseline/pom.xml baseline/
+COPY targets/java/javalin/pom.xml javalin/
+COPY targets/java/vertx/pom.xml vertx/
+COPY targets/java/helidon-se/pom.xml helidon-se/
+COPY targets/java/spring-boot/pom.xml spring-boot/
+COPY targets/java/micronaut/pom.xml micronaut/
+COPY targets/java/quarkus/pom.xml quarkus/
+RUN mvn -B -q -pl ${TARGET} -am dependency:go-offline
+
+COPY targets/java/shared/src shared/src
+COPY targets/java/hosts/src hosts/src
+COPY targets/java/${TARGET}/src ${TARGET}/src
+RUN mvn -B -q -pl ${TARGET} -am -DskipTests package \
+ && cp ${TARGET}/target/server.jar /server.jar
+
+FROM public.ecr.aws/lambda/java:${JAVA_VERSION}
+# The runtime client puts ${LAMBDA_TASK_ROOT}/lib/* on the classpath, so the one shaded jar
+# is all that has to land.
+COPY --from=build /server.jar ${LAMBDA_TASK_ROOT}/lib/server.jar
+COPY spec/fixture.json /var/task/spec/fixture.json
+ENV RB_FIXTURE=/var/task/spec/fixture.json RB_HOST=lambda-rie
+# Every target names its Lambda entry rb.lambda.Handler, so this is the same for all of
+# them: an exec-form CMD cannot expand a build arg, and a per-target CMD would be a second
+# place to keep the target list.
+CMD ["rb.lambda.Handler::handleRequest"]

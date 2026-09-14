@@ -17,6 +17,17 @@
       <groupId>dev.requestbench</groupId>
       <artifactId>rb-shared</artifactId>
     </dependency>
+    <!-- The runtime client and the event shapes are in every target's classpath, the way
+         the go _hosts package links them into every binary. Which adapter a target gets
+         on top of them is decided per target. -->
+    <dependency>
+      <groupId>com.amazonaws</groupId>
+      <artifactId>aws-lambda-java-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.amazonaws</groupId>
+      <artifactId>aws-lambda-java-events</artifactId>
+    </dependency>
   </dependencies>
 
   <build>
