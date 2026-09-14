@@ -127,10 +127,91 @@ jobs:
           path: results/summary/*.json
           retention-days: 90
 
+  cross:
+    name: cross-language
+    runs-on: ${{ github.event.inputs.runner || 'ubuntu-latest' }}
+    timeout-minutes: 330
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Resolve every implemented target
+        id: rot
+        run: |
+          python3 harness/rotation.py --cross --github-output >> "$GITHUB_OUTPUT"
+          python3 harness/rotation.py --cross
+
+      - name: Is this a full ladder?
+        id: full
+        run: |
+          if [ -z "${{ github.event.inputs.seconds }}" ] && [ -z "${{ github.event.inputs.rungs }}" ]; then
+            echo "yes=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "yes=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Record the machine
+        run: |
+          echo "cores: $(nproc)"
+          grep -m1 "model name" /proc/cpuinfo || true
+
+      # Every language on one machine, back to back. This is the only run whose numbers
+      # may be compared across languages, because it is the only one where nothing about
+      # the machine changed between targets.
+      - name: Run the ladder
+        if: steps.rot.outputs.built != '0'
+        env:
+          RB_CPUS: "2"
+          RB_SUT_CPUS: "0,1"
+          RB_GEN_CPUS: "2,3"
+        run: |
+          python3 harness/run.py \
+            --targets "${{ steps.rot.outputs.targets }}" \
+            --mode docker \
+            --workers 2 \
+            --emit-path /tmp/rb-result-path \
+            ${{ github.event.inputs.seconds && format('--seconds {0}', github.event.inputs.seconds) || '' }} \
+            ${{ github.event.inputs.rungs && format('--rungs {0}', github.event.inputs.rungs) || '' }}
+
+      - name: Summarize
+        id: sum
+        if: steps.rot.outputs.built != '0'
+        run: |
+          RAW=$(cat /tmp/rb-result-path)
+          NAME=$(basename "$RAW" .jsonl)
+          TRACKED=""
+          [ "${{ steps.full.outputs.yes }}" = "true" ] && TRACKED="--tracked"
+          # shellcheck disable=SC2086
+          python3 harness/summarize.py "$RAW" $TRACKED \
+            --runner github-hosted \
+            --out "results/summary/$NAME.json"
+          gzip -9 -c "$RAW" > "/tmp/$NAME.jsonl.gz"
+          echo "name=$NAME" >> "$GITHUB_OUTPUT"
+          python3 harness/report.py "$RAW"
+
+      - name: Upload raw samples
+        if: steps.rot.outputs.built != '0'
+        uses: actions/upload-artifact@v4
+        with:
+          name: raw-${{ steps.sum.outputs.name }}
+          path: /tmp/${{ steps.sum.outputs.name }}.jsonl.gz
+          retention-days: 90
+
+      - name: Upload summary
+        if: steps.rot.outputs.built != '0' && steps.full.outputs.yes == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: summary-cross
+          path: results/summary/*.json
+          retention-days: 90
+
   collect:
     name: record summaries
-    needs: measure
-    if: always() && needs.measure.result == 'success'
+    needs: [measure, cross]
+    if: always() && (needs.measure.result == 'success' || needs.cross.result == 'success')
     runs-on: ubuntu-latest
     steps:
       # The results branch is orphan and data-only: nothing watches it, so a nightly

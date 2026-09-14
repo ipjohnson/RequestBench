@@ -123,12 +123,75 @@ def load(d):
 def latest_per_shard(runs):
     best = {}
     for r in runs:
-        if not r.get("tracked"):
+        if not r.get("tracked") or r.get("cross_language"):
             continue
         cur = best.get(r["shard"])
         if cur is None or r["run_id"] > cur["run_id"]:
             best[r["shard"]] = r
     return dict(sorted(best.items()))
+
+def latest_cross(runs):
+    best = None
+    for r in runs:
+        if r.get("tracked") and r.get("cross_language"):
+            if best is None or r["run_id"] > best["run_id"]:
+                best = r
+    return best
+
+
+def clean_rung(run):
+    """The highest rate at which no baseline in the run was dropping requests."""
+    ok = [rn for rn in run["rungs"]
+          if not any(t["rungs"].get(str(rn), {}).get("baseline_saturated")
+                     for t in run["targets"])]
+    return ok[-1] if ok else run["rungs"][len(run["rungs"]) // 2]
+
+
+def cross_section(run):
+    """The only view where comparing languages is defensible: one machine, one window,
+    nothing changed between targets. Ranked by absolute p50, not by ratio."""
+    rn = clean_rung(run)
+    rows = []
+    for t in run["targets"]:
+        d = t["rungs"].get(str(rn))
+        if d:
+            rows.append((t, d))
+    if not rows:
+        return ""
+    rows.sort(key=lambda x: x[1]["p50_us"])
+    worst = max(d["p50_us"] for _, d in rows) or 1
+    langs = sorted({t.get("shard", "?") for t, _ in rows})
+    colour = {l: SERIES[i % len(SERIES)] for i, l in enumerate(langs)}
+    out = []
+    for t, d in rows:
+        lang = t.get("shard", "?")
+        is_base = t["target"] == t.get("baseline")
+        pct = 100.0 * d["p50_us"] / worst
+        bar = ('<div style="height:8px;border-radius:2px;background:%s;width:%.1f%%;'
+               'min-width:2px"></div>' % (colour[lang], pct))
+        out.append(
+            '<tr><td class="name"><span class="pill" style="background:transparent;'
+            'border:1px solid %s;color:%s">%s</span> %s%s</td>'
+            '<td class="ver">%s</td><td>%d us</td>%s<td style="width:38%%">%s</td></tr>'
+            % (colour[lang], colour[lang], esc(lang), esc(t["target"]),
+               ' <span class="pill">baseline</span>' if is_base else "",
+               esc(t.get("version") or "\u2014"), d["p50_us"],
+               ratio_cell(d["p50_ratio"]), bar))
+    offered = rows[0][1]["offered_rps"]
+    return (
+        "<section>"
+        '<div class="shead"><h2>Across languages</h2>'
+        '<span class="pill">%s</span></div>'
+        '<p class="sub">%s &middot; %s, %d cores &middot; every target on one machine, '
+        "back to back, at %s rps. This is the only run where comparing one language to "
+        "another is supported, because nothing about the machine changed between targets. "
+        "The ratio column is still to that target's own language baseline.</p>"
+        '<div class="scroll"><table><thead><tr><th>target</th><th>version</th>'
+        "<th>p50</th><th>vs own baseline</th><th>relative p50</th></tr></thead>"
+        "<tbody>%s</tbody></table></div></section>"
+        % (esc(run["run_id"][:16]), esc(run["date"]), esc(run["cpu"]), run["cores"],
+           f"{offered:,}", "".join(out)))
+
 
 def ratio_cell(v, dead=False):
     if v is None:
@@ -250,7 +313,10 @@ def render(runs):
     tracked = [r for r in runs if r.get("tracked")]
     now = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     body = []
-    if not latest:
+    cross = latest_cross(runs)
+    if cross:
+        body.append(cross_section(cross))
+    if not latest and not cross:
         body.append('<div class="note">No tracked runs yet. A shortened ladder is a '
                     "smoke test and never enters the series, so the first full run on the "
                     "schedule will populate this page.</div>")

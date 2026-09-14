@@ -31,6 +31,24 @@ why `conform.py` fingerprints every response and refuses to measure a target tha
     gen/blend.mjs         open-loop blend driver
     targets/<lang>/       one directory per target, plus _shared/ domain logic
 
+## Comparing across languages
+
+Within a language, a framework is reported as a ratio to that language's bare baseline,
+which divides out the machine. Across languages there is no shared denominator, so ratios
+from two different shards cannot be put side by side.
+
+The `cross` job is the answer: one runner, every implemented target in every language,
+booted back to back. Nothing about the machine changes between targets, so the absolute
+numbers from that single run are comparable across languages. It is the only place the
+site ranks languages against each other.
+
+    python3 harness/rotation.py --cross          # what it would run
+    python3 harness/run.py --mode docker \
+      --targets go:net-http,go:gin,node:node-http,node:fastify
+
+A hosted job is capped at six hours, which at roughly 370s per target holds about 58
+targets. The full 43-target plan fits; adding the capability suites would not.
+
 ## Running it
 
     make plan

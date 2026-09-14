@@ -207,8 +207,10 @@ def env_fingerprint(run_id, shard, baseline):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--shard", required=True)
-    ap.add_argument("--targets", required=True, help="comma separated, baseline first")
+    ap.add_argument("--shard", help="single shard; omit when --targets is fully qualified")
+    ap.add_argument("--targets", required=True,
+                    help="comma separated. Either bare names with --shard, or "
+                         "shard:target pairs to measure several languages in one run")
     ap.add_argument("--seconds", type=int, default=0, help="override rung duration")
     ap.add_argument("--rungs", default="", help="comma separated rung numbers, default all")
     ap.add_argument("--workers", type=int, default=6)
@@ -220,37 +222,63 @@ def main():
                     help="write the results file path here, so callers need not glob")
     a = ap.parse_args()
 
+    # A cross-language run is one job on one machine measuring every language back to
+    # back. Within-language ratios still work because each language's baseline is in the
+    # list; absolutes become comparable across languages because nothing moved between them.
+    pairs = []
+    for entry in a.targets.split(","):
+        entry = entry.strip()
+        if not entry:
+            continue
+        if ":" in entry:
+            sh, _, name = entry.partition(":")
+        elif a.shard:
+            sh, name = a.shard, entry
+        else:
+            sys.exit("target %r has no shard: pass --shard or write shard:target" % entry)
+        if sh not in MATRIX["languages"]:
+            sys.exit("unknown shard %r in target %r" % (sh, entry))
+        pairs.append((sh, name))
+    if not pairs:
+        sys.exit("no targets")
+    shards = list(dict.fromkeys(sh for sh, _ in pairs))
+    baselines = {sh: MATRIX["languages"][sh]["baseline"] for sh in shards}
+
     rungs = [r for r in LADDER["rungs"]
              if not a.rungs or str(r["rung"]) in a.rungs.split(",")]
     secs = a.seconds or None
-    wclass = warmup_class(a.shard)
-    warm_s = LADDER["warmup"]["seconds"][wclass]
+    warm_s = max(LADDER["warmup"]["seconds"][warmup_class(sh)] for sh in shards)
     if a.seconds:
         warm_s = max(5, a.seconds // 2)
 
-    run_id = "%s.%s.%s" % (time.strftime("%Y-%m-%dT%H:%MZ", time.gmtime()), a.shard, uuid.uuid4().hex[:6])
+    tag = shards[0] if len(shards) == 1 else "x-" + "-".join(shards)
+    run_id = "%s.%s.%s" % (time.strftime("%Y-%m-%dT%H:%MZ", time.gmtime()), tag,
+                           uuid.uuid4().hex[:6])
     out_path = ROOT / "results" / ("%s.jsonl" % run_id.replace(":", ""))
     out_path.parent.mkdir(exist_ok=True)
-    baseline = MATRIX["languages"][a.shard]["baseline"]
-    rows = [env_fingerprint(run_id, a.shard, baseline)]
+    rows = [env_fingerprint(run_id, tag, baselines[shards[0]])]
+    rows[0]["shards"] = shards
+    rows[0]["baselines"] = baselines
+    rows[0]["cross_language"] = len(shards) > 1
 
     rows[0]["mode"] = a.mode
     if a.mode == "docker":
         rows[0]["cpus"] = Container.CPUS
+    what = "shard=%s" % shards[0] if len(shards) == 1 else "shards=%s" % ",".join(shards)
     if a.validate_only:
-        print("run %s   shard=%s  mode=%s  VALIDATE ONLY" % (run_id, a.shard, a.mode))
+        print("run %s   %s  mode=%s  VALIDATE ONLY" % (run_id, what, a.mode))
     else:
-        print("run %s   shard=%s  mode=%s  warmup=%ss (%s)  rungs=%s"
-              % (run_id, a.shard, a.mode, warm_s, wclass, [r["rung"] for r in rungs]))
+        print("run %s   %s  mode=%s  warmup=%ss  rungs=%s  %d targets"
+              % (run_id, what, a.mode, warm_s, [r["rung"] for r in rungs], len(pairs)))
 
     conformed = 0
-    for target in a.targets.split(","):
-        print("\n=== %s ===" % target)
-        t = launcher(a.mode, a.shard, target).start()
+    for shard, target in pairs:
+        print("\n=== %s%s ===" % (("%s:" % shard) if len(shards) > 1 else "", target))
+        t = launcher(a.mode, shard, target).start()
         try:
             # `go run` compiles on first launch, which no boot budget should punish.
             try:
-                wait_healthy(t, 240 if (a.mode == "local" and a.shard == "go")
+                wait_healthy(t, 240 if (a.mode == "local" and shard == "go")
                                 else LADDER["boot_timeout_s"])
             except RuntimeError as e:
                 print("  BOOT FAILED: %s" % e)
@@ -262,7 +290,7 @@ def main():
                 print("  booted   %s %s on %s" % (meta.get("framework", target),
                                                   meta.get("version", "?"),
                                                   meta.get("runtime", "?")))
-                rows.append({"kind": "target", "run_id": run_id, "shard": a.shard,
+                rows.append({"kind": "target", "run_id": run_id, "shard": shard,
                              "target": target, **meta})
             else:
                 print("  booted   (no /__meta; version unknown)")
@@ -287,14 +315,14 @@ def main():
                          res["dropped"], res["errors"]))
                 for ep in res["endpoints"]:
                     rows.append({"kind": "sample", "run_id": run_id, "epoch": 1,
-                                 "suite": "blend-v1", "arm": None, "shard": a.shard,
+                                 "suite": "blend-v1", "arm": None, "shard": shard,
                                  "target": target, "rung": r["rung"], "offered_rps": r["rps"],
                                  "achieved_rps": res["achieved_rps"], "seconds": dur,
                                  "endpoint": ep["id"], "family": ep["family"],
                                  "count": ep["count"], "errors": ep["errors"],
                                  "mismatch": ep["mismatch"], "p50_us": ep["p50_us"],
                                  "p99_us": ep["p99_us"], "hist_b64": ep["hist_b64"]})
-                rows.append({"kind": "rung", "run_id": run_id, "target": target,
+                rows.append({"kind": "rung", "run_id": run_id, "shard": shard, "target": target,
                              "rung": r["rung"], "offered_rps": r["rps"],
                              "achieved_rps": res["achieved_rps"], "seconds": dur,
                              "dropped": res["dropped"], "errors": res["errors"],

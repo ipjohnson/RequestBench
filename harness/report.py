@@ -41,10 +41,15 @@ def main():
     env = next(r for r in rows if r["kind"] == "env")
     samples = [r for r in rows if r["kind"] == "sample"]
     rungs = [r for r in rows if r["kind"] == "rung"]
+    baselines = env.get("baselines") or {env["shard"]: env["baseline"]}
+    shard_of = {r["target"]: r.get("shard", env["shard"]) for r in rungs}
+    base_of = {t: baselines.get(shard_of[t], env["baseline"]) for t in shard_of}
     base = env["baseline"]
     targets = list(dict.fromkeys(r["target"] for r in rungs))
-    if base not in targets:
-        print("baseline %r not in this run; ratios unavailable" % base); return 1
+    missing = {b for b in base_of.values()} - set(targets)
+    if missing:
+        print("baseline(s) %s not in this run; ratios unavailable" % ", ".join(missing))
+        return 1
 
     print("run      %s" % env["run_id"])
     print("host     %s  %s  %d cores" % (env["host"], env["cpu"], env["cores"]))
@@ -56,16 +61,20 @@ def main():
     by = {(r["target"], r["rung"]): r for r in rungs}
     rung_ids = sorted({r["rung"] for r in rungs})
 
-    print("\nachieved rps / p50 us / p99 us   (x = ratio to %s, lower is better)" % base)
+    label = base if len(baselines) == 1 else "each language's own baseline"
+    print("\nachieved rps / p50 us / p99 us   (x = ratio to %s, lower is better)" % label)
     head = "  %-12s" % "target"
     for rn in rung_ids:
-        head += " %-26s" % ("rung %d @ %s rps" % (rn, by[(base, rn)]["offered_rps"]))
+        any_row = next(r for r in rungs if r["rung"] == rn)
+        head += " %-26s" % ("rung %d @ %s rps" % (rn, any_row["offered_rps"]))
     print(head)
     for t in targets:
-        line = "  %-12s" % t
+        tag = t if len(baselines) == 1 else "%s:%s" % (shard_of.get(t, "?"), t)
+        line = "  %-16s" % tag
+        tb = base_of.get(t, base)
         for rn in rung_ids:
-            r, b = by.get((t, rn)), by[(base, rn)]
-            if not r:
+            r, b = by.get((t, rn)), by.get((tb, rn))
+            if not r or not b:
                 line += " %-26s" % "-"; continue
             rat = r["p50_us"] / b["p50_us"] if b["p50_us"] else 0
             cell = "%5d %5d %6d %5.2fx" % (r["achieved_rps"], r["p50_us"], r["p99_us"], rat)

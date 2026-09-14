@@ -53,7 +53,11 @@ def main():
     rungs = [r for r in rows if r["kind"] == "rung"]
     meta = {r["target"]: r for r in rows if r["kind"] == "target"}
     samples = [r for r in rows if r["kind"] == "sample"]
-    base = env["baseline"]
+    # A cross-language run has one baseline per language. Ratios are always within a
+    # language; the absolutes are what carry across, because nothing moved between targets.
+    baselines = env.get("baselines") or {env["shard"]: env["baseline"]}
+    shard_of = {r["target"]: r.get("shard", env["shard"]) for r in rungs}
+    base_of = {t: baselines.get(shard_of[t], env["baseline"]) for t in shard_of}
     targets = list(dict.fromkeys(r["target"] for r in rungs))
     by = {(r["target"], r["rung"]): r for r in rungs}
     rung_ids = sorted({r["rung"] for r in rungs})
@@ -79,13 +83,19 @@ def main():
         "host": env["host"], "cpu": env["cpu"], "cores": env["cores"],
         "sut_cpus": env.get("sut_cpus", ""), "gen_cpus": env.get("gen_cpus", ""),
         "runtime": env["runtime"], "generator": env["generator"],
-        "baseline": base, "rungs": rung_ids, "targets": [],
+        "baseline": env["baseline"], "baselines": baselines,
+        "shards": env.get("shards", [env["shard"]]),
+        "cross_language": env.get("cross_language", False),
+        "rungs": rung_ids, "targets": [],
     }
     for t in targets:
         m = meta.get(t, {})
-        entry = {"target": t, "framework": m.get("framework", t),
+        entry = {"target": t, "shard": shard_of.get(t, env["shard"]),
+                 "baseline": base_of.get(t, env["baseline"]),
+                 "framework": m.get("framework", t),
                  "version": m.get("version", ""), "target_runtime": m.get("runtime", ""),
                  "rungs": {}, "families": {}}
+        base = base_of.get(t, env["baseline"])
         for rn in rung_ids:
             r, b = by.get((t, rn)), by.get((base, rn))
             if not r:

@@ -41,6 +41,22 @@ def shard_targets(shard):
         "warmup_class": "jit" if shard in MATRIX["warmup_classes"]["jit"] else "steady",
     }
 
+def cross_targets():
+    """Every implemented target in every language, as shard:target pairs.
+
+    One job, one machine, everything back to back. Ratios stay within a language because
+    each language's baseline is in the list; absolutes become comparable across languages
+    because nothing moved between targets.
+    """
+    out = []
+    for shard, lang in MATRIX["languages"].items():
+        built = lang.get("implemented", [])
+        if not built:
+            continue
+        out += ["%s:%s" % (shard, t) for t in [lang["baseline"]] + built]
+    return out
+
+
 def override_shard(r, shard):
     """Keep the night's suite, but measure a shard the operator named."""
     r.update(shard_targets(shard))
@@ -63,9 +79,22 @@ def main(argv):
     ap.add_argument("--shard", default="auto")
     ap.add_argument("--github-output", action="store_true",
                     help="emit key=value lines instead of JSON")
+    ap.add_argument("--cross", action="store_true",
+                    help="every implemented target in every language, as shard:target")
     a = ap.parse_args(argv[1:])
 
     day = dt.date.fromisoformat(a.date) if a.date else dt.date.today()
+    if a.cross:
+        pairs = cross_targets()
+        r = {"date": day.isoformat(), "shard": "cross", "suite": "blend",
+             "targets": ",".join(pairs), "built": len(pairs)}
+        if a.github_output:
+            for k in ("date", "shard", "suite", "targets"):
+                print("%s=%s" % (k, r[k]))
+            print("built=%d" % r["built"])
+        else:
+            print(json.dumps(r))
+        return 0
     r = resolve(day)
     if a.shard and a.shard != "auto":
         if a.shard not in MATRIX["languages"]:
