@@ -41,7 +41,10 @@
       "anchor": "gin",
       "implemented": [
         "gin",
-        "echo"
+        "echo",
+        "chi",
+        "gorilla-mux",
+        "fiber"
       ]
     },
     "node": {
