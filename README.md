@@ -5,7 +5,10 @@ each measured against a bare baseline in its own runtime, so what gets published
 overhead a framework adds rather than an absolute number that only describes the machine
 it ran on.
 
-The full design and the capability suites are in [docs/plan.md](docs/plan.md).
+The full design and the capability suites are in [docs/plan.md](docs/plan.md). The
+endpoint set is designed in [docs/blend-v2.html](docs/blend-v2.html), and
+[docs/bundles.html](docs/bundles.html) covers tracing a published ratio back to the code
+that produced it.
 
 ## Two rules the whole thing rests on
 
@@ -22,11 +25,13 @@ why `conform.py` fingerprints every response and refuses to measure a target tha
 
 ## Layout
 
-    spec/endpoints.json   40 endpoints, families, integer weight shares out of 10000
+    spec/endpoints.json   42 endpoints in 13 families, drawn uniformly
+    spec/blends.json      weight vectors, applied when an aggregate is composed
     spec/ladder.json      five rungs, 500 -> 12000 rps, 60s each
     spec/matrix.json      languages, frameworks, baselines, warmup class
     spec/fixture.json     generated, committed: identical data for all 43 targets
     spec/plan.json        generated: pre-resolved concrete requests every driver replays
+    spec/sequence.json    generated: the fixed replay order every serial host uses
     harness/              plan, conformance gate, orchestrator, aggregator
     gen/blend.mjs         open-loop blend driver
     targets/<lang>/       one directory per target, plus _shared/ domain logic
@@ -91,7 +96,9 @@ nightly framework update, and nineteen targets across three languages. Node has
 gorilla/mux and Fiber. Java has bare Netty, Spring Boot, Quarkus, Micronaut, Helidon SE,
 Vert.x and Javalin.
 
-All nineteen fingerprint-match each other on all 40 endpoints, across three languages.
+All nineteen fingerprint-match each other across three languages, on the forty endpoints
+of `blend-v1`. The spec is now `blend-v2` and no target implements it yet, so the
+conformance gate fails against all of them until they are rewired.
 
 Framework versions are not held by hand. `.github/workflows/deps.yml` resolves the latest
 release for each language nightly, patch and minor only, and opens one pull request per
