@@ -1,7 +1,7 @@
 # Host: lambda-rie. The AWS base image carries the Runtime Interface Client and, when not
 # running in Lambda, the Runtime Interface Emulator, so nothing here is a stand-in.
 #   docker build -f targets/node/Dockerfile.lambda --build-arg TARGET=fastify -t rb/node-fastify-lambda .
-FROM public.ecr.aws/lambda/nodejs:22
+FROM public.ecr.aws/lambda/nodejs:24
 ARG TARGET=baseline
 WORKDIR /var/task
 COPY targets/node/package.json targets/node/package-lock.json ./
