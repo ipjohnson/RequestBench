@@ -31,15 +31,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out the generator
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Check out the data
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: results
           path: _results
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.13"
 
@@ -51,9 +51,9 @@ jobs:
             --exemplars results/exemplars \
             --out site/dist
 
-      - uses: actions/configure-pages@v5
+      - uses: actions/configure-pages@v6
 
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: site/dist
 
@@ -65,4 +65,4 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5

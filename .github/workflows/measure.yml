@@ -44,13 +44,13 @@ jobs:
       matrix:
         host: ${{ fromJSON(github.event.inputs.hosts || '["container","gcp-func","lambda-rie"]') }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.13"
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: "24"
           cache: npm
@@ -117,7 +117,7 @@ jobs:
 
       - name: Upload raw samples
         if: steps.resolve.outputs.built != '0'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: raw-${{ steps.sum.outputs.name }}
           path: /tmp/${{ steps.sum.outputs.name }}.jsonl.gz
@@ -125,7 +125,7 @@ jobs:
 
       - name: Upload summary
         if: steps.resolve.outputs.built != '0' && steps.full.outputs.yes == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: summary-${{ matrix.host }}
           path: out/**/*.json
@@ -139,12 +139,12 @@ jobs:
     steps:
       # The results branch is orphan and data-only: nothing watches it, so recording a run
       # adds no commit to main's history and triggers no CI.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: results
 
       - name: Download every host's summary
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: summary-*
           path: /tmp/summaries
