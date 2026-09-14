@@ -26,6 +26,10 @@ on:
         description: Comma separated rung numbers. Empty means all five.
         default: ""
         type: string
+      runner:
+        description: Runner image. The ARM fleet is a single CPU family; x64 is mixed.
+        default: ubuntu-24.04-arm
+        type: string
 
 permissions:
   contents: write
@@ -37,7 +41,7 @@ concurrency:
 jobs:
   measure:
     name: measure ${{ matrix.shard }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ github.event.inputs.runner || 'ubuntu-24.04-arm' }}
     timeout-minutes: 90
     strategy:
       fail-fast: false
