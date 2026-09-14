@@ -9,6 +9,16 @@ GROWTH, NBUCKETS = 1.02, 920
 LOG_G = math.log(GROWTH)
 val = lambda i: math.exp((i + 0.5) * LOG_G)
 
+def normalize_env(env):
+    """Runs made before the host split named themselves by language and carried one
+    baseline. Read them through the same plural shape as everything since."""
+    if "languages" not in env:
+        env["languages"] = env.get("shards") or [env.get("language") or env.get("shard")]
+    if "baselines" not in env:
+        env["baselines"] = {env["languages"][0]: env.get("baseline")}
+    return env
+
+
 def unpack(b64):
     raw = base64.b64decode(b64)
     return list(struct.unpack("<%dI" % (len(raw) // 4), raw))
@@ -41,10 +51,13 @@ def main():
     env = next(r for r in rows if r["kind"] == "env")
     samples = [r for r in rows if r["kind"] == "sample"]
     rungs = [r for r in rows if r["kind"] == "rung"]
-    baselines = env.get("baselines") or {env["language"]: env["baseline"]}
-    language_of = {r["target"]: r.get("language", env["language"]) for r in rungs}
-    base_of = {t: baselines.get(language_of[t], env["baseline"]) for t in language_of}
-    base = env["baseline"]
+    env = normalize_env(env)
+    baselines = env["baselines"]
+    first = env["languages"][0]
+    # Rows written before the host split carried the language as "shard".
+    language_of = {r["target"]: r.get("language") or r.get("shard") or first for r in rungs}
+    base_of = {t: baselines.get(language_of[t]) for t in language_of}
+    base = baselines[first]
     targets = list(dict.fromkeys(r["target"] for r in rungs))
     missing = {b for b in base_of.values()} - set(targets)
     if missing:
