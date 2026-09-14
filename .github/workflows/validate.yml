@@ -61,7 +61,7 @@ jobs:
         run: python3 harness/run.py --shard node --targets node-http,fastify,express --validate-only
       - name: Fail if the reference fingerprints drifted
         run: |
-          node targets/node/baseline/server.js & SRV=$!
+          RB_TARGET=baseline PORT=8080 node targets/node/_hosts/container.mjs & SRV=$!
           for _ in $(seq 1 40); do
             if curl -sf http://127.0.0.1:8080/health >/dev/null; then break; fi
             sleep 0.25
