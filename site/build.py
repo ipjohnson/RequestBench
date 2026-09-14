@@ -142,6 +142,8 @@ td.dead { color: var(--ink3); text-decoration: line-through; }
            border: 1px solid var(--rule2); border-radius: 3px; background: var(--ground);
            color: var(--ink2); }
 .wirebtn:hover { border-color: var(--teal); color: var(--tealtext); }
+.wirebtn[aria-pressed="true"] { background: var(--teal); border-color: var(--teal);
+                                color: var(--onfill); }
 .wirehead { display: flex; flex-wrap: wrap; gap: 9px; align-items: baseline;
             margin-bottom: 14px; font-size: 14px; }
 .wirehead .wmeta { font-family: var(--f-mono); font-size: 11.5px; color: var(--ink3);
@@ -385,7 +387,11 @@ function renderWire(key, eid) {
         ${e.sb ? `<pre class="wire">${esc(e.sb)}${e.tr ? '\n\u2026 ' + e.sbz + ' bytes total' : ''}</pre>` : '<p class="empty" style="padding:8px 0">no body</p>'}
       </div>
     </div>`;
-  box.scrollIntoView({behavior: 'smooth', block: 'nearest'});
+  document.querySelectorAll('.wirebtn[aria-pressed="true"]')
+          .forEach(b => b.removeAttribute('aria-pressed'));
+  const btn = document.querySelector(`.wirebtn[data-wire="${key}|${eid}"]`);
+  if (btn) btn.setAttribute('aria-pressed', 'true');
+  box.scrollIntoView({behavior: 'smooth', block: 'center'});
 }
 const esc = t => String(t).replace(/[&<>]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;'}[c]));
 
@@ -416,6 +422,8 @@ function render() {
   document.getElementById('q').value = st.q;
   document.getElementById('q').style.display = st.gran === 'blend' ? 'none' : '';
   document.getElementById('qlabel').style.display = st.gran === 'blend' ? 'none' : '';
+  document.getElementById('wirehint').style.display =
+      (st.gran === 'endpoint' && RB.wire && Object.keys(RB.wire).length) ? '' : 'none';
 
   if (!run) {
     document.getElementById('meta').textContent = 'no tracked runs for this host yet';
@@ -624,6 +632,8 @@ target against the bare baseline in its own language.</p>
   <div class="ctl"><label>Languages</label><div class="chips" id="chips"></div></div>
   <div class="ctl"><label for="q" id="qlabel">Filter</label>
     <input type="search" id="q" placeholder="endpoint or framework"></div>
+  <div class="ctl" id="wirehint" style="display:none"><label>&nbsp;</label>
+    <span class="count">press <code>&lt;/&gt;</code> on a row for its request and response</span></div>
   <div class="spacer"></div>
   <div class="ctl"><label>&nbsp;</label>
     <div class="seg"><button id="reset" type="button">Reset</button></div></div>
