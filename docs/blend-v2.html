@@ -171,13 +171,13 @@ footer { margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--rule);
 
 <p class="eyebrow">RequestBench · design</p>
 <h1>Blend v2 Endpoints</h1>
-<p class="lede">The endpoint set as it should be: forty-two endpoints whose names say what they test, built by adding one feature at a time to a fixed JSON response, sampled evenly, and weighted only when someone asks for an aggregate.</p>
+<p class="lede">The endpoint set as it should be: forty-five endpoints whose names say what they test, built by adding one feature at a time to a fixed JSON response, sampled evenly, and weighted only when someone asks for an aggregate.</p>
 
 <dl class="meta">
   <div><dt>Date</dt><dd>14 September 2026</dd></div>
   <div><dt>Replaces</dt><dd><code>blend-v1</code>, 40 endpoints, 8 families</dd></div>
-  <div><dt>Proposes</dt><dd><code>blend-v2</code>, 42 endpoints, 13 families</dd></div>
-  <div><dt>Sampling</dt><dd>Uniform. 32,857 requests per endpoint per run.</dd></div>
+  <div><dt>Proposes</dt><dd><code>blend-v2</code>, 45 endpoints, 13 families</dd></div>
+  <div><dt>Sampling</dt><dd>Uniform. 30,667 requests per endpoint per run.</dd></div>
   <div><dt>Status</dt><dd>Proposed. Nothing implemented.</dd></div>
 </dl>
 
@@ -190,7 +190,7 @@ footer { margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--rule);
 
 <p>Today an endpoint id says where it sits in a taxonomy and its path says what resource it returns. Neither says what is being measured. <code>nf.dashboard</code> serves <code>/dashboard</code>; the family note says it exercises "a deeper middleware chain", which you cannot recover from either string. <code>jr.product</code> serves <code>/products/{product}</code> and <code>pp.cust_orders</code> serves <code>/customers/{customer}/orders</code>; they sit in different families but both are a GET with a path capture, and nothing explains the split.</p>
 
-<p>In v2 the first path segment names the thing under test and the rest names the arm. <code>/compressed/medium</code> is the medium payload with compression on. <code>/parameters/{one}/with-second/{two}</code> is the router carrying two captures. The id is the same words with a dot, so <code>compressed.medium</code> and <code>parameters.two</code> need no lookup table.</p>
+<p>In v2 the first path segment names the thing under test and the rest names the arm. <code>/compressed/medium</code> is the medium payload on the compressing route. <code>/parameters/{one}/with-second/{two}</code> is the router carrying two captures. The id is the same words with a dot, plus the arm where one route carries two, so <code>compressed.gzip_medium</code> and <code>parameters.two</code> need no lookup table.</p>
 
 <p>The rule that makes the names honest is the one underneath: <b>every feature endpoint is a baseline endpoint plus exactly one factor.</b> The response payload is a controlled variable with three fixed values, and a feature family reuses one of them unchanged. Subtracting the base from the arm leaves the feature and nothing else.</p>
 
@@ -234,15 +234,15 @@ footer { margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--rule);
 
 <p>Record counts are the pinned quantity; the byte counts are what those counts produce and are stated so a reader can check <code>content-length</code> against them. They were computed against the proposed generator, not measured from a target. Sizes sit safely inside a regime rather than on a boundary — probing where the boundary is needs more than three points and is a different question.</p>
 
-<p>The records are distinct rather than fifty fixture products cycled. Cycling compresses 26:1 and would make gzip look free; distinct records land at 7:1, which is ordinary for JSON. The small payload is the one that earns its slot twice over: gzip −6 turns 125 bytes into 125 bytes, so <code>compressed.small</code> minus <code>json.small</code> is the cost a framework pays to achieve nothing, which is exactly the threshold behaviour worth exposing.</p>
+<p>The records are distinct rather than fifty fixture products cycled. Cycling compresses 26:1 and would make gzip look free; distinct records land at 7:1, which is ordinary for JSON. The small payload is the one that earns its slot twice over: gzip −6 turns 125 bytes into 125 bytes, so <code>compressed.gzip_small</code> minus <code>compressed.identity_small</code> is the cost a framework pays to achieve nothing, which is exactly the threshold behaviour worth exposing.</p>
 
-<p>Request bodies use small and medium only. A 131&nbsp;KB request body at rung 5 would move 1.5&nbsp;GB/s across loopback and measure the kernel. Response bodies do use large: <code>json.large</code>, <code>compressed.large</code> and <code>cached.large</code> together move about 110&nbsp;MB/s at rung 5, which loopback carries comfortably and which is the first thing to check if rung 5 ever looks strange.</p>
+<p>Request bodies use small and medium only. A 131&nbsp;KB request body at rung 5 would move 1.5&nbsp;GB/s across loopback and measure the kernel. Response bodies do use large: <code>json.large</code>, <code>compressed.identity_large</code> and <code>cached.large</code> together move about 110&nbsp;MB/s at rung 5, which loopback carries comfortably and which is the first thing to check if rung 5 ever looks strange.</p>
 </section>
 
 <section>
 <div class="sectionhead">
   <span class="num">§3 · The set</span>
-  <h2>Forty-two endpoints in thirteen families</h2>
+  <h2>Forty-five endpoints in thirteen families</h2>
   <p>Each block gives the family's job, its rows, and the three lines that define what its deltas mean. <code>Base</code> is the endpoint to subtract. There is no weight column: every endpoint is drawn with equal probability, and what counts toward an aggregate is decided in <code>spec/blends.json</code> rather than here.</p>
 </div>
 
@@ -312,19 +312,22 @@ footer { margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--rule);
 </div>
 
 <div class="grp">
-  <div class="grphead"><h3>compressed</h3><span class="cnt">3 endpoints</span>
-    <p class="job">Outbound gzip at a pinned level. The request carries <code>accept-encoding: gzip</code> and <code>cache-control: no-cache</code>.</p></div>
+  <div class="grphead"><h3>compressed</h3><span class="cnt">6 endpoints</span>
+    <p class="job">Outbound gzip at a pinned level, crossed with whether the client asked for it. Three routes, two request shapes each: <code>accept-encoding: gzip</code> against <code>accept-encoding: identity</code>, both with <code>cache-control: no-cache</code>.</p></div>
   <div class="scroll"><table>
-  <thead><tr><th>Id</th><th>Method</th><th>Path</th><th class="n">Expect</th><th>Base</th></tr></thead>
+  <thead><tr><th>Id</th><th>Method</th><th>Path / request</th><th class="n">Expect</th><th>Base</th></tr></thead>
   <tbody>
-  <tr><td class="m">compressed.small</td><td class="m">GET</td><td class="w">/compressed/small</td><td class="n">200</td><td class="base">json.small</td></tr>
-  <tr><td class="m">compressed.medium</td><td class="m">GET</td><td class="w">/compressed/medium</td><td class="n">200</td><td class="base">json.medium</td></tr>
-  <tr><td class="m">compressed.large</td><td class="m">GET</td><td class="w">/compressed/large</td><td class="n">200</td><td class="base">json.large</td></tr>
+  <tr><td class="m">compressed.identity_small</td><td class="m">GET</td><td class="w">/compressed/small<br><code>accept-encoding: identity</code></td><td class="n">200</td><td class="base">json.small</td></tr>
+  <tr><td class="m">compressed.identity_medium</td><td class="m">GET</td><td class="w">/compressed/medium<br><code>accept-encoding: identity</code></td><td class="n">200</td><td class="base">json.medium</td></tr>
+  <tr><td class="m">compressed.identity_large</td><td class="m">GET</td><td class="w">/compressed/large<br><code>accept-encoding: identity</code></td><td class="n">200</td><td class="base">json.large</td></tr>
+  <tr><td class="m">compressed.gzip_small</td><td class="m">GET</td><td class="w">/compressed/small<br><code>accept-encoding: gzip</code></td><td class="n">200</td><td class="base">compressed.identity_small</td></tr>
+  <tr><td class="m">compressed.gzip_medium</td><td class="m">GET</td><td class="w">/compressed/medium<br><code>accept-encoding: gzip</code></td><td class="n">200</td><td class="base">compressed.identity_medium</td></tr>
+  <tr><td class="m">compressed.gzip_large</td><td class="m">GET</td><td class="w">/compressed/large<br><code>accept-encoding: gzip</code></td><td class="n">200</td><td class="base">compressed.identity_large</td></tr>
   </tbody></table></div>
   <dl class="holds">
-    <div><dt>Held constant</dt><dd>Payload, codec, compression level.</dd></div>
-    <div><dt>Varies</dt><dd>Compression on or off, crossed with size.</dd></div>
-    <div><dt>The delta reads</dt><dd>Buffer-whole against stream, and whether a framework compresses a body too small to benefit.</dd></div>
+    <div><dt>Held constant</dt><dd>Route, payload, codec, compression level. The wiring is registered on the route in both arms.</dd></div>
+    <div><dt>Varies</dt><dd>Whether the client opted in, crossed with size.</dd></div>
+    <div><dt>The delta reads</dt><dd>Three ways, which is the reason for the pair. <code>identity</code> minus <code>json</code> is what the wiring costs when it declines, the "did they ask?" check on its own. <code>gzip</code> minus <code>identity</code> is the codec and the buffer-whole-against-stream decision, with that check already subtracted out. A framework whose threshold skips a body too small to benefit reads as a near-zero second delta rather than having to be inferred.</dd></div>
   </dl>
 </div>
 
@@ -488,6 +491,7 @@ footer { margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--rule);
 <table>
 <thead><tr><th>Pinned</th><th>Value</th><th>Because</th></tr></thead>
 <tbody>
+<tr><td class="m">Opting out</td><td><code>accept-encoding: identity</code>, sent explicitly rather than omitting the header</td><td>RFC 9110 &sect;12.5.3 makes an absent <code>Accept-Encoding</code> mean every coding is acceptable, so omitting it licenses a server to compress anyway and the arm stops being the same request on every target.</td></tr>
 <tr><td class="m">Codec and level</td><td>gzip, level 6, every language</td><td>Compression cost is dominated by codec and level, not by framework. An unpinned codec makes <code>compressed.*</code> a zlib benchmark.</td></tr>
 <tr><td class="m">ETag value</td><td>Literal in the fixture, <code>sha256(body)[:16]</code>, strong and quoted</td><td>A pre-resolved <code>if-none-match</code> cannot be built unless every target emits the same ETag. It also means the hashing is not measured, only the header emission and the comparison, which is the framework's actual contribution for a static body. Hash cost belongs in Suite B's static-content suite.</td></tr>
 <tr><td class="m">Bearer token</td><td>Opaque 32-hex constant in the fixture; the denial arm differs in the last character</td><td>Crypto cost is not framework cost, and Suite B already pins a JWT arm. A wrong token of equal length makes the comparison walk the whole string rather than fail on length.</td></tr>
@@ -522,16 +526,16 @@ footer { margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--rule);
 <table>
 <thead><tr><th>Per endpoint, per run</th><th class="n">blend-v1 weighted</th><th class="n">v2 uniform</th><th>Consequence</th></tr></thead>
 <tbody>
-<tr><td class="w">Requests, weakest endpoint</td><td class="n">13,800</td><td class="n">32,857</td><td>The endpoint with the thinnest tail gets 2.4× the samples it does today.</td></tr>
-<tr><td class="w">Requests, strongest endpoint</td><td class="n">82,800</td><td class="n">32,857</td><td>Still 3.3× the 10,000 floor. Nothing loses resolution that had any.</td></tr>
+<tr><td class="w">Requests, weakest endpoint</td><td class="n">13,800</td><td class="n">30,667</td><td>The endpoint with the thinnest tail gets 2.2× the samples it does today.</td></tr>
+<tr><td class="w">Requests, strongest endpoint</td><td class="n">82,800</td><td class="n">30,667</td><td>Still 3.1× the 10,000 floor. Nothing loses resolution that had any.</td></tr>
 <tr><td class="w">Spread across the set</td><td class="n">6×</td><td class="n">1×</td><td>Percentile confidence stops varying by endpoint.</td></tr>
-<tr><td class="w">Samples behind p99</td><td class="n">138 … 828</td><td class="n">329</td><td>Every endpoint's p99 rests on the same number of observations.</td></tr>
-<tr><td class="w">Samples behind p99.9</td><td class="n">14 … 83</td><td class="n">33</td><td>Thin everywhere. See the ceiling below.</td></tr>
+<tr><td class="w">Samples behind p99</td><td class="n">138 … 828</td><td class="n">307</td><td>Every endpoint's p99 rests on the same number of observations.</td></tr>
+<tr><td class="w">Samples behind p99.9</td><td class="n">14 … 83</td><td class="n">31</td><td>Thin everywhere. See the ceiling below.</td></tr>
 </tbody>
 </table>
 </div>
 
-<p>The 10,000-request floor in <code>spec/ladder.json</code> stops being a design constraint to check and becomes an automatic property: 1.38M requests over 42 endpoints is 32,857 each, clearing it 3.3× without anyone arranging it.</p>
+<p>The 10,000-request floor in <code>spec/ladder.json</code> stops being a design constraint to check and becomes an automatic property: 1.38M requests over 45 endpoints is 30,667 each, clearing it 3.1× without anyone arranging it.</p>
 
 <p>Composition simplifies too. With every <code>n</code> equal, scaling a histogram by <code>w / n</code> is scaling it by <code>w</code>, and merging the raw histograms untouched <em>is</em> the uniform blend. There is no longer a sampling field and a weighting field to keep consistent — there is one weight vector, applied at the end, and the raw data underneath it has no opinion in it at all.</p>
 
@@ -568,9 +572,9 @@ p50_ratio       = <b>percentile(merged_target) / percentile(merged_baseline)</b>
 
 <h3>The ceiling is p99 per endpoint, p99.9 for the blend</h3>
 
-<p>At 32,857 requests an endpoint's p99 rests on 329 observations, which is sound, and its p99.9 rests on 33, which is not. <code>docs/plan.html</code> already draws this line — "fine for a median, shaky for p99, and useless for p99.9" — and uniform sampling moves every endpoint to the same side of it. So per-endpoint rows publish p50, p90 and p99 and stop.</p>
+<p>At 30,667 requests an endpoint's p99 rests on 307 observations, which is sound, and its p99.9 rests on 31, which is not. <code>docs/plan.html</code> already draws this line — "fine for a median, shaky for p99, and useless for p99.9" — and uniform sampling moves every endpoint to the same side of it. So per-endpoint rows publish p50, p90 and p99 and stop.</p>
 
-<p>The blend is a different population. Merged across 42 endpoints it holds 1.38M samples, so its p99.9 rests on 1,380 observations. That one is real and worth keeping: rung 5 exists to watch saturation, and saturation shows up in the tail before it shows up anywhere else. Dropping p99.9 would blind the rung that the ladder climbs to reach.</p>
+<p>The blend is a different population. Merged across 45 endpoints it holds 1.38M samples, so its p99.9 rests on 1,380 observations. That one is real and worth keeping: rung 5 exists to watch saturation, and saturation shows up in the tail before it shows up anywhere else. Dropping p99.9 would blind the rung that the ladder climbs to reach.</p>
 
 <h3>What to ship so the browser can compose</h3>
 
@@ -637,7 +641,7 @@ p50_ratio       = <b>percentile(merged_target) / percentile(merged_baseline)</b>
 <tr><td class="m">ep.malformed</td><td><span class="v keep">renamed</span></td><td class="m">errors.malformed</td><td>Now unparseable bytes rather than a schema violation, which <code>body.rejected_all</code> covers.</td></tr>
 <tr class="cut"><td class="m">ep.boom</td><td><span class="v cut">cut</span></td><td class="m">—</td><td>Measured stack-trace capture policy. Suite B has it as an arm where the comparison holds.</td></tr>
 <tr><td class="m">ep.forbidden</td><td><span class="v keep">recast</span></td><td class="m">authorized.denied</td><td>A 403 with a mechanism behind it instead of a constant-cost status write.</td></tr>
-<tr><td class="m">—</td><td><span class="v new">new</span></td><td class="m">18 endpoints</td><td><code>json.medium</code>, <code>json.large</code>, <code>parameters.static</code>, <code>authorized.*</code>, <code>compressed.*</code>, <code>cached.*</code>, <code>body.bind_*</code>, <code>body.rejected_first</code>, <code>query.*</code>, <code>headers.*</code>, <code>middleware.*</code></td></tr>
+<tr><td class="m">—</td><td><span class="v new">new</span></td><td class="m">21 endpoints</td><td><code>json.medium</code>, <code>json.large</code>, <code>parameters.static</code>, <code>authorized.*</code>, <code>compressed.*</code>, <code>cached.*</code>, <code>body.bind_*</code>, <code>body.rejected_first</code>, <code>query.*</code>, <code>headers.*</code>, <code>middleware.*</code></td></tr>
 <tr><td class="m">—</td><td><span class="v new">new</span></td><td class="m">template.* (2)</td><td>Sampled evenly, carried by no ranking blend. Suite B's template arms can stay or retire into these; they answer the same question with the arms minutes apart instead of microseconds.</td></tr>
 </tbody>
 </table>
@@ -688,7 +692,7 @@ p50_ratio       = <b>percentile(merged_target) / percentile(merged_baseline)</b>
 <li><h3>Uniform sampling and named blends</h3><p><code>blends.json</code>, a uniform draw, and the composed aggregate in <code>summarize.py</code>. Worth doing early and out of order: it removes more code than it adds, touches nothing the target authors touch, and applies to <code>blend-v1</code> as it stands.</p></li>
 <li><h3>One target end to end</h3><p><code>node:node-http</code>, the baseline. It has no framework facilities to use, so it establishes the contract each framework then has to meet with its own.</p></li>
 <li><h3>Then one framework per language</h3><p>Fastify, Gin, Spring Boot. These are where the feature wirings are least alike, so they will find whatever the spec left ambiguous.</p></li>
-<li><h3>Then the remaining fifteen</h3><p>Mechanical once three languages have a worked example, and the point at which conformance across forty-two endpoints starts earning its keep again.</p></li>
+<li><h3>Then the remaining fifteen</h3><p>Mechanical once three languages have a worked example, and the point at which conformance across forty-five endpoints starts earning its keep again.</p></li>
 <li><h3>Endpoint pages, the delta column, the blend selector</h3><p><code>base</code>, <code>varies</code> and the named blends are already in the spec by then, so the site can state "costs 41&nbsp;µs over <code>json.medium</code>" as generated text rather than leaving the reader to subtract, and can offer five aggregates rather than one.</p></li>
 <li><h3>The arbitrary composer</h3><p>Quantile summaries into the summary file, then the endpoint selector in the browser. Independent of all of the above and cheap enough that it need not wait for any of it.</p></li>
 </ol>

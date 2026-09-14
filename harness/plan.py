@@ -115,8 +115,33 @@ def build():
         plan["endpoints"].append(entry)
     return plan
 
+def check_references(plan):
+    """Every base and every weighted id has to name an endpoint that exists.
+
+    A weight vector is the only place a traffic opinion lives, and a renamed endpoint
+    turns one of its entries into a no-op rather than an error: the blend quietly starts
+    counting a row it was written to leave out, and the number still looks fine.
+    """
+    ids = {e["id"] for e in plan["endpoints"]}
+    bad = []
+    for e in plan["endpoints"]:
+        if "base" in e and e["base"] not in ids:
+            bad.append("%s names base %s, which is not an endpoint" % (e["id"], e["base"]))
+    blends = json.loads((ROOT / "spec" / "blends.json").read_text())
+    for name, blend in blends["blends"].items():
+        for eid in blend["weights"]:
+            if eid not in ids:
+                bad.append("blend %s weights %s, which is not an endpoint" % (name, eid))
+    return bad
+
+
 if __name__ == "__main__":
     plan = build()
+    problems = check_references(plan)
+    if problems:
+        for line in problems:
+            print("  %s" % line)
+        raise SystemExit("spec/endpoints.json and spec/blends.json disagree")
     out = ROOT / "spec" / "plan.json"
     out.write_text(json.dumps(plan, separators=(",", ":")))
     uniq = sum(len(set(e["paths"])) for e in plan["endpoints"])

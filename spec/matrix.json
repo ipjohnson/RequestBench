@@ -122,7 +122,8 @@
   "conformance_required": {
     "note": "Targets rewired to the endpoint set in spec/endpoints.json. The gate boots every implemented target and reports all of them, but only these have to pass. A target that has not been rewired yet cannot pass, and requiring it would leave the gate red for as long as the rewiring takes, which is how a check stops being read.",
     "targets": [
-      "node:node-http"
+      "node:node-http",
+      "node:fastify"
     ]
   },
   "hosts": {

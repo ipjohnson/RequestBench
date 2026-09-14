@@ -40,12 +40,19 @@ function chain(n, final) {
 const small = () => json(200, d.payload("small"));
 const MIDDLEWARE = { none: chain(0, small), four: chain(4, small), sixteen: chain(16, small) };
 
-function compressed(size) {
-  // Per request, at the pinned level. compressed.small exists because gzip turns 125 bytes
-  // into 125 bytes, so it is the cost of achieving nothing.
-  const body = d.gzip(Buffer.from(JSON.stringify(d.payload(size))));
-  return { status: 200, body,
-           headers: { ...JSON_CT, "content-encoding": "gzip", "x-rb-serial": d.nextSerial() } };
+function compressed(size, headers) {
+  // Content coding is the client's opt-in, so the identity arm has to come back
+  // uncompressed. That arm minus json is what the wiring costs when it declines; the gzip
+  // arm minus it is what the codec costs, with the wiring already subtracted out.
+  const json = JSON.stringify(d.payload(size));
+  const common = { ...JSON_CT, "x-rb-serial": d.nextSerial() };
+  if (!/\bgzip\b/.test(headers["accept-encoding"] ?? ""))
+    return { status: 200, headers: common, body: json };
+  // No threshold: the baseline is the floor, so it compresses whatever it is handed. gzip
+  // turns the 125-byte payload into 125 bytes, which makes compressed.gzip_small the cost
+  // of achieving nothing.
+  return { status: 200, body: d.gzip(Buffer.from(json)),
+           headers: { ...common, "content-encoding": "gzip" } };
 }
 
 function cached(size, headers) {
@@ -77,7 +84,7 @@ function route(method, seg, q, body, headers) {
     } else if (n === 2) {
       switch (seg[0]) {
         case "json":       if (SIZES.has(seg[1])) return json(200, d.payload(seg[1])); break;
-        case "compressed": if (SIZES.has(seg[1])) return compressed(seg[1]); break;
+        case "compressed": if (SIZES.has(seg[1])) return compressed(seg[1], headers); break;
         case "cached":     if (SIZES.has(seg[1])) return cached(seg[1], headers); break;
         case "template":
           if (seg[1] === "small" || seg[1] === "medium")
