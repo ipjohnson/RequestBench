@@ -1,6 +1,11 @@
 {
   "version": "ladder-v1",
-  "warmup": { "rps": 1000, "seconds": { "jit": 90, "steady": 30 } },
+  "warmup": {
+    "rps": 1000,
+    "seconds": { "jit": 90, "steady": 30 },
+    "note": "serial_requests is the serial suite's equivalent of seconds. A rate ladder warms for a duration; a host that runs one invocation at a time warms for a count, and a JVM needs thousands of invocations to reach C2 rather than the few hundred a steady runtime needs.",
+    "serial_requests": { "jit": 20000, "steady": 500 }
+  },
   "rungs": [
     { "rung": 1, "rps": 500,   "seconds": 60, "purpose": "unloaded latency floor" },
     { "rung": 2, "rps": 1500,  "seconds": 60, "purpose": "light load" },
@@ -8,7 +13,7 @@
     { "rung": 4, "rps": 6000,  "seconds": 60, "purpose": "approaching the knee" },
     { "rung": 5, "rps": 12000, "seconds": 60, "purpose": "saturation behaviour" }
   ],
-  "boot_timeout_s": 20,
+  "boot_timeout_s": { "jit": 90, "steady": 20 },
   "teardown_s": 20,
   "min_requests_per_endpoint": 10000
 }

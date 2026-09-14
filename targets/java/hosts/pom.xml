@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>dev.requestbench</groupId>
+    <artifactId>rb-java</artifactId>
+    <version>1.0.0</version>
+  </parent>
+
+  <artifactId>rb-hosts</artifactId>
+  <name>RequestBench execution hosts</name>
+
+  <dependencies>
+    <dependency>
+      <groupId>dev.requestbench</groupId>
+      <artifactId>rb-shared</artifactId>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <resources>
+      <!-- rb-versions.properties is filtered so /__meta reports the version the parent pom
+           pins, which is the value the nightly deps job rewrites. Reading it from the jar
+           manifest instead would report nothing once a target is shaded. -->
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>true</filtering>
+      </resource>
+    </resources>
+  </build>
+</project>

@@ -1,4 +1,4 @@
-.PHONY: fixture plan build lint validate conform run report clean help
+.PHONY: fixture plan build java lint validate conform run report clean help
 TARGETS ?= node:node-http,node:fastify,node:express
 SECONDS ?=
 RUNGS ?=
@@ -16,11 +16,18 @@ plan: ## expand spec/endpoints.json into spec/plan.json
 build: ## build container images  (TARGETS=go:net-http,go:gin,go:echo)
 	@for t in $$(echo $(TARGETS) | tr ',' ' '); do \
 	  lang=$${t%%:*}; name=$${t#*:}; \
-	  case $$name in net-http|node-http) dir=baseline;; *) dir=$$name;; esac; \
+	  case $$name in net-http|node-http|bare-netty) dir=baseline;; *) dir=$$name;; esac; \
 	  echo "building rb/$$lang-$$name"; \
 	  docker build -q -f targets/$$lang/Dockerfile --build-arg TARGET=$$dir \
 	    -t rb/$$lang-$$name . >/dev/null; \
 	done
+
+java: ## build the java target jars, which MODE=local needs  (TARGETS=java:bare-netty)
+	@mods=$$(for t in $$(echo $(TARGETS) | tr ',' ' '); do \
+	  name=$${t#*:}; \
+	  case $$name in bare-netty) echo baseline;; *) echo $$name;; esac; \
+	done | paste -sd, -); \
+	cd targets/java && mvn -B -q -pl "$$mods" -am -DskipTests package
 
 lint: ## parse every workflow file, and run actionlint when it is installed
 	python3 harness/lintyaml.py

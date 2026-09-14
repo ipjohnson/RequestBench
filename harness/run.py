@@ -75,6 +75,18 @@ class Local:
                 raise SystemExit("go has no launcher for host %r yet" % host)
             return (["go", "run", "./" + d], ROOT / "targets/go",
                     {"RB_FIXTURE": str(ROOT / "spec/fixture.json"), "RB_HOST": host})
+        if self.language == "java":
+            # The jar is prebuilt by `make java` rather than built here: maven resolving a
+            # framework's tree takes longer than the boot budget, and a validation job that
+            # boots every target should pay for that once, not once per target.
+            if host != "container":
+                raise SystemExit("java has no local launcher for host %r; use --mode docker"
+                                 % host)
+            jar = ROOT / "targets/java" / d / "target" / "server.jar"
+            if not jar.exists():
+                raise SystemExit("%s is not built; run 'make java'" % jar)
+            return (["java", "-jar", str(jar)], ROOT / "targets/java",
+                    {"RB_FIXTURE": str(ROOT / "spec/fixture.json"), "RB_HOST": host})
         raise SystemExit("language %r has no local launcher; use --mode docker" % self.language)
 
     def start(self):
@@ -406,9 +418,11 @@ def main():
         t = launcher(a.mode, language, target).start()
         try:
             # `go run` compiles on first launch, which no boot budget should punish.
+            # Otherwise the budget is the language's: a JVM target spends seconds starting
+            # that a steady runtime does not, and 20s fails Spring Boot on two pinned cores.
             try:
                 wait_healthy(t, 240 if (a.mode == "local" and language == "go")
-                                else LADDER["boot_timeout_s"])
+                                else LADDER["boot_timeout_s"][warmup_class(language)])
             except RuntimeError as e:
                 print("  BOOT FAILED: %s" % e)
                 if hasattr(t, "tail"):
@@ -437,7 +451,10 @@ def main():
                 continue
 
             if suite == "serial":
-                res = run_serial(a.count, encoding, min(500, a.count // 10))
+                # A JIT runtime is still compiling after the few hundred invocations a
+                # steady runtime needs, so the warmup count is the language's too.
+                warm_n = LADDER["warmup"]["serial_requests"][warmup_class(language)]
+                res = run_serial(a.count, encoding, min(warm_n, max(1, a.count // 2)))
                 o = res["overall"]
                 print("  serial  %s requests in %6.2fs -> %5d rps   p50 %5dus  p99 %6dus"
                       % (f"{res['completed']:,}", res["elapsed_s"], res["achieved_rps"],
