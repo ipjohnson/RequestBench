@@ -126,13 +126,17 @@ class Container:
     def __init__(self, shard, name):
         self.shard, self.name = shard, name
         self.host = os.environ.get("RB_HOST", "container")
-        suffix = "" if self.host == "container" else "-" + self.host.split("-")[0]
+        special = (ROOT / "targets" / shard / ("Dockerfile." + self.host.split("-")[0])).exists()
+        suffix = "-" + self.host.split("-")[0] if special else ""
         self.cname = "rb-%s-%s%s" % (shard, name, suffix)
         self.image = "rb/%s-%s%s" % (shard, name, suffix)
 
     def build(self):
-        dockerfile = ROOT / "targets" / self.shard / (
-            "Dockerfile" if self.host == "container" else "Dockerfile." + self.host.split("-")[0])
+        # Only a host that needs a different base image gets its own Dockerfile. Go serves
+        # gcp-func from the same binary, switching on RB_HOST, so it reuses the default.
+        dockerfile = ROOT / "targets" / self.shard / ("Dockerfile." + self.host.split("-")[0])
+        if self.host == "container" or not dockerfile.exists():
+            dockerfile = ROOT / "targets" / self.shard / "Dockerfile"
         subprocess.run(["docker", "build", "-q", "-f", str(dockerfile),
                         "--build-arg", "TARGET=" + target_dir(self.name),
                         "-t", self.image, "."],

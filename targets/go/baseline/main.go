@@ -11,6 +11,7 @@ import (
 	"runtime"
 	"strconv"
 
+	hosts "github.com/ianjohnson/requestbench/targets/go/_hosts"
 	d "github.com/ianjohnson/requestbench/targets/go/_shared"
 )
 
@@ -226,10 +227,5 @@ func main() {
 		writeJSON(w, 404, map[string]string{"error": "not_found"})
 	})
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
-	log.Printf("go baseline listening on %s", port)
-	log.Fatal(http.ListenAndServe(":"+port, recovered(mux)))
+	hosts.Serve("baseline", recovered(mux))
 }
