@@ -63,6 +63,11 @@ public final class Hosts {
     ADAPTERS.add(v.isEmpty() ? name : name + " " + v);
   }
 
+  /** For an adapter whose version a framework BOM decides rather than this repo's pins. */
+  public static void adapter(String nameAndVersion) {
+    ADAPTERS.add(nameAndVersion);
+  }
+
   public static String host() {
     String h = System.getenv("RB_HOST");
     return h == null || h.isEmpty() ? CONTAINER : h;

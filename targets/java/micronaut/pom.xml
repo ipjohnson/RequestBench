@@ -41,6 +41,12 @@
       <groupId>io.micronaut</groupId>
       <artifactId>micronaut-runtime</artifactId>
     </dependency>
+    <!-- Host: lambda-rie. Micronaut's own API Gateway adapter, which is what people
+         actually deploy, rather than a generic servlet shim over it. -->
+    <dependency>
+      <groupId>io.micronaut.aws</groupId>
+      <artifactId>micronaut-function-aws-api-proxy</artifactId>
+    </dependency>
   </dependencies>
 
   <build>
