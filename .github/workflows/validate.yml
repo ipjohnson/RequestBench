@@ -30,10 +30,10 @@ jobs:
           python3 harness/sequence.py
       - name: Fail if generated files drifted from what is committed
         run: |
-          GEN="spec/fixture.json spec/plan.json spec/sequence.json"
-          if ! git diff --quiet -- $GEN; then
+          GEN=(spec/fixture.json spec/plan.json spec/sequence.json)
+          if ! git diff --quiet -- "${GEN[@]}"; then
             echo "a generated spec file is stale. Run 'make spec' and commit."
-            git --no-pager diff --stat -- $GEN
+            git --no-pager diff --stat -- "${GEN[@]}"
             exit 1
           fi
           echo "fixture, plan and sequence match their generators"
