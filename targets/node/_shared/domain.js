@@ -5,7 +5,11 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const fixture = JSON.parse(readFileSync(join(here, "../../../spec/fixture.json"), "utf8"));
+// A host decides the layout: the Lambda base image puts the task at /var/task, so the
+// path relative to this file is not the same everywhere. RB_FIXTURE wins when set, which
+// is how the Go targets already do it.
+const fixturePath = process.env.RB_FIXTURE || join(here, "../../../spec/fixture.json");
+const fixture = JSON.parse(readFileSync(fixturePath, "utf8"));
 
 export const products = fixture.products;
 export const customers = fixture.customers;

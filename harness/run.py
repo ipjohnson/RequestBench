@@ -3,7 +3,7 @@
   python3 harness/run.py --shard node --targets node-http,fastify,express
   python3 harness/run.py --shard node --targets fastify --seconds 20 --rungs 3,5
 """
-import argparse, functools, http.client, json, os, pathlib, platform, shutil, signal, subprocess, sys, time, uuid
+import argparse, collections, functools, http.client, json, os, pathlib, platform, re, shutil, signal, subprocess, sys, time, uuid
 
 # Long runs are watched live; block-buffered stdout hides progress for minutes.
 print = functools.partial(print, flush=True)
@@ -13,6 +13,15 @@ SPEC = ROOT / "spec"
 LADDER = json.loads((SPEC / "ladder.json").read_text())
 MATRIX = json.loads((SPEC / "matrix.json").read_text())
 PORT = int(os.environ.get("RB_PORT", "8080"))
+
+# A host with no concurrency of its own gets the serial suite: there is no knee to find,
+# so the question is how long the identical pinned sequence took rather than what rate it
+# sustained. Hosts that run a real server keep the rate ladder.
+SUITE_FOR_HOST = {"container": "blend", "gcp-func": "serial",
+                  "lambda-rie": "serial", "azure-func": "serial"}
+ENCODING_FOR_HOST = {"lambda-rie": "lambda"}
+LAMBDA_INVOKE = "/2015-03-31/functions/function/invocations"
+
 
 def target_dir(name):
     """Baselines live in baseline/ whatever their shard calls them."""
@@ -101,12 +110,15 @@ class Container:
 
     def __init__(self, shard, name):
         self.shard, self.name = shard, name
-        self.cname = "rb-%s-%s" % (shard, name)
-        self.image = "rb/%s-%s" % (shard, name)
+        self.host = os.environ.get("RB_HOST", "container")
+        suffix = "" if self.host == "container" else "-" + self.host.split("-")[0]
+        self.cname = "rb-%s-%s%s" % (shard, name, suffix)
+        self.image = "rb/%s-%s%s" % (shard, name, suffix)
 
     def build(self):
-        subprocess.run(["docker", "build", "-q",
-                        "-f", str(ROOT / "targets" / self.shard / "Dockerfile"),
+        dockerfile = ROOT / "targets" / self.shard / (
+            "Dockerfile" if self.host == "container" else "Dockerfile." + self.host.split("-")[0])
+        subprocess.run(["docker", "build", "-q", "-f", str(dockerfile),
                         "--build-arg", "TARGET=" + target_dir(self.name),
                         "-t", self.image, "."],
                        cwd=ROOT, check=True, capture_output=True)
@@ -128,6 +140,10 @@ class Container:
                              capture_output=True, text=True)
         return out.stdout.strip() == "true"
 
+    def logs(self):
+        out = subprocess.run(["docker", "logs", self.cname], capture_output=True, text=True)
+        return out.stdout + out.stderr
+
     def stop(self):
         subprocess.run(["docker", "stop", "-t", "3", self.cname], capture_output=True)
 
@@ -147,23 +163,37 @@ def wait_healthy(target, timeout):
     endpoint's fingerprint, which surfaces later as a body mismatch on whichever
     endpoints happened to land in the gap.
     """
+    encoding = ENCODING_FOR_HOST.get(os.environ.get("RB_HOST", "container"), "http")
     start = time.time()
     deadline = start + timeout
     while time.time() < deadline:
         if not target.alive():
             raise RuntimeError("target exited during boot")
         try:
-            c = http.client.HTTPConnection("127.0.0.1", PORT, timeout=1.0)
-            c.request("GET", "/health")
-            r = c.getresponse()
-            body = r.read()
-            c.close()
-            if r.status == 200 and body:
-                return round(time.time() - start, 2)
-        except (OSError, http.client.HTTPException):
+            c = http.client.HTTPConnection("127.0.0.1", PORT, timeout=2.0)
+            if encoding == "lambda":
+                # RIE serves only the invocations endpoint, so readiness is a real
+                # invocation and the status lives inside the returned envelope.
+                event = json.dumps({"version": "2.0", "rawPath": "/health",
+                                    "requestContext": {"http": {"method": "GET"}}})
+                c.request("POST", LAMBDA_INVOKE, body=event,
+                          headers={"content-type": "application/json"})
+                r = c.getresponse()
+                body = r.read()
+                c.close()
+                if r.status == 200 and json.loads(body).get("statusCode") == 200:
+                    return round(time.time() - start, 2)
+            else:
+                c.request("GET", "/health")
+                r = c.getresponse()
+                body = r.read()
+                c.close()
+                if r.status == 200 and body:
+                    return round(time.time() - start, 2)
+        except (OSError, http.client.HTTPException, ValueError):
             pass
         time.sleep(0.1)
-    raise RuntimeError("target never answered /health with 200 in %ss" % timeout)
+    raise RuntimeError("target never became ready in %ss (encoding %s)" % (timeout, encoding))
 
 def run_gen(rate, seconds, workers, record=True):
     # Histograms go through a file rather than the pipe: a full rung is megabytes of
@@ -189,8 +219,18 @@ def read_meta():
     """Ask the target what it is. /__meta is outside the blend spec on purpose: it is not
     measured and not conformance-checked, it exists so a point on the results chart can be
     attributed to a framework version rather than to a different runner."""
+    encoding = ENCODING_FOR_HOST.get(os.environ.get("RB_HOST", "container"), "http")
     try:
-        c = http.client.HTTPConnection("127.0.0.1", PORT, timeout=3)
+        c = http.client.HTTPConnection("127.0.0.1", PORT, timeout=5)
+        if encoding == "lambda":
+            event = json.dumps({"version": "2.0", "rawPath": "/__meta",
+                                "requestContext": {"http": {"method": "GET"}}})
+            c.request("POST", LAMBDA_INVOKE, body=event,
+                      headers={"content-type": "application/json"})
+            r = c.getresponse()
+            env = json.loads(r.read())
+            c.close()
+            return json.loads(env.get("body") or "{}") if env.get("statusCode") == 200 else {}
         c.request("GET", "/__meta")
         r = c.getresponse()
         body = r.read()
@@ -200,6 +240,32 @@ def read_meta():
     except (OSError, http.client.HTTPException, ValueError):
         pass
     return {}
+
+
+def run_serial(count, encoding, warmup):
+    tmp = ROOT / "results" / (".gen-%s.json" % uuid.uuid4().hex[:8])
+    cmd = ["node", str(ROOT / "gen" / "serial.mjs"), "--target", "127.0.0.1:%d" % PORT,
+           "--encoding", encoding, "--count", str(count), "--warmup", str(warmup),
+           "--out", str(tmp)]
+    gen_cpus = os.environ.get("RB_GEN_CPUS", "")
+    if gen_cpus and shutil.which("taskset"):
+        cmd = ["taskset", "-c", gen_cpus] + cmd
+    try:
+        out = subprocess.run(cmd, capture_output=True, text=True, cwd=ROOT)
+        if out.returncode != 0:
+            raise RuntimeError("serial driver failed: %s" % out.stderr[-600:])
+        return json.loads(tmp.read_text())
+    finally:
+        tmp.unlink(missing_ok=True)
+
+
+def billed_durations(text):
+    """RIE prints a REPORT line per invocation. Billed duration is what costs money, and
+    no HTTP-level timing exposes it."""
+    hist = collections.Counter()
+    for m in re.finditer(r"Billed Duration: (\d+) ms", text):
+        hist[int(m.group(1))] += 1
+    return dict(sorted(hist.items()))
 
 
 def conform():
@@ -231,6 +297,11 @@ def main():
     ap.add_argument("--workers", type=int, default=6)
     ap.add_argument("--skip-conform", action="store_true")
     ap.add_argument("--mode", choices=["local", "docker"], default="local")
+    ap.add_argument("--suite", choices=["auto", "blend", "serial"], default="auto",
+                    help="auto picks by host: a server gets the ladder, a function host "
+                         "gets the pinned serial sequence")
+    ap.add_argument("--count", type=int, default=20000,
+                    help="serial suite: how many requests of the pinned sequence to replay")
     ap.add_argument("--validate-only", action="store_true",
                     help="boot and conform every target, then stop; no load is generated")
     ap.add_argument("--emit-path", metavar="FILE",
@@ -279,9 +350,16 @@ def main():
     rows[0]["mode"] = a.mode
     if a.mode == "docker":
         rows[0]["cpus"] = Container.CPUS
+    host = os.environ.get("RB_HOST", "container")
+    suite = a.suite if a.suite != "auto" else SUITE_FOR_HOST.get(host, "blend")
+    encoding = ENCODING_FOR_HOST.get(host, "http")
+    rows[0]["suite"] = "serial-v1" if suite == "serial" else "blend-v1"
     what = "shard=%s" % shards[0] if len(shards) == 1 else "shards=%s" % ",".join(shards)
     if a.validate_only:
         print("run %s   %s  mode=%s  VALIDATE ONLY" % (run_id, what, a.mode))
+    elif suite == "serial":
+        print("run %s   %s  host=%s  suite=serial  %s requests  %d targets"
+              % (run_id, what, host, f"{a.count:,}", len(pairs)))
     else:
         print("run %s   %s  mode=%s  warmup=%ss  rungs=%s  %d targets"
               % (run_id, what, a.mode, warm_s, [r["rung"] for r in rungs], len(pairs)))
@@ -319,6 +397,38 @@ def main():
                 conformed += 1
             if a.validate_only:
                 continue
+
+            if suite == "serial":
+                res = run_serial(a.count, encoding, min(500, a.count // 10))
+                o = res["overall"]
+                print("  serial  %s requests in %6.2fs -> %5d rps   p50 %5dus  p99 %6dus"
+                      % (f"{res['completed']:,}", res["elapsed_s"], res["achieved_rps"],
+                         o["p50_us"], o["p99_us"]))
+                billed = billed_durations(t.logs()) if hasattr(t, "logs") else {}
+                if billed:
+                    print("  billed  %s"
+                          % "  ".join("%dms x%s" % (k, f"{v:,}") for k, v in billed.items()))
+                for ep in res["endpoints"]:
+                    rows.append({"kind": "sample", "run_id": run_id, "epoch": 1,
+                                 "suite": "serial-v1", "arm": None, "shard": shard,
+                                 "host": host, "target": target, "rung": 1,
+                                 "offered_rps": 0, "achieved_rps": res["achieved_rps"],
+                                 "seconds": res["elapsed_s"], "endpoint": ep["id"],
+                                 "family": ep["family"], "count": ep["count"],
+                                 "errors": ep["errors"], "mismatch": ep["mismatch"],
+                                 "p50_us": ep["p50_us"], "p99_us": ep["p99_us"],
+                                 "hist_b64": ep["hist_b64"]})
+                rows.append({"kind": "rung", "run_id": run_id, "shard": shard,
+                             "target": target, "rung": 1, "offered_rps": 0,
+                             "achieved_rps": res["achieved_rps"],
+                             "seconds": res["elapsed_s"], "dropped": 0,
+                             "errors": res["errors"],
+                             "status_mismatch": res["status_mismatch"],
+                             "elapsed_s": res["elapsed_s"], "billed_ms": billed,
+                             **{k: o[k] for k in ("count", "p50_us", "p90_us",
+                                                  "p99_us", "p999_us")}})
+                continue
+
             print("  warmup %ss @ %s rps" % (warm_s, LADDER["warmup"]["rps"]))
             run_gen(LADDER["warmup"]["rps"], warm_s, a.workers, record=False)
 

@@ -89,6 +89,7 @@ app.setErrorHandler((err, _, reply) =>
     ? reply.code(422).send({ error: "validation_failed", errors: err.errors })
     : reply.code(500).send({ error: "internal", message: err.message }));
 
+export { app };
 export const listen = (port) => app.listen({ port, host: "0.0.0.0" });
 
 export async function handler(req, res) {

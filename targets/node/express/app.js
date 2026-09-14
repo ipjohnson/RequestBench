@@ -80,5 +80,6 @@ app.use((err, _req, res, _next) =>
     ? res.status(422).json({ error: "validation_failed", errors: err.errors })
     : res.status(500).json({ error: "internal", message: err.message }));
 
+export { app };
 export const listen = (port) => new Promise((r) => r(app.listen(port)));
 export const handler = app;
