@@ -4,14 +4,14 @@ package main
 import (
 	"errors"
 	"log"
-	"net/http"
 	"os"
 	"runtime"
 	"strconv"
 
+	hosts "github.com/ianjohnson/requestbench/targets/go/_hosts"
+	d "github.com/ianjohnson/requestbench/targets/go/_shared"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	d "github.com/ianjohnson/requestbench/targets/go/_shared"
 )
 
 type H = map[string]any
@@ -174,10 +174,5 @@ func main() {
 		return c.NoContent(204)
 	})
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
-	log.Printf("echo listening on %s", port)
-	log.Fatal(http.ListenAndServe(":"+port, e))
+	hosts.Serve("echo", e, nil)
 }

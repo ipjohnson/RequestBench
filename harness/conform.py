@@ -61,7 +61,7 @@ def framing(headers):
     return "none"
 
 
-def check_headers(status, headers, body):
+def check_headers(status, headers, body, encoding="http"):
     got = {k.lower(): v for k, v in headers}
     problems = []
     for name, rule, why in ALWAYS + HEADER_RULES.get(status, []):
@@ -70,6 +70,10 @@ def check_headers(status, headers, body):
         # Chunked framing declares the length differently; both are valid, and which one a
         # framework picks is worth recording rather than failing.
         if name == "content-length" and framing(headers) == "chunked":
+            continue
+        # A Lambda handler returns a JSON envelope, not an HTTP response. API Gateway sets
+        # the length downstream, so demanding the function declare it tests the wrong layer.
+        if name == "content-length" and encoding == "lambda":
             continue
         if rule == "present" and name not in got:
             problems.append("missing %s (%s)" % (name, why))
@@ -167,7 +171,7 @@ def main():
                 if ep["id"] not in seen_once:
                     seen_once.add(ep["id"])
                     if not a.skip_headers:
-                        for msg in check_headers(status, hdrs, raw):
+                        for msg in check_headers(status, hdrs, raw, a.encoding):
                             header_problems.append((ep["id"], msg))
                     exemplars.append({
                         "endpoint": ep["id"], "family": ep["family"],

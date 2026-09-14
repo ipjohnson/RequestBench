@@ -11,6 +11,7 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
+	hosts "github.com/ianjohnson/requestbench/targets/go/_hosts"
 	d "github.com/ianjohnson/requestbench/targets/go/_shared"
 )
 
@@ -220,10 +221,5 @@ func main() {
 	r.NotFoundHandler = notFound
 	r.MethodNotAllowedHandler = notFound
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
-	log.Printf("gorilla/mux listening on %s", port)
-	log.Fatal(http.ListenAndServe(":"+port, recovered(r)))
+	hosts.Serve("gorilla-mux", recovered(r), nil)
 }

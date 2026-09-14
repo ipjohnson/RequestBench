@@ -204,6 +204,17 @@ def esc(s):
     return html.escape(str(s))
 
 
+def host_notes():
+    """What a host is, and what it should be compared against, straight from the spec."""
+    try:
+        m = json.loads((pathlib.Path(__file__).resolve().parent.parent
+                        / "spec" / "matrix.json").read_text())
+    except (OSError, json.JSONDecodeError):
+        return {}
+    return {h: {"note": cfg.get("note", ""), "compare_to": cfg.get("compare_to", "")}
+            for h, cfg in m.get("hosts", {}).items() if cfg.get("note")}
+
+
 def load_exemplars(d):
     """One request/response pair per endpoint per target, captured by the conformance gate.
 
@@ -505,7 +516,8 @@ function render() {
     document.getElementById(id).style.display = st.gran === 'blend' ? 'none' : '';
 
   if (!run) {
-    document.getElementById('meta').textContent = 'no tracked runs for this host yet';
+    renderHostNote(rs);
+  document.getElementById('meta').textContent = 'no tracked runs for this host yet';
     document.getElementById('thead').innerHTML = '';
     document.getElementById('tbody').innerHTML = '';
     document.getElementById('time').innerHTML = '<p class="empty">No data.</p>';
@@ -546,6 +558,41 @@ function render() {
   window.__rows = rs;
   renderTime(rs, langColour);
   writeHash();
+}
+
+/* A host that is a library choice rather than a platform gets an asterisk, and the
+   asterisk carries the measured cost rather than an opinion. */
+function renderHostNote(rs) {
+  const box = document.getElementById('hostnote');
+  const meta = (RB.hosts || {})[st.host];
+  if (!meta) { box.style.display = 'none'; return; }
+  box.style.display = '';
+  let delta = '';
+  const other = meta.compare_to;
+  if (other) {
+    const there = runsFor(other);
+    if (!there.length) {
+      fetchHostRuns(other).then(got => { if (got) render(); });
+    } else {
+      const ref = there[there.length - 1];
+      const refRn = pickRung(ref);
+      const pairs = [];
+      for (const r of rs) {
+        if (r.detail) continue;
+        const t = ref.targets.find(x => x.shard === r.shard && x.target === r.target);
+        const d = t && t.rungs[refRn];
+        if (d && d.p50_us && r.p50) pairs.push([r.label, r.p50 / d.p50_us]);
+      }
+      if (pairs.length) {
+        const lo = Math.min(...pairs.map(p => p[1])), hi = Math.max(...pairs.map(p => p[1]));
+        delta = ` Measured against <strong>${esc(other)}</strong> on the same targets, this host costs `
+              + (hi < 1.05
+                  ? `nothing measurable (${lo.toFixed(2)}\u2013${hi.toFixed(2)}x).`
+                  : `${lo.toFixed(2)}\u2013${hi.toFixed(2)}x.`);
+      }
+    }
+  }
+  box.innerHTML = `<strong>${esc(st.host)}</strong> &mdash; ${esc(meta.note)}${delta}`;
 }
 
 /* ---- detail dialog: every field, hidden ones included, plus the captured exchange ---- */
@@ -763,6 +810,7 @@ def render(runs, wire):
     data = json.dumps({
         "runs": list(newest.values()),
         "manifest": [manifest_entry(r) for r in runs],
+        "hosts": host_notes(),
         "wireIndex": {k: {"framework": v["framework"], "version": v["version"],
                           "file": "data/wire/%s.json.gz" % k}
                       for k, v in wire.items()},
@@ -816,6 +864,7 @@ target against the bare baseline in its own language.</p>
     <div class="seg"><button id="reset" type="button">Reset</button></div></div>
 </div>
 
+<div class="note" id="hostnote" style="display:none"></div>
 <p class="count" id="meta" style="margin:12px 0 0"></p>
 
 <div class="scroll"><table>

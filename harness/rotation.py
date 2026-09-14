@@ -48,12 +48,17 @@ def host_targets(host):
     dimension: every run is cross-language by construction rather than by a separate job.
     """
     out = []
+    exceptions = MATRIX.get("host_exceptions", {})
     for shard, lang in MATRIX["languages"].items():
         built = lang.get("implemented", [])
         hosts = MATRIX.get("hosts_implemented", {}).get(shard, ["container"])
         if not built or host not in hosts:
             continue
-        out += ["%s:%s" % (shard, t) for t in [lang["baseline"]] + built]
+        for t in [lang["baseline"]] + built:
+            # A framework can be unable to run on a host its language otherwise supports.
+            if host in exceptions.get("%s:%s" % (shard, t), {}).get("excluded", []):
+                continue
+            out.append("%s:%s" % (shard, t))
     return out
 
 

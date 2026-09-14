@@ -28,7 +28,7 @@
       "implemented": []
     },
     "go": {
-      "runtime": "golang:1.25",
+      "runtime": "golang:1.26",
       "baseline": "net-http",
       "frameworks": [
         "gin",
@@ -138,7 +138,8 @@
         "python",
         "dotnet",
         "rust"
-      ]
+      ],
+      "note": "The Cloud Run container contract: listen on $PORT and speak HTTP. The same contract covers Fargate, ECS, EKS and plain Docker, so this host is not specific to one cloud."
     },
     "gcp-func": {
       "runs": "GCP Functions Framework",
@@ -148,7 +149,9 @@
         "node",
         "python",
         "dotnet"
-      ]
+      ],
+      "note": "Cloud Run functions. Gen2 functions are Cloud Run underneath, so the same code deployed as a Cloud Run container skips the Functions Framework entirely and runs on the container contract measured here.",
+      "compare_to": "container"
     },
     "lambda-rie": {
       "runs": "AWS Runtime Interface Emulator",
@@ -159,7 +162,8 @@
         "python",
         "dotnet",
         "rust"
-      ]
+      ],
+      "note": "A genuinely different invocation model: no HTTP in the process, one invocation at a time, so it runs the serial suite rather than a rate ladder."
     },
     "azure-func": {
       "runs": "Azure Functions Core Tools",
@@ -178,7 +182,18 @@
       "lambda-rie"
     ],
     "go": [
-      "container"
+      "container",
+      "gcp-func",
+      "lambda-rie"
     ]
+  },
+  "host_exceptions": {
+    "go:fiber": {
+      "excluded": [
+        "gcp-func",
+        "lambda-rie"
+      ],
+      "why": "fasthttp, not an http.Handler"
+    }
   }
 }

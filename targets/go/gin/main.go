@@ -4,12 +4,12 @@ package main
 import (
 	"errors"
 	"log"
-	"net/http"
 	"os"
 	"runtime"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	hosts "github.com/ianjohnson/requestbench/targets/go/_hosts"
 	d "github.com/ianjohnson/requestbench/targets/go/_shared"
 )
 
@@ -179,10 +179,5 @@ func main() {
 		c.Status(204)
 	})
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
-	log.Printf("gin listening on %s", port)
-	log.Fatal(http.ListenAndServe(":"+port, r))
+	hosts.Serve("gin", r, nil)
 }
