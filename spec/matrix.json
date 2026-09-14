@@ -28,7 +28,7 @@
       "implemented": []
     },
     "go": {
-      "runtime": "golang:1.25",
+      "runtime": "golang:1.26",
       "baseline": "net-http",
       "frameworks": [
         "gin",
@@ -178,7 +178,17 @@
       "lambda-rie"
     ],
     "go": [
-      "container"
+      "container",
+      "gcp-func"
     ]
+  },
+  "host_exceptions": {
+    "go:fiber": {
+      "excluded": [
+        "gcp-func",
+        "lambda-rie"
+      ],
+      "why": "fasthttp, not an http.Handler"
+    }
   }
 }
