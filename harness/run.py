@@ -312,8 +312,8 @@ def conform():
     out = subprocess.run(argv, capture_output=True, text=True, cwd=ROOT)
     return out.returncode == 0, out.stdout.strip().splitlines()[-1] if out.stdout else out.stderr
 
-def env_fingerprint(run_id, language, baseline):
-    return {"kind": "env", "run_id": run_id, "language": language, "baseline": baseline,
+def env_fingerprint(run_id, languages, baselines):
+    return {"kind": "env", "run_id": run_id, "languages": languages, "baselines": baselines,
             "host": platform.node(), "cpu": cpu_model(),
             "cores": os.cpu_count(), "platform": platform.platform(),
             "exec_host": os.environ.get("RB_HOST", "container"),
@@ -374,20 +374,19 @@ def main():
     if a.seconds:
         warm_s = max(5, a.seconds // 2)
 
-    tag = languages[0] if len(languages) == 1 else "x-" + "-".join(languages)
-    run_id = "%s.%s.%s" % (time.strftime("%Y-%m-%dT%H:%MZ", time.gmtime()), tag,
+    # A run is one host. Its identity is the machine it measured on, not the languages
+    # that happened to be on it: naming it by language is what split the matrix in two.
+    host = os.environ.get("RB_HOST", "container")
+    run_id = "%s.%s.%s" % (time.strftime("%Y-%m-%dT%H:%MZ", time.gmtime()), host,
                            uuid.uuid4().hex[:6])
     out_path = ROOT / "results" / ("%s.jsonl" % run_id.replace(":", ""))
     out_path.parent.mkdir(exist_ok=True)
-    rows = [env_fingerprint(run_id, tag, baselines[languages[0]])]
-    rows[0]["languages"] = languages
-    rows[0]["baselines"] = baselines
+    rows = [env_fingerprint(run_id, languages, baselines)]
     rows[0]["cross_language"] = len(languages) > 1
 
     rows[0]["mode"] = a.mode
     if a.mode == "docker":
         rows[0]["cpus"] = Container.CPUS
-    host = os.environ.get("RB_HOST", "container")
     suite = a.suite if a.suite != "auto" else SUITE_FOR_HOST.get(host, "blend")
     encoding = ENCODING_FOR_HOST.get(host, "http")
     rows[0]["suite"] = "serial-v1" if suite == "serial" else "blend-v1"

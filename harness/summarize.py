@@ -11,6 +11,16 @@ import argparse, base64, json, math, pathlib, struct, sys, collections
 GROWTH, NBUCKETS = 1.02, 920
 LOG_G = math.log(GROWTH)
 
+def normalize_env(env):
+    """Runs made before the host split named themselves by language and carried one
+    baseline. Read them through the same plural shape as everything since."""
+    if "languages" not in env:
+        env["languages"] = env.get("shards") or [env.get("language") or env.get("shard")]
+    if "baselines" not in env:
+        env["baselines"] = {env["languages"][0]: env.get("baseline")}
+    return env
+
+
 def unpack(b64):
     raw = base64.b64decode(b64)
     return struct.unpack("<%dI" % (len(raw) // 4), raw)
@@ -79,9 +89,12 @@ def main():
     samples = [r for r in rows if r["kind"] == "sample"]
     # A cross-language run has one baseline per language. Ratios are always within a
     # language; the absolutes are what carry across, because nothing moved between targets.
-    baselines = env.get("baselines") or {env["language"]: env["baseline"]}
-    language_of = {r["target"]: r.get("language", env["language"]) for r in rungs}
-    base_of = {t: baselines.get(language_of[t], env["baseline"]) for t in language_of}
+    env = normalize_env(env)
+    languages, baselines = env["languages"], env["baselines"]
+    first = languages[0]
+    # Rows written before the host split carried the language as "shard".
+    language_of = {r["target"]: r.get("language") or r.get("shard") or first for r in rungs}
+    base_of = {t: baselines.get(language_of[t]) for t in language_of}
     targets = list(dict.fromkeys(r["target"] for r in rungs))
     by = {(r["target"], r["rung"]): r for r in rungs}
     rung_ids = sorted({r["rung"] for r in rungs})
@@ -111,15 +124,14 @@ def main():
             fam_p50[key][f] = pct(merged, 50)
 
     out = {
-        "run_id": env["run_id"], "date": env["run_id"][:10], "language": env["language"],
+        "run_id": env["run_id"], "date": env["run_id"][:10],
         "suite": env["suite"], "epoch": env["epoch"], "mode": env.get("mode", "local"),
         "runner": a.runner, "tracked": a.tracked,
         "exec_host": env.get("exec_host") or "container",
         "host": env["host"], "cpu": env["cpu"], "cores": env["cores"],
         "sut_cpus": env.get("sut_cpus", ""), "gen_cpus": env.get("gen_cpus", ""),
         "runtime": env["runtime"], "generator": env["generator"],
-        "baseline": env["baseline"], "baselines": baselines,
-        "languages": env.get("languages", [env["language"]]),
+        "baselines": baselines, "languages": languages,
         "cross_language": env.get("cross_language", False),
         "rungs": rung_ids, "targets": [],
         # Declared once. Per-target endpoint arrays are parallel to this, which keeps the
@@ -129,9 +141,9 @@ def main():
     }
     for t in targets:
         m = meta.get(t, {})
-        entry = {"target": t, "language": language_of.get(t, env["language"]),
+        entry = {"target": t, "language": language_of.get(t, first),
                  "exec_host": meta.get(t, {}).get("host", env.get("host", "container")),
-                 "baseline": base_of.get(t, env["baseline"]),
+                 "baseline": base_of.get(t),
                  "framework": m.get("framework", t),
                  "version": m.get("version", ""), "target_runtime": m.get("runtime", ""),
                  # What the host put in front of the framework. A bump here moves the
@@ -139,7 +151,7 @@ def main():
                  # it rather than left to the lockfile.
                  "adapter": m.get("adapter", ""),
                  "rungs": {}, "families": {}, "families_by_rung": {}}
-        base = base_of.get(t, env["baseline"])
+        base = base_of.get(t)
         for rn in rung_ids:
             r, b = by.get((t, rn)), by.get((base, rn))
             if not r:

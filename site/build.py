@@ -806,7 +806,7 @@ def slug(run_id):
 def manifest_entry(r):
     """Just enough to populate the controls and decide what to fetch."""
     return {"id": r["run_id"], "file": "data/%s.json.gz" % slug(r["run_id"]),
-            "date": r.get("date", ""), "language": r.get("language", ""),
+            "date": r.get("date", ""), "languages": r.get("languages") or [],
             "exec_host": r.get("exec_host") or "container",
             "suite": r.get("suite", ""), "tracked": bool(r.get("tracked")),
             "cpu": r.get("cpu", ""), "cores": r.get("cores", 0)}
