@@ -1,12 +1,17 @@
 """Conformance gate. A target is not measured until it passes.
 
-Replays every instance in spec/plan.json, asserts the status, and fingerprints each
-response body canonically so two targets that disagree semantically are caught here
-rather than surfacing later as an unexplained latency difference.
+Replays every instance in spec/plan.json and asserts the status, then compares each
+distinct request's response against a reference target measured in the same run, so two
+targets that disagree semantically are caught here rather than surfacing later as an
+unexplained latency difference.
 
-  python3 harness/conform.py 127.0.0.1:8080 [--fingerprint f.json] [--compare ref.json]
+Responses are compared as parsed values rather than as bytes. Key order and number
+formatting follow whatever each language's serializer does and mean nothing, and a
+mismatch should say which field differs rather than that two digests do not match.
+
+  python3 harness/conform.py 127.0.0.1:8080 [--reference ref.json] [--compare ref.json]
 """
-import json, sys, hashlib, pathlib, argparse, http.client, collections, re, zlib
+import json, sys, pathlib, argparse, http.client, collections, re, zlib
 
 # What a response has to carry regardless of framework. Latency says nothing about any of
 # it, and frameworks differ more here than anywhere else.
@@ -134,13 +139,19 @@ def advanced(headers, previous):
     return None
 
 
-def canonical(raw, ctype):
+def comparable(raw, ctype):
+    """The response as a value, not as bytes.
+
+    Two targets that mean the same thing can write it differently: key order follows
+    whatever the language's serializer does, and a number can come back 18928 or 18928.0.
+    Parsing first makes those stop mattering, and it makes a mismatch legible -- the
+    failure names the field that differs instead of two hex strings that do not match.
+    """
     if not raw:
-        return "empty"
+        return None
     if "json" in (ctype or ""):
         try:
-            return hashlib.sha256(json.dumps(json.loads(raw), sort_keys=True,
-                                             separators=(",", ":")).encode()).hexdigest()[:16]
+            return json.loads(raw)
         except Exception:
             return "unparseable-json"
     if "html" in (ctype or ""):
@@ -156,13 +167,42 @@ def canonical(raw, ctype):
         raw = re.sub(rb">\s+", b">", raw)
         raw = re.sub(rb"\s+<", b"<", raw)
         raw = raw.strip()
-    return hashlib.sha256(raw).hexdigest()[:16]
+    return raw.decode("utf-8", "replace")
+
+
+def first_difference(a, b, path="response"):
+    """Where two parsed responses stop agreeing, as something a person can act on."""
+    if type(a) is not type(b) and not (isinstance(a, (int, float)) and isinstance(b, (int, float))):
+        return "%s: %s vs %s" % (path, type(a).__name__, type(b).__name__)
+    if isinstance(a, dict):
+        for k in sorted(set(a) | set(b)):
+            if k not in a:
+                return "%s.%s: missing here, present in the reference" % (path, k)
+            if k not in b:
+                return "%s.%s: present here, missing in the reference" % (path, k)
+            d = first_difference(a[k], b[k], "%s.%s" % (path, k))
+            if d:
+                return d
+        return None
+    if isinstance(a, list):
+        if len(a) != len(b):
+            return "%s: %d items vs %d" % (path, len(a), len(b))
+        for i, (x, y) in enumerate(zip(a, b)):
+            d = first_difference(x, y, "%s[%d]" % (path, i))
+            if d:
+                return d
+        return None
+    if a != b:
+        return "%s: %r vs %r" % (path, a, b)
+    return None
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("hostport")
     ap.add_argument("--instances", type=int, default=0, help="0 = every instance")
-    ap.add_argument("--fingerprint")
+    ap.add_argument("--reference", metavar="FILE",
+                    help="write this target's responses here, to compare later targets "
+                         "in the same run against")
     ap.add_argument("--compare")
     ap.add_argument("--quiet", action="store_true")
     ap.add_argument("--exemplars", metavar="FILE",
@@ -178,7 +218,12 @@ def main():
     conn = http.client.HTTPConnection(host, int(port or 80), timeout=15)
     ref = json.loads(pathlib.Path(a.compare).read_text()) if a.compare else None
 
-    prints, failures, drift, sent = {}, [], [], 0
+    # Keyed by endpoint and path, because the instances of one endpoint are different
+    # requests: /domain/orders/602 and /domain/orders/876 return different orders, so one
+    # value per endpoint could only ever check the first of them. The plan holds 3,346
+    # distinct requests against 23,040 instances, and 34 of the 45 endpoints send the same
+    # request every time, so keeping them all costs a couple of megabytes.
+    responses, failures, drift, sent, compared = {}, [], [], 0, 0
     exemplars, header_problems, seen_once = [], [], set()
 
     meta = {}
@@ -234,7 +279,7 @@ def main():
                 stale = stale or advanced(hdrs, last_serial)
                 last_serial = serial_of(hdrs, last_serial)
             if status == ep["expect"]:
-                prints.setdefault(ep["id"], canonical(decoded(raw, hdrs), ctype))
+                responses.setdefault(ep["id"] + " " + path, comparable(decoded(raw, hdrs), ctype))
                 if ep["id"] not in seen_once:
                     seen_once.add(ep["id"])
                     if not a.skip_headers:
@@ -262,8 +307,16 @@ def main():
         if not ok:
             failures.append((ep["id"], bad or stale or "mixed statuses %s" % dict(seen)))
         note = ""
-        if ref and ep["id"] in ref and ep["id"] in prints and ref[ep["id"]] != prints[ep["id"]]:
-            note, _ = "  <- body differs from reference", drift.append(ep["id"])
+        if ref:
+            for key in (ep["id"] + " " + pth for pth in dict.fromkeys(paths)):
+                if key not in ref or key not in responses:
+                    continue
+                compared += 1
+                diff = first_difference(responses[key], ref[key])
+                if diff:
+                    note = "  <- " + diff
+                    drift.append((ep["id"], diff))
+                    break
         if not a.quiet:
             print("  %s %-18s %-6s %-3d instances  %s%s" %
                   ("ok  " if ok else "FAIL", ep["id"], ep["method"], len(paths),
@@ -274,7 +327,20 @@ def main():
     for eid, why in failures:
         print("  FAIL %-18s %s" % (eid, why))
     if drift:
-        print("  %d body mismatch(es) vs reference: %s" % (len(drift), ", ".join(drift)))
+        # The first difference goes on the header line, because run.py reports the summary
+        # and the line after it. A count with the detail on the next line down told the
+        # reader a response differed without saying how.
+        print("  %d response(s) differ from the reference: %s %s"
+              % (len(drift), drift[0][0], drift[0][1]))
+        for eid, diff in drift[1:12]:
+            print("    %-18s %s" % (eid, diff))
+    # A reference from a target that does not serve the whole spec can only check the part
+    # it does serve. Saying so keeps a thin comparison from reading like a clean pass.
+    if ref is not None and not drift:
+        print("  %d/%d responses compared against the reference%s"
+              % (compared, len(responses),
+                 "" if compared == len(responses)
+                 else "; the reference does not cover the rest"))
     if header_problems:
         print("  %d response header problem(s):" % len(header_problems))
         for eid, msg in header_problems[:12]:
@@ -290,9 +356,12 @@ def main():
         }, indent=1))
         print("  exemplars -> %s (%d endpoints, %.1f KB)"
               % (out, len(exemplars), out.stat().st_size / 1024))
-    if a.fingerprint:
-        pathlib.Path(a.fingerprint).write_text(json.dumps(prints, indent=2, sort_keys=True))
-        print("  fingerprints -> %s" % a.fingerprint)
+    if a.reference:
+        out = pathlib.Path(a.reference)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(json.dumps(responses, sort_keys=True))
+        print("  reference -> %s (%d requests, %.1f KB)"
+              % (out, len(responses), out.stat().st_size / 1024))
     conn.close()
     return 1 if failures or drift or header_problems else 0
 

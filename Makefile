@@ -43,8 +43,8 @@ lint: ## parse every workflow file, and run actionlint when it is installed
 validate: ## boot and conform every named target, no load  (TARGETS= MODE=)
 	python3 harness/run.py --targets $(TARGETS) --mode $(MODE) --validate-only
 
-conform: ## gate a already-running target on 127.0.0.1:8080
-	python3 harness/conform.py 127.0.0.1:8080 --compare spec/fingerprint.node-http.json
+conform: ## gate a already-running target on 127.0.0.1:8080  (REF= to compare)
+	python3 harness/conform.py 127.0.0.1:8080 $(if $(REF),--compare $(REF),)
 
 run: ## boot, gate, warm, ladder, record  (TARGETS= SECONDS= RUNGS= MODE=)
 	python3 harness/run.py --targets $(TARGETS) \
@@ -54,4 +54,4 @@ report: ## ratios for the newest run
 	python3 harness/report.py $$(ls -t results/*.jsonl | head -1) --family
 
 clean:
-	rm -f results/*.jsonl results/.gen-*.json
+	rm -f results/*.jsonl results/.gen-*.json results/.ref-*.json
