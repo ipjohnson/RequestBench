@@ -1,0 +1,199 @@
+# Keep the measured framework versions current.
+#
+# Framework version is a measured variable here, not maintenance. Every target serves
+# /__meta, every result row carries the version, and site/build.py draws a ring on the
+# trend chart when it changes. This job is what produces those rings.
+#
+# Scope is patch and minor, deliberately. express is "^5.1.0" and gofiber/fiber/v3 cannot
+# reach v4 without a module path change, and -DallowMajorUpdates=false holds Java to the
+# same line. A major version changes the wiring, and by this repo's own rule the wiring is
+# hand-written. Base images and action versions are Dependabot's, in .github/dependabot.yml.
+#
+# Conformance is not run here. Each leg does the cheap check -- does the manifest still
+# install and compile -- and hands the real gate to validate.yml on the pull request, so
+# the 40-endpoint fingerprint comparison runs once, where it can be read.
+name: deps
+
+on:
+  schedule:
+    # measure starts at 02:00 UTC with a 300 minute cap. 09:00 keeps a merge from landing
+    # in the middle of a measurement.
+    - cron: "0 9 * * *"
+  workflow_dispatch:
+    inputs:
+      languages:
+        description: JSON array of languages to update.
+        default: '["node","go","java"]'
+        type: string
+
+# The workflow's own token stays read-only. DEPS_TOKEN does all the writing, because a pull
+# request opened with GITHUB_TOKEN does not fire `on: pull_request` and validate.yml would
+# never run on it -- which would leave the update with no gate at all.
+permissions:
+  contents: read
+
+concurrency:
+  group: deps-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  update:
+    name: ${{ matrix.language }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      node: ${{ steps.pr.outputs.node }}
+      go: ${{ steps.pr.outputs.go }}
+      java: ${{ steps.pr.outputs.java }}
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ${{ fromJSON(github.event.inputs.languages || '["node","go","java"]') }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The branch is cut fresh from origin/main every night, so full history is not
+          # needed, but the ref has to be fetchable for the checkout -B below.
+          fetch-depth: 0
+          token: ${{ secrets.DEPS_TOKEN || github.token }}
+
+      - uses: actions/setup-node@v4
+        if: matrix.language == 'node'
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: targets/node/package-lock.json
+
+      - uses: actions/setup-go@v5
+        if: matrix.language == 'go'
+        with:
+          go-version: "1.26"
+          cache-dependency-path: targets/go/go.sum
+
+      - uses: actions/setup-java@v4
+        if: matrix.language == 'java'
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: maven
+
+      - name: Cut the branch fresh from main
+        run: |
+          git config user.name  "requestbench"
+          git config user.email "requestbench@users.noreply.github.com"
+          git checkout -B "deps/${{ matrix.language }}" origin/main
+
+      # Old-to-new for the direct dependencies, captured before the update. A lockfile diff
+      # is not reviewable; this is what goes in the pull request body.
+      - name: What is behind
+        id: before
+        working-directory: targets/${{ matrix.language }}
+        run: |
+          case "${{ matrix.language }}" in
+            node) npm outdated --long || true ;;
+            go)   go list -m -u all 2>/dev/null | grep -F '[' || true ;;
+            java) mvn -q -B versions:display-property-updates -DallowMajorUpdates=false || true ;;
+          esac | tee /tmp/outdated.txt
+
+      - name: Update
+        working-directory: targets/${{ matrix.language }}
+        run: |
+          case "${{ matrix.language }}" in
+            node) npm update --save ;;
+            go)   go get -u ./... && go mod tidy ;;
+            java) mvn -q -B versions:update-properties \
+                    -DallowMajorUpdates=false -DgenerateBackupPoms=false ;;
+          esac
+
+      # The cheap gate: does the manifest still install and compile? A full conformance run
+      # costs minutes per target and belongs on the pull request, run once.
+      - name: Install and build
+        working-directory: targets/${{ matrix.language }}
+        run: |
+          case "${{ matrix.language }}" in
+            node) npm ci --omit=dev --no-audit --no-fund ;;
+            go)   go build ./... ;;
+            java) mvn -q -B -DskipTests package ;;
+          esac
+
+      - name: Anything move?
+        id: changed
+        run: |
+          if git diff --quiet; then
+            echo "moved=false" >> "$GITHUB_OUTPUT"
+            echo "${{ matrix.language }} is already current"
+          else
+            echo "moved=true" >> "$GITHUB_OUTPUT"
+            git --no-pager diff --stat
+          fi
+
+      - name: Push and open the pull request
+        id: pr
+        if: steps.changed.outputs.moved == 'true'
+        env:
+          # Falling back to github.token lets a dispatch run reach this step and fail
+          # loudly on the push, rather than looking green while opening nothing.
+          GH_TOKEN: ${{ secrets.DEPS_TOKEN || github.token }}
+          LANG_NAME: ${{ matrix.language }}
+        run: |
+          git commit -qam "Update the $LANG_NAME frameworks"
+          # Reusing one branch per language means at most one open update pull request per
+          # manifest, refreshed nightly, instead of a pile of stale ones.
+          git push -f origin "deps/$LANG_NAME"
+          {
+            echo "Nightly framework update for \`targets/$LANG_NAME\`. Patch and minor only;"
+            echo "a major changes the wiring and stays hand-written."
+            echo
+            echo "Conformance is not run by the \`deps\` job. The gate is \`validate.yml\` on"
+            echo "this pull request: it boots every target and fingerprints all 40 endpoints"
+            echo "against the node baseline. Green here means the frameworks behave"
+            echo "identically, not that they are still as fast -- no load is generated on a"
+            echo "pull request, so a regression in speed shows up as a ring on the chart"
+            echo "after the next nightly measurement."
+            echo
+            echo '```'
+            cat /tmp/outdated.txt
+            echo '```'
+          } > /tmp/body.md
+          n=$(gh pr list --head "deps/$LANG_NAME" --state open --json number --jq '.[0].number')
+          if [ -z "$n" ]; then
+            n=$(gh pr create --base main --head "deps/$LANG_NAME" \
+                  --title "Update the $LANG_NAME frameworks" --body-file /tmp/body.md \
+                  | grep -oE '[0-9]+$')
+          else
+            gh pr edit "$n" --body-file /tmp/body.md
+          fi
+          echo "$LANG_NAME=$n" >> "$GITHUB_OUTPUT"
+          echo "pull request #$n"
+
+  gate:
+    # The daily failure signal. Without this the scheduled run is green whatever the update
+    # did, and a framework change that breaks a fingerprint -- the most interesting thing
+    # this repo can find -- would sit unnoticed in an open pull request.
+    name: watch the checks
+    needs: update
+    if: always() && needs.update.result != 'cancelled'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wait for validate.yml on every pull request this run opened
+        env:
+          GH_TOKEN: ${{ secrets.DEPS_TOKEN || github.token }}
+          NUMBERS: ${{ needs.update.outputs.node }} ${{ needs.update.outputs.go }} ${{ needs.update.outputs.java }}
+        run: |
+          opened=0
+          failed=0
+          for n in $NUMBERS; do
+            [ -n "$n" ] || continue
+            opened=$((opened + 1))
+            echo "::group::pull request #$n"
+            gh pr checks "$n" --watch --fail-fast || failed=$((failed + 1))
+            echo "::endgroup::"
+          done
+          if [ "$opened" -eq 0 ]; then
+            echo "every manifest is current; nothing opened"
+            exit 0
+          fi
+          echo "$opened pull request(s), $failed with failing checks"
+          exit "$failed"

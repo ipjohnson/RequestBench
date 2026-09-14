@@ -1,0 +1,22 @@
+# Base images and action versions only.
+#
+# The framework versions are deps.yml's, because they are a measured variable: a bump there
+# is what puts a ring on the trend chart. Nothing in deps.yml reaches a FROM line or a
+# `uses:` pin, which is what this covers.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+
+  # One entry per directory holding a Dockerfile. The runtime image is the floor every
+  # framework in that language is measured on, so a base image moving is worth its own
+  # reviewable pull request rather than arriving inside a framework bump.
+  - package-ecosystem: docker
+    directories:
+      - /targets/node
+      - /targets/go
+      - /targets/java
+    schedule:
+      interval: weekly
