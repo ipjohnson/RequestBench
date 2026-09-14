@@ -108,7 +108,7 @@ def main():
                  "baseline": base_of.get(t, env["baseline"]),
                  "framework": m.get("framework", t),
                  "version": m.get("version", ""), "target_runtime": m.get("runtime", ""),
-                 "rungs": {}, "families": {}}
+                 "rungs": {}, "families": {}, "families_by_rung": {}}
         base = base_of.get(t, env["baseline"])
         for rn in rung_ids:
             r, b = by.get((t, rn)), by.get((base, rn))
@@ -125,28 +125,62 @@ def main():
                 "p50_ratio": ratio(r["p50_us"], b["p50_us"]) if b else None,
                 "p99_ratio": ratio(r["p99_us"], b["p99_us"]) if b else None,
             }
-        # Per endpoint, per rung, as arrays parallel to endpoint_order.
-        eps = {"p50_us": {}, "p99_us": {}, "count": {}, "p50_ratio": {}}
+        # Per endpoint, per rung, every statistic the histogram can answer. Arrays are
+        # parallel to endpoint_order. Nothing is dropped for size: the repository is
+        # public, so neither Actions minutes nor storage is billed, and a percentile
+        # discarded here is one the 90-day artifact retention eventually takes with it.
+        fields = ("count", "errors", "mismatch", "p50_us", "p90_us", "p99_us", "p999_us",
+                  "p50_ratio", "p99_ratio")
+        eps = {f: {} for f in fields}
         for rn in rung_ids:
-            p50s, p99s, counts, ratios = [], [], [], []
+            acc = {f: [] for f in fields}
             for eid in ep_order:
                 row = ep_hist.get((t, rn, eid))
                 brow = ep_hist.get((base, rn, eid))
-                p50s.append(row["p50_us"] if row else None)
-                p99s.append(row["p99_us"] if row else None)
-                counts.append(row["count"] if row else 0)
-                ratios.append(ratio(row["p50_us"], brow["p50_us"])
-                              if row and brow and brow["p50_us"] else None)
-            eps["p50_us"][str(rn)] = p50s
-            eps["p99_us"][str(rn)] = p99s
-            eps["count"][str(rn)] = counts
-            eps["p50_ratio"][str(rn)] = ratios
+                if not row:
+                    for f in fields:
+                        acc[f].append(None)
+                    continue
+                h = unpack(row["hist_b64"])
+                bh = unpack(brow["hist_b64"]) if brow else None
+                p50, p90 = pct(h, 50), pct(h, 90)
+                p99, p999 = pct(h, 99), pct(h, 99.9)
+                acc["count"].append(row["count"])
+                acc["errors"].append(row.get("errors", 0))
+                acc["mismatch"].append(row.get("mismatch", 0))
+                acc["p50_us"].append(p50)
+                acc["p90_us"].append(p90)
+                acc["p99_us"].append(p99)
+                acc["p999_us"].append(p999)
+                acc["p50_ratio"].append(ratio(p50, pct(bh, 50)) if bh else None)
+                acc["p99_ratio"].append(ratio(p99, pct(bh, 99)) if bh else None)
+            for f in fields:
+                eps[f][str(rn)] = acc[f]
         entry["endpoints"] = eps
 
         mid = rung_ids[len(rung_ids) // 2]
-        for f, v in sorted(fam_p50.get((t, mid), {}).items()):
-            bv = fam_p50.get((base, mid), {}).get(f)
-            entry["families"][f] = {"p50_us": v, "p50_ratio": ratio(v, bv) if bv else None}
+        # Families at every rung too, not just the middle one, with the same percentiles.
+        for rn in rung_ids:
+            for f, hs in fam.get((t, rn), {}).items():
+                merged = [0] * NBUCKETS
+                for h in hs:
+                    for i, c in enumerate(unpack(h)):
+                        merged[i] += c
+                bmerged = [0] * NBUCKETS
+                for h in fam.get((base, rn), {}).get(f, []):
+                    for i, c in enumerate(unpack(h)):
+                        bmerged[i] += c
+                rec = {"p50_us": pct(merged, 50), "p90_us": pct(merged, 90),
+                       "p99_us": pct(merged, 99), "p999_us": pct(merged, 99.9),
+                       "count": sum(merged)}
+                if any(bmerged):
+                    rec["p50_ratio"] = ratio(rec["p50_us"], pct(bmerged, 50))
+                    rec["p99_ratio"] = ratio(rec["p99_us"], pct(bmerged, 99))
+                entry["families_by_rung"].setdefault(str(rn), {})[f] = rec
+            if rn == mid:
+                # `families` stays flat and keyed by family name, which is what the site
+                # reads; the rung-keyed copy lives beside it rather than inside it.
+                entry["families"] = dict(entry["families_by_rung"].get(str(rn), {}))
         out["targets"].append(entry)
 
     # Compact, not pretty. Indenting puts every one of the per-endpoint integers on its
