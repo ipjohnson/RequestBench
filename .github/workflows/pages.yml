@@ -20,9 +20,11 @@ permissions:
   pages: write
   id-token: write
 
+# Never cancel a deploy in flight: a manual dispatch and a push-triggered build were
+# cancelling each other, which left the published site stale with no failure to notice.
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build:
