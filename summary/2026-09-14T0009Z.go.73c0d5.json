@@ -1,0 +1,376 @@
+{
+  "baseline": "net-http",
+  "baselines": {
+    "go": "net-http"
+  },
+  "cores": 4,
+  "cpu": "aarch64",
+  "cross_language": false,
+  "date": "2026-09-14",
+  "epoch": 1,
+  "gen_cpus": "2,3",
+  "generator": "blend.mjs/node",
+  "host": "runnervmec22z",
+  "mode": "docker",
+  "run_id": "2026-09-14T00:09Z.go.73c0d5",
+  "rungs": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "runner": "github-hosted",
+  "runtime": "v22.23.2",
+  "shard": "go",
+  "shards": [
+    "go"
+  ],
+  "suite": "blend-v1",
+  "sut_cpus": "0,1",
+  "targets": [
+    {
+      "baseline": "net-http",
+      "families": {
+        "body_validate": {
+          "p50_ratio": 1.0,
+          "p50_us": 285
+        },
+        "error_paths": {
+          "p50_ratio": 1.0,
+          "p50_us": 258
+        },
+        "json_read": {
+          "p50_ratio": 1.0,
+          "p50_us": 258
+        },
+        "nested_fetch": {
+          "p50_ratio": 1.0,
+          "p50_us": 274
+        },
+        "path_params": {
+          "p50_ratio": 1.0,
+          "p50_us": 264
+        },
+        "plaintext": {
+          "p50_ratio": 1.0,
+          "p50_us": 248
+        },
+        "query_paging": {
+          "p50_ratio": 1.0,
+          "p50_us": 274
+        },
+        "write_echo": {
+          "p50_ratio": 1.0,
+          "p50_us": 269
+        }
+      },
+      "framework": "net/http",
+      "rungs": {
+        "1": {
+          "achieved_rps": 499,
+          "baseline_saturated": false,
+          "dropped": 0,
+          "errors": 0,
+          "offered_rps": 500,
+          "p50_ratio": 1.0,
+          "p50_us": 315,
+          "p999_us": 4301,
+          "p99_ratio": 1.0,
+          "p99_us": 918,
+          "saturated": false,
+          "status_mismatch": 0
+        },
+        "2": {
+          "achieved_rps": 1498,
+          "baseline_saturated": false,
+          "dropped": 0,
+          "errors": 0,
+          "offered_rps": 1500,
+          "p50_ratio": 1.0,
+          "p50_us": 258,
+          "p999_us": 4053,
+          "p99_ratio": 1.0,
+          "p99_us": 799,
+          "saturated": false,
+          "status_mismatch": 0
+        },
+        "3": {
+          "achieved_rps": 2997,
+          "baseline_saturated": false,
+          "dropped": 0,
+          "errors": 0,
+          "offered_rps": 3000,
+          "p50_ratio": 1.0,
+          "p50_us": 269,
+          "p999_us": 5455,
+          "p99_ratio": 1.0,
+          "p99_us": 974,
+          "saturated": false,
+          "status_mismatch": 0
+        },
+        "4": {
+          "achieved_rps": 5994,
+          "baseline_saturated": false,
+          "dropped": 0,
+          "errors": 0,
+          "offered_rps": 6000,
+          "p50_ratio": 1.0,
+          "p50_us": 258,
+          "p999_us": 14682,
+          "p99_ratio": 1.0,
+          "p99_us": 1910,
+          "saturated": false,
+          "status_mismatch": 0
+        },
+        "5": {
+          "achieved_rps": 11978,
+          "baseline_saturated": false,
+          "dropped": 406,
+          "errors": 0,
+          "offered_rps": 12000,
+          "p50_ratio": 1.0,
+          "p50_us": 527,
+          "p999_us": 122180,
+          "p99_ratio": 1.0,
+          "p99_us": 13037,
+          "saturated": false,
+          "status_mismatch": 0
+        }
+      },
+      "shard": "go",
+      "target": "net-http",
+      "target_runtime": "go1.25.14",
+      "version": "go1.25.14"
+    },
+    {
+      "baseline": "net-http",
+      "families": {
+        "body_validate": {
+          "p50_ratio": 1.0421,
+          "p50_us": 297
+        },
+        "error_paths": {
+          "p50_ratio": 1.0853,
+          "p50_us": 280
+        },
+        "json_read": {
+          "p50_ratio": 1.0,
+          "p50_us": 258
+        },
+        "nested_fetch": {
+          "p50_ratio": 1.0219,
+          "p50_us": 280
+        },
+        "path_params": {
+          "p50_ratio": 1.0,
+          "p50_us": 264
+        },
+        "plaintext": {
+          "p50_ratio": 1.0202,
+          "p50_us": 253
+        },
+        "query_paging": {
+          "p50_ratio": 1.0219,
+          "p50_us": 280
+        },
+        "write_echo": {
+          "p50_ratio": 1.0186,
+          "p50_us": 274
+        }
+      },
+      "framework": "gin",
+      "rungs": {
+        "1": {
+          "achieved_rps": 499,
+          "baseline_saturated": false,
+          "dropped": 0,
+          "errors": 0,
+          "offered_rps": 500,
+          "p50_ratio": 1.0,
+          "p50_us": 315,
+          "p999_us": 3973,
+          "p99_ratio": 1.0817,
+          "p99_us": 993,
+          "saturated": false,
+          "status_mismatch": 0
+        },
+        "2": {
+          "achieved_rps": 1498,
+          "baseline_saturated": false,
+          "dropped": 0,
+          "errors": 0,
+          "offered_rps": 1500,
+          "p50_ratio": 1.0426,
+          "p50_us": 269,
+          "p999_us": 4053,
+          "p99_ratio": 1.1264,
+          "p99_us": 900,
+          "saturated": false,
+          "status_mismatch": 0
+        },
+        "3": {
+          "achieved_rps": 2997,
+          "baseline_saturated": false,
+          "dropped": 0,
+          "errors": 0,
+          "offered_rps": 3000,
+          "p50_ratio": 1.0186,
+          "p50_us": 274,
+          "p999_us": 5455,
+          "p99_ratio": 1.1715,
+          "p99_us": 1141,
+          "saturated": false,
+          "status_mismatch": 0
+        },
+        "4": {
+          "achieved_rps": 5994,
+          "baseline_saturated": false,
+          "dropped": 0,
+          "errors": 0,
+          "offered_rps": 6000,
+          "p50_ratio": 1.0,
+          "p50_us": 258,
+          "p999_us": 8774,
+          "p99_ratio": 1.0199,
+          "p99_us": 1948,
+          "saturated": false,
+          "status_mismatch": 0
+        },
+        "5": {
+          "achieved_rps": 11981,
+          "baseline_saturated": false,
+          "dropped": 308,
+          "errors": 0,
+          "offered_rps": 12000,
+          "p50_ratio": 1.0835,
+          "p50_us": 571,
+          "p999_us": 115133,
+          "p99_ratio": 0.743,
+          "p99_us": 9687,
+          "saturated": false,
+          "status_mismatch": 0
+        }
+      },
+      "shard": "go",
+      "target": "gin",
+      "target_runtime": "go1.25.14",
+      "version": "v1.12.0"
+    },
+    {
+      "baseline": "net-http",
+      "families": {
+        "body_validate": {
+          "p50_ratio": 0.9439,
+          "p50_us": 269
+        },
+        "error_paths": {
+          "p50_ratio": 0.9806,
+          "p50_us": 253
+        },
+        "json_read": {
+          "p50_ratio": 0.907,
+          "p50_us": 234
+        },
+        "nested_fetch": {
+          "p50_ratio": 0.9416,
+          "p50_us": 258
+        },
+        "path_params": {
+          "p50_ratio": 0.9242,
+          "p50_us": 244
+        },
+        "plaintext": {
+          "p50_ratio": 0.9073,
+          "p50_us": 225
+        },
+        "query_paging": {
+          "p50_ratio": 0.9234,
+          "p50_us": 253
+        },
+        "write_echo": {
+          "p50_ratio": 0.9591,
+          "p50_us": 258
+        }
+      },
+      "framework": "echo",
+      "rungs": {
+        "1": {
+          "achieved_rps": 500,
+          "baseline_saturated": false,
+          "dropped": 0,
+          "errors": 0,
+          "offered_rps": 500,
+          "p50_ratio": 0.9238,
+          "p50_us": 291,
+          "p999_us": 3819,
+          "p99_ratio": 0.8529,
+          "p99_us": 783,
+          "saturated": false,
+          "status_mismatch": 0
+        },
+        "2": {
+          "achieved_rps": 1498,
+          "baseline_saturated": false,
+          "dropped": 0,
+          "errors": 0,
+          "offered_rps": 1500,
+          "p50_ratio": 0.9806,
+          "p50_us": 253,
+          "p999_us": 3391,
+          "p99_ratio": 1.02,
+          "p99_us": 815,
+          "saturated": false,
+          "status_mismatch": 0
+        },
+        "3": {
+          "achieved_rps": 2997,
+          "baseline_saturated": false,
+          "dropped": 0,
+          "errors": 0,
+          "offered_rps": 3000,
+          "p50_ratio": 0.9219,
+          "p50_us": 248,
+          "p999_us": 6266,
+          "p99_ratio": 1.4856,
+          "p99_us": 1447,
+          "saturated": false,
+          "status_mismatch": 0
+        },
+        "4": {
+          "achieved_rps": 5994,
+          "baseline_saturated": false,
+          "dropped": 0,
+          "errors": 0,
+          "offered_rps": 6000,
+          "p50_ratio": 1.0426,
+          "p50_us": 269,
+          "p999_us": 8774,
+          "p99_ratio": 1.9995,
+          "p99_us": 3819,
+          "saturated": false,
+          "status_mismatch": 0
+        },
+        "5": {
+          "achieved_rps": 5538,
+          "baseline_saturated": false,
+          "dropped": 386163,
+          "errors": 0,
+          "offered_rps": 12000,
+          "p50_ratio": 156.0228,
+          "p50_us": 82224,
+          "p999_us": 1668108,
+          "p99_ratio": 67.8955,
+          "p99_us": 885154,
+          "saturated": true,
+          "status_mismatch": 0
+        }
+      },
+      "shard": "go",
+      "target": "echo",
+      "target_runtime": "go1.25.14",
+      "version": "4.15.4"
+    }
+  ],
+  "tracked": true
+}

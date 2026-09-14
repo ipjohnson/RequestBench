@@ -1,0 +1,720 @@
+{
+  "baseline": "net-http",
+  "baselines": {
+    "go": "net-http",
+    "node": "node-http"
+  },
+  "cores": 4,
+  "cpu": "aarch64",
+  "cross_language": true,
+  "date": "2026-09-14",
+  "epoch": 1,
+  "gen_cpus": "2,3",
+  "generator": "blend.mjs/node",
+  "host": "runnervmec22z",
+  "mode": "docker",
+  "run_id": "2026-09-14T00:09Z.x-go-node.04476d",
+  "rungs": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "runner": "github-hosted",
+  "runtime": "v22.23.2",
+  "shard": "x-go-node",
+  "shards": [
+    "go",
+    "node"
+  ],
+  "suite": "blend-v1",
+  "sut_cpus": "0,1",
+  "targets": [
+    {
+      "baseline": "net-http",
+      "families": {
+        "body_validate": {
+          "p50_ratio": 1.0,
+          "p50_us": 269
+        },
+        "error_paths": {
+          "p50_ratio": 1.0,
+          "p50_us": 229
+        },
+        "json_read": {
+          "p50_ratio": 1.0,
+          "p50_us": 229
+        },
+        "nested_fetch": {
+          "p50_ratio": 1.0,
+          "p50_us": 253
+        },
+        "path_params": {
+          "p50_ratio": 1.0,
+          "p50_us": 239
+        },
+        "plaintext": {
+          "p50_ratio": 1.0,
+          "p50_us": 221
+        },
+        "query_paging": {
+          "p50_ratio": 1.0,
+          "p50_us": 253
+        },
+        "write_echo": {
+          "p50_ratio": 1.0,
+          "p50_us": 248
+        }
+      },
+      "framework": "net/http",
+      "rungs": {
+        "1": {
+          "achieved_rps": 500,
+          "baseline_saturated": false,
+          "dropped": 0,
+          "errors": 0,
+          "offered_rps": 500,
+          "p50_ratio": 1.0,
+          "p50_us": 285,
+          "p999_us": 3391,
+          "p99_ratio": 1.0,
+          "p99_us": 799,
+          "saturated": false,
+          "status_mismatch": 0
+        },
+        "2": {
+          "achieved_rps": 1499,
+          "baseline_saturated": false,
+          "dropped": 0,
+          "errors": 0,
+          "offered_rps": 1500,
+          "p50_ratio": 1.0,
+          "p50_us": 248,
+          "p999_us": 3528,
+          "p99_ratio": 1.0,
+          "p99_us": 738,
+          "saturated": false,
+          "status_mismatch": 0
+        },
+        "3": {
+          "achieved_rps": 2997,
+          "baseline_saturated": false,
+          "dropped": 0,
+          "errors": 0,
+          "offered_rps": 3000,
+          "p50_ratio": 1.0,
+          "p50_us": 244,
+          "p999_us": 4475,
+          "p99_ratio": 1.0,
+          "p99_us": 848,
+          "saturated": false,
+          "status_mismatch": 0
+        },
+        "4": {
+          "achieved_rps": 5994,
+          "baseline_saturated": false,
+          "dropped": 0,
+          "errors": 0,
+          "offered_rps": 6000,
+          "p50_ratio": 1.0,
+          "p50_us": 264,
+          "p999_us": 6649,
+          "p99_ratio": 1.0,
+          "p99_us": 1598,
+          "saturated": false,
+          "status_mismatch": 0
+        },
+        "5": {
+          "achieved_rps": 11977,
+          "baseline_saturated": false,
+          "dropped": 388,
+          "errors": 0,
+          "offered_rps": 12000,
+          "p50_ratio": 1.0,
+          "p50_us": 441,
+          "p999_us": 122180,
+          "p99_ratio": 1.0,
+          "p99_us": 7341,
+          "saturated": false,
+          "status_mismatch": 0
+        }
+      },
+      "shard": "go",
+      "target": "net-http",
+      "target_runtime": "go1.25.14",
+      "version": "go1.25.14"
+    },
+    {
+      "baseline": "net-http",
+      "families": {
+        "body_validate": {
+          "p50_ratio": 1.0818,
+          "p50_us": 291
+        },
+        "error_paths": {
+          "p50_ratio": 1.1747,
+          "p50_us": 269
+        },
+        "json_read": {
+          "p50_ratio": 1.083,
+          "p50_us": 248
+        },
+        "nested_fetch": {
+          "p50_ratio": 1.083,
+          "p50_us": 274
+        },
+        "path_params": {
+          "p50_ratio": 1.0795,
+          "p50_us": 258
+        },
+        "plaintext": {
+          "p50_ratio": 1.0814,
+          "p50_us": 239
+        },
+        "query_paging": {
+          "p50_ratio": 1.0632,
+          "p50_us": 269
+        },
+        "write_echo": {
+          "p50_ratio": 1.0847,
+          "p50_us": 269
+        }
+      },
+      "framework": "gin",
+      "rungs": {
+        "1": {
+          "achieved_rps": 500,
+          "baseline_saturated": false,
+          "dropped": 0,
+          "errors": 0,
+          "offered_rps": 500,
+          "p50_ratio": 0.9439,
+          "p50_us": 269,
+          "p999_us": 3896,
+          "p99_ratio": 1.1039,
+          "p99_us": 882,
+          "saturated": false,
+          "status_mismatch": 0
+        },
+        "2": {
+          "achieved_rps": 1499,
+          "baseline_saturated": false,
+          "dropped": 0,
+          "errors": 0,
+          "offered_rps": 1500,
+          "p50_ratio": 1.0847,
+          "p50_us": 269,
+          "p999_us": 3325,
+          "p99_ratio": 1.294,
+          "p99_us": 955,
+          "saturated": false,
+          "status_mismatch": 0
+        },
+        "3": {
+          "achieved_rps": 2997,
+          "baseline_saturated": false,
+          "dropped": 0,
+          "errors": 0,
+          "offered_rps": 3000,
+          "p50_ratio": 1.082,
+          "p50_us": 264,
+          "p999_us": 5789,
+          "p99_ratio": 1.3196,
+          "p99_us": 1119,
+          "saturated": false,
+          "status_mismatch": 0
+        },
+        "4": {
+          "achieved_rps": 5994,
+          "baseline_saturated": false,
+          "dropped": 0,
+          "errors": 0,
+          "offered_rps": 6000,
+          "p50_ratio": 0.9242,
+          "p50_us": 244,
+          "p999_us": 7947,
+          "p99_ratio": 1.02,
+          "p99_us": 1630,
+          "saturated": false,
+          "status_mismatch": 0
+        },
+        "5": {
+          "achieved_rps": 11981,
+          "baseline_saturated": false,
+          "dropped": 281,
+          "errors": 0,
+          "offered_rps": 12000,
+          "p50_ratio": 1.0204,
+          "p50_us": 450,
+          "p999_us": 122180,
+          "p99_ratio": 1.0613,
+          "p99_us": 7791,
+          "saturated": false,
+          "status_mismatch": 0
+        }
+      },
+      "shard": "go",
+      "target": "gin",
+      "target_runtime": "go1.25.14",
+      "version": "v1.12.0"
+    },
+    {
+      "baseline": "net-http",
+      "families": {
+        "body_validate": {
+          "p50_ratio": 0.9219,
+          "p50_us": 248
+        },
+        "error_paths": {
+          "p50_ratio": 0.9825,
+          "p50_us": 225
+        },
+        "json_read": {
+          "p50_ratio": 0.9083,
+          "p50_us": 208
+        },
+        "nested_fetch": {
+          "p50_ratio": 0.9249,
+          "p50_us": 234
+        },
+        "path_params": {
+          "p50_ratio": 0.887,
+          "p50_us": 212
+        },
+        "plaintext": {
+          "p50_ratio": 0.9231,
+          "p50_us": 204
+        },
+        "query_paging": {
+          "p50_ratio": 0.9051,
+          "p50_us": 229
+        },
+        "write_echo": {
+          "p50_ratio": 0.9637,
+          "p50_us": 239
+        }
+      },
+      "framework": "echo",
+      "rungs": {
+        "1": {
+          "achieved_rps": 500,
+          "baseline_saturated": false,
+          "dropped": 0,
+          "errors": 0,
+          "offered_rps": 500,
+          "p50_ratio": 0.9614,
+          "p50_us": 274,
+          "p999_us": 3459,
+          "p99_ratio": 1.0,
+          "p99_us": 799,
+          "saturated": false,
+          "status_mismatch": 0
+        },
+        "2": {
+          "achieved_rps": 1499,
+          "baseline_saturated": false,
+          "dropped": 0,
+          "errors": 0,
+          "offered_rps": 1500,
+          "p50_ratio": 0.9637,
+          "p50_us": 239,
+          "p999_us": 3744,
+          "p99_ratio": 1.061,
+          "p99_us": 783,
+          "saturated": false,
+          "status_mismatch": 0
+        },
+        "3": {
+          "achieved_rps": 2997,
+          "baseline_saturated": false,
+          "dropped": 0,
+          "errors": 0,
+          "offered_rps": 3000,
+          "p50_ratio": 0.9221,
+          "p50_us": 225,
+          "p999_us": 4844,
+          "p99_ratio": 1.2936,
+          "p99_us": 1097,
+          "saturated": false,
+          "status_mismatch": 0
+        },
+        "4": {
+          "achieved_rps": 5994,
+          "baseline_saturated": false,
+          "dropped": 0,
+          "errors": 0,
+          "offered_rps": 6000,
+          "p50_ratio": 0.8864,
+          "p50_us": 234,
+          "p999_us": 12531,
+          "p99_ratio": 2.3429,
+          "p99_us": 3744,
+          "saturated": false,
+          "status_mismatch": 0
+        },
+        "5": {
+          "achieved_rps": 5482,
+          "baseline_saturated": false,
+          "dropped": 389918,
+          "errors": 0,
+          "offered_rps": 12000,
+          "p50_ratio": 193.9819,
+          "p50_us": 85546,
+          "p999_us": 2157876,
+          "p99_ratio": 115.8946,
+          "p99_us": 850782,
+          "saturated": true,
+          "status_mismatch": 0
+        }
+      },
+      "shard": "go",
+      "target": "echo",
+      "target_runtime": "go1.25.14",
+      "version": "4.15.4"
+    },
+    {
+      "baseline": "node-http",
+      "families": {
+        "body_validate": {
+          "p50_ratio": 1.0,
+          "p50_us": 297
+        },
+        "error_paths": {
+          "p50_ratio": 1.0,
+          "p50_us": 269
+        },
+        "json_read": {
+          "p50_ratio": 1.0,
+          "p50_us": 248
+        },
+        "nested_fetch": {
+          "p50_ratio": 1.0,
+          "p50_us": 274
+        },
+        "path_params": {
+          "p50_ratio": 1.0,
+          "p50_us": 253
+        },
+        "plaintext": {
+          "p50_ratio": 1.0,
+          "p50_us": 234
+        },
+        "query_paging": {
+          "p50_ratio": 1.0,
+          "p50_us": 274
+        },
+        "write_echo": {
+          "p50_ratio": 1.0,
+          "p50_us": 280
+        }
+      },
+      "framework": "node-http",
+      "rungs": {
+        "1": {
+          "achieved_rps": 500,
+          "baseline_saturated": false,
+          "dropped": 0,
+          "errors": 0,
+          "offered_rps": 500,
+          "p50_ratio": 1.0,
+          "p50_us": 315,
+          "p999_us": 3896,
+          "p99_ratio": 1.0,
+          "p99_us": 831,
+          "saturated": false,
+          "status_mismatch": 0
+        },
+        "2": {
+          "achieved_rps": 1498,
+          "baseline_saturated": false,
+          "dropped": 0,
+          "errors": 0,
+          "offered_rps": 1500,
+          "p50_ratio": 1.0,
+          "p50_us": 258,
+          "p999_us": 4387,
+          "p99_ratio": 1.0,
+          "p99_us": 606,
+          "saturated": false,
+          "status_mismatch": 0
+        },
+        "3": {
+          "achieved_rps": 2997,
+          "baseline_saturated": false,
+          "dropped": 0,
+          "errors": 0,
+          "offered_rps": 3000,
+          "p50_ratio": 1.0,
+          "p50_us": 269,
+          "p999_us": 5564,
+          "p99_ratio": 1.0,
+          "p99_us": 783,
+          "saturated": false,
+          "status_mismatch": 0
+        },
+        "4": {
+          "achieved_rps": 5994,
+          "baseline_saturated": false,
+          "dropped": 0,
+          "errors": 0,
+          "offered_rps": 6000,
+          "p50_ratio": 1.0,
+          "p50_us": 297,
+          "p999_us": 13298,
+          "p99_ratio": 1.0,
+          "p99_us": 1696,
+          "saturated": false,
+          "status_mismatch": 0
+        },
+        "5": {
+          "achieved_rps": 9813,
+          "baseline_saturated": true,
+          "dropped": 129549,
+          "errors": 0,
+          "offered_rps": 12000,
+          "p50_ratio": 1.0,
+          "p50_us": 94449,
+          "p999_us": 212719,
+          "p99_ratio": 1.0,
+          "p99_us": 196520,
+          "saturated": true,
+          "status_mismatch": 0
+        }
+      },
+      "shard": "node",
+      "target": "node-http",
+      "target_runtime": "node 24.21.0",
+      "version": "24.21.0"
+    },
+    {
+      "baseline": "node-http",
+      "families": {
+        "body_validate": {
+          "p50_ratio": 1.1953,
+          "p50_us": 355
+        },
+        "error_paths": {
+          "p50_ratio": 1.1487,
+          "p50_us": 309
+        },
+        "json_read": {
+          "p50_ratio": 1.0847,
+          "p50_us": 269
+        },
+        "nested_fetch": {
+          "p50_ratio": 1.1058,
+          "p50_us": 303
+        },
+        "path_params": {
+          "p50_ratio": 1.083,
+          "p50_us": 274
+        },
+        "plaintext": {
+          "p50_ratio": 1.1282,
+          "p50_us": 264
+        },
+        "query_paging": {
+          "p50_ratio": 1.0839,
+          "p50_us": 297
+        },
+        "write_echo": {
+          "p50_ratio": 1.1464,
+          "p50_us": 321
+        }
+      },
+      "framework": "fastify",
+      "rungs": {
+        "1": {
+          "achieved_rps": 500,
+          "baseline_saturated": false,
+          "dropped": 0,
+          "errors": 0,
+          "offered_rps": 500,
+          "p50_ratio": 0.981,
+          "p50_us": 309,
+          "p999_us": 4134,
+          "p99_ratio": 1.083,
+          "p99_us": 900,
+          "saturated": false,
+          "status_mismatch": 0
+        },
+        "2": {
+          "achieved_rps": 1498,
+          "baseline_saturated": false,
+          "dropped": 0,
+          "errors": 0,
+          "offered_rps": 1500,
+          "p50_ratio": 1.062,
+          "p50_us": 274,
+          "p999_us": 5675,
+          "p99_ratio": 1.3993,
+          "p99_us": 848,
+          "saturated": false,
+          "status_mismatch": 0
+        },
+        "3": {
+          "achieved_rps": 2997,
+          "baseline_saturated": false,
+          "dropped": 0,
+          "errors": 0,
+          "offered_rps": 3000,
+          "p50_ratio": 1.1264,
+          "p50_us": 303,
+          "p999_us": 7488,
+          "p99_ratio": 2.802,
+          "p99_us": 2194,
+          "saturated": false,
+          "status_mismatch": 0
+        },
+        "4": {
+          "achieved_rps": 5994,
+          "baseline_saturated": false,
+          "dropped": 0,
+          "errors": 0,
+          "offered_rps": 6000,
+          "p50_ratio": 0.9798,
+          "p50_us": 291,
+          "p999_us": 32418,
+          "p99_ratio": 8.487,
+          "p99_us": 14394,
+          "saturated": false,
+          "status_mismatch": 0
+        },
+        "5": {
+          "achieved_rps": 8724,
+          "baseline_saturated": true,
+          "dropped": 194760,
+          "errors": 0,
+          "offered_rps": 12000,
+          "p50_ratio": 1.0612,
+          "p50_us": 100230,
+          "p999_us": 254219,
+          "p99_ratio": 0.9612,
+          "p99_us": 188888,
+          "saturated": true,
+          "status_mismatch": 0
+        }
+      },
+      "shard": "node",
+      "target": "fastify",
+      "target_runtime": "node 24.21.0",
+      "version": "5.12.4"
+    },
+    {
+      "baseline": "node-http",
+      "families": {
+        "body_validate": {
+          "p50_ratio": 1.1246,
+          "p50_us": 334
+        },
+        "error_paths": {
+          "p50_ratio": 1.0595,
+          "p50_us": 285
+        },
+        "json_read": {
+          "p50_ratio": 1.0847,
+          "p50_us": 269
+        },
+        "nested_fetch": {
+          "p50_ratio": 1.1058,
+          "p50_us": 303
+        },
+        "path_params": {
+          "p50_ratio": 1.1067,
+          "p50_us": 280
+        },
+        "plaintext": {
+          "p50_ratio": 1.0598,
+          "p50_us": 248
+        },
+        "query_paging": {
+          "p50_ratio": 1.0401,
+          "p50_us": 285
+        },
+        "write_echo": {
+          "p50_ratio": 1.1464,
+          "p50_us": 321
+        }
+      },
+      "framework": "express",
+      "rungs": {
+        "1": {
+          "achieved_rps": 500,
+          "baseline_saturated": false,
+          "dropped": 0,
+          "errors": 0,
+          "offered_rps": 500,
+          "p50_ratio": 1.1048,
+          "p50_us": 348,
+          "p999_us": 4217,
+          "p99_ratio": 1.0614,
+          "p99_us": 882,
+          "saturated": false,
+          "status_mismatch": 0
+        },
+        "2": {
+          "achieved_rps": 1499,
+          "baseline_saturated": false,
+          "dropped": 0,
+          "errors": 0,
+          "offered_rps": 1500,
+          "p50_ratio": 1.2209,
+          "p50_us": 315,
+          "p999_us": 4217,
+          "p99_ratio": 1.2921,
+          "p99_us": 783,
+          "saturated": false,
+          "status_mismatch": 0
+        },
+        "3": {
+          "achieved_rps": 2997,
+          "baseline_saturated": false,
+          "dropped": 0,
+          "errors": 0,
+          "offered_rps": 3000,
+          "p50_ratio": 1.1041,
+          "p50_us": 297,
+          "p999_us": 5455,
+          "p99_ratio": 1.083,
+          "p99_us": 848,
+          "saturated": false,
+          "status_mismatch": 0
+        },
+        "4": {
+          "achieved_rps": 5994,
+          "baseline_saturated": false,
+          "dropped": 0,
+          "errors": 0,
+          "offered_rps": 6000,
+          "p50_ratio": 1.9226,
+          "p50_us": 571,
+          "p999_us": 57570,
+          "p99_ratio": 15.6804,
+          "p99_us": 26594,
+          "saturated": false,
+          "status_mismatch": 0
+        },
+        "5": {
+          "achieved_rps": 6427,
+          "baseline_saturated": true,
+          "dropped": 332777,
+          "errors": 0,
+          "offered_rps": 12000,
+          "p50_ratio": 1.1951,
+          "p50_us": 112876,
+          "p999_us": 18316608,
+          "p99_ratio": 0.8368,
+          "p99_us": 164439,
+          "saturated": true,
+          "status_mismatch": 0
+        }
+      },
+      "shard": "node",
+      "target": "express",
+      "target_runtime": "node 24.21.0",
+      "version": "5.2.1"
+    }
+  ],
+  "tracked": true
+}

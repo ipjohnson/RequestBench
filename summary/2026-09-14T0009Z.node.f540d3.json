@@ -1,0 +1,376 @@
+{
+  "baseline": "node-http",
+  "baselines": {
+    "node": "node-http"
+  },
+  "cores": 4,
+  "cpu": "aarch64",
+  "cross_language": false,
+  "date": "2026-09-14",
+  "epoch": 1,
+  "gen_cpus": "2,3",
+  "generator": "blend.mjs/node",
+  "host": "runnervmec22z",
+  "mode": "docker",
+  "run_id": "2026-09-14T00:09Z.node.f540d3",
+  "rungs": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "runner": "github-hosted",
+  "runtime": "v22.23.2",
+  "shard": "node",
+  "shards": [
+    "node"
+  ],
+  "suite": "blend-v1",
+  "sut_cpus": "0,1",
+  "targets": [
+    {
+      "baseline": "node-http",
+      "families": {
+        "body_validate": {
+          "p50_ratio": 1.0,
+          "p50_us": 297
+        },
+        "error_paths": {
+          "p50_ratio": 1.0,
+          "p50_us": 248
+        },
+        "json_read": {
+          "p50_ratio": 1.0,
+          "p50_us": 234
+        },
+        "nested_fetch": {
+          "p50_ratio": 1.0,
+          "p50_us": 258
+        },
+        "path_params": {
+          "p50_ratio": 1.0,
+          "p50_us": 239
+        },
+        "plaintext": {
+          "p50_ratio": 1.0,
+          "p50_us": 225
+        },
+        "query_paging": {
+          "p50_ratio": 1.0,
+          "p50_us": 264
+        },
+        "write_echo": {
+          "p50_ratio": 1.0,
+          "p50_us": 269
+        }
+      },
+      "framework": "node-http",
+      "rungs": {
+        "1": {
+          "achieved_rps": 500,
+          "baseline_saturated": false,
+          "dropped": 0,
+          "errors": 0,
+          "offered_rps": 500,
+          "p50_ratio": 1.0,
+          "p50_us": 264,
+          "p999_us": 3744,
+          "p99_ratio": 1.0,
+          "p99_us": 682,
+          "saturated": false,
+          "status_mismatch": 0
+        },
+        "2": {
+          "achieved_rps": 1499,
+          "baseline_saturated": false,
+          "dropped": 0,
+          "errors": 0,
+          "offered_rps": 1500,
+          "p50_ratio": 1.0,
+          "p50_us": 229,
+          "p999_us": 3819,
+          "p99_ratio": 1.0,
+          "p99_us": 538,
+          "saturated": false,
+          "status_mismatch": 0
+        },
+        "3": {
+          "achieved_rps": 2997,
+          "baseline_saturated": false,
+          "dropped": 0,
+          "errors": 0,
+          "offered_rps": 3000,
+          "p50_ratio": 1.0,
+          "p50_us": 253,
+          "p999_us": 4656,
+          "p99_ratio": 1.0,
+          "p99_us": 618,
+          "saturated": false,
+          "status_mismatch": 0
+        },
+        "4": {
+          "achieved_rps": 5994,
+          "baseline_saturated": false,
+          "dropped": 0,
+          "errors": 0,
+          "offered_rps": 6000,
+          "p50_ratio": 1.0,
+          "p50_us": 204,
+          "p999_us": 8268,
+          "p99_ratio": 1.0,
+          "p99_us": 882,
+          "saturated": false,
+          "status_mismatch": 0
+        },
+        "5": {
+          "achieved_rps": 11366,
+          "baseline_saturated": true,
+          "dropped": 36270,
+          "errors": 0,
+          "offered_rps": 12000,
+          "p50_ratio": 1.0,
+          "p50_us": 77481,
+          "p999_us": 196520,
+          "p99_ratio": 1.0,
+          "p99_us": 167728,
+          "saturated": true,
+          "status_mismatch": 0
+        }
+      },
+      "shard": "node",
+      "target": "node-http",
+      "target_runtime": "node 24.21.0",
+      "version": "24.21.0"
+    },
+    {
+      "baseline": "node-http",
+      "families": {
+        "body_validate": {
+          "p50_ratio": 0.9226,
+          "p50_us": 274
+        },
+        "error_paths": {
+          "p50_ratio": 0.8911,
+          "p50_us": 221
+        },
+        "json_read": {
+          "p50_ratio": 0.8718,
+          "p50_us": 204
+        },
+        "nested_fetch": {
+          "p50_ratio": 0.907,
+          "p50_us": 234
+        },
+        "path_params": {
+          "p50_ratio": 0.887,
+          "p50_us": 212
+        },
+        "plaintext": {
+          "p50_ratio": 0.8711,
+          "p50_us": 196
+        },
+        "query_paging": {
+          "p50_ratio": 0.8371,
+          "p50_us": 221
+        },
+        "write_echo": {
+          "p50_ratio": 0.9405,
+          "p50_us": 253
+        }
+      },
+      "framework": "fastify",
+      "rungs": {
+        "1": {
+          "achieved_rps": 500,
+          "baseline_saturated": false,
+          "dropped": 0,
+          "errors": 0,
+          "offered_rps": 500,
+          "p50_ratio": 1.0379,
+          "p50_us": 274,
+          "p999_us": 3973,
+          "p99_ratio": 1.0616,
+          "p99_us": 724,
+          "saturated": false,
+          "status_mismatch": 0
+        },
+        "2": {
+          "achieved_rps": 1499,
+          "baseline_saturated": false,
+          "dropped": 0,
+          "errors": 0,
+          "offered_rps": 1500,
+          "p50_ratio": 1.0218,
+          "p50_us": 234,
+          "p999_us": 5455,
+          "p99_ratio": 1.1952,
+          "p99_us": 643,
+          "saturated": false,
+          "status_mismatch": 0
+        },
+        "3": {
+          "achieved_rps": 2997,
+          "baseline_saturated": false,
+          "dropped": 0,
+          "errors": 0,
+          "offered_rps": 3000,
+          "p50_ratio": 0.8893,
+          "p50_us": 225,
+          "p999_us": 6918,
+          "p99_ratio": 2.9126,
+          "p99_us": 1800,
+          "saturated": false,
+          "status_mismatch": 0
+        },
+        "4": {
+          "achieved_rps": 5994,
+          "baseline_saturated": false,
+          "dropped": 0,
+          "errors": 0,
+          "offered_rps": 6000,
+          "p50_ratio": 1.0833,
+          "p50_us": 221,
+          "p999_us": 17546,
+          "p99_ratio": 8.4898,
+          "p99_us": 7488,
+          "saturated": false,
+          "status_mismatch": 0
+        },
+        "5": {
+          "achieved_rps": 9897,
+          "baseline_saturated": true,
+          "dropped": 124518,
+          "errors": 0,
+          "offered_rps": 12000,
+          "p50_ratio": 1.1262,
+          "p50_us": 87257,
+          "p999_us": 254219,
+          "p99_ratio": 0.888,
+          "p99_us": 148937,
+          "saturated": true,
+          "status_mismatch": 0
+        }
+      },
+      "shard": "node",
+      "target": "fastify",
+      "target_runtime": "node 24.21.0",
+      "version": "5.12.4"
+    },
+    {
+      "baseline": "node-http",
+      "families": {
+        "body_validate": {
+          "p50_ratio": 1.2189,
+          "p50_us": 362
+        },
+        "error_paths": {
+          "p50_ratio": 1.3226,
+          "p50_us": 328
+        },
+        "json_read": {
+          "p50_ratio": 1.2179,
+          "p50_us": 285
+        },
+        "nested_fetch": {
+          "p50_ratio": 1.1744,
+          "p50_us": 303
+        },
+        "path_params": {
+          "p50_ratio": 1.2176,
+          "p50_us": 291
+        },
+        "plaintext": {
+          "p50_ratio": 1.1956,
+          "p50_us": 269
+        },
+        "query_paging": {
+          "p50_ratio": 1.1705,
+          "p50_us": 309
+        },
+        "write_echo": {
+          "p50_ratio": 1.1487,
+          "p50_us": 309
+        }
+      },
+      "framework": "express",
+      "rungs": {
+        "1": {
+          "achieved_rps": 500,
+          "baseline_saturated": false,
+          "dropped": 0,
+          "errors": 0,
+          "offered_rps": 500,
+          "p50_ratio": 1.125,
+          "p50_us": 297,
+          "p999_us": 3744,
+          "p99_ratio": 0.9604,
+          "p99_us": 655,
+          "saturated": false,
+          "status_mismatch": 0
+        },
+        "2": {
+          "achieved_rps": 1499,
+          "baseline_saturated": false,
+          "dropped": 0,
+          "errors": 0,
+          "offered_rps": 1500,
+          "p50_ratio": 1.4017,
+          "p50_us": 321,
+          "p999_us": 3819,
+          "p99_ratio": 1.3457,
+          "p99_us": 724,
+          "saturated": false,
+          "status_mismatch": 0
+        },
+        "3": {
+          "achieved_rps": 2997,
+          "baseline_saturated": false,
+          "dropped": 0,
+          "errors": 0,
+          "offered_rps": 3000,
+          "p50_ratio": 1.1976,
+          "p50_us": 303,
+          "p999_us": 5675,
+          "p99_ratio": 1.267,
+          "p99_us": 783,
+          "saturated": false,
+          "status_mismatch": 0
+        },
+        "4": {
+          "achieved_rps": 5994,
+          "baseline_saturated": false,
+          "dropped": 0,
+          "errors": 0,
+          "offered_rps": 6000,
+          "p50_ratio": 1.7059,
+          "p50_us": 348,
+          "p999_us": 83868,
+          "p99_ratio": 37.4909,
+          "p99_us": 33067,
+          "saturated": false,
+          "status_mismatch": 0
+        },
+        "5": {
+          "achieved_rps": 7255,
+          "baseline_saturated": true,
+          "dropped": 283224,
+          "errors": 0,
+          "offered_rps": 12000,
+          "p50_ratio": 1.4568,
+          "p50_us": 112876,
+          "p999_us": 7663682,
+          "p99_ratio": 0.888,
+          "p99_us": 148937,
+          "saturated": true,
+          "status_mismatch": 0
+        }
+      },
+      "shard": "node",
+      "target": "express",
+      "target_runtime": "node 24.21.0",
+      "version": "5.2.1"
+    }
+  ],
+  "tracked": true
+}
