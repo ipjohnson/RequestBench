@@ -32,7 +32,7 @@ why `conform.py` fingerprints every response and refuses to measure a target tha
     spec/fixture.json     generated, committed: identical data for all 43 targets
     spec/plan.json        generated: pre-resolved concrete requests every driver replays
     spec/sequence.json    generated: the fixed replay order every serial host uses
-    harness/              plan, conformance gate, orchestrator, aggregator
+    harness/              plan, conformance gate, orchestrator, bundles, aggregator
     gen/blend.mjs         open-loop blend driver
     targets/<lang>/       one directory per target, plus _shared/ domain logic
 

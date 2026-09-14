@@ -5,6 +5,9 @@
 """
 import argparse, collections, functools, http.client, json, os, pathlib, platform, re, shutil, signal, socket, subprocess, sys, time, uuid
 
+import bundle
+from bundle import target_dir
+
 # Long runs are watched live; block-buffered stdout hides progress for minutes.
 print = functools.partial(print, flush=True)
 
@@ -43,12 +46,6 @@ def lambda_event(method, path):
         "requestContext": {"http": {"method": method, "path": path}},
         "isBase64Encoded": False,
     })
-
-
-def target_dir(name):
-    """Baselines live in baseline/ whatever their language calls them."""
-    return "baseline" if name in ("node-http", "net-http", "raw-asgi", "raw-kestrel",
-                                  "bare-netty", "hyper") else name
 
 
 class Local:
@@ -333,8 +330,29 @@ def conform():
     out = subprocess.run(argv, capture_output=True, text=True, cwd=ROOT)
     return out.returncode == 0, out.stdout.strip().splitlines()[-1] if out.stdout else out.stderr
 
+
+def safely(fn, *args):
+    """Nothing here is worth losing a measurement over. A run that cannot say which code
+    it measured is still worth recording; it just says so rather than writing a row that
+    looks complete."""
+    try:
+        return fn(*args)
+    except Exception as e:
+        print("  WARNING: %s failed (%s); this run will not be attributable to code"
+              % (fn.__name__, e))
+        return ""
+
+
+def bundle_hashes(language, target):
+    return safely(bundle.hashes, language, target) or {}
+
+
 def env_fingerprint(run_id, languages, baselines):
+    # commit and repo are what turn a row of numbers into something traceable back to the
+    # code that produced it. They cannot be added later, because the record is meant to say
+    # what was true when the measurement was taken. docs/bundles.html §8.
     return {"kind": "env", "run_id": run_id, "languages": languages, "baselines": baselines,
+            "commit": safely(bundle.commit), "repo": safely(bundle.repo),
             "host": platform.node(), "cpu": cpu_model(),
             "cores": os.cpu_count(), "platform": platform.platform(),
             "exec_host": os.environ.get("RB_HOST", "container"),
@@ -448,7 +466,8 @@ def main():
                                                     if meta.get("adapter") else ""))
                 rows.append({"kind": "target", "run_id": run_id, "language": language,
                              "target": target,
-                             "host": os.environ.get("RB_HOST", "container"), **meta})
+                             "host": os.environ.get("RB_HOST", "container"), **meta,
+                             **bundle_hashes(language, target)})
             else:
                 print("  booted   (no /__meta; version unknown)")
             if not a.skip_conform:
