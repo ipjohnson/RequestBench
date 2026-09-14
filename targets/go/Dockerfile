@@ -11,7 +11,7 @@ COPY targets/go/${TARGET} ./target
 RUN go mod download
 RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/server ./target
 
-FROM alpine:3.21
+FROM alpine:3.24
 COPY --from=build /out/server /server
 COPY spec/fixture.json /app/spec/fixture.json
 ENV RB_FIXTURE=/app/spec/fixture.json PORT=8080
