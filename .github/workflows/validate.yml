@@ -20,7 +20,7 @@ jobs:
     name: spec is reproducible
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v5
         with: { python-version: "3.13" }
       - name: Regenerate fixture, plan and sequence
@@ -42,7 +42,7 @@ jobs:
     name: target bundles resolve
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v5
         with: { python-version: "3.13" }
       # A bundle that resolves to a partial file set still hashes cleanly, so the only way
@@ -54,7 +54,7 @@ jobs:
     name: workflow files parse
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: actionlint
         run: |
           bash <(curl -sSf https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
@@ -64,7 +64,7 @@ jobs:
     name: node targets conform
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with: { node-version: "24", cache: npm, cache-dependency-path: targets/node/package-lock.json }
       - uses: actions/setup-python@v5
@@ -106,7 +106,7 @@ jobs:
     name: go targets conform
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-go@v5
         with: { go-version: "1.26", cache-dependency-path: targets/go/go.sum }
       - uses: actions/setup-python@v5
@@ -120,7 +120,7 @@ jobs:
     name: java targets conform
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: "25", cache: maven }
       - uses: actions/setup-python@v5
@@ -162,7 +162,7 @@ jobs:
           - { language: java, target: micronaut }
           - { language: java, target: quarkus }
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Build ${{ matrix.language }}/${{ matrix.target }}
         run: |
           docker build -f targets/${{ matrix.language }}/Dockerfile \

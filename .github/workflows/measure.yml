@@ -44,7 +44,7 @@ jobs:
       matrix:
         host: ${{ fromJSON(github.event.inputs.hosts || '["container","gcp-func","lambda-rie"]') }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-python@v5
         with:
@@ -139,7 +139,7 @@ jobs:
     steps:
       # The results branch is orphan and data-only: nothing watches it, so recording a run
       # adds no commit to main's history and triggers no CI.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: results
 

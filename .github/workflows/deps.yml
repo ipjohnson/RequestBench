@@ -50,7 +50,7 @@ jobs:
       matrix:
         language: ${{ fromJSON(github.event.inputs.languages || '["node","go","java"]') }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           # The branch is cut fresh from origin/main every night, so full history is not
           # needed, but the ref has to be fetchable for the checkout -B below.
@@ -177,7 +177,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Wait for validate.yml on every pull request this run opened
         env:
           GH_TOKEN: ${{ secrets.DEPS_TOKEN || github.token }}

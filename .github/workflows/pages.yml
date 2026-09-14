@@ -31,10 +31,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out the generator
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Check out the data
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: results
           path: _results
