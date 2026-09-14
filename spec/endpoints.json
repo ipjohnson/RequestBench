@@ -3,42 +3,129 @@
   "sampling": "uniform",
   "note": "Every endpoint is drawn with equal probability. There is no share field: the request stream carries no opinion about traffic, and every opinion lives in a weight vector in spec/blends.json applied when an aggregate is composed. Generators never fill params or headers themselves; they replay spec/plan.json, which harness/plan.py derives from this file and the fixture. 'base' names the endpoint to subtract and 'varies' the single factor that differs from it, which is what lets the site render a delta column. 'correlate' names a strategy that keeps related ids consistent.",
   "fixture": {
-    "products": { "min": 1, "max": 50 },
-    "customers": { "min": 1, "max": 200 },
-    "orders": { "min": 1, "max": 1000 },
-    "lines": { "min": 1, "max": 10 },
-    "regions": ["north", "south", "east", "west"],
-    "categories": ["tools", "garden", "kitchen", "outdoor", "office"],
-    "statuses": ["open", "paid", "shipped", "cancelled"]
+    "products": {
+      "min": 1,
+      "max": 50
+    },
+    "customers": {
+      "min": 1,
+      "max": 200
+    },
+    "orders": {
+      "min": 1,
+      "max": 1000
+    },
+    "lines": {
+      "min": 1,
+      "max": 10
+    },
+    "regions": [
+      "north",
+      "south",
+      "east",
+      "west"
+    ],
+    "categories": [
+      "tools",
+      "garden",
+      "kitchen",
+      "outdoor",
+      "office"
+    ],
+    "statuses": [
+      "open",
+      "paid",
+      "shipped",
+      "cancelled"
+    ]
   },
   "families": {
-    "baseline": { "exercises": "dispatch floor, no serialization" },
-    "json": { "exercises": "serializer and response buffering across three size regimes" },
-    "parameters": { "exercises": "router captures with segment depth held constant" },
-    "authorized": { "exercises": "the framework's authorization mechanism, crypto excluded" },
-    "compressed": { "exercises": "outbound gzip: buffer-whole against stream, and the small-body threshold" },
-    "cached": { "exercises": "validator headers and the conditional request" },
-    "body": { "exercises": "parser and validator, with size crossed against validation" },
-    "query": { "exercises": "query string parsing and coercion, isolated from any use of the values" },
-    "headers": { "exercises": "eager against lazy construction of the request header map" },
-    "middleware": { "exercises": "per-layer dispatch cost at 0, 4 and 16 no-op layers" },
-    "domain": { "exercises": "application-shaped handler work and the write methods" },
-    "errors": { "exercises": "router miss, handler 404 and parser failure" },
-    "template": { "exercises": "server-side rendering of the same model the json family serializes; not comparable across languages" }
+    "baseline": {
+      "exercises": "dispatch floor, no serialization"
+    },
+    "json": {
+      "exercises": "serializer and response buffering across three size regimes"
+    },
+    "parameters": {
+      "exercises": "router captures with segment depth held constant"
+    },
+    "authorized": {
+      "exercises": "the framework's authorization mechanism, crypto excluded"
+    },
+    "compressed": {
+      "exercises": "outbound gzip: the cost of the wiring declining, the cost of it working, and the small-body threshold"
+    },
+    "cached": {
+      "exercises": "validator headers and the conditional request"
+    },
+    "body": {
+      "exercises": "parser and validator, with size crossed against validation"
+    },
+    "query": {
+      "exercises": "query string parsing and coercion, isolated from any use of the values"
+    },
+    "headers": {
+      "exercises": "eager against lazy construction of the request header map"
+    },
+    "middleware": {
+      "exercises": "per-layer dispatch cost at 0, 4 and 16 no-op layers"
+    },
+    "domain": {
+      "exercises": "application-shaped handler work and the write methods"
+    },
+    "errors": {
+      "exercises": "router miss, handler 404 and parser failure"
+    },
+    "template": {
+      "exercises": "server-side rendering of the same model the json family serializes; not comparable across languages"
+    }
   },
   "header_sets": {
-    "bearer_ok": { "authorization": "Bearer {auth.token}" },
-    "bearer_wrong": { "authorization": "Bearer {auth.wrong_token}" },
-    "gzip_nocache": { "accept-encoding": "gzip", "cache-control": "no-cache" },
-    "revalidate_large": { "if-none-match": "{payloads.large.etag}" },
+    "bearer_ok": {
+      "authorization": "Bearer {auth.token}"
+    },
+    "bearer_wrong": {
+      "authorization": "Bearer {auth.wrong_token}"
+    },
+    "gzip_nocache": {
+      "accept-encoding": "gzip",
+      "cache-control": "no-cache"
+    },
+    "identity_nocache": {
+      "accept-encoding": "identity",
+      "cache-control": "no-cache"
+    },
+    "revalidate_large": {
+      "if-none-match": "{payloads.large.etag}"
+    },
     "twenty_seven": {
-      "x-rb-h01": "v01", "x-rb-h02": "v02", "x-rb-h03": "v03", "x-rb-h04": "v04",
-      "x-rb-h05": "v05", "x-rb-h06": "v06", "x-rb-h07": "v07", "x-rb-h08": "v08",
-      "x-rb-h09": "v09", "x-rb-h10": "v10", "x-rb-h11": "v11", "x-rb-h12": "v12",
-      "x-rb-h13": "v13", "x-rb-h14": "v14", "x-rb-h15": "v15", "x-rb-h16": "v16",
-      "x-rb-h17": "v17", "x-rb-h18": "v18", "x-rb-h19": "v19", "x-rb-h20": "v20",
-      "x-rb-h21": "v21", "x-rb-h22": "v22", "x-rb-h23": "v23", "x-rb-h24": "v24",
-      "x-rb-h25": "v25", "x-rb-h26": "v26", "x-rb-h27": "v27"
+      "x-rb-h01": "v01",
+      "x-rb-h02": "v02",
+      "x-rb-h03": "v03",
+      "x-rb-h04": "v04",
+      "x-rb-h05": "v05",
+      "x-rb-h06": "v06",
+      "x-rb-h07": "v07",
+      "x-rb-h08": "v08",
+      "x-rb-h09": "v09",
+      "x-rb-h10": "v10",
+      "x-rb-h11": "v11",
+      "x-rb-h12": "v12",
+      "x-rb-h13": "v13",
+      "x-rb-h14": "v14",
+      "x-rb-h15": "v15",
+      "x-rb-h16": "v16",
+      "x-rb-h17": "v17",
+      "x-rb-h18": "v18",
+      "x-rb-h19": "v19",
+      "x-rb-h20": "v20",
+      "x-rb-h21": "v21",
+      "x-rb-h22": "v22",
+      "x-rb-h23": "v23",
+      "x-rb-h24": "v24",
+      "x-rb-h25": "v25",
+      "x-rb-h26": "v26",
+      "x-rb-h27": "v27"
     }
   },
   "endpoints": [
@@ -129,36 +216,69 @@
       "varies": "outcome"
     },
     {
-      "id": "compressed.small",
+      "id": "compressed.identity_small",
+      "family": "compressed",
+      "method": "GET",
+      "path": "/compressed/small",
+      "expect": 200,
+      "payload": "small",
+      "headers": "identity_nocache",
+      "base": "json.small",
+      "varies": "compression_wiring"
+    },
+    {
+      "id": "compressed.identity_medium",
+      "family": "compressed",
+      "method": "GET",
+      "path": "/compressed/medium",
+      "expect": 200,
+      "payload": "medium",
+      "headers": "identity_nocache",
+      "base": "json.medium",
+      "varies": "compression_wiring"
+    },
+    {
+      "id": "compressed.identity_large",
+      "family": "compressed",
+      "method": "GET",
+      "path": "/compressed/large",
+      "expect": 200,
+      "payload": "large",
+      "headers": "identity_nocache",
+      "base": "json.large",
+      "varies": "compression_wiring"
+    },
+    {
+      "id": "compressed.gzip_small",
       "family": "compressed",
       "method": "GET",
       "path": "/compressed/small",
       "expect": 200,
       "payload": "small",
       "headers": "gzip_nocache",
-      "base": "json.small",
+      "base": "compressed.identity_small",
       "varies": "compression"
     },
     {
-      "id": "compressed.medium",
+      "id": "compressed.gzip_medium",
       "family": "compressed",
       "method": "GET",
       "path": "/compressed/medium",
       "expect": 200,
       "payload": "medium",
       "headers": "gzip_nocache",
-      "base": "json.medium",
+      "base": "compressed.identity_medium",
       "varies": "compression"
     },
     {
-      "id": "compressed.large",
+      "id": "compressed.gzip_large",
       "family": "compressed",
       "method": "GET",
       "path": "/compressed/large",
       "expect": 200,
       "payload": "large",
       "headers": "gzip_nocache",
-      "base": "json.large",
+      "base": "compressed.identity_large",
       "varies": "compression"
     },
     {
@@ -438,20 +558,84 @@
     }
   ],
   "params": {
-    "product": { "kind": "int_range", "from": "fixture.products" },
-    "customer": { "kind": "int_range", "from": "fixture.customers" },
-    "order": { "kind": "int_range", "from": "fixture.orders" },
-    "line": { "kind": "int_range", "from": "fixture.lines" },
-    "one": { "kind": "int_range", "min": 1, "max": 1000 },
-    "two": { "kind": "int_range", "min": 1, "max": 1000 },
-    "region": { "kind": "choice", "from": "fixture.regions" },
-    "category": { "kind": "choice", "from": "fixture.categories" },
-    "status": { "kind": "choice", "from": "fixture.statuses" },
-    "page": { "kind": "int_range", "min": 0, "max": 20 },
-    "size": { "kind": "choice", "values": [10, 25, 50] },
-    "minp": { "kind": "int_range", "min": 1, "max": 40 },
-    "maxp": { "kind": "int_range", "min": 41, "max": 200 },
-    "term": { "kind": "choice", "values": ["ring", "bolt", "seed", "pan", "desk"] },
-    "sort": { "kind": "choice", "values": ["name", "created", "total"] }
+    "product": {
+      "kind": "int_range",
+      "from": "fixture.products"
+    },
+    "customer": {
+      "kind": "int_range",
+      "from": "fixture.customers"
+    },
+    "order": {
+      "kind": "int_range",
+      "from": "fixture.orders"
+    },
+    "line": {
+      "kind": "int_range",
+      "from": "fixture.lines"
+    },
+    "one": {
+      "kind": "int_range",
+      "min": 1,
+      "max": 1000
+    },
+    "two": {
+      "kind": "int_range",
+      "min": 1,
+      "max": 1000
+    },
+    "region": {
+      "kind": "choice",
+      "from": "fixture.regions"
+    },
+    "category": {
+      "kind": "choice",
+      "from": "fixture.categories"
+    },
+    "status": {
+      "kind": "choice",
+      "from": "fixture.statuses"
+    },
+    "page": {
+      "kind": "int_range",
+      "min": 0,
+      "max": 20
+    },
+    "size": {
+      "kind": "choice",
+      "values": [
+        10,
+        25,
+        50
+      ]
+    },
+    "minp": {
+      "kind": "int_range",
+      "min": 1,
+      "max": 40
+    },
+    "maxp": {
+      "kind": "int_range",
+      "min": 41,
+      "max": 200
+    },
+    "term": {
+      "kind": "choice",
+      "values": [
+        "ring",
+        "bolt",
+        "seed",
+        "pan",
+        "desk"
+      ]
+    },
+    "sort": {
+      "kind": "choice",
+      "values": [
+        "name",
+        "created",
+        "total"
+      ]
+    }
   }
 }
