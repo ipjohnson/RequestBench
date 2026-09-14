@@ -93,19 +93,24 @@ app.register(async (scope) => {
 
 // ---- cached: validator headers and the conditional, scoped the same way ---------------
 
-app.register(async (scope) => {
-  // The ETag is pinned in the fixture, so this measures emitting the header and comparing
-  // it rather than hashing the body. @fastify/etag would compute its own and could not
-  // produce the pinned value, which is why the hook is written out.
-  scope.addHook("onRequest", (req, reply, done) => {
-    const etag = d.etagOf(req.url.slice(req.url.lastIndexOf("/") + 1));
+// The ETag is pinned in the fixture, so this measures emitting the header and comparing it
+// rather than hashing the body. @fastify/etag would compute its own and could not produce
+// the pinned value, which is why the hook is written out.
+//
+// The size is closed over per route rather than sliced back out of req.url, which carries
+// the query string: /cached/large?x=1 looked up a payload named "large?x=1" and threw.
+const validators = (size) => {
+  const etag = d.etagOf(size);
+  return (req, reply, done) => {
     reply.header("etag", etag).header("cache-control", "public, max-age=60")
          .header("x-rb-serial", d.nextSerial());
     if (req.headers["if-none-match"] === etag) return reply.code(304).send();
     done();
-  });
+  };
+};
+app.register(async (scope) => {
   for (const size of ["small", "medium", "large"])
-    scope.get("/cached/" + size, () => d.payload(size));
+    scope.get("/cached/" + size, { onRequest: validators(size) }, () => d.payload(size));
 });
 
 // ---- body: bind, validate, and the two rejection contracts ---------------------------

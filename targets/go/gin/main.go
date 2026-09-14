@@ -1,16 +1,33 @@
 // RequestBench target: Gin. Framework wiring only; behaviour from _shared.
+//
+// Every feature family uses Gin's own facility rather than an if in the handler, and each
+// one is scoped to its own routes through a group. Compression registered on the engine
+// would put a "did they ask?" check on all forty-five endpoints and contaminate the
+// baseline the compressed rows are measured against, which is the whole reason those rows
+// have their own paths instead of riding on /json with an accept-encoding header.
 package main
 
 import (
+	_ "embed"
 	"errors"
+	"html/template"
 	"log"
 	"os"
 	"strconv"
 
+	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 	hosts "github.com/ianjohnson/requestbench/targets/go/_hosts"
 	d "github.com/ianjohnson/requestbench/targets/go/_shared"
 )
+
+// Embedded rather than read from disk: the container image is the built binary on a bare
+// alpine, so a template file beside the source would not be there to load.
+//
+//go:embed views/items.tmpl
+var itemsTemplate string
+
+const cacheable = "public, max-age=60"
 
 func fail(c *gin.Context, err error) {
 	var ve *d.ValidationError
@@ -23,6 +40,7 @@ func fail(c *gin.Context, err error) {
 		c.JSON(500, gin.H{"error": "internal", "message": err.Error()})
 	}
 }
+
 func ok(c *gin.Context, v any, err error, status int) {
 	if err != nil {
 		fail(c, err)
@@ -30,12 +48,56 @@ func ok(c *gin.Context, v any, err error, status int) {
 	}
 	c.JSON(status, v)
 }
+
 func body(c *gin.Context) (map[string]any, error) {
 	var m map[string]any
 	if err := c.ShouldBindJSON(&m); err != nil {
 		return nil, &d.ValidationError{Errors: []d.FieldError{{Field: "body", Rule: "json"}}}
 	}
 	return m, nil
+}
+
+// requireToken is Gin middleware, not a check inside the handler. An if in the handler
+// would measure the language; the point of the authorized family is the framework's own
+// plumbing.
+func requireToken(c *gin.Context) {
+	if !d.TokenOK(c.GetHeader("authorization")) {
+		c.AbortWithStatusJSON(403, gin.H{"error": "forbidden"})
+		return
+	}
+	c.Next()
+}
+
+// noop is one middleware layer: it calls the next and does nothing else.
+func noop(c *gin.Context) { c.Next() }
+
+func layers(n int) []gin.HandlerFunc {
+	out := make([]gin.HandlerFunc, n)
+	for i := range out {
+		out[i] = noop
+	}
+	return out
+}
+
+// validatorsFor sets the cache headers and answers the conditional for one size. The ETag
+// is pinned in the fixture, so what this measures is emitting the header and comparing it
+// rather than hashing the body; hash cost belongs in Suite B's static-content suite.
+//
+// The size is closed over rather than read back out of the path, and the comparison
+// requires a non-empty header. Matching a missing if-none-match against an empty ETag
+// answers 304 to a client that never asked a conditional question.
+func validatorsFor(size string) gin.HandlerFunc {
+	etag := d.ETagOf(size)
+	return func(c *gin.Context) {
+		c.Header("etag", etag)
+		c.Header("cache-control", cacheable)
+		c.Header("x-rb-serial", d.NextSerial())
+		if inm := c.GetHeader("if-none-match"); inm != "" && inm == etag {
+			c.AbortWithStatus(304)
+			return
+		}
+		c.Next()
+	}
 }
 
 func main() {
@@ -56,99 +118,143 @@ func main() {
 		c.AbortWithStatusJSON(500, gin.H{"error": "internal", "message": msg})
 	}))
 	r.NoRoute(func(c *gin.Context) { c.JSON(404, gin.H{"error": "not_found"}) })
+	r.SetHTMLTemplate(template.Must(template.New("items.tmpl").Parse(itemsTemplate)))
 
-	get := func(path string, fn func(*gin.Context) (any, error)) {
-		r.GET(path, func(c *gin.Context) { v, err := fn(c); ok(c, v, err, 200) })
+	sizes := []string{"small", "medium", "large"}
+	// The response is read once and served from the closure rather than looked up per
+	// request: the map lookup is not what any of these endpoints is measuring, and every
+	// other target reaches its payload the same way.
+	payload := func(size string) gin.HandlerFunc {
+		body := d.Payload(size)
+		return func(c *gin.Context) { c.JSON(200, body) }
 	}
-	q := func(c *gin.Context) map[string][]string { return c.Request.URL.Query() }
+	small := payload("small")
+
+	// ---- baseline, json, parameters, query, headers ---------------------------------
 
 	r.GET("/plaintext", func(c *gin.Context) { c.String(200, "Hello, World!") })
 	r.GET("/health", func(c *gin.Context) { c.String(200, "ok") })
-	get("/json/small", func(*gin.Context) (any, error) { return d.JSONSmall(), nil })
-	get("/products", func(c *gin.Context) (any, error) { return d.ListProducts(q(c)), nil })
-	get("/customers", func(c *gin.Context) (any, error) { return d.ListCustomers(q(c)), nil })
-	get("/orders", func(c *gin.Context) (any, error) { return d.ListOrders(q(c)), nil })
-	get("/search", func(c *gin.Context) (any, error) { return d.Search(q(c)), nil })
-	get("/dashboard", func(*gin.Context) (any, error) { return d.Dashboard(), nil })
 	r.GET("/__meta", func(c *gin.Context) {
-		c.JSON(200, hosts.Meta("gin", gin.Version))
-	})
-	r.GET("/boom", func(*gin.Context) { panic(d.Boom{}) })
-	r.GET("/forbidden", func(c *gin.Context) { c.JSON(403, gin.H{"error": "forbidden"}) })
-
-	get("/products/:pid", func(c *gin.Context) (any, error) { return d.GetProduct(c.Param("pid")) })
-	get("/customers/:cid", func(c *gin.Context) (any, error) { return d.GetCustomer(c.Param("cid")) })
-	get("/orders/:oid", func(c *gin.Context) (any, error) { return d.GetOrder(c.Param("oid")) })
-	get("/products/:pid/reviews", func(c *gin.Context) (any, error) { return d.GetProductReviews(c.Param("pid")) })
-	get("/products/:pid/related", func(c *gin.Context) (any, error) { return d.RelatedProducts(c.Param("pid")) })
-	get("/customers/:cid/orders", func(c *gin.Context) (any, error) { return d.GetCustomerOrders(c.Param("cid")) })
-	get("/customers/:cid/summary", func(c *gin.Context) (any, error) { return d.CustomerSummary(c.Param("cid")) })
-	get("/orders/:oid/lines", func(c *gin.Context) (any, error) { return d.GetOrderLines(c.Param("oid")) })
-	get("/orders/:oid/full", func(c *gin.Context) (any, error) { return d.OrderFull(c.Param("oid")) })
-	get("/regions/:r/customers", func(c *gin.Context) (any, error) { return d.GetRegionCustomers(c.Param("r")) })
-	get("/regions/:r/report", func(c *gin.Context) (any, error) { return d.RegionReport(c.Param("r")) })
-	get("/customers/:cid/orders/:oid", func(c *gin.Context) (any, error) {
-		return d.GetCustomerOrder(c.Param("cid"), c.Param("oid"))
-	})
-	get("/orders/:oid/lines/:lid", func(c *gin.Context) (any, error) {
-		return d.GetOrderLine(c.Param("oid"), c.Param("lid"))
-	})
-	get("/regions/:r/customers/:cid/orders/:oid/lines/:lid", func(c *gin.Context) (any, error) {
-		return d.GetOrderLine(c.Param("oid"), c.Param("lid"))
+		m := hosts.Meta("gin", gin.Version)
+		m["template"] = "html/template"
+		c.JSON(200, m)
 	})
 
-	post := func(path string, fn func(map[string]any) (any, error), status int) {
-		r.POST(path, func(c *gin.Context) {
+	// Static routes, not /json/:size. The size set is fixed, so a capture would make Gin
+	// pay radix parameter cost on the family every other target serves from a static
+	// route, and json.small is the denominator most of the set is read against. It would
+	// also answer 200 with an empty payload for a size that does not exist.
+	for _, size := range sizes {
+		r.GET("/json/"+size, payload(size))
+	}
+
+	r.GET("/parameters/static/segment/literal", small)
+	r.GET("/parameters/:one", small)
+	r.GET("/parameters/:one/with-second/:two", small)
+
+	r.GET("/query/one", func(c *gin.Context) { c.JSON(200, d.CoerceOne(c.Request.URL.Query())) })
+	r.GET("/query/many", func(c *gin.Context) { c.JSON(200, d.CoerceMany(c.Request.URL.Query())) })
+
+	// The handler reads no header at all, so headers.many minus headers.few is the cost of
+	// materialising 27 nobody asked for.
+	r.GET("/headers", small)
+
+	// ---- middleware: real Gin handlers on the route, each calling the next ----------
+
+	r.GET("/middleware/none", small)
+	r.GET("/middleware/four", append(layers(4), small)...)
+	r.GET("/middleware/sixteen", append(layers(16), small)...)
+
+	// ---- authorized: middleware on the route, not an if in the handler --------------
+
+	r.GET("/authorized/small", requireToken, small)
+
+	// ---- compressed: gin-contrib/gzip on this group only ----------------------------
+
+	// Level is pinned across every language. The default size threshold is left alone:
+	// whether a framework bothers to compress a body too small to benefit is what
+	// compressed.gzip_small is in the set to show, so forcing it would erase the answer.
+	comp := r.Group("/compressed", gzip.Gzip(d.GzipLevel))
+	for _, size := range sizes {
+		body := d.Payload(size)
+		comp.GET("/"+size, func(c *gin.Context) {
+			c.Header("x-rb-serial", d.NextSerial())
+			c.JSON(200, body)
+		})
+	}
+
+	// ---- cached: validator headers and the conditional, scoped the same way ---------
+
+	cached := r.Group("/cached")
+	for _, size := range sizes {
+		cached.GET("/"+size, validatorsFor(size), payload(size))
+	}
+
+	// ---- template -------------------------------------------------------------------
+
+	for _, size := range []string{"small", "medium"} {
+		body := d.Payload(size)
+		r.GET("/template/"+size, func(c *gin.Context) { c.HTML(200, "items.tmpl", body) })
+	}
+
+	// ---- body: bind, validate, and the two rejection contracts ----------------------
+
+	withBody := func(fn func(*gin.Context, map[string]any)) gin.HandlerFunc {
+		return func(c *gin.Context) {
 			m, err := body(c)
 			if err != nil {
 				fail(c, err)
 				return
 			}
-			v, err := fn(m)
-			ok(c, v, err, status)
-		})
-	}
-	post("/orders/validate", func(m map[string]any) (any, error) { return d.ValidateOrder(m) }, 200)
-	post("/customers/validate", func(m map[string]any) (any, error) { return d.ValidateCustomer(m) }, 200)
-	post("/products/validate", func(m map[string]any) (any, error) { return d.ValidateProduct(m) }, 200)
-	post("/echo", func(m map[string]any) (any, error) { return d.Echo(m), nil }, 200)
-	r.POST("/orders", func(c *gin.Context) {
-		m, err := body(c)
-		if err != nil {
-			fail(c, err)
-			return
+			fn(c, m)
 		}
+	}
+	// bind parses and binds without validating, so validate minus bind is the validator
+	// alone rather than the validator plus the parse.
+	for _, size := range []string{"small", "medium"} {
+		r.POST("/body/bind/"+size, withBody(func(c *gin.Context, m map[string]any) {
+			c.JSON(200, d.BindEcho(m))
+		}))
+	}
+	r.POST("/body/validate/small", withBody(func(c *gin.Context, m map[string]any) {
+		v, err := d.ValidateOrder(m)
+		ok(c, v, err, 200)
+	}))
+	r.POST("/body/validate/medium", withBody(func(c *gin.Context, m map[string]any) {
+		v, err := d.ValidateOrder(m)
+		ok(c, v, err, 200)
+	}))
+	r.POST("/body/validate/first-error", withBody(func(c *gin.Context, m map[string]any) {
+		v, err := d.ValidateOrderFirst(m)
+		ok(c, v, err, 200)
+	}))
+
+	// ---- domain ---------------------------------------------------------------------
+
+	r.GET("/domain/orders", func(c *gin.Context) { c.JSON(200, d.DomainFilter(c.Request.URL.Query())) })
+	r.GET("/domain/orders/:oid", func(c *gin.Context) {
+		v, err := d.GetOrder(c.Param("oid"))
+		ok(c, v, err, 200)
+	})
+	r.GET("/domain/customers/:cid/summary", func(c *gin.Context) {
+		v, err := d.DomainJoin(c.Param("cid"))
+		ok(c, v, err, 200)
+	})
+	r.GET("/domain/regions/:region/report", func(c *gin.Context) {
+		v, err := d.DomainAggregate(c.Param("region"))
+		ok(c, v, err, 200)
+	})
+	r.POST("/domain/orders", withBody(func(c *gin.Context, m map[string]any) {
 		v, err := d.ValidateOrder(m)
 		if err != nil {
 			fail(c, err)
 			return
 		}
-		c.Header("location", "/orders/"+strconv.Itoa(d.NextOrderID))
+		c.Header("location", "/domain/orders/"+strconv.Itoa(d.NextOrderID))
 		c.JSON(201, v)
-	})
-
-	r.POST("/orders/:oid/lines", func(c *gin.Context) {
+	}))
+	r.PUT("/domain/orders/:oid", withBody(func(c *gin.Context, m map[string]any) {
 		o, err := d.GetOrder(c.Param("oid"))
-		if err != nil {
-			fail(c, err)
-			return
-		}
-		m, err := body(c)
-		if err != nil {
-			fail(c, err)
-			return
-		}
-		v, err := d.ValidateLine(m)
-		c.Header("location", "/orders/"+c.Param("oid")+"/lines/"+strconv.Itoa(len(o.Lines)+1))
-		ok(c, v, err, 201)
-	})
-	r.PUT("/orders/:oid", func(c *gin.Context) {
-		o, err := d.GetOrder(c.Param("oid"))
-		if err != nil {
-			fail(c, err)
-			return
-		}
-		m, err := body(c)
 		if err != nil {
 			fail(c, err)
 			return
@@ -159,17 +265,12 @@ func main() {
 			return
 		}
 		c.JSON(200, d.ValidatedOrderWithID{ID: o.ID, ValidatedOrder: *v})
-	})
-	r.PATCH("/customers/:cid", func(c *gin.Context) {
-		m, err := body(c)
-		if err != nil {
-			fail(c, err)
-			return
-		}
+	}))
+	r.PATCH("/domain/customers/:cid", withBody(func(c *gin.Context, m map[string]any) {
 		v, err := d.PatchCustomer(c.Param("cid"), m)
 		ok(c, v, err, 200)
-	})
-	r.DELETE("/orders/:oid/lines/:lid", func(c *gin.Context) {
+	}))
+	r.DELETE("/domain/orders/:oid/lines/:lid", func(c *gin.Context) {
 		if _, err := d.GetOrderLine(c.Param("oid"), c.Param("lid")); err != nil {
 			fail(c, err)
 			return

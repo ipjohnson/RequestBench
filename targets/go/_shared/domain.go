@@ -3,12 +3,15 @@
 package domain
 
 import (
+	"bytes"
+	"compress/gzip"
 	"encoding/json"
 	"errors"
 	"os"
 	"sort"
 	"strconv"
 	"strings"
+	"sync/atomic"
 )
 
 type Product struct {
@@ -48,10 +51,12 @@ type Order struct {
 }
 
 type fixture struct {
-	Products  []Product          `json:"products"`
-	Customers []Customer         `json:"customers"`
-	Orders    []Order            `json:"orders"`
-	Reviews   map[string][]Review `json:"reviews"`
+	Products  []Product             `json:"products"`
+	Customers []Customer            `json:"customers"`
+	Orders    []Order               `json:"orders"`
+	Reviews   map[string][]Review   `json:"reviews"`
+	Payloads  map[string]payloadDoc `json:"payloads"`
+	Auth      authDoc               `json:"auth"`
 }
 
 var (
@@ -59,6 +64,10 @@ var (
 	Customers []Customer
 	Orders    []Order
 	Reviews   map[string][]Review
+
+	payloads map[string]payloadDoc
+	auth     authDoc
+	serial   atomic.Uint64
 
 	productByID  map[int]*Product
 	customerByID map[int]*Customer
@@ -85,6 +94,7 @@ func Load(path string) error {
 		return err
 	}
 	Products, Customers, Orders, Reviews = f.Products, f.Customers, f.Orders, f.Reviews
+	payloads, auth = f.Payloads, f.Auth
 
 	productByID = make(map[int]*Product, len(Products))
 	for i := range Products {
@@ -579,23 +589,38 @@ func reqField(errs *[]FieldError, m map[string]any, field, typ string) {
 	}
 }
 
-func ValidateOrder(m map[string]any) (*ValidatedOrder, error) {
+// ValidateOrder reports every problem it finds. ValidateOrderFirst stops at the first,
+// which is what body.rejected_all minus body.rejected_first states as a number: the same
+// walk in the same order, differing only in where it gives up.
+func ValidateOrder(m map[string]any) (*ValidatedOrder, error) { return validateOrder(m, false) }
+
+func ValidateOrderFirst(m map[string]any) (*ValidatedOrder, error) { return validateOrder(m, true) }
+
+func validateOrder(m map[string]any, firstError bool) (*ValidatedOrder, error) {
 	var errs []FieldError
+	bail := func() bool { return firstError && len(errs) > 0 }
 	reqField(&errs, m, "customer_id", "int")
-	reqField(&errs, m, "status", "string")
-	reqField(&errs, m, "lines", "array")
+	if !bail() {
+		reqField(&errs, m, "status", "string")
+	}
+	if !bail() {
+		reqField(&errs, m, "lines", "array")
+	}
 	raw, isArr := m["lines"].([]any)
-	if isArr {
+	if isArr && !bail() {
 		if len(raw) == 0 {
 			errs = append(errs, FieldError{"lines", "min_length"})
 		}
 		for i, e := range raw {
+			if bail() {
+				break
+			}
 			l, _ := e.(map[string]any)
 			if !isInt(l["product_id"]) {
 				errs = append(errs, FieldError{"lines[" + strconv.Itoa(i) + "].product_id", "int"})
 			}
 			q, ok := l["qty"].(float64)
-			if !ok || !isInt(l["qty"]) || q < 1 {
+			if !bail() && (!ok || !isInt(l["qty"]) || q < 1) {
 				errs = append(errs, FieldError{"lines[" + strconv.Itoa(i) + "].qty", "min"})
 			}
 		}
@@ -687,3 +712,219 @@ func Echo(body any) EchoResult {
 type Boom struct{}
 
 func (Boom) Error() string { return "deliberate unhandled failure" }
+
+// ---- blend-v2 ---------------------------------------------------------------
+//
+// The payload is the controlled variable: three fixed responses that every feature family
+// reuses unchanged, so subtracting a base endpoint from its arm leaves the feature and
+// nothing else.
+
+// PayloadBody is the response json.*, compressed.*, cached.* and template.* all serve.
+type PayloadBody struct {
+	Count int       `json:"count"`
+	Items []Product `json:"items"`
+	Size  string    `json:"size"`
+}
+
+type payloadDoc struct {
+	Body  PayloadBody `json:"body"`
+	Bytes int         `json:"bytes"`
+	ETag  string      `json:"etag"`
+	HTML  string      `json:"html"`
+}
+
+type authDoc struct {
+	Token      string `json:"token"`
+	WrongToken string `json:"wrong_token"`
+}
+
+// Payload is not pre-serialized. json.small against json.large is one fixture read, one
+// serialize and one write at three sizes; handing back a cached string would measure none
+// of it.
+func Payload(size string) PayloadBody { return payloads[size].Body }
+
+// ETagOf is the value pinned in the fixture, so what a target spends is emitting the
+// header and comparing it rather than hashing a body.
+func ETagOf(size string) string { return payloads[size].ETag }
+
+// GzipLevel is pinned across every language. Compression cost is dominated by codec and
+// level, not by framework, so an unpinned level makes compressed.* a zlib benchmark.
+const GzipLevel = 6
+
+// Gzip compresses at the pinned level. Targets whose framework brings its own middleware
+// use that instead and configure it to this level.
+func Gzip(b []byte) []byte {
+	var out bytes.Buffer
+	w, _ := gzip.NewWriterLevel(&out, GzipLevel)
+	_, _ = w.Write(b)
+	_ = w.Close()
+	return out.Bytes()
+}
+
+// NextSerial is x-rb-serial, monotonic per process. A response served from a cache
+// anywhere in the path, or precomputed at boot, repeats a number it did not increment,
+// and identical bytes are the whole point of the fingerprint. Atomic because the server is
+// concurrent and a torn counter would fail the gate for a reason that is not the target's.
+func NextSerial() string { return strconv.FormatUint(serial.Add(1), 10) }
+
+// TokenOK compares the bearer token. The denial arm's token differs only in its last
+// character, so this walks the whole string rather than failing on length.
+func TokenOK(header string) bool {
+	const prefix = "Bearer "
+	return strings.HasPrefix(header, prefix) && header[len(prefix):] == auth.Token
+}
+
+// LeafCount walks the parsed body. Without a field derived from the parsed structure a
+// target can pipe request bytes straight to the response and never parse, and the
+// fingerprint sorts keys before hashing so even a reordering is invisible.
+func LeafCount(v any) int {
+	switch t := v.(type) {
+	case map[string]any:
+		n := 0
+		for _, x := range t {
+			n += LeafCount(x)
+		}
+		return n
+	case []any:
+		n := 0
+		for _, x := range t {
+			n += LeafCount(x)
+		}
+		return n
+	default:
+		return 1
+	}
+}
+
+type BindResult struct {
+	Fields int `json:"fields"`
+	Bytes  int `json:"bytes"`
+	Echo   any `json:"echo"`
+}
+
+func BindEcho(body any) BindResult {
+	b, _ := json.Marshal(body)
+	return BindResult{Fields: LeafCount(body), Bytes: len(b), Echo: body}
+}
+
+// The query arms have to echo the coerced values or the parse can be skipped and the
+// endpoint measures nothing.
+type QueryOne struct {
+	Page int `json:"page"`
+}
+type QueryMany struct {
+	Page     int    `json:"page"`
+	Size     int    `json:"size"`
+	Status   string `json:"status"`
+	Category string `json:"category"`
+	Sort     string `json:"sort"`
+	Q        string `json:"q"`
+	MinPrice int    `json:"min_price"`
+	MaxPrice int    `json:"max_price"`
+}
+
+func CoerceOne(q map[string][]string) QueryOne { return QueryOne{Page: qint(q, "page")} }
+
+func CoerceMany(q map[string][]string) QueryMany {
+	return QueryMany{
+		Page: qint(q, "page"), Size: qint(q, "size"),
+		Status: qstr(q, "status"), Category: qstr(q, "category"),
+		Sort: qstr(q, "sort"), Q: qstr(q, "q"),
+		MinPrice: qint(q, "min_price"), MaxPrice: qint(q, "max_price"),
+	}
+}
+
+// DomainFilter, DomainJoin and DomainAggregate do the work the spec pins. Conformance
+// compares bytes, and a precomputed page produces the same bytes as a computed one, so
+// this is the one family where two conforming implementations can do wildly different
+// amounts of work. The predicate runs over the live list on every request, the join walks
+// the lines, and the aggregate folds every matching order. No index, no memoization.
+func DomainFilter(q map[string][]string) OrdersPage {
+	page := max(0, qint(q, "page"))
+	size := qint(q, "size")
+	if size == 0 {
+		size = 25
+	}
+	size = min(100, max(1, size))
+	status := qstr(q, "status")
+	rows := make([]*Order, 0, len(Orders))
+	for i := range Orders {
+		if Orders[i].Status == status {
+			rows = append(rows, &Orders[i])
+		}
+	}
+	start := min(page*size, len(rows))
+	end := min(start+size, len(rows))
+	return OrdersPage{Page: page, Size: size, Total: len(rows), Items: rows[start:end]}
+}
+
+type JoinSummary struct {
+	Customer      *Customer     `json:"customer"`
+	OrderCount    int           `json:"order_count"`
+	LifetimeCents int           `json:"lifetime_cents"`
+	LineCount     int           `json:"line_count"`
+	Units         int           `json:"units"`
+	Recent        []RecentOrder `json:"recent"`
+}
+
+func DomainJoin(cid string) (*JoinSummary, error) {
+	id, ok := atoi(cid)
+	if !ok {
+		return nil, ErrNotFound
+	}
+	c, ok := customerByID[id]
+	if !ok {
+		return nil, ErrNotFound
+	}
+	out := &JoinSummary{Customer: c, Recent: []RecentOrder{}}
+	for i := range Orders {
+		o := &Orders[i]
+		if o.CustomerID != c.ID {
+			continue
+		}
+		out.OrderCount++
+		out.LifetimeCents += o.TotalCents
+		for _, l := range o.Lines {
+			out.LineCount++
+			out.Units += l.Qty
+		}
+		out.Recent = append(out.Recent, RecentOrder{o.ID, o.Created, o.TotalCents})
+	}
+	if n := len(out.Recent); n > 5 {
+		out.Recent = out.Recent[n-5:]
+	}
+	return out, nil
+}
+
+func DomainAggregate(region string) (*Report, error) {
+	inRegion := make(map[int]struct{}, len(Customers))
+	for i := range Customers {
+		if Customers[i].Region == region {
+			inRegion[Customers[i].ID] = struct{}{}
+		}
+	}
+	if len(inRegion) == 0 {
+		return nil, ErrNotFound
+	}
+	r := &Report{Region: region, Customers: len(inRegion), Top: []TopOrder{}}
+	matched := make([]*Order, 0, len(Orders))
+	for i := range Orders {
+		o := &Orders[i]
+		if _, ok := inRegion[o.CustomerID]; !ok {
+			continue
+		}
+		r.Orders++
+		r.RevenueCents += o.TotalCents
+		matched = append(matched, o)
+	}
+	sort.SliceStable(matched, func(i, j int) bool {
+		if matched[i].TotalCents != matched[j].TotalCents {
+			return matched[i].TotalCents > matched[j].TotalCents
+		}
+		return matched[i].ID < matched[j].ID
+	})
+	for _, o := range matched[:min(10, len(matched))] {
+		r.Top = append(r.Top, TopOrder{o.ID, o.TotalCents})
+	}
+	return r, nil
+}
