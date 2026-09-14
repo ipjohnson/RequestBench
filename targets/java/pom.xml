@@ -128,6 +128,141 @@
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>versions-maven-plugin</artifactId>
           <version>${versions-plugin.version}</version>
+          <configuration>
+            <!--
+              Which artifact each pin tracks, stated rather than inferred.
+
+              versions:update-properties links a property to a dependency by finding it
+              used as a <version> in the same project. Every framework BOM is imported in
+              its own module, not here, so five of these seven resolve to nothing and the
+              nightly deps job would leave them at whatever they were, silently. Checked by
+              downgrading a pin and confirming the job brings it back.
+            -->
+            <!--
+              Releases only. Left to itself the plugin took spring-boot to 4.2.0-M1: a
+              milestone would land in the nightly measurement overnight and the series
+              would show a step nobody chose.
+            -->
+            <ignoredVersions>
+              <ignoredVersion>(?i).*[.-]M\d+</ignoredVersion>
+              <ignoredVersion>(?i).*[.-]RC\d*</ignoredVersion>
+              <ignoredVersion>(?i).*[.-]CR\d*</ignoredVersion>
+              <ignoredVersion>(?i).*[.-]alpha.*</ignoredVersion>
+              <ignoredVersion>(?i).*[.-]beta.*</ignoredVersion>
+              <ignoredVersion>(?i).*[.-]preview.*</ignoredVersion>
+              <ignoredVersion>(?i).*-SNAPSHOT</ignoredVersion>
+            </ignoredVersions>
+            <properties>
+            <property>
+              <name>netty.version</name>
+              <dependencies>
+                <dependency>
+                  <groupId>io.netty</groupId>
+                  <artifactId>netty-bom</artifactId>
+                </dependency>
+              </dependencies>
+            </property>
+            <property>
+              <name>javalin.version</name>
+              <dependencies>
+                <dependency>
+                  <groupId>io.javalin</groupId>
+                  <artifactId>javalin</artifactId>
+                </dependency>
+              </dependencies>
+            </property>
+            <property>
+              <name>vertx.version</name>
+              <dependencies>
+                <dependency>
+                  <groupId>io.vertx</groupId>
+                  <artifactId>vertx-stack-depchain</artifactId>
+                </dependency>
+              </dependencies>
+            </property>
+            <property>
+              <name>helidon.version</name>
+              <dependencies>
+                <dependency>
+                  <groupId>io.helidon</groupId>
+                  <artifactId>helidon-bom</artifactId>
+                </dependency>
+              </dependencies>
+            </property>
+            <property>
+              <name>spring-boot.version</name>
+              <dependencies>
+                <dependency>
+                  <groupId>org.springframework.boot</groupId>
+                  <artifactId>spring-boot-dependencies</artifactId>
+                </dependency>
+              </dependencies>
+            </property>
+            <property>
+              <name>micronaut.version</name>
+              <dependencies>
+                <dependency>
+                  <groupId>io.micronaut.platform</groupId>
+                  <artifactId>micronaut-platform</artifactId>
+                </dependency>
+              </dependencies>
+            </property>
+            <property>
+              <name>quarkus.version</name>
+              <dependencies>
+                <dependency>
+                  <groupId>io.quarkus</groupId>
+                  <artifactId>quarkus-bom</artifactId>
+                </dependency>
+              </dependencies>
+            </property>
+            <property>
+              <name>jackson.version</name>
+              <dependencies>
+                <dependency>
+                  <groupId>com.fasterxml.jackson</groupId>
+                  <artifactId>jackson-bom</artifactId>
+                </dependency>
+              </dependencies>
+            </property>
+            <property>
+              <name>gcp-functions.version</name>
+              <dependencies>
+                <dependency>
+                  <groupId>com.google.cloud.functions</groupId>
+                  <artifactId>functions-framework-api</artifactId>
+                </dependency>
+              </dependencies>
+            </property>
+            <property>
+              <name>aws-lambda-core.version</name>
+              <dependencies>
+                <dependency>
+                  <groupId>com.amazonaws</groupId>
+                  <artifactId>aws-lambda-java-core</artifactId>
+                </dependency>
+              </dependencies>
+            </property>
+            <property>
+              <name>aws-lambda-events.version</name>
+              <dependencies>
+                <dependency>
+                  <groupId>com.amazonaws</groupId>
+                  <artifactId>aws-lambda-java-events</artifactId>
+                </dependency>
+              </dependencies>
+            </property>
+            <property>
+              <name>aws-serverless-container.version</name>
+              <dependencies>
+                <dependency>
+                  <groupId>com.amazonaws.serverless</groupId>
+                  <artifactId>aws-serverless-java-container-springboot4</artifactId>
+                </dependency>
+              </dependencies>
+            </property>
+            </properties>
+          </configuration>
         </plugin>
       </plugins>
     </pluginManagement>

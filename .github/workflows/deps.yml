@@ -83,18 +83,6 @@ jobs:
           git config user.email "requestbench@users.noreply.github.com"
           git checkout -B "deps/${{ matrix.language }}" origin/main
 
-      # Old-to-new for the direct dependencies, captured before the update. A lockfile diff
-      # is not reviewable; this is what goes in the pull request body.
-      - name: What is behind
-        id: before
-        working-directory: targets/${{ matrix.language }}
-        run: |
-          case "${{ matrix.language }}" in
-            node) npm outdated --long || true ;;
-            go)   go list -m -u all 2>/dev/null | grep -F '[' || true ;;
-            java) mvn -q -B versions:display-property-updates -DallowMajorUpdates=false || true ;;
-          esac | tee /tmp/outdated.txt
-
       - name: Update
         working-directory: targets/${{ matrix.language }}
         run: |
@@ -116,16 +104,29 @@ jobs:
             java) mvn -q -B -DskipTests package ;;
           esac
 
+      # The manifest diff is the reviewable part: it is the pinned versions and nothing
+      # else. A lockfile diff is thousands of lines of transitive churn, and `npm outdated`
+      # reports every package as MISSING before an install has run.
       - name: Anything move?
         id: changed
+        env:
+          MANIFEST: >-
+            ${{ matrix.language == 'node' && 'targets/node/package.json'
+             || matrix.language == 'go' && 'targets/go/go.mod'
+             || 'targets/java/pom.xml' }}
         run: |
           if git diff --quiet; then
             echo "moved=false" >> "$GITHUB_OUTPUT"
             echo "${{ matrix.language }} is already current"
-          else
-            echo "moved=true" >> "$GITHUB_OUTPUT"
-            git --no-pager diff --stat
+            exit 0
           fi
+          echo "moved=true" >> "$GITHUB_OUTPUT"
+          git --no-pager diff --stat
+          git --no-pager diff -U0 -- "$MANIFEST" > /tmp/pins.diff
+          if [ ! -s /tmp/pins.diff ]; then
+            echo "(only transitive versions moved; no pinned version changed)" > /tmp/pins.diff
+          fi
+          cat /tmp/pins.diff
 
       - name: Push and open the pull request
         id: pr
@@ -151,8 +152,8 @@ jobs:
             echo "pull request, so a regression in speed shows up as a ring on the chart"
             echo "after the next nightly measurement."
             echo
-            echo '```'
-            cat /tmp/outdated.txt
+            echo '```diff'
+            cat /tmp/pins.diff
             echo '```'
           } > /tmp/body.md
           n=$(gh pr list --head "deps/$LANG_NAME" --state open --json number --jq '.[0].number')
