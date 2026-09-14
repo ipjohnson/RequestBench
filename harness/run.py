@@ -23,6 +23,21 @@ ENCODING_FOR_HOST = {"lambda-rie": "lambda"}
 LAMBDA_INVOKE = "/2015-03-31/functions/function/invocations"
 
 
+def lambda_event(method, path):
+    """The full API Gateway v2 shape the drivers send.
+
+    A minimal event is not enough: serverless-express reads headers and
+    queryStringParameters directly, so a probe that omits them throws inside the adapter
+    and the target looks like it never became ready.
+    """
+    return json.dumps({
+        "version": "2.0", "rawPath": path, "rawQueryString": "",
+        "queryStringParameters": {}, "headers": {"content-type": "application/json"},
+        "requestContext": {"http": {"method": method, "path": path}},
+        "isBase64Encoded": False,
+    })
+
+
 def target_dir(name):
     """Baselines live in baseline/ whatever their shard calls them."""
     return "baseline" if name in ("node-http", "net-http", "raw-asgi", "raw-kestrel",
@@ -174,9 +189,7 @@ def wait_healthy(target, timeout):
             if encoding == "lambda":
                 # RIE serves only the invocations endpoint, so readiness is a real
                 # invocation and the status lives inside the returned envelope.
-                event = json.dumps({"version": "2.0", "rawPath": "/health",
-                                    "requestContext": {"http": {"method": "GET"}}})
-                c.request("POST", LAMBDA_INVOKE, body=event,
+                c.request("POST", LAMBDA_INVOKE, body=lambda_event("GET", "/health"),
                           headers={"content-type": "application/json"})
                 r = c.getresponse()
                 body = r.read()
@@ -234,9 +247,7 @@ def read_meta():
     try:
         c = http.client.HTTPConnection("127.0.0.1", PORT, timeout=5)
         if encoding == "lambda":
-            event = json.dumps({"version": "2.0", "rawPath": "/__meta",
-                                "requestContext": {"http": {"method": "GET"}}})
-            c.request("POST", LAMBDA_INVOKE, body=event,
+            c.request("POST", LAMBDA_INVOKE, body=lambda_event("GET", "/__meta"),
                       headers={"content-type": "application/json"})
             r = c.getresponse()
             env = json.loads(r.read())

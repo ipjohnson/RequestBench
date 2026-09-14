@@ -168,7 +168,8 @@
   "hosts_implemented": {
     "node": [
       "container",
-      "gcp-func"
+      "gcp-func",
+      "lambda-rie"
     ],
     "go": [
       "container"
