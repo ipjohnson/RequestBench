@@ -179,7 +179,8 @@
     ],
     "go": [
       "container",
-      "gcp-func"
+      "gcp-func",
+      "lambda-rie"
     ]
   },
   "host_exceptions": {

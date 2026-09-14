@@ -221,5 +221,5 @@ func main() {
 		writeJSON(w, 404, map[string]string{"error": "not_found"})
 	})
 
-	hosts.Serve("chi", recovered(r))
+	hosts.Serve("chi", recovered(r), nil)
 }

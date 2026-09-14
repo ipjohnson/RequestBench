@@ -174,5 +174,5 @@ func main() {
 		return c.NoContent(204)
 	})
 
-	hosts.Serve("echo", e)
+	hosts.Serve("echo", e, nil)
 }

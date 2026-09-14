@@ -221,5 +221,5 @@ func main() {
 	r.NotFoundHandler = notFound
 	r.MethodNotAllowedHandler = notFound
 
-	hosts.Serve("gorilla-mux", recovered(r))
+	hosts.Serve("gorilla-mux", recovered(r), nil)
 }
