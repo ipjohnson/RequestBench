@@ -27,6 +27,8 @@
       "anchor": "spring-boot",
       "implemented": [
         "spring-boot",
+        "quarkus",
+        "micronaut",
         "helidon-se",
         "vertx",
         "javalin"

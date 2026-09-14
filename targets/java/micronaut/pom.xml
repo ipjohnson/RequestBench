@@ -9,15 +9,15 @@
     <version>1.0.0</version>
   </parent>
 
-  <artifactId>rb-baseline</artifactId>
-  <name>RequestBench bare baseline (Netty)</name>
+  <artifactId>rb-micronaut</artifactId>
+  <name>RequestBench target: Micronaut</name>
 
   <dependencyManagement>
     <dependencies>
       <dependency>
-        <groupId>io.netty</groupId>
-        <artifactId>netty-bom</artifactId>
-        <version>${netty.version}</version>
+        <groupId>io.micronaut.platform</groupId>
+        <artifactId>micronaut-platform</artifactId>
+        <version>${micronaut.version}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -30,13 +30,37 @@
       <artifactId>rb-hosts</artifactId>
     </dependency>
     <dependency>
-      <groupId>io.netty</groupId>
-      <artifactId>netty-codec-http</artifactId>
+      <groupId>io.micronaut</groupId>
+      <artifactId>micronaut-http-server-netty</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.micronaut</groupId>
+      <artifactId>micronaut-jackson-databind</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.micronaut</groupId>
+      <artifactId>micronaut-runtime</artifactId>
     </dependency>
   </dependencies>
 
   <build>
     <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <!-- Micronaut resolves its beans and routes at build time; without the
+               annotation processor the jar builds clean and serves nothing. -->
+          <annotationProcessorPaths>
+            <!-- No version: the platform BOM manages it, and micronaut's core line runs
+                 ahead of the platform version, so a second pin here would drift. -->
+            <path>
+              <groupId>io.micronaut</groupId>
+              <artifactId>micronaut-inject-java</artifactId>
+            </path>
+          </annotationProcessorPaths>
+        </configuration>
+      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
@@ -45,15 +69,17 @@
             <phase>package</phase>
             <goals><goal>shade</goal></goals>
             <configuration>
-              <!-- One fixed path, so a single ENTRYPOINT covers every target. -->
               <outputFile>${project.build.directory}/server.jar</outputFile>
               <transformers>
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                  <mainClass>rb.baseline.Main</mainClass>
+                  <mainClass>rb.micronaut.Main</mainClass>
                 </transformer>
-                <!-- Netty resolves transports through META-INF/services; without merging
-                     them the shaded jar starts and then finds no channel implementation. -->
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                <!-- Micronaut's bean definitions are indexed in META-INF/micronaut across
+                     every jar, so the shaded jar has to keep all of them, not the last. -->
+                <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                  <resource>META-INF/micronaut/io.micronaut.inject.BeanDefinitionReference</resource>
+                </transformer>
               </transformers>
               <filters>
                 <filter>

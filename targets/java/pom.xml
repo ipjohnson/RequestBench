@@ -29,6 +29,8 @@
     <module>vertx</module>
     <module>helidon-se</module>
     <module>spring-boot</module>
+    <module>micronaut</module>
+    <module>quarkus</module>
   </modules>
 
   <properties>
@@ -64,54 +66,18 @@
     <versions-plugin.version>2.22.0</versions-plugin.version>
   </properties>
 
+  <!--
+    Only what rb-shared and rb-hosts need is managed here. A framework's own BOM lives in
+    that framework's module: importing them all in one place lets one framework dictate
+    another's transitive versions, which is what happened when the Vert.x 5 BOM reached
+    Quarkus and broke its build against the Vert.x 4 it expects.
+  -->
   <dependencyManagement>
     <dependencies>
       <dependency>
         <groupId>com.fasterxml.jackson</groupId>
         <artifactId>jackson-bom</artifactId>
         <version>${jackson.version}</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
-      <dependency>
-        <groupId>io.netty</groupId>
-        <artifactId>netty-bom</artifactId>
-        <version>${netty.version}</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
-      <dependency>
-        <groupId>io.vertx</groupId>
-        <artifactId>vertx-stack-depchain</artifactId>
-        <version>${vertx.version}</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
-      <dependency>
-        <groupId>io.helidon</groupId>
-        <artifactId>helidon-bom</artifactId>
-        <version>${helidon.version}</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-dependencies</artifactId>
-        <version>${spring-boot.version}</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
-      <dependency>
-        <groupId>io.micronaut.platform</groupId>
-        <artifactId>micronaut-platform</artifactId>
-        <version>${micronaut.version}</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
-      <dependency>
-        <groupId>io.quarkus</groupId>
-        <artifactId>quarkus-bom</artifactId>
-        <version>${quarkus.version}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>

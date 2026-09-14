@@ -12,6 +12,18 @@
   <artifactId>rb-helidon-se</artifactId>
   <name>RequestBench target: Helidon SE</name>
 
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>io.helidon</groupId>
+        <artifactId>helidon-bom</artifactId>
+        <version>${helidon.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
   <dependencies>
     <dependency>
       <groupId>dev.requestbench</groupId>
