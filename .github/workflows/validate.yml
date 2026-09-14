@@ -116,15 +116,15 @@ jobs:
       # been deleted built clean and was unrunnable, so the image has to actually answer.
       - name: Boot it and ask what it is
         run: |
-          docker run -d --rm --name t -p 8080:8080 \
+          docker run -d --rm --name rb-smoke -p 8080:8080 \
             rb/${{ matrix.language }}-${{ matrix.target }}
           for _ in $(seq 1 60); do
-            curl -sf http://127.0.0.1:8080/health >/dev/null && break
+            if curl -sf http://127.0.0.1:8080/health >/dev/null; then break; fi
             sleep 0.5
           done
           if ! curl -sf http://127.0.0.1:8080/health >/dev/null; then
-            docker logs t
+            docker logs rb-smoke
             exit 1
           fi
           curl -s http://127.0.0.1:8080/__meta
-          docker stop t
+          docker stop rb-smoke
