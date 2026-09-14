@@ -96,9 +96,10 @@ nightly framework update, and nineteen targets across three languages. Node has
 gorilla/mux and Fiber. Java has bare Netty, Spring Boot, Quarkus, Micronaut, Helidon SE,
 Vert.x and Javalin.
 
-All nineteen fingerprint-match each other across three languages, on the forty endpoints
-of `blend-v1`. The spec is now `blend-v2` and no target implements it yet, so the
-conformance gate fails against all of them until they are rewired.
+`node-http` implements the forty-two endpoints of `blend-v2` and is the contract each
+framework then has to meet with its own facilities. The other eighteen still answer
+`blend-v1`, which they fingerprint-match each other on, so the conformance gate fails
+against them until they are rewired.
 
 Framework versions are not held by hand. `.github/workflows/deps.yml` resolves the latest
 release for each language nightly, patch and minor only, and opens one pull request per

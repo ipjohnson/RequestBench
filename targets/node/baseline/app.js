@@ -15,6 +15,8 @@ import * as d from "../_shared/domain.js";
 
 const JSON_CT = { "content-type": "application/json" };
 const TEXT_CT = { "content-type": "text/plain" };
+const HTML_CT = { "content-type": "text/html; charset=utf-8" };
+const CACHEABLE = "public, max-age=60";
 
 const json = (status, value, headers) => ({
   status, headers: { ...JSON_CT, ...headers }, body: JSON.stringify(value),
@@ -24,83 +26,131 @@ const notFound = () => json(404, { error: "not_found" });
 const send = (v, status = 200, headers) =>
   v === d.NOT_FOUND ? notFound() : json(status, v, headers);
 
-// ---- routing: method + path segments + query + parsed body -> result -----------------
+const SIZES = new Set(["small", "medium", "large"]);
 
-function route(method, seg, q, body) {
+// No framework here, so a middleware layer is a plain function that calls the next and
+// does nothing else. The chains are built once, the way a framework registers its own, so
+// what the request pays is walking them. This is the floor the frameworks are read against.
+const layer = (next) => (req) => next(req);
+function chain(n, final) {
+  let f = final;
+  for (let i = 0; i < n; i++) f = layer(f);
+  return f;
+}
+const small = () => json(200, d.payload("small"));
+const MIDDLEWARE = { none: chain(0, small), four: chain(4, small), sixteen: chain(16, small) };
+
+function compressed(size) {
+  // Per request, at the pinned level. compressed.small exists because gzip turns 125 bytes
+  // into 125 bytes, so it is the cost of achieving nothing.
+  const body = d.gzip(Buffer.from(JSON.stringify(d.payload(size))));
+  return { status: 200, body,
+           headers: { ...JSON_CT, "content-encoding": "gzip", "x-rb-serial": d.nextSerial() } };
+}
+
+function cached(size, headers) {
+  // The ETag is pinned in the fixture, so what is measured is emitting the header and
+  // comparing it, not hashing the body. Hash cost belongs in Suite B.
+  const etag = d.etagOf(size);
+  const common = { etag, "cache-control": CACHEABLE, "x-rb-serial": d.nextSerial() };
+  if (headers["if-none-match"] === etag)
+    return { status: 304, headers: common, body: "" };
+  return { status: 200, headers: { ...JSON_CT, ...common },
+           body: JSON.stringify(d.payload(size)) };
+}
+
+// ---- routing: method + path segments + query + parsed body + headers -> result --------
+
+function route(method, seg, q, body, headers) {
   const n = seg.length;
 
   if (method === "GET") {
     if (n === 1) {
       switch (seg[0]) {
         case "plaintext": return text(200, "Hello, World!");
+        // The handler reads no header at all: headers.many minus headers.few is then the
+        // cost of materialising 27 nobody asked for.
+        case "headers":   return json(200, d.payload("small"));
         case "health":    return text(200, "ok");
         case "__meta":    return json(200, { ...meta, ...hostMeta() });
-        case "products":  return json(200, d.listProducts(q));
-        case "customers": return json(200, d.listCustomers(q));
-        case "orders":    return json(200, d.listOrders(q));
-        case "search":    return json(200, d.search(q));
-        case "dashboard": return json(200, d.dashboard());
-        case "boom":      throw new d.Boom();
-        case "forbidden": return json(403, { error: "forbidden" });
       }
     } else if (n === 2) {
-      if (seg[0] === "json" && seg[1] === "small") return json(200, d.jsonSmall());
-      if (seg[0] === "products")  return send(d.getProduct(seg[1]));
-      if (seg[0] === "customers") return send(d.getCustomer(seg[1]));
-      if (seg[0] === "orders")    return send(d.getOrder(seg[1]));
+      switch (seg[0]) {
+        case "json":       if (SIZES.has(seg[1])) return json(200, d.payload(seg[1])); break;
+        case "compressed": if (SIZES.has(seg[1])) return compressed(seg[1]); break;
+        case "cached":     if (SIZES.has(seg[1])) return cached(seg[1], headers); break;
+        case "template":
+          if (seg[1] === "small" || seg[1] === "medium")
+            return { status: 200, headers: HTML_CT, body: d.renderItems(seg[1]) };
+          break;
+        case "authorized":
+          if (seg[1] === "small")
+            return d.tokenOk(headers["authorization"])
+              ? json(200, d.payload("small")) : json(403, { error: "forbidden" });
+          break;
+        case "middleware": {
+          const mw = MIDDLEWARE[seg[1]];
+          if (mw) return mw(null);
+          break;
+        }
+        case "query":
+          if (seg[1] === "one")  return json(200, d.coerceOne(q));
+          if (seg[1] === "many") return json(200, d.coerceMany(q));
+          break;
+        case "parameters": return json(200, d.payload("small"));
+        case "domain":     if (seg[1] === "orders") return json(200, d.domainFilter(q)); break;
+      }
     } else if (n === 3) {
-      if (seg[0] === "products"  && seg[2] === "reviews") return send(d.getProductReviews(seg[1]));
-      if (seg[0] === "products"  && seg[2] === "related") return send(d.relatedProducts(seg[1]));
-      if (seg[0] === "customers" && seg[2] === "orders")  return send(d.getCustomerOrders(seg[1]));
-      if (seg[0] === "customers" && seg[2] === "summary") return send(d.customerSummary(seg[1]));
-      if (seg[0] === "orders"    && seg[2] === "lines")   return send(d.getOrderLines(seg[1]));
-      if (seg[0] === "orders"    && seg[2] === "full")    return send(d.orderFull(seg[1]));
-      if (seg[0] === "regions"   && seg[2] === "customers") return send(d.getRegionCustomers(seg[1]));
-      if (seg[0] === "regions"   && seg[2] === "report")    return send(d.regionReport(seg[1]));
+      if (seg[0] === "domain" && seg[1] === "orders") return send(d.getOrder(seg[2]));
     } else if (n === 4) {
-      if (seg[0] === "customers" && seg[2] === "orders") return send(d.getCustomerOrder(seg[1], seg[3]));
-      if (seg[0] === "orders"    && seg[2] === "lines")  return send(d.getOrderLine(seg[1], seg[3]));
-    } else if (n === 8) {
-      if (seg[0] === "regions" && seg[2] === "customers" && seg[4] === "orders" && seg[6] === "lines")
-        return send(d.getOrderLine(seg[5], seg[7]));
+      if (seg[0] === "parameters") {
+        if (seg[1] === "static" && seg[2] === "segment" && seg[3] === "literal")
+          return json(200, d.payload("small"));
+        if (seg[2] === "with-second") return json(200, d.payload("small"));
+      }
+      if (seg[0] === "domain") {
+        if (seg[1] === "customers" && seg[3] === "summary") return send(d.domainJoin(seg[2]));
+        if (seg[1] === "regions"   && seg[3] === "report")  return send(d.domainAggregate(seg[2]));
+      }
     }
     return notFound();
   }
 
   if (method === "POST") {
-    if (n === 1) {
-      if (seg[0] === "echo") return json(200, d.echo(body));
-      if (seg[0] === "orders")
-        return json(201, d.validateOrder(body), { location: "/orders/" + d.NEXT_ORDER_ID });
-    } else if (n === 2) {
-      if (seg[0] === "orders"    && seg[1] === "validate") return json(200, d.validateOrder(body));
-      if (seg[0] === "customers" && seg[1] === "validate") return json(200, d.validateCustomer(body));
-      if (seg[0] === "products"  && seg[1] === "validate") return json(200, d.validateProduct(body));
-    } else if (n === 3 && seg[0] === "orders" && seg[2] === "lines") {
-      const o = d.getOrder(seg[1]);
-      if (o === d.NOT_FOUND) return notFound();
-      return json(201, d.validateLine(body),
-                  { location: `/orders/${seg[1]}/lines/${o.lines.length + 1}` });
+    if (n === 2 && seg[0] === "domain" && seg[1] === "orders")
+      return json(201, d.validateOrder(body), { location: "/domain/orders/" + d.NEXT_ORDER_ID });
+    if (n === 3 && seg[0] === "body") {
+      // bind parses and binds without validating, so validate minus bind is the validator
+      // alone rather than the validator plus the parse.
+      if (seg[1] === "bind" && SIZES.has(seg[2])) return json(200, d.bindEcho(body));
+      if (seg[1] === "validate") {
+        if (SIZES.has(seg[2]))            return json(200, d.validateOrder(body));
+        if (seg[2] === "first-error")     return json(200, d.validateOrder(body, true));
+      }
     }
     return notFound();
   }
 
-  if (method === "PUT" && n === 2 && seg[0] === "orders") {
-    const o = d.getOrder(seg[1]);
+  if (method === "PUT" && n === 3 && seg[0] === "domain" && seg[1] === "orders") {
+    const o = d.getOrder(seg[2]);
     if (o === d.NOT_FOUND) return notFound();
     return json(200, { id: o.id, ...d.validateOrder(body) });
   }
-  if (method === "PATCH" && n === 2 && seg[0] === "customers")
-    return send(d.patchCustomer(seg[1], body));
-  if (method === "DELETE" && n === 4 && seg[0] === "orders" && seg[2] === "lines") {
-    if (d.getOrderLine(seg[1], seg[3]) === d.NOT_FOUND) return notFound();
+  if (method === "PATCH" && n === 3 && seg[0] === "domain" && seg[1] === "customers")
+    return send(d.patchCustomer(seg[2], body));
+  if (method === "DELETE" && n === 5 && seg[0] === "domain" && seg[1] === "orders"
+      && seg[3] === "lines") {
+    if (d.getOrderLine(seg[2], seg[4]) === d.NOT_FOUND) return notFound();
     return { status: 204, headers: {}, body: "" };
   }
   return notFound();
 }
 
 const meta = { framework: "node-http", version: process.versions.node,
-               runtime: "node " + process.versions.node };
+               runtime: "node " + process.versions.node,
+               // Declared so the template row is never read as a renderer it is not. A bare
+               // baseline has no engine, and saying so is what keeps it out of that column.
+               template: "string-concat" };
 
 function onError(err) {
   if (err instanceof d.ValidationError)
@@ -130,11 +180,14 @@ function readBody(req) {
 }
 
 function write(res, r) {
-  const buf = Buffer.from(r.body ?? "");
+  // A compressed response is already bytes. Buffer.from on a Buffer copies it, which would
+  // charge every compressed.* response for a second pass over the body.
+  const buf = Buffer.isBuffer(r.body) ? r.body : Buffer.from(r.body ?? "");
   const headers = { ...r.headers };
-  if (r.status !== 204) headers["content-length"] = buf.length;
+  const noBody = r.status === 204 || r.status === 304;
+  if (!noBody) headers["content-length"] = buf.length;
   res.writeHead(r.status, headers);
-  res.end(r.status === 204 ? undefined : buf);
+  res.end(noBody ? undefined : buf);
 }
 
 export function handler(req, res) {
@@ -143,7 +196,7 @@ export function handler(req, res) {
   const q = qi === -1 ? {} : Object.fromEntries(new URLSearchParams(req.url.slice(qi + 1)));
   const seg = split(path);
   const run = (body) => {
-    try { write(res, route(req.method, seg, q, body)); }
+    try { write(res, route(req.method, seg, q, body, req.headers)); }
     catch (err) { write(res, onError(err)); }
   };
   if (HAS_BODY.has(req.method)) readBody(req).then(run, (err) => write(res, onError(err)));
@@ -169,15 +222,25 @@ export async function lambda(event) {
   }
   try {
     return asResult(route(event.requestContext.http.method,
-                          split(event.rawPath), event.queryStringParameters ?? {}, body));
+                          split(event.rawPath), event.queryStringParameters ?? {}, body,
+                          lower(event.headers ?? {})));
   } catch (err) {
     return asResult(onError(err));
   }
 }
 
-const asResult = (r) => ({
-  statusCode: r.status,
-  headers: r.status === 204 ? r.headers
-         : { ...r.headers, "content-length": String(Buffer.byteLength(r.body ?? "")) },
-  body: r.body ?? "",
-});
+// API Gateway lowercases header names; a hand-built event might not, and the authorization
+// and if-none-match reads are the only places that would notice.
+const lower = (h) => Object.fromEntries(Object.entries(h).map(([k, v]) => [k.toLowerCase(), v]));
+
+const asResult = (r) => {
+  const binary = Buffer.isBuffer(r.body);
+  const bytes = binary ? r.body.length : Buffer.byteLength(r.body ?? "");
+  return {
+    statusCode: r.status,
+    headers: r.status === 204 || r.status === 304 ? r.headers
+           : { ...r.headers, "content-length": String(bytes) },
+    body: binary ? r.body.toString("base64") : (r.body ?? ""),
+    isBase64Encoded: binary,
+  };
+};
