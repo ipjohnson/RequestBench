@@ -1,12 +1,12 @@
 # Measurement on GitHub-hosted runners.
 #
-# Hosted hardware varies between runs, so nothing absolute here is comparable night to
-# night. Every shard measures its own bare baseline in the same job, on the same machine,
-# within the same few minutes, and publishes ratios to it. That is what survives a runner
-# swap. Cross-language comparison does not survive it and is not attempted.
+# A job is one suite on one execution host, and it holds every framework in every language
+# that host supports. There is deliberately no language dimension: splitting by language
+# would put Go and Node on different runners, and nothing then makes their numbers
+# comparable. Every run is cross-language by construction.
 #
-# Each shard gets its own runner, so there is no shared machine to serialize around and
-# the shards run in parallel.
+# Within a run the ratio to each language's own bare baseline is what crosses hosts; the
+# absolute numbers are comparable only inside the single run that produced them.
 name: measure
 
 on:
@@ -14,21 +14,17 @@ on:
     - cron: "0 2 * * *"
   workflow_dispatch:
     inputs:
-      shards:
-        description: JSON array of shards to measure.
-        default: '["node","go"]'
+      hosts:
+        description: JSON array of execution hosts to measure.
+        default: '["container","gcp-func","lambda-rie"]'
         type: string
       seconds:
-        description: Override rung duration in seconds. Empty means the full 60s rungs.
+        description: Blend only. Override rung duration. Empty means the full 60s rungs.
         default: ""
         type: string
-      rungs:
-        description: Comma separated rung numbers. Empty means all five.
-        default: ""
-        type: string
-      runner:
-        description: Runner image. The ARM fleet is a single CPU family; x64 is mixed.
-        default: ubuntu-24.04-arm
+      count:
+        description: Serial only. How many requests of the pinned sequence to replay.
+        default: "40000"
         type: string
 
 permissions:
@@ -40,13 +36,13 @@ concurrency:
 
 jobs:
   measure:
-    name: measure ${{ matrix.shard }}
-    runs-on: ${{ github.event.inputs.runner || 'ubuntu-24.04-arm' }}
-    timeout-minutes: 90
+    name: ${{ matrix.host }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
     strategy:
       fail-fast: false
       matrix:
-        shard: ${{ fromJSON(github.event.inputs.shards || '["node","go"]') }}
+        host: ${{ fromJSON(github.event.inputs.hosts || '["container","gcp-func","lambda-rie"]') }}
     steps:
       - uses: actions/checkout@v4
 
@@ -54,116 +50,41 @@ jobs:
         with:
           python-version: "3.13"
 
-      - name: Resolve the shard's targets
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: targets/node/package-lock.json
+
+      - run: npm ci --omit=dev --no-audit --no-fund
+        working-directory: targets/node
+
+      - name: Resolve every target this host supports
         id: rot
         run: |
-          python3 harness/rotation.py --shard "${{ matrix.shard }}" --github-output \
-            >> "$GITHUB_OUTPUT"
-          python3 harness/rotation.py --shard "${{ matrix.shard }}"
-
-      # A shortened ladder proves the wiring; it must never enter the tracked series.
-      - name: Is this a full ladder?
-        id: full
-        run: |
-          if [ -z "${{ github.event.inputs.seconds }}" ] && [ -z "${{ github.event.inputs.rungs }}" ]; then
-            echo "yes=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "yes=false" >> "$GITHUB_OUTPUT"
-            echo "rung duration or rung set was overridden; this run is a smoke test"
-          fi
+          python3 harness/rotation.py --host "${{ matrix.host }}" --github-output >> "$GITHUB_OUTPUT"
+          python3 harness/rotation.py --host "${{ matrix.host }}"
 
       - name: Record the machine
         if: steps.rot.outputs.built != '0'
         run: |
           echo "cores: $(nproc)"
           grep -m1 "model name" /proc/cpuinfo || true
-          echo "target pinned to cores 0,1 and the generator to 2,3"
 
-      - name: Run the ladder
-        if: steps.rot.outputs.built != '0'
-        env:
-          RB_CPUS: "2"
-          RB_SUT_CPUS: "0,1"
-          RB_GEN_CPUS: "2,3"
-        run: |
-          python3 harness/run.py \
-            --shard "${{ matrix.shard }}" \
-            --targets "${{ steps.rot.outputs.targets }}" \
-            --mode docker \
-            --workers 2 \
-            --emit-path /tmp/rb-result-path \
-            ${{ github.event.inputs.seconds && format('--seconds {0}', github.event.inputs.seconds) || '' }} \
-            ${{ github.event.inputs.rungs && format('--rungs {0}', github.event.inputs.rungs) || '' }}
-
-      - name: Summarize
-        id: sum
-        if: steps.rot.outputs.built != '0'
-        run: |
-          RAW=$(cat /tmp/rb-result-path)
-          NAME=$(basename "$RAW" .jsonl)
-          TRACKED=""
-          [ "${{ steps.full.outputs.yes }}" = "true" ] && TRACKED="--tracked"
-          # shellcheck disable=SC2086
-          python3 harness/summarize.py "$RAW" $TRACKED \
-            --runner github-hosted \
-            --out "results/summary/$NAME.json"
-          gzip -9 -c "$RAW" > "/tmp/$NAME.jsonl.gz"
-          echo "name=$NAME" >> "$GITHUB_OUTPUT"
-          python3 harness/report.py "$RAW" --family
-
-      - name: Upload raw samples
-        if: steps.rot.outputs.built != '0'
-        uses: actions/upload-artifact@v4
-        with:
-          name: raw-${{ steps.sum.outputs.name }}
-          path: /tmp/${{ steps.sum.outputs.name }}.jsonl.gz
-          retention-days: 90
-
-      - name: Upload summary
-        if: steps.rot.outputs.built != '0' && steps.full.outputs.yes == 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: summary-${{ matrix.shard }}
-          path: results/summary/*.json
-          retention-days: 90
-
-  cross:
-    name: cross-language
-    runs-on: ${{ github.event.inputs.runner || 'ubuntu-latest' }}
-    timeout-minutes: 330
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
-
-      - name: Resolve every implemented target
-        id: rot
-        run: |
-          python3 harness/rotation.py --cross --github-output >> "$GITHUB_OUTPUT"
-          python3 harness/rotation.py --cross
-
-      - name: Is this a full ladder?
+      - name: Is this a full run?
         id: full
         run: |
-          if [ -z "${{ github.event.inputs.seconds }}" ] && [ -z "${{ github.event.inputs.rungs }}" ]; then
+          if [ -z "${{ github.event.inputs.seconds }}" ]; then
             echo "yes=true" >> "$GITHUB_OUTPUT"
           else
             echo "yes=false" >> "$GITHUB_OUTPUT"
+            echo "rung duration was overridden; this run is a smoke test"
           fi
 
-      - name: Record the machine
-        run: |
-          echo "cores: $(nproc)"
-          grep -m1 "model name" /proc/cpuinfo || true
-
-      # Every language on one machine, back to back. This is the only run whose numbers
-      # may be compared across languages, because it is the only one where nothing about
-      # the machine changed between targets.
-      - name: Run the ladder
+      - name: Measure
         if: steps.rot.outputs.built != '0'
         env:
+          RB_HOST: ${{ matrix.host }}
           RB_CPUS: "2"
           RB_SUT_CPUS: "0,1"
           RB_GEN_CPUS: "2,3"
@@ -172,9 +93,9 @@ jobs:
             --targets "${{ steps.rot.outputs.targets }}" \
             --mode docker \
             --workers 2 \
+            --count "${{ github.event.inputs.count || '40000' }}" \
             --emit-path /tmp/rb-result-path \
-            ${{ github.event.inputs.seconds && format('--seconds {0}', github.event.inputs.seconds) || '' }} \
-            ${{ github.event.inputs.rungs && format('--rungs {0}', github.event.inputs.rungs) || '' }}
+            ${{ github.event.inputs.seconds && format('--seconds {0}', github.event.inputs.seconds) || '' }}
 
       - name: Summarize
         id: sum
@@ -182,12 +103,14 @@ jobs:
         run: |
           RAW=$(cat /tmp/rb-result-path)
           NAME=$(basename "$RAW" .jsonl)
+          MONTH=$(date -u +%Y-%m)
           TRACKED=""
           [ "${{ steps.full.outputs.yes }}" = "true" ] && TRACKED="--tracked"
+          mkdir -p "out/$MONTH"
           # shellcheck disable=SC2086
           python3 harness/summarize.py "$RAW" $TRACKED \
             --runner github-hosted \
-            --out "results/summary/$NAME.json"
+            --out "out/$MONTH/$NAME.json"
           gzip -9 -c "$RAW" > "/tmp/$NAME.jsonl.gz"
           echo "name=$NAME" >> "$GITHUB_OUTPUT"
           python3 harness/report.py "$RAW"
@@ -204,23 +127,23 @@ jobs:
         if: steps.rot.outputs.built != '0' && steps.full.outputs.yes == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: summary-cross
-          path: results/summary/*.json
+          name: summary-${{ matrix.host }}
+          path: out/**/*.json
           retention-days: 90
 
   collect:
     name: record summaries
-    needs: [measure, cross]
-    if: always() && (needs.measure.result == 'success' || needs.cross.result == 'success')
+    needs: measure
+    if: always() && needs.measure.result == 'success'
     runs-on: ubuntu-latest
     steps:
-      # The results branch is orphan and data-only: nothing watches it, so a nightly
-      # measurement adds no commit to main's history and triggers no CI.
+      # The results branch is orphan and data-only: nothing watches it, so recording a run
+      # adds no commit to main's history and triggers no CI.
       - uses: actions/checkout@v4
         with:
           ref: results
 
-      - name: Download every shard's summary
+      - name: Download every host's summary
         uses: actions/download-artifact@v4
         with:
           pattern: summary-*
@@ -230,14 +153,19 @@ jobs:
       - name: Commit them in one go
         shell: bash
         run: |
-          shopt -s nullglob
-          files=(/tmp/summaries/*.json)
+          shopt -s nullglob globstar
+          files=(/tmp/summaries/**/*.json)
           if [ ${#files[@]} -eq 0 ]; then
-            echo "no full-ladder summaries produced; nothing to record"
+            echo "no full-run summaries produced; nothing to record"
             exit 0
           fi
-          mkdir -p summary
-          cp "${files[@]}" summary/
+          # Summaries are filed by month, so a directory stays browsable after a year of
+          # nightly runs rather than holding several hundred siblings.
+          for f in "${files[@]}"; do
+            month=$(basename "$(dirname "$f")")
+            mkdir -p "summary/$month"
+            cp "$f" "summary/$month/"
+          done
           git config user.name  "requestbench"
           git config user.email "requestbench@users.noreply.github.com"
           git add summary

@@ -41,6 +41,27 @@ def shard_targets(shard):
         "warmup_class": "jit" if shard in MATRIX["warmup_classes"]["jit"] else "steady",
     }
 
+def host_targets(host):
+    """Every implemented target, in every language that supports this host.
+
+    A job is one suite on one host and holds all of them, so there is no language
+    dimension: every run is cross-language by construction rather than by a separate job.
+    """
+    out = []
+    for shard, lang in MATRIX["languages"].items():
+        built = lang.get("implemented", [])
+        hosts = MATRIX.get("hosts_implemented", {}).get(shard, ["container"])
+        if not built or host not in hosts:
+            continue
+        out += ["%s:%s" % (shard, t) for t in [lang["baseline"]] + built]
+    return out
+
+
+def suite_for(host):
+    """A host that runs one invocation at a time has no knee to find."""
+    return "blend" if host == "container" else "serial"
+
+
 def cross_targets():
     """Every implemented target in every language, as shard:target pairs.
 
@@ -81,9 +102,22 @@ def main(argv):
                     help="emit key=value lines instead of JSON")
     ap.add_argument("--cross", action="store_true",
                     help="every implemented target in every language, as shard:target")
+    ap.add_argument("--host", default="",
+                    help="every implemented target that supports this execution host")
     a = ap.parse_args(argv[1:])
 
     day = dt.date.fromisoformat(a.date) if a.date else dt.date.today()
+    if a.host:
+        pairs = host_targets(a.host)
+        r = {"date": day.isoformat(), "host": a.host, "shard": a.host,
+             "suite": suite_for(a.host), "targets": ",".join(pairs), "built": len(pairs)}
+        if a.github_output:
+            for k in ("date", "host", "suite", "targets"):
+                print("%s=%s" % (k, r[k]))
+            print("built=%d" % r["built"])
+        else:
+            print(json.dumps(r))
+        return 0
     if a.cross:
         pairs = cross_targets()
         r = {"date": day.isoformat(), "shard": "cross", "suite": "blend",
