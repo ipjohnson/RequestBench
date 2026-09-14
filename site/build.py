@@ -325,7 +325,13 @@ const esc = t => String(t).replace(/[&<>"]/g, c =>
   ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
 
 /* ---- wire data, aggregated to whatever granularity is on screen ---- */
-const wireDoc = r => (RB.wire || {})[r.shard + '-' + r.target];
+/* Exemplars are keyed <shard>-<target>@<host>: the same framework on two hosts puts
+   different things on the wire, which is the point of the host axis. */
+const wireDoc = r => {
+  const w = RB.wire || {}, run = latest();
+  const host = (run && run.exec_host) || 'container';
+  return w[`${r.shard}-${r.target}@${host}`] || w[`${r.shard}-${r.target}`];
+};
 function wireFor(r) {
   const doc = wireDoc(r);
   if (!doc) return {};

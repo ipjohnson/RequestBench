@@ -28,12 +28,26 @@ class Local:
         self.log = ROOT / "results" / (".target-%s-%s.log" % (shard, name))
 
     def _argv(self):
+        """A target is a framework plus a host, and the host decides what starts it."""
         d = target_dir(self.name)
+        host = os.environ.get("RB_HOST", "container")
         if self.shard == "node":
-            return ["node", str(ROOT / "targets/node" / d / "server.js")], ROOT, {}
+            nd = ROOT / "targets/node"
+            env = {"RB_TARGET": d, "RB_HOST": host}
+            if host == "container":
+                return ["node", str(nd / "_hosts/container.mjs")], nd, env
+            if host == "gcp-func":
+                # The Functions Framework CLI is the real entrypoint on Cloud Run, so it
+                # is the one used here rather than a hand-rolled server around the library.
+                return ([str(nd / "node_modules/.bin/functions-framework"),
+                         "--target=rb", "--source=_hosts/gcp-func.mjs",
+                         "--port=%d" % PORT], nd, env)
+            raise SystemExit("node has no launcher for host %r" % host)
         if self.shard == "go":
+            if host != "container":
+                raise SystemExit("go has no launcher for host %r yet" % host)
             return (["go", "run", "./" + d], ROOT / "targets/go",
-                    {"RB_FIXTURE": str(ROOT / "spec/fixture.json")})
+                    {"RB_FIXTURE": str(ROOT / "spec/fixture.json"), "RB_HOST": host})
         raise SystemExit("shard %r has no local launcher; use --mode docker" % self.shard)
 
     def start(self):

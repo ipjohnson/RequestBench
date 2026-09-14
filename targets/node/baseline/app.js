@@ -1,11 +1,12 @@
 // RequestBench bare baseline for Node: node:http with a hand-written router.
+//
+// Exports both a native server (listen) and a bare (req, res) handler, so a host that
+// brings its own server can invoke the same routing without a shim.
 // No framework, no dependencies. Everything else in the node shard is reported as a
 // ratio to this. Responses are serialized per request, never cached, so the comparison
 // against a framework stays honest.
 import { createServer } from "node:http";
 import * as d from "../_shared/domain.js";
-
-const PORT = Number(process.env.PORT ?? 8080);
 
 // Reported so a point on the results chart can be attributed to a version rather than
 // to a different runner. Deliberately outside spec/endpoints.json: it is not part of
@@ -29,6 +30,9 @@ const send = (res, v, status = 200) =>
   v === d.NOT_FOUND ? notFound(res) : json(res, status, v);
 
 function readBody(req) {
+  // A function host parses the body before the handler runs and hands over a consumed
+  // stream. Waiting on "end" there waits forever, so take what the host already parsed.
+  if (req.body !== undefined) return Promise.resolve(req.body);
   return new Promise((resolve, reject) => {
     const chunks = [];
     req.on("data", (c) => chunks.push(c));
@@ -120,7 +124,7 @@ function route(req, res, seg, q, body) {
   return notFound(res);
 }
 
-const server = createServer((req, res) => {
+export function handler(req, res) {
   const qi = req.url.indexOf("?");
   const path = qi === -1 ? req.url : req.url.slice(0, qi);
   const q = qi === -1 ? {} : Object.fromEntries(new URLSearchParams(req.url.slice(qi + 1)));
@@ -144,8 +148,11 @@ const server = createServer((req, res) => {
   } else {
     run(undefined);
   }
-});
+}
 
-server.keepAliveTimeout = 65_000;
-server.headersTimeout = 66_000;
-server.listen(PORT, () => console.log(`baseline listening on ${PORT}`));
+export function listen(port) {
+  const server = createServer(handler);
+  server.keepAliveTimeout = 65_000;
+  server.headersTimeout = 66_000;
+  return new Promise((r) => server.listen(port, () => r(server)));
+}

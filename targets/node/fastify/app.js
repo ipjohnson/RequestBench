@@ -1,4 +1,7 @@
-// RequestBench target: Fastify. Framework wiring only; all behaviour comes from _shared/domain.js.
+// RequestBench target: Fastify. Framework wiring only; behaviour comes from _shared/domain.js.
+//
+// `listen` starts Fastify's own server, which is what people deploy. `handler` is
+// Fastify's routing exposed as a plain (req, res), which is what a function host invokes.
 import Fastify from "fastify";
 import { createRequire } from "node:module";
 import * as d from "../_shared/domain.js";
@@ -8,6 +11,18 @@ const meta = { framework: "fastify", version: require("fastify/package.json").ve
                runtime: "node " + process.versions.node };
 
 const app = Fastify({ logger: false, disableRequestLogging: true });
+
+// Same reason as the baseline: when a function host has already parsed the body, Fastify
+// must not try to read the stream again. Its own parser still runs under `container`.
+app.addContentTypeParser("application/json", (req, payload, done) => {
+  if (req.raw.body !== undefined) return done(null, req.raw.body);
+  let data = "";
+  payload.on("data", (c) => (data += c));
+  payload.on("end", () => {
+    try { done(null, data.length ? JSON.parse(data) : undefined); }
+    catch { done(new d.ValidationError([{ field: "body", rule: "json" }])); }
+  });
+});
 const send = (reply, v, status = 200) =>
   v === d.NOT_FOUND ? reply.code(404).send({ error: "not_found" }) : reply.code(status).send(v);
 
@@ -74,5 +89,9 @@ app.setErrorHandler((err, _, reply) =>
     ? reply.code(422).send({ error: "validation_failed", errors: err.errors })
     : reply.code(500).send({ error: "internal", message: err.message }));
 
-app.listen({ port: Number(process.env.PORT ?? 8080), host: "0.0.0.0" })
-   .then((a) => console.log(`fastify listening on ${a}`));
+export const listen = (port) => app.listen({ port, host: "0.0.0.0" });
+
+export async function handler(req, res) {
+  await app.ready();
+  app.routing(req, res);
+}

@@ -1,4 +1,6 @@
 // RequestBench target: Express 5. Framework wiring only; behaviour from _shared/domain.js.
+//
+// An Express app already is a (req, res) function, so the host handler is the app itself.
 import express from "express";
 import { createRequire } from "node:module";
 import * as d from "../_shared/domain.js";
@@ -78,4 +80,5 @@ app.use((err, _req, res, _next) =>
     ? res.status(422).json({ error: "validation_failed", errors: err.errors })
     : res.status(500).json({ error: "internal", message: err.message }));
 
-app.listen(Number(process.env.PORT ?? 8080), () => console.log("express listening"));
+export const listen = (port) => new Promise((r) => r(app.listen(port)));
+export const handler = app;
