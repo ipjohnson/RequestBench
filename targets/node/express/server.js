@@ -52,11 +52,15 @@ app.post("/orders/validate",    (req, res) => res.json(d.validateOrder(req.body)
 app.post("/customers/validate", (req, res) => res.json(d.validateCustomer(req.body)));
 app.post("/products/validate",  (req, res) => res.json(d.validateProduct(req.body)));
 app.post("/echo",               (req, res) => res.json(d.echo(req.body)));
-app.post("/orders", (req, res) => res.status(201).json(d.validateOrder(req.body)));
-app.post("/orders/:oid/lines", (req, res) =>
-  d.getOrder(req.params.oid) === d.NOT_FOUND
-    ? res.status(404).json({ error: "not_found" })
-    : res.status(201).json(d.validateLine(req.body)));
+app.post("/orders", (req, res) =>
+  res.status(201).location("/orders/" + d.NEXT_ORDER_ID).json(d.validateOrder(req.body)));
+app.post("/orders/:oid/lines", (req, res) => {
+  const o = d.getOrder(req.params.oid);
+  if (o === d.NOT_FOUND) return res.status(404).json({ error: "not_found" });
+  return res.status(201)
+    .location(`/orders/${req.params.oid}/lines/${o.lines.length + 1}`)
+    .json(d.validateLine(req.body));
+});
 app.put("/orders/:oid", (req, res) =>
   d.getOrder(req.params.oid) === d.NOT_FOUND
     ? res.status(404).json({ error: "not_found" })

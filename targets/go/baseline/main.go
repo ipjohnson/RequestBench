@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"runtime"
+	"strconv"
 
 	d "github.com/ianjohnson/requestbench/targets/go/_shared"
 )
@@ -20,6 +21,7 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 		return
 	}
 	w.Header().Set("content-type", "application/json")
+	w.Header().Set("content-length", strconv.Itoa(len(buf)))
 	w.WriteHeader(status)
 	w.Write(buf)
 }
@@ -155,10 +157,24 @@ func main() {
 	post("POST /customers/validate", func(m map[string]any) (any, error) { return d.ValidateCustomer(m) }, 200)
 	post("POST /products/validate", func(m map[string]any) (any, error) { return d.ValidateProduct(m) }, 200)
 	post("POST /echo", func(m map[string]any) (any, error) { return d.Echo(m), nil }, 200)
-	post("POST /orders", func(m map[string]any) (any, error) { return d.ValidateOrder(m) }, 201)
+	mux.HandleFunc("POST /orders", func(w http.ResponseWriter, r *http.Request) {
+		m, err := body(r)
+		if err != nil {
+			fail(w, err)
+			return
+		}
+		v, err := d.ValidateOrder(m)
+		if err != nil {
+			fail(w, err)
+			return
+		}
+		w.Header().Set("location", "/orders/"+strconv.Itoa(d.NextOrderID))
+		writeJSON(w, 201, v)
+	})
 
 	mux.HandleFunc("POST /orders/{oid}/lines", func(w http.ResponseWriter, r *http.Request) {
-		if _, err := d.GetOrder(r.PathValue("oid")); err != nil {
+		o, err := d.GetOrder(r.PathValue("oid"))
+		if err != nil {
 			fail(w, err)
 			return
 		}
@@ -168,6 +184,8 @@ func main() {
 			return
 		}
 		v, err := d.ValidateLine(m)
+		w.Header().Set("location",
+			"/orders/"+r.PathValue("oid")+"/lines/"+strconv.Itoa(len(o.Lines)+1))
 		ok(w, v, err, 201)
 	})
 	mux.HandleFunc("PUT /orders/{oid}", func(w http.ResponseWriter, r *http.Request) {

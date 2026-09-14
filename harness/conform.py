@@ -8,6 +8,50 @@ rather than surfacing later as an unexplained latency difference.
 """
 import json, sys, hashlib, pathlib, argparse, http.client, collections
 
+# What a response has to carry regardless of framework. Latency says nothing about any of
+# it, and frameworks differ more here than anywhere else.
+HEADER_RULES = {
+    201: [("location", "present", "a 201 must say where the thing was created")],
+}
+ALWAYS = [("content-type", "present", "every response must declare its type"),
+          ("content-length", "present", "every response must declare its length")]
+NO_BODY = {204, 304}
+
+
+def header_bytes(headers):
+    """Approximate wire cost: name, colon-space, value, CRLF per header."""
+    return sum(len(k) + len(v) + 4 for k, v in headers)
+
+
+def framing(headers):
+    got = {k.lower(): v for k, v in headers}
+    if "content-length" in got:
+        return "content-length"
+    if "chunked" in got.get("transfer-encoding", ""):
+        return "chunked"
+    return "none"
+
+
+def check_headers(status, headers, body):
+    got = {k.lower(): v for k, v in headers}
+    problems = []
+    for name, rule, why in ALWAYS + HEADER_RULES.get(status, []):
+        if status in NO_BODY and name in ("content-length", "content-type"):
+            continue
+        # Chunked framing declares the length differently; both are valid, and which one a
+        # framework picks is worth recording rather than failing.
+        if name == "content-length" and framing(headers) == "chunked":
+            continue
+        if rule == "present" and name not in got:
+            problems.append("missing %s (%s)" % (name, why))
+    cl = got.get("content-length")
+    if cl is not None and cl.isdigit() and int(cl) != len(body):
+        problems.append("content-length %s but body is %d bytes" % (cl, len(body)))
+    if "content-type" in got and body and body.lstrip()[:1] in (b"{", b"["):
+        if "json" not in got["content-type"]:
+            problems.append("JSON body served as %s" % got["content-type"])
+    return problems
+
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 PLAN = json.loads((ROOT / "spec" / "plan.json").read_text())
 
@@ -29,6 +73,10 @@ def main():
     ap.add_argument("--fingerprint")
     ap.add_argument("--compare")
     ap.add_argument("--quiet", action="store_true")
+    ap.add_argument("--exemplars", metavar="FILE",
+                    help="write one captured request/response pair per endpoint here")
+    ap.add_argument("--skip-headers", action="store_true",
+                    help="do not enforce the response header contract")
     a = ap.parse_args()
 
     host, _, port = a.hostport.partition(":")
@@ -36,6 +84,16 @@ def main():
     ref = json.loads(pathlib.Path(a.compare).read_text()) if a.compare else None
 
     prints, failures, drift, sent = {}, [], [], 0
+    exemplars, header_problems, seen_once = [], [], set()
+
+    meta = {}
+    try:
+        conn.request("GET", "/__meta")
+        r = conn.getresponse()
+        meta = json.loads(r.read())
+    except Exception:
+        conn.close()
+        conn = http.client.HTTPConnection(host, int(port or 80), timeout=15)
     for ep in PLAN["endpoints"]:
         paths = ep["paths"][: a.instances] if a.instances else ep["paths"]
         body = ep.get("body")
@@ -48,10 +106,11 @@ def main():
                 conn.request(ep["method"], path, body=body, headers=headers)
                 r = conn.getresponse()
                 raw, status, ctype = r.read(), r.status, r.headers.get("content-type")
+                hdrs = list(r.headers.items())
             except Exception as e:
                 conn.close()
                 conn = http.client.HTTPConnection(host, int(port or 80), timeout=15)
-                status, raw, ctype = 0, b"", None
+                status, raw, ctype, hdrs = 0, b"", None, []
                 bad = bad or "transport:%s" % type(e).__name__
             sent += 1
             seen[status] += 1
@@ -62,6 +121,28 @@ def main():
             # reference body and every later comparison reports drift that is not real.
             if status == ep["expect"]:
                 prints.setdefault(ep["id"], canonical(raw, ctype))
+                if ep["id"] not in seen_once:
+                    seen_once.add(ep["id"])
+                    if not a.skip_headers:
+                        for msg in check_headers(status, hdrs, raw):
+                            header_problems.append((ep["id"], msg))
+                    exemplars.append({
+                        "endpoint": ep["id"], "family": ep["family"],
+                        "request": {
+                            "method": ep["method"], "path": path,
+                            "headers": sorted(headers.items()),
+                            "body": (body[:2048] if body else None),
+                            "body_bytes": len(body.encode()) if body else 0,
+                        },
+                        "response": {
+                            "status": status, "headers": hdrs,
+                            "header_bytes": header_bytes(hdrs),
+                            "framing": framing(hdrs),
+                            "body_bytes": len(raw),
+                            "body": raw[:2048].decode("utf-8", "replace"),
+                            "truncated": len(raw) > 2048,
+                        },
+                    })
 
         ok = set(seen) == {ep["expect"]}
         if not ok:
@@ -80,11 +161,25 @@ def main():
         print("  FAIL %-18s %s" % (eid, why))
     if drift:
         print("  %d body mismatch(es) vs reference: %s" % (len(drift), ", ".join(drift)))
+    if header_problems:
+        print("  %d response header problem(s):" % len(header_problems))
+        for eid, msg in header_problems[:12]:
+            print("    %-18s %s" % (eid, msg))
+    if a.exemplars:
+        out = pathlib.Path(a.exemplars)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(json.dumps({
+            "framework": meta.get("framework", ""), "version": meta.get("version", ""),
+            "runtime": meta.get("runtime", ""), "blend": PLAN["version"],
+            "endpoints": exemplars,
+        }, indent=1))
+        print("  exemplars -> %s (%d endpoints, %.1f KB)"
+              % (out, len(exemplars), out.stat().st_size / 1024))
     if a.fingerprint:
         pathlib.Path(a.fingerprint).write_text(json.dumps(prints, indent=2, sort_keys=True))
         print("  fingerprints -> %s" % a.fingerprint)
     conn.close()
-    return 1 if failures or drift else 0
+    return 1 if failures or drift or header_problems else 0
 
 if __name__ == "__main__":
     sys.exit(main())

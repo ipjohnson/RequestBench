@@ -86,15 +86,22 @@ function route(req, res, seg, q, body) {
   if (m === "POST") {
     if (n === 1) {
       if (seg[0] === "echo")   return json(res, 200, d.echo(body));
-      if (seg[0] === "orders") return json(res, 201, d.validateOrder(body));
+      if (seg[0] === "orders") {
+        const v = d.validateOrder(body);
+        res.setHeader("location", "/orders/" + d.NEXT_ORDER_ID);
+        return json(res, 201, v);
+      }
     } else if (n === 2) {
       if (seg[0] === "orders"    && seg[1] === "validate") return json(res, 200, d.validateOrder(body));
       if (seg[0] === "customers" && seg[1] === "validate") return json(res, 200, d.validateCustomer(body));
       if (seg[0] === "products"  && seg[1] === "validate") return json(res, 200, d.validateProduct(body));
     } else if (n === 3) {
       if (seg[0] === "orders" && seg[2] === "lines") {
-        if (d.getOrder(seg[1]) === d.NOT_FOUND) return notFound(res);
-        return json(res, 201, d.validateLine(body));
+        const o = d.getOrder(seg[1]);
+        if (o === d.NOT_FOUND) return notFound(res);
+        const line = d.validateLine(body);
+        res.setHeader("location", `/orders/${seg[1]}/lines/${o.lines.length + 1}`);
+        return json(res, 201, line);
       }
     }
     return notFound(res);

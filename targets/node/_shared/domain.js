@@ -29,6 +29,9 @@ for (const c of customers) {
 }
 
 export const NOT_FOUND = Symbol("not_found");
+// The fixture holds orders 1..1000, so a created one is 1001. Synthetic and deterministic,
+// which is all a Location header needs when nothing is persisted.
+export const NEXT_ORDER_ID = orders.length + 1;
 const int = (v) => { const n = Number(v); return Number.isInteger(n) ? n : NaN; };
 
 export const getProduct  = (id) => productById.get(int(id))  ?? NOT_FOUND;

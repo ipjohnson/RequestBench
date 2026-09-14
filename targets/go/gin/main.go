@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"runtime"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	d "github.com/ianjohnson/requestbench/targets/go/_shared"
@@ -113,10 +114,24 @@ func main() {
 	post("/customers/validate", func(m map[string]any) (any, error) { return d.ValidateCustomer(m) }, 200)
 	post("/products/validate", func(m map[string]any) (any, error) { return d.ValidateProduct(m) }, 200)
 	post("/echo", func(m map[string]any) (any, error) { return d.Echo(m), nil }, 200)
-	post("/orders", func(m map[string]any) (any, error) { return d.ValidateOrder(m) }, 201)
+	r.POST("/orders", func(c *gin.Context) {
+		m, err := body(c)
+		if err != nil {
+			fail(c, err)
+			return
+		}
+		v, err := d.ValidateOrder(m)
+		if err != nil {
+			fail(c, err)
+			return
+		}
+		c.Header("location", "/orders/"+strconv.Itoa(d.NextOrderID))
+		c.JSON(201, v)
+	})
 
 	r.POST("/orders/:oid/lines", func(c *gin.Context) {
-		if _, err := d.GetOrder(c.Param("oid")); err != nil {
+		o, err := d.GetOrder(c.Param("oid"))
+		if err != nil {
 			fail(c, err)
 			return
 		}
@@ -126,6 +141,7 @@ func main() {
 			return
 		}
 		v, err := d.ValidateLine(m)
+		c.Header("location", "/orders/"+c.Param("oid")+"/lines/"+strconv.Itoa(len(o.Lines)+1))
 		ok(c, v, err, 201)
 	})
 	r.PUT("/orders/:oid", func(c *gin.Context) {

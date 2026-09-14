@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"runtime"
+	"strconv"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -116,10 +117,22 @@ func main() {
 	post("/customers/validate", func(m map[string]any) (any, error) { return d.ValidateCustomer(m) }, 200)
 	post("/products/validate", func(m map[string]any) (any, error) { return d.ValidateProduct(m) }, 200)
 	post("/echo", func(m map[string]any) (any, error) { return d.Echo(m), nil }, 200)
-	post("/orders", func(m map[string]any) (any, error) { return d.ValidateOrder(m) }, 201)
+	e.POST("/orders", func(c echo.Context) error {
+		m, err := body(c)
+		if err != nil {
+			return err
+		}
+		v, err := d.ValidateOrder(m)
+		if err != nil {
+			return err
+		}
+		c.Response().Header().Set("location", "/orders/"+strconv.Itoa(d.NextOrderID))
+		return c.JSON(201, v)
+	})
 
 	e.POST("/orders/:oid/lines", func(c echo.Context) error {
-		if _, err := d.GetOrder(c.Param("oid")); err != nil {
+		o, err := d.GetOrder(c.Param("oid"))
+		if err != nil {
 			return err
 		}
 		m, err := body(c)
@@ -127,6 +140,8 @@ func main() {
 			return err
 		}
 		v, err := d.ValidateLine(m)
+		c.Response().Header().Set("location",
+			"/orders/"+c.Param("oid")+"/lines/"+strconv.Itoa(len(o.Lines)+1))
 		return send(c, v, err, 201)
 	})
 	e.PUT("/orders/:oid", func(c echo.Context) error {

@@ -48,11 +48,15 @@ app.post("/orders/validate",    (req) => d.validateOrder(req.body));
 app.post("/customers/validate", (req) => d.validateCustomer(req.body));
 app.post("/products/validate",  (req) => d.validateProduct(req.body));
 app.post("/echo",               (req) => d.echo(req.body));
-app.post("/orders", (req, reply) => reply.code(201).send(d.validateOrder(req.body)));
-app.post("/orders/:oid/lines", (req, reply) =>
-  d.getOrder(req.params.oid) === d.NOT_FOUND
-    ? reply.code(404).send({ error: "not_found" })
-    : reply.code(201).send(d.validateLine(req.body)));
+app.post("/orders", (req, reply) =>
+  reply.code(201).header("location", "/orders/" + d.NEXT_ORDER_ID).send(d.validateOrder(req.body)));
+app.post("/orders/:oid/lines", (req, reply) => {
+  const o = d.getOrder(req.params.oid);
+  if (o === d.NOT_FOUND) return reply.code(404).send({ error: "not_found" });
+  return reply.code(201)
+    .header("location", `/orders/${req.params.oid}/lines/${o.lines.length + 1}`)
+    .send(d.validateLine(req.body));
+});
 app.put("/orders/:oid", (req, reply) =>
   d.getOrder(req.params.oid) === d.NOT_FOUND
     ? reply.code(404).send({ error: "not_found" })

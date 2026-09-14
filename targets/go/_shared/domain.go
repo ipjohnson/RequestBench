@@ -70,6 +70,11 @@ var (
 // ErrNotFound is the sentinel every lookup returns; handlers map it to 404.
 var ErrNotFound = errors.New("not_found")
 
+// NextOrderID is the id a created order would get. The fixture holds 1..1000, so it is
+// 1001: synthetic and deterministic, which is all a Location header needs when nothing
+// is persisted. Set by Load.
+var NextOrderID int
+
 func Load(path string) error {
 	raw, err := os.ReadFile(path)
 	if err != nil {
@@ -92,6 +97,7 @@ func Load(path string) error {
 		customerByID[c.ID] = c
 		custsByRegion[c.Region] = append(custsByRegion[c.Region], c)
 	}
+	NextOrderID = len(Orders) + 1
 	orderByID = make(map[int]*Order, len(Orders))
 	ordersByCust = map[int][]*Order{}
 	for i := range Orders {
