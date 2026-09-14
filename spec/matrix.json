@@ -58,7 +58,10 @@
       "anchor": "fastify",
       "implemented": [
         "fastify",
-        "express"
+        "express",
+        "hono",
+        "koa",
+        "h3"
       ]
     },
     "python": {

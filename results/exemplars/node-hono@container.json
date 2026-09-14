@@ -1,6 +1,6 @@
 {
- "framework": "express",
- "version": "5.2.1",
+ "framework": "hono",
+ "version": "4.13.7",
  "runtime": "node 22.16.0",
  "blend": "blend-v1",
  "endpoints": [
@@ -24,7 +24,7 @@
     "headers": [
      [
       "Content-Type",
-      "text/plain; charset=utf-8"
+      "text/plain; charset=UTF-8"
      ],
      [
       "Content-Length",
@@ -32,7 +32,7 @@
      ],
      [
       "Date",
-      "Mon, 14 Sep 2026 11:05:28 GMT"
+      "Mon, 14 Sep 2026 11:05:30 GMT"
      ],
      [
       "Connection",
@@ -70,7 +70,7 @@
     "headers": [
      [
       "Content-Type",
-      "text/plain; charset=utf-8"
+      "text/plain; charset=UTF-8"
      ],
      [
       "Content-Length",
@@ -78,7 +78,7 @@
      ],
      [
       "Date",
-      "Mon, 14 Sep 2026 11:05:28 GMT"
+      "Mon, 14 Sep 2026 11:05:30 GMT"
      ],
      [
       "Connection",
@@ -116,7 +116,7 @@
     "headers": [
      [
       "Content-Type",
-      "application/json; charset=utf-8"
+      "application/json"
      ],
      [
       "Content-Length",
@@ -124,7 +124,7 @@
      ],
      [
       "Date",
-      "Mon, 14 Sep 2026 11:05:28 GMT"
+      "Mon, 14 Sep 2026 11:05:30 GMT"
      ],
      [
       "Connection",
@@ -135,7 +135,7 @@
       "timeout=5"
      ]
     ],
-    "header_bytes": 151,
+    "header_bytes": 136,
     "framing": "content-length",
     "body_bytes": 27,
     "body": "{\"message\":\"Hello, World!\"}",
@@ -162,7 +162,7 @@
     "headers": [
      [
       "Content-Type",
-      "application/json; charset=utf-8"
+      "application/json"
      ],
      [
       "Content-Length",
@@ -170,7 +170,7 @@
      ],
      [
       "Date",
-      "Mon, 14 Sep 2026 11:05:28 GMT"
+      "Mon, 14 Sep 2026 11:05:30 GMT"
      ],
      [
       "Connection",
@@ -181,7 +181,7 @@
       "timeout=5"
      ]
     ],
-    "header_bytes": 151,
+    "header_bytes": 136,
     "framing": "content-length",
     "body_bytes": 90,
     "body": "{\"category\":\"outdoor\",\"id\":48,\"in_stock\":true,\"name\":\"steel-hinge-48\",\"price_cents\":10185}",
@@ -208,7 +208,7 @@
     "headers": [
      [
       "Content-Type",
-      "application/json; charset=utf-8"
+      "application/json"
      ],
      [
       "Content-Length",
@@ -216,7 +216,7 @@
      ],
      [
       "Date",
-      "Mon, 14 Sep 2026 11:05:28 GMT"
+      "Mon, 14 Sep 2026 11:05:30 GMT"
      ],
      [
       "Connection",
@@ -227,7 +227,7 @@
       "timeout=5"
      ]
     ],
-    "header_bytes": 152,
+    "header_bytes": 137,
     "framing": "content-length",
     "body_bytes": 103,
     "body": "{\"created\":\"2025-08-28\",\"email\":\"user55@example.invalid\",\"id\":55,\"name\":\"ada lovelace\",\"region\":\"west\"}",
@@ -254,7 +254,7 @@
     "headers": [
      [
       "Content-Type",
-      "application/json; charset=utf-8"
+      "application/json"
      ],
      [
       "Content-Length",
@@ -262,7 +262,7 @@
      ],
      [
       "Date",
-      "Mon, 14 Sep 2026 11:05:28 GMT"
+      "Mon, 14 Sep 2026 11:05:30 GMT"
      ],
      [
       "Connection",
@@ -273,7 +273,7 @@
       "timeout=5"
      ]
     ],
-    "header_bytes": 152,
+    "header_bytes": 137,
     "framing": "content-length",
     "body_bytes": 738,
     "body": "{\"created\":\"2026-05-04\",\"customer_id\":182,\"id\":283,\"lines\":[{\"id\":1,\"product_id\":7,\"qty\":3,\"total_cents\":21210,\"unit_cents\":7070},{\"id\":2,\"product_id\":30,\"qty\":4,\"total_cents\":3124,\"unit_cents\":781},{\"id\":3,\"product_id\":35,\"qty\":2,\"total_cents\":2586,\"unit_cents\":1293},{\"id\":4,\"product_id\":46,\"qty\":5,\"total_cents\":81165,\"unit_cents\":16233},{\"id\":5,\"product_id\":18,\"qty\":1,\"total_cents\":12547,\"unit_cents\":12547},{\"id\":6,\"product_id\":8,\"qty\":4,\"total_cents\":46532,\"unit_cents\":11633},{\"id\":7,\"product_id\":17,\"qty\":4,\"total_cents\":18104,\"unit_cents\":4526},{\"id\":8,\"product_id\":6,\"qty\":5,\"total_cents\":52170,\"unit_cents\":10434},{\"id\":9,\"product_id\":9,\"qty\":1,\"total_cents\":1709,\"unit_cents\":1709}],\"status\":\"cancelled\",\"total_cents\":239147}",
@@ -300,7 +300,7 @@
     "headers": [
      [
       "Content-Type",
-      "application/json; charset=utf-8"
+      "application/json"
      ],
      [
       "Content-Length",
@@ -308,7 +308,7 @@
      ],
      [
       "Date",
-      "Mon, 14 Sep 2026 11:05:28 GMT"
+      "Mon, 14 Sep 2026 11:05:30 GMT"
      ],
      [
       "Connection",
@@ -319,7 +319,7 @@
       "timeout=5"
      ]
     ],
-    "header_bytes": 153,
+    "header_bytes": 138,
     "framing": "content-length",
     "body_bytes": 4450,
     "body": "{\"total\":50,\"items\":[{\"category\":\"garden\",\"id\":1,\"in_stock\":true,\"name\":\"copper-pan-1\",\"price_cents\":7825},{\"category\":\"kitchen\",\"id\":2,\"in_stock\":true,\"name\":\"cedar-trowel-2\",\"price_cents\":13976},{\"category\":\"outdoor\",\"id\":3,\"in_stock\":true,\"name\":\"cedar-trowel-3\",\"price_cents\":7045},{\"category\":\"office\",\"id\":4,\"in_stock\":true,\"name\":\"oak-seed-4\",\"price_cents\":2060},{\"category\":\"tools\",\"id\":5,\"in_stock\":true,\"name\":\"oak-trowel-5\",\"price_cents\":16283},{\"category\":\"garden\",\"id\":6,\"in_stock\":true,\"name\":\"linen-bolt-6\",\"price_cents\":10434},{\"category\":\"kitchen\",\"id\":7,\"in_stock\":true,\"name\":\"steel-lamp-7\",\"price_cents\":7070},{\"category\":\"outdoor\",\"id\":8,\"in_stock\":true,\"name\":\"brass-desk-8\",\"price_cents\":11633},{\"category\":\"office\",\"id\":9,\"in_stock\":true,\"name\":\"amber-hinge-9\",\"price_cents\":1709},{\"category\":\"tools\",\"id\":10,\"in_stock\":true,\"name\":\"oak-desk-10\",\"price_cents\":613},{\"category\":\"garden\",\"id\":11,\"in_stock\":false,\"name\":\"amber-seed-11\",\"price_cents\":11314},{\"category\":\"kitchen\",\"id\":12,\"in_stock\":true,\"name\":\"steel-hinge-12\",\"price_cents\":2863},{\"category\":\"outdoor\",\"id\":13,\"in_stock\":true,\"name\":\"brass-seed-13\",\"price_cents\":10012},{\"category\":\"office\",\"id\":14,\"in_stock\":true,\"name\":\"oak-trowel-14\",\"price_cents\":2192},{\"category\":\"tools\",\"id\":15,\"in_stock\":false,\"name\":\"linen-bolt-15\",\"price_cents\":18858},{\"category\":\"garden\",\"id\":16,\"in_stock\":false,\"name\":\"steel-bolt-16\",\"price_cents\":18199},{\"category\":\"kitchen\",\"id\":17,\"in_stock\":true,\"name\":\"amber-bolt-17\",\"price_cents\":4526},{\"category\":\"outdoor\",\"id\":18,\"in_stock\":true,\"name\":\"copper-trowel-18\",\"price_cents\":12547},{\"category\":\"office\",\"id\":19,\"in_stock\":true,\"name\":\"steel-lamp-19\",\"price_cents\":931},{\"category\":\"tools\",\"id\":20,\"in_stock\":false,\"name\":\"brass-desk-20\",\"price_cents\":335},{\"category\":\"garden\",\"id\":21,\"in_stock\":true,\"name\":\"steel-bolt-21\",\"price_cents\":17323},{\"category\":\"kitchen\",\"id\":22,\"in_stock\":true,\"name\":\"oak-ring-22\",\"price_cents\":3562},{\"category\":\"outdoor\",\"id\":23,\"in_stock\":true,\"name\":\"amber-trowel-23\",\"price_cents\":6663}",
@@ -346,7 +346,7 @@
     "headers": [
      [
       "Content-Type",
-      "application/json; charset=utf-8"
+      "application/json"
      ],
      [
       "Content-Length",
@@ -354,7 +354,7 @@
      ],
      [
       "Date",
-      "Mon, 14 Sep 2026 11:05:28 GMT"
+      "Mon, 14 Sep 2026 11:05:30 GMT"
      ],
      [
       "Connection",
@@ -365,7 +365,7 @@
       "timeout=5"
      ]
     ],
-    "header_bytes": 152,
+    "header_bytes": 137,
     "framing": "content-length",
     "body_bytes": 427,
     "body": "[{\"id\":1,\"product_id\":36,\"qty\":5,\"total_cents\":75670,\"unit_cents\":15134},{\"id\":2,\"product_id\":3,\"qty\":3,\"total_cents\":21135,\"unit_cents\":7045},{\"id\":3,\"product_id\":37,\"qty\":3,\"total_cents\":50721,\"unit_cents\":16907},{\"id\":4,\"product_id\":4,\"qty\":1,\"total_cents\":2060,\"unit_cents\":2060},{\"id\":5,\"product_id\":21,\"qty\":4,\"total_cents\":69292,\"unit_cents\":17323},{\"id\":6,\"product_id\":26,\"qty\":3,\"total_cents\":22062,\"unit_cents\":7354}]",
@@ -396,7 +396,7 @@
     "headers": [
      [
       "Content-Type",
-      "application/json; charset=utf-8"
+      "application/json"
      ],
      [
       "Content-Length",
@@ -404,7 +404,7 @@
      ],
      [
       "Date",
-      "Mon, 14 Sep 2026 11:05:28 GMT"
+      "Mon, 14 Sep 2026 11:05:30 GMT"
      ],
      [
       "Connection",
@@ -415,7 +415,7 @@
       "timeout=5"
      ]
     ],
-    "header_bytes": 152,
+    "header_bytes": 137,
     "framing": "content-length",
     "body_bytes": 202,
     "body": "{\"customer_id\":1,\"status\":\"open\",\"lines\":[{\"id\":1,\"product_id\":3,\"qty\":2,\"unit_cents\":7045,\"total_cents\":14090},{\"id\":2,\"product_id\":7,\"qty\":1,\"unit_cents\":7070,\"total_cents\":7070}],\"total_cents\":21160}",
@@ -446,7 +446,7 @@
     "headers": [
      [
       "Content-Type",
-      "application/json; charset=utf-8"
+      "application/json"
      ],
      [
       "Content-Length",
@@ -454,7 +454,7 @@
      ],
      [
       "Date",
-      "Mon, 14 Sep 2026 11:05:28 GMT"
+      "Mon, 14 Sep 2026 11:05:30 GMT"
      ],
      [
       "Connection",
@@ -465,7 +465,7 @@
       "timeout=5"
      ]
     ],
-    "header_bytes": 151,
+    "header_bytes": 136,
     "framing": "content-length",
     "body_bytes": 70,
     "body": "{\"name\":\"Ada Lovelace\",\"email\":\"ada@example.invalid\",\"region\":\"north\"}",
@@ -496,7 +496,7 @@
     "headers": [
      [
       "Content-Type",
-      "application/json; charset=utf-8"
+      "application/json"
      ],
      [
       "Content-Length",
@@ -504,7 +504,7 @@
      ],
      [
       "Date",
-      "Mon, 14 Sep 2026 11:05:28 GMT"
+      "Mon, 14 Sep 2026 11:05:30 GMT"
      ],
      [
       "Connection",
@@ -515,7 +515,7 @@
       "timeout=5"
      ]
     ],
-    "header_bytes": 151,
+    "header_bytes": 136,
     "framing": "content-length",
     "body_bytes": 62,
     "body": "{\"name\":\"brass-ring-99\",\"category\":\"tools\",\"price_cents\":1299}",
@@ -546,7 +546,7 @@
     "headers": [
      [
       "Content-Type",
-      "application/json; charset=utf-8"
+      "application/json"
      ],
      [
       "Content-Length",
@@ -554,7 +554,7 @@
      ],
      [
       "Date",
-      "Mon, 14 Sep 2026 11:05:28 GMT"
+      "Mon, 14 Sep 2026 11:05:30 GMT"
      ],
      [
       "Connection",
@@ -565,7 +565,7 @@
       "timeout=5"
      ]
     ],
-    "header_bytes": 152,
+    "header_bytes": 137,
     "framing": "content-length",
     "body_bytes": 152,
     "body": "{\"error\":\"validation_failed\",\"errors\":[{\"field\":\"customer_id\",\"rule\":\"int\"},{\"field\":\"status\",\"rule\":\"required\"},{\"field\":\"lines\",\"rule\":\"min_length\"}]}",
@@ -596,7 +596,7 @@
     "headers": [
      [
       "Content-Type",
-      "application/json; charset=utf-8"
+      "application/json"
      ],
      [
       "Content-Length",
@@ -604,7 +604,7 @@
      ],
      [
       "Date",
-      "Mon, 14 Sep 2026 11:05:28 GMT"
+      "Mon, 14 Sep 2026 11:05:30 GMT"
      ],
      [
       "Connection",
@@ -615,7 +615,7 @@
       "timeout=5"
      ]
     ],
-    "header_bytes": 152,
+    "header_bytes": 137,
     "framing": "content-length",
     "body_bytes": 401,
     "body": "{\"received\":{\"pad\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\",\"n\":1},\"bytes\":376}",
@@ -646,7 +646,7 @@
     "headers": [
      [
       "Content-Type",
-      "application/json; charset=utf-8"
+      "application/json"
      ],
      [
       "Content-Length",
@@ -654,7 +654,7 @@
      ],
      [
       "Date",
-      "Mon, 14 Sep 2026 11:05:28 GMT"
+      "Mon, 14 Sep 2026 11:05:30 GMT"
      ],
      [
       "Connection",
@@ -665,7 +665,7 @@
       "timeout=5"
      ]
     ],
-    "header_bytes": 154,
+    "header_bytes": 139,
     "framing": "content-length",
     "body_bytes": 32243,
     "body": "{\"received\":{\"pad\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
@@ -692,7 +692,7 @@
     "headers": [
      [
       "Content-Type",
-      "application/json; charset=utf-8"
+      "application/json"
      ],
      [
       "Content-Length",
@@ -700,7 +700,7 @@
      ],
      [
       "Date",
-      "Mon, 14 Sep 2026 11:05:28 GMT"
+      "Mon, 14 Sep 2026 11:05:30 GMT"
      ],
      [
       "Connection",
@@ -711,7 +711,7 @@
       "timeout=5"
      ]
     ],
-    "header_bytes": 153,
+    "header_bytes": 138,
     "framing": "content-length",
     "body_bytes": 2074,
     "body": "[{\"created\":\"2026-04-03\",\"customer_id\":11,\"id\":30,\"lines\":[{\"id\":1,\"product_id\":29,\"qty\":4,\"total_cents\":43628,\"unit_cents\":10907},{\"id\":2,\"product_id\":44,\"qty\":4,\"total_cents\":35296,\"unit_cents\":8824},{\"id\":3,\"product_id\":13,\"qty\":2,\"total_cents\":20024,\"unit_cents\":10012},{\"id\":4,\"product_id\":45,\"qty\":2,\"total_cents\":31000,\"unit_cents\":15500},{\"id\":5,\"product_id\":15,\"qty\":1,\"total_cents\":18858,\"unit_cents\":18858},{\"id\":6,\"product_id\":8,\"qty\":2,\"total_cents\":23266,\"unit_cents\":11633}],\"status\":\"shipped\",\"total_cents\":172072},{\"created\":\"2026-06-07\",\"customer_id\":11,\"id\":230,\"lines\":[{\"id\":1,\"product_id\":50,\"qty\":1,\"total_cents\":3094,\"unit_cents\":3094},{\"id\":2,\"product_id\":32,\"qty\":3,\"total_cents\":37230,\"unit_cents\":12410},{\"id\":3,\"product_id\":42,\"qty\":5,\"total_cents\":46820,\"unit_cents\":9364},{\"id\":4,\"product_id\":41,\"qty\":1,\"total_cents\":1517,\"unit_cents\":1517},{\"id\":5,\"product_id\":42,\"qty\":1,\"total_cents\":9364,\"unit_cents\":9364}],\"status\":\"shipped\",\"total_cents\":98025},{\"created\":\"2026-08-11\",\"customer_id\":11,\"id\":430,\"lines\":[{\"id\":1,\"product_id\":49,\"qty\":5,\"total_cents\":66535,\"unit_cents\":13307},{\"id\":2,\"product_id\":33,\"qty\":1,\"total_cents\":5208,\"unit_cents\":5208},{\"id\":3,\"product_id\":23,\"qty\":3,\"total_cents\":19989,\"unit_cents\":6663},{\"id\":4,\"product_id\":18,\"qty\":3,\"total_cents\":37641,\"unit_cents\":12547},{\"id\":5,\"product_id\":37,\"qty\":2,\"total_cents\":33814,\"unit_cents\":16907},{\"id\":6,\"product_id\":11,\"qty\":5,\"total_cents\":56570,\"unit_cents\":11314},{\"id\":7,\"product_id\":2,\"qty\":1,\"total_cents\":13976,\"unit_cents\":13976}],\"status\":\"shipped\",\"total_cents\":233733},{\"created\":\"2026-01-15\",\"customer_id\":11,\"id\":630,\"lines\":[{\"id\":1,\"product_id\":13,\"qty\":1,\"total_cents\":10012,\"unit_cents\":10012}],\"status\":\"shipped\",\"total_cents\":10012},{\"created\":\"2026-03-19\",\"customer_id\":11,\"id\":830,\"lines\":[{\"id\":1,\"product_id\":18,\"qty\":1,\"total_cents\":12547,\"unit_cents\":12547},{\"id\":2,\"product_id\":18,\"qty\":5,\"total_cents\":62735,\"unit_cents\":12547},{\"id\":3,\"product_id\":34,\"qty\":2,\"total_cents\":33254,\"unit_cents\":16627}],\"status\":\"shipp",
@@ -738,7 +738,7 @@
     "headers": [
      [
       "Content-Type",
-      "application/json; charset=utf-8"
+      "application/json"
      ],
      [
       "Content-Length",
@@ -746,7 +746,7 @@
      ],
      [
       "Date",
-      "Mon, 14 Sep 2026 11:05:28 GMT"
+      "Mon, 14 Sep 2026 11:05:30 GMT"
      ],
      [
       "Connection",
@@ -757,7 +757,7 @@
       "timeout=5"
      ]
     ],
-    "header_bytes": 152,
+    "header_bytes": 137,
     "framing": "content-length",
     "body_bytes": 240,
     "body": "{\"created\":\"2026-06-20\",\"customer_id\":10,\"id\":887,\"lines\":[{\"id\":1,\"product_id\":10,\"qty\":4,\"total_cents\":2452,\"unit_cents\":613},{\"id\":2,\"product_id\":47,\"qty\":3,\"total_cents\":9858,\"unit_cents\":3286}],\"status\":\"cancelled\",\"total_cents\":12310}",
@@ -784,7 +784,7 @@
     "headers": [
      [
       "Content-Type",
-      "application/json; charset=utf-8"
+      "application/json"
      ],
      [
       "Content-Length",
@@ -792,7 +792,7 @@
      ],
      [
       "Date",
-      "Mon, 14 Sep 2026 11:05:28 GMT"
+      "Mon, 14 Sep 2026 11:05:30 GMT"
      ],
      [
       "Connection",
@@ -803,7 +803,7 @@
       "timeout=5"
      ]
     ],
-    "header_bytes": 151,
+    "header_bytes": 136,
     "framing": "content-length",
     "body_bytes": 73,
     "body": "[{\"body\":\"linen ring, would buy again\",\"id\":1,\"product_id\":45,\"stars\":4}]",
@@ -830,7 +830,7 @@
     "headers": [
      [
       "Content-Type",
-      "application/json; charset=utf-8"
+      "application/json"
      ],
      [
       "Content-Length",
@@ -838,7 +838,7 @@
      ],
      [
       "Date",
-      "Mon, 14 Sep 2026 11:05:28 GMT"
+      "Mon, 14 Sep 2026 11:05:30 GMT"
      ],
      [
       "Connection",
@@ -849,7 +849,7 @@
       "timeout=5"
      ]
     ],
-    "header_bytes": 153,
+    "header_bytes": 138,
     "framing": "content-length",
     "body_bytes": 5373,
     "body": "[{\"created\":\"2025-02-02\",\"email\":\"user1@example.invalid\",\"id\":1,\"name\":\"ada liskov\",\"region\":\"south\"},{\"created\":\"2025-06-06\",\"email\":\"user5@example.invalid\",\"id\":5,\"name\":\"margaret hamilton\",\"region\":\"south\"},{\"created\":\"2025-10-10\",\"email\":\"user9@example.invalid\",\"id\":9,\"name\":\"edsger hopper\",\"region\":\"south\"},{\"created\":\"2025-02-14\",\"email\":\"user13@example.invalid\",\"id\":13,\"name\":\"edsger thompson\",\"region\":\"south\"},{\"created\":\"2025-06-18\",\"email\":\"user17@example.invalid\",\"id\":17,\"name\":\"barbara torvalds\",\"region\":\"south\"},{\"created\":\"2025-10-22\",\"email\":\"user21@example.invalid\",\"id\":21,\"name\":\"alan thompson\",\"region\":\"south\"},{\"created\":\"2025-02-26\",\"email\":\"user25@example.invalid\",\"id\":25,\"name\":\"barbara thompson\",\"region\":\"south\"},{\"created\":\"2025-06-02\",\"email\":\"user29@example.invalid\",\"id\":29,\"name\":\"linus liskov\",\"region\":\"south\"},{\"created\":\"2025-10-06\",\"email\":\"user33@example.invalid\",\"id\":33,\"name\":\"ada liskov\",\"region\":\"south\"},{\"created\":\"2025-02-10\",\"email\":\"user37@example.invalid\",\"id\":37,\"name\":\"barbara liskov\",\"region\":\"south\"},{\"created\":\"2025-06-14\",\"email\":\"user41@example.invalid\",\"id\":41,\"name\":\"ken hopper\",\"region\":\"south\"},{\"created\":\"2025-10-18\",\"email\":\"user45@example.invalid\",\"id\":45,\"name\":\"ken hamilton\",\"region\":\"south\"},{\"created\":\"2025-02-22\",\"email\":\"user49@example.invalid\",\"id\":49,\"name\":\"alan torvalds\",\"region\":\"south\"},{\"created\":\"2025-06-26\",\"email\":\"user53@example.invalid\",\"id\":53,\"name\":\"alan thompson\",\"region\":\"south\"},{\"created\":\"2025-10-02\",\"email\":\"user57@example.invalid\",\"id\":57,\"name\":\"ada dijkstra\",\"region\":\"south\"},{\"created\":\"2025-02-06\",\"email\":\"user61@example.invalid\",\"id\":61,\"name\":\"grace lovelace\",\"region\":\"south\"},{\"created\":\"2025-06-10\",\"email\":\"user65@example.invalid\",\"id\":65,\"name\":\"margaret liskov\",\"region\":\"south\"},{\"created\":\"2025-10-14\",\"email\":\"user69@example.invalid\",\"id\":69,\"name\":\"grace lovelace\",\"region\":\"south\"},{\"created\":\"2025-02-18\",\"email\":\"user73@example.invalid\",\"id\":73,\"name\":\"grace torvalds\",\"region\":\"south\"},{\"created\":\"2025-06-22\",\"email\":\"",
@@ -876,7 +876,7 @@
     "headers": [
      [
       "Content-Type",
-      "application/json; charset=utf-8"
+      "application/json"
      ],
      [
       "Content-Length",
@@ -884,7 +884,7 @@
      ],
      [
       "Date",
-      "Mon, 14 Sep 2026 11:05:28 GMT"
+      "Mon, 14 Sep 2026 11:05:30 GMT"
      ],
      [
       "Connection",
@@ -895,7 +895,7 @@
       "timeout=5"
      ]
     ],
-    "header_bytes": 151,
+    "header_bytes": 136,
     "framing": "content-length",
     "body_bytes": 71,
     "body": "{\"id\":6,\"product_id\":16,\"qty\":1,\"total_cents\":18199,\"unit_cents\":18199}",
@@ -922,7 +922,7 @@
     "headers": [
      [
       "Content-Type",
-      "application/json; charset=utf-8"
+      "application/json"
      ],
      [
       "Content-Length",
@@ -930,7 +930,7 @@
      ],
      [
       "Date",
-      "Mon, 14 Sep 2026 11:05:28 GMT"
+      "Mon, 14 Sep 2026 11:05:30 GMT"
      ],
      [
       "Connection",
@@ -941,7 +941,7 @@
       "timeout=5"
      ]
     ],
-    "header_bytes": 151,
+    "header_bytes": 136,
     "framing": "content-length",
     "body_bytes": 68,
     "body": "{\"id\":3,\"product_id\":9,\"qty\":4,\"total_cents\":6836,\"unit_cents\":1709}",
@@ -968,7 +968,7 @@
     "headers": [
      [
       "Content-Type",
-      "application/json; charset=utf-8"
+      "application/json"
      ],
      [
       "Content-Length",
@@ -976,7 +976,7 @@
      ],
      [
       "Date",
-      "Mon, 14 Sep 2026 11:05:28 GMT"
+      "Mon, 14 Sep 2026 11:05:30 GMT"
      ],
      [
       "Connection",
@@ -987,7 +987,7 @@
       "timeout=5"
      ]
     ],
-    "header_bytes": 154,
+    "header_bytes": 139,
     "framing": "content-length",
     "body_bytes": 23628,
     "body": "{\"page\":8,\"size\":50,\"total\":1000,\"items\":[{\"created\":\"2026-06-10\",\"customer_id\":8,\"id\":401,\"lines\":[{\"id\":1,\"product_id\":26,\"qty\":1,\"total_cents\":7354,\"unit_cents\":7354},{\"id\":2,\"product_id\":14,\"qty\":5,\"total_cents\":10960,\"unit_cents\":2192},{\"id\":3,\"product_id\":35,\"qty\":1,\"total_cents\":1293,\"unit_cents\":1293},{\"id\":4,\"product_id\":48,\"qty\":1,\"total_cents\":10185,\"unit_cents\":10185},{\"id\":5,\"product_id\":47,\"qty\":5,\"total_cents\":16430,\"unit_cents\":3286}],\"status\":\"paid\",\"total_cents\":46222},{\"created\":\"2026-07-11\",\"customer_id\":15,\"id\":402,\"lines\":[{\"id\":1,\"product_id\":47,\"qty\":1,\"total_cents\":3286,\"unit_cents\":3286},{\"id\":2,\"product_id\":48,\"qty\":2,\"total_cents\":20370,\"unit_cents\":10185},{\"id\":3,\"product_id\":27,\"qty\":2,\"total_cents\":32404,\"unit_cents\":16202},{\"id\":4,\"product_id\":49,\"qty\":4,\"total_cents\":53228,\"unit_cents\":13307},{\"id\":5,\"product_id\":35,\"qty\":5,\"total_cents\":6465,\"unit_cents\":1293},{\"id\":6,\"product_id\":37,\"qty\":4,\"total_cents\":67628,\"unit_cents\":16907},{\"id\":7,\"product_id\":38,\"qty\":5,\"total_cents\":24380,\"unit_cents\":4876},{\"id\":8,\"product_id\":40,\"qty\":1,\"total_cents\":15468,\"unit_cents\":15468}],\"status\":\"shipped\",\"total_cents\":223229},{\"created\":\"2026-08-12\",\"customer_id\":22,\"id\":403,\"lines\":[{\"id\":1,\"product_id\":41,\"qty\":5,\"total_cents\":7585,\"unit_cents\":1517},{\"id\":2,\"product_id\":4,\"qty\":1,\"total_cents\":2060,\"unit_cents\":2060},{\"id\":3,\"product_id\":50,\"qty\":1,\"total_cents\":3094,\"unit_cents\":3094},{\"id\":4,\"product_id\":14,\"qty\":4,\"total_cents\":8768,\"unit_cents\":2192},{\"id\":5,\"product_id\":37,\"qty\":3,\"total_cents\":50721,\"unit_cents\":16907}],\"status\":\"cancelled\",\"total_cents\":72228},{\"created\":\"2026-09-13\",\"customer_id\":29,\"id\":404,\"lines\":[{\"id\":1,\"product_id\":29,\"qty\":4,\"total_cents\":43628,\"unit_cents\":10907},{\"id\":2,\"product_id\":2,\"qty\":5,\"total_cents\":69880,\"unit_cents\":13976},{\"id\":3,\"product_id\":30,\"qty\":1,\"total_cents\":781,\"unit_cents\":781},{\"id\":4,\"product_id\":38,\"qty\":4,\"total_cents\":19504,\"unit_cents\":4876},{\"id\":5,\"product_id\":37,\"qty\":1,\"total_cents\":16907,\"unit_cents\":16907},{\"id\":6,\"product_i",
@@ -1014,7 +1014,7 @@
     "headers": [
      [
       "Content-Type",
-      "application/json; charset=utf-8"
+      "application/json"
      ],
      [
       "Content-Length",
@@ -1022,7 +1022,7 @@
      ],
      [
       "Date",
-      "Mon, 14 Sep 2026 11:05:28 GMT"
+      "Mon, 14 Sep 2026 11:05:30 GMT"
      ],
      [
       "Connection",
@@ -1033,7 +1033,7 @@
       "timeout=5"
      ]
     ],
-    "header_bytes": 152,
+    "header_bytes": 137,
     "framing": "content-length",
     "body_bytes": 920,
     "body": "{\"total\":10,\"items\":[{\"category\":\"outdoor\",\"id\":3,\"in_stock\":true,\"name\":\"cedar-trowel-3\",\"price_cents\":7045},{\"category\":\"outdoor\",\"id\":8,\"in_stock\":true,\"name\":\"brass-desk-8\",\"price_cents\":11633},{\"category\":\"outdoor\",\"id\":13,\"in_stock\":true,\"name\":\"brass-seed-13\",\"price_cents\":10012},{\"category\":\"outdoor\",\"id\":18,\"in_stock\":true,\"name\":\"copper-trowel-18\",\"price_cents\":12547},{\"category\":\"outdoor\",\"id\":23,\"in_stock\":true,\"name\":\"amber-trowel-23\",\"price_cents\":6663},{\"category\":\"outdoor\",\"id\":28,\"in_stock\":true,\"name\":\"amber-lamp-28\",\"price_cents\":14321},{\"category\":\"outdoor\",\"id\":33,\"in_stock\":true,\"name\":\"linen-lamp-33\",\"price_cents\":5208},{\"category\":\"outdoor\",\"id\":38,\"in_stock\":true,\"name\":\"oak-lamp-38\",\"price_cents\":4876},{\"category\":\"outdoor\",\"id\":43,\"in_stock\":true,\"name\":\"amber-desk-43\",\"price_cents\":13259},{\"category\":\"outdoor\",\"id\":48,\"in_stock\":true,\"name\":\"steel-hinge-48\",\"price_cents\":10185}]}",
@@ -1060,7 +1060,7 @@
     "headers": [
      [
       "Content-Type",
-      "application/json; charset=utf-8"
+      "application/json"
      ],
      [
       "Content-Length",
@@ -1068,7 +1068,7 @@
      ],
      [
       "Date",
-      "Mon, 14 Sep 2026 11:05:28 GMT"
+      "Mon, 14 Sep 2026 11:05:30 GMT"
      ],
      [
       "Connection",
@@ -1079,7 +1079,7 @@
       "timeout=5"
      ]
     ],
-    "header_bytes": 151,
+    "header_bytes": 136,
     "framing": "content-length",
     "body_bytes": 36,
     "body": "{\"total\":0,\"sort\":\"name\",\"items\":[]}",
@@ -1106,7 +1106,7 @@
     "headers": [
      [
       "Content-Type",
-      "application/json; charset=utf-8"
+      "application/json"
      ],
      [
       "Content-Length",
@@ -1114,7 +1114,7 @@
      ],
      [
       "Date",
-      "Mon, 14 Sep 2026 11:05:28 GMT"
+      "Mon, 14 Sep 2026 11:05:30 GMT"
      ],
      [
       "Connection",
@@ -1125,7 +1125,7 @@
       "timeout=5"
      ]
     ],
-    "header_bytes": 151,
+    "header_bytes": 136,
     "framing": "content-length",
     "body_bytes": 43,
     "body": "{\"page\":7,\"size\":50,\"total\":250,\"items\":[]}",
@@ -1152,7 +1152,7 @@
     "headers": [
      [
       "Content-Type",
-      "application/json; charset=utf-8"
+      "application/json"
      ],
      [
       "Content-Length",
@@ -1160,7 +1160,7 @@
      ],
      [
       "Date",
-      "Mon, 14 Sep 2026 11:05:28 GMT"
+      "Mon, 14 Sep 2026 11:05:30 GMT"
      ],
      [
       "Connection",
@@ -1171,7 +1171,7 @@
       "timeout=5"
      ]
     ],
-    "header_bytes": 152,
+    "header_bytes": 137,
     "framing": "content-length",
     "body_bytes": 612,
     "body": "{\"term\":\"seed\",\"limit\":25,\"offset\":1,\"sort\":\"price_cents\",\"total\":7,\"items\":[{\"category\":\"office\",\"id\":4,\"in_stock\":true,\"name\":\"oak-seed-4\",\"price_cents\":2060},{\"category\":\"outdoor\",\"id\":13,\"in_stock\":true,\"name\":\"brass-seed-13\",\"price_cents\":10012},{\"category\":\"garden\",\"id\":11,\"in_stock\":false,\"name\":\"amber-seed-11\",\"price_cents\":11314},{\"category\":\"kitchen\",\"id\":32,\"in_stock\":false,\"name\":\"slate-seed-32\",\"price_cents\":12410},{\"category\":\"office\",\"id\":24,\"in_stock\":true,\"name\":\"brass-seed-24\",\"price_cents\":14955},{\"category\":\"kitchen\",\"id\":27,\"in_stock\":true,\"name\":\"steel-seed-27\",\"price_cents\":16202}]}",
@@ -1198,7 +1198,7 @@
     "headers": [
      [
       "Content-Type",
-      "application/json; charset=utf-8"
+      "application/json"
      ],
      [
       "Content-Length",
@@ -1206,7 +1206,7 @@
      ],
      [
       "Date",
-      "Mon, 14 Sep 2026 11:05:28 GMT"
+      "Mon, 14 Sep 2026 11:05:30 GMT"
      ],
      [
       "Connection",
@@ -1217,7 +1217,7 @@
       "timeout=5"
      ]
     ],
-    "header_bytes": 152,
+    "header_bytes": 137,
     "framing": "content-length",
     "body_bytes": 472,
     "body": "{\"customer\":{\"created\":\"2025-12-04\",\"email\":\"user143@example.invalid\",\"id\":143,\"name\":\"margaret dijkstra\",\"region\":\"west\"},\"order_count\":5,\"lifetime_cents\":638186,\"by_status\":{\"shipped\":5},\"recent\":[{\"id\":106,\"created\":\"2026-08-23\",\"total_cents\":126597},{\"id\":306,\"created\":\"2026-01-27\",\"total_cents\":51436},{\"id\":506,\"created\":\"2026-03-03\",\"total_cents\":229065},{\"id\":706,\"created\":\"2026-05-07\",\"total_cents\":1675},{\"id\":906,\"created\":\"2026-07-11\",\"total_cents\":229413}]}",
@@ -1244,7 +1244,7 @@
     "headers": [
      [
       "Content-Type",
-      "application/json; charset=utf-8"
+      "application/json"
      ],
      [
       "Content-Length",
@@ -1252,7 +1252,7 @@
      ],
      [
       "Date",
-      "Mon, 14 Sep 2026 11:05:28 GMT"
+      "Mon, 14 Sep 2026 11:05:30 GMT"
      ],
      [
       "Connection",
@@ -1263,7 +1263,7 @@
       "timeout=5"
      ]
     ],
-    "header_bytes": 152,
+    "header_bytes": 137,
     "framing": "content-length",
     "body_bytes": 713,
     "body": "{\"created\":\"2026-09-09\",\"customer_id\":57,\"id\":8,\"lines\":[{\"id\":1,\"product_id\":35,\"qty\":4,\"total_cents\":5172,\"unit_cents\":1293,\"product\":{\"category\":\"tools\",\"id\":35,\"in_stock\":true,\"name\":\"slate-hinge-35\",\"price_cents\":1293}},{\"id\":2,\"product_id\":30,\"qty\":1,\"total_cents\":781,\"unit_cents\":781,\"product\":{\"category\":\"tools\",\"id\":30,\"in_stock\":true,\"name\":\"slate-seed-30\",\"price_cents\":781}},{\"id\":3,\"product_id\":2,\"qty\":4,\"total_cents\":55904,\"unit_cents\":13976,\"product\":{\"category\":\"kitchen\",\"id\":2,\"in_stock\":true,\"name\":\"cedar-trowel-2\",\"price_cents\":13976}}],\"status\":\"open\",\"total_cents\":61857,\"customer\":{\"created\":\"2025-10-02\",\"email\":\"user57@example.invalid\",\"id\":57,\"name\":\"ada dijkstra\",\"region\":\"south\"}}",
@@ -1290,7 +1290,7 @@
     "headers": [
      [
       "Content-Type",
-      "application/json; charset=utf-8"
+      "application/json"
      ],
      [
       "Content-Length",
@@ -1298,7 +1298,7 @@
      ],
      [
       "Date",
-      "Mon, 14 Sep 2026 11:05:28 GMT"
+      "Mon, 14 Sep 2026 11:05:30 GMT"
      ],
      [
       "Connection",
@@ -1309,7 +1309,7 @@
       "timeout=5"
      ]
     ],
-    "header_bytes": 152,
+    "header_bytes": 137,
     "framing": "content-length",
     "body_bytes": 399,
     "body": "{\"region\":\"south\",\"customers\":50,\"orders\":250,\"revenue_cents\":36205542,\"top\":[{\"id\":512,\"total_cents\":389415},{\"id\":768,\"total_cents\":381785},{\"id\":876,\"total_cents\":360638},{\"id\":944,\"total_cents\":353195},{\"id\":660,\"total_cents\":351644},{\"id\":284,\"total_cents\":347530},{\"id\":444,\"total_cents\":339978},{\"id\":340,\"total_cents\":332516},{\"id\":420,\"total_cents\":331825},{\"id\":816,\"total_cents\":315506}]}",
@@ -1336,7 +1336,7 @@
     "headers": [
      [
       "Content-Type",
-      "application/json; charset=utf-8"
+      "application/json"
      ],
      [
       "Content-Length",
@@ -1344,7 +1344,7 @@
      ],
      [
       "Date",
-      "Mon, 14 Sep 2026 11:05:28 GMT"
+      "Mon, 14 Sep 2026 11:05:30 GMT"
      ],
      [
       "Connection",
@@ -1355,7 +1355,7 @@
       "timeout=5"
      ]
     ],
-    "header_bytes": 152,
+    "header_bytes": 137,
     "framing": "content-length",
     "body_bytes": 897,
     "body": "{\"product\":{\"category\":\"office\",\"id\":39,\"in_stock\":true,\"name\":\"linen-desk-39\",\"price_cents\":14808},\"related\":[{\"category\":\"office\",\"id\":4,\"in_stock\":true,\"name\":\"oak-seed-4\",\"price_cents\":2060},{\"category\":\"office\",\"id\":9,\"in_stock\":true,\"name\":\"amber-hinge-9\",\"price_cents\":1709},{\"category\":\"office\",\"id\":14,\"in_stock\":true,\"name\":\"oak-trowel-14\",\"price_cents\":2192},{\"category\":\"office\",\"id\":19,\"in_stock\":true,\"name\":\"steel-lamp-19\",\"price_cents\":931},{\"category\":\"office\",\"id\":24,\"in_stock\":true,\"name\":\"brass-seed-24\",\"price_cents\":14955},{\"category\":\"office\",\"id\":29,\"in_stock\":true,\"name\":\"oak-ring-29\",\"price_cents\":10907},{\"category\":\"office\",\"id\":34,\"in_stock\":true,\"name\":\"steel-desk-34\",\"price_cents\":16627},{\"category\":\"office\",\"id\":44,\"in_stock\":true,\"name\":\"oak-lamp-44\",\"price_cents\":8824},{\"category\":\"office\",\"id\":49,\"in_stock\":true,\"name\":\"linen-pan-49\",\"price_cents\":13307}]}",
@@ -1382,7 +1382,7 @@
     "headers": [
      [
       "Content-Type",
-      "application/json; charset=utf-8"
+      "application/json"
      ],
      [
       "Content-Length",
@@ -1390,7 +1390,7 @@
      ],
      [
       "Date",
-      "Mon, 14 Sep 2026 11:05:28 GMT"
+      "Mon, 14 Sep 2026 11:05:30 GMT"
      ],
      [
       "Connection",
@@ -1401,7 +1401,7 @@
       "timeout=5"
      ]
     ],
-    "header_bytes": 152,
+    "header_bytes": 137,
     "framing": "content-length",
     "body_bytes": 285,
     "body": "{\"products\":50,\"customers\":200,\"orders\":1000,\"revenue_cents\":157344040,\"by_status\":{\"paid\":250,\"shipped\":250,\"cancelled\":250,\"open\":250},\"by_region\":[{\"region\":\"east\",\"customers\":50},{\"region\":\"north\",\"customers\":50},{\"region\":\"south\",\"customers\":50},{\"region\":\"west\",\"customers\":50}]}",
@@ -1431,12 +1431,12 @@
     "status": 201,
     "headers": [
      [
-      "Location",
-      "/orders/1001"
+      "content-type",
+      "application/json"
      ],
      [
-      "Content-Type",
-      "application/json; charset=utf-8"
+      "location",
+      "/orders/1001"
      ],
      [
       "Content-Length",
@@ -1444,7 +1444,7 @@
      ],
      [
       "Date",
-      "Mon, 14 Sep 2026 11:05:28 GMT"
+      "Mon, 14 Sep 2026 11:05:30 GMT"
      ],
      [
       "Connection",
@@ -1455,7 +1455,7 @@
       "timeout=5"
      ]
     ],
-    "header_bytes": 176,
+    "header_bytes": 161,
     "framing": "content-length",
     "body_bytes": 202,
     "body": "{\"customer_id\":1,\"status\":\"open\",\"lines\":[{\"id\":1,\"product_id\":3,\"qty\":2,\"unit_cents\":7045,\"total_cents\":14090},{\"id\":2,\"product_id\":7,\"qty\":1,\"unit_cents\":7070,\"total_cents\":7070}],\"total_cents\":21160}",
@@ -1486,7 +1486,7 @@
     "headers": [
      [
       "Content-Type",
-      "application/json; charset=utf-8"
+      "application/json"
      ],
      [
       "Content-Length",
@@ -1494,7 +1494,7 @@
      ],
      [
       "Date",
-      "Mon, 14 Sep 2026 11:05:28 GMT"
+      "Mon, 14 Sep 2026 11:05:30 GMT"
      ],
      [
       "Connection",
@@ -1505,7 +1505,7 @@
       "timeout=5"
      ]
     ],
-    "header_bytes": 152,
+    "header_bytes": 137,
     "framing": "content-length",
     "body_bytes": 211,
     "body": "{\"id\":362,\"customer_id\":1,\"status\":\"open\",\"lines\":[{\"id\":1,\"product_id\":3,\"qty\":2,\"unit_cents\":7045,\"total_cents\":14090},{\"id\":2,\"product_id\":7,\"qty\":1,\"unit_cents\":7070,\"total_cents\":7070}],\"total_cents\":21160}",
@@ -1536,7 +1536,7 @@
     "headers": [
      [
       "Content-Type",
-      "application/json; charset=utf-8"
+      "application/json"
      ],
      [
       "Content-Length",
@@ -1544,7 +1544,7 @@
      ],
      [
       "Date",
-      "Mon, 14 Sep 2026 11:05:28 GMT"
+      "Mon, 14 Sep 2026 11:05:31 GMT"
      ],
      [
       "Connection",
@@ -1555,7 +1555,7 @@
       "timeout=5"
      ]
     ],
-    "header_bytes": 151,
+    "header_bytes": 136,
     "framing": "content-length",
     "body_bytes": 98,
     "body": "{\"created\":\"2025-03-15\",\"email\":\"user14@example.invalid\",\"id\":14,\"name\":\"Ada L.\",\"region\":\"south\"}",
@@ -1585,12 +1585,12 @@
     "status": 201,
     "headers": [
      [
-      "Location",
-      "/orders/644/lines/11"
+      "content-type",
+      "application/json"
      ],
      [
-      "Content-Type",
-      "application/json; charset=utf-8"
+      "location",
+      "/orders/644/lines/11"
      ],
      [
       "Content-Length",
@@ -1598,7 +1598,7 @@
      ],
      [
       "Date",
-      "Mon, 14 Sep 2026 11:05:28 GMT"
+      "Mon, 14 Sep 2026 11:05:31 GMT"
      ],
      [
       "Connection",
@@ -1609,7 +1609,7 @@
       "timeout=5"
      ]
     ],
-    "header_bytes": 183,
+    "header_bytes": 168,
     "framing": "content-length",
     "body_bytes": 70,
     "body": "{\"id\":1,\"product_id\":5,\"qty\":3,\"unit_cents\":16283,\"total_cents\":48849}",
@@ -1636,7 +1636,7 @@
     "headers": [
      [
       "Date",
-      "Mon, 14 Sep 2026 11:05:28 GMT"
+      "Mon, 14 Sep 2026 11:05:31 GMT"
      ],
      [
       "Connection",
@@ -1674,7 +1674,7 @@
     "headers": [
      [
       "Content-Type",
-      "application/json; charset=utf-8"
+      "application/json"
      ],
      [
       "Content-Length",
@@ -1682,7 +1682,7 @@
      ],
      [
       "Date",
-      "Mon, 14 Sep 2026 11:05:28 GMT"
+      "Mon, 14 Sep 2026 11:05:31 GMT"
      ],
      [
       "Connection",
@@ -1693,7 +1693,7 @@
       "timeout=5"
      ]
     ],
-    "header_bytes": 151,
+    "header_bytes": 136,
     "framing": "content-length",
     "body_bytes": 21,
     "body": "{\"error\":\"not_found\"}",
@@ -1720,7 +1720,7 @@
     "headers": [
      [
       "Content-Type",
-      "application/json; charset=utf-8"
+      "application/json"
      ],
      [
       "Content-Length",
@@ -1728,7 +1728,7 @@
      ],
      [
       "Date",
-      "Mon, 14 Sep 2026 11:05:28 GMT"
+      "Mon, 14 Sep 2026 11:05:31 GMT"
      ],
      [
       "Connection",
@@ -1739,7 +1739,7 @@
       "timeout=5"
      ]
     ],
-    "header_bytes": 151,
+    "header_bytes": 136,
     "framing": "content-length",
     "body_bytes": 21,
     "body": "{\"error\":\"not_found\"}",
@@ -1769,12 +1769,8 @@
     "status": 422,
     "headers": [
      [
-      "Location",
-      "/orders/1001"
-     ],
-     [
       "Content-Type",
-      "application/json; charset=utf-8"
+      "application/json"
      ],
      [
       "Content-Length",
@@ -1782,7 +1778,7 @@
      ],
      [
       "Date",
-      "Mon, 14 Sep 2026 11:05:28 GMT"
+      "Mon, 14 Sep 2026 11:05:31 GMT"
      ],
      [
       "Connection",
@@ -1793,7 +1789,7 @@
       "timeout=5"
      ]
     ],
-    "header_bytes": 176,
+    "header_bytes": 137,
     "framing": "content-length",
     "body_bytes": 150,
     "body": "{\"error\":\"validation_failed\",\"errors\":[{\"field\":\"customer_id\",\"rule\":\"required\"},{\"field\":\"status\",\"rule\":\"string\"},{\"field\":\"lines\",\"rule\":\"array\"}]}",
@@ -1820,7 +1816,7 @@
     "headers": [
      [
       "Content-Type",
-      "application/json; charset=utf-8"
+      "application/json"
      ],
      [
       "Content-Length",
@@ -1828,7 +1824,7 @@
      ],
      [
       "Date",
-      "Mon, 14 Sep 2026 11:05:28 GMT"
+      "Mon, 14 Sep 2026 11:05:31 GMT"
      ],
      [
       "Connection",
@@ -1839,7 +1835,7 @@
       "timeout=5"
      ]
     ],
-    "header_bytes": 151,
+    "header_bytes": 136,
     "framing": "content-length",
     "body_bytes": 61,
     "body": "{\"error\":\"internal\",\"message\":\"deliberate unhandled failure\"}",
@@ -1866,7 +1862,7 @@
     "headers": [
      [
       "Content-Type",
-      "application/json; charset=utf-8"
+      "application/json"
      ],
      [
       "Content-Length",
@@ -1874,7 +1870,7 @@
      ],
      [
       "Date",
-      "Mon, 14 Sep 2026 11:05:28 GMT"
+      "Mon, 14 Sep 2026 11:05:31 GMT"
      ],
      [
       "Connection",
@@ -1885,7 +1881,7 @@
       "timeout=5"
      ]
     ],
-    "header_bytes": 151,
+    "header_bytes": 136,
     "framing": "content-length",
     "body_bytes": 21,
     "body": "{\"error\":\"forbidden\"}",

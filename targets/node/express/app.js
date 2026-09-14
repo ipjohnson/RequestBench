@@ -2,11 +2,10 @@
 //
 // An Express app already is a (req, res) function, so the host handler is the app itself.
 import express from "express";
-import { createRequire } from "node:module";
+import { pkgVersion } from "../_shared/version.js";
 import * as d from "../_shared/domain.js";
 
-const require = createRequire(import.meta.url);
-const meta = { framework: "express", version: require("express/package.json").version,
+const meta = { framework: "express", version: pkgVersion("express"),
                runtime: "node " + process.versions.node };
 
 const app = express();

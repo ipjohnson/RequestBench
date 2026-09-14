@@ -3,11 +3,10 @@
 // `listen` starts Fastify's own server, which is what people deploy. `handler` is
 // Fastify's routing exposed as a plain (req, res), which is what a function host invokes.
 import Fastify from "fastify";
-import { createRequire } from "node:module";
+import { pkgVersion } from "../_shared/version.js";
 import * as d from "../_shared/domain.js";
 
-const require = createRequire(import.meta.url);
-const meta = { framework: "fastify", version: require("fastify/package.json").version,
+const meta = { framework: "fastify", version: pkgVersion("fastify"),
                runtime: "node " + process.versions.node };
 
 const app = Fastify({ logger: false, disableRequestLogging: true });
