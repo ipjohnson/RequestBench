@@ -1,0 +1,421 @@
+<title>Endpoint Set Redesign</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root {
+  --ground: #F4F5F2; --surface: #FCFCFB; --surface2: #EDEFEA;
+  --ink: #121917; --ink2: #58655F; --ink3: #66716A;
+  --rule: #DCE0DB; --rule2: #C3C9C2;
+  --teal: #00836E; --tealtext: #00705E; --tealsoft: #DCEBE6;
+  --amber: #A6670C; --ambersoft: #F6ECDB;
+  --crimson: #A03E5C; --crimsonsoft: #F3E3E8;
+  --onfill: #FFFFFF;
+  --f-display: "Newsreader", Georgia, serif;
+  --f-body: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --ground: #121513; --surface: #1A1E1B; --surface2: #232823;
+  --ink: #E8ECE7; --ink2: #9AA59E; --ink3: #949E98;
+  --rule: #2A302C; --rule2: #3A423C;
+  --teal: #35AD97; --tealtext: #35AD97; --tealsoft: #17302B;
+  --amber: #DDA03C; --ambersoft: #2C2314;
+  --crimson: #C05A78; --crimsonsoft: #2E1A20;
+  --onfill: #101614;
+} }
+:root[data-theme="dark"] {
+  --ground: #121513; --surface: #1A1E1B; --surface2: #232823;
+  --ink: #E8ECE7; --ink2: #9AA59E; --ink3: #949E98;
+  --rule: #2A302C; --rule2: #3A423C;
+  --teal: #35AD97; --tealtext: #35AD97; --tealsoft: #17302B;
+  --amber: #DDA03C; --ambersoft: #2C2314;
+  --crimson: #C05A78; --crimsonsoft: #2E1A20;
+  --onfill: #101614;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--ground); color: var(--ink);
+       font-family: var(--f-body); font-size: 15px; line-height: 1.6;
+       -webkit-font-smoothing: antialiased; }
+.page { max-width: 880px; margin: 0 auto;
+        padding-inline: clamp(16px, 4vw, 40px); padding-block: clamp(28px, 5vw, 56px) 72px; }
+a { color: var(--tealtext); }
+code, .mono { font-family: var(--f-mono); font-size: .92em; }
+code { background: var(--surface2); padding: 1px 4px; border-radius: 2px; }
+
+.eyebrow { font-family: var(--f-mono); font-size: 11px; letter-spacing: .13em;
+           text-transform: uppercase; color: var(--ink3);
+           display: flex; gap: 12px; align-items: center; margin: 0 0 14px; }
+.eyebrow::after { content: ""; flex: 1; height: 1px; background: var(--rule2); }
+h1 { font-family: var(--f-display); font-weight: 600; letter-spacing: -.02em;
+     font-size: clamp(30px, 5vw, 44px); line-height: 1.05; margin: 0 0 16px;
+     text-wrap: balance; }
+.lede { font-family: var(--f-display); font-size: clamp(16px, 2vw, 19px);
+        color: var(--ink2); max-width: 62ch; margin: 0; }
+h2 { font-family: var(--f-display); font-weight: 600; font-size: 25px;
+     letter-spacing: -.01em; margin: 0 0 4px; text-wrap: balance; }
+h3 { font-family: var(--f-body); font-weight: 600; font-size: 16px; margin: 0 0 6px; }
+p { margin: 0 0 14px; max-width: 68ch; }
+p:last-child { margin-bottom: 0; }
+section { margin-top: 52px; }
+.sectionhead { border-top: 2px solid var(--ink); padding-top: 14px; margin-bottom: 24px; }
+.sectionhead .num { font-family: var(--f-mono); font-size: 11px; letter-spacing: .12em;
+                    color: var(--ink3); text-transform: uppercase; display: block; margin-bottom: 8px; }
+.sectionhead p { color: var(--ink2); margin: 6px 0 0; }
+
+.meta { display: flex; flex-wrap: wrap; gap: 8px 28px; margin-top: 26px;
+        padding-top: 18px; border-top: 1px solid var(--rule); }
+.meta div { display: flex; flex-direction: column; gap: 2px; }
+.meta dt { font-family: var(--f-mono); font-size: 10px; letter-spacing: .1em;
+           text-transform: uppercase; color: var(--ink3); }
+.meta dd { margin: 0; font-size: 14px; }
+
+/* decisions carry a status, which is the one thing a fresh reader needs first */
+.d { background: var(--surface); border: 1px solid var(--rule);
+     border-left: 3px solid var(--teal); border-radius: 3px;
+     padding: 18px 20px; margin-bottom: 16px; }
+.d.open { border-left-color: var(--amber); border-left-style: dashed; }
+.dhead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px; margin-bottom: 10px; }
+.dhead h3 { margin: 0; }
+.tag { font-family: var(--f-mono); font-size: 10px; letter-spacing: .09em;
+       text-transform: uppercase; padding: 2px 7px; border-radius: 2px;
+       background: var(--tealsoft); color: var(--tealtext); white-space: nowrap; }
+.tag.open { background: var(--ambersoft); color: var(--amber); }
+.tag.cut { background: var(--crimsonsoft); color: var(--crimson); }
+.d p { font-size: 14.5px; }
+.why { font-size: 14px; color: var(--ink2); margin-top: 10px;
+       padding-top: 10px; border-top: 1px solid var(--rule); }
+.why b { font-family: var(--f-mono); font-size: 10px; letter-spacing: .09em;
+         text-transform: uppercase; color: var(--ink3); font-weight: 500;
+         display: block; margin-bottom: 3px; }
+
+.scroll { overflow-x: auto; border: 1px solid var(--rule); border-radius: 3px;
+          margin: 18px 0; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th, td { padding: 7px 11px; text-align: left; border-bottom: 1px solid var(--rule);
+         vertical-align: top; }
+th { font-family: var(--f-mono); font-size: 10px; letter-spacing: .09em;
+     text-transform: uppercase; color: var(--ink3); font-weight: 500;
+     background: var(--surface2); white-space: nowrap; }
+tbody tr:last-child td { border-bottom: none; }
+td.m { font-family: var(--f-mono); font-size: 12.5px; white-space: nowrap; }
+td.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+tr.cut td { color: var(--ink3); }
+tr.cut td.m:first-child { text-decoration: line-through; }
+.v { font-family: var(--f-mono); font-size: 10px; letter-spacing: .07em;
+     text-transform: uppercase; padding: 1px 6px; border-radius: 2px; white-space: nowrap; }
+.v.keep { background: var(--tealsoft); color: var(--tealtext); }
+.v.cut { background: var(--crimsonsoft); color: var(--crimson); }
+.v.open { background: var(--ambersoft); color: var(--amber); }
+
+pre { font-family: var(--f-mono); font-size: 12.5px; line-height: 1.55;
+      background: var(--surface); border: 1px solid var(--rule); border-radius: 3px;
+      padding: 16px 18px; overflow-x: auto; margin: 18px 0; color: var(--ink2); }
+pre b { color: var(--tealtext); font-weight: 500; }
+pre i { color: var(--ink3); font-style: normal; }
+
+ol.steps { list-style: none; counter-reset: s; padding: 0; margin: 18px 0 0; }
+ol.steps li { counter-increment: s; position: relative; padding-left: 38px;
+              margin-bottom: 16px; }
+ol.steps li::before { content: counter(s); position: absolute; left: 0; top: 1px;
+  font-family: var(--f-mono); font-size: 11px; width: 24px; height: 24px;
+  display: grid; place-items: center; border: 1px solid var(--rule2);
+  border-radius: 99px; color: var(--ink3); }
+ol.steps h3 { margin-bottom: 2px; }
+ol.steps p { font-size: 14.5px; color: var(--ink2); margin: 0; }
+
+.note { background: var(--ambersoft); border: 1px solid var(--amber);
+        border-radius: 3px; padding: 16px 18px; margin: 18px 0; }
+.note h3 { color: var(--amber); }
+.note p { font-size: 14.5px; }
+
+footer { margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--rule);
+         font-size: 13px; color: var(--ink3); }
+@media (max-width: 560px) {
+  .meta { gap: 14px 20px; }
+}
+</style>
+
+<div class="page">
+
+<p class="eyebrow">RequestBench · design note</p>
+<h1>Endpoint Set Redesign</h1>
+<p class="lede">What the forty endpoints should become, why each change, and what is still undecided. Written to be picked up cold in a new session.</p>
+
+<dl class="meta">
+  <div><dt>Date</dt><dd>14 September 2026</dd></div>
+  <div><dt>Current set</dt><dd>40 endpoints, 8 families</dd></div>
+  <div><dt>Targets</dt><dd>6 node, 6 go</dd></div>
+  <div><dt>Status</dt><dd>Design agreed, nothing implemented</dd></div>
+</dl>
+
+<section>
+<div class="sectionhead">
+  <span class="num">Orientation</span>
+  <h2>How a number gets made</h2>
+  <p>Enough of the existing machinery to follow the rest.</p>
+</div>
+
+<p><code>spec/endpoints.json</code> holds the forty endpoints. <code>harness/plan.py</code> expands each into 64 concrete pre-resolved requests, <code>spec/sequence.json</code> pins a 100,000-long replay order drawn by weight, and every driver replays that file rather than filling templates itself.</p>
+
+<p>The order interleaves hard: the first twenty slots hold fifteen distinct endpoints. That matters for everything below, because it means any two endpoints are measured microseconds apart on the same process, at the same JIT state, the same heap occupancy, the same thermal state.</p>
+
+<p>Every statistic rolls up from one place. <code>harness/summarize.py:102</code> states it: an endpoint is a histogram, a family is its endpoints merged, the blend is every family merged. The raw JSONL carries one histogram per endpoint per rung at 3.7&nbsp;KB dense; the summary drops them and keeps only <code>count</code>, <code>errors</code>, <code>mismatch</code>, <code>p50_us</code>, <code>p90_us</code>, <code>p99_us</code>, <code>p999_us</code> and the two ratios.</p>
+
+<p>The headline is a ratio to each language's own baseline. Absolute numbers are comparable only inside the single run that produced them.</p>
+</section>
+
+<section>
+<div class="sectionhead">
+  <span class="num">Decisions</span>
+  <h2>What changes, and why</h2>
+  <p>Ten calls. The reasoning is here because a decision without it gets re-litigated.</p>
+</div>
+
+<div class="d">
+  <div class="dhead"><h3>Drop <code>ep.boom</code></h3><span class="tag cut">Cut</span></div>
+  <p>Remove the 500 from the blend entirely. The 4xx endpoints stay.</p>
+  <div class="why"><b>Why</b>
+  Suite B's error-handling delta already runs <code>unhandled-500</code> as an arm against <code>ok-200</code> on one long-lived process, which the plan calls the most portable measurement in the benchmark. In the blend the same row measures stack-trace capture policy rather than framework speed — the plan's own words are that it "dominates on the JVM and .NET and differs by whether the framework captures on every error or only when something logs it." That is configuration, not framework. The contract is also ambiguous across languages: a Go handler that panics and one that writes <code>w.WriteHeader(500)</code> exercise unrelated machinery, so making targets comparable means mandating which, and then the benchmark is measuring its own spec.</div>
+</div>
+
+<div class="d open">
+  <div class="dhead"><h3>Cut or demote <code>ep.forbidden</code></h3><span class="tag open">Undecided</span></div>
+  <p>A 403 in the blend has no mechanism behind it, because there is no auth in the blend.</p>
+  <div class="why"><b>Why</b>
+  It is a constant-cost status write, which is roughly what <code>ep.missing_order</code> costs minus the lookup. Suite B's authorization delta carries <code>denied-403</code> as an arm where it means something, since there the principal and claim set actually get built before the rejection. Keeping it is defensible if the intent is coverage of the status code itself rather than of a mechanism.</div>
+</div>
+
+<div class="d">
+  <div class="dhead"><h3>Keep the three 4xx that have mechanisms</h3><span class="tag">Settled</span></div>
+  <p><code>ep.unmatched</code>, <code>ep.missing_order</code> and <code>ep.malformed</code> stay.</p>
+  <div class="why"><b>Why</b>
+  Each has distinct machinery behind it. A routing miss genuinely differs on whether it short-circuits before the middleware chain or walks all of it. <code>ep.missing_order</code> is a 404 raised by a handler that did a lookup first. <code>ep.malformed</code> is the validation rejection path.</div>
+</div>
+
+<div class="d">
+  <div class="dhead"><h3>Validation stays in <code>_shared/domain.*</code></h3><span class="tag">Settled</span></div>
+  <p>Do not move validation into each framework's native facility. Every target keeps calling the shared function.</p>
+  <div class="why"><b>Why</b>
+  This is already how it works and it is the reason the blend means anything. <code>targets/node/_shared/domain.js:174</code> and <code>targets/go/_shared/domain.go:582</code> hold the validators, both collect-all, and every target calls them — Fastify included, at <code>targets/node/fastify/app.js:62</code>, which hands <code>req.body</code> straight to the shared function instead of using a JSON Schema. Gin's <code>ShouldBindJSON</code> at <code>targets/go/gin/main.go:35</code> only decodes into a <code>map[string]any</code> before calling the same code. Node carries no validation library at all and <code>go-playground/validator</code> sits in <code>go.sum</code> as an indirect dependency nothing imports.
+  <br><br>The cost is real and worth stating plainly: the blend cannot show a framework being good at validation, and Fastify's compiled schema is bypassed. That is the price of every target doing identical work.</div>
+</div>
+
+<div class="d">
+  <div class="dhead"><h3>The shared validators are spec artifacts</h3><span class="tag">Settled</span></div>
+  <p>They need a written contract on <em>how</em> they are implemented, not only on what they emit.</p>
+  <div class="why"><b>Why</b>
+  Within a language the validator is one compiled function, so it cancels out of every comparison. Across languages they are independently hand-written and conformance only checks the 422 body. Whoever writes the Java <code>validateOrder</code> therefore sets a constant offset that lands on every <code>body_validate</code> endpoint for every Java framework. The contract should pin a single pass, fixed field order, no reflection, and no regex unless the spec asks for one.</div>
+</div>
+
+<div class="d">
+  <div class="dhead"><h3>Fail-fast is two endpoints, not an option</h3><span class="tag">Settled</span></div>
+  <p>Two 422 endpoints over the same payload with different mandated contracts. One must report the complete error set. The other must report only the first error and may stop there. Both live in the shared domain code, so every target gets both.</p>
+  <div class="why"><b>Why</b>
+  Short-circuiting saves nothing on a valid payload, because reaching a 200 means checking every field, so the fast path can only be measured where validation fails. Making it optional does not work either: "if the framework has it built in" is a judgment call, and under shared domain code any target can short-circuit with an early return, so the distinction collapses. Mandating both contracts means nobody chooses anything, nobody is excluded, and the delta between the two endpoints is the saving stated as a number rather than granted as a discount. Make the payload fail on its first field so the gap is large enough to read. Full validation stays the requirement, which is the actual position.</div>
+</div>
+
+<div class="d">
+  <div class="dhead"><h3>Matched pairs, one factor at a time</h3><span class="tag">Settled</span></div>
+  <p>Endpoints come in pairs that differ in exactly one property, built by varying one factor from a common base rather than crossing everything.</p>
+  <div class="why"><b>Why</b>
+  Both halves of a pair land in the same rung microseconds apart, so a pair delta is cleaner than Suite B's arms, which are minutes apart on the same process. Same moment beats same process. Anything expressible as two endpoints should be; Suite B keeps only what needs a different process, such as boot-time server options or a protocol change.
+  <br><br>The discipline is what keeps it finite. Size, validation, compression and shape fully crossed is 36 endpoints for one family. A base plus one arm per factor is seven, and yields the same deltas. Fully cross only size against validation: three sizes by two states, plus a 422 at each size, is nine.</div>
+</div>
+
+<div class="d">
+  <div class="dhead"><h3>Pin the compression codec per language</h3><span class="tag">Settled</span></div>
+  <p>One algorithm and one level per language, the way Suite B pins the crypto library.</p>
+  <div class="why"><b>Why</b>
+  Compression cost is dominated by codec and level, not by framework, so an unpinned codec repeats the <code>ep.boom</code> mistake. The framework-relevant signal is whether the response is buffered whole before compressing or streamed, and whether compression is skipped below a size threshold — which is exactly why it has to cross with payload size.</div>
+</div>
+
+<div class="d">
+  <div class="dhead"><h3>Make the pairing machine-readable</h3><span class="tag">Settled</span></div>
+  <p>Each endpoint in <code>endpoints.json</code> gains <code>base</code> and <code>varies</code>.</p>
+  <div class="why"><b>Why</b>
+  The site can then compute and show a delta column itself instead of the reader finding two rows and subtracting, and each generated endpoint page can state "costs 41&nbsp;µs over <code>pl.json_m</code>" as generated text. It turns a naming convention into a feature for almost no code.</div>
+</div>
+
+<div class="d">
+  <div class="dhead"><h3>Readers compose their own blend</h3><span class="tag">Settled</span></div>
+  <p>Let the reader choose which endpoints roll into the aggregate, with the default mix as the starting point.</p>
+  <div class="why"><b>Why</b>
+  It retires three arguments at once. Weights stop being an opinion, because anyone who disagrees reweights and gets their own number. Diagnostic pairs stop needing a separate unweighted sweep, since they can ship at zero default weight and stay selectable. And the fail-fast endpoint needs no policy: publish both and let the reader decide whether their traffic short-circuits.
+  <br><br>One constraint sets the shape. Percentiles do not compose from percentiles, so the browser needs histograms, which the summary currently drops. Compute the ratio from composed histograms — merge the target's selection, merge the baseline's same selection, then divide — never by averaging per-endpoint ratios. Renormalize surviving shares to 10,000 by default and allow a manual override. Put the selection in the URL hash, like every other piece of view state, so a composed blend is a shareable link.</div>
+</div>
+</section>
+
+<section>
+<div class="sectionhead">
+  <span class="num">Design</span>
+  <h2>Axes worth pairing</h2>
+  <p>Ordered by how sharply they separate frameworks. Each row is one factor varied from a base.</p>
+</div>
+
+<div class="scroll">
+<table>
+<thead><tr><th>Pair</th><th>Held constant</th><th>What the delta exposes</th></tr></thead>
+<tbody>
+<tr><td class="m">validate / bind-only</td><td>payload, parse, bind</td><td>Validation alone. The off arm must parse and bind, then not validate; if it ignores the body the delta is parse plus validate.</td></tr>
+<tr><td class="m">collect-all / first-error</td><td>payload, size</td><td>What short-circuiting saves. Only visible on a failing payload.</td></tr>
+<tr><td class="m">S / M / L payload</td><td>shape, handler work</td><td>Regime changes: one write versus several, stack buffer versus heap, framing.</td></tr>
+<tr><td class="m">static / dynamic response</td><td>identical response bytes</td><td>Serialization cost with I/O removed. Catches compiled serializers.</td></tr>
+<tr><td class="m">flat / nested / array</td><td>total bytes</td><td>Serializer behaviour by structure rather than volume.</td></tr>
+<tr><td class="m">0 / 4 / 16 no-op layers</td><td>handler work</td><td>Per-layer dispatch cost, the number people need when adding a layer.</td></tr>
+<tr><td class="m">compressed / plain</td><td>payload, codec, level</td><td>Buffer-whole versus stream, and whether small bodies skip compression.</td></tr>
+<tr><td class="m">static / parameterized route</td><td>segment depth</td><td>Router matching separated from path length.</td></tr>
+<tr><td class="m">3 / 30 request headers</td><td>body</td><td>Eager versus lazy header map construction.</td></tr>
+<tr><td class="m">JSON / form / multipart</td><td>logical payload</td><td>Parser differences. Multipart is usually a separate library.</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Payload sizes need pinning to actual byte counts far enough apart to cross regimes, not just to be nominally different. The current <code>bv.echo_small</code> and <code>bv.echo_large</code> bodies are 400&nbsp;B and 32&nbsp;KB, which is a reasonable starting spread for S and L.</p>
+</section>
+
+<section>
+<div class="sectionhead">
+  <span class="num">Inventory</span>
+  <h2>The forty as they stand</h2>
+  <p>Verdicts from the decisions above. Shares are out of 10,000.</p>
+</div>
+
+<div class="scroll">
+<table>
+<thead><tr><th>Endpoint</th><th>Method</th><th>Path</th><th class="n">Expect</th><th class="n">Share</th><th>Verdict</th></tr></thead>
+<tbody>
+<tr><td class="m">pt.plaintext</td><td class="m">GET</td><td class="m">/plaintext</td><td class="n m">200</td><td class="n m">400</td><td><span class="v keep">Keep</span></td></tr>
+<tr><td class="m">pt.health</td><td class="m">GET</td><td class="m">/health</td><td class="n m">200</td><td class="n m">400</td><td><span class="v keep">Keep</span></td></tr>
+<tr><td class="m">jr.json_small</td><td class="m">GET</td><td class="m">/json/small</td><td class="n m">200</td><td class="n m">400</td><td><span class="v keep">Keep</span></td></tr>
+<tr><td class="m">jr.product</td><td class="m">GET</td><td class="m">/products/{product}</td><td class="n m">200</td><td class="n m">400</td><td><span class="v keep">Keep</span></td></tr>
+<tr><td class="m">jr.customer</td><td class="m">GET</td><td class="m">/customers/{customer}</td><td class="n m">200</td><td class="n m">400</td><td><span class="v keep">Keep</span></td></tr>
+<tr><td class="m">jr.order</td><td class="m">GET</td><td class="m">/orders/{order}</td><td class="n m">200</td><td class="n m">400</td><td><span class="v keep">Keep</span></td></tr>
+<tr><td class="m">jr.product_list</td><td class="m">GET</td><td class="m">/products</td><td class="n m">200</td><td class="n m">400</td><td><span class="v open">Pin work</span></td></tr>
+<tr><td class="m">jr.order_lines</td><td class="m">GET</td><td class="m">/orders/{order}/lines</td><td class="n m">200</td><td class="n m">400</td><td><span class="v keep">Keep</span></td></tr>
+<tr><td class="m">bv.order</td><td class="m">POST</td><td class="m">/orders/validate</td><td class="n m">200</td><td class="n m">300</td><td><span class="v keep">Keep</span></td></tr>
+<tr><td class="m">bv.customer</td><td class="m">POST</td><td class="m">/customers/validate</td><td class="n m">200</td><td class="n m">300</td><td><span class="v keep">Keep</span></td></tr>
+<tr><td class="m">bv.product</td><td class="m">POST</td><td class="m">/products/validate</td><td class="n m">200</td><td class="n m">300</td><td><span class="v keep">Keep</span></td></tr>
+<tr><td class="m">bv.rejected</td><td class="m">POST</td><td class="m">/orders/validate</td><td class="n m">422</td><td class="n m">300</td><td><span class="v open">Overlap</span></td></tr>
+<tr><td class="m">bv.echo_small</td><td class="m">POST</td><td class="m">/echo</td><td class="n m">200</td><td class="n m">300</td><td><span class="v open">Refile</span></td></tr>
+<tr><td class="m">bv.echo_large</td><td class="m">POST</td><td class="m">/echo</td><td class="n m">200</td><td class="n m">300</td><td><span class="v open">Refile</span></td></tr>
+<tr><td class="m">pp.cust_orders</td><td class="m">GET</td><td class="m">/customers/{customer}/orders</td><td class="n m">200</td><td class="n m">234</td><td><span class="v keep">Keep</span></td></tr>
+<tr><td class="m">pp.cust_order</td><td class="m">GET</td><td class="m">/customers/{customer}/orders/{order}</td><td class="n m">200</td><td class="n m">233</td><td><span class="v keep">Keep</span></td></tr>
+<tr><td class="m">pp.prod_reviews</td><td class="m">GET</td><td class="m">/products/{product}/reviews</td><td class="n m">200</td><td class="n m">233</td><td><span class="v keep">Keep</span></td></tr>
+<tr><td class="m">pp.region_custs</td><td class="m">GET</td><td class="m">/regions/{region}/customers</td><td class="n m">200</td><td class="n m">233</td><td><span class="v keep">Keep</span></td></tr>
+<tr><td class="m">pp.order_line</td><td class="m">GET</td><td class="m">/orders/{order}/lines/{line}</td><td class="n m">200</td><td class="n m">233</td><td><span class="v keep">Keep</span></td></tr>
+<tr><td class="m">pp.deep</td><td class="m">GET</td><td class="m">/regions/…/lines/{line}</td><td class="n m">200</td><td class="n m">234</td><td><span class="v keep">Keep</span></td></tr>
+<tr><td class="m">qp.orders_page</td><td class="m">GET</td><td class="m">/orders?page&amp;size</td><td class="n m">200</td><td class="n m">240</td><td><span class="v open">Pin work</span></td></tr>
+<tr><td class="m">qp.products_filter</td><td class="m">GET</td><td class="m">/products?category&amp;min&amp;max</td><td class="n m">200</td><td class="n m">240</td><td><span class="v open">Pin work</span></td></tr>
+<tr><td class="m">qp.customers_sort</td><td class="m">GET</td><td class="m">/customers?q&amp;sort</td><td class="n m">200</td><td class="n m">240</td><td><span class="v open">Pin work</span></td></tr>
+<tr><td class="m">qp.orders_status</td><td class="m">GET</td><td class="m">/orders?status&amp;page&amp;size</td><td class="n m">200</td><td class="n m">240</td><td><span class="v open">Pin work</span></td></tr>
+<tr><td class="m">qp.search</td><td class="m">GET</td><td class="m">/search?q&amp;limit&amp;offset&amp;sort&amp;dir</td><td class="n m">200</td><td class="n m">240</td><td><span class="v keep">Keep</span></td></tr>
+<tr><td class="m">nf.cust_summary</td><td class="m">GET</td><td class="m">/customers/{customer}/summary</td><td class="n m">200</td><td class="n m">200</td><td><span class="v open">Pin depth</span></td></tr>
+<tr><td class="m">nf.order_full</td><td class="m">GET</td><td class="m">/orders/{order}/full</td><td class="n m">200</td><td class="n m">200</td><td><span class="v open">Pin depth</span></td></tr>
+<tr><td class="m">nf.region_report</td><td class="m">GET</td><td class="m">/regions/{region}/report</td><td class="n m">200</td><td class="n m">200</td><td><span class="v open">Pin depth</span></td></tr>
+<tr><td class="m">nf.prod_related</td><td class="m">GET</td><td class="m">/products/{product}/related</td><td class="n m">200</td><td class="n m">200</td><td><span class="v open">Pin depth</span></td></tr>
+<tr><td class="m">nf.dashboard</td><td class="m">GET</td><td class="m">/dashboard</td><td class="n m">200</td><td class="n m">200</td><td><span class="v open">Pin depth</span></td></tr>
+<tr><td class="m">we.create_order</td><td class="m">POST</td><td class="m">/orders</td><td class="n m">201</td><td class="n m">180</td><td><span class="v keep">Keep</span></td></tr>
+<tr><td class="m">we.replace_order</td><td class="m">PUT</td><td class="m">/orders/{order}</td><td class="n m">200</td><td class="n m">180</td><td><span class="v keep">Keep</span></td></tr>
+<tr><td class="m">we.patch_customer</td><td class="m">PATCH</td><td class="m">/customers/{customer}</td><td class="n m">200</td><td class="n m">180</td><td><span class="v keep">Keep</span></td></tr>
+<tr><td class="m">we.add_line</td><td class="m">POST</td><td class="m">/orders/{order}/lines</td><td class="n m">201</td><td class="n m">180</td><td><span class="v keep">Keep</span></td></tr>
+<tr><td class="m">we.delete_line</td><td class="m">DELETE</td><td class="m">/orders/{order}/lines/{line}</td><td class="n m">204</td><td class="n m">180</td><td><span class="v keep">Keep</span></td></tr>
+<tr><td class="m">ep.missing_order</td><td class="m">GET</td><td class="m">/orders/999999</td><td class="n m">404</td><td class="n m">100</td><td><span class="v keep">Keep</span></td></tr>
+<tr><td class="m">ep.unmatched</td><td class="m">GET</td><td class="m">/no/such/route</td><td class="n m">404</td><td class="n m">100</td><td><span class="v keep">Keep</span></td></tr>
+<tr><td class="m">ep.malformed</td><td class="m">POST</td><td class="m">/orders</td><td class="n m">422</td><td class="n m">100</td><td><span class="v keep">Keep</span></td></tr>
+<tr class="cut"><td class="m">ep.boom</td><td class="m">GET</td><td class="m">/boom</td><td class="n m">500</td><td class="n m">100</td><td><span class="v cut">Cut</span></td></tr>
+<tr><td class="m">ep.forbidden</td><td class="m">GET</td><td class="m">/forbidden</td><td class="n m">403</td><td class="n m">100</td><td><span class="v open">Undecided</span></td></tr>
+</tbody>
+</table>
+</div>
+
+<p>"Pin work" marks endpoints whose contract currently permits two conforming implementations that do materially different amounts of work. Whether <code>jr.product_list</code> sorts and slices the fixture per request or returns a precomputed page is a large difference that conformance cannot see, because the bytes come out the same. The <code>nested_fetch</code> family is the sharpest case: its stated purpose is a deeper middleware chain, and nothing pins how deep.</p>
+</section>
+
+<section>
+<div class="sectionhead">
+  <span class="num">Risk</span>
+  <h2>The hole worth closing first</h2>
+</div>
+
+<div class="note">
+<h3>Sixty-four instances is memoizable</h3>
+<p><code>harness/plan.py:13</code> sets <code>INSTANCES = 64</code>, so each endpoint has 64 distinct pre-resolved requests and no more. A target could precompute all 64 responses into a map at boot and reduce every endpoint to a dispatch and a write. Conformance would not catch it, because the bytes are identical by construction — that is the whole point of the fingerprint.</p>
+<p>It has not happened, and every target lives in this repo under review, so the practical fix is a written rule plus review. Raising the instance count is cheap insurance and makes precomputation impractical rather than merely forbidden. Worth settling before the target set grows past two languages and review stops being one person reading everything.</p>
+</div>
+</section>
+
+<section>
+<div class="sectionhead">
+  <span class="num">Deliverable</span>
+  <h2>Endpoint documentation pages</h2>
+  <p>One page per endpoint, an index that drills down, and a link from the results table.</p>
+</div>
+
+<pre><b>spec/</b>
+  endpoints.json           <i>unchanged as the source of truth; gains base + varies</i>
+  <b>endpoints/</b>               <i>new. hand-written prose, one file per endpoint</i>
+    pt.plaintext.md
+    pt.health.md
+    jr.json_small.md
+    …                      <i>40 files, named for the id</i>
+    <b>_family/</b>               <i>new. the rationale each family's members share</i>
+      plaintext.md
+      json_read.md
+      …                    <i>8 files</i>
+
+<b>site/</b>
+  build.py                 <i>unchanged entry point; gains --endpoint-docs</i>
+  endpoints.py             <i>new. renders the index and the 40 detail pages</i>
+  <b>dist/</b>
+    index.html             <i>the results table, unchanged</i>
+    <b>endpoints/</b>
+      index.html           <i>all 40 grouped by family, drills down</i>
+      pt.plaintext.html
+      …                    <i>40 files</i>
+    data/                  <i>unchanged</i></pre>
+
+<p>Static HTML with no JavaScript, on the same origin as the table, so the link from a row is a plain href. Prose lives in markdown rather than in <code>endpoints.json</code> so it stays reviewable in a diff and does not bloat a file that <code>plan.py</code> reads on every build.</p>
+
+<h3>What each endpoint page carries</h3>
+<p>The identity line — id, family, method, path, expected status, share. What it exercises and why it earns a slot. Which fixture params it draws and how they correlate. The exact response contract including the field set. Implementation notes covering what a target must and must not do, which is where the "pin work" rulings land. And the captured request and response bytes from <code>results/exemplars/</code>, which already hold all forty per target per host.</p>
+</section>
+
+<section>
+<div class="sectionhead">
+  <span class="num">Plan</span>
+  <h2>Order of work</h2>
+</div>
+
+<ol class="steps">
+<li><h3>Settle the open questions</h3><p>Everything marked undecided above. Cheapest to change now, most expensive once forty pages describe it.</p></li>
+<li><h3>Write <code>site/endpoints.py</code></h3><p>Reads <code>spec/endpoints.json</code> for structure, <code>spec/endpoints/*.md</code> for prose, one exemplar for wire bytes. Emits the index and the detail pages.</p></li>
+<li><h3>Wire it into <code>build.py</code></h3><p>Pass the docs directory through <code>main()</code> and call the renderer. The <code>--out</code> tree gains one subdirectory.</p></li>
+<li><h3>Link from the results table</h3><p>At endpoint granularity the detail cell at <code>site/build.py:568</code> renders the id as text. It becomes an anchor to <code>endpoints/&lt;id&gt;.html</code>.</p></li>
+<li><h3>Add the parity check</h3><p>A validate job that fails when an id has no markdown file or a markdown file names an id that does not exist, matching how the spec drift check already works.</p></li>
+<li><h3>Write the eight family files</h3><p>Highest-value prose in the set, because this is where "must do" and "must not do" get stated before another language lands.</p></li>
+<li><h3>Write the forty endpoint files</h3><p>The bulk of the work, and mechanical once the families set the rules.</p></li>
+<li><h3>Then the new endpoints</h3><p>Pairs, sizes, the two 422 contracts. Adding them after the doc pipeline exists means each arrives documented.</p></li>
+<li><h3>Then histograms and the composer</h3><p>Carry histograms into the summary, ship them sparsely, build the endpoint selector. Independent of everything above and can run in parallel.</p></li>
+</ol>
+</section>
+
+<section>
+<div class="sectionhead">
+  <span class="num">Open</span>
+  <h2>Still undecided</h2>
+</div>
+
+<p>Whether <code>ep.forbidden</code> survives as a status-code coverage row or moves to Suite B's authorization delta where it has a mechanism.</p>
+<p>Where the echo endpoints belong. They sit in <code>body_validate</code> and do no validation, while a <code>write_echo</code> family exists and the family note reads "parser, schema validation, error paths". Either they move or the note is wrong. Related: nothing currently forces the echo response to be re-serialized from a parsed model rather than piped through as bytes, which is a large difference. Specifying a canonical key order for the response that differs from the request order would make a byte passthrough fail conformance.</p>
+<p>Whether <code>bv.rejected</code> and <code>ep.malformed</code> measuring the same rejection path at two weights is deliberate coverage or an accident.</p>
+<p>Exact byte counts for S, M and L, and whether M is chosen to sit on a buffer boundary or safely inside one.</p>
+<p>Whether to add a native-validation family, where each target uses its framework's own validation facility and declares what it used. It would show Fastify's compiled schema and gin's struct tags, and it cannot be compared across languages. Worth having, worth labelling, and it cannot live inside the blend without taking the blend's meaning with it.</p>
+<p>Whether the default blend mix stays as the published headline once readers can compose their own.</p>
+</section>
+
+<footer>
+<p>Written 14 September 2026 against <code>main</code> at <code>9a05525</code>. Line references were accurate at that commit. Companion to <code>docs/plan.html</code>, which covers the suite rotation and the capability deltas.</p>
+</footer>
+
+</div>
