@@ -62,10 +62,20 @@ def main():
     by = {(r["target"], r["rung"]): r for r in rungs}
     rung_ids = sorted({r["rung"] for r in rungs})
 
-    # family p50 per (target, rung), merged from the per-endpoint histograms
+    # Everything rolls up from one place: the per-endpoint histograms. An endpoint is a
+    # histogram, a family is its endpoints merged, the blend is every family merged. Keep
+    # all three levels so the site can drill down without a second pass over the raw file.
+    ep_order, ep_family, seen = [], {}, set()
+    for row in samples:
+        if row["endpoint"] not in seen:
+            seen.add(row["endpoint"])
+            ep_order.append(row["endpoint"])
+            ep_family[row["endpoint"]] = row["family"]
+
+    ep_hist = {(row["target"], row["rung"], row["endpoint"]): row for row in samples}
     fam = collections.defaultdict(lambda: collections.defaultdict(list))
-    for s in samples:
-        fam[(s["target"], s["rung"])][s["family"]].append(s["hist_b64"])
+    for row in samples:
+        fam[(row["target"], row["rung"])][row["family"]].append(row["hist_b64"])
     fam_p50 = {}
     for key, byfam in fam.items():
         fam_p50[key] = {}
@@ -87,6 +97,10 @@ def main():
         "shards": env.get("shards", [env["shard"]]),
         "cross_language": env.get("cross_language", False),
         "rungs": rung_ids, "targets": [],
+        # Declared once. Per-target endpoint arrays are parallel to this, which keeps the
+        # file small enough to commit on every run and keep forever.
+        "endpoint_order": ep_order,
+        "endpoint_family": [ep_family[e] for e in ep_order],
     }
     for t in targets:
         m = meta.get(t, {})
@@ -111,13 +125,34 @@ def main():
                 "p50_ratio": ratio(r["p50_us"], b["p50_us"]) if b else None,
                 "p99_ratio": ratio(r["p99_us"], b["p99_us"]) if b else None,
             }
+        # Per endpoint, per rung, as arrays parallel to endpoint_order.
+        eps = {"p50_us": {}, "p99_us": {}, "count": {}, "p50_ratio": {}}
+        for rn in rung_ids:
+            p50s, p99s, counts, ratios = [], [], [], []
+            for eid in ep_order:
+                row = ep_hist.get((t, rn, eid))
+                brow = ep_hist.get((base, rn, eid))
+                p50s.append(row["p50_us"] if row else None)
+                p99s.append(row["p99_us"] if row else None)
+                counts.append(row["count"] if row else 0)
+                ratios.append(ratio(row["p50_us"], brow["p50_us"])
+                              if row and brow and brow["p50_us"] else None)
+            eps["p50_us"][str(rn)] = p50s
+            eps["p99_us"][str(rn)] = p99s
+            eps["count"][str(rn)] = counts
+            eps["p50_ratio"][str(rn)] = ratios
+        entry["endpoints"] = eps
+
         mid = rung_ids[len(rung_ids) // 2]
         for f, v in sorted(fam_p50.get((t, mid), {}).items()):
             bv = fam_p50.get((base, mid), {}).get(f)
             entry["families"][f] = {"p50_us": v, "p50_ratio": ratio(v, bv) if bv else None}
         out["targets"].append(entry)
 
-    blob = json.dumps(out, indent=2, sort_keys=True)
+    # Compact, not pretty. Indenting puts every one of the per-endpoint integers on its
+    # own line and quadruples a file that is committed on every run and kept forever.
+    # `jq .` reads it fine.
+    blob = json.dumps(out, separators=(",", ":"), sort_keys=True)
     if a.out:
         p = pathlib.Path(a.out)
         p.parent.mkdir(parents=True, exist_ok=True)

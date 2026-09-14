@@ -80,6 +80,37 @@ td.name { font-weight: 600; white-space: nowrap; }
 tr.baseline td { color: var(--ink2); }
 tr.baseline td.name { color: var(--ink); }
 .ver { font-family: var(--f-mono); font-size: 12px; color: var(--ink2); }
+
+/* family rollups that open to the endpoints they were rolled up from */
+.drill { border: 1px solid var(--rule); border-radius: 3px; min-width: 560px;
+         background: var(--surface); }
+.dhead, .drill summary, .erow {
+  display: grid; gap: 12px; align-items: baseline; padding: 9px 14px;
+  font-variant-numeric: tabular-nums; text-align: right; font-size: 14px; }
+.dhead > :first-child, .drill summary > :first-child, .erow > :first-child { text-align: left; }
+.dhead { font-family: var(--f-mono); font-size: 10px; letter-spacing: .09em;
+         text-transform: uppercase; color: var(--ink3);
+         border-bottom: 1px solid var(--rule2); }
+.drill details { border-top: 1px solid var(--rule); }
+.drill details:first-of-type { border-top: none; }
+.drill summary { cursor: pointer; list-style: none; }
+.drill summary::-webkit-details-marker { display: none; }
+.drill summary:hover { background: var(--surface2); }
+.drill summary .fname { font-weight: 600; }
+.drill summary .fname::before { content: "\25B8"; color: var(--ink3);
+                                display: inline-block; width: 1em;
+                                transition: transform .12s ease; }
+.drill details[open] summary .fname::before { transform: rotate(90deg); }
+.drill details[open] summary { background: var(--surface2); }
+.drill summary .fname em { font-style: normal; color: var(--ink3); font-weight: 400;
+                           font-family: var(--f-mono); font-size: 11px; margin-left: 6px; }
+.erows { background: var(--ground); border-top: 1px solid var(--rule); }
+.erow { padding-block: 6px; font-size: 13px; color: var(--ink2); }
+.erow + .erow { border-top: 1px solid var(--rule); }
+.erow .eid { font-family: var(--f-mono); font-size: 12px; color: var(--ink); }
+@media (prefers-reduced-motion: reduce) {
+  .drill summary .fname::before { transition: none; }
+}
 .pill { display: inline-block; font-family: var(--f-mono); font-size: 11px;
         padding: 2px 7px; border-radius: 2px; background: var(--tealsoft);
         color: var(--tealtext); white-space: nowrap; }
@@ -226,22 +257,64 @@ def shard_table(run):
     return ('<div class="scroll"><table><thead><tr><th>target</th><th>version</th>%s</tr>'
             "</thead><tbody>%s</tbody></table></div>" % (head, "".join(rows)))
 
-def family_table(run):
+def family_table(run, rung):
+    """Family rollups, each expanding to the endpoints it was rolled up from.
+
+    Everything here derives from the same per-endpoint histograms: an endpoint is one
+    histogram, a family is its endpoints merged, the blend is every family merged. The
+    drill-down is a different view of one measurement, not a second one.
+    """
     fams = sorted({f for t in run["targets"] for f in t["families"]})
     if not fams:
         return ""
+    base_t = next((t for t in run["targets"] if t["target"] == run["baseline"]), None)
     others = [t for t in run["targets"] if t["target"] != run["baseline"]]
-    head = "".join("<th>%s</th>" % esc(t["target"]) for t in others)
-    rows = []
+    if not base_t:
+        return ""
+    order = run.get("endpoint_order", [])
+    efam = run.get("endpoint_family", [])
+    rn = str(rung)
+    cols = "minmax(150px,1.4fr) 90px " + " ".join(["minmax(74px,1fr)"] * len(others))
+
+    head = ('<div class="dhead" style="grid-template-columns:%s"><span>family</span>'
+            "<span>%s</span>%s</div>"
+            % (cols, esc(run["baseline"]),
+               "".join("<span>%s</span>" % esc(t["target"]) for t in others)))
+
+    blocks = []
     for f in fams:
-        base = next((t["families"].get(f, {}).get("p50_us")
-                     for t in run["targets"] if t["target"] == run["baseline"]), None)
-        cells = "".join(ratio_cell(t["families"].get(f, {}).get("p50_ratio")) for t in others)
-        rows.append("<tr><td class=\"name\">%s</td><td>%s us</td>%s</tr>"
-                    % (esc(f), base if base else "&mdash;", cells))
-    return ('<div class="scroll"><table><thead><tr><th>family</th>'
-            "<th>%s</th>%s</tr></thead><tbody>%s</tbody></table></div>"
-            % (esc(run["baseline"]), head, "".join(rows)))
+        fbase = base_t["families"].get(f, {}).get("p50_us")
+        cells = "".join(
+            '<span class="ratio%s">%s</span>'
+            % (" up" if (t["families"].get(f, {}).get("p50_ratio") or 0) > 1.15 else "",
+               ("%.2fx" % t["families"][f]["p50_ratio"])
+               if t["families"].get(f, {}).get("p50_ratio") else "&mdash;")
+            for t in others)
+        idx = [i for i, fam in enumerate(efam) if fam == f]
+        inner = ""
+        if idx:
+            erows = []
+            for i in idx:
+                bp = (base_t.get("endpoints", {}).get("p50_us", {}).get(rn) or [None])[i] \
+                     if base_t.get("endpoints") else None
+                ecells = []
+                for t in others:
+                    arr = (t.get("endpoints", {}).get("p50_ratio", {}).get(rn) or [])
+                    v = arr[i] if i < len(arr) else None
+                    ecells.append('<span class="ratio%s">%s</span>'
+                                  % (" up" if (v or 0) > 1.15 else "",
+                                     ("%.2fx" % v) if v else "&mdash;"))
+                erows.append('<div class="erow" style="grid-template-columns:%s">'
+                             '<span class="eid">%s</span><span>%s</span>%s</div>'
+                             % (cols, esc(order[i]),
+                                ("%d us" % bp) if bp else "&mdash;", "".join(ecells)))
+            inner = '<div class="erows">%s</div>' % "".join(erows)
+        blocks.append(
+            "<details><summary style=\"grid-template-columns:%s\">"
+            '<span class="fname">%s <em>%d</em></span><span>%s</span>%s</summary>%s</details>'
+            % (cols, esc(f), len(idx), ("%d us" % fbase) if fbase else "&mdash;",
+               cells, inner))
+    return '<div class="scroll"><div class="drill">%s%s</div></div>' % (head, "".join(blocks))
 
 def history_chart(runs, shard, rung):
     pts = defaultdict(list)
@@ -335,12 +408,13 @@ def render(runs):
             "Struck-through rates are ones where the baseline itself was dropping "
             "requests, so the ratio there compares two overloaded systems.</p>"
             "%s<h3 style=\"font-size:13px;text-transform:uppercase;letter-spacing:.07em;"
-            "color:var(--ink2);margin:28px 0 10px\">By endpoint family at %s rps</h3>%s"
+            "color:var(--ink2);margin:28px 0 10px\">By family at %s rps &mdash; "
+            "click any row for its endpoints</h3>%s"
             "%s</section>"
             % (esc(shard), esc(run["run_id"][:16]), esc(run["date"]), esc(run["cpu"]),
                run["cores"], esc(run["baseline"]), shard_table(run),
                f"{next((t['rungs'][str(mid)]['offered_rps'] for t in run['targets'] if str(mid) in t['rungs']), mid):,}",
-               family_table(run), history_chart(runs, shard, mid)))
+               family_table(run, mid), history_chart(runs, shard, mid)))
     return """<!doctype html>
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
