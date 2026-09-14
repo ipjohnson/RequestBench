@@ -25,7 +25,11 @@
         "javalin"
       ],
       "anchor": "spring-boot",
-      "implemented": []
+      "implemented": [
+        "javalin",
+        "vertx",
+        "helidon-se"
+      ]
     },
     "go": {
       "runtime": "golang:1.26",
@@ -160,12 +164,15 @@
     }
   },
   "hosts_implemented": {
-    "node": [
+    "java": [
+      "container"
+    ],
+    "go": [
       "container",
       "gcp-func",
       "lambda-rie"
     ],
-    "go": [
+    "node": [
       "container",
       "gcp-func",
       "lambda-rie"

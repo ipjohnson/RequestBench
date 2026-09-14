@@ -14,6 +14,9 @@ COPY targets/java/pom.xml ./
 COPY targets/java/shared/pom.xml shared/
 COPY targets/java/hosts/pom.xml hosts/
 COPY targets/java/baseline/pom.xml baseline/
+COPY targets/java/javalin/pom.xml javalin/
+COPY targets/java/vertx/pom.xml vertx/
+COPY targets/java/helidon-se/pom.xml helidon-se/
 RUN mvn -B -q -pl ${TARGET} -am dependency:go-offline
 
 COPY targets/java/shared/src shared/src
