@@ -39,6 +39,30 @@ def saturated(rung_row):
     offered = rung_row["offered_rps"] * rung_row["seconds"]
     return offered > 0 and rung_row["dropped"] / offered > SATURATION
 
+def readable(obj, indent=0):
+    """Indented structure, but leaf arrays stay on one line.
+
+    Plain json.dumps(indent=2) puts every one of the forty per-endpoint integers on its
+    own line, which quadruples the file and makes it unreadable in a browser anyway. This
+    keeps the shape legible on github.com while leaving the numeric arrays compact.
+    """
+    pad, inner = "  " * indent, "  " * (indent + 1)
+    if isinstance(obj, dict):
+        if not obj:
+            return "{}"
+        items = ['%s%s: %s' % (inner, json.dumps(k), readable(v, indent + 1))
+                 for k, v in sorted(obj.items())]
+        return "{\n" + ",\n".join(items) + "\n" + pad + "}"
+    if isinstance(obj, list):
+        if not obj:
+            return "[]"
+        if all(not isinstance(x, (dict, list)) for x in obj):
+            return json.dumps(obj, separators=(",", ":"))   # a leaf array stays on one line
+        items = [inner + readable(v, indent + 1) for v in obj]
+        return "[\n" + ",\n".join(items) + "\n" + pad + "]"
+    return json.dumps(obj)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("path")
@@ -185,10 +209,7 @@ def main():
                 entry["families"] = dict(entry["families_by_rung"].get(str(rn), {}))
         out["targets"].append(entry)
 
-    # Compact, not pretty. Indenting puts every one of the per-endpoint integers on its
-    # own line and quadruples a file that is committed on every run and kept forever.
-    # `jq .` reads it fine.
-    blob = json.dumps(out, separators=(",", ":"), sort_keys=True)
+    blob = readable(out)
     if a.out:
         p = pathlib.Path(a.out)
         p.parent.mkdir(parents=True, exist_ok=True)

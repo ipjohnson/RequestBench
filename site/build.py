@@ -5,7 +5,7 @@ Pages identically, and every slice happens in the browser rather than at build t
 
   python3 site/build.py --summaries results/summary --out site/dist
 """
-import argparse, html, json, pathlib, sys, datetime as dt
+import argparse, gzip, html, json, pathlib, sys, datetime as dt
 
 T = {  # light, dark
     "ground": ("#F4F5F2", "#121513"), "surface": ("#FCFCFB", "#1A1E1B"),
@@ -210,8 +210,8 @@ def load_exemplars(d):
     Bodies are trimmed for display; the full capture stays in results/exemplars on main.
     """
     out = {}
-    for f in sorted(pathlib.Path(d).glob("*.json")):
-        key = f.stem                      # <shard>-<target>
+    for f in sorted(pathlib.Path(d).rglob("*.json")):
+        key = f.stem                      # <shard>-<target>@<host>
         try:
             doc = json.loads(f.read_text())
         except json.JSONDecodeError:
@@ -235,7 +235,8 @@ def load_exemplars(d):
 
 def load(d):
     runs = []
-    for f in sorted(pathlib.Path(d).glob("*.json")):
+    # Summaries are filed by month, so walk rather than glob one level.
+    for f in sorted(pathlib.Path(d).rglob("*.json")):
         if f.name.startswith("."):
             continue
         try:
@@ -253,8 +254,44 @@ const ser = () => (matchMedia('(prefers-color-scheme: dark)').matches &&
                    document.documentElement.dataset.theme !== 'light') ||
                   document.documentElement.dataset.theme === 'dark' ? S.dark : S.light;
 
+/* RB.runs holds the newest run per host, embedded so the table paints immediately.
+   RB.manifest lists every run; the rest are fetched only when something needs them. */
+const loaded = new Map(RB.runs.map(r => [r.run_id, r]));
+const manifest = (RB.manifest || []).filter(m => m.tracked);
+const inflight = new Map();
+
+function runsFor(host) {
+  return manifest.filter(m => m.exec_host === host)
+                 .map(m => loaded.get(m.id)).filter(Boolean)
+                 .sort((a, b) => a.run_id < b.run_id ? -1 : 1);
+}
+
+/* Pages serves a .gz as application/gzip with no Content-Encoding, so the browser hands
+   back raw bytes and the stream has to be unwrapped here. */
+async function fetchJson(url) {
+  const res = await fetch(url);
+  if (!res.ok) return null;
+  if (!url.endsWith('.gz')) return res.json();
+  const stream = res.body.pipeThrough(new DecompressionStream('gzip'));
+  return new Response(stream).json();
+}
+
+async function fetchHostRuns(host) {
+  const want = manifest.filter(m => m.exec_host === host && !loaded.has(m.id));
+  if (!want.length) return false;
+  await Promise.all(want.map(async (m) => {
+    if (inflight.has(m.id)) return inflight.get(m.id);
+    const p = fetchJson(m.file)
+      .then(run => { if (run) loaded.set(m.id, run); })
+      .catch(() => {});
+    inflight.set(m.id, p);
+    return p;
+  }));
+  return true;
+}
+
 const tracked = RB.runs.filter(r => r.tracked);
-const hosts   = [...new Set(tracked.map(r => r.exec_host || 'container'))].sort();
+const hosts   = [...new Set(manifest.map(m => m.exec_host))].sort();
 const langs   = [...new Set(tracked.flatMap(r => r.targets.map(t => t.shard)))].sort();
 
 const METRICS = {
@@ -307,7 +344,7 @@ let writeHash = function () {
   history.replaceState(null, '', '#' + p.toString());
 };
 
-const runsForHost = () => tracked.filter(r => (r.exec_host || 'container') === st.host);
+const runsForHost = () => runsFor(st.host);
 const latest = () => { const rs = runsForHost(); return rs.length ? rs[rs.length - 1] : null; };
 const rungsOf = run => run ? run.rungs.map(String) : [];
 function pickRung(run) {
@@ -331,11 +368,26 @@ const esc = t => String(t).replace(/[&<>"]/g, c =>
 /* ---- wire data, aggregated to whatever granularity is on screen ---- */
 /* Exemplars are keyed <shard>-<target>@<host>: the same framework on two hosts puts
    different things on the wire, which is the point of the host axis. */
-const wireDoc = r => {
-  const w = RB.wire || {}, run = latest();
-  const host = (run && run.exec_host) || 'container';
-  return w[`${r.shard}-${r.target}@${host}`] || w[`${r.shard}-${r.target}`];
+/* Exemplars are keyed <shard>-<target>@<host> and fetched when a dialog asks for one. */
+const wireKeyFor = (r) => {
+  const run = latest(), host = (run && run.exec_host) || 'container';
+  const idx = RB.wireIndex || {};
+  const k = `${r.shard}-${r.target}@${host}`;
+  return idx[k] ? k : (idx[`${r.shard}-${r.target}`] ? `${r.shard}-${r.target}` : null);
 };
+const wireCache = new Map();
+const wireDoc = (r) => {
+  const k = wireKeyFor(r);
+  return k ? wireCache.get(k) : undefined;
+};
+async function fetchWire(key) {
+  if (wireCache.has(key)) return wireCache.get(key);
+  const meta = (RB.wireIndex || {})[key];
+  if (!meta) return null;
+  const doc = await fetchJson(meta.file).catch(() => null);
+  if (doc) wireCache.set(key, doc);
+  return doc;
+}
 function wireFor(r) {
   const doc = wireDoc(r);
   if (!doc) return {};
@@ -497,10 +549,13 @@ function render() {
 }
 
 /* ---- detail dialog: every field, hidden ones included, plus the captured exchange ---- */
-function openDetail(key) {
+async function openDetail(key) {
   const r = (window.__rows || []).find(x => x.key === key);
   if (!r) return;
-  const doc = wireDoc(r), e = r.ex;
+  const wk = wireKeyFor(r);
+  if (wk) await fetchWire(wk);
+  const doc = wireDoc(r);
+  const e = st.gran === 'endpoint' && doc ? doc.endpoints[r.detail] : null;
   const field = (lab, val, hidden) =>
     `<div class="frow${hidden ? ' hid' : ''}"><span class="fk">${esc(lab)}${hidden ? ' <em>hidden</em>' : ''}</span><span class="fv">${cell(lab === 'framing' ? 'framing' : '', val)}</span></div>`;
   const fields = COLS.filter(c => c.label && c.id !== 'bar').map(c => {
@@ -539,6 +594,12 @@ function openDetail(key) {
 function renderTime(rs, langColour) {
   const runs = runsForHost();
   const el = document.getElementById('time');
+  // The history needs every run on this host, not just the embedded newest one.
+  if (manifest.some(m => m.exec_host === st.host && !loaded.has(m.id))) {
+    el.innerHTML = '<p class="empty">Loading history\u2026</p>';
+    fetchHostRuns(st.host).then(got => { if (got) render(); });
+    return;
+  }
   const keys = rs.slice(0, 6).map(r => r.key);
   if (runs.length < 2) {
     el.innerHTML = '<p class="empty">One run on this host so far. The time axis fills in as runs accumulate.</p>';
@@ -613,7 +674,10 @@ function renderTime(rs, langColour) {
 }
 
 /* ---- wiring ---- */
-document.getElementById('host').onchange = e => { st.host = e.target.value; st.rung = null; render(); };
+document.getElementById('host').onchange = async (e) => {
+  st.host = e.target.value; st.rung = null; render();
+  if (await fetchHostRuns(st.host)) render();
+};
 document.getElementById('rung').onchange = e => { st.rung = e.target.value; render(); };
 document.getElementById('metric').onchange = e => { st.metric = e.target.value; render(); };
 document.getElementById('q').oninput = e => { st.q = e.target.value; render(); };
@@ -659,7 +723,10 @@ matchMedia('(prefers-color-scheme: dark)').addEventListener('change', render);
 let ownHash = '';
 addEventListener('hashchange', () => {
   if (location.hash === ownHash) return;
-  readHash(); render();
+  readHash();
+render();
+// Pull the rest of this host's runs in the background so the history fills in.
+fetchHostRuns(st.host).then(got => { if (got) render(); });
 });
 const _writeHash = writeHash;
 writeHash = function () { _writeHash(); ownHash = location.hash; };
@@ -667,10 +734,39 @@ readHash(); render();
 """
 
 
+def slug(run_id):
+    return run_id.replace(":", "").replace("/", "-")
+
+
+def manifest_entry(r):
+    """Just enough to populate the controls and decide what to fetch."""
+    return {"id": r["run_id"], "file": "data/%s.json.gz" % slug(r["run_id"]),
+            "date": r.get("date", ""), "shard": r.get("shard", ""),
+            "exec_host": r.get("exec_host") or "container",
+            "suite": r.get("suite", ""), "tracked": bool(r.get("tracked")),
+            "cpu": r.get("cpu", ""), "cores": r.get("cores", 0)}
+
+
 def render(runs, wire):
     tracked = [r for r in runs if r.get("tracked")]
     now = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
-    data = json.dumps({"runs": runs, "wire": wire}, separators=(",", ":"))
+    # Embed only the newest tracked run per host, so the table paints without a round trip.
+    # Everything else is fetched when something actually needs it; embedding every run made
+    # the page grow without bound, one full-matrix run being close to a megabyte.
+    newest = {}
+    for r in tracked:
+        h = r.get("exec_host") or "container"
+        if h not in newest or r["run_id"] > newest[h]["run_id"]:
+            newest[h] = r
+    # Wire captures are per target and only read when a dialog opens, so ship the index
+    # and fetch the bodies. Embedding all of them was most of the page weight.
+    data = json.dumps({
+        "runs": list(newest.values()),
+        "manifest": [manifest_entry(r) for r in runs],
+        "wireIndex": {k: {"framework": v["framework"], "version": v["version"],
+                          "file": "data/wire/%s.json.gz" % k}
+                      for k, v in wire.items()},
+    }, separators=(",", ":"))
     app = (APP.replace("__SERIES_LIGHT__", json.dumps(SERIES_LIGHT))
               .replace("__SERIES_DARK__", json.dumps(SERIES_DARK)))
     return ("""<!doctype html>
@@ -766,11 +862,32 @@ def main():
     out = pathlib.Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
     (out / "index.html").write_text(render(runs, wire))
-    (out / "data.json").write_text(json.dumps(runs, separators=(",", ":")))
+    # Clear the data directory: a rename or a dropped run would otherwise leave a stale
+    # file behind that the manifest no longer references but Pages keeps serving.
+    data_dir = out / "data"
+    if data_dir.exists():
+        for old_file in sorted(data_dir.rglob("*"), reverse=True):
+            old_file.unlink() if old_file.is_file() else old_file.rmdir()
+    data_dir.mkdir(parents=True, exist_ok=True)
+    # Stored gzipped. Pages caps a site at 1 GB and this directory grows by a run a night,
+    # so the saving is in bytes at rest rather than on the wire, which Pages already
+    # compresses. The client unwraps with DecompressionStream.
+    def put(path, obj):
+        path.write_bytes(gzip.compress(json.dumps(obj, separators=(",", ":")).encode(), 9))
+
+    for r in runs:
+        put(data_dir / ("%s.json.gz" % slug(r["run_id"])), r)
+    wire_dir = data_dir / "wire"
+    wire_dir.mkdir(exist_ok=True)
+    for key, doc in wire.items():
+        put(wire_dir / ("%s.json.gz" % key), doc)
+
     print("read %d summaries (%d tracked)" % (runs.__len__(),
                                               sum(1 for r in runs if r.get("tracked"))))
-    print("wrote %s (%.1f KB), %d targets with captured wire data"
-          % (out / "index.html", (out / "index.html").stat().st_size / 1024, len(wire)))
+    embedded = len({(r.get("exec_host") or "container") for r in runs if r.get("tracked")})
+    print("wrote %s (%.1f KB): %d run(s) embedded, %d fetched on demand, %d wire captures"
+          % (out / "index.html", (out / "index.html").stat().st_size / 1024,
+             embedded, len(runs) - embedded, len(wire)))
     return 0
 
 
