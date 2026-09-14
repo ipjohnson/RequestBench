@@ -6,7 +6,7 @@ rather than surfacing later as an unexplained latency difference.
 
   python3 harness/conform.py 127.0.0.1:8080 [--fingerprint f.json] [--compare ref.json]
 """
-import json, sys, hashlib, pathlib, argparse, http.client, collections
+import json, sys, hashlib, pathlib, argparse, http.client, collections, re, zlib
 
 # What a response has to carry regardless of framework. Latency says nothing about any of
 # it, and frameworks differ more here than anywhere else.
@@ -18,8 +18,12 @@ ALWAYS = [("content-type", "present", "every response must declare its type"),
 NO_BODY = {204, 304}
 LAMBDA_INVOKE = "/2015-03-31/functions/function/invocations"
 
+# Families whose responses carry x-rb-serial, a per-process counter proving the handler ran
+# and the response came from it rather than from a cache anywhere in the path.
+FRESH = ("compressed.", "cached.")
 
-def as_event(method, path, body):
+
+def as_event(method, path, body, headers=None):
     """An API Gateway v2 event, shaped the same way gen/serial.mjs shapes it."""
     qi = path.find("?")
     raw_path = path if qi == -1 else path[:qi]
@@ -28,7 +32,8 @@ def as_event(method, path, body):
     return json.dumps({
         "version": "2.0", "rawPath": raw_path, "rawQueryString": qs,
         "queryStringParameters": dict(parse_qsl(qs)),
-        "headers": {"content-type": "application/json", "host": "rb.invalid"},
+        "headers": {**(headers or {}),
+                    "content-type": "application/json", "host": "rb.invalid"},
         "requestContext": {"http": {"method": method, "path": raw_path}},
         "body": body, "isBase64Encoded": False,
     })
@@ -91,6 +96,44 @@ def check_headers(status, headers, body, encoding="http"):
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 PLAN = json.loads((ROOT / "spec" / "plan.json").read_text())
 
+def decoded(raw, headers):
+    """The bytes to fingerprint, which are not always the bytes on the wire.
+
+    gzip output differs between zlib, Java's Deflater and Go's compress/flate at the same
+    level. The decompressed bytes must not, so the fingerprint is taken over those. The
+    wire bytes are still what the content-length contract is checked against.
+    """
+    enc = {k.lower(): v for k, v in headers}.get("content-encoding", "")
+    if raw and "gzip" in enc:
+        try:
+            return zlib.decompress(raw, 16 + zlib.MAX_WBITS)
+        except zlib.error:
+            return raw
+    return raw
+
+
+def serial_of(headers, previous):
+    v = {k.lower(): v for k, v in headers}.get("x-rb-serial")
+    return int(v) if v is not None and v.isdigit() else previous
+
+
+def advanced(headers, previous):
+    """Why x-rb-serial is unacceptable on this response, or None.
+
+    A target that served a response from a cache anywhere in its own path, or precomputed
+    it at boot, repeats a counter it did not increment. Identical bytes are the whole point
+    of the fingerprint, so this is the only thing that can tell the two apart.
+    """
+    v = {k.lower(): v for k, v in headers}.get("x-rb-serial")
+    if v is None:
+        return "no x-rb-serial (the response must prove the handler ran)"
+    if not v.isdigit():
+        return "x-rb-serial %r is not a number" % v
+    if previous is not None and int(v) <= previous:
+        return "x-rb-serial did not advance (%s after %d)" % (v, previous)
+    return None
+
+
 def canonical(raw, ctype):
     if not raw:
         return "empty"
@@ -100,6 +143,19 @@ def canonical(raw, ctype):
                                              separators=(",", ":")).encode()).hexdigest()[:16]
         except Exception:
             return "unparseable-json"
+    if "html" in (ctype or ""):
+        # Five template engines cannot agree on formatting without every template being
+        # contorted to match, so the spec pins content and leaves whitespace free: same
+        # elements, same order, same values.
+        #
+        # Collapsing runs is not enough on its own to make it free. It leaves an engine's
+        # indentation as a space where a string concat has nothing, so the two still differ
+        # and no engine could ever match. Whitespace at an element boundary goes entirely;
+        # whitespace inside text is collapsed and kept, because there it is content.
+        raw = re.sub(rb"\s+", b" ", raw)
+        raw = re.sub(rb">\s+", b">", raw)
+        raw = re.sub(rb"\s+<", b"<", raw)
+        raw = raw.strip()
     return hashlib.sha256(raw).hexdigest()[:16]
 
 def main():
@@ -136,14 +192,19 @@ def main():
     for ep in PLAN["endpoints"]:
         paths = ep["paths"][: a.instances] if a.instances else ep["paths"]
         body = ep.get("body")
-        headers = {"accept": "application/json"}
+        # The same request gen/blend.mjs sends: the endpoint's own headers, plus a
+        # content-type when there is a body. The gate used to add an accept the generator
+        # never sends, which meant a content-negotiating target could be gated on one
+        # response and measured on another.
+        headers = dict(ep.get("headers") or {})
         if body:
             headers["content-type"] = "application/json"
-        seen, bad = collections.Counter(), None
+        fresh = ep["id"].startswith(FRESH) and not a.skip_headers
+        seen, bad, stale, last_serial = collections.Counter(), None, None, None
         for path in paths:
             try:
                 if a.encoding == "lambda":
-                    event = as_event(ep["method"], path, body)
+                    event = as_event(ep["method"], path, body, headers)
                     conn.request("POST", LAMBDA_INVOKE, body=event,
                                  headers={"content-type": "application/json"})
                     r = conn.getresponse()
@@ -169,8 +230,11 @@ def main():
             # Only a response that actually arrived with the right status may define the
             # endpoint's fingerprint; otherwise a single early hiccup gets recorded as the
             # reference body and every later comparison reports drift that is not real.
+            if fresh and status == ep["expect"]:
+                stale = stale or advanced(hdrs, last_serial)
+                last_serial = serial_of(hdrs, last_serial)
             if status == ep["expect"]:
-                prints.setdefault(ep["id"], canonical(raw, ctype))
+                prints.setdefault(ep["id"], canonical(decoded(raw, hdrs), ctype))
                 if ep["id"] not in seen_once:
                     seen_once.add(ep["id"])
                     if not a.skip_headers:
@@ -194,9 +258,9 @@ def main():
                         },
                     })
 
-        ok = set(seen) == {ep["expect"]}
+        ok = set(seen) == {ep["expect"]} and stale is None
         if not ok:
-            failures.append((ep["id"], bad or "mixed statuses %s" % dict(seen)))
+            failures.append((ep["id"], bad or stale or "mixed statuses %s" % dict(seen)))
         note = ""
         if ref and ep["id"] in ref and ep["id"] in prints and ref[ep["id"]] != prints[ep["id"]]:
             note, _ = "  <- body differs from reference", drift.append(ep["id"])

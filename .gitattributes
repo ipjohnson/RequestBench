@@ -1,0 +1,4 @@
+# Bundle hashes are taken over raw file bytes, so a checkout that rewrote line endings
+# would change every hash at once and read as forty-three rewritten targets. This pin is
+# what makes them reproducible across machines. See docs/bundles.html §3.
+* text=auto eol=lf

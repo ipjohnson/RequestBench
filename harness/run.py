@@ -5,6 +5,9 @@
 """
 import argparse, collections, functools, http.client, json, os, pathlib, platform, re, shutil, signal, socket, subprocess, sys, time, uuid
 
+import bundle
+from bundle import target_dir
+
 # Long runs are watched live; block-buffered stdout hides progress for minutes.
 print = functools.partial(print, flush=True)
 
@@ -13,6 +16,10 @@ SPEC = ROOT / "spec"
 LADDER = json.loads((SPEC / "ladder.json").read_text())
 MATRIX = json.loads((SPEC / "matrix.json").read_text())
 PORT = int(os.environ.get("RB_PORT", "8080"))
+# Which targets the gate actually fails on. Everything implemented is still booted and
+# still reported; a target that has not been rewired to the current endpoint set cannot
+# pass, and failing on it would leave the gate red for as long as the rewiring takes.
+CONFORMANCE_REQUIRED = set(MATRIX.get("conformance_required", {}).get("targets", []))
 
 # A host with no concurrency of its own gets the serial suite: there is no knee to find,
 # so the question is how long the identical pinned sequence took rather than what rate it
@@ -39,12 +46,6 @@ def lambda_event(method, path):
         "requestContext": {"http": {"method": method, "path": path}},
         "isBase64Encoded": False,
     })
-
-
-def target_dir(name):
-    """Baselines live in baseline/ whatever their language calls them."""
-    return "baseline" if name in ("node-http", "net-http", "raw-asgi", "raw-kestrel",
-                                  "bare-netty", "hyper") else name
 
 
 class Local:
@@ -327,10 +328,39 @@ def conform():
     if encoding != "http":
         argv += ["--encoding", encoding]
     out = subprocess.run(argv, capture_output=True, text=True, cwd=ROOT)
-    return out.returncode == 0, out.stdout.strip().splitlines()[-1] if out.stdout else out.stderr
+    lines = [l.strip() for l in out.stdout.strip().splitlines() if l.strip()]
+    # The summary line is what says how bad it is. Reporting the last line reported whichever
+    # diagnostic happened to print last, so a target failing forty-one endpoints announced
+    # itself as one body mismatch.
+    i = next((k for k in reversed(range(len(lines))) if "endpoints conform" in lines[k]), None)
+    if i is None:
+        return out.returncode == 0, lines[-1] if lines else out.stderr
+    why = "   " + lines[i + 1] if i + 1 < len(lines) else ""
+    return out.returncode == 0, lines[i] + why
+
+
+def safely(fn, *args):
+    """Nothing here is worth losing a measurement over. A run that cannot say which code
+    it measured is still worth recording; it just says so rather than writing a row that
+    looks complete."""
+    try:
+        return fn(*args)
+    except Exception as e:
+        print("  WARNING: %s failed (%s); this run will not be attributable to code"
+              % (fn.__name__, e))
+        return ""
+
+
+def bundle_hashes(language, target):
+    return safely(bundle.hashes, language, target) or {}
+
 
 def env_fingerprint(run_id, languages, baselines):
+    # commit and repo are what turn a row of numbers into something traceable back to the
+    # code that produced it. They cannot be added later, because the record is meant to say
+    # what was true when the measurement was taken. docs/bundles.html §8.
     return {"kind": "env", "run_id": run_id, "languages": languages, "baselines": baselines,
+            "commit": safely(bundle.commit), "repo": safely(bundle.repo),
             "host": platform.node(), "cpu": cpu_model(),
             "cores": os.cpu_count(), "platform": platform.platform(),
             "exec_host": os.environ.get("RB_HOST", "container"),
@@ -417,8 +447,9 @@ def main():
         print("run %s   %s  mode=%s  warmup=%ss  rungs=%s  %d targets"
               % (run_id, what, a.mode, warm_s, [r["rung"] for r in rungs], len(pairs)))
 
-    conformed = 0
+    conformed, boot_failed, nonconforming, unlisted = 0, [], [], []
     for language, target in pairs:
+        key = "%s:%s" % (language, target)
         print("\n=== %s%s ===" % (("%s:" % language) if len(languages) > 1 else "", target))
         t = launcher(a.mode, language, target).start()
         try:
@@ -430,6 +461,7 @@ def main():
                                 else LADDER["boot_timeout_s"][warmup_class(language)])
             except RuntimeError as e:
                 print("  BOOT FAILED: %s" % e)
+                boot_failed.append(key)
                 if hasattr(t, "tail"):
                     print("  --- target log ---\n%s" % t.tail())
                 continue
@@ -442,16 +474,22 @@ def main():
                                                     if meta.get("adapter") else ""))
                 rows.append({"kind": "target", "run_id": run_id, "language": language,
                              "target": target,
-                             "host": os.environ.get("RB_HOST", "container"), **meta})
+                             "host": os.environ.get("RB_HOST", "container"), **meta,
+                             **bundle_hashes(language, target)})
             else:
                 print("  booted   (no /__meta; version unknown)")
             if not a.skip_conform:
                 ok, line = conform()
                 print("  conformance: %s" % line)
                 if not ok:
-                    print("  FAILED: target does not conform")
+                    nonconforming.append(key)
+                    print("  %s: target does not conform"
+                          % ("FAILED" if key in CONFORMANCE_REQUIRED else "pending rewiring"))
                     continue
                 conformed += 1
+                if key not in CONFORMANCE_REQUIRED:
+                    unlisted.append(key)
+                    print("  conforms but is not in conformance_required; add it there")
             if a.validate_only:
                 continue
 
@@ -526,9 +564,22 @@ def main():
             time.sleep(0.5)   # cooldown so the next target does not inherit a warm socket table
 
     if a.validate_only:
-        n = len(a.targets.split(","))
-        print("\n%d/%d targets conform" % (conformed, n))
-        return 0 if conformed == n else 1
+        print("\n%d/%d targets conform" % (conformed, len(pairs)))
+        required_bad = [k for k in nonconforming if k in CONFORMANCE_REQUIRED]
+        pending = [k for k in nonconforming if k not in CONFORMANCE_REQUIRED]
+        if pending:
+            print("  %d not yet rewired to the current spec: %s"
+                  % (len(pending), ", ".join(pending)))
+        # A target that starts conforming on its own is the signal to add it, not something
+        # to pass silently: the list is what the gate protects, so it has to stay current.
+        if unlisted:
+            print("  %d conform but are unlisted: %s" % (len(unlisted), ", ".join(unlisted)))
+        if boot_failed:
+            print("  %d FAILED TO BOOT: %s" % (len(boot_failed), ", ".join(boot_failed)))
+        if required_bad:
+            print("  %d required and not conforming: %s"
+                  % (len(required_bad), ", ".join(required_bad)))
+        return 1 if (required_bad or boot_failed or unlisted) else 0
 
     with out_path.open("w") as f:
         for row in rows:

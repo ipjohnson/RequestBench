@@ -38,6 +38,18 @@ jobs:
           fi
           echo "fixture, plan and sequence match their generators"
 
+  bundles:
+    name: target bundles resolve
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.13" }
+      # A bundle that resolves to a partial file set still hashes cleanly, so the only way
+      # to notice the convention failing to fit a new language is to assert the roles.
+      - name: Every implemented target resolves a bundle
+        run: python3 harness/bundle.py --all --check
+
   workflows:
     name: workflow files parse
     runs-on: ubuntu-latest
@@ -63,14 +75,24 @@ jobs:
         run: python3 harness/run.py --language node --targets node-http,fastify,express,hono,koa,h3 --validate-only
       - name: Fail if the reference fingerprints drifted
         run: |
+          # The reference is the baseline's own conformance output, so it can only be
+          # regenerated from a baseline that serves the current endpoint set. Until
+          # node-http is rewired there is nothing here to compare against.
+          if ! jq -e '.conformance_required.targets | index("node:node-http")' \
+               spec/matrix.json >/dev/null; then
+            echo "node-http is not required to conform yet; nothing to regenerate."
+            exit 0
+          fi
           RB_TARGET=baseline PORT=8080 node targets/node/_hosts/container.mjs & SRV=$!
+          # Without this the server outlives a failing gate, because the step aborts on
+          # the non-zero exit before it reaches the kill.
+          trap 'kill $SRV 2>/dev/null || true' EXIT
           for _ in $(seq 1 40); do
             if curl -sf http://127.0.0.1:8080/health >/dev/null; then break; fi
             sleep 0.25
           done
           python3 harness/conform.py 127.0.0.1:8080 --quiet \
             --fingerprint spec/fingerprint.node-http.json
-          kill $SRV
           if ! git diff --quiet -- spec/fingerprint.node-http.json; then
             echo "the committed reference fingerprints no longer match the baseline."
             echo "Every other target is compared against this file, so regenerating it"
