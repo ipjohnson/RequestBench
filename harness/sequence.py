@@ -4,6 +4,10 @@ A function host runs one invocation at a time, so there is no knee to find and n
 to sample a mix randomly. Every target replays the identical ordered list instead, which
 removes mix variance entirely: the comparison becomes how long the same work took.
 
+The draw is uniform, matching spec/endpoints.json. Endpoints are not weighted here, so the
+sequence gives every one of them the same number of invocations and every per-endpoint
+percentile the same number of observations behind it.
+
 Generated rather than committed by hand, and regenerated in CI to prove it has not drifted,
 the same way spec/fixture.json and spec/plan.json are.
 """
@@ -27,25 +31,11 @@ def xorshift32(seed):
 
 def build():
     eps = PLAN["endpoints"]
-    total = sum(e["share"] for e in eps)
-    # Cumulative shares, so a draw picks an endpoint in proportion to its blend weight.
-    cum, acc = [], 0
-    for e in eps:
-        acc += e["share"]
-        cum.append(acc)
-
+    assert PLAN["sampling"] == "uniform", PLAN["sampling"]
     rnd = xorshift32(SEED)
     ep_idx, inst_idx = [], []
     for _ in range(LENGTH):
-        r = next(rnd) % total
-        lo, hi = 0, len(cum) - 1
-        while lo < hi:
-            mid = (lo + hi) // 2
-            if r < cum[mid]:
-                hi = mid
-            else:
-                lo = mid + 1
-        ep_idx.append(lo)
+        ep_idx.append(next(rnd) % len(eps))
         inst_idx.append(next(rnd) % PLAN["instances"])
     return ep_idx, inst_idx
 
@@ -57,7 +47,7 @@ def main():
     for i in ep_idx:
         counts[i] += 1
     out = {
-        "version": "sequence-v1",
+        "version": "sequence-v2",
         "length": LENGTH,
         "seed": SEED,
         "blend": PLAN["version"],
@@ -68,12 +58,11 @@ def main():
     p = ROOT / "spec" / "sequence.json"
     p.write_text(json.dumps(out, separators=(",", ":")))
     print("wrote %s  (%.0f KB, %s requests)" % (p, p.stat().st_size / 1024, f"{LENGTH:,}"))
-    lo = min(counts)
-    worst = eps[counts.index(lo)]["id"]
-    print("  rarest endpoint %s gets %s of %s requests (%.2f%%)"
-          % (worst, f"{lo:,}", f"{LENGTH:,}", 100 * lo / LENGTH))
-    exp = min(e["share"] for e in eps) / sum(e["share"] for e in eps)
-    print("  expected share %.2f%%, so the draw tracks the blend weights" % (100 * exp))
+    lo, hi = min(counts), max(counts)
+    exp = LENGTH / len(eps)
+    print("  %s..%s invocations per endpoint against %s expected (spread %.2f%%)"
+          % (f"{lo:,}", f"{hi:,}", f"{exp:,.0f}", 100 * (hi - lo) / exp))
+    print("  the draw is uniform, so that spread is sampling noise and nothing else")
     return 0
 
 

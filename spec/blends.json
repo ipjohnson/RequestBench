@@ -1,0 +1,58 @@
+{
+  "version": "blends-v1",
+  "published": "uniform",
+  "note": "Weight vectors over spec/endpoints.json. The request stream is drawn uniformly, so every opinion about traffic lives here and nowhere else. A vector need not sum to anything: weights are relative and normalised when the blend is composed. Weights are applied by scaling each endpoint's histogram before merging, and percentiles are read from the merged histogram; a blend is never an average of per-endpoint percentiles. Adding a blend needs no re-measurement, only a re-run of harness/summarize.py over samples already on disk.",
+  "default_weight": 1,
+  "blends": {
+    "uniform": {
+      "title": "Uniform",
+      "why": "The published headline. Every endpoint counts once, so the number carries no opinion about traffic. It is also the only blend with no reweighting error, because a uniform mix is the mix that was actually run: per-endpoint latency is not independent of the mix, so every other vector here describes what those endpoints did under uniform load rather than under their own.",
+      "weights": {}
+    },
+    "rankable": {
+      "title": "Rankable",
+      "why": "Uniform with the one family that cannot be compared across languages removed. Template output is partly an engine benchmark, so a cross-language ranking that includes it is measuring Thymeleaf against html/template.",
+      "weights": { "template.small": 0, "template.medium": 0 }
+    },
+    "core": {
+      "title": "Core",
+      "why": "What blend-v1 covered: dispatch, serialization, routing, body handling, query parsing, application work and errors, with every feature family zeroed. The old series has no successor that carries its numbers, but this one carries its shape.",
+      "weights": {
+        "authorized.allowed": 0, "authorized.denied": 0,
+        "compressed.small": 0, "compressed.medium": 0, "compressed.large": 0,
+        "cached.small": 0, "cached.medium": 0, "cached.large": 0, "cached.revalidate": 0,
+        "headers.few": 0, "headers.many": 0,
+        "middleware.none": 0, "middleware.four": 0, "middleware.sixteen": 0,
+        "template.small": 0, "template.medium": 0
+      }
+    },
+    "features": {
+      "title": "Features",
+      "why": "Only what a real service turns on. Separates frameworks that are quick at dispatch from frameworks that are quick once authorization, compression, caching and a middleware chain are in the path.",
+      "weights": {
+        "baseline.plaintext": 0,
+        "json.small": 0, "json.medium": 0, "json.large": 0,
+        "parameters.static": 0, "parameters.one": 0, "parameters.two": 0,
+        "body.bind_small": 0, "body.bind_medium": 0,
+        "body.validate_small": 0, "body.validate_medium": 0,
+        "body.rejected_all": 0, "body.rejected_first": 0,
+        "query.one": 0, "query.many": 0,
+        "domain.lookup": 0, "domain.filter": 0, "domain.join": 0, "domain.aggregate": 0,
+        "domain.create": 0, "domain.replace": 0, "domain.patch": 0, "domain.delete": 0,
+        "errors.not_found": 0, "errors.unmatched": 0, "errors.malformed": 0
+      }
+    },
+    "read-only": {
+      "title": "Read only",
+      "why": "A service behind a cache, where reads dominate and the write path barely runs. Every endpoint carrying a request body is zeroed, which drops validation and the four write methods.",
+      "weights": {
+        "body.bind_small": 0, "body.bind_medium": 0,
+        "body.validate_small": 0, "body.validate_medium": 0,
+        "body.rejected_all": 0, "body.rejected_first": 0,
+        "domain.create": 0, "domain.replace": 0, "domain.patch": 0, "domain.delete": 0,
+        "errors.malformed": 0,
+        "template.small": 0, "template.medium": 0
+      }
+    }
+  }
+}

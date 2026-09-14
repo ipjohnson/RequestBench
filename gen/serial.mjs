@@ -49,14 +49,25 @@ const LAMBDA_PATH = "/2015-03-31/functions/function/invocations";
 // stays normal -- the exact shape of the bogus 61s and 1186s runs.
 const agent = new http.Agent({ keepAlive: true, maxSockets: 1, noDelay: true });
 
+// The endpoint's own headers plus whatever the body requires. Four families are defined by
+// what the request carries rather than where it points, so dropping these would leave them
+// measuring the wrong thing rather than failing.
+function reqHeaders(ep) {
+  const h = { ...(ep.headers ?? {}) };
+  if (ep.body) {
+    h["content-type"] = "application/json";
+    h["content-length"] = Buffer.byteLength(ep.body);
+  }
+  return Object.keys(h).length ? h : undefined;
+}
+
 function build(i) {
   const ep = eps[epIdx[i % epIdx.length]];
   const path = ep.paths[inIdx[i % inIdx.length] % ep.paths.length];
   if (encoding === "http") {
     return {
       opts: { host, port, path, method: ep.method, agent,
-              headers: ep.body ? { "content-type": "application/json",
-                                   "content-length": Buffer.byteLength(ep.body) } : undefined },
+              headers: reqHeaders(ep) },
       payload: ep.body, ep, unwrap: false,
     };
   }
@@ -67,7 +78,7 @@ function build(i) {
   const event = JSON.stringify({
     version: "2.0", rawPath, rawQueryString: qi === -1 ? "" : path.slice(qi + 1),
     queryStringParameters: query,
-    headers: { "content-type": "application/json", host: "rb.invalid" },
+    headers: { ...(ep.headers ?? {}), "content-type": "application/json", host: "rb.invalid" },
     requestContext: { http: { method: ep.method, path: rawPath } },
     body: ep.body ?? undefined, isBase64Encoded: false,
   });

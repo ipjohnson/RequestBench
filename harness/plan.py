@@ -4,29 +4,46 @@ Every driver replays this file rather than filling templates itself. That keeps 
 conformance checker and the load generator sending byte-identical shapes, keeps string
 formatting out of the generator's hot loop, and makes correlated ids (an order and the
 customer who actually owns it) a build-time concern instead of a runtime one.
+
+Request headers are resolved here too, for the same reason paths are. Four families are
+defined by what the request carries rather than by where it points: the bearer token, the
+Accept-Encoding, the If-None-Match and the twenty-seven extra headers all have to be the
+same bytes for every target, and two of them are values only the fixture knows.
 """
-import json, random, pathlib
+import json, random, pathlib, re
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 SPEC = json.loads((ROOT / "spec" / "endpoints.json").read_text())
 FIX = json.loads((ROOT / "spec" / "fixture.json").read_text())
-INSTANCES = 64
+# Sixty-four made the whole endpoint set memoizable: a target could precompute every
+# response at boot and reduce each endpoint to a dispatch and a write, and conformance
+# could not see it, because identical bytes are the point of the fingerprint. Five hundred
+# and twelve makes that impractical rather than merely forbidden.
+INSTANCES = 512
 SEED = 424242
 
 ORDERS = FIX["orders"]
-CUSTOMERS = {c["id"]: c for c in FIX["customers"]}
+
+# Line counts are chosen so the serialized body lands in the same size regime as the
+# response payload of the same name. Asserted in build(), because "medium" meaning two
+# different things in two places is exactly the drift this file exists to prevent.
+LINES_SMALL, LINES_MEDIUM = 1, 336
+
+def order(nlines):
+    return {"customer_id": 1, "status": "open",
+            "lines": [{"product_id": 1 + (i % 50), "qty": 1 + (i % 5)} for i in range(nlines)]}
 
 BODIES = {
-    "order_draft":    {"customer_id": 1, "status": "open",
-                       "lines": [{"product_id": 3, "qty": 2}, {"product_id": 7, "qty": 1}]},
-    "order_invalid":  {"customer_id": "not-an-int", "lines": []},
-    "customer_draft": {"name": "Ada Lovelace", "email": "ADA@example.invalid", "region": "north"},
+    "order_small":    order(LINES_SMALL),
+    "order_medium":   order(LINES_MEDIUM),
+    # Fails on its first field, so the gap between collect-all and first-error is wide
+    # enough to read. Every later field is invalid too, which is what the two contracts
+    # disagree about.
+    "order_invalid":  {"customer_id": "not-an-int", "status": 42, "lines": "nope"},
     "customer_patch": {"name": "Ada L.", "region": "south"},
-    "product_draft":  {"name": "brass-ring-99", "category": "tools", "price_cents": 1299},
-    "line_draft":     {"product_id": 5, "qty": 3},
-    "malformed":      {"customer_id": None, "status": 42, "lines": "nope"},
-    "echo_400b":      {"pad": "x" * 360, "n": 1},
-    "echo_32kb":      {"pad": "x" * 32_200, "n": 2},
+    # Not JSON at all. This is the parser's failure path, not the validator's, which is
+    # what separates errors.malformed from body.rejected_all.
+    "malformed":      "{\"customer_id\": 1, \"lines\": [",
 }
 
 def free_params(rng):
@@ -41,22 +58,38 @@ def free_params(rng):
     return out
 
 def correlate(strategy, params, rng):
-    """Overwrite free params so related ids refer to the same real objects."""
-    if strategy in ("order_chain", "order_line"):
+    """Overwrite free params so related ids refer to the same real objects. Without this,
+    domain.delete would name a line that its order does not have and measure the 404 path
+    on most instances."""
+    if strategy == "order_line":
         o = rng.choice(ORDERS)
         params["order"] = o["id"]
         params["line"] = rng.choice(o["lines"])["id"]
-        if strategy == "order_chain":
-            c = CUSTOMERS[o["customer_id"]]
-            params["customer"] = c["id"]
-            params["region"] = c["region"]
-    elif strategy == "customer_any":
-        params["customer"] = rng.choice(list(CUSTOMERS))
     return params
+
+def fixture_value(dotted):
+    """Resolve {auth.token} or {payloads.large.etag} against the committed fixture."""
+    node = FIX
+    for part in dotted.split("."):
+        node = node[part]
+    return str(node)
+
+
+def header_set(name):
+    raw = SPEC["header_sets"][name]
+    return {k: re.sub(r"\{([a-z_.]+)\}", lambda m: fixture_value(m.group(1)), v)
+            for k, v in raw.items()}
+
 
 def build():
     rng = random.Random(SEED)
-    plan = {"version": SPEC["version"], "instances": INSTANCES, "endpoints": []}
+    small = json.dumps(BODIES["order_small"], separators=(",", ":"))
+    medium = json.dumps(BODIES["order_medium"], separators=(",", ":"))
+    assert len(small) < 256, "order_small is %d bytes" % len(small)
+    assert 4096 < len(medium) < 16384, \
+        "order_medium is %d bytes, which is not the medium regime" % len(medium)
+    plan = {"version": SPEC["version"], "sampling": SPEC["sampling"],
+            "instances": INSTANCES, "endpoints": []}
     for ep in SPEC["endpoints"]:
         rows = []
         for _ in range(INSTANCES):
@@ -69,9 +102,16 @@ def build():
             assert "{" not in path, "unfilled placeholder in %s: %s" % (ep["id"], path)
             rows.append(path)
         entry = {"id": ep["id"], "family": ep["family"], "method": ep["method"],
-                 "share": ep["share"], "expect": ep["expect"], "paths": rows}
+                 "expect": ep["expect"], "paths": rows}
+        for key in ("base", "varies", "payload"):
+            if key in ep:
+                entry[key] = ep[key]
+        if "headers" in ep:
+            entry["headers"] = header_set(ep["headers"])
         if "body" in ep:
-            entry["body"] = json.dumps(BODIES[ep["body"]], separators=(",", ":"))
+            b = BODIES[ep["body"]]
+            # A malformed body is raw bytes on purpose; serializing it would repair it.
+            entry["body"] = b if isinstance(b, str) else json.dumps(b, separators=(",", ":"))
         plan["endpoints"].append(entry)
     return plan
 
@@ -84,4 +124,9 @@ if __name__ == "__main__":
     print("  %d endpoints x %d instances, %d distinct paths"
           % (len(plan["endpoints"]), INSTANCES, uniq))
     bodies = sum(1 for e in plan["endpoints"] if "body" in e)
-    print("  %d endpoints carry a request body" % bodies)
+    hdrs = sum(1 for e in plan["endpoints"] if "headers" in e)
+    pairs = sum(1 for e in plan["endpoints"] if "base" in e)
+    print("  %d carry a request body, %d carry request headers, %d name a base"
+          % (bodies, hdrs, pairs))
+    print("  sampling is %s: every endpoint is drawn with equal probability"
+          % plan["sampling"])

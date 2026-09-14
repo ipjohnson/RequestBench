@@ -34,25 +34,26 @@ function percentile(counts, total, p) {
 // ---- plan ---------------------------------------------------------------------------
 function loadPlan() {
   const plan = JSON.parse(readFileSync(join(ROOT, "spec", "plan.json"), "utf8"));
-  const eps = plan.endpoints;
-  const total = eps.reduce((s, e) => s + e.share, 0);
-  // Cumulative share table for O(log n) weighted pick.
-  const cum = new Float64Array(eps.length);
-  let acc = 0;
-  eps.forEach((e, i) => { acc += e.share / total; cum[i] = acc; });
-  cum[eps.length - 1] = 1;
-  return { eps, cum };
-}
-function pick(cum, r) {
-  let lo = 0, hi = cum.length - 1;
-  while (lo < hi) { const mid = (lo + hi) >> 1; if (r <= cum[mid]) hi = mid; else lo = mid + 1; }
-  return lo;
+  if (plan.sampling !== "uniform") throw new Error(`plan sampling is ${plan.sampling}`);
+  // Uniform, so there is no cumulative table and no weighted pick. Weighting happens once,
+  // in harness/summarize.py, against the per-endpoint histograms this run produces.
+  return { eps: plan.endpoints };
 }
 
 // ---- worker -------------------------------------------------------------------------
 if (!isMainThread) {
   const { host, port, rate, seconds, offsetUs, maxInflight, seed, record } = workerData;
-  const { eps, cum } = loadPlan();
+  const { eps } = loadPlan();
+  // Header objects are built once per endpoint rather than per request: they are constant
+  // across an endpoint's instances, and this is the hot loop.
+  const headersOf = eps.map((ep) => {
+    const h = { ...(ep.headers ?? {}) };
+    if (ep.body) {
+      h["content-type"] = "application/json";
+      h["content-length"] = Buffer.byteLength(ep.body);
+    }
+    return Object.keys(h).length ? h : undefined;
+  });
 
   const agent = new http.Agent({ keepAlive: true, maxSockets: maxInflight,
                                  maxFreeSockets: maxInflight, scheduling: "fifo",
@@ -74,10 +75,7 @@ if (!isMainThread) {
   function fire(idx, scheduledNs) {
     const ep = eps[idx];
     const path = ep.paths[(rnd() * ep.paths.length) | 0];
-    const opts = { host, port, path, method: ep.method, agent,
-                   headers: ep.body
-                     ? { "content-type": "application/json", "content-length": Buffer.byteLength(ep.body) }
-                     : undefined };
+    const opts = { host, port, path, method: ep.method, agent, headers: headersOf[idx] };
     inflight++;
     const req = http.request(opts, (res) => {
       if (res.statusCode !== ep.expect) mismatch[idx]++;
@@ -102,7 +100,7 @@ if (!isMainThread) {
       const dueNs = startNs + BigInt(Math.round(issued * periodUs * 1000));
       if (dueNs > nowNs) break;
       if (inflight >= maxInflight) { dropped++; issued++; continue; }
-      fire(pick(cum, rnd()), dueNs);
+      fire((rnd() * eps.length) | 0, dueNs);
       issued++;
     }
     if (issued < totalReq) {
