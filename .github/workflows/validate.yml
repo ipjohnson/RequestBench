@@ -38,6 +38,18 @@ jobs:
           fi
           echo "fixture, plan and sequence match their generators"
 
+  bundles:
+    name: target bundles resolve
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.13" }
+      # A bundle that resolves to a partial file set still hashes cleanly, so the only way
+      # to notice the convention failing to fit a new language is to assert the roles.
+      - name: Every implemented target resolves a bundle
+        run: python3 harness/bundle.py --all --check
+
   workflows:
     name: workflow files parse
     runs-on: ubuntu-latest

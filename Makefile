@@ -1,4 +1,4 @@
-.PHONY: fixture plan spec build java lint validate conform run report clean help
+.PHONY: fixture plan spec bundle build java lint validate conform run report clean help
 TARGETS ?= node:node-http,node:fastify,node:express
 SECONDS ?=
 RUNGS ?=
@@ -15,6 +15,9 @@ plan: ## expand spec/endpoints.json into spec/plan.json and spec/sequence.json
 	python3 harness/sequence.py
 
 spec: fixture plan ## regenerate every generated spec file (commit the result)
+
+bundle: ## file list and hashes for every implemented target's bundle
+	python3 harness/bundle.py --all --summary
 
 build: ## build container images  (TARGETS=go:net-http,go:gin,go:echo)
 	@for t in $$(echo $(TARGETS) | tr ',' ' '); do \
