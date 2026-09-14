@@ -6,5 +6,6 @@ results/*.ndjson
 *.pyc
 .DS_Store
 results/.target-*.log
+results/.ref-*.json
 results/summary/
 targets/java/*/target/

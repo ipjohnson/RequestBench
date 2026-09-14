@@ -318,12 +318,19 @@ def billed_durations(text):
     return dict(sorted(hist.items()))
 
 
-def conform():
+def conform(reference, is_reference):
+    """Gate the running target, against the language's baseline measured in this run.
+
+    The baseline boots first and records what it answered; every target after it is
+    compared to that. Nothing is stored between runs, because a committed reference makes
+    every target answer forever to one target's serialization choices at one moment, and a
+    change in the reference then reads as a failure in everything else.
+    """
     # The gate has to speak the host's encoding. A RIE container serves only the
     # invocations endpoint, so plain HTTP reaches nothing and every target fails.
     argv = [sys.executable, str(ROOT / "harness" / "conform.py"),
             "127.0.0.1:%d" % PORT, "--quiet",
-            "--compare", str(SPEC / "fingerprint.node-http.json")]
+            "--reference" if is_reference else "--compare", str(reference)]
     encoding = ENCODING_FOR_HOST.get(os.environ.get("RB_HOST", "container"), "http")
     if encoding != "http":
         argv += ["--encoding", encoding]
@@ -448,6 +455,7 @@ def main():
               % (run_id, what, a.mode, warm_s, [r["rung"] for r in rungs], len(pairs)))
 
     conformed, boot_failed, nonconforming, unlisted = 0, [], [], []
+    reference_ok = set()
     for language, target in pairs:
         key = "%s:%s" % (language, target)
         print("\n=== %s%s ===" % (("%s:" % language) if len(languages) > 1 else "", target))
@@ -479,7 +487,22 @@ def main():
             else:
                 print("  booted   (no /__meta; version unknown)")
             if not a.skip_conform:
-                ok, line = conform()
+                reference = ROOT / "results" / (".ref-%s-%s.json"
+                                                % (run_id.replace(":", ""), language))
+                is_reference = target == baselines[language]
+                # Only a baseline that conformed is worth comparing against. One that did
+                # not is serving something else, and every difference from it would be
+                # reported against the target rather than against the baseline.
+                usable = reference.exists() and language in reference_ok
+                # The baseline goes first in every run and is the reference when it
+                # conforms. When it does not, the first target that does takes its place,
+                # so the targets after it are still compared against something rather than
+                # each writing a reference nobody reads.
+                writes_reference = is_reference or not usable
+                if not is_reference and not usable:
+                    print("  note: no conforming %s reference yet in this run, so responses "
+                          "are only status-checked" % language)
+                ok, line = conform(reference, writes_reference)
                 print("  conformance: %s" % line)
                 if not ok:
                     nonconforming.append(key)
@@ -487,6 +510,8 @@ def main():
                           % ("FAILED" if key in CONFORMANCE_REQUIRED else "pending rewiring"))
                     continue
                 conformed += 1
+                if writes_reference:
+                    reference_ok.add(language)
                 if key not in CONFORMANCE_REQUIRED:
                     unlisted.append(key)
                     print("  conforms but is not in conformance_required; add it there")
