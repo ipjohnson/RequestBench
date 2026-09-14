@@ -1,0 +1,1572 @@
+{
+ "framework": "gorilla-mux",
+ "version": "v1.8.1",
+ "runtime": "go1.25.14",
+ "blend": "blend-v1",
+ "endpoints": [
+  {
+   "endpoint": "pt.plaintext",
+   "family": "plaintext",
+   "request": {
+    "method": "GET",
+    "path": "/plaintext",
+    "headers": [
+     [
+      "accept",
+      "application/json"
+     ]
+    ],
+    "body": null,
+    "body_bytes": 0
+   },
+   "response": {
+    "status": 200,
+    "headers": [
+     [
+      "Content-Type",
+      "text/plain"
+     ],
+     [
+      "Date",
+      "Mon, 14 Sep 2026 11:11:18 GMT"
+     ],
+     [
+      "Content-Length",
+      "13"
+     ]
+    ],
+    "header_bytes": 83,
+    "framing": "content-length",
+    "body_bytes": 13,
+    "body": "Hello, World!",
+    "truncated": false
+   }
+  },
+  {
+   "endpoint": "pt.health",
+   "family": "plaintext",
+   "request": {
+    "method": "GET",
+    "path": "/health",
+    "headers": [
+     [
+      "accept",
+      "application/json"
+     ]
+    ],
+    "body": null,
+    "body_bytes": 0
+   },
+   "response": {
+    "status": 200,
+    "headers": [
+     [
+      "Content-Type",
+      "text/plain"
+     ],
+     [
+      "Date",
+      "Mon, 14 Sep 2026 11:11:18 GMT"
+     ],
+     [
+      "Content-Length",
+      "2"
+     ]
+    ],
+    "header_bytes": 82,
+    "framing": "content-length",
+    "body_bytes": 2,
+    "body": "ok",
+    "truncated": false
+   }
+  },
+  {
+   "endpoint": "jr.json_small",
+   "family": "json_read",
+   "request": {
+    "method": "GET",
+    "path": "/json/small",
+    "headers": [
+     [
+      "accept",
+      "application/json"
+     ]
+    ],
+    "body": null,
+    "body_bytes": 0
+   },
+   "response": {
+    "status": 200,
+    "headers": [
+     [
+      "Content-Length",
+      "27"
+     ],
+     [
+      "Content-Type",
+      "application/json"
+     ],
+     [
+      "Date",
+      "Mon, 14 Sep 2026 11:11:18 GMT"
+     ]
+    ],
+    "header_bytes": 89,
+    "framing": "content-length",
+    "body_bytes": 27,
+    "body": "{\"message\":\"Hello, World!\"}",
+    "truncated": false
+   }
+  },
+  {
+   "endpoint": "jr.product",
+   "family": "json_read",
+   "request": {
+    "method": "GET",
+    "path": "/products/48",
+    "headers": [
+     [
+      "accept",
+      "application/json"
+     ]
+    ],
+    "body": null,
+    "body_bytes": 0
+   },
+   "response": {
+    "status": 200,
+    "headers": [
+     [
+      "Content-Length",
+      "90"
+     ],
+     [
+      "Content-Type",
+      "application/json"
+     ],
+     [
+      "Date",
+      "Mon, 14 Sep 2026 11:11:18 GMT"
+     ]
+    ],
+    "header_bytes": 89,
+    "framing": "content-length",
+    "body_bytes": 90,
+    "body": "{\"id\":48,\"name\":\"steel-hinge-48\",\"category\":\"outdoor\",\"price_cents\":10185,\"in_stock\":true}",
+    "truncated": false
+   }
+  },
+  {
+   "endpoint": "jr.customer",
+   "family": "json_read",
+   "request": {
+    "method": "GET",
+    "path": "/customers/55",
+    "headers": [
+     [
+      "accept",
+      "application/json"
+     ]
+    ],
+    "body": null,
+    "body_bytes": 0
+   },
+   "response": {
+    "status": 200,
+    "headers": [
+     [
+      "Content-Length",
+      "103"
+     ],
+     [
+      "Content-Type",
+      "application/json"
+     ],
+     [
+      "Date",
+      "Mon, 14 Sep 2026 11:11:18 GMT"
+     ]
+    ],
+    "header_bytes": 90,
+    "framing": "content-length",
+    "body_bytes": 103,
+    "body": "{\"id\":55,\"name\":\"ada lovelace\",\"email\":\"user55@example.invalid\",\"region\":\"west\",\"created\":\"2025-08-28\"}",
+    "truncated": false
+   }
+  },
+  {
+   "endpoint": "jr.order",
+   "family": "json_read",
+   "request": {
+    "method": "GET",
+    "path": "/orders/283",
+    "headers": [
+     [
+      "accept",
+      "application/json"
+     ]
+    ],
+    "body": null,
+    "body_bytes": 0
+   },
+   "response": {
+    "status": 200,
+    "headers": [
+     [
+      "Content-Length",
+      "738"
+     ],
+     [
+      "Content-Type",
+      "application/json"
+     ],
+     [
+      "Date",
+      "Mon, 14 Sep 2026 11:11:18 GMT"
+     ]
+    ],
+    "header_bytes": 90,
+    "framing": "content-length",
+    "body_bytes": 738,
+    "body": "{\"id\":283,\"customer_id\":182,\"status\":\"cancelled\",\"created\":\"2026-05-04\",\"total_cents\":239147,\"lines\":[{\"id\":1,\"product_id\":7,\"qty\":3,\"unit_cents\":7070,\"total_cents\":21210},{\"id\":2,\"product_id\":30,\"qty\":4,\"unit_cents\":781,\"total_cents\":3124},{\"id\":3,\"product_id\":35,\"qty\":2,\"unit_cents\":1293,\"total_cents\":2586},{\"id\":4,\"product_id\":46,\"qty\":5,\"unit_cents\":16233,\"total_cents\":81165},{\"id\":5,\"product_id\":18,\"qty\":1,\"unit_cents\":12547,\"total_cents\":12547},{\"id\":6,\"product_id\":8,\"qty\":4,\"unit_cents\":11633,\"total_cents\":46532},{\"id\":7,\"product_id\":17,\"qty\":4,\"unit_cents\":4526,\"total_cents\":18104},{\"id\":8,\"product_id\":6,\"qty\":5,\"unit_cents\":10434,\"total_cents\":52170},{\"id\":9,\"product_id\":9,\"qty\":1,\"unit_cents\":1709,\"total_cents\":1709}]}",
+    "truncated": false
+   }
+  },
+  {
+   "endpoint": "jr.product_list",
+   "family": "json_read",
+   "request": {
+    "method": "GET",
+    "path": "/products",
+    "headers": [
+     [
+      "accept",
+      "application/json"
+     ]
+    ],
+    "body": null,
+    "body_bytes": 0
+   },
+   "response": {
+    "status": 200,
+    "headers": [
+     [
+      "Content-Length",
+      "4450"
+     ],
+     [
+      "Content-Type",
+      "application/json"
+     ],
+     [
+      "Date",
+      "Mon, 14 Sep 2026 11:11:18 GMT"
+     ]
+    ],
+    "header_bytes": 91,
+    "framing": "content-length",
+    "body_bytes": 4450,
+    "body": "{\"total\":50,\"items\":[{\"id\":1,\"name\":\"copper-pan-1\",\"category\":\"garden\",\"price_cents\":7825,\"in_stock\":true},{\"id\":2,\"name\":\"cedar-trowel-2\",\"category\":\"kitchen\",\"price_cents\":13976,\"in_stock\":true},{\"id\":3,\"name\":\"cedar-trowel-3\",\"category\":\"outdoor\",\"price_cents\":7045,\"in_stock\":true},{\"id\":4,\"name\":\"oak-seed-4\",\"category\":\"office\",\"price_cents\":2060,\"in_stock\":true},{\"id\":5,\"name\":\"oak-trowel-5\",\"category\":\"tools\",\"price_cents\":16283,\"in_stock\":true},{\"id\":6,\"name\":\"linen-bolt-6\",\"category\":\"garden\",\"price_cents\":10434,\"in_stock\":true},{\"id\":7,\"name\":\"steel-lamp-7\",\"category\":\"kitchen\",\"price_cents\":7070,\"in_stock\":true},{\"id\":8,\"name\":\"brass-desk-8\",\"category\":\"outdoor\",\"price_cents\":11633,\"in_stock\":true},{\"id\":9,\"name\":\"amber-hinge-9\",\"category\":\"office\",\"price_cents\":1709,\"in_stock\":true},{\"id\":10,\"name\":\"oak-desk-10\",\"category\":\"tools\",\"price_cents\":613,\"in_stock\":true},{\"id\":11,\"name\":\"amber-seed-11\",\"category\":\"garden\",\"price_cents\":11314,\"in_stock\":false},{\"id\":12,\"name\":\"steel-hinge-12\",\"category\":\"kitchen\",\"price_cents\":2863,\"in_stock\":true},{\"id\":13,\"name\":\"brass-seed-13\",\"category\":\"outdoor\",\"price_cents\":10012,\"in_stock\":true},{\"id\":14,\"name\":\"oak-trowel-14\",\"category\":\"office\",\"price_cents\":2192,\"in_stock\":true},{\"id\":15,\"name\":\"linen-bolt-15\",\"category\":\"tools\",\"price_cents\":18858,\"in_stock\":false},{\"id\":16,\"name\":\"steel-bolt-16\",\"category\":\"garden\",\"price_cents\":18199,\"in_stock\":false},{\"id\":17,\"name\":\"amber-bolt-17\",\"category\":\"kitchen\",\"price_cents\":4526,\"in_stock\":true},{\"id\":18,\"name\":\"copper-trowel-18\",\"category\":\"outdoor\",\"price_cents\":12547,\"in_stock\":true},{\"id\":19,\"name\":\"steel-lamp-19\",\"category\":\"office\",\"price_cents\":931,\"in_stock\":true},{\"id\":20,\"name\":\"brass-desk-20\",\"category\":\"tools\",\"price_cents\":335,\"in_stock\":false},{\"id\":21,\"name\":\"steel-bolt-21\",\"category\":\"garden\",\"price_cents\":17323,\"in_stock\":true},{\"id\":22,\"name\":\"oak-ring-22\",\"category\":\"kitchen\",\"price_cents\":3562,\"in_stock\":true},{\"id\":23,\"name\":\"amber-trowel-23\",\"category\":\"outdoor\",\"price_cents\":6663,\"in_stock\":true}",
+    "truncated": true
+   }
+  },
+  {
+   "endpoint": "jr.order_lines",
+   "family": "json_read",
+   "request": {
+    "method": "GET",
+    "path": "/orders/435/lines",
+    "headers": [
+     [
+      "accept",
+      "application/json"
+     ]
+    ],
+    "body": null,
+    "body_bytes": 0
+   },
+   "response": {
+    "status": 200,
+    "headers": [
+     [
+      "Content-Length",
+      "427"
+     ],
+     [
+      "Content-Type",
+      "application/json"
+     ],
+     [
+      "Date",
+      "Mon, 14 Sep 2026 11:11:18 GMT"
+     ]
+    ],
+    "header_bytes": 90,
+    "framing": "content-length",
+    "body_bytes": 427,
+    "body": "[{\"id\":1,\"product_id\":36,\"qty\":5,\"unit_cents\":15134,\"total_cents\":75670},{\"id\":2,\"product_id\":3,\"qty\":3,\"unit_cents\":7045,\"total_cents\":21135},{\"id\":3,\"product_id\":37,\"qty\":3,\"unit_cents\":16907,\"total_cents\":50721},{\"id\":4,\"product_id\":4,\"qty\":1,\"unit_cents\":2060,\"total_cents\":2060},{\"id\":5,\"product_id\":21,\"qty\":4,\"unit_cents\":17323,\"total_cents\":69292},{\"id\":6,\"product_id\":26,\"qty\":3,\"unit_cents\":7354,\"total_cents\":22062}]",
+    "truncated": false
+   }
+  },
+  {
+   "endpoint": "bv.order",
+   "family": "body_validate",
+   "request": {
+    "method": "POST",
+    "path": "/orders/validate",
+    "headers": [
+     [
+      "accept",
+      "application/json"
+     ],
+     [
+      "content-type",
+      "application/json"
+     ]
+    ],
+    "body": "{\"customer_id\":1,\"status\":\"open\",\"lines\":[{\"product_id\":3,\"qty\":2},{\"product_id\":7,\"qty\":1}]}",
+    "body_bytes": 93
+   },
+   "response": {
+    "status": 200,
+    "headers": [
+     [
+      "Content-Length",
+      "202"
+     ],
+     [
+      "Content-Type",
+      "application/json"
+     ],
+     [
+      "Date",
+      "Mon, 14 Sep 2026 11:11:18 GMT"
+     ]
+    ],
+    "header_bytes": 90,
+    "framing": "content-length",
+    "body_bytes": 202,
+    "body": "{\"customer_id\":1,\"status\":\"open\",\"lines\":[{\"id\":1,\"product_id\":3,\"qty\":2,\"unit_cents\":7045,\"total_cents\":14090},{\"id\":2,\"product_id\":7,\"qty\":1,\"unit_cents\":7070,\"total_cents\":7070}],\"total_cents\":21160}",
+    "truncated": false
+   }
+  },
+  {
+   "endpoint": "bv.customer",
+   "family": "body_validate",
+   "request": {
+    "method": "POST",
+    "path": "/customers/validate",
+    "headers": [
+     [
+      "accept",
+      "application/json"
+     ],
+     [
+      "content-type",
+      "application/json"
+     ]
+    ],
+    "body": "{\"name\":\"Ada Lovelace\",\"email\":\"ADA@example.invalid\",\"region\":\"north\"}",
+    "body_bytes": 70
+   },
+   "response": {
+    "status": 200,
+    "headers": [
+     [
+      "Content-Length",
+      "70"
+     ],
+     [
+      "Content-Type",
+      "application/json"
+     ],
+     [
+      "Date",
+      "Mon, 14 Sep 2026 11:11:18 GMT"
+     ]
+    ],
+    "header_bytes": 89,
+    "framing": "content-length",
+    "body_bytes": 70,
+    "body": "{\"name\":\"Ada Lovelace\",\"email\":\"ada@example.invalid\",\"region\":\"north\"}",
+    "truncated": false
+   }
+  },
+  {
+   "endpoint": "bv.product",
+   "family": "body_validate",
+   "request": {
+    "method": "POST",
+    "path": "/products/validate",
+    "headers": [
+     [
+      "accept",
+      "application/json"
+     ],
+     [
+      "content-type",
+      "application/json"
+     ]
+    ],
+    "body": "{\"name\":\"brass-ring-99\",\"category\":\"tools\",\"price_cents\":1299}",
+    "body_bytes": 62
+   },
+   "response": {
+    "status": 200,
+    "headers": [
+     [
+      "Content-Length",
+      "62"
+     ],
+     [
+      "Content-Type",
+      "application/json"
+     ],
+     [
+      "Date",
+      "Mon, 14 Sep 2026 11:11:18 GMT"
+     ]
+    ],
+    "header_bytes": 89,
+    "framing": "content-length",
+    "body_bytes": 62,
+    "body": "{\"name\":\"brass-ring-99\",\"category\":\"tools\",\"price_cents\":1299}",
+    "truncated": false
+   }
+  },
+  {
+   "endpoint": "bv.rejected",
+   "family": "body_validate",
+   "request": {
+    "method": "POST",
+    "path": "/orders/validate",
+    "headers": [
+     [
+      "accept",
+      "application/json"
+     ],
+     [
+      "content-type",
+      "application/json"
+     ]
+    ],
+    "body": "{\"customer_id\":\"not-an-int\",\"lines\":[]}",
+    "body_bytes": 39
+   },
+   "response": {
+    "status": 422,
+    "headers": [
+     [
+      "Content-Length",
+      "152"
+     ],
+     [
+      "Content-Type",
+      "application/json"
+     ],
+     [
+      "Date",
+      "Mon, 14 Sep 2026 11:11:18 GMT"
+     ]
+    ],
+    "header_bytes": 90,
+    "framing": "content-length",
+    "body_bytes": 152,
+    "body": "{\"error\":\"validation_failed\",\"errors\":[{\"field\":\"customer_id\",\"rule\":\"int\"},{\"field\":\"status\",\"rule\":\"required\"},{\"field\":\"lines\",\"rule\":\"min_length\"}]}",
+    "truncated": false
+   }
+  },
+  {
+   "endpoint": "bv.echo_small",
+   "family": "body_validate",
+   "request": {
+    "method": "POST",
+    "path": "/echo",
+    "headers": [
+     [
+      "accept",
+      "application/json"
+     ],
+     [
+      "content-type",
+      "application/json"
+     ]
+    ],
+    "body": "{\"pad\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\",\"n\":1}",
+    "body_bytes": 376
+   },
+   "response": {
+    "status": 200,
+    "headers": [
+     [
+      "Content-Length",
+      "401"
+     ],
+     [
+      "Content-Type",
+      "application/json"
+     ],
+     [
+      "Date",
+      "Mon, 14 Sep 2026 11:11:18 GMT"
+     ]
+    ],
+    "header_bytes": 90,
+    "framing": "content-length",
+    "body_bytes": 401,
+    "body": "{\"received\":{\"n\":1,\"pad\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"},\"bytes\":376}",
+    "truncated": false
+   }
+  },
+  {
+   "endpoint": "bv.echo_large",
+   "family": "body_validate",
+   "request": {
+    "method": "POST",
+    "path": "/echo",
+    "headers": [
+     [
+      "accept",
+      "application/json"
+     ],
+     [
+      "content-type",
+      "application/json"
+     ]
+    ],
+    "body": "{\"pad\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "body_bytes": 32216
+   },
+   "response": {
+    "status": 200,
+    "headers": [
+     [
+      "Content-Length",
+      "32243"
+     ],
+     [
+      "Content-Type",
+      "application/json"
+     ],
+     [
+      "Date",
+      "Mon, 14 Sep 2026 11:11:18 GMT"
+     ]
+    ],
+    "header_bytes": 92,
+    "framing": "content-length",
+    "body_bytes": 32243,
+    "body": "{\"received\":{\"n\":2,\"pad\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "truncated": true
+   }
+  },
+  {
+   "endpoint": "pp.cust_orders",
+   "family": "path_params",
+   "request": {
+    "method": "GET",
+    "path": "/customers/11/orders",
+    "headers": [
+     [
+      "accept",
+      "application/json"
+     ]
+    ],
+    "body": null,
+    "body_bytes": 0
+   },
+   "response": {
+    "status": 200,
+    "headers": [
+     [
+      "Content-Length",
+      "2074"
+     ],
+     [
+      "Content-Type",
+      "application/json"
+     ],
+     [
+      "Date",
+      "Mon, 14 Sep 2026 11:11:18 GMT"
+     ]
+    ],
+    "header_bytes": 91,
+    "framing": "content-length",
+    "body_bytes": 2074,
+    "body": "[{\"id\":30,\"customer_id\":11,\"status\":\"shipped\",\"created\":\"2026-04-03\",\"total_cents\":172072,\"lines\":[{\"id\":1,\"product_id\":29,\"qty\":4,\"unit_cents\":10907,\"total_cents\":43628},{\"id\":2,\"product_id\":44,\"qty\":4,\"unit_cents\":8824,\"total_cents\":35296},{\"id\":3,\"product_id\":13,\"qty\":2,\"unit_cents\":10012,\"total_cents\":20024},{\"id\":4,\"product_id\":45,\"qty\":2,\"unit_cents\":15500,\"total_cents\":31000},{\"id\":5,\"product_id\":15,\"qty\":1,\"unit_cents\":18858,\"total_cents\":18858},{\"id\":6,\"product_id\":8,\"qty\":2,\"unit_cents\":11633,\"total_cents\":23266}]},{\"id\":230,\"customer_id\":11,\"status\":\"shipped\",\"created\":\"2026-06-07\",\"total_cents\":98025,\"lines\":[{\"id\":1,\"product_id\":50,\"qty\":1,\"unit_cents\":3094,\"total_cents\":3094},{\"id\":2,\"product_id\":32,\"qty\":3,\"unit_cents\":12410,\"total_cents\":37230},{\"id\":3,\"product_id\":42,\"qty\":5,\"unit_cents\":9364,\"total_cents\":46820},{\"id\":4,\"product_id\":41,\"qty\":1,\"unit_cents\":1517,\"total_cents\":1517},{\"id\":5,\"product_id\":42,\"qty\":1,\"unit_cents\":9364,\"total_cents\":9364}]},{\"id\":430,\"customer_id\":11,\"status\":\"shipped\",\"created\":\"2026-08-11\",\"total_cents\":233733,\"lines\":[{\"id\":1,\"product_id\":49,\"qty\":5,\"unit_cents\":13307,\"total_cents\":66535},{\"id\":2,\"product_id\":33,\"qty\":1,\"unit_cents\":5208,\"total_cents\":5208},{\"id\":3,\"product_id\":23,\"qty\":3,\"unit_cents\":6663,\"total_cents\":19989},{\"id\":4,\"product_id\":18,\"qty\":3,\"unit_cents\":12547,\"total_cents\":37641},{\"id\":5,\"product_id\":37,\"qty\":2,\"unit_cents\":16907,\"total_cents\":33814},{\"id\":6,\"product_id\":11,\"qty\":5,\"unit_cents\":11314,\"total_cents\":56570},{\"id\":7,\"product_id\":2,\"qty\":1,\"unit_cents\":13976,\"total_cents\":13976}]},{\"id\":630,\"customer_id\":11,\"status\":\"shipped\",\"created\":\"2026-01-15\",\"total_cents\":10012,\"lines\":[{\"id\":1,\"product_id\":13,\"qty\":1,\"unit_cents\":10012,\"total_cents\":10012}]},{\"id\":830,\"customer_id\":11,\"status\":\"shipped\",\"created\":\"2026-03-19\",\"total_cents\":108536,\"lines\":[{\"id\":1,\"product_id\":18,\"qty\":1,\"unit_cents\":12547,\"total_cents\":12547},{\"id\":2,\"product_id\":18,\"qty\":5,\"unit_cents\":12547,\"total_cents\":62735},{\"id\":3,\"product_id\":34,\"qty\":2,\"unit_cents\":166",
+    "truncated": true
+   }
+  },
+  {
+   "endpoint": "pp.cust_order",
+   "family": "path_params",
+   "request": {
+    "method": "GET",
+    "path": "/customers/10/orders/887",
+    "headers": [
+     [
+      "accept",
+      "application/json"
+     ]
+    ],
+    "body": null,
+    "body_bytes": 0
+   },
+   "response": {
+    "status": 200,
+    "headers": [
+     [
+      "Content-Length",
+      "240"
+     ],
+     [
+      "Content-Type",
+      "application/json"
+     ],
+     [
+      "Date",
+      "Mon, 14 Sep 2026 11:11:18 GMT"
+     ]
+    ],
+    "header_bytes": 90,
+    "framing": "content-length",
+    "body_bytes": 240,
+    "body": "{\"id\":887,\"customer_id\":10,\"status\":\"cancelled\",\"created\":\"2026-06-20\",\"total_cents\":12310,\"lines\":[{\"id\":1,\"product_id\":10,\"qty\":4,\"unit_cents\":613,\"total_cents\":2452},{\"id\":2,\"product_id\":47,\"qty\":3,\"unit_cents\":3286,\"total_cents\":9858}]}",
+    "truncated": false
+   }
+  },
+  {
+   "endpoint": "pp.prod_reviews",
+   "family": "path_params",
+   "request": {
+    "method": "GET",
+    "path": "/products/45/reviews",
+    "headers": [
+     [
+      "accept",
+      "application/json"
+     ]
+    ],
+    "body": null,
+    "body_bytes": 0
+   },
+   "response": {
+    "status": 200,
+    "headers": [
+     [
+      "Content-Length",
+      "73"
+     ],
+     [
+      "Content-Type",
+      "application/json"
+     ],
+     [
+      "Date",
+      "Mon, 14 Sep 2026 11:11:18 GMT"
+     ]
+    ],
+    "header_bytes": 89,
+    "framing": "content-length",
+    "body_bytes": 73,
+    "body": "[{\"id\":1,\"product_id\":45,\"stars\":4,\"body\":\"linen ring, would buy again\"}]",
+    "truncated": false
+   }
+  },
+  {
+   "endpoint": "pp.region_custs",
+   "family": "path_params",
+   "request": {
+    "method": "GET",
+    "path": "/regions/south/customers",
+    "headers": [
+     [
+      "accept",
+      "application/json"
+     ]
+    ],
+    "body": null,
+    "body_bytes": 0
+   },
+   "response": {
+    "status": 200,
+    "headers": [
+     [
+      "Content-Length",
+      "5373"
+     ],
+     [
+      "Content-Type",
+      "application/json"
+     ],
+     [
+      "Date",
+      "Mon, 14 Sep 2026 11:11:18 GMT"
+     ]
+    ],
+    "header_bytes": 91,
+    "framing": "content-length",
+    "body_bytes": 5373,
+    "body": "[{\"id\":1,\"name\":\"ada liskov\",\"email\":\"user1@example.invalid\",\"region\":\"south\",\"created\":\"2025-02-02\"},{\"id\":5,\"name\":\"margaret hamilton\",\"email\":\"user5@example.invalid\",\"region\":\"south\",\"created\":\"2025-06-06\"},{\"id\":9,\"name\":\"edsger hopper\",\"email\":\"user9@example.invalid\",\"region\":\"south\",\"created\":\"2025-10-10\"},{\"id\":13,\"name\":\"edsger thompson\",\"email\":\"user13@example.invalid\",\"region\":\"south\",\"created\":\"2025-02-14\"},{\"id\":17,\"name\":\"barbara torvalds\",\"email\":\"user17@example.invalid\",\"region\":\"south\",\"created\":\"2025-06-18\"},{\"id\":21,\"name\":\"alan thompson\",\"email\":\"user21@example.invalid\",\"region\":\"south\",\"created\":\"2025-10-22\"},{\"id\":25,\"name\":\"barbara thompson\",\"email\":\"user25@example.invalid\",\"region\":\"south\",\"created\":\"2025-02-26\"},{\"id\":29,\"name\":\"linus liskov\",\"email\":\"user29@example.invalid\",\"region\":\"south\",\"created\":\"2025-06-02\"},{\"id\":33,\"name\":\"ada liskov\",\"email\":\"user33@example.invalid\",\"region\":\"south\",\"created\":\"2025-10-06\"},{\"id\":37,\"name\":\"barbara liskov\",\"email\":\"user37@example.invalid\",\"region\":\"south\",\"created\":\"2025-02-10\"},{\"id\":41,\"name\":\"ken hopper\",\"email\":\"user41@example.invalid\",\"region\":\"south\",\"created\":\"2025-06-14\"},{\"id\":45,\"name\":\"ken hamilton\",\"email\":\"user45@example.invalid\",\"region\":\"south\",\"created\":\"2025-10-18\"},{\"id\":49,\"name\":\"alan torvalds\",\"email\":\"user49@example.invalid\",\"region\":\"south\",\"created\":\"2025-02-22\"},{\"id\":53,\"name\":\"alan thompson\",\"email\":\"user53@example.invalid\",\"region\":\"south\",\"created\":\"2025-06-26\"},{\"id\":57,\"name\":\"ada dijkstra\",\"email\":\"user57@example.invalid\",\"region\":\"south\",\"created\":\"2025-10-02\"},{\"id\":61,\"name\":\"grace lovelace\",\"email\":\"user61@example.invalid\",\"region\":\"south\",\"created\":\"2025-02-06\"},{\"id\":65,\"name\":\"margaret liskov\",\"email\":\"user65@example.invalid\",\"region\":\"south\",\"created\":\"2025-06-10\"},{\"id\":69,\"name\":\"grace lovelace\",\"email\":\"user69@example.invalid\",\"region\":\"south\",\"created\":\"2025-10-14\"},{\"id\":73,\"name\":\"grace torvalds\",\"email\":\"user73@example.invalid\",\"region\":\"south\",\"created\":\"2025-02-18\"},{\"id\":77,\"name\":\"barbara thompson",
+    "truncated": true
+   }
+  },
+  {
+   "endpoint": "pp.order_line",
+   "family": "path_params",
+   "request": {
+    "method": "GET",
+    "path": "/orders/659/lines/6",
+    "headers": [
+     [
+      "accept",
+      "application/json"
+     ]
+    ],
+    "body": null,
+    "body_bytes": 0
+   },
+   "response": {
+    "status": 200,
+    "headers": [
+     [
+      "Content-Length",
+      "71"
+     ],
+     [
+      "Content-Type",
+      "application/json"
+     ],
+     [
+      "Date",
+      "Mon, 14 Sep 2026 11:11:18 GMT"
+     ]
+    ],
+    "header_bytes": 89,
+    "framing": "content-length",
+    "body_bytes": 71,
+    "body": "{\"id\":6,\"product_id\":16,\"qty\":1,\"unit_cents\":18199,\"total_cents\":18199}",
+    "truncated": false
+   }
+  },
+  {
+   "endpoint": "pp.deep",
+   "family": "path_params",
+   "request": {
+    "method": "GET",
+    "path": "/regions/north/customers/28/orders/461/lines/3",
+    "headers": [
+     [
+      "accept",
+      "application/json"
+     ]
+    ],
+    "body": null,
+    "body_bytes": 0
+   },
+   "response": {
+    "status": 200,
+    "headers": [
+     [
+      "Content-Length",
+      "68"
+     ],
+     [
+      "Content-Type",
+      "application/json"
+     ],
+     [
+      "Date",
+      "Mon, 14 Sep 2026 11:11:18 GMT"
+     ]
+    ],
+    "header_bytes": 89,
+    "framing": "content-length",
+    "body_bytes": 68,
+    "body": "{\"id\":3,\"product_id\":9,\"qty\":4,\"unit_cents\":1709,\"total_cents\":6836}",
+    "truncated": false
+   }
+  },
+  {
+   "endpoint": "qp.orders_page",
+   "family": "query_paging",
+   "request": {
+    "method": "GET",
+    "path": "/orders?page=8&size=50",
+    "headers": [
+     [
+      "accept",
+      "application/json"
+     ]
+    ],
+    "body": null,
+    "body_bytes": 0
+   },
+   "response": {
+    "status": 200,
+    "headers": [
+     [
+      "Content-Length",
+      "23628"
+     ],
+     [
+      "Content-Type",
+      "application/json"
+     ],
+     [
+      "Date",
+      "Mon, 14 Sep 2026 11:11:18 GMT"
+     ]
+    ],
+    "header_bytes": 92,
+    "framing": "content-length",
+    "body_bytes": 23628,
+    "body": "{\"page\":8,\"size\":50,\"total\":1000,\"items\":[{\"id\":401,\"customer_id\":8,\"status\":\"paid\",\"created\":\"2026-06-10\",\"total_cents\":46222,\"lines\":[{\"id\":1,\"product_id\":26,\"qty\":1,\"unit_cents\":7354,\"total_cents\":7354},{\"id\":2,\"product_id\":14,\"qty\":5,\"unit_cents\":2192,\"total_cents\":10960},{\"id\":3,\"product_id\":35,\"qty\":1,\"unit_cents\":1293,\"total_cents\":1293},{\"id\":4,\"product_id\":48,\"qty\":1,\"unit_cents\":10185,\"total_cents\":10185},{\"id\":5,\"product_id\":47,\"qty\":5,\"unit_cents\":3286,\"total_cents\":16430}]},{\"id\":402,\"customer_id\":15,\"status\":\"shipped\",\"created\":\"2026-07-11\",\"total_cents\":223229,\"lines\":[{\"id\":1,\"product_id\":47,\"qty\":1,\"unit_cents\":3286,\"total_cents\":3286},{\"id\":2,\"product_id\":48,\"qty\":2,\"unit_cents\":10185,\"total_cents\":20370},{\"id\":3,\"product_id\":27,\"qty\":2,\"unit_cents\":16202,\"total_cents\":32404},{\"id\":4,\"product_id\":49,\"qty\":4,\"unit_cents\":13307,\"total_cents\":53228},{\"id\":5,\"product_id\":35,\"qty\":5,\"unit_cents\":1293,\"total_cents\":6465},{\"id\":6,\"product_id\":37,\"qty\":4,\"unit_cents\":16907,\"total_cents\":67628},{\"id\":7,\"product_id\":38,\"qty\":5,\"unit_cents\":4876,\"total_cents\":24380},{\"id\":8,\"product_id\":40,\"qty\":1,\"unit_cents\":15468,\"total_cents\":15468}]},{\"id\":403,\"customer_id\":22,\"status\":\"cancelled\",\"created\":\"2026-08-12\",\"total_cents\":72228,\"lines\":[{\"id\":1,\"product_id\":41,\"qty\":5,\"unit_cents\":1517,\"total_cents\":7585},{\"id\":2,\"product_id\":4,\"qty\":1,\"unit_cents\":2060,\"total_cents\":2060},{\"id\":3,\"product_id\":50,\"qty\":1,\"unit_cents\":3094,\"total_cents\":3094},{\"id\":4,\"product_id\":14,\"qty\":4,\"unit_cents\":2192,\"total_cents\":8768},{\"id\":5,\"product_id\":37,\"qty\":3,\"unit_cents\":16907,\"total_cents\":50721}]},{\"id\":404,\"customer_id\":29,\"status\":\"open\",\"created\":\"2026-09-13\",\"total_cents\":152262,\"lines\":[{\"id\":1,\"product_id\":29,\"qty\":4,\"unit_cents\":10907,\"total_cents\":43628},{\"id\":2,\"product_id\":2,\"qty\":5,\"unit_cents\":13976,\"total_cents\":69880},{\"id\":3,\"product_id\":30,\"qty\":1,\"unit_cents\":781,\"total_cents\":781},{\"id\":4,\"product_id\":38,\"qty\":4,\"unit_cents\":4876,\"total_cents\":19504},{\"id\":5,\"product_id\":37,\"qty\":1,\"unit_cents\":16907,\"t",
+    "truncated": true
+   }
+  },
+  {
+   "endpoint": "qp.products_filter",
+   "family": "query_paging",
+   "request": {
+    "method": "GET",
+    "path": "/products?category=outdoor&min_price=29&max_price=171",
+    "headers": [
+     [
+      "accept",
+      "application/json"
+     ]
+    ],
+    "body": null,
+    "body_bytes": 0
+   },
+   "response": {
+    "status": 200,
+    "headers": [
+     [
+      "Content-Length",
+      "920"
+     ],
+     [
+      "Content-Type",
+      "application/json"
+     ],
+     [
+      "Date",
+      "Mon, 14 Sep 2026 11:11:18 GMT"
+     ]
+    ],
+    "header_bytes": 90,
+    "framing": "content-length",
+    "body_bytes": 920,
+    "body": "{\"total\":10,\"items\":[{\"id\":3,\"name\":\"cedar-trowel-3\",\"category\":\"outdoor\",\"price_cents\":7045,\"in_stock\":true},{\"id\":8,\"name\":\"brass-desk-8\",\"category\":\"outdoor\",\"price_cents\":11633,\"in_stock\":true},{\"id\":13,\"name\":\"brass-seed-13\",\"category\":\"outdoor\",\"price_cents\":10012,\"in_stock\":true},{\"id\":18,\"name\":\"copper-trowel-18\",\"category\":\"outdoor\",\"price_cents\":12547,\"in_stock\":true},{\"id\":23,\"name\":\"amber-trowel-23\",\"category\":\"outdoor\",\"price_cents\":6663,\"in_stock\":true},{\"id\":28,\"name\":\"amber-lamp-28\",\"category\":\"outdoor\",\"price_cents\":14321,\"in_stock\":true},{\"id\":33,\"name\":\"linen-lamp-33\",\"category\":\"outdoor\",\"price_cents\":5208,\"in_stock\":true},{\"id\":38,\"name\":\"oak-lamp-38\",\"category\":\"outdoor\",\"price_cents\":4876,\"in_stock\":true},{\"id\":43,\"name\":\"amber-desk-43\",\"category\":\"outdoor\",\"price_cents\":13259,\"in_stock\":true},{\"id\":48,\"name\":\"steel-hinge-48\",\"category\":\"outdoor\",\"price_cents\":10185,\"in_stock\":true}]}",
+    "truncated": false
+   }
+  },
+  {
+   "endpoint": "qp.customers_sort",
+   "family": "query_paging",
+   "request": {
+    "method": "GET",
+    "path": "/customers?q=pan&sort=name",
+    "headers": [
+     [
+      "accept",
+      "application/json"
+     ]
+    ],
+    "body": null,
+    "body_bytes": 0
+   },
+   "response": {
+    "status": 200,
+    "headers": [
+     [
+      "Content-Length",
+      "36"
+     ],
+     [
+      "Content-Type",
+      "application/json"
+     ],
+     [
+      "Date",
+      "Mon, 14 Sep 2026 11:11:18 GMT"
+     ]
+    ],
+    "header_bytes": 89,
+    "framing": "content-length",
+    "body_bytes": 36,
+    "body": "{\"total\":0,\"sort\":\"name\",\"items\":[]}",
+    "truncated": false
+   }
+  },
+  {
+   "endpoint": "qp.orders_status",
+   "family": "query_paging",
+   "request": {
+    "method": "GET",
+    "path": "/orders?status=open&page=7&size=50",
+    "headers": [
+     [
+      "accept",
+      "application/json"
+     ]
+    ],
+    "body": null,
+    "body_bytes": 0
+   },
+   "response": {
+    "status": 200,
+    "headers": [
+     [
+      "Content-Length",
+      "43"
+     ],
+     [
+      "Content-Type",
+      "application/json"
+     ],
+     [
+      "Date",
+      "Mon, 14 Sep 2026 11:11:18 GMT"
+     ]
+    ],
+    "header_bytes": 89,
+    "framing": "content-length",
+    "body_bytes": 43,
+    "body": "{\"page\":7,\"size\":50,\"total\":250,\"items\":[]}",
+    "truncated": false
+   }
+  },
+  {
+   "endpoint": "qp.search",
+   "family": "query_paging",
+   "request": {
+    "method": "GET",
+    "path": "/search?q=seed&limit=25&offset=1&sort=total&dir=asc",
+    "headers": [
+     [
+      "accept",
+      "application/json"
+     ]
+    ],
+    "body": null,
+    "body_bytes": 0
+   },
+   "response": {
+    "status": 200,
+    "headers": [
+     [
+      "Content-Length",
+      "612"
+     ],
+     [
+      "Content-Type",
+      "application/json"
+     ],
+     [
+      "Date",
+      "Mon, 14 Sep 2026 11:11:18 GMT"
+     ]
+    ],
+    "header_bytes": 90,
+    "framing": "content-length",
+    "body_bytes": 612,
+    "body": "{\"term\":\"seed\",\"limit\":25,\"offset\":1,\"sort\":\"price_cents\",\"total\":7,\"items\":[{\"id\":4,\"name\":\"oak-seed-4\",\"category\":\"office\",\"price_cents\":2060,\"in_stock\":true},{\"id\":13,\"name\":\"brass-seed-13\",\"category\":\"outdoor\",\"price_cents\":10012,\"in_stock\":true},{\"id\":11,\"name\":\"amber-seed-11\",\"category\":\"garden\",\"price_cents\":11314,\"in_stock\":false},{\"id\":32,\"name\":\"slate-seed-32\",\"category\":\"kitchen\",\"price_cents\":12410,\"in_stock\":false},{\"id\":24,\"name\":\"brass-seed-24\",\"category\":\"office\",\"price_cents\":14955,\"in_stock\":true},{\"id\":27,\"name\":\"steel-seed-27\",\"category\":\"kitchen\",\"price_cents\":16202,\"in_stock\":true}]}",
+    "truncated": false
+   }
+  },
+  {
+   "endpoint": "nf.cust_summary",
+   "family": "nested_fetch",
+   "request": {
+    "method": "GET",
+    "path": "/customers/143/summary",
+    "headers": [
+     [
+      "accept",
+      "application/json"
+     ]
+    ],
+    "body": null,
+    "body_bytes": 0
+   },
+   "response": {
+    "status": 200,
+    "headers": [
+     [
+      "Content-Length",
+      "472"
+     ],
+     [
+      "Content-Type",
+      "application/json"
+     ],
+     [
+      "Date",
+      "Mon, 14 Sep 2026 11:11:18 GMT"
+     ]
+    ],
+    "header_bytes": 90,
+    "framing": "content-length",
+    "body_bytes": 472,
+    "body": "{\"customer\":{\"id\":143,\"name\":\"margaret dijkstra\",\"email\":\"user143@example.invalid\",\"region\":\"west\",\"created\":\"2025-12-04\"},\"order_count\":5,\"lifetime_cents\":638186,\"by_status\":{\"shipped\":5},\"recent\":[{\"id\":106,\"created\":\"2026-08-23\",\"total_cents\":126597},{\"id\":306,\"created\":\"2026-01-27\",\"total_cents\":51436},{\"id\":506,\"created\":\"2026-03-03\",\"total_cents\":229065},{\"id\":706,\"created\":\"2026-05-07\",\"total_cents\":1675},{\"id\":906,\"created\":\"2026-07-11\",\"total_cents\":229413}]}",
+    "truncated": false
+   }
+  },
+  {
+   "endpoint": "nf.order_full",
+   "family": "nested_fetch",
+   "request": {
+    "method": "GET",
+    "path": "/orders/8/full",
+    "headers": [
+     [
+      "accept",
+      "application/json"
+     ]
+    ],
+    "body": null,
+    "body_bytes": 0
+   },
+   "response": {
+    "status": 200,
+    "headers": [
+     [
+      "Content-Length",
+      "713"
+     ],
+     [
+      "Content-Type",
+      "application/json"
+     ],
+     [
+      "Date",
+      "Mon, 14 Sep 2026 11:11:18 GMT"
+     ]
+    ],
+    "header_bytes": 90,
+    "framing": "content-length",
+    "body_bytes": 713,
+    "body": "{\"id\":8,\"customer_id\":57,\"status\":\"open\",\"created\":\"2026-09-09\",\"total_cents\":61857,\"lines\":[{\"id\":1,\"product_id\":35,\"qty\":4,\"unit_cents\":1293,\"total_cents\":5172,\"product\":{\"id\":35,\"name\":\"slate-hinge-35\",\"category\":\"tools\",\"price_cents\":1293,\"in_stock\":true}},{\"id\":2,\"product_id\":30,\"qty\":1,\"unit_cents\":781,\"total_cents\":781,\"product\":{\"id\":30,\"name\":\"slate-seed-30\",\"category\":\"tools\",\"price_cents\":781,\"in_stock\":true}},{\"id\":3,\"product_id\":2,\"qty\":4,\"unit_cents\":13976,\"total_cents\":55904,\"product\":{\"id\":2,\"name\":\"cedar-trowel-2\",\"category\":\"kitchen\",\"price_cents\":13976,\"in_stock\":true}}],\"customer\":{\"id\":57,\"name\":\"ada dijkstra\",\"email\":\"user57@example.invalid\",\"region\":\"south\",\"created\":\"2025-10-02\"}}",
+    "truncated": false
+   }
+  },
+  {
+   "endpoint": "nf.region_report",
+   "family": "nested_fetch",
+   "request": {
+    "method": "GET",
+    "path": "/regions/south/report",
+    "headers": [
+     [
+      "accept",
+      "application/json"
+     ]
+    ],
+    "body": null,
+    "body_bytes": 0
+   },
+   "response": {
+    "status": 200,
+    "headers": [
+     [
+      "Content-Length",
+      "399"
+     ],
+     [
+      "Content-Type",
+      "application/json"
+     ],
+     [
+      "Date",
+      "Mon, 14 Sep 2026 11:11:18 GMT"
+     ]
+    ],
+    "header_bytes": 90,
+    "framing": "content-length",
+    "body_bytes": 399,
+    "body": "{\"region\":\"south\",\"customers\":50,\"orders\":250,\"revenue_cents\":36205542,\"top\":[{\"id\":512,\"total_cents\":389415},{\"id\":768,\"total_cents\":381785},{\"id\":876,\"total_cents\":360638},{\"id\":944,\"total_cents\":353195},{\"id\":660,\"total_cents\":351644},{\"id\":284,\"total_cents\":347530},{\"id\":444,\"total_cents\":339978},{\"id\":340,\"total_cents\":332516},{\"id\":420,\"total_cents\":331825},{\"id\":816,\"total_cents\":315506}]}",
+    "truncated": false
+   }
+  },
+  {
+   "endpoint": "nf.prod_related",
+   "family": "nested_fetch",
+   "request": {
+    "method": "GET",
+    "path": "/products/39/related",
+    "headers": [
+     [
+      "accept",
+      "application/json"
+     ]
+    ],
+    "body": null,
+    "body_bytes": 0
+   },
+   "response": {
+    "status": 200,
+    "headers": [
+     [
+      "Content-Length",
+      "897"
+     ],
+     [
+      "Content-Type",
+      "application/json"
+     ],
+     [
+      "Date",
+      "Mon, 14 Sep 2026 11:11:18 GMT"
+     ]
+    ],
+    "header_bytes": 90,
+    "framing": "content-length",
+    "body_bytes": 897,
+    "body": "{\"product\":{\"id\":39,\"name\":\"linen-desk-39\",\"category\":\"office\",\"price_cents\":14808,\"in_stock\":true},\"related\":[{\"id\":4,\"name\":\"oak-seed-4\",\"category\":\"office\",\"price_cents\":2060,\"in_stock\":true},{\"id\":9,\"name\":\"amber-hinge-9\",\"category\":\"office\",\"price_cents\":1709,\"in_stock\":true},{\"id\":14,\"name\":\"oak-trowel-14\",\"category\":\"office\",\"price_cents\":2192,\"in_stock\":true},{\"id\":19,\"name\":\"steel-lamp-19\",\"category\":\"office\",\"price_cents\":931,\"in_stock\":true},{\"id\":24,\"name\":\"brass-seed-24\",\"category\":\"office\",\"price_cents\":14955,\"in_stock\":true},{\"id\":29,\"name\":\"oak-ring-29\",\"category\":\"office\",\"price_cents\":10907,\"in_stock\":true},{\"id\":34,\"name\":\"steel-desk-34\",\"category\":\"office\",\"price_cents\":16627,\"in_stock\":true},{\"id\":44,\"name\":\"oak-lamp-44\",\"category\":\"office\",\"price_cents\":8824,\"in_stock\":true},{\"id\":49,\"name\":\"linen-pan-49\",\"category\":\"office\",\"price_cents\":13307,\"in_stock\":true}]}",
+    "truncated": false
+   }
+  },
+  {
+   "endpoint": "nf.dashboard",
+   "family": "nested_fetch",
+   "request": {
+    "method": "GET",
+    "path": "/dashboard",
+    "headers": [
+     [
+      "accept",
+      "application/json"
+     ]
+    ],
+    "body": null,
+    "body_bytes": 0
+   },
+   "response": {
+    "status": 200,
+    "headers": [
+     [
+      "Content-Length",
+      "285"
+     ],
+     [
+      "Content-Type",
+      "application/json"
+     ],
+     [
+      "Date",
+      "Mon, 14 Sep 2026 11:11:18 GMT"
+     ]
+    ],
+    "header_bytes": 90,
+    "framing": "content-length",
+    "body_bytes": 285,
+    "body": "{\"products\":50,\"customers\":200,\"orders\":1000,\"revenue_cents\":157344040,\"by_status\":{\"cancelled\":250,\"open\":250,\"paid\":250,\"shipped\":250},\"by_region\":[{\"region\":\"east\",\"customers\":50},{\"region\":\"north\",\"customers\":50},{\"region\":\"south\",\"customers\":50},{\"region\":\"west\",\"customers\":50}]}",
+    "truncated": false
+   }
+  },
+  {
+   "endpoint": "we.create_order",
+   "family": "write_echo",
+   "request": {
+    "method": "POST",
+    "path": "/orders",
+    "headers": [
+     [
+      "accept",
+      "application/json"
+     ],
+     [
+      "content-type",
+      "application/json"
+     ]
+    ],
+    "body": "{\"customer_id\":1,\"status\":\"open\",\"lines\":[{\"product_id\":3,\"qty\":2},{\"product_id\":7,\"qty\":1}]}",
+    "body_bytes": 93
+   },
+   "response": {
+    "status": 201,
+    "headers": [
+     [
+      "Content-Length",
+      "202"
+     ],
+     [
+      "Content-Type",
+      "application/json"
+     ],
+     [
+      "Location",
+      "/orders/1001"
+     ],
+     [
+      "Date",
+      "Mon, 14 Sep 2026 11:11:18 GMT"
+     ]
+    ],
+    "header_bytes": 114,
+    "framing": "content-length",
+    "body_bytes": 202,
+    "body": "{\"customer_id\":1,\"status\":\"open\",\"lines\":[{\"id\":1,\"product_id\":3,\"qty\":2,\"unit_cents\":7045,\"total_cents\":14090},{\"id\":2,\"product_id\":7,\"qty\":1,\"unit_cents\":7070,\"total_cents\":7070}],\"total_cents\":21160}",
+    "truncated": false
+   }
+  },
+  {
+   "endpoint": "we.replace_order",
+   "family": "write_echo",
+   "request": {
+    "method": "PUT",
+    "path": "/orders/362",
+    "headers": [
+     [
+      "accept",
+      "application/json"
+     ],
+     [
+      "content-type",
+      "application/json"
+     ]
+    ],
+    "body": "{\"customer_id\":1,\"status\":\"open\",\"lines\":[{\"product_id\":3,\"qty\":2},{\"product_id\":7,\"qty\":1}]}",
+    "body_bytes": 93
+   },
+   "response": {
+    "status": 200,
+    "headers": [
+     [
+      "Content-Length",
+      "211"
+     ],
+     [
+      "Content-Type",
+      "application/json"
+     ],
+     [
+      "Date",
+      "Mon, 14 Sep 2026 11:11:18 GMT"
+     ]
+    ],
+    "header_bytes": 90,
+    "framing": "content-length",
+    "body_bytes": 211,
+    "body": "{\"id\":362,\"customer_id\":1,\"status\":\"open\",\"lines\":[{\"id\":1,\"product_id\":3,\"qty\":2,\"unit_cents\":7045,\"total_cents\":14090},{\"id\":2,\"product_id\":7,\"qty\":1,\"unit_cents\":7070,\"total_cents\":7070}],\"total_cents\":21160}",
+    "truncated": false
+   }
+  },
+  {
+   "endpoint": "we.patch_customer",
+   "family": "write_echo",
+   "request": {
+    "method": "PATCH",
+    "path": "/customers/14",
+    "headers": [
+     [
+      "accept",
+      "application/json"
+     ],
+     [
+      "content-type",
+      "application/json"
+     ]
+    ],
+    "body": "{\"name\":\"Ada L.\",\"region\":\"south\"}",
+    "body_bytes": 34
+   },
+   "response": {
+    "status": 200,
+    "headers": [
+     [
+      "Content-Length",
+      "98"
+     ],
+     [
+      "Content-Type",
+      "application/json"
+     ],
+     [
+      "Date",
+      "Mon, 14 Sep 2026 11:11:18 GMT"
+     ]
+    ],
+    "header_bytes": 89,
+    "framing": "content-length",
+    "body_bytes": 98,
+    "body": "{\"id\":14,\"name\":\"Ada L.\",\"email\":\"user14@example.invalid\",\"region\":\"south\",\"created\":\"2025-03-15\"}",
+    "truncated": false
+   }
+  },
+  {
+   "endpoint": "we.add_line",
+   "family": "write_echo",
+   "request": {
+    "method": "POST",
+    "path": "/orders/644/lines",
+    "headers": [
+     [
+      "accept",
+      "application/json"
+     ],
+     [
+      "content-type",
+      "application/json"
+     ]
+    ],
+    "body": "{\"product_id\":5,\"qty\":3}",
+    "body_bytes": 24
+   },
+   "response": {
+    "status": 201,
+    "headers": [
+     [
+      "Content-Length",
+      "70"
+     ],
+     [
+      "Content-Type",
+      "application/json"
+     ],
+     [
+      "Location",
+      "/orders/644/lines/11"
+     ],
+     [
+      "Date",
+      "Mon, 14 Sep 2026 11:11:18 GMT"
+     ]
+    ],
+    "header_bytes": 121,
+    "framing": "content-length",
+    "body_bytes": 70,
+    "body": "{\"id\":1,\"product_id\":5,\"qty\":3,\"unit_cents\":16283,\"total_cents\":48849}",
+    "truncated": false
+   }
+  },
+  {
+   "endpoint": "we.delete_line",
+   "family": "write_echo",
+   "request": {
+    "method": "DELETE",
+    "path": "/orders/924/lines/1",
+    "headers": [
+     [
+      "accept",
+      "application/json"
+     ]
+    ],
+    "body": null,
+    "body_bytes": 0
+   },
+   "response": {
+    "status": 204,
+    "headers": [
+     [
+      "Date",
+      "Mon, 14 Sep 2026 11:11:18 GMT"
+     ]
+    ],
+    "header_bytes": 37,
+    "framing": "none",
+    "body_bytes": 0,
+    "body": "",
+    "truncated": false
+   }
+  },
+  {
+   "endpoint": "ep.missing_order",
+   "family": "error_paths",
+   "request": {
+    "method": "GET",
+    "path": "/orders/999999",
+    "headers": [
+     [
+      "accept",
+      "application/json"
+     ]
+    ],
+    "body": null,
+    "body_bytes": 0
+   },
+   "response": {
+    "status": 404,
+    "headers": [
+     [
+      "Content-Length",
+      "21"
+     ],
+     [
+      "Content-Type",
+      "application/json"
+     ],
+     [
+      "Date",
+      "Mon, 14 Sep 2026 11:11:18 GMT"
+     ]
+    ],
+    "header_bytes": 89,
+    "framing": "content-length",
+    "body_bytes": 21,
+    "body": "{\"error\":\"not_found\"}",
+    "truncated": false
+   }
+  },
+  {
+   "endpoint": "ep.unmatched",
+   "family": "error_paths",
+   "request": {
+    "method": "GET",
+    "path": "/no/such/route",
+    "headers": [
+     [
+      "accept",
+      "application/json"
+     ]
+    ],
+    "body": null,
+    "body_bytes": 0
+   },
+   "response": {
+    "status": 404,
+    "headers": [
+     [
+      "Content-Length",
+      "21"
+     ],
+     [
+      "Content-Type",
+      "application/json"
+     ],
+     [
+      "Date",
+      "Mon, 14 Sep 2026 11:11:18 GMT"
+     ]
+    ],
+    "header_bytes": 89,
+    "framing": "content-length",
+    "body_bytes": 21,
+    "body": "{\"error\":\"not_found\"}",
+    "truncated": false
+   }
+  },
+  {
+   "endpoint": "ep.malformed",
+   "family": "error_paths",
+   "request": {
+    "method": "POST",
+    "path": "/orders",
+    "headers": [
+     [
+      "accept",
+      "application/json"
+     ],
+     [
+      "content-type",
+      "application/json"
+     ]
+    ],
+    "body": "{\"customer_id\":null,\"status\":42,\"lines\":\"nope\"}",
+    "body_bytes": 47
+   },
+   "response": {
+    "status": 422,
+    "headers": [
+     [
+      "Content-Length",
+      "150"
+     ],
+     [
+      "Content-Type",
+      "application/json"
+     ],
+     [
+      "Date",
+      "Mon, 14 Sep 2026 11:11:18 GMT"
+     ]
+    ],
+    "header_bytes": 90,
+    "framing": "content-length",
+    "body_bytes": 150,
+    "body": "{\"error\":\"validation_failed\",\"errors\":[{\"field\":\"customer_id\",\"rule\":\"required\"},{\"field\":\"status\",\"rule\":\"string\"},{\"field\":\"lines\",\"rule\":\"array\"}]}",
+    "truncated": false
+   }
+  },
+  {
+   "endpoint": "ep.boom",
+   "family": "error_paths",
+   "request": {
+    "method": "GET",
+    "path": "/boom",
+    "headers": [
+     [
+      "accept",
+      "application/json"
+     ]
+    ],
+    "body": null,
+    "body_bytes": 0
+   },
+   "response": {
+    "status": 500,
+    "headers": [
+     [
+      "Content-Length",
+      "61"
+     ],
+     [
+      "Content-Type",
+      "application/json"
+     ],
+     [
+      "Date",
+      "Mon, 14 Sep 2026 11:11:18 GMT"
+     ]
+    ],
+    "header_bytes": 89,
+    "framing": "content-length",
+    "body_bytes": 61,
+    "body": "{\"error\":\"internal\",\"message\":\"deliberate unhandled failure\"}",
+    "truncated": false
+   }
+  },
+  {
+   "endpoint": "ep.forbidden",
+   "family": "error_paths",
+   "request": {
+    "method": "GET",
+    "path": "/forbidden",
+    "headers": [
+     [
+      "accept",
+      "application/json"
+     ]
+    ],
+    "body": null,
+    "body_bytes": 0
+   },
+   "response": {
+    "status": 403,
+    "headers": [
+     [
+      "Content-Length",
+      "21"
+     ],
+     [
+      "Content-Type",
+      "application/json"
+     ],
+     [
+      "Date",
+      "Mon, 14 Sep 2026 11:11:18 GMT"
+     ]
+    ],
+    "header_bytes": 89,
+    "framing": "content-length",
+    "body_bytes": 21,
+    "body": "{\"error\":\"forbidden\"}",
+    "truncated": false
+   }
+  }
+ ]
+}
