@@ -1,13 +1,11 @@
-"""Render the results site from committed summaries.
+"""Render the results explorer from committed summaries.
 
-Reads every summary JSON, keeps the newest tracked run per shard as the headline, and
-emits one self-contained page. No build step, no fetch: the data is embedded, so the
-output works from a file:// URL and from Pages identically.
+One self-contained page. The summaries are embedded, so it works from file:// and from
+Pages identically, and every slice happens in the browser rather than at build time.
 
   python3 site/build.py --summaries results/summary --out site/dist
 """
 import argparse, html, json, pathlib, sys, datetime as dt
-from collections import defaultdict
 
 T = {  # light, dark
     "ground": ("#F4F5F2", "#121513"), "surface": ("#FCFCFB", "#1A1E1B"),
@@ -16,14 +14,25 @@ T = {  # light, dark
     "rule": ("#DCE0DB", "#2A302C"), "rule2": ("#C3C9C2", "#3A423C"),
     "teal": ("#00836E", "#35AD97"), "tealtext": ("#00705E", "#35AD97"),
     "amber": ("#A6670C", "#DDA03C"), "tealsoft": ("#DCEBE6", "#17302B"),
-    "onfill": ("#FFFFFF", "#101614"),
+    "onfill": ("#FFFFFF", "#101614"), "bar": ("#DCEBE6", "#1D3B34"),
 }
+# Six-hue categorical set; both orders clear the validator's CVD, chroma and contrast
+# checks on their own surface.
+SERIES_LIGHT = ["#00836E", "#B5651D", "#3F6FB0", "#A03E5C", "#6B8E23", "#7D5BA6"]
+SERIES_DARK = ["#2E9B85", "#C77A2A", "#5A85C4", "#C05A78", "#7FA03A", "#9478BE"]
+
 
 def tokens(i):
     return "\n".join("  --%s: %s;" % (k, v[i]) for k, v in T.items())
 
+
+def series_css(i, names):
+    return "\n".join("  --s%d: %s;" % (n, c) for n, c in enumerate(names))
+
+
 CSS = """
 :root {
+%s
 %s
   --f-display: "Newsreader", Georgia, serif;
   --f-body: "Archivo", "Helvetica Neue", Arial, sans-serif;
@@ -31,114 +40,119 @@ CSS = """
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
 %s
+%s
 } }
 :root[data-theme="dark"] {
+%s
 %s
 }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--ground); color: var(--ink);
-       font-family: var(--f-body); font-size: 16px; line-height: 1.6;
+       font-family: var(--f-body); font-size: 15px; line-height: 1.55;
        -webkit-font-smoothing: antialiased; }
-.page { max-width: 1080px; margin: 0 auto; padding-inline: clamp(18px, 5vw, 48px);
-        padding-block: clamp(36px, 6vw, 72px) 56px; }
-a { color: var(--tealtext); text-underline-offset: 3px; }
+.page { max-width: 1240px; margin: 0 auto;
+        padding-inline: clamp(16px, 4vw, 40px); padding-block: clamp(28px, 5vw, 52px) 48px; }
+a { color: var(--tealtext); }
 code, .mono { font-family: var(--f-mono); }
-.eyebrow { font-family: var(--f-mono); font-size: 11px; letter-spacing: .13em;
-           text-transform: uppercase; color: var(--tealtext); margin: 0 0 16px;
-           display: flex; gap: 12px; align-items: center; }
-.eyebrow::after { content:""; flex:1; height:1px; background: var(--rule2); }
-h1 { font-family: var(--f-display); font-weight: 600; letter-spacing: -.02em;
-     font-size: clamp(34px, 5.5vw, 52px); line-height: 1.05; margin: 0 0 18px; }
-.lede { font-family: var(--f-display); font-size: clamp(17px, 2.2vw, 20px);
-        color: var(--ink2); max-width: 62ch; margin: 0; }
-.meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr));
-        gap: 1px; background: var(--rule); border: 1px solid var(--rule);
-        border-radius: 3px; overflow: hidden; margin: 36px 0 0; }
-.meta div { background: var(--surface); padding: 14px 16px 16px; }
-.meta dt { font-family: var(--f-mono); font-size: 10px; letter-spacing: .1em;
-           text-transform: uppercase; color: var(--ink3); margin: 0 0 6px; }
-.meta dd { margin: 0; font-family: var(--f-display); font-size: 23px; line-height: 1;
-           font-variant-numeric: tabular-nums; }
-.meta dd span { font-family: var(--f-body); font-size: 12px; color: var(--ink2); }
-section { margin-top: clamp(48px, 7vw, 72px); }
-.shead { border-top: 1px solid var(--rule2); padding-top: 14px; margin-bottom: 8px;
-         display: flex; justify-content: space-between; align-items: baseline;
-         gap: 16px; flex-wrap: wrap; }
-h2 { font-family: var(--f-display); font-weight: 600; font-size: clamp(23px, 3vw, 30px);
-     margin: 0; letter-spacing: -.015em; }
-.sub { font-size: 13px; color: var(--ink2); margin: 0 0 22px; }
-.scroll { overflow-x: auto; }
-table { border-collapse: collapse; width: 100%%; min-width: 560px; font-size: 14px; }
-th, td { text-align: right; padding: 10px 12px; border-bottom: 1px solid var(--rule);
-         font-variant-numeric: tabular-nums; }
-th:first-child, td:first-child { text-align: left; }
-thead th { font-family: var(--f-mono); font-size: 10px; letter-spacing: .09em;
-           text-transform: uppercase; color: var(--ink3); font-weight: 500;
-           border-bottom: 1px solid var(--rule2); }
-tbody tr:last-child td { border-bottom: none; }
-td.name { font-weight: 600; white-space: nowrap; }
-tr.baseline td { color: var(--ink2); }
-tr.baseline td.name { color: var(--ink); }
-.ver { font-family: var(--f-mono); font-size: 12px; color: var(--ink2); }
 
-/* family rollups that open to the endpoints they were rolled up from */
-.drill { border: 1px solid var(--rule); border-radius: 3px; min-width: 560px;
-         background: var(--surface); }
-.dhead, .drill summary, .erow {
-  display: grid; gap: 12px; align-items: baseline; padding: 9px 14px;
-  font-variant-numeric: tabular-nums; text-align: right; font-size: 14px; }
-.dhead > :first-child, .drill summary > :first-child, .erow > :first-child { text-align: left; }
-.dhead { font-family: var(--f-mono); font-size: 10px; letter-spacing: .09em;
-         text-transform: uppercase; color: var(--ink3);
-         border-bottom: 1px solid var(--rule2); }
-.drill details { border-top: 1px solid var(--rule); }
-.drill details:first-of-type { border-top: none; }
-.drill summary { cursor: pointer; list-style: none; }
-.drill summary::-webkit-details-marker { display: none; }
-.drill summary:hover { background: var(--surface2); }
-.drill summary .fname { font-weight: 600; }
-.drill summary .fname::before { content: "\25B8"; color: var(--ink3);
-                                display: inline-block; width: 1em;
-                                transition: transform .12s ease; }
-.drill details[open] summary .fname::before { transform: rotate(90deg); }
-.drill details[open] summary { background: var(--surface2); }
-.drill summary .fname em { font-style: normal; color: var(--ink3); font-weight: 400;
-                           font-family: var(--f-mono); font-size: 11px; margin-left: 6px; }
-.erows { background: var(--ground); border-top: 1px solid var(--rule); }
-.erow { padding-block: 6px; font-size: 13px; color: var(--ink2); }
-.erow + .erow { border-top: 1px solid var(--rule); }
-.erow .eid { font-family: var(--f-mono); font-size: 12px; color: var(--ink); }
-@media (prefers-reduced-motion: reduce) {
-  .drill summary .fname::before { transition: none; }
-}
-.pill { display: inline-block; font-family: var(--f-mono); font-size: 11px;
-        padding: 2px 7px; border-radius: 2px; background: var(--tealsoft);
-        color: var(--tealtext); white-space: nowrap; }
-.ratio { font-family: var(--f-mono); }
-.ratio.up { color: var(--amber); }
-td.dead { color: var(--ink3); text-decoration: line-through;
-          text-decoration-color: var(--rule2); }
-.chart { background: var(--surface); border: 1px solid var(--rule); border-radius: 3px;
-         padding: 18px; margin-top: 18px; }
-.legend { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 14px;
+.eyebrow { font-family: var(--f-mono); font-size: 11px; letter-spacing: .13em;
+           text-transform: uppercase; color: var(--tealtext); margin: 0 0 14px;
+           display: flex; gap: 12px; align-items: center; }
+.eyebrow::after { content: ""; flex: 1; height: 1px; background: var(--rule2); }
+h1 { font-family: var(--f-display); font-weight: 600; letter-spacing: -.02em;
+     font-size: clamp(30px, 5vw, 46px); line-height: 1.05; margin: 0 0 14px; }
+.lede { font-family: var(--f-display); font-size: clamp(16px, 2vw, 19px);
+        color: var(--ink2); max-width: 64ch; margin: 0; }
+
+/* ---------- controls ---------- */
+.controls { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: flex-end;
+            margin: 28px 0 0; padding: 16px; background: var(--surface);
+            border: 1px solid var(--rule); border-radius: 4px; }
+.ctl { display: flex; flex-direction: column; gap: 5px; }
+.ctl > label { font-family: var(--f-mono); font-size: 10px; letter-spacing: .1em;
+               text-transform: uppercase; color: var(--ink3); }
+select, input[type=search] {
+  font: inherit; font-size: 14px; color: var(--ink); background: var(--ground);
+  border: 1px solid var(--rule2); border-radius: 3px; padding: 6px 9px; min-width: 120px; }
+input[type=search] { min-width: 190px; }
+.seg { display: flex; border: 1px solid var(--rule2); border-radius: 3px; overflow: hidden; }
+.seg button { font: inherit; font-size: 13px; padding: 6px 12px; cursor: pointer;
+              background: var(--ground); color: var(--ink2); border: none;
+              border-left: 1px solid var(--rule2); }
+.seg button:first-child { border-left: none; }
+.seg button[aria-pressed="true"] { background: var(--teal); color: var(--onfill); font-weight: 600; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font: inherit; font-size: 12.5px; padding: 5px 11px; cursor: pointer;
+        border: 1px solid var(--rule2); border-radius: 99px;
+        background: var(--ground); color: var(--ink2); display: flex; align-items: center; gap: 6px; }
+.chip[aria-pressed="true"] { border-color: transparent; color: var(--onfill); }
+.chip i { width: 8px; height: 8px; border-radius: 99px; display: inline-block; }
+.spacer { flex: 1 1 auto; }
+.count { font-family: var(--f-mono); font-size: 12px; color: var(--ink3); }
+
+/* ---------- table ---------- */
+/* A 240-row endpoint view would push the chart off the page; cap it and let the
+   sticky header carry the column names down the scroll. */
+.scroll { overflow: auto; margin-top: 20px; max-height: 62vh;
+          border: 1px solid var(--rule); border-radius: 4px; }
+table { border-collapse: collapse; width: 100%%; min-width: 760px; font-size: 14px;
+        background: var(--ground); }
+th, td { padding: 8px 11px; text-align: right; border-bottom: 1px solid var(--rule);
+         font-variant-numeric: tabular-nums; white-space: nowrap; }
+th:first-child, td:first-child, th.l, td.l { text-align: left; }
+thead th { position: sticky; top: 0; z-index: 1; background: var(--surface2);
+           font-family: var(--f-mono); font-size: 10px; letter-spacing: .09em;
+           text-transform: uppercase; color: var(--ink3); font-weight: 500;
+           border-bottom: 1px solid var(--rule2); cursor: pointer; user-select: none; }
+thead th:hover { color: var(--ink); }
+thead th[aria-sort] { color: var(--tealtext); }
+thead th[aria-sort]::after { content: " \\25B4"; }
+thead th[aria-sort="descending"]::after { content: " \\25BE"; }
+tbody tr:hover { background: var(--surface); }
+tbody tr[aria-selected="true"] { background: var(--tealsoft); }
+td.rank { color: var(--ink3); font-family: var(--f-mono); font-size: 12px; width: 34px; }
+td.name { font-weight: 600; }
+td.name .swatch { width: 8px; height: 8px; border-radius: 2px; display: inline-block;
+                  margin-right: 7px; vertical-align: middle; }
+td.sub { color: var(--ink2); font-family: var(--f-mono); font-size: 12px; }
+td.ratio { font-family: var(--f-mono); }
+td.ratio.up { color: var(--amber); }
+td.ratio.base { color: var(--ink3); }
+td.dead { color: var(--ink3); text-decoration: line-through; }
+.barcell { width: 26%%; min-width: 120px; }
+.bar { height: 9px; border-radius: 2px; background: var(--teal); min-width: 2px; }
+.bar.b { background: var(--bar); }
+.pill { display: inline-block; font-family: var(--f-mono); font-size: 10.5px;
+        padding: 1px 6px; border-radius: 2px; background: var(--tealsoft);
+        color: var(--tealtext); margin-left: 7px; }
+
+/* ---------- charts ---------- */
+.panel { background: var(--surface); border: 1px solid var(--rule); border-radius: 4px;
+         padding: 18px; margin-top: 26px; }
+.panel h2 { font-family: var(--f-display); font-size: 20px; font-weight: 600;
+            margin: 0 0 4px; letter-spacing: -.01em; }
+.panel p.hint { margin: 0 0 14px; font-size: 13px; color: var(--ink2); }
+.legend { display: flex; flex-wrap: wrap; gap: 7px 16px; margin-top: 13px;
           font-size: 12px; color: var(--ink2); }
 .legend span { display: flex; align-items: center; gap: 6px; }
 .legend b { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+.empty { color: var(--ink3); font-size: 13px; padding: 22px 0; text-align: center; }
 .note { border-left: 2px solid var(--amber); background: var(--surface);
-        padding: 14px 18px; border-radius: 0 3px 3px 0; margin-top: 24px;
-        font-size: 14px; color: var(--ink2); }
-footer { margin-top: 64px; border-top: 1px solid var(--rule2); padding-top: 18px;
-         font-family: var(--f-mono); font-size: 11px; letter-spacing: .04em;
-         color: var(--ink3); display: flex; justify-content: space-between;
-         gap: 16px; flex-wrap: wrap; }
+        padding: 13px 17px; border-radius: 0 3px 3px 0; margin-top: 22px;
+        font-size: 13.5px; color: var(--ink2); }
+footer { margin-top: 52px; border-top: 1px solid var(--rule2); padding-top: 16px;
+         font-family: var(--f-mono); font-size: 11px; color: var(--ink3);
+         display: flex; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 :focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
-""" % (tokens(0), tokens(1), tokens(1))
+@media (max-width: 620px) { .controls { padding: 12px; } .barcell { display: none; } }
+""" % (tokens(0), series_css(0, SERIES_LIGHT), tokens(1), series_css(1, SERIES_DARK),
+       tokens(1), series_css(1, SERIES_DARK))
 
-SERIES = ["#00836E", "#A6670C", "#4668A8", "#A1527F", "#5C7A33", "#8A4B2A"]
 
 def esc(s):
     return html.escape(str(s))
+
 
 def load(d):
     runs = []
@@ -149,299 +163,406 @@ def load(d):
             runs.append(json.loads(f.read_text()))
         except json.JSONDecodeError:
             print("  skipping unreadable %s" % f, file=sys.stderr)
+    runs.sort(key=lambda r: r["run_id"])
     return runs
 
-def latest_per_shard(runs):
-    best = {}
-    for r in runs:
-        if not r.get("tracked") or r.get("cross_language"):
-            continue
-        cur = best.get(r["shard"])
-        if cur is None or r["run_id"] > cur["run_id"]:
-            best[r["shard"]] = r
-    return dict(sorted(best.items()))
 
-def latest_cross(runs):
-    best = None
-    for r in runs:
-        if r.get("tracked") and r.get("cross_language"):
-            if best is None or r["run_id"] > best["run_id"]:
-                best = r
-    return best
+APP = r"""
+const RB = window.__RB__;
+const S = {light: %s, dark: %s};
+const ser = () => (matchMedia('(prefers-color-scheme: dark)').matches &&
+                   document.documentElement.dataset.theme !== 'light') ||
+                  document.documentElement.dataset.theme === 'dark' ? S.dark : S.light;
 
+const tracked = RB.runs.filter(r => r.tracked);
+const hosts   = [...new Set(tracked.map(r => r.exec_host || 'container'))].sort();
+const langs   = [...new Set(tracked.flatMap(r => r.targets.map(t => t.shard)))].sort();
 
-def clean_rung(run):
-    """The highest rate at which no baseline in the run was dropping requests."""
-    ok = [rn for rn in run["rungs"]
-          if not any(t["rungs"].get(str(rn), {}).get("baseline_saturated")
-                     for t in run["targets"])]
-    return ok[-1] if ok else run["rungs"][len(run["rungs"]) // 2]
+const st = {
+  host: hosts[0] || 'container',
+  langs: new Set(langs),
+  rung: null, metric: 'p50_us', gran: 'blend',
+  sort: {col: 'value', dir: 1}, q: '',
+  pinned: new Set(),
+};
 
+/* ---- state in the URL so a view can be shared ---- */
+function readHash() {
+  const p = new URLSearchParams(location.hash.slice(1));
+  if (p.get('host')) st.host = p.get('host');
+  if (p.get('langs')) st.langs = new Set(p.get('langs').split(','));
+  if (p.get('rung')) st.rung = p.get('rung');
+  if (p.get('metric')) st.metric = p.get('metric');
+  if (p.get('gran')) st.gran = p.get('gran');
+  if (p.get('q')) st.q = p.get('q');
+  if (p.get('pin')) st.pinned = new Set(p.get('pin').split(','));
+  if (p.get('sort')) { const [c, d] = p.get('sort').split(':'); st.sort = {col: c, dir: +d}; }
+}
+let writeHash = function () {
+  const p = new URLSearchParams();
+  p.set('host', st.host); p.set('metric', st.metric); p.set('gran', st.gran);
+  if (st.rung) p.set('rung', st.rung);
+  if (st.langs.size !== langs.length) p.set('langs', [...st.langs].join(','));
+  if (st.q) p.set('q', st.q);
+  if (st.pinned.size) p.set('pin', [...st.pinned].join(','));
+  p.set('sort', st.sort.col + ':' + st.sort.dir);
+  history.replaceState(null, '', '#' + p.toString());
+};
 
-def cross_section(run):
-    """The only view where comparing languages is defensible: one machine, one window,
-    nothing changed between targets. Ranked by absolute p50, not by ratio."""
-    rn = clean_rung(run)
-    rows = []
-    for t in run["targets"]:
-        d = t["rungs"].get(str(rn))
-        if d:
-            rows.append((t, d))
-    if not rows:
-        return ""
-    rows.sort(key=lambda x: x[1]["p50_us"])
-    worst = max(d["p50_us"] for _, d in rows) or 1
-    langs = sorted({t.get("shard", "?") for t, _ in rows})
-    colour = {l: SERIES[i % len(SERIES)] for i, l in enumerate(langs)}
-    out = []
-    for t, d in rows:
-        lang = t.get("shard", "?")
-        is_base = t["target"] == t.get("baseline")
-        pct = 100.0 * d["p50_us"] / worst
-        bar = ('<div style="height:8px;border-radius:2px;background:%s;width:%.1f%%;'
-               'min-width:2px"></div>' % (colour[lang], pct))
-        out.append(
-            '<tr><td class="name"><span class="pill" style="background:transparent;'
-            'border:1px solid %s;color:%s">%s</span> %s%s</td>'
-            '<td class="ver">%s</td><td>%d us</td>%s<td style="width:38%%">%s</td></tr>'
-            % (colour[lang], colour[lang], esc(lang), esc(t["target"]),
-               ' <span class="pill">baseline</span>' if is_base else "",
-               esc(t.get("version") or "\u2014"), d["p50_us"],
-               ratio_cell(d["p50_ratio"]), bar))
-    offered = rows[0][1]["offered_rps"]
-    return (
-        "<section>"
-        '<div class="shead"><h2>Across languages</h2>'
-        '<span class="pill">%s</span></div>'
-        '<p class="sub">%s &middot; %s, %d cores &middot; every target on one machine, '
-        "back to back, at %s rps. This is the only run where comparing one language to "
-        "another is supported, because nothing about the machine changed between targets. "
-        "The ratio column is still to that target's own language baseline.</p>"
-        '<div class="scroll"><table><thead><tr><th>target</th><th>version</th>'
-        "<th>p50</th><th>vs own baseline</th><th>relative p50</th></tr></thead>"
-        "<tbody>%s</tbody></table></div></section>"
-        % (esc(run["run_id"][:16]), esc(run["date"]), esc(run["cpu"]), run["cores"],
-           f"{offered:,}", "".join(out)))
+const runsForHost = () => tracked.filter(r => (r.exec_host || 'container') === st.host);
+const latest = () => { const rs = runsForHost(); return rs.length ? rs[rs.length - 1] : null; };
 
+function rungsOf(run) { return run ? run.rungs.map(String) : []; }
+function pickRung(run) {
+  if (!run) return null;
+  const rs = rungsOf(run);
+  if (st.rung && rs.includes(st.rung)) return st.rung;
+  const clean = rs.filter(rn => !run.targets.some(t => (t.rungs[rn] || {}).baseline_saturated));
+  return clean.length ? clean[clean.length - 1] : rs[Math.floor(rs.length / 2)];
+}
+const offered = (run, rn) => {
+  for (const t of run.targets) if (t.rungs[rn]) return t.rungs[rn].offered_rps;
+  return rn;
+};
 
-def ratio_cell(v, dead=False):
-    if v is None:
-        return '<td class="ratio">&mdash;</td>'
-    if dead:
-        return ('<td class="ratio dead" title="the baseline was saturated at this rate, '
-                'so this ratio compares two overloaded systems">%.2fx</td>' % v)
-    cls = "ratio up" if v > 1.15 else "ratio"
-    return '<td class="%s">%.2fx</td>' % (cls, v)
+const METRICS = {
+  p50_us: {label: 'p50', unit: 'us', lower: true},
+  p90_us: {label: 'p90', unit: 'us', lower: true},
+  p99_us: {label: 'p99', unit: 'us', lower: true},
+  p999_us: {label: 'p99.9', unit: 'us', lower: true},
+  p50_ratio: {label: 'p50 vs baseline', unit: 'x', lower: true},
+  p99_ratio: {label: 'p99 vs baseline', unit: 'x', lower: true},
+  achieved_rps: {label: 'achieved rps', unit: '', lower: false},
+  dropped: {label: 'dropped', unit: '', lower: true},
+};
 
-def shard_table(run):
-    rungs = run["rungs"]
-    head = "".join("<th>%s rps</th><th>ratio</th>" % f"{next((t['rungs'][str(rn)]['offered_rps'] for t in run['targets'] if str(rn) in t['rungs']), rn):,}"
-                   for rn in rungs)
-    rows = []
-    for t in run["targets"]:
-        is_base = t["target"] == run["baseline"]
-        cells = []
-        for rn in rungs:
-            d = t["rungs"].get(str(rn))
-            if not d:
-                cells.append("<td>&mdash;</td><td>&mdash;</td>")
-                continue
-            dead = d.get("baseline_saturated", False)
-            cells.append('<td%s>%d us</td>%s'
-                         % (' class="dead"' if dead else "", d["p50_us"],
-                            ratio_cell(d["p50_ratio"], dead)))
-        label = esc(t["target"]) + (' <span class="pill">baseline</span>' if is_base else "")
-        ver = '<td class="ver">%s</td>' % (esc(t.get("version") or "\u2014"))
-        rows.append('<tr class="%s"><td class="name">%s</td>%s%s</tr>'
-                    % ("baseline" if is_base else "", label, ver, "".join(cells)))
-    return ('<div class="scroll"><table><thead><tr><th>target</th><th>version</th>%s</tr>'
-            "</thead><tbody>%s</tbody></table></div>" % (head, "".join(rows)))
+/* ---- rows: one per target, or per target x family, or per target x endpoint ---- */
+function rows() {
+  const run = latest(); if (!run) return {run: null, rn: null, rows: []};
+  const rn = pickRung(run);
+  const out = [];
+  const q = st.q.trim().toLowerCase();
+  for (const t of run.targets) {
+    if (!st.langs.has(t.shard)) continue;
+    const isBase = t.target === t.baseline;
+    const base = {target: t.target, shard: t.shard, version: t.version || '',
+                  isBase, key: t.shard + ':' + t.target};
+    if (st.gran === 'blend') {
+      const d = t.rungs[rn]; if (!d) continue;
+      const v = st.metric in d ? d[st.metric] : null;
+      out.push({...base, label: t.target, detail: '', value: v,
+                p50: d.p50_us, p99: d.p99_us, ratio: d.p50_ratio,
+                dead: !!d.baseline_saturated, n: d.achieved_rps});
+    } else if (st.gran === 'family') {
+      const fams = t.families_by_rung && t.families_by_rung[rn] ? t.families_by_rung[rn] : t.families;
+      for (const [f, rec] of Object.entries(fams || {})) {
+        if (q && !(f.toLowerCase().includes(q) || t.target.toLowerCase().includes(q))) continue;
+        out.push({...base, key: base.key + '|' + f, label: t.target, detail: f,
+                  value: rec[st.metric] ?? null, p50: rec.p50_us, p99: rec.p99_us,
+                  ratio: rec.p50_ratio, dead: false, n: rec.count});
+      }
+    } else {
+      const eps = t.endpoints || {};
+      const order = run.endpoint_order || [];
+      const fam = run.endpoint_family || [];
+      const arr = k => (eps[k] && eps[k][rn]) || [];
+      const p50s = arr('p50_us'), p99s = arr('p99_us'), vals = arr(st.metric), cnt = arr('count');
+      const rats = arr('p50_ratio');
+      order.forEach((eid, i) => {
+        if (q && !(eid.toLowerCase().includes(q) || t.target.toLowerCase().includes(q) ||
+                   (fam[i] || '').toLowerCase().includes(q))) return;
+        if (p50s[i] == null) return;
+        out.push({...base, key: base.key + '|' + eid, label: t.target, detail: eid,
+                  family: fam[i], value: vals[i] ?? null, p50: p50s[i], p99: p99s[i],
+                  ratio: rats[i], dead: false, n: cnt[i]});
+      });
+    }
+  }
+  const {col, dir} = st.sort;
+  const get = r => col === 'name' ? (r.label + r.detail)
+                 : col === 'lang' ? r.shard
+                 : col === 'ratio' ? (r.ratio ?? Infinity)
+                 : (r[col] ?? (METRICS[st.metric].lower ? Infinity : -Infinity));
+  out.sort((a, b) => {
+    const x = get(a), y = get(b);
+    if (typeof x === 'string') return dir * x.localeCompare(y);
+    return dir * (x - y);
+  });
+  return {run, rn, rows: out};
+}
 
-def family_table(run, rung):
-    """Family rollups, each expanding to the endpoints it was rolled up from.
+const fmt = v => v == null ? '&mdash;'
+  : METRICS[st.metric].unit === 'x' ? v.toFixed(2) + 'x'
+  : METRICS[st.metric].unit === 'us' ? Math.round(v).toLocaleString() + ' us'
+  : Math.round(v).toLocaleString();
 
-    Everything here derives from the same per-endpoint histograms: an endpoint is one
-    histogram, a family is its endpoints merged, the blend is every family merged. The
-    drill-down is a different view of one measurement, not a second one.
-    """
-    fams = sorted({f for t in run["targets"] for f in t["families"]})
-    if not fams:
-        return ""
-    base_t = next((t for t in run["targets"] if t["target"] == run["baseline"]), None)
-    others = [t for t in run["targets"] if t["target"] != run["baseline"]]
-    if not base_t:
-        return ""
-    order = run.get("endpoint_order", [])
-    efam = run.get("endpoint_family", [])
-    rn = str(rung)
-    cols = "minmax(150px,1.4fr) 90px " + " ".join(["minmax(74px,1fr)"] * len(others))
+/* ---- render ---- */
+function render() {
+  const {run, rn, rows: rs} = rows();
+  const cols = ser();
+  const langColour = Object.fromEntries(langs.map((l, i) => [l, cols[i %% cols.length]]));
 
-    head = ('<div class="dhead" style="grid-template-columns:%s"><span>family</span>'
-            "<span>%s</span>%s</div>"
-            % (cols, esc(run["baseline"]),
-               "".join("<span>%s</span>" % esc(t["target"]) for t in others)))
+  // controls
+  const hostSel = document.getElementById('host');
+  hostSel.innerHTML = hosts.map(h => `<option${h === st.host ? ' selected' : ''}>${h}</option>`).join('');
+  const rungSel = document.getElementById('rung');
+  rungSel.innerHTML = run ? rungsOf(run).map(r =>
+      `<option value="${r}"${r === rn ? ' selected' : ''}>${offered(run, r).toLocaleString()} rps</option>`).join('') : '';
+  document.getElementById('metric').value = st.metric;
+  document.querySelectorAll('.seg button').forEach(b =>
+      b.setAttribute('aria-pressed', b.dataset.gran === st.gran));
+  document.getElementById('chips').innerHTML = langs.map(l =>
+      `<button class="chip" data-lang="${l}" aria-pressed="${st.langs.has(l)}"` +
+      `${st.langs.has(l) ? ` style="background:${langColour[l]}"` : ''}>` +
+      `<i style="background:${st.langs.has(l) ? 'currentColor' : langColour[l]}"></i>${l}</button>`).join('');
+  document.getElementById('q').value = st.q;
+  document.getElementById('q').style.display = st.gran === 'blend' ? 'none' : '';
+  document.getElementById('qlabel').style.display = st.gran === 'blend' ? 'none' : '';
 
-    blocks = []
-    for f in fams:
-        fbase = base_t["families"].get(f, {}).get("p50_us")
-        cells = "".join(
-            '<span class="ratio%s">%s</span>'
-            % (" up" if (t["families"].get(f, {}).get("p50_ratio") or 0) > 1.15 else "",
-               ("%.2fx" % t["families"][f]["p50_ratio"])
-               if t["families"].get(f, {}).get("p50_ratio") else "&mdash;")
-            for t in others)
-        idx = [i for i, fam in enumerate(efam) if fam == f]
-        inner = ""
-        if idx:
-            erows = []
-            for i in idx:
-                bp = (base_t.get("endpoints", {}).get("p50_us", {}).get(rn) or [None])[i] \
-                     if base_t.get("endpoints") else None
-                ecells = []
-                for t in others:
-                    arr = (t.get("endpoints", {}).get("p50_ratio", {}).get(rn) or [])
-                    v = arr[i] if i < len(arr) else None
-                    ecells.append('<span class="ratio%s">%s</span>'
-                                  % (" up" if (v or 0) > 1.15 else "",
-                                     ("%.2fx" % v) if v else "&mdash;"))
-                erows.append('<div class="erow" style="grid-template-columns:%s">'
-                             '<span class="eid">%s</span><span>%s</span>%s</div>'
-                             % (cols, esc(order[i]),
-                                ("%d us" % bp) if bp else "&mdash;", "".join(ecells)))
-            inner = '<div class="erows">%s</div>' % "".join(erows)
-        blocks.append(
-            "<details><summary style=\"grid-template-columns:%s\">"
-            '<span class="fname">%s <em>%d</em></span><span>%s</span>%s</summary>%s</details>'
-            % (cols, esc(f), len(idx), ("%d us" % fbase) if fbase else "&mdash;",
-               cells, inner))
-    return '<div class="scroll"><div class="drill">%s%s</div></div>' % (head, "".join(blocks))
+  if (!run) {
+    document.getElementById('meta').textContent = 'no tracked runs for this host yet';
+    document.getElementById('tbody').innerHTML = '';
+    document.getElementById('time').innerHTML = '<p class="empty">No data.</p>';
+    writeHash(); return;
+  }
+  document.getElementById('meta').textContent =
+      `${run.date} · ${run.cpu}, ${run.cores} cores · ${rs.length} rows · baseline per language`;
 
-def history_chart(runs, shard, rung):
-    pts = defaultdict(list)
-    for r in sorted((x for x in runs if x["tracked"] and x["shard"] == shard),
-                    key=lambda x: x["run_id"]):
-        for t in r["targets"]:
-            if t["target"] == r["baseline"]:
-                continue
-            d = t["rungs"].get(str(rung))
-            if d and d["p50_ratio"]:
-                pts[t["target"]].append((r["run_id"][:10], d["p50_ratio"],
-                                         t.get("version", "")))
-    if not any(len(v) > 1 for v in pts.values()):
-        n = max((len(v) for v in pts.values()), default=0)
-        return ('<div class="note">Ratio history needs more than one tracked run. '
-                "There %s so far.</div>"
-                % ("is 1" if n == 1 else "are %d" % n))
-    W, H, PAD = 900, 220, 38
-    allv = [v for s in pts.values() for _, v, _ in s]
-    lo, hi = min(1.0, min(allv)) * 0.95, max(allv) * 1.08
-    n = max(len(v) for v in pts.values())
-    x = lambda i: PAD + (W - 2 * PAD) * (i / max(1, n - 1))
-    y = lambda v: H - PAD - (H - 2 * PAD) * ((v - lo) / (hi - lo))
-    parts = ['<svg viewBox="0 0 %d %d" width="100%%" role="img" '
-             'aria-label="p50 ratio to baseline over time">' % (W, H)]
-    for g in range(5):
-        v = lo + (hi - lo) * g / 4
-        parts.append('<line x1="%d" y1="%.1f" x2="%d" y2="%.1f" stroke="var(--rule)" '
-                     'stroke-width="1"/>' % (PAD, y(v), W - PAD, y(v)))
-        parts.append('<text x="%d" y="%.1f" fill="var(--ink3)" font-size="10" '
-                     'font-family="var(--f-mono)" text-anchor="end">%.2fx</text>'
-                     % (PAD - 6, y(v) + 3, v))
-    for i, (name, series) in enumerate(sorted(pts.items())):
-        col = SERIES[i % len(SERIES)]
-        d = " ".join("%s %.1f %.1f" % ("M" if j == 0 else "L", x(j), y(v))
-                     for j, (_, v, _) in enumerate(series))
-        parts.append('<path d="%s" fill="none" stroke="%s" stroke-width="2" '
-                     'stroke-linejoin="round"/>' % (d, col))
-        prev = None
-        for j, (_, v, ver) in enumerate(series):
-            # A hollow ring marks the first run on a new framework version, so a step in
-            # the line can be told apart from runner-to-runner noise.
-            changed = prev is not None and ver and ver != prev
-            prev = ver or prev
-            if changed:
-                parts.append('<circle cx="%.1f" cy="%.1f" r="5.5" fill="var(--surface)" '
-                             'stroke="%s" stroke-width="2"/>' % (x(j), y(v), col))
-                parts.append('<text x="%.1f" y="%.1f" fill="%s" font-size="9" '
-                             'font-family="var(--f-mono)" text-anchor="middle">%s</text>'
-                             % (x(j), y(v) - 11, col, esc(ver)))
-            else:
-                parts.append('<circle cx="%.1f" cy="%.1f" r="3.5" fill="%s"/>'
-                             % (x(j), y(v), col))
-    labels = sorted({d for s in pts.values() for d, _, _ in s})
-    for j, lab in enumerate(labels[:n]):
-        parts.append('<text x="%.1f" y="%d" fill="var(--ink3)" font-size="10" '
-                     'font-family="var(--f-mono)" text-anchor="middle">%s</text>'
-                     % (x(j), H - 12, esc(lab)))
-    parts.append("</svg>")
-    legend = "".join('<span><b style="background:%s"></b>%s <span class="ver">%s</span></span>'
-                     % (SERIES[i % len(SERIES)], esc(k), esc(pts[k][-1][2] or ""))
-                     for i, k in enumerate(sorted(pts)))
-    return ('<div class="chart">%s<div class="legend">%s'
-            '<span style="color:var(--ink3)">hollow ring = first run on a new version</span>'
-            "</div></div>" % ("".join(parts), legend))
+  // table
+  const m = METRICS[st.metric];
+  const finite = rs.map(r => r.value).filter(v => v != null && isFinite(v));
+  const worst = finite.length ? Math.max(...finite) : 1;
+  document.getElementById('vhead').textContent = m.label;
+  document.getElementById('tbody').innerHTML = rs.map((r, i) => {
+    const w = r.value != null && isFinite(r.value) ? Math.max(1.5, 100 * r.value / worst) : 0;
+    const ratio = r.ratio == null ? '&mdash;'
+      : `<span>${r.ratio.toFixed(2)}x</span>`;
+    return `<tr data-key="${r.key}" aria-selected="${st.pinned.has(r.key)}">
+      <td class="rank">${i + 1}</td>
+      <td class="name l"><span class="swatch" style="background:${langColour[r.shard]}"></span>${r.label}${r.isBase ? '<span class="pill">baseline</span>' : ''}</td>
+      <td class="sub l">${r.detail || r.shard}</td>
+      <td class="sub">${r.version || '&mdash;'}</td>
+      <td class="${r.dead ? 'dead ' : ''}">${fmt(r.value)}</td>
+      <td class="ratio ${r.isBase ? 'base' : (r.ratio > 1.15 ? 'up' : '')}">${ratio}</td>
+      <td class="sub">${(r.n ?? 0).toLocaleString()}</td>
+      <td class="barcell"><div class="bar${r.isBase ? ' b' : ''}" style="width:${w}%%;background:${r.isBase ? '' : langColour[r.shard]}"></div></td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="8" class="empty">Nothing matches those filters.</td></tr>';
+  document.getElementById('count').textContent = `${rs.length} rows`;
+
+  renderTime(rs, langColour);
+  writeHash();
+}
+
+/* ---- the time axis: the selected metric over every run on this host ---- */
+function renderTime(rs, langColour) {
+  const host = st.host, rnWanted = st.rung;
+  const runs = runsForHost();
+  const el = document.getElementById('time');
+  const keys = st.pinned.size ? [...st.pinned] : rs.slice(0, 6).map(r => r.key);
+  if (runs.length < 2) {
+    el.innerHTML = `<p class="empty">One run on this host so far. The time axis fills in as runs accumulate.</p>`;
+    return;
+  }
+  const cols = ser();
+  const series = new Map();
+  runs.forEach(run => {
+    const rn = (rnWanted && run.rungs.map(String).includes(rnWanted)) ? rnWanted : pickRung(run);
+    run.targets.forEach(t => {
+      const base = t.shard + ':' + t.target;
+      keys.forEach(k => {
+        const [kb, det] = k.split('|');
+        if (kb !== base) return;
+        let v = null, ver = t.version || '';
+        if (!det) { const d = t.rungs[rn]; v = d ? d[st.metric] : null; }
+        else if (run.endpoint_order && run.endpoint_order.includes(det)) {
+          const i = run.endpoint_order.indexOf(det);
+          const a = (t.endpoints || {})[st.metric]; v = a && a[rn] ? a[rn][i] : null;
+        } else {
+          const fams = (t.families_by_rung || {})[rn] || t.families || {};
+          v = fams[det] ? fams[det][st.metric] : null;
+        }
+        if (v == null) return;
+        if (!series.has(k)) series.set(k, []);
+        series.get(k).push({date: run.date, v, ver});
+      });
+    });
+  });
+  const live = [...series.entries()].filter(([, p]) => p.length);
+  if (!live.length || !live.some(([, p]) => p.length > 1)) {
+    el.innerHTML = `<p class="empty">Not enough runs yet for these rows.</p>`;
+    return;
+  }
+  // Left padding has to hold six-figure microsecond labels; right padding holds a
+  // version string sitting above the last point.
+  const W = 940, H = 260, P = 78, R = 52;
+  const all = live.flatMap(([, p]) => p.map(x => x.v));
+  const lo = Math.min(...all) * 0.92, hi = Math.max(...all) * 1.08;
+  const n = Math.max(...live.map(([, p]) => p.length));
+  const X = i => P + (W - P - R) * (n < 2 ? 0.5 : i / (n - 1));
+  const Y = v => H - 44 - (H - 62) * ((v - lo) / (hi - lo || 1));
+  let g = `<svg viewBox="0 0 ${W} ${H}" width="100%%" role="img" aria-label="${METRICS[st.metric].label} over time">`;
+  for (let k = 0; k <= 4; k++) {
+    const v = lo + (hi - lo) * k / 4;
+    g += `<line x1="${P}" y1="${Y(v).toFixed(1)}" x2="${W - R}" y2="${Y(v).toFixed(1)}" stroke="var(--rule)" stroke-width="1"/>`;
+    g += `<text x="${P - 7}" y="${(Y(v) + 3).toFixed(1)}" fill="var(--ink3)" font-size="10" font-family="var(--f-mono)" text-anchor="end">${fmt(v).replace(' us', '')}</text>`;
+  }
+  live.forEach(([k, pts], idx) => {
+    const c = cols[idx %% cols.length];
+    g += `<path d="${pts.map((p, i) => (i ? 'L' : 'M') + ' ' + X(i).toFixed(1) + ' ' + Y(p.v).toFixed(1)).join(' ')}" fill="none" stroke="${c}" stroke-width="2" stroke-linejoin="round"/>`;
+    let prev = null;
+    pts.forEach((p, i) => {
+      const changed = prev !== null && p.ver && p.ver !== prev;
+      prev = p.ver || prev;
+      g += changed
+        ? `<circle cx="${X(i).toFixed(1)}" cy="${Y(p.v).toFixed(1)}" r="5.5" fill="var(--surface)" stroke="${c}" stroke-width="2"/><text x="${X(i).toFixed(1)}" y="${(Y(p.v) - 11).toFixed(1)}" fill="${c}" font-size="9" font-family="var(--f-mono)" text-anchor="${i === 0 ? 'start' : i >= n - 1 ? 'end' : 'middle'}">${p.ver}</text>`
+        : `<circle cx="${X(i).toFixed(1)}" cy="${Y(p.v).toFixed(1)}" r="3.2" fill="${c}"/>`;
+    });
+  });
+  // One tick per run, not per distinct date: several runs can share a day, and labelling
+  // by date put the ticks under the wrong points entirely.
+  const step = Math.max(1, Math.ceil(n / 8));
+  runs.slice(0, n).forEach((r, i) => {
+    if (i %% step && i !== n - 1) return;
+    const anchor = i === 0 ? 'start' : i === n - 1 ? 'end' : 'middle';
+    g += `<text x="${X(i).toFixed(1)}" y="${H - 16}" fill="var(--ink3)" font-size="10" font-family="var(--f-mono)" text-anchor="${anchor}">${r.date.slice(5)}</text>`;
+  });
+  g += '</svg>';
+  const legend = live.map(([k], i) =>
+    `<span><b style="background:${cols[i %% cols.length]}"></b>${k.replace('|', ' · ')}</span>`).join('');
+  el.innerHTML = g + `<div class="legend">${legend}<span style="color:var(--ink3)">hollow ring = new framework version</span></div>`;
+}
+
+/* ---- wiring ---- */
+document.getElementById('host').onchange = e => { st.host = e.target.value; st.rung = null; render(); };
+document.getElementById('rung').onchange = e => { st.rung = e.target.value; render(); };
+document.getElementById('metric').onchange = e => { st.metric = e.target.value; render(); };
+document.getElementById('q').oninput = e => { st.q = e.target.value; render(); };
+document.querySelectorAll('.seg button').forEach(b => b.onclick = () => { st.gran = b.dataset.gran; render(); });
+document.getElementById('chips').onclick = e => {
+  const b = e.target.closest('[data-lang]'); if (!b) return;
+  const l = b.dataset.lang;
+  st.langs.has(l) ? st.langs.delete(l) : st.langs.add(l);
+  if (!st.langs.size) st.langs = new Set(langs);
+  render();
+};
+document.querySelectorAll('thead th[data-col]').forEach(th => th.onclick = () => {
+  const c = th.dataset.col;
+  st.sort = {col: c, dir: st.sort.col === c ? -st.sort.dir : 1};
+  document.querySelectorAll('thead th').forEach(x => x.removeAttribute('aria-sort'));
+  th.setAttribute('aria-sort', st.sort.dir === 1 ? 'ascending' : 'descending');
+  render();
+});
+document.getElementById('tbody').onclick = e => {
+  const tr = e.target.closest('tr[data-key]'); if (!tr) return;
+  const k = tr.dataset.key;
+  st.pinned.has(k) ? st.pinned.delete(k) : st.pinned.add(k);
+  render();
+};
+document.getElementById('reset').onclick = () => {
+  st.langs = new Set(langs); st.q = ''; st.pinned.clear(); st.rung = null;
+  st.sort = {col: 'value', dir: 1}; render();
+};
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', render);
+/* A shared link pasted into an already-open tab, or the back button, changes the hash
+   without reloading. Without this the URL and the view silently disagree. */
+let ownHash = '';
+addEventListener('hashchange', () => {
+  if (location.hash === ownHash) return;
+  readHash(); render();
+});
+const _writeHash = writeHash;
+writeHash = function () { _writeHash(); ownHash = location.hash; };
+readHash(); render();
+"""
+
 
 def render(runs):
-    latest = latest_per_shard(runs)
     tracked = [r for r in runs if r.get("tracked")]
     now = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
-    body = []
-    cross = latest_cross(runs)
-    if cross:
-        body.append(cross_section(cross))
-    if not latest and not cross:
-        body.append('<div class="note">No tracked runs yet. A shortened ladder is a '
-                    "smoke test and never enters the series, so the first full run on the "
-                    "schedule will populate this page.</div>")
-    for shard, run in latest.items():
-        # Chart the highest rate at which the baseline was still keeping up; a saturated
-        # rung says more about the runner's core count than about any framework.
-        clean = [rn for rn in run["rungs"]
-                 if not any(t["rungs"].get(str(rn), {}).get("baseline_saturated")
-                            for t in run["targets"])]
-        mid = clean[-1] if clean else run["rungs"][len(run["rungs"]) // 2]
-        body.append(
-            "<section>"
-            '<div class="shead"><h2>%s</h2><span class="pill">%s</span></div>'
-            '<p class="sub">%s &middot; %s, %d cores &middot; baseline <code>%s</code> '
-            "&middot; p50 and its ratio to that baseline, lower is better. "
-            "Struck-through rates are ones where the baseline itself was dropping "
-            "requests, so the ratio there compares two overloaded systems.</p>"
-            "%s<h3 style=\"font-size:13px;text-transform:uppercase;letter-spacing:.07em;"
-            "color:var(--ink2);margin:28px 0 10px\">By family at %s rps &mdash; "
-            "click any row for its endpoints</h3>%s"
-            "%s</section>"
-            % (esc(shard), esc(run["run_id"][:16]), esc(run["date"]), esc(run["cpu"]),
-               run["cores"], esc(run["baseline"]), shard_table(run),
-               f"{next((t['rungs'][str(mid)]['offered_rps'] for t in run['targets'] if str(mid) in t['rungs']), mid):,}",
-               family_table(run, mid), history_chart(runs, shard, mid)))
+    data = json.dumps({"runs": runs}, separators=(",", ":"))
+    app = APP % (json.dumps(SERIES_LIGHT), json.dumps(SERIES_DARK))
     return """<!doctype html>
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>RequestBench Results</title>
-<meta name="description" content="Framework overhead over a bare baseline, measured per language.">
+<meta name="description" content="Sortable, filterable HTTP framework results across languages, hosts and time.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@400;600&family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>%s</style></head><body><div class="page">
+
 <p class="eyebrow">blend-v1 &middot; epoch 1 &middot; built %s</p>
 <h1>RequestBench Results</h1>
-<p class="lede">What a web framework costs you over writing the same forty endpoints
-with no framework at all, in the same language, on the same machine, in the same minute.</p>
-<dl class="meta">
-<div><dt>Shards</dt><dd>%d</dd></div>
-<div><dt>Tracked runs</dt><dd>%d</dd></div>
-<div><dt>Endpoints</dt><dd>40</dd></div>
-<div><dt>Rungs</dt><dd>5 <span>500&ndash;12k rps</span></dd></div>
-</dl>
-%s
-<div class="note">Runs happen on GitHub-hosted runners, whose hardware varies between
-runs, so no absolute number here is comparable night to night. Each shard measures its
-own bare baseline in the same job on the same machine, and only the ratio to it is
-meant to be read across runs. Comparing one language to another is not supported by
-this design.</div>
-<footer><span>github.com/ipjohnson/RequestBench</span><span>raw histograms in the run artifacts, 90 days</span></footer>
-</div></body></html>""" % (CSS, esc(now), len(latest), len(tracked), "".join(body))
+<p class="lede">Every framework in a run shares one machine and one window, so these are
+real latencies and they rank directly against each other. The ratio column is still each
+target against the bare baseline in its own language.</p>
+
+<div class="controls">
+  <div class="ctl"><label for="host">Execution host</label>
+    <select id="host"></select></div>
+  <div class="ctl"><label for="rung">Offered rate</label>
+    <select id="rung"></select></div>
+  <div class="ctl"><label for="metric">Metric</label>
+    <select id="metric">
+      <option value="p50_us">p50</option>
+      <option value="p90_us">p90</option>
+      <option value="p99_us">p99</option>
+      <option value="p999_us">p99.9</option>
+      <option value="p50_ratio">p50 vs baseline</option>
+      <option value="p99_ratio">p99 vs baseline</option>
+      <option value="achieved_rps">achieved rps</option>
+      <option value="dropped">dropped</option>
+    </select></div>
+  <div class="ctl"><label>Granularity</label>
+    <div class="seg" role="group" aria-label="Granularity">
+      <button data-gran="blend">Blend</button>
+      <button data-gran="family">Family</button>
+      <button data-gran="endpoint">Endpoint</button>
+    </div></div>
+  <div class="ctl"><label>Languages</label><div class="chips" id="chips"></div></div>
+  <div class="ctl"><label for="q" id="qlabel">Filter</label>
+    <input type="search" id="q" placeholder="endpoint or framework"></div>
+  <div class="spacer"></div>
+  <div class="ctl"><label>&nbsp;</label>
+    <div class="seg"><button id="reset" type="button">Reset</button></div></div>
+</div>
+
+<p class="count" id="meta" style="margin:12px 0 0"></p>
+
+<div class="scroll"><table>
+  <thead><tr>
+    <th style="cursor:default">#</th>
+    <th class="l" data-col="name">framework</th>
+    <th class="l" data-col="lang">slice</th>
+    <th>version</th>
+    <th data-col="value" aria-sort="ascending"><span id="vhead">p50</span></th>
+    <th data-col="ratio">vs baseline</th>
+    <th data-col="n">samples</th>
+    <th class="barcell" style="cursor:default"></th>
+  </tr></thead>
+  <tbody id="tbody"></tbody>
+</table></div>
+<p class="count" id="count" style="margin-top:10px"></p>
+
+<div class="panel">
+  <h2>Over time</h2>
+  <p class="hint">Click any row above to pin it here. With nothing pinned this shows the
+  top six rows of the current ranking.</p>
+  <div id="time"></div>
+</div>
+
+<div class="note">Runs happen on GitHub-hosted runners, whose CPU varies between runs, so
+an absolute number is comparable to the others <em>in its own run</em> and to nothing else.
+The ratio to each language's bare baseline is what carries across runs and across hosts.</div>
+
+<footer><span>github.com/ipjohnson/RequestBench</span>
+<span>%d runs &middot; raw histograms in the run artifacts</span></footer>
+</div>
+<script>window.__RB__ = %s;</script>
+<script>%s</script>
+</body></html>""" % (CSS, esc(now), len(tracked), data, app)
+
 
 def main():
     ap = argparse.ArgumentParser()
@@ -452,13 +573,13 @@ def main():
     out = pathlib.Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
     (out / "index.html").write_text(render(runs))
-    (out / "data.json").write_text(json.dumps(runs, indent=1, sort_keys=True))
-    print("read %d summaries (%d tracked) from %s"
-          % (len(runs), sum(1 for r in runs if r.get("tracked")), a.summaries))
-    print("wrote %s (%.1f KB) and data.json (%.1f KB)"
-          % (out / "index.html", (out / "index.html").stat().st_size / 1024,
-             (out / "data.json").stat().st_size / 1024))
+    (out / "data.json").write_text(json.dumps(runs, separators=(",", ":")))
+    print("read %d summaries (%d tracked)" % (runs.__len__(),
+                                              sum(1 for r in runs if r.get("tracked"))))
+    print("wrote %s (%.1f KB)" % (out / "index.html",
+                                  (out / "index.html").stat().st_size / 1024))
     return 0
+
 
 if __name__ == "__main__":
     sys.exit(main())

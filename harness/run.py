@@ -199,6 +199,7 @@ def env_fingerprint(run_id, shard, baseline):
     return {"kind": "env", "run_id": run_id, "shard": shard, "baseline": baseline,
             "host": platform.node(), "cpu": cpu_model(),
             "cores": os.cpu_count(), "platform": platform.platform(),
+            "exec_host": os.environ.get("RB_HOST", "container"),
             "sut_cpus": os.environ.get("RB_SUT_CPUS", ""),
             "gen_cpus": os.environ.get("RB_GEN_CPUS", ""),
             "runtime": subprocess.run(["node", "-v"], capture_output=True, text=True)
@@ -291,7 +292,8 @@ def main():
                                                   meta.get("version", "?"),
                                                   meta.get("runtime", "?")))
                 rows.append({"kind": "target", "run_id": run_id, "shard": shard,
-                             "target": target, **meta})
+                             "target": target,
+                             "host": os.environ.get("RB_HOST", "container"), **meta})
             else:
                 print("  booted   (no /__meta; version unknown)")
             if not a.skip_conform:

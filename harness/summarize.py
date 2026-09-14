@@ -90,6 +90,7 @@ def main():
         "run_id": env["run_id"], "date": env["run_id"][:10], "shard": env["shard"],
         "suite": env["suite"], "epoch": env["epoch"], "mode": env.get("mode", "local"),
         "runner": a.runner, "tracked": a.tracked,
+        "exec_host": env.get("exec_host") or "container",
         "host": env["host"], "cpu": env["cpu"], "cores": env["cores"],
         "sut_cpus": env.get("sut_cpus", ""), "gen_cpus": env.get("gen_cpus", ""),
         "runtime": env["runtime"], "generator": env["generator"],
@@ -105,6 +106,7 @@ def main():
     for t in targets:
         m = meta.get(t, {})
         entry = {"target": t, "shard": shard_of.get(t, env["shard"]),
+                 "exec_host": meta.get(t, {}).get("host", env.get("host", "container")),
                  "baseline": base_of.get(t, env["baseline"]),
                  "framework": m.get("framework", t),
                  "version": m.get("version", ""), "target_runtime": m.get("runtime", ""),
