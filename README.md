@@ -99,12 +99,20 @@ manifest; `validate.yml` is the gate on it. That needs a `DEPS_TOKEN` secret, be
 pull request opened with the default token fires no checks.
 
 Three execution hosts are implemented: the container contract, the GCP Functions Framework,
-and the Lambda runtime interface emulator. Node and Go cover all three; Java covers the
-container contract only so far. Two targets do not cover all three. Fiber runs only as a
-container, because it is fasthttp rather than an `http.Handler`. Koa has no Lambda entry,
-because its body parser does not see a request body through serverless-express.
+and the Lambda runtime interface emulator. Every Node and Go target covers all three except
+Fiber, which runs only as a container because it is fasthttp rather than an `http.Handler`,
+and Koa, which has no Lambda entry because its body parser does not see a request body
+through serverless-express.
 
-Not built yet: the other three languages, Java on the two function hosts, the ten
+On Java the function hosts are thinner, and `spec/matrix.json` says why for each target.
+Bare Netty is on all three, with a hand-written entry per host so the baseline is the floor
+for its host rather than a translation of another host's floor. Micronaut is on all three
+through its own AWS and GCP adapters, and Spring Boot is on Lambda through
+aws-serverless-java-container. Javalin, Vert.x and Helidon SE have no first-party adapter
+for either function host, and a hand-written shim would measure the shim. Quarkus has one
+for both and is not wired to either yet.
+
+Not built yet: the other three languages, Quarkus on either function host, the ten
 capability suites, and the machine calibrator.
 
 The current numbers are **not admissible** under the plan's own rules: the generator runs on

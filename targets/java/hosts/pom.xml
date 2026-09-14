@@ -28,6 +28,10 @@
       <groupId>com.amazonaws</groupId>
       <artifactId>aws-lambda-java-events</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.google.cloud.functions</groupId>
+      <artifactId>functions-framework-api</artifactId>
+    </dependency>
   </dependencies>
 
   <build>

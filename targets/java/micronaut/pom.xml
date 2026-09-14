@@ -47,6 +47,12 @@
       <groupId>io.micronaut.aws</groupId>
       <artifactId>micronaut-function-aws-api-proxy</artifactId>
     </dependency>
+    <!-- Host: gcp-func. Micronaut's own Functions Framework adapter, which keeps the same
+         @Controller routes the container host serves. -->
+    <dependency>
+      <groupId>io.micronaut.gcp</groupId>
+      <artifactId>micronaut-gcp-function-http</artifactId>
+    </dependency>
   </dependencies>
 
   <build>

@@ -72,6 +72,6 @@ next night as a ring on the chart.
 
 ## Not built yet
 
-Java on the two function hosts, the capability suites, and the fixed native calibrator that
-checks the host has not drifted mid-run. Until the calibrator exists, nothing catches a
+Quarkus on either function host, the capability suites, and the fixed native calibrator
+that checks the host has not drifted mid-run. Until the calibrator exists, nothing catches a
 host that slowed down halfway through a run.
