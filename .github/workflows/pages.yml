@@ -43,8 +43,13 @@ jobs:
         with:
           python-version: "3.13"
 
+      # Exemplars come from main beside the targets; summaries come from the data branch.
       - name: Build the site
-        run: python3 site/build.py --summaries _results/summary --out site/dist
+        run: |
+          python3 site/build.py \
+            --summaries _results/summary \
+            --exemplars results/exemplars \
+            --out site/dist
 
       - uses: actions/configure-pages@v5
 

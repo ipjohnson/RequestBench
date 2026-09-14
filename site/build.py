@@ -137,6 +137,32 @@ td.dead { color: var(--ink3); text-decoration: line-through; }
 .legend span { display: flex; align-items: center; gap: 6px; }
 .legend b { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
 .empty { color: var(--ink3); font-size: 13px; padding: 22px 0; text-align: center; }
+.wirecell { width: 46px; }
+.wirebtn { font-family: var(--f-mono); font-size: 11px; padding: 3px 7px; cursor: pointer;
+           border: 1px solid var(--rule2); border-radius: 3px; background: var(--ground);
+           color: var(--ink2); }
+.wirebtn:hover { border-color: var(--teal); color: var(--tealtext); }
+.wirehead { display: flex; flex-wrap: wrap; gap: 9px; align-items: baseline;
+            margin-bottom: 14px; font-size: 14px; }
+.wirehead .wmeta { font-family: var(--f-mono); font-size: 11.5px; color: var(--ink3);
+                   margin-left: auto; }
+.wirecols { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+@media (max-width: 780px) { .wirecols { grid-template-columns: 1fr; } }
+.wirecols h3 { font-family: var(--f-mono); font-size: 10px; letter-spacing: .1em;
+               text-transform: uppercase; color: var(--ink3); margin: 0 0 8px; font-weight: 500; }
+pre.wire { font-family: var(--f-mono); font-size: 12px; line-height: 1.6; margin: 0 0 10px;
+           padding: 9px 11px; background: var(--ground); border: 1px solid var(--rule);
+           border-radius: 3px; overflow-x: auto; white-space: pre-wrap; word-break: break-all;
+           color: var(--ink); }
+pre.wire.req { border-left: 2px solid var(--teal); }
+pre.wire.res { border-left: 2px solid var(--amber); }
+.hdrs { margin: 0 0 10px; }
+.hrow { display: grid; grid-template-columns: minmax(110px, 34%%) 1fr; gap: 10px;
+        font-family: var(--f-mono); font-size: 11.5px; padding: 3px 0;
+        border-bottom: 1px solid var(--rule); }
+.hrow:last-child { border-bottom: none; }
+.hk { color: var(--tealtext); }
+.hv { color: var(--ink2); word-break: break-all; }
 .note { border-left: 2px solid var(--amber); background: var(--surface);
         padding: 13px 17px; border-radius: 0 3px 3px 0; margin-top: 22px;
         font-size: 13.5px; color: var(--ink2); }
@@ -152,6 +178,35 @@ footer { margin-top: 52px; border-top: 1px solid var(--rule2); padding-top: 16px
 
 def esc(s):
     return html.escape(str(s))
+
+
+def load_exemplars(d):
+    """One request/response pair per endpoint per target, captured by the conformance gate.
+
+    Bodies are trimmed for display; the full capture stays in results/exemplars on main.
+    """
+    out = {}
+    for f in sorted(pathlib.Path(d).glob("*.json")):
+        key = f.stem                      # <shard>-<target>
+        try:
+            doc = json.loads(f.read_text())
+        except json.JSONDecodeError:
+            continue
+        eps = {}
+        for e in doc.get("endpoints", []):
+            req, res = e["request"], e["response"]
+            eps[e["endpoint"]] = {
+                "m": req["method"], "p": req["path"],
+                "rh": req["headers"], "rb": (req.get("body") or "")[:700],
+                "rbz": req.get("body_bytes", 0),
+                "s": res["status"], "sh": res["headers"],
+                "shz": res["header_bytes"], "sbz": res["body_bytes"],
+                "fr": res.get("framing", ""),
+                "sb": res["body"][:700], "tr": res.get("truncated") or len(res["body"]) > 700,
+            }
+        out[key] = {"framework": doc.get("framework", ""), "version": doc.get("version", ""),
+                    "endpoints": eps}
+    return out
 
 
 def load(d):
@@ -303,6 +358,37 @@ function emptyWhy(run, rn) {
   return 'Nothing matches those filters.';
 }
 
+/* Exemplars are keyed <shard>-<target>, and only the endpoint view names an endpoint. */
+const wireKey = r => (st.gran === 'endpoint' && RB.wire && RB.wire[r.shard + '-' + r.target])
+  ? r.shard + '-' + r.target : '';
+
+function renderWire(key, eid) {
+  const box = document.getElementById('wire');
+  const doc = RB.wire[key];
+  const e = doc && doc.endpoints[eid];
+  if (!e) { box.innerHTML = '<p class="empty">No capture for that endpoint.</p>'; return; }
+  const hdr = hs => hs.map(([k, v]) =>
+    `<div class="hrow"><span class="hk">${k}</span><span class="hv">${esc(v)}</span></div>`).join('');
+  box.innerHTML = `
+    <div class="wirehead"><strong>${key}</strong> <span class="ver">${doc.version}</span>
+      <span class="pill">${eid}</span>
+      <span class="wmeta">${e.shz} B headers &middot; ${e.sbz} B body &middot; ${e.fr}</span></div>
+    <div class="wirecols">
+      <div><h3>Request</h3>
+        <pre class="wire req">${esc(e.m)} ${esc(e.p)}</pre>
+        <div class="hdrs">${hdr(e.rh)}</div>
+        ${e.rb ? `<pre class="wire">${esc(e.rb)}${e.rbz > 700 ? '\n\u2026 ' + e.rbz + ' bytes total' : ''}</pre>` : '<p class="empty" style="padding:8px 0">no body</p>'}
+      </div>
+      <div><h3>Response</h3>
+        <pre class="wire res">HTTP ${e.s}</pre>
+        <div class="hdrs">${hdr(e.sh)}</div>
+        ${e.sb ? `<pre class="wire">${esc(e.sb)}${e.tr ? '\n\u2026 ' + e.sbz + ' bytes total' : ''}</pre>` : '<p class="empty" style="padding:8px 0">no body</p>'}
+      </div>
+    </div>`;
+  box.scrollIntoView({behavior: 'smooth', block: 'nearest'});
+}
+const esc = t => String(t).replace(/[&<>]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;'}[c]));
+
 const fmt = v => v == null ? '&mdash;'
   : METRICS[st.metric].unit === 'x' ? v.toFixed(2) + 'x'
   : METRICS[st.metric].unit === 'us' ? Math.round(v).toLocaleString() + ' us'
@@ -358,8 +444,9 @@ function render() {
       <td class="ratio ${r.isBase ? 'base' : (r.ratio > 1.15 ? 'up' : '')}">${ratio}</td>
       <td class="sub">${(r.n ?? 0).toLocaleString()}</td>
       <td class="barcell"><div class="bar${r.isBase ? ' b' : ''}" style="width:${w}%%;background:${r.isBase ? '' : langColour[r.shard]}"></div></td>
+      <td class="wirecell">${wireKey(r) ? `<button class="wirebtn" data-wire="${wireKey(r)}|${r.detail}" title="show the captured request and response">&lt;/&gt;</button>` : ''}</td>
     </tr>`;
-  }).join('') || `<tr><td colspan="8" class="empty">${emptyWhy(run, rn)}</td></tr>`;
+  }).join('') || `<tr><td colspan="9" class="empty">${emptyWhy(run, rn)}</td></tr>`;
   document.getElementById('count').textContent = `${rs.length} rows`;
 
   renderTime(rs, langColour);
@@ -466,6 +553,8 @@ document.querySelectorAll('thead th[data-col]').forEach(th => th.onclick = () =>
   render();
 });
 document.getElementById('tbody').onclick = e => {
+  const wb = e.target.closest('[data-wire]');
+  if (wb) { const [k, eid] = wb.dataset.wire.split('|'); renderWire(k, eid); return; }
   const tr = e.target.closest('tr[data-key]'); if (!tr) return;
   const k = tr.dataset.key;
   st.pinned.has(k) ? st.pinned.delete(k) : st.pinned.add(k);
@@ -489,10 +578,10 @@ readHash(); render();
 """
 
 
-def render(runs):
+def render(runs, wire):
     tracked = [r for r in runs if r.get("tracked")]
     now = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
-    data = json.dumps({"runs": runs}, separators=(",", ":"))
+    data = json.dumps({"runs": runs, "wire": wire}, separators=(",", ":"))
     app = APP % (json.dumps(SERIES_LIGHT), json.dumps(SERIES_DARK))
     return """<!doctype html>
 <html lang="en"><head>
@@ -552,10 +641,18 @@ target against the bare baseline in its own language.</p>
     <th data-col="ratio">vs baseline</th>
     <th data-col="n">samples</th>
     <th class="barcell" style="cursor:default"></th>
+    <th class="wirecell" style="cursor:default">wire</th>
   </tr></thead>
   <tbody id="tbody"></tbody>
 </table></div>
 <p class="count" id="count" style="margin-top:10px"></p>
+
+<div class="panel">
+  <h2>On the wire</h2>
+  <p class="hint">Switch granularity to Endpoint and press <code>&lt;/&gt;</code> on any row to
+  read the exact request and response the conformance gate captured for it.</p>
+  <div id="wire"><p class="empty">Nothing selected.</p></div>
+</div>
 
 <div class="panel">
   <h2>Over time</h2>
@@ -579,17 +676,19 @@ The ratio to each language's bare baseline is what carries across runs and acros
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--summaries", default="results/summary")
+    ap.add_argument("--exemplars", default="results/exemplars")
     ap.add_argument("--out", default="site/dist")
     a = ap.parse_args()
     runs = load(a.summaries)
+    wire = load_exemplars(a.exemplars)
     out = pathlib.Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
-    (out / "index.html").write_text(render(runs))
+    (out / "index.html").write_text(render(runs, wire))
     (out / "data.json").write_text(json.dumps(runs, separators=(",", ":")))
     print("read %d summaries (%d tracked)" % (runs.__len__(),
                                               sum(1 for r in runs if r.get("tracked"))))
-    print("wrote %s (%.1f KB)" % (out / "index.html",
-                                  (out / "index.html").stat().st_size / 1024))
+    print("wrote %s (%.1f KB), %d targets with captured wire data"
+          % (out / "index.html", (out / "index.html").stat().st_size / 1024, len(wire)))
     return 0
 
 
