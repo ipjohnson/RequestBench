@@ -58,7 +58,7 @@ jobs:
       - run: npm ci --omit=dev --no-audit --no-fund
         working-directory: targets/node
       - name: Boot and conform every node target
-        run: python3 harness/run.py --language node --targets node-http,fastify,express --validate-only
+        run: python3 harness/run.py --language node --targets node-http,fastify,express,hono,koa,h3 --validate-only
       - name: Fail if the reference fingerprints drifted
         run: |
           RB_TARGET=baseline PORT=8080 node targets/node/_hosts/container.mjs & SRV=$!
@@ -90,7 +90,7 @@ jobs:
       - run: go build ./...
         working-directory: targets/go
       - name: Boot and conform every go target against the node reference
-        run: python3 harness/run.py --language go --targets net-http,gin,echo --validate-only
+        run: python3 harness/run.py --language go --targets net-http,gin,echo,chi,gorilla-mux,fiber --validate-only
 
   images:
     name: container images build
@@ -100,10 +100,17 @@ jobs:
       matrix:
         include:
           - { language: node, target: baseline }
+          - { language: node, target: express }
           - { language: node, target: fastify }
+          - { language: node, target: hono }
+          - { language: node, target: koa }
+          - { language: node, target: h3 }
           - { language: go,   target: baseline }
           - { language: go,   target: gin }
           - { language: go,   target: echo }
+          - { language: go,   target: chi }
+          - { language: go,   target: gorilla-mux }
+          - { language: go,   target: fiber }
     steps:
       - uses: actions/checkout@v4
       - name: Build ${{ matrix.language }}/${{ matrix.target }}
