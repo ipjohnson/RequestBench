@@ -58,7 +58,7 @@ jobs:
       - run: npm ci --omit=dev --no-audit --no-fund
         working-directory: targets/node
       - name: Boot and conform every node target
-        run: python3 harness/run.py --language node --targets node-http,fastify,express --validate-only
+        run: python3 harness/run.py --language node --targets node-http,fastify,express,hono,koa,h3 --validate-only
       - name: Fail if the reference fingerprints drifted
         run: |
           RB_TARGET=baseline PORT=8080 node targets/node/_hosts/container.mjs & SRV=$!
@@ -90,7 +90,26 @@ jobs:
       - run: go build ./...
         working-directory: targets/go
       - name: Boot and conform every go target against the node reference
-        run: python3 harness/run.py --language go --targets net-http,gin,echo --validate-only
+        run: python3 harness/run.py --language go --targets net-http,gin,echo,chi,gorilla-mux,fiber --validate-only
+
+  java:
+    name: java targets conform
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: "25", cache: maven }
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.13" }
+      # One reactor build for all seven, rather than an image build per target: the local
+      # launcher runs the jar the same way the container ENTRYPOINT does.
+      - name: Build every java target
+        run: mvn -B -q -DskipTests package
+        working-directory: targets/java
+      - name: Boot and conform every java target against the node reference
+        run: |
+          python3 harness/run.py --language java --validate-only \
+            --targets bare-netty,javalin,vertx,helidon-se,spring-boot,micronaut,quarkus
 
   images:
     name: container images build
@@ -100,10 +119,24 @@ jobs:
       matrix:
         include:
           - { language: node, target: baseline }
+          - { language: node, target: express }
           - { language: node, target: fastify }
+          - { language: node, target: hono }
+          - { language: node, target: koa }
+          - { language: node, target: h3 }
           - { language: go,   target: baseline }
           - { language: go,   target: gin }
           - { language: go,   target: echo }
+          - { language: go,   target: chi }
+          - { language: go,   target: gorilla-mux }
+          - { language: go,   target: fiber }
+          - { language: java, target: baseline }
+          - { language: java, target: javalin }
+          - { language: java, target: vertx }
+          - { language: java, target: helidon-se }
+          - { language: java, target: spring-boot }
+          - { language: java, target: micronaut }
+          - { language: java, target: quarkus }
     steps:
       - uses: actions/checkout@v4
       - name: Build ${{ matrix.language }}/${{ matrix.target }}
@@ -118,7 +151,7 @@ jobs:
         run: |
           docker run -d --rm --name rb-smoke -p 8080:8080 \
             rb/${{ matrix.language }}-${{ matrix.target }}
-          for _ in $(seq 1 60); do
+          for _ in $(seq 1 180); do
             if curl -sf http://127.0.0.1:8080/health >/dev/null; then break; fi
             sleep 0.5
           done

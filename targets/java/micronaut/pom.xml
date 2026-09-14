@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>dev.requestbench</groupId>
+    <artifactId>rb-java</artifactId>
+    <version>1.0.0</version>
+  </parent>
+
+  <artifactId>rb-micronaut</artifactId>
+  <name>RequestBench target: Micronaut</name>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>io.micronaut.platform</groupId>
+        <artifactId>micronaut-platform</artifactId>
+        <version>${micronaut.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <dependencies>
+    <dependency>
+      <groupId>dev.requestbench</groupId>
+      <artifactId>rb-hosts</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.micronaut</groupId>
+      <artifactId>micronaut-http-server-netty</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.micronaut</groupId>
+      <artifactId>micronaut-jackson-databind</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.micronaut</groupId>
+      <artifactId>micronaut-runtime</artifactId>
+    </dependency>
+    <!-- Host: lambda-rie. Micronaut's own API Gateway adapter, which is what people
+         actually deploy, rather than a generic servlet shim over it. -->
+    <dependency>
+      <groupId>io.micronaut.aws</groupId>
+      <artifactId>micronaut-function-aws-api-proxy</artifactId>
+    </dependency>
+    <!-- Host: gcp-func. Micronaut's own Functions Framework adapter, which keeps the same
+         @Controller routes the container host serves. -->
+    <dependency>
+      <groupId>io.micronaut.gcp</groupId>
+      <artifactId>micronaut-gcp-function-http</artifactId>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <!-- Micronaut resolves its beans and routes at build time; without the
+               annotation processor the jar builds clean and serves nothing. -->
+          <annotationProcessorPaths>
+            <!-- No version: the platform BOM manages it, and micronaut's core line runs
+                 ahead of the platform version, so a second pin here would drift. -->
+            <path>
+              <groupId>io.micronaut</groupId>
+              <artifactId>micronaut-inject-java</artifactId>
+            </path>
+          </annotationProcessorPaths>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals><goal>shade</goal></goals>
+            <configuration>
+              <outputFile>${project.build.directory}/server.jar</outputFile>
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                  <mainClass>rb.micronaut.Main</mainClass>
+                </transformer>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                <!-- Micronaut's bean definitions are indexed in META-INF/micronaut across
+                     every jar, so the shaded jar has to keep all of them, not the last. -->
+                <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                  <resource>META-INF/micronaut/io.micronaut.inject.BeanDefinitionReference</resource>
+                </transformer>
+              </transformers>
+              <filters>
+                <filter>
+                  <artifact>*:*</artifact>
+                  <excludes>
+                    <exclude>META-INF/*.SF</exclude>
+                    <exclude>META-INF/*.DSA</exclude>
+                    <exclude>META-INF/*.RSA</exclude>
+                    <exclude>module-info.class</exclude>
+                  </excludes>
+                </filter>
+              </filters>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>

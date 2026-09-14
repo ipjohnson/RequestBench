@@ -1,0 +1,40 @@
+# Host: gcp-func for Java. The Functions Framework brings the server, so the entrypoint is
+# its invoker and not the framework's own listen.
+#   docker build -f targets/java/Dockerfile.gcp --build-arg TARGET=baseline -t rb/java-bare-netty-gcp .
+ARG JAVA_VERSION=25
+FROM maven:3.9-eclipse-temurin-${JAVA_VERSION} AS build
+ARG TARGET=baseline
+WORKDIR /src
+COPY targets/java/pom.xml ./
+COPY targets/java/shared/pom.xml shared/
+COPY targets/java/hosts/pom.xml hosts/
+COPY targets/java/baseline/pom.xml baseline/
+COPY targets/java/javalin/pom.xml javalin/
+COPY targets/java/vertx/pom.xml vertx/
+COPY targets/java/helidon-se/pom.xml helidon-se/
+COPY targets/java/spring-boot/pom.xml spring-boot/
+COPY targets/java/micronaut/pom.xml micronaut/
+COPY targets/java/quarkus/pom.xml quarkus/
+RUN mvn -B -q -pl ${TARGET} -am dependency:go-offline
+
+COPY targets/java/shared/src shared/src
+COPY targets/java/hosts/src hosts/src
+COPY targets/java/${TARGET}/src ${TARGET}/src
+RUN mvn -B -q -pl ${TARGET} -am -DskipTests package \
+ && cp "$(ls ${TARGET}/target/server.jar ${TARGET}/target/server-runner.jar 2>/dev/null | head -1)" /server.jar
+# The invoker is the real entrypoint on Cloud Run functions, so it is fetched rather than
+# reimplemented. Its version is read out of the filtered properties the build just wrote,
+# so the invoker, the parent pom's pin and what /__meta reports cannot drift apart.
+RUN V=$(sed -n 's/^gcp-functions=//p' hosts/target/classes/rb-versions.properties) \
+ && mvn -B -q dependency:copy -Dmdep.stripVersion=true -DoutputDirectory=/ \
+      -Dartifact=com.google.cloud.functions.invoker:java-function-invoker:$V
+
+FROM eclipse-temurin:${JAVA_VERSION}-jre
+COPY --from=build /server.jar /app/server.jar
+COPY --from=build /java-function-invoker.jar /app/invoker.jar
+COPY spec/fixture.json /app/spec/fixture.json
+ENV RB_FIXTURE=/app/spec/fixture.json RB_HOST=gcp-func PORT=8080
+EXPOSE 8080
+# Every target names its function rb.gcp.Function, so this is the same for all of them.
+ENTRYPOINT ["java", "-jar", "/app/invoker.jar", \
+            "--classpath", "/app/server.jar", "--target", "rb.gcp.Function"]

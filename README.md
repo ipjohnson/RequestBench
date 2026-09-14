@@ -47,7 +47,10 @@ that single run are comparable across languages.
       --targets go:net-http,go:gin,node:node-http,node:fastify
 
 A hosted job is capped at six hours, which at roughly 370s per target holds about 58
-targets. The full 43-target plan fits; adding the capability suites would not.
+targets. The full 43-target plan fits; adding the capability suites would not. Java is in
+the run, and Java warms for 90s rather than 30s, so every target in a run now warms for
+90s: the warmup has to be the same for all of them or the comparison inside the run is
+not one.
 
 ## Running it
 
@@ -60,8 +63,9 @@ targets. The full 43-target plan fits; adding the capability suites would not.
 
 `MODE=local` runs targets as host processes, which is the fast edit loop. `MODE=docker`
 builds an image per target and runs it with a pinned CPU budget (`RB_CPUS`, default 2),
-which is what measurement uses. Go, Java and Rust only have a container path, since the
-image carries the toolchain.
+which is what measurement uses. Java needs `make java` first, because the local launcher
+runs a jar the reactor has already built. Rust only has a container path, since the image
+carries the toolchain.
 
 ## Why the generator is written rather than bought
 
@@ -81,19 +85,35 @@ target at that rung and therefore cancels in the ratio.
 
 Working: the spec and plan, the conformance gate with cross-target response fingerprinting,
 the open-loop generator with per-endpoint histograms, the orchestrator in both host and
-container mode, the ratio aggregator, the nightly measurement split by execution host, and
-twelve targets across two languages. Node has `node-http`, Fastify, Express, Hono, Koa and
-h3. Go has `net-http`, Gin, Echo, chi, gorilla/mux and Fiber.
+container mode, the ratio aggregator, the nightly measurement split by execution host, the
+nightly framework update, and nineteen targets across three languages. Node has
+`node-http`, Fastify, Express, Hono, Koa and h3. Go has `net-http`, Gin, Echo, chi,
+gorilla/mux and Fiber. Java has bare Netty, Spring Boot, Quarkus, Micronaut, Helidon SE,
+Vert.x and Javalin.
 
-All twelve fingerprint-match each other on all 40 endpoints, across two languages.
+All nineteen fingerprint-match each other on all 40 endpoints, across three languages.
+
+Framework versions are not held by hand. `.github/workflows/deps.yml` resolves the latest
+release for each language nightly, patch and minor only, and opens one pull request per
+manifest; `validate.yml` is the gate on it. That needs a `DEPS_TOKEN` secret, because a
+pull request opened with the default token fires no checks.
 
 Three execution hosts are implemented: the container contract, the GCP Functions Framework,
-and the Lambda runtime interface emulator. Two targets do not cover all three. Fiber runs
-only as a container, because it is fasthttp rather than an `http.Handler`. Koa has no Lambda
-entry, because its body parser does not see a request body through serverless-express.
+and the Lambda runtime interface emulator. Every Node and Go target covers all three except
+Fiber, which runs only as a container because it is fasthttp rather than an `http.Handler`,
+and Koa, which has no Lambda entry because its body parser does not see a request body
+through serverless-express.
 
-Not built yet: the other four languages, the ten capability suites, and the machine
-calibrator.
+On Java the function hosts are thinner, and `spec/matrix.json` says why for each target.
+Bare Netty is on all three, with a hand-written entry per host so the baseline is the floor
+for its host rather than a translation of another host's floor. Micronaut is on all three
+through its own AWS and GCP adapters, and Spring Boot is on Lambda through
+aws-serverless-java-container. Javalin, Vert.x and Helidon SE have no first-party adapter
+for either function host, and a hand-written shim would measure the shim. Quarkus has one
+for both and is not wired to either yet.
+
+Not built yet: the other three languages, Quarkus on either function host, the ten
+capability suites, and the machine calibrator.
 
 The current numbers are **not admissible** under the plan's own rules: the generator runs on
 the same machine as the target, there is no calibrator, and no host is pinned. They prove

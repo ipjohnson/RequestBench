@@ -1,0 +1,41 @@
+# Host: lambda-rie for Java. The AWS base image carries the Runtime Interface Client and,
+# when not running in Lambda, the Runtime Interface Emulator, so nothing here is a stand-in.
+#   docker build -f targets/java/Dockerfile.lambda --build-arg TARGET=baseline -t rb/java-bare-netty-lambda .
+ARG JAVA_VERSION=25
+FROM maven:3.9-eclipse-temurin-${JAVA_VERSION} AS build
+ARG TARGET=baseline
+WORKDIR /src
+COPY targets/java/pom.xml ./
+COPY targets/java/shared/pom.xml shared/
+COPY targets/java/hosts/pom.xml hosts/
+COPY targets/java/baseline/pom.xml baseline/
+COPY targets/java/javalin/pom.xml javalin/
+COPY targets/java/vertx/pom.xml vertx/
+COPY targets/java/helidon-se/pom.xml helidon-se/
+COPY targets/java/spring-boot/pom.xml spring-boot/
+COPY targets/java/micronaut/pom.xml micronaut/
+COPY targets/java/quarkus/pom.xml quarkus/
+RUN mvn -B -q -Plambda -pl ${TARGET} -am dependency:go-offline
+
+COPY targets/java/shared/src shared/src
+COPY targets/java/hosts/src hosts/src
+COPY targets/java/${TARGET}/src ${TARGET}/src
+# Everything the target produced goes to /out, and the runtime gets all of it on the
+# classpath. That is one shaded jar today; a target packaged as a jar beside a lib/ tree
+# would land here too.
+RUN mvn -B -q -Plambda -pl ${TARGET} -am -DskipTests package \
+ && mkdir -p /out \
+ && cp "$(ls ${TARGET}/target/server.jar ${TARGET}/target/server-runner.jar 2>/dev/null | head -1)" /out/ \
+ && if [ -d ${TARGET}/target/lib ]; then \
+      find ${TARGET}/target/lib -name '*.jar' -exec cp {} /out/ \; ; \
+    fi
+
+FROM public.ecr.aws/lambda/java:${JAVA_VERSION}
+# The runtime client puts ${LAMBDA_TASK_ROOT}/lib/* on the classpath.
+COPY --from=build /out/ ${LAMBDA_TASK_ROOT}/lib/
+COPY spec/fixture.json /var/task/spec/fixture.json
+ENV RB_FIXTURE=/var/task/spec/fixture.json RB_HOST=lambda-rie
+# Every target names its Lambda entry rb.lambda.Handler, so this is the same for all of
+# them: an exec-form CMD cannot expand a build arg, and a per-target CMD would be a second
+# place to keep the target list.
+CMD ["rb.lambda.Handler::handleRequest"]

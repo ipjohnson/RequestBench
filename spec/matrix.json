@@ -25,7 +25,14 @@
         "javalin"
       ],
       "anchor": "spring-boot",
-      "implemented": []
+      "implemented": [
+        "spring-boot",
+        "quarkus",
+        "micronaut",
+        "helidon-se",
+        "vertx",
+        "javalin"
+      ]
     },
     "go": {
       "runtime": "golang:1.26",
@@ -160,7 +167,7 @@
     }
   },
   "hosts_implemented": {
-    "node": [
+    "java": [
       "container",
       "gcp-func",
       "lambda-rie"
@@ -169,21 +176,60 @@
       "container",
       "gcp-func",
       "lambda-rie"
+    ],
+    "node": [
+      "container",
+      "gcp-func",
+      "lambda-rie"
     ]
   },
   "host_exceptions": {
-    "node:koa": {
-      "excluded": [
-        "lambda-rie"
-      ],
-      "why": "koa-bodyparser does not see the body through serverless-express, so the five body-carrying endpoints do not match. Unwired rather than unable: it conforms under gcp-func."
-    },
     "go:fiber": {
       "excluded": [
         "gcp-func",
         "lambda-rie"
       ],
       "why": "fasthttp, not an http.Handler"
+    },
+    "java:helidon-se": {
+      "excluded": [
+        "gcp-func",
+        "lambda-rie"
+      ],
+      "why": "No first-party adapter for either function host, and no servlet to bridge. Same reason as vertx."
+    },
+    "java:javalin": {
+      "excluded": [
+        "gcp-func",
+        "lambda-rie"
+      ],
+      "why": "No first-party adapter for either function host. Javalin is a servlet on Jetty, so the generic servlet bridge would fit lambda-rie, but that shim is not written. Unwired rather than unable."
+    },
+    "java:quarkus": {
+      "excluded": [
+        "gcp-func",
+        "lambda-rie"
+      ],
+      "why": "lambda-rie: quarkus-amazon-lambda-http packages for the custom-runtime zip layout, not the lambda/java base image, so its rewritten netty-common is missing classes that layout supplies. gcp-func: quarkus-google-cloud-functions-http exists and is not wired yet. Unwired rather than unable on both."
+    },
+    "java:spring-boot": {
+      "excluded": [
+        "gcp-func"
+      ],
+      "why": "spring-cloud-function-adapter-gcp routes to Function beans rather than to the @RestController the other two hosts serve, so measuring it would measure a different application. It runs on lambda-rie, where aws-serverless-java-container keeps the same controller."
+    },
+    "java:vertx": {
+      "excluded": [
+        "gcp-func",
+        "lambda-rie"
+      ],
+      "why": "No first-party adapter for either function host, and no servlet to bridge. A hand-written event-to-request shim would measure the shim rather than Vert.x."
+    },
+    "node:koa": {
+      "excluded": [
+        "lambda-rie"
+      ],
+      "why": "koa-bodyparser does not see the body through serverless-express, so the five body-carrying endpoints do not match. Unwired rather than unable: it conforms under gcp-func."
     }
   }
 }

@@ -48,8 +48,30 @@ is neither uploaded nor committed, so a short run cannot contaminate the series.
 rung duration and applies to the blend suite only. `count` sets how many requests of the
 pinned sequence the serial suite replays.
 
+## Keeping the measured versions current
+
+`.github/workflows/deps.yml` fires at 09:00 UTC, after `measure` starts at 02:00 with its
+300 minute cap, so a merge never lands mid-measurement. One leg per manifest --
+`targets/node`, `targets/go`, `targets/java` -- each cutting `deps/<language>` fresh from
+`origin/main`, updating in place, and checking only that the manifest still installs and
+compiles. Scope is patch and minor; a major changes the wiring, which is hand-written.
+
+Conformance is deliberately not run there. The gate is `validate.yml` on the pull request,
+which boots every target and fingerprints all 40 endpoints. A second job watches those
+checks so the scheduled run goes red when an update breaks one.
+
+Opening that pull request needs a `DEPS_TOKEN` secret, a fine-grained token with Contents
+and Pull requests write. A pull request opened with the default `GITHUB_TOKEN` does not
+fire `on: pull_request`, so the checks would not run at all and the update would have no
+gate. Base images and action versions are Dependabot's, in `.github/dependabot.yml`;
+nothing in the deps job touches a `FROM` line or a `uses:` pin.
+
+Green there means the frameworks behave identically, not that they are still as fast.
+`validate.yml` generates no load, so a framework update that costs performance shows up the
+next night as a ring on the chart.
+
 ## Not built yet
 
-The capability suites, and the fixed native calibrator that checks the host has not drifted
-mid-run. Until the calibrator exists, nothing catches a host that slowed down halfway
-through a run.
+Quarkus on either function host, the capability suites, and the fixed native calibrator
+that checks the host has not drifted mid-run. Until the calibrator exists, nothing catches a
+host that slowed down halfway through a run.

@@ -7,3 +7,4 @@ results/*.ndjson
 .DS_Store
 results/.target-*.log
 results/summary/
+targets/java/*/target/
