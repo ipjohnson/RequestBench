@@ -168,15 +168,25 @@ def main():
             if not r:
                 continue
             base_sat = saturated(b) if b else False
+            # A rate the target did not complete publishes no latency. gen/blend.mjs drops
+            # by never sending, so the percentiles describe the requests that survived and
+            # omit the ones that would have been slowest: the harder a target collapses,
+            # the better its p99 looks. What it achieved and what it dropped are the
+            # honest numbers at that point, and they are the ones kept.
+            done = r.get("completed", True)
             entry["rungs"][str(rn)] = {
+                "rate": r.get("rate", str(rn)),
+                "completed": done,
                 "baseline_saturated": base_sat,
                 "saturated": saturated(r),
                 "offered_rps": r["offered_rps"], "achieved_rps": r["achieved_rps"],
-                "p50_us": r["p50_us"], "p99_us": r["p99_us"], "p999_us": r["p999_us"],
                 "dropped": r["dropped"], "errors": r["errors"],
                 "status_mismatch": r["status_mismatch"],
-                "p50_ratio": ratio(r["p50_us"], b["p50_us"]) if b else None,
-                "p99_ratio": ratio(r["p99_us"], b["p99_us"]) if b else None,
+                "p50_us": r["p50_us"] if done else None,
+                "p99_us": r["p99_us"] if done else None,
+                "p999_us": r["p999_us"] if done else None,
+                "p50_ratio": ratio(r["p50_us"], b["p50_us"]) if (b and done) else None,
+                "p99_ratio": ratio(r["p99_us"], b["p99_us"]) if (b and done) else None,
             }
         # Per endpoint, per rung, every statistic the histogram can answer, keyed by the
         # endpoint's own id. This was parallel arrays indexed by endpoint_order, which
@@ -189,7 +199,7 @@ def main():
             rungs = {}
             for rn in rung_ids:
                 row = ep_hist.get((t, rn, eid))
-                if not row:
+                if not row or not row.get("completed", True):
                     continue
                 brow = ep_hist.get((base, rn, eid))
                 h = unpack(row["hist_b64"])

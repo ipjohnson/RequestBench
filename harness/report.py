@@ -67,7 +67,8 @@ def main():
     head = "  %-12s" % "target"
     for rn in rung_ids:
         any_row = next(r for r in rungs if r["rung"] == rn)
-        head += " %-26s" % ("rung %d @ %s rps" % (rn, any_row["offered_rps"]))
+        head += " %-26s" % ("%s @ %s rps" % (any_row.get("rate", "rung %d" % rn),
+                                             any_row["offered_rps"]))
     print(head)
     for t in targets:
         tag = t if len(baselines) == 1 else "%s:%s" % (language_of.get(t, "?"), t)
@@ -77,7 +78,17 @@ def main():
             r, b = by.get((t, rn)), by.get((tb, rn))
             if not r or not b:
                 line += " %-26s" % "-"; continue
-            rat = r["p50_us"] / b["p50_us"] if b["p50_us"] else 0
+            # A rate the target did not complete has no latency to print: the percentiles
+            # would describe only the requests that survived. What it managed and what it
+            # lost is the whole of what happened there.
+            if not r.get("completed", True) or r["p50_us"] is None:
+                offered = r["offered_rps"] * r["seconds"]
+                line += " %-26s" % ("%5d  dropped %4.1f%%"
+                                    % (r["achieved_rps"],
+                                       100 * r["dropped"] / offered if offered else 0))
+                continue
+            rat = (r["p50_us"] / b["p50_us"]
+                   if b.get("completed", True) and b["p50_us"] else 0)
             cell = "%5d %5d %6d %5.2fx" % (r["achieved_rps"], r["p50_us"], r["p99_us"], rat)
             line += " %-26s" % cell
         print(line)

@@ -408,7 +408,9 @@ def main():
                     help="comma separated language:target pairs. A name may repeat, "
                          "which measures that target in two positions in one run")
     ap.add_argument("--seconds", type=int, default=0, help="override rung duration")
-    ap.add_argument("--rungs", default="", help="comma separated rung numbers, default all")
+    ap.add_argument("--rungs", default="",
+                    help="comma separated rate names or numbers, default all. "
+                         "spec/ladder.json names them: regular, raised")
     ap.add_argument("--workers", type=int, default=6)
     ap.add_argument("--skip-conform", action="store_true")
     ap.add_argument("--exemplars", action="store_true",
@@ -457,8 +459,13 @@ def main():
     languages = list(dict.fromkeys(lang for lang, _ in pairs))
     baselines = {lang: MATRIX["languages"][lang]["baseline"] for lang in languages}
 
+    want = [x.strip() for x in a.rungs.split(",") if x.strip()]
     rungs = [r for r in LADDER["rungs"]
-             if not a.rungs or str(r["rung"]) in a.rungs.split(",")]
+             if not want or str(r["rung"]) in want or r["name"] in want]
+    if want and not rungs:
+        sys.exit("no rate matches %r; spec/ladder.json has %s"
+                 % (a.rungs, ", ".join("%s (%d)" % (r["name"], r["rung"])
+                                       for r in LADDER["rungs"])))
     secs = a.seconds or None
     warm_s = max(LADDER["warmup"]["seconds"][warmup_class(lang)] for lang in languages)
     if a.seconds:
@@ -487,8 +494,9 @@ def main():
         print("run %s   %s  host=%s  suite=serial  %s requests  %d targets"
               % (run_id, what, host, f"{a.count:,}", len(pairs)))
     else:
-        print("run %s   %s  mode=%s  warmup=%ss  rungs=%s  %d targets"
-              % (run_id, what, a.mode, warm_s, [r["rung"] for r in rungs], len(pairs)))
+        print("run %s   %s  mode=%s  warmup=%ss  rates=%s  %d targets"
+              % (run_id, what, a.mode, warm_s,
+                 " ".join("%s@%d" % (r["name"], r["rps"]) for r in rungs), len(pairs)))
 
     conformed, boot_failed, nonconforming, unlisted = 0, [], [], []
     reference_ok = set()
@@ -601,23 +609,55 @@ def main():
 
             for r in rungs:
                 dur = secs or r["seconds"]
+                # Step into the rate before recording at it: the connection pool and the
+                # collector adjust to a new offered rate, and the first seconds would
+                # measure that adjustment. The window is unrecorded either way, so it
+                # doubles as the probe that decides whether the full sample is worth
+                # spending. A target dropping at twenty seconds drops at four minutes.
+                settle_s = min(LADDER.get("settle_s", 0), max(1, dur // 4))
+                if settle_s:
+                    probe = run_gen(r["rps"], settle_s, a.workers, record=False)
+                    offered = r["rps"] * settle_s
+                    frac = probe["dropped"] / offered if offered else 0
+                    if frac > LADDER["abort"]["drop_fraction"]:
+                        print("  %-7s %6d rps -> %6d achieved   ABORTED, dropping %.1f%% "
+                              "after %ds" % (r["name"], r["rps"], probe["achieved_rps"],
+                                             frac * 100, settle_s))
+                        rows.append({"kind": "rung", "run_id": run_id, "language": language,
+                                     "target": target, "rung": r["rung"], "rate": r["name"],
+                                     "offered_rps": r["rps"],
+                                     "achieved_rps": probe["achieved_rps"],
+                                     "seconds": settle_s, "completed": False,
+                                     "dropped": probe["dropped"], "errors": probe["errors"],
+                                     "status_mismatch": probe["status_mismatch"],
+                                     "count": 0, "p50_us": None, "p90_us": None,
+                                     "p99_us": None, "p999_us": None})
+                        continue
                 res = run_gen(r["rps"], dur, a.workers)
                 o = res["overall"]
-                print("  rung %d  %6d rps -> %6d achieved   p50 %5dus  p99 %6dus  drop %d  err %d"
-                      % (r["rung"], r["rps"], res["achieved_rps"], o["p50_us"], o["p99_us"],
-                         res["dropped"], res["errors"]))
+                offered = r["rps"] * dur
+                # Percentiles here are computed over what completed, and a dropped request
+                # never entered a histogram. Publishing them for a target that did not
+                # keep up would report the survivors and flatter the worst collapses.
+                completed = not offered or (res["dropped"] / offered
+                                            <= LADDER["publish"]["max_drop_fraction"])
+                print("  %-7s %6d rps -> %6d achieved   p50 %5dus  p99 %6dus  drop %d  err %d%s"
+                      % (r["name"], r["rps"], res["achieved_rps"], o["p50_us"], o["p99_us"],
+                         res["dropped"], res["errors"], "" if completed else "   NOT PUBLISHED"))
                 for ep in res["endpoints"]:
                     rows.append({"kind": "sample", "run_id": run_id, "epoch": 1,
                                  "suite": BLEND, "arm": None, "language": language,
-                                 "target": target, "rung": r["rung"], "offered_rps": r["rps"],
+                                 "target": target, "rung": r["rung"], "rate": r["name"],
+                                 "offered_rps": r["rps"], "completed": completed,
                                  "achieved_rps": res["achieved_rps"], "seconds": dur,
                                  "endpoint": ep["id"], "family": ep["family"],
                                  "count": ep["count"], "errors": ep["errors"],
                                  "mismatch": ep["mismatch"], "p50_us": ep["p50_us"],
                                  "p99_us": ep["p99_us"], "hist_b64": ep["hist_b64"]})
                 rows.append({"kind": "rung", "run_id": run_id, "language": language, "target": target,
-                             "rung": r["rung"], "offered_rps": r["rps"],
+                             "rung": r["rung"], "rate": r["name"], "offered_rps": r["rps"],
                              "achieved_rps": res["achieved_rps"], "seconds": dur,
+                             "completed": completed,
                              "dropped": res["dropped"], "errors": res["errors"],
                              "status_mismatch": res["status_mismatch"], **{
                                  k: o[k] for k in ("count", "p50_us", "p90_us", "p99_us", "p999_us")}})
