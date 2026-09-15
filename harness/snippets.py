@@ -43,7 +43,9 @@ BY_ID = {e["id"]: e for e in ENDPOINTS}
 
 # How the frameworks in this repository spell a route parameter. The name is never
 # matched, only the shape: the spec's {order} is gin's :oid and neither is authoritative.
-CAPTURE = r"(?::[\w]+|\{[\w.*]*\}|<[\w]+>|\*[\w]*)"
+# A converter is part of the shape rather than a name, which is why the colon is inside the
+# brackets as well: Litestar writes {oid:str} and Django writes <int:pk>.
+CAPTURE = r"(?::[\w]+|\{[\w.*:]*\}|<[\w:]+>|\*[\w]*)"
 
 # A route literal is delimited, which is what keeps /domain/customers/{cid} from matching
 # inside "/domain/customers/{cid}/summary".
@@ -82,12 +84,16 @@ def instance_regex(route):
 @functools.lru_cache(maxsize=None)
 def route_regex(route):
     segments = []
-    for seg in route.split("/"):
+    for seg in route.split("/")[1:]:
         if seg.startswith("{") and seg.endswith("}"):
             segments.append(CAPTURE)
         else:
             segments.append(re.escape(seg))
-    return re.compile(QUOTE + "/".join(segments) + QUOTE)
+    # The leading slash is optional. Django's path() matches what is left after the slash
+    # the request carried, so its patterns are written without one; everything else writes
+    # it. The quotes still delimit, so this widens the shape a literal can take and not
+    # where in a line it may sit.
+    return re.compile(QUOTE + "/?" + "/".join(segments) + QUOTE)
 
 
 def attribute(line, i):
