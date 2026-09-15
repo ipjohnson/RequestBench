@@ -613,6 +613,11 @@ function renderHostNote(rs) {
   box.innerHTML = `<strong>${esc(st.host)}</strong> &mdash; ${esc(meta.note)}${delta}`;
 }
 
+/* A framework page is per target, but a row's key carries its slice: node:fastify at blend
+   granularity, node:fastify|domain at family. Look the page up by the target itself, or
+   the link appears on one of the three views and not the other two. */
+const fwPage = (r) => (RB.pages || {})[r.language + ':' + r.target];
+
 /* ---- detail dialog: every field, hidden ones included, plus the captured exchange ---- */
 async function openDetail(key) {
   const r = (window.__rows || []).find(x => x.key === key);
@@ -650,7 +655,7 @@ async function openDetail(key) {
       <span class="ver">${esc(r.version || '')}</span>
       ${r.detail ? `<span class="pill">${esc(r.detail)}</span>` : ''}
       <span class="wmeta">${esc(r.language)}${doc ? ' \u00b7 ' + esc(doc.framework) : ''}</span>
-      ${(RB.pages || {})[r.key] ? `<a class="fwlink" href="${esc(RB.pages[r.key])}">source &amp; bundle &rarr;</a>` : ''}</div>
+      ${fwPage(r) ? `<a class="fwlink" href="${esc(fwPage(r))}">source &amp; bundle &rarr;</a>` : ''}</div>
     <div class="fields">${fields}</div>
     ${exchange}`;
   document.getElementById('dlg').showModal();
