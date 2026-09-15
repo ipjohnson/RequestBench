@@ -12,6 +12,6 @@ Every `<framework>/app.js` exports two things:
 The function hosts pass `handler` to theirs, because that is what actually happens on
 Lambda, on Azure Functions and on Cloud Run. Neither is a wrapper around the other.
 
-Every host carries its own bare baseline, so a framework on `gcp-func` is reported
-against a bare handler on `gcp-func`. Without that the ratio would charge the framework
-for the host's own overhead.
+A host's overhead is part of what it measures. A framework on `gcp-func` is timed
+through the Functions Framework, and that number is not comparable to the same framework
+on `container`; the host is named on every row so the two are never read as one.

@@ -2,7 +2,7 @@
 
 The raw JSONL carries a histogram per endpoint per rung and runs to megabytes; it lives in
 a build artifact. This is the durable time series regression detection reads, so it holds
-ratios rather than absolutes and stays a few kilobytes.
+the percentiles and what was achieved and stays a few kilobytes.
 
   python3 harness/summarize.py results/<run>.jsonl --out results/summary/<run>.json
 """
@@ -26,12 +26,8 @@ def pct(counts, p):
             return round(math.exp((i + 0.5) * LOG_G))
     return 0
 
-def ratio(v, base):
-    return round(v / base, 4) if base else None
-
-
-# Past this fraction of dropped requests the baseline itself is past its knee, and a ratio
-# to it compares two saturated systems rather than measuring framework overhead.
+# Past this fraction of dropped requests a target is serving less than it was offered, so
+# its percentiles describe the requests that survived rather than the load it was given.
 SATURATION = 0.01
 
 
@@ -80,12 +76,13 @@ def main():
     rungs = [r for r in rows if r["kind"] == "rung"]
     meta = {r["target"]: r for r in rows if r["kind"] == "target"}
     samples = [r for r in rows if r["kind"] == "sample"]
-    # A run has one baseline per language in it. Ratios are always within a language;
-    # the absolutes are what carry across, because nothing moved between targets.
-    languages, baselines = env["languages"], env["baselines"]
+    # Nothing is divided by anything. What a run publishes is the time each target took,
+    # and the reference below is the target the conformance gate compared responses
+    # against, which is a statement about correctness rather than about speed.
+    languages = env["languages"]
+    references = env.get("references") or env.get("baselines") or {}
     first = languages[0]
     language_of = {r["target"]: r.get("language", first) for r in rungs}
-    base_of = {t: baselines.get(language_of[t]) for t in language_of}
     targets = list(dict.fromkeys(r["target"] for r in rungs))
     by = {(r["target"], r["rung"]): r for r in rungs}
     rung_ids = sorted({r["rung"] for r in rungs})
@@ -130,11 +127,11 @@ def main():
         "host": env["host"], "cpu": env["cpu"], "cores": env["cores"],
         "sut_cpus": env.get("sut_cpus", ""), "gen_cpus": env.get("gen_cpus", ""),
         "runtime": env["runtime"], "generator": env["generator"],
-        "baselines": baselines, "languages": languages,
+        "references": references, "languages": languages,
         "cross_language": env.get("cross_language", False),
         # What code produced these numbers. The raw JSONL carries it too, but that is a
         # 90-day artifact and this file is kept forever, so dropping it here is what makes
-        # a ratio permanently unattributable. Neither can be backfilled onto a past run.
+        # a number permanently unattributable. Neither can be backfilled onto a past run.
         "commit": env.get("commit", ""), "repo": env.get("repo", ""),
         "rungs": rung_ids, "targets": [],
         # Ordering only. Every statistic is keyed by endpoint id inside each target, so a
@@ -146,7 +143,7 @@ def main():
         m = meta.get(t, {})
         entry = {"target": t, "language": language_of.get(t, first),
                  "exec_host": meta.get(t, {}).get("host", env.get("host", "container")),
-                 "baseline": base_of.get(t),
+                 "reference": references.get(language_of.get(t, first)),
                  "framework": m.get("framework", t),
                  "version": m.get("version", ""), "target_runtime": m.get("runtime", ""),
                  # What the host put in front of the framework. A bump here moves the
@@ -159,19 +156,17 @@ def main():
                  # And which template engine, which the Node targets report instead of a
                  # serializer. Reading only `serializer` left the column empty for every
                  # Node and Go row and discarded the one field that explains the template
-                 # family, where handlebars runs several times the baseline's concat.
+                 # family, where handlebars and html/template are not the same product.
                  "template": m.get("template", ""),
                  # The bundle this target was: code_hash excludes prose, so a corrected
                  # README does not read as a target that changed.
                  "bundle_hash": m.get("bundle_hash", ""),
                  "code_hash": m.get("code_hash", ""),
                  "rungs": {}, "families": {}, "families_by_rung": {}}
-        base = base_of.get(t)
         for rn in rung_ids:
-            r, b = by.get((t, rn)), by.get((base, rn))
+            r = by.get((t, rn))
             if not r:
                 continue
-            base_sat = saturated(b) if b else False
             # A rate the target did not complete publishes no latency. gen/blend.mjs drops
             # by never sending, so the percentiles describe the requests that survived and
             # omit the ones that would have been slowest: the harder a target collapses,
@@ -181,7 +176,6 @@ def main():
             entry["rungs"][str(rn)] = {
                 "rate": r.get("rate", str(rn)),
                 "completed": done,
-                "baseline_saturated": base_sat,
                 "saturated": saturated(r),
                 "offered_rps": r["offered_rps"], "achieved_rps": r["achieved_rps"],
                 "dropped": r["dropped"], "errors": r["errors"],
@@ -189,8 +183,6 @@ def main():
                 "p50_us": r["p50_us"] if done else None,
                 "p99_us": r["p99_us"] if done else None,
                 "p999_us": r["p999_us"] if done else None,
-                "p50_ratio": ratio(r["p50_us"], b["p50_us"]) if (b and done) else None,
-                "p99_ratio": ratio(r["p99_us"], b["p99_us"]) if (b and done) else None,
             }
         # Per endpoint, per rung, every statistic the histogram can answer, keyed by the
         # endpoint's own id. This was parallel arrays indexed by endpoint_order, which
@@ -205,42 +197,35 @@ def main():
                 row = ep_hist.get((t, rn, eid))
                 if not row or not row.get("completed", True):
                     continue
-                brow = ep_hist.get((base, rn, eid))
                 h = unpack(row["hist_b64"])
-                bh = unpack(brow["hist_b64"]) if brow else None
                 p50, p90 = pct(h, 50), pct(h, 90)
                 p99, p999 = pct(h, 99), pct(h, 99.9)
                 rungs[str(rn)] = {
                     "count": row["count"], "errors": row.get("errors", 0),
                     "mismatch": row.get("mismatch", 0),
                     "p50_us": p50, "p90_us": p90, "p99_us": p99, "p999_us": p999,
-                    "p50_ratio": ratio(p50, pct(bh, 50)) if bh else None,
-                    "p99_ratio": ratio(p99, pct(bh, 99)) if bh else None,
                 }
             if rungs:
                 eps[eid] = {"family": ep_family[eid], "rungs": rungs}
         entry["endpoints"] = eps
 
-        mid = rung_ids[len(rung_ids) // 2]
-        # Families at every rung too, not just the middle one, with the same percentiles.
+        # The flat `families` copy is the first rate, which is the one every target is
+        # expected to complete. Picking the middle of the list gave the raised rate once
+        # the ladder became two, so the copy was empty for exactly the targets that could
+        # not sustain it -- the ones a reader is looking for.
+        flat = rung_ids[0]
+        # Families at every rung too, not just the flat one, with the same percentiles.
         for rn in rung_ids:
             for f, hs in fam.get((t, rn), {}).items():
                 merged = [0] * NBUCKETS
                 for h in hs:
                     for i, c in enumerate(unpack(h)):
                         merged[i] += c
-                bmerged = [0] * NBUCKETS
-                for h in fam.get((base, rn), {}).get(f, []):
-                    for i, c in enumerate(unpack(h)):
-                        bmerged[i] += c
                 rec = {"p50_us": pct(merged, 50), "p90_us": pct(merged, 90),
                        "p99_us": pct(merged, 99), "p999_us": pct(merged, 99.9),
                        "count": sum(merged)}
-                if any(bmerged):
-                    rec["p50_ratio"] = ratio(rec["p50_us"], pct(bmerged, 50))
-                    rec["p99_ratio"] = ratio(rec["p99_us"], pct(bmerged, 99))
                 entry["families_by_rung"].setdefault(str(rn), {})[f] = rec
-            if rn == mid:
+            if rn == flat:
                 # `families` stays flat and keyed by family name, which is what the site
                 # reads; the rung-keyed copy lives beside it rather than inside it.
                 entry["families"] = dict(entry["families_by_rung"].get(str(rn), {}))

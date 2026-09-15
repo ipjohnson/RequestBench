@@ -22,7 +22,7 @@ def host_targets(host):
         hosts = MATRIX.get("hosts_implemented", {}).get(language, ["container"])
         if not built or host not in hosts:
             continue
-        for t in [entry["baseline"]] + built:
+        for t in built:
             # A framework can be unable to run on a host its language otherwise supports.
             if host in exceptions.get("%s:%s" % (language, t), {}).get("excluded", []):
                 continue

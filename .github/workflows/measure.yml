@@ -4,8 +4,8 @@
 # One job is one machine, so every absolute number in it was measured under the same
 # conditions and they can be read against each other.
 #
-# The ratio to each target's own bare baseline is what crosses hosts; the absolute numbers
-# are comparable only inside the single run that produced them.
+# What a run publishes is the time each target took at each offered rate, on the machine
+# named in the record. Nothing is divided by anything.
 name: measure
 
 on:

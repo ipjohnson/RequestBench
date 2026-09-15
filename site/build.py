@@ -375,8 +375,6 @@ const langs   = [...new Set(tracked.flatMap(r => r.targets.map(t => t.language))
 const METRICS = {
   p50_us: {label: 'p50', unit: 'us'}, p90_us: {label: 'p90', unit: 'us'},
   p99_us: {label: 'p99', unit: 'us'}, p999_us: {label: 'p99.9', unit: 'us'},
-  p50_ratio: {label: 'p50 vs baseline', unit: 'x'},
-  p99_ratio: {label: 'p99 vs baseline', unit: 'x'},
   achieved_rps: {label: 'achieved rps', unit: ''}, dropped: {label: 'dropped', unit: ''},
 };
 
@@ -387,7 +385,6 @@ const COLS = [
   {id: 'adapter', label: 'adapter',     def: false, cls: 'sub',   get: r => r.adapter || '\u2014'},
   {id: 'serializer', label: 'serializer', def: false, cls: 'sub', get: r => r.serializer || '\u2014'},
   {id: 'value',   label: '',            def: true,  pin: true,    get: r => r.value},
-  {id: 'ratio',   label: 'vs baseline', def: true,  cls: 'ratio', get: r => r.ratio},
   {id: 'n',       label: 'samples',     def: true,  cls: 'sub',   get: r => r.n},
   {id: 'hdrz',    label: 'header B',    def: false, cls: 'sub',   get: r => r.hdrz},
   {id: 'bodyz',   label: 'body B',      def: false, cls: 'sub',   get: r => r.bodyz},
@@ -431,7 +428,7 @@ function pickRung(run) {
   if (!run) return null;
   const rs = rungsOf(run);
   if (st.rung && rs.includes(st.rung)) return st.rung;
-  const clean = rs.filter(rn => !run.targets.some(t => (t.rungs[rn] || {}).baseline_saturated));
+  const clean = rs.filter(rn => !run.targets.some(t => (t.rungs[rn] || {}).saturated));
   return clean.length ? clean[clean.length - 1] : rs[Math.floor(rs.length / 2)];
 }
 /* A serial run has no offered rate: it replays a pinned order one at a time, so the
@@ -493,21 +490,20 @@ function rows() {
   const q = st.q.trim().toLowerCase();
   for (const t of run.targets) {
     if (!st.langs.has(t.language)) continue;
-    const isBase = t.target === t.baseline;
     const base = {target: t.target, language: t.language, version: t.version || '',
                   adapter: t.adapter || '', serializer: t.serializer || '',
-                  isBase, key: t.language + ':' + t.target};
+                  key: t.language + ':' + t.target};
     const push = o => { const r = {...base, ...o}; Object.assign(r, wireFor(r)); out.push(r); };
     if (st.gran === 'blend') {
       const d = t.rungs[rn]; if (!d) continue;
       push({label: t.target, detail: '', value: d[st.metric] ?? null,
-            ratio: d.p50_ratio, dead: !!d.baseline_saturated, n: d.achieved_rps});
+            dead: !d.completed, n: d.achieved_rps});
     } else if (st.gran === 'family') {
       const fams = famsAt(t, rn);
       for (const [f, rec] of Object.entries(fams)) {
         if (q && !(f.toLowerCase().includes(q) || t.target.toLowerCase().includes(q))) continue;
         push({key: base.key + '|' + f, label: t.target, detail: f,
-              value: rec[st.metric] ?? null, ratio: rec.p50_ratio, dead: false, n: rec.count});
+              value: rec[st.metric] ?? null, dead: false, n: rec.count});
       }
     } else {
       const eps = t.endpoints || {}, order = run.endpoint_order || [];
@@ -518,7 +514,7 @@ function rows() {
         if (q && !(eid.toLowerCase().includes(q) || t.target.toLowerCase().includes(q) ||
                    (rec.family || '').toLowerCase().includes(q))) return;
         push({key: base.key + '|' + eid, label: t.target, detail: eid, family: rec.family,
-              value: d[st.metric] ?? null, ratio: d.p50_ratio, dead: false, n: d.count});
+              value: d[st.metric] ?? null, dead: false, n: d.count});
       });
     }
   }
@@ -538,7 +534,7 @@ function rows() {
 }
 
 const unit = id => id === 'value' ? METRICS[st.metric].unit
-  : id === 'ratio' ? 'x' : (id === 'hdrz' || id === 'bodyz') ? 'B' : '';
+  : (id === 'hdrz' || id === 'bodyz') ? 'B' : '';
 function cell(id, v) {
   if (v == null) return '&mdash;';
   if (typeof v === 'string') return esc(v);
@@ -609,15 +605,14 @@ function render() {
     const w = r.value != null && isFinite(r.value) ? Math.max(1.5, 100 * r.value / worst) : 0;
     const tds = vc.map(c => {
       if (c.id === 'bar')
-        return `<td class="barcell"><div class="bar${r.isBase ? ' b' : ''}" style="width:${w}%;background:${r.isBase ? '' : langColour[r.language]}"></div></td>`;
+        return `<td class="barcell"><div class="bar" style="width:${w}%;background:${langColour[r.language]}"></div></td>`;
       const v = c.get(r);
-      const extra = c.id === 'value' && r.dead ? ' dead'
-                  : c.id === 'ratio' ? (r.isBase ? ' base' : (v > 1.15 ? ' up' : '')) : '';
+      const extra = c.id === 'value' && r.dead ? ' dead' : '';
       return `<td class="${c.cls || ''}${extra}">${cell(c.id, v)}</td>`;
     }).join('');
     return `<tr data-key="${esc(r.key)}" tabindex="0">
       <td class="rank">${i + 1}</td>
-      <td class="name l"><span class="swatch" style="background:${langColour[r.language]}"></span>${esc(r.label)}${r.isBase ? '<span class="pill">baseline</span>' : ''}</td>
+      <td class="name l"><span class="swatch" style="background:${langColour[r.language]}"></span>${esc(r.label)}</td>
       <td class="sub l">${esc(r.detail || r.language)}</td>${tds}</tr>`;
   }).join('') || `<tr><td colspan="${vc.length + 3}" class="empty">${emptyWhy(run)}</td></tr>`;
   document.getElementById('count').textContent = `${rs.length} rows`;
@@ -698,7 +693,7 @@ function famsAt(t, rn) {
 function famRowsFor(run, t, rn) {
   const fams = famsAt(t, rn);
   return Object.entries(fams).map(([f, rec]) => ({
-    id: f, value: rec[st.metric] ?? rec.p50_us, ratio: rec.p50_ratio, n: rec.count,
+    id: f, value: rec[st.metric] ?? rec.p50_us, n: rec.count,
     // Counted from this target rather than from the spec, so the number matches the list
     // you get when you open the row.
     eps: epRowsFor(run, t, rn, f).length,
@@ -713,7 +708,7 @@ function epRowsFor(run, t, rn, family) {
     const d = (rec.rungs || {})[rn];
     if (!d) continue;
     out.push({id: eid, family: rec.family, value: d[st.metric] ?? d.p50_us,
-              ratio: d.p50_ratio, n: d.count});
+              n: d.count});
   }
   return out.sort((a, b) => (a.value ?? Infinity) - (b.value ?? Infinity));
 }
@@ -751,7 +746,7 @@ function childTable(caption, kids, level) {
     <div class="scroll childscroll"><table><thead><tr>
       <th class="l">${withRoute ? 'endpoint' : 'family'}</th>
       ${withRoute ? '<th class="l">route</th>' : '<th>endpoints</th>'}
-      <th>${esc(METRICS[st.metric].label)}</th><th>vs baseline</th><th>samples</th><th></th>
+      <th>${esc(METRICS[st.metric].label)}</th><th>samples</th><th></th>
     </tr></thead><tbody>${body}</tbody></table></div>`;
 }
 
@@ -783,7 +778,7 @@ async function paintDetail() {
   const head = `
     <div class="wirehead"><strong>${esc(t.framework || t.target)}</strong>
       <span class="ver">${esc(t.version || '')}</span>
-      <span class="wmeta">${esc(t.language)}${t.target === t.baseline ? ' · baseline' : ''}</span>
+      <span class="wmeta">${esc(t.language)}</span>
       ${(RB.pages || {})[tkey] ? `<a class="fwlink" href="${esc(RB.pages[tkey])}">README &amp; bundle &rarr;</a>` : ''}</div>
     ${crumbs(t)}`;
 
@@ -794,7 +789,6 @@ async function paintDetail() {
     box.innerHTML = head + `
       <div class="fields">
         <div class="frow"><span class="fk">${esc(METRICS[st.metric].label)}</span><span class="fv">${cell('value', self[st.metric] ?? self.p50_us)}</span></div>
-        <div class="frow"><span class="fk">vs baseline</span><span class="fv">${self.p50_ratio == null ? '&mdash;' : self.p50_ratio.toFixed(2) + 'x'}</span></div>
         <div class="frow"><span class="fk">samples</span><span class="fv">${cell('', self.count ?? self.achieved_rps)}</span></div>
       </div>` +
       childTable(dlgAt.family ? `Endpoints in ${dlgAt.family}` : 'Families', kids,
@@ -812,7 +806,6 @@ async function paintDetail() {
     <div class="fields">
       ${stat('p50', 'p50_us', 'value')}${stat('p90', 'p90_us', 'value')}
       ${stat('p99', 'p99_us', 'value')}${stat('p99.9', 'p999_us', 'value')}
-      <div class="frow"><span class="fk">vs baseline</span><span class="fv">${d.p50_ratio == null ? '&mdash;' : d.p50_ratio.toFixed(2) + 'x'}</span></div>
       ${stat('samples', 'count', '')}
     </div>
     <p class="empty" id="leafload">Loading the handler and the captured exchange…</p>`;
@@ -1088,8 +1081,8 @@ def render(runs, wire, pages=None, code=None):
 <p class="eyebrow">__SUITES__ &middot; built __BUILT__</p>
 <h1>RequestBench Results</h1>
 <p class="lede">Every framework in a run shares one machine and one window, so these are
-real latencies and they rank directly against each other. The ratio column is still each
-target against the bare baseline in its own language.</p>
+real latencies and they rank directly against each other. Nothing here is divided by
+anything: what a target took is what is shown.</p>
 
 <div class="controls">
   <div class="ctl"><label for="host">Execution host</label>
@@ -1102,8 +1095,6 @@ target against the bare baseline in its own language.</p>
       <option value="p90_us">p90</option>
       <option value="p99_us">p99</option>
       <option value="p999_us">p99.9</option>
-      <option value="p50_ratio">p50 vs baseline</option>
-      <option value="p99_ratio">p99 vs baseline</option>
       <option value="achieved_rps">achieved rps</option>
       <option value="dropped">dropped</option>
     </select></div>
@@ -1138,9 +1129,10 @@ target against the bare baseline in its own language.</p>
   <div id="time"></div>
 </div>
 
-<div class="note">Runs happen on GitHub-hosted runners, whose CPU varies between runs, so
-an absolute number is comparable to the others <em>in its own run</em> and to nothing else.
-The ratio to each language's bare baseline is what carries across runs and across hosts.</div>
+<div class="note">Each row is the time that target took at the offered rate, on the
+machine and in the window named above. A target that could not sustain a rate has no
+latency at it: percentiles over the requests that survived would flatter the collapse,
+so what it achieved and what it dropped is shown instead.</div>
 
 <dialog id="dlg">
   <button id="dlgclose" aria-label="Close">&times;</button>
@@ -1357,15 +1349,19 @@ def render_framework(run, t, rn, view):
                     "how this framework is wired here.</div>")
 
     if row:
-        ratio = row.get("p50_ratio")
+        # A rate the target did not complete has no latency to state, so the line says what
+        # it achieved and what it lost instead of formatting a None.
+        p50 = row.get("p50_us")
+        offered = (row.get("offered_rps") or 0) * (row.get("seconds") or 0)
+        took = ("p50 %s&nbsp;us" % f"{p50:,}") if p50 is not None else (
+            "did not sustain the rate, dropping %.1f%%"
+            % (100 * row.get("dropped", 0) / offered if offered else 0))
         body.append(
             "<div class='panel'><h2>Standing</h2>"
             "<p class='hint'>At %s offered rps, in the run that produced this page.</p>"
-            "<p class='factline'>p50 %s&nbsp;us &middot; %s &middot; rank %s of %s in %s"
+            "<p class='factline'>%s &middot; rank %s of %s in %s"
             " &middot; %s achieved rps</p></div>"
-            % (f"{row.get('offered_rps', 0):,}", f"{row.get('p50_us', 0):,}",
-               ("%.2fx vs %s" % (ratio, esc(t.get("baseline") or "baseline")))
-               if ratio else "baseline",
+            % (f"{row.get('offered_rps', 0):,}", took,
                rank, n_peers, esc(t["language"]), f"{row.get('achieved_rps', 0):,}"))
 
     if view:
@@ -1478,7 +1474,10 @@ def main():
     pages, code, page_dir, built, unavailable = {}, {}, out / "f", 0, 0
     page_dir.mkdir(parents=True, exist_ok=True)
     for r in newest_tracked.values():
-        rn = str(r["rungs"][len(r["rungs"]) // 2]) if r.get("rungs") else "1"
+        # The first rate: the one every target is expected to complete. Picking the middle
+        # of the list gave the raised rate once the ladder became two, so a target that
+        # could not sustain it had no number on its own page.
+        rn = str(r["rungs"][0]) if r.get("rungs") else "1"
         for t in r["targets"]:
             key = "%s:%s" % (t["language"], t["target"])
             view = bundle_at(r, t)

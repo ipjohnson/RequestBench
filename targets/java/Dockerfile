@@ -1,10 +1,10 @@
 # Build context is the repo root so spec/fixture.json can be baked in.
-#   docker build -f targets/java/Dockerfile --build-arg TARGET=baseline -t rb/java-bare-netty .
+#   docker build -f targets/java/Dockerfile --build-arg TARGET=javalin -t rb/java-javalin .
 #
 # Every target builds to the same target/server.jar, so one ENTRYPOINT covers them all.
 ARG JAVA_VERSION=25
 FROM maven:3.9-eclipse-temurin-${JAVA_VERSION} AS build
-ARG TARGET=baseline
+ARG TARGET
 WORKDIR /src
 
 # Poms first, on their own layer. Maven reads every module in the reactor even when -pl
@@ -13,7 +13,6 @@ WORKDIR /src
 COPY targets/java/pom.xml ./
 COPY targets/java/shared/pom.xml shared/
 COPY targets/java/hosts/pom.xml hosts/
-COPY targets/java/baseline/pom.xml baseline/
 COPY targets/java/javalin/pom.xml javalin/
 COPY targets/java/vertx/pom.xml vertx/
 COPY targets/java/helidon-se/pom.xml helidon-se/
@@ -31,7 +30,7 @@ RUN mvn -B -q -pl ${TARGET} -am -DskipTests package \
  && cp "$(ls ${TARGET}/target/server.jar ${TARGET}/target/server-runner.jar 2>/dev/null | head -1)" /server.jar
 
 FROM eclipse-temurin:${JAVA_VERSION}-jre
-ARG TARGET=baseline
+ARG TARGET
 COPY --from=build /server.jar /app/server.jar
 COPY spec/fixture.json /app/spec/fixture.json
 ENV RB_FIXTURE=/app/spec/fixture.json PORT=8080

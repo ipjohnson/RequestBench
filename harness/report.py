@@ -1,5 +1,5 @@
-"""Turn a results JSONL into the numbers RequestBench actually publishes: ratios to the
-bare baseline, never absolute latency.
+"""Turn a results JSONL into the numbers RequestBench publishes: what each target
+achieved and how long it took, at every rate in the run.
 
   python3 harness/report.py results/<run>.jsonl [--family]
 """
@@ -41,16 +41,9 @@ def main():
     env = next(r for r in rows if r["kind"] == "env")
     samples = [r for r in rows if r["kind"] == "sample"]
     rungs = [r for r in rows if r["kind"] == "rung"]
-    baselines = env["baselines"]
     first = env["languages"][0]
     language_of = {r["target"]: r.get("language", first) for r in rungs}
-    base_of = {t: baselines.get(language_of[t]) for t in language_of}
-    base = baselines[first]
     targets = list(dict.fromkeys(r["target"] for r in rungs))
-    missing = {b for b in base_of.values()} - set(targets)
-    if missing:
-        print("baseline(s) %s not in this run; ratios unavailable" % ", ".join(missing))
-        return 1
 
     print("run      %s" % env["run_id"])
     print("host     %s  %s  %d cores" % (env["host"], env["cpu"], env["cores"]))
@@ -62,35 +55,31 @@ def main():
     by = {(r["target"], r["rung"]): r for r in rungs}
     rung_ids = sorted({r["rung"] for r in rungs})
 
-    label = base if len(baselines) == 1 else "each language's own baseline"
-    print("\nachieved rps / p50 us / p99 us   (x = ratio to %s, lower is better)" % label)
-    head = "  %-12s" % "target"
+    print("\nachieved rps / p50 us / p99 us   (lower is better)")
+    head = "  %-16s" % "target"
     for rn in rung_ids:
         any_row = next(r for r in rungs if r["rung"] == rn)
-        head += " %-26s" % ("%s @ %s rps" % (any_row.get("rate", "rung %d" % rn),
+        head += " %-24s" % ("%s @ %s rps" % (any_row.get("rate", "rung %d" % rn),
                                              any_row["offered_rps"]))
     print(head)
     for t in targets:
-        tag = t if len(baselines) == 1 else "%s:%s" % (language_of.get(t, "?"), t)
+        tag = t if len(set(language_of.values())) == 1 else "%s:%s" % (language_of.get(t, "?"), t)
         line = "  %-16s" % tag
-        tb = base_of.get(t, base)
         for rn in rung_ids:
-            r, b = by.get((t, rn)), by.get((tb, rn))
-            if not r or not b:
-                line += " %-26s" % "-"; continue
+            r = by.get((t, rn))
+            if not r:
+                line += " %-24s" % "-"; continue
             # A rate the target did not complete has no latency to print: the percentiles
             # would describe only the requests that survived. What it managed and what it
             # lost is the whole of what happened there.
             if not r.get("completed", True) or r["p50_us"] is None:
                 offered = r["offered_rps"] * r["seconds"]
-                line += " %-26s" % ("%5d  dropped %4.1f%%"
+                line += " %-24s" % ("%6d  dropped %4.1f%%"
                                     % (r["achieved_rps"],
                                        100 * r["dropped"] / offered if offered else 0))
                 continue
-            rat = (r["p50_us"] / b["p50_us"]
-                   if b.get("completed", True) and b["p50_us"] else 0)
-            cell = "%5d %5d %6d %5.2fx" % (r["achieved_rps"], r["p50_us"], r["p99_us"], rat)
-            line += " %-26s" % cell
+            line += " %-24s" % ("%6d %6d %7d"
+                                % (r["achieved_rps"], r["p50_us"], r["p99_us"]))
         print(line)
 
     bad = [(r["target"], r["rung"], r["errors"], r["status_mismatch"], r["dropped"])
@@ -103,25 +92,19 @@ def main():
         print("\n  integrity: no errors, no status mismatches, no drops")
 
     if a.family:
-        mid = rung_ids[len(rung_ids) // 2]
-        print("\nper-family p50 at rung %d, as a ratio to %s" % (mid, base))
+        # The first rate: the one every target is expected to complete, so the table has
+        # a column for each of them rather than a dash where the raised rate was dropped.
+        mid = rung_ids[0]
+        rate = next((r.get("rate") for r in rungs if r["rung"] == mid), "rung %d" % mid)
+        print("\nper-family p50 us at the %s rate" % rate)
         fams = list(dict.fromkeys(s["family"] for s in samples))
-        print("  %-16s %10s" % ("family", base) + "".join(
-            " %12s" % t for t in targets if t != base))
-        basefam = {}
+        print("  %-16s" % "family" + "".join(" %12s" % t for t in targets))
         for f in fams:
-            hs = [unpack(s["hist_b64"]) for s in samples
-                  if s["target"] == base and s["rung"] == mid and s["family"] == f]
-            basefam[f] = pct(merge(hs), 50) if hs else 0
-        for f in fams:
-            line = "  %-16s %10d" % (f, basefam[f])
+            line = "  %-16s" % f
             for t in targets:
-                if t == base:
-                    continue
                 hs = [unpack(s["hist_b64"]) for s in samples
                       if s["target"] == t and s["rung"] == mid and s["family"] == f]
-                p = pct(merge(hs), 50) if hs else 0
-                line += " %11.2fx" % (p / basefam[f] if basefam[f] else 0)
+                line += " %12s" % (pct(merge(hs), 50) if hs else "-")
             print(line)
     return 0
 

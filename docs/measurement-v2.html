@@ -175,9 +175,9 @@ footer { margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--rule);
 <dl class="meta">
   <div><dt>Date</dt><dd>15 September 2026</dd></div>
   <div><dt>Replaces</dt><dd>Five-rung ladder, ratio to a per-language baseline</dd></div>
-  <div><dt>Proposes</dt><dd>Two fixed rates, absolute p50 and p99</dd></div>
+  <div><dt>Establishes</dt><dd>Two fixed rates, absolute p50 and p99</dd></div>
   <div><dt>Machine</dt><dd>AMD 5700G, 8 cores, Supermicro 2U</dd></div>
-  <div><dt>Status</dt><dd>Proposed. Nothing implemented. Rates are provisional until the hardware is running.</dd></div>
+  <div><dt>Status</dt><dd>The design of record. The harness, the rates and the machine preflight are in; the site is partly rebuilt. Rates stay provisional until the hardware has run.</dd></div>
 </dl>
 
 <section>
@@ -187,7 +187,7 @@ footer { margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--rule);
   <p>That rule was a mitigation, not a principle. The mitigation goes when its cause does.</p>
 </div>
 
-<p>Every result today is a ratio to a bare baseline measured in the same run, because every run landed on a different GitHub-hosted machine and a ratio divides the machine out. The rule worked for what it was for. It also threw away the number a reader came for, and it was never as clean as it looked.</p>
+<p>Every result used to be a ratio to a bare baseline measured in the same run, because every run landed on a different GitHub-hosted machine and a ratio divides the machine out. The rule worked for what it was for. It also threw away the number a reader came for, and it was never as clean as it looked. The baselines have since been removed outright: hand-rolled segment dispatch is a second implementation to maintain and to answer questions about, and once nothing divides by it there is no job left for it but the response fingerprint, which the language's anchor now holds.</p>
 
 <p>A run on 15 September measured <code>node-http</code>, then <code>fastify</code>, then <code>node-http</code> again: the same image at both ends, ten minutes apart, nothing else on the box.</p>
 
@@ -293,7 +293,7 @@ fire((rnd() * eps.length) | 0, dueNs);</pre>
 
 <p>Abort a failing rate early. A target dropping thirty per cent twenty seconds in will drop thirty per cent four minutes in. Record the failure and move to the next target. Across the slow half of the population that is close to an hour at full build-out, and it is what makes a third rate affordable later.</p>
 
-<p><code>summarize.py</code> already carries <code>SATURATION = 0.01</code> and a <code>baseline_saturated</code> flag from the ratio design. The threshold survives; what it gates changes from a marker on a published number to whether a number is published.</p>
+<p><code>summarize.py</code> already carries <code>SATURATION = 0.01</code> from the ratio design. The threshold survives; what it gates changes from a marker on a published number to whether a number is published.</p>
 </section>
 
 <section>
@@ -337,7 +337,7 @@ fire((rnd() * eps.length) | 0, dueNs);</pre>
 
 <p>One hole there is worth closing whatever else is decided. <code>bundle_hashes</code> covers the Dockerfiles, so a change to the base image <i>tag</i> is caught, but <code>node:24</code> is a moving tag and the digest under it changes with no file changing. Every hash can be identical while the runtime underneath is different. Recording the resolved image digest per target per run closes it, and it is a <code>docker inspect</code> after the build.</p>
 
-<p>The per-language baselines stay in the run, as published rows rather than as denominators. What a language does with no framework at all is a useful number to a reader when it sits beside the others instead of underneath them.</p>
+<p>The per-language baselines were removed rather than kept as rows. They were hand-rolled segment dispatch, which is a second implementation to maintain, to answer questions about, and to keep conforming, and nothing is divided by them any more. Each language now names an anchor in <code>spec/matrix.json</code> — Fastify, Gin, Spring Boot — which boots first and holds the one job the baseline still had: being the response fingerprint the rest of the language is gated against.</p>
 </section>
 
 <section>
@@ -353,7 +353,7 @@ fire((rnd() * eps.length) | 0, dueNs);</pre>
 
 <p>Then the machine becomes part of the result and travels with it: CPU, core count, the two-core container budget, fixed clock with boost off, kernel and Docker versions. <code>site/build.py</code> currently tells the reader that runs happen on GitHub-hosted runners whose CPU varies between runs, which is the note this replaces. Worth stating too that the latency is target plus loopback and excludes the load balancer a reader will have in front of it.</p>
 
-<p>The cost of the reversal, so it is a decision and not a surprise: absolute numbers are stranded if the machine dies, where ratios were not. Keep recording the baselines' absolutes every run so a replacement box can be characterised against the same images and the conversion is known. The ratio survives as an internal tool rather than as the published output. And the numbers are true for a two-core container on Zen 3 at a fixed clock; they say nothing about Graviton or about an eight-core task. That is a scope statement to publish, not a flaw to hide.</p>
+<p>The cost of the reversal, so it is a decision and not a surprise: absolute numbers are stranded if the machine dies, where ratios were not. A replacement box has to be characterised against the one it replaces by running the same target images on both, which means keeping the old one alive long enough to do it. And the numbers are true for a two-core container on Zen 3 at a fixed clock; they say nothing about Graviton or about an eight-core task. That is a scope statement to publish, not a flaw to hide.</p>
 </section>
 
 <section>

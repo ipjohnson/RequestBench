@@ -304,7 +304,7 @@ footer { margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--rule);
 <tr><td class="w">Vendored into <code>site/logos/</code>, never hot-linked</td><td>A hot-linked mark breaks when a project reorganises its site, and it points every visitor's browser at someone else's server. Vendoring also means the page renders offline and from a build artifact.</td></tr>
 <tr><td class="w">Recorded in <code>site/logos/index.json</code>: source URL, licence or brand-guideline URL, the date fetched, and whether redistribution is permitted</td><td>Using a mark to identify the thing being benchmarked is ordinary nominative use, which is what every comparison does. Some projects still publish brand terms that restrict redistribution, and a few have none at all. Recording the answer per logo takes one line and makes the question answerable later without re-deriving it.</td></tr>
 <tr><td class="w">Normalised to a fixed box on a neutral tile, SVG preferred</td><td>Forty-three marks arrive at every aspect ratio, some square glyphs, some wide wordmarks. A fixed box with padding makes a grid of them read as one system. The tile matters more than it sounds: plenty of logos are dark-on-transparent and disappear entirely on a dark ground, and a fixed tile background guarantees contrast in both themes without needing a second variant of every mark.</td></tr>
-<tr><td class="w">A monogram fallback, rendered from the framework name in the page's own type</td><td>Some targets have no logo — <code>net-http</code> and <code>node-http</code> are standard libraries, not products. Others have terms that do not permit vendoring. A typographic fallback covers both without leaving a hole in the grid, and it is a deliberate placeholder rather than a broken image.</td></tr>
+<tr><td class="w">A monogram fallback, rendered from the framework name in the page's own type</td><td>Some targets have no logo — <code>chi</code> and <code>gorilla/mux</code> are libraries rather than products with a mark. Others have terms that do not permit vendoring. A typographic fallback covers both without leaving a hole in the grid, and it is a deliberate placeholder rather than a broken image.</td></tr>
 </tbody>
 </table>
 </div>
@@ -327,14 +327,13 @@ footer { margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--rule);
 
 <p>An endpoint's wiring can be found by matching its spec path as a regex that tolerates any capture syntax — <code>:one</code>, <code>{one}</code>, <code>&lt;one&gt;</code> — then expanding from that line backward through annotations and forward to balanced delimiters. Run against all nineteen targets, every framework target resolves 38 of 40 endpoints. The two it misses are the same two everywhere and they are correct misses: one is a value on a route that already exists, the other is deliberately unregistered. Annotations and route tables both work, across sixteen frameworks in three languages.</p>
 
-<p>The baselines resolve 4 of 40, and that is the real finding. They dispatch with a segment switch — <code>switch (seg[0]) { case "plaintext": … }</code> — so there is no path literal anywhere to anchor on.</p>
+<p>The baselines resolved 4 of 40, and that was the finding that ended them. They dispatched with a segment switch — <code>switch (seg[0]) { case "plaintext": … }</code> — so there was no path literal anywhere to anchor on, and a marker inside such a switch captures a condition rather than a handler. They have since been removed; every remaining target registers routes with the path written down, which is what makes derivation work at all.</p>
 
 <div class="scroll">
 <table>
 <thead><tr><th>Case</th><th class="n">Coverage</th><th>Treatment</th></tr></thead>
 <tbody>
 <tr><td class="w">16 framework targets</td><td class="n">38 / 40</td><td>Derived. No annotation.</td></tr>
-<tr><td class="w">6 baselines</td><td class="n">4 / 40</td><td>Markers, one per <code>case</code> block and naming several ids at once, so roughly twenty per baseline rather than forty.</td></tr>
 <tr><td class="w">Feature configuration</td><td class="n">—</td><td>Markers. There is no path to anchor on, and the configuration is often in another file entirely.</td></tr>
 <tr><td class="w">Routeless endpoints</td><td class="n">2</td><td>A spec field, not a marker: <code>errors.not_found</code> points at <code>domain.lookup</code>'s route, <code>errors.unmatched</code> at the framework's 404 handler.</td></tr>
 </tbody>
@@ -374,7 +373,7 @@ footer { margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--rule);
 <tr><td class="m">.gitattributes</td><td>New. <code>* text=auto eol=lf</code>. Without it the hashes are not reproducible across checkouts, which makes everything else here unreliable.</td></tr>
 <tr><td class="m">harness/bundle.py</td><td>New. Resolves a target's roots to a file list through <code>git ls-files</code>, hashes each file, derives the framework metadata from the resolved dependency tree, and emits the manifest. Called by <code>run.py</code> per target and standalone for the site build.</td></tr>
 <tr><td class="m">harness/run.py</td><td>Write <code>bundle_hash</code> and <code>code_hash</code> on each <code>target</code> row and <code>commit</code> plus <code>repo</code> on the <code>env</code> row. This is the only change that has to land before the next run to be worth anything, because it is the only one that cannot be backfilled.</td></tr>
-<tr><td class="m">harness/snippets.py</td><td>New. Derives endpoint wiring from spec paths, reads markers for the baselines and the feature configuration, records each snippet's line range, and enforces the two checks in §7.</td></tr>
+<tr><td class="m">harness/snippets.py</td><td>New. Derives endpoint wiring from spec paths, reads markers for wiring no path can reach, records each snippet's line range, and enforces the two checks in §7.</td></tr>
 <tr><td class="m">spec/matrix.json</td><td>Bundle roots per target, where the convention does not cover it, and the per-feature mechanism declarations <code>docs/blend-v2.html</code> already calls for.</td></tr>
 <tr><td class="m">targets/&lt;lang&gt;/&lt;target&gt;/README.md</td><td>New, one per target. Nineteen to write now, forty-three eventually. The largest piece of work here and the only part that is not mechanical.</td></tr>
 <tr><td class="m">site/logos/</td><td>New. One normalised mark per target plus <code>index.json</code> recording each one's source, terms and fetch date. Outside the bundle on purpose.</td></tr>
@@ -398,7 +397,7 @@ footer { margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--rule);
 
 <ol class="steps">
 <li><h3><code>.gitattributes</code>, then <code>bundle.py</code>, then the run fields</h3><p>The line-ending pin has to precede the first hash or the first cross-platform checkout invalidates everything. These three are small and they are the only time-sensitive part.</p></li>
-<li><h3>The snippet extractor and its gate</h3><p>Derivation for the framework targets, markers for the six baselines. The gate goes in at the same time, because an extractor without coverage enforcement quietly stops covering things.</p></li>
+<li><h3>The snippet extractor and its gate</h3><p>Derivation wherever the route is a literal, markers for routes registered from a loop or a group and for handlers with no route at all. The gate goes in at the same time, because an extractor without coverage enforcement quietly stops covering things.</p></li>
 <li><h3>Feature markers and the mechanism declarations</h3><p>Follows the feature families in <code>docs/blend-v2.html</code> landing in the targets. Marking a registration that does not exist yet is not possible.</p></li>
 <li><h3>The READMEs</h3><p>Nineteen of them. Worth writing as each target is touched for the blend-v2 wiring rather than as a batch afterwards, because that is when the unusual parts are fresh.</p></li>
 <li><h3>Framework pages, then the comparison views</h3><p>The single-target page first, since it needs only one manifest and one README to be worth looking at. Logos can be collected in one pass at any point, since nothing depends on them. Endpoint and feature comparison pages come free from the same data once more than one target is done.</p></li>

@@ -1,9 +1,9 @@
 # Host: lambda-rie for Go. The custom runtime base image carries the Runtime Interface
 # Emulator, and the handler binary must be named bootstrap.
-#   docker build -f targets/go/Dockerfile.lambda --build-arg TARGET=baseline -t rb/go-net-http-lambda .
+#   docker build -f targets/go/Dockerfile.lambda --build-arg TARGET=gin -t rb/go-gin .
 ARG GO_VERSION=1.26
 FROM golang:${GO_VERSION}-alpine AS build
-ARG TARGET=baseline
+ARG TARGET
 WORKDIR /src
 COPY targets/go/go.mod targets/go/go.sum ./
 COPY targets/go/_shared ./_shared

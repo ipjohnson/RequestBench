@@ -1,14 +1,13 @@
 # Host: lambda-rie for Java. The AWS base image carries the Runtime Interface Client and,
 # when not running in Lambda, the Runtime Interface Emulator, so nothing here is a stand-in.
-#   docker build -f targets/java/Dockerfile.lambda --build-arg TARGET=baseline -t rb/java-bare-netty-lambda .
+#   docker build -f targets/java/Dockerfile.lambda --build-arg TARGET=javalin -t rb/java-javalin .
 ARG JAVA_VERSION=25
 FROM maven:3.9-eclipse-temurin-${JAVA_VERSION} AS build
-ARG TARGET=baseline
+ARG TARGET
 WORKDIR /src
 COPY targets/java/pom.xml ./
 COPY targets/java/shared/pom.xml shared/
 COPY targets/java/hosts/pom.xml hosts/
-COPY targets/java/baseline/pom.xml baseline/
 COPY targets/java/javalin/pom.xml javalin/
 COPY targets/java/vertx/pom.xml vertx/
 COPY targets/java/helidon-se/pom.xml helidon-se/

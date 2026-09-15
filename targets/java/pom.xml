@@ -24,7 +24,6 @@
   <modules>
     <module>shared</module>
     <module>hosts</module>
-    <module>baseline</module>
     <module>javalin</module>
     <module>vertx</module>
     <module>helidon-se</module>

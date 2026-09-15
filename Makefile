@@ -49,19 +49,17 @@ machine: ## what this machine is, and whether it is fit to measure on
 bundle: ## file list and hashes for every implemented target's bundle
 	python3 harness/bundle.py --all --summary
 
-build: ## build container images  (TARGETS=go:net-http,go:gin,go:echo)
+build: ## build container images  (TARGETS=go:gin,go:echo)
 	@for t in $$(echo $(TARGETS) | tr ',' ' '); do \
 	  lang=$${t%%:*}; name=$${t#*:}; \
-	  case $$name in net-http|node-http|bare-netty) dir=baseline;; *) dir=$$name;; esac; \
 	  echo "building rb/$$lang-$$name"; \
-	  docker build -q -f targets/$$lang/Dockerfile --build-arg TARGET=$$dir \
+	  docker build -q -f targets/$$lang/Dockerfile --build-arg TARGET=$$name \
 	    -t rb/$$lang-$$name . >/dev/null; \
 	done
 
-java: ## build the java target jars, which MODE=local needs  (TARGETS=java:bare-netty)
+java: ## build the java target jars, which MODE=local needs  (TARGETS=java:javalin)
 	@mods=$$(for t in $$(echo $(TARGETS) | tr ',' ' '); do \
-	  name=$${t#*:}; \
-	  case $$name in bare-netty) echo baseline;; *) echo $$name;; esac; \
+	  echo $${t#*:}; \
 	done | paste -sd, -); \
 	cd targets/java && mvn -B -q -pl "$$mods" -am -DskipTests package
 

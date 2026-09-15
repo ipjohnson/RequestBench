@@ -8,7 +8,8 @@ import { useAdapter } from "../_shared/host.js";
 
 useAdapter("@google-cloud/functions-framework");
 
-const target = process.env.RB_TARGET ?? "baseline";
+const target = process.env.RB_TARGET;
+if (!target) throw new Error("RB_TARGET is not set");
 const app = await import(`../${target}/app.js`);
 
 http("rb", (req, res) => app.handler(req, res));

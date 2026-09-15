@@ -43,7 +43,6 @@ MATRIX = json.loads((SPEC / "matrix.json").read_text())
 
 BUNDLE_VERSION = "bundle-v1"
 
-BASELINES = ("node-http", "net-http", "raw-asgi", "raw-kestrel", "bare-netty", "hyper")
 
 # The two directories every target in a language shares: the domain module they all call,
 # and the host entry points that invoke them. Java spells both without the underscore.
@@ -62,8 +61,8 @@ REQUIRED_ROLES = ("source", "shared", "manifest")
 
 
 def target_dir(name):
-    """Baselines live in baseline/ whatever their language calls them."""
-    return "baseline" if name in BASELINES else name
+    """A target's directory is its name. Nothing is special-cased any more."""
+    return name
 
 
 def shared_dir(language):
@@ -262,8 +261,6 @@ def check(pairs):
 
 def implemented():
     for language, spec in MATRIX["languages"].items():
-        if spec["implemented"]:
-            yield language, spec["baseline"]
         for name in spec["implemented"]:
             yield language, name
 
