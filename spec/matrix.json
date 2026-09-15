@@ -125,7 +125,12 @@
     "targets": [
       "node:fastify",
       "go:gin",
-      "rust:axum"
+      "rust:axum",
+      "rust:actix-web",
+      "rust:rocket",
+      "rust:poem",
+      "rust:salvo",
+      "rust:warp"
     ]
   },
   "hosts": {
