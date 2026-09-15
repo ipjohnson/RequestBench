@@ -1,0 +1,21 @@
+[package]
+name = "rb-axum"
+version = "0.0.0"
+edition.workspace = true
+publish.workspace = true
+
+# Named per target rather than "server": six crates writing one binary into the shared
+# target directory made cargo relink on every switch, which local mode does per boot.
+[[bin]]
+name = "rb-axum"
+path = "src/main.rs"
+
+[dependencies]
+rb-domain = { workspace = true }
+rb-host = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true }
+axum = "0.8"
+tower = "0.5"
+tower-http = { version = "0.6", features = ["compression-gzip"] }
