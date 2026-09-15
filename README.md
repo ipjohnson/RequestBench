@@ -5,10 +5,11 @@ each measured against a bare baseline in its own runtime, so what gets published
 overhead a framework adds rather than an absolute number that only describes the machine
 it ran on.
 
-The full design and the capability suites are in [docs/plan.md](docs/plan.md). The
-endpoint set is designed in [docs/blend-v2.html](docs/blend-v2.html), and
+The endpoint set is designed in [docs/blend-v2.html](docs/blend-v2.html), and
 [docs/bundles.html](docs/bundles.html) covers tracing a published ratio back to the code
-that produced it.
+that produced it. [docs/measurement-v2.html](docs/measurement-v2.html) is a proposal, not
+yet the design of record: it argues for publishing real times from one dedicated machine
+instead of ratios, which would reverse the first of the two rules below.
 
 ## Two rules the whole thing rests on
 
@@ -42,10 +43,9 @@ Within a language, a framework is reported as a ratio to that language's bare ba
 which divides out the machine. Across languages there is no shared denominator, so two
 ratios measured on different machines cannot be put side by side.
 
-Runs are split by execution host, never by language, which is what makes the comparison
-possible. One job is one host and boots every implemented target in every language back to
-back, so nothing about the machine changes between targets and the absolute numbers from
-that single run are comparable across languages.
+A run is one execution host. One job boots every implemented target back to back, so
+nothing about the machine changes between targets, and the absolute numbers from that
+single run are comparable to each other.
 
     python3 harness/hosts.py --host container    # what that job would run
     python3 harness/run.py --mode docker \

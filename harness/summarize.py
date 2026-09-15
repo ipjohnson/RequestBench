@@ -11,16 +11,6 @@ import argparse, base64, json, math, pathlib, struct, sys, collections
 GROWTH, NBUCKETS = 1.02, 920
 LOG_G = math.log(GROWTH)
 
-def normalize_env(env):
-    """Runs made before the host split named themselves by language and carried one
-    baseline. Read them through the same plural shape as everything since."""
-    if "languages" not in env:
-        env["languages"] = env.get("shards") or [env.get("language") or env.get("shard")]
-    if "baselines" not in env:
-        env["baselines"] = {env["languages"][0]: env.get("baseline")}
-    return env
-
-
 def unpack(b64):
     raw = base64.b64decode(b64)
     return struct.unpack("<%dI" % (len(raw) // 4), raw)
@@ -90,13 +80,11 @@ def main():
     rungs = [r for r in rows if r["kind"] == "rung"]
     meta = {r["target"]: r for r in rows if r["kind"] == "target"}
     samples = [r for r in rows if r["kind"] == "sample"]
-    # A cross-language run has one baseline per language. Ratios are always within a
-    # language; the absolutes are what carry across, because nothing moved between targets.
-    env = normalize_env(env)
+    # A run has one baseline per language in it. Ratios are always within a language;
+    # the absolutes are what carry across, because nothing moved between targets.
     languages, baselines = env["languages"], env["baselines"]
     first = languages[0]
-    # Rows written before the host split carried the language as "shard".
-    language_of = {r["target"]: r.get("language") or r.get("shard") or first for r in rungs}
+    language_of = {r["target"]: r.get("language", first) for r in rungs}
     base_of = {t: baselines.get(language_of[t]) for t in language_of}
     targets = list(dict.fromkeys(r["target"] for r in rungs))
     by = {(r["target"], r["rung"]): r for r in rungs}
@@ -129,6 +117,10 @@ def main():
     out = {
         "run_id": env["run_id"], "date": env["run_id"][:10],
         "suite": env["suite"], "epoch": env["epoch"], "mode": env.get("mode", "local"),
+        # Rung ids are reused across ladder versions while the rates behind them change,
+        # so two summaries can agree on "rung 2" and mean different offered loads.
+        "ladder": env.get("ladder", "ladder-v1"),
+        "machine": env.get("machine", {}),
         "runner": a.runner, "tracked": a.tracked,
         "exec_host": env.get("exec_host") or "container",
         "host": env["host"], "cpu": env["cpu"], "cores": env["cores"],
@@ -176,15 +168,25 @@ def main():
             if not r:
                 continue
             base_sat = saturated(b) if b else False
+            # A rate the target did not complete publishes no latency. gen/blend.mjs drops
+            # by never sending, so the percentiles describe the requests that survived and
+            # omit the ones that would have been slowest: the harder a target collapses,
+            # the better its p99 looks. What it achieved and what it dropped are the
+            # honest numbers at that point, and they are the ones kept.
+            done = r.get("completed", True)
             entry["rungs"][str(rn)] = {
+                "rate": r.get("rate", str(rn)),
+                "completed": done,
                 "baseline_saturated": base_sat,
                 "saturated": saturated(r),
                 "offered_rps": r["offered_rps"], "achieved_rps": r["achieved_rps"],
-                "p50_us": r["p50_us"], "p99_us": r["p99_us"], "p999_us": r["p999_us"],
                 "dropped": r["dropped"], "errors": r["errors"],
                 "status_mismatch": r["status_mismatch"],
-                "p50_ratio": ratio(r["p50_us"], b["p50_us"]) if b else None,
-                "p99_ratio": ratio(r["p99_us"], b["p99_us"]) if b else None,
+                "p50_us": r["p50_us"] if done else None,
+                "p99_us": r["p99_us"] if done else None,
+                "p999_us": r["p999_us"] if done else None,
+                "p50_ratio": ratio(r["p50_us"], b["p50_us"]) if (b and done) else None,
+                "p99_ratio": ratio(r["p99_us"], b["p99_us"]) if (b and done) else None,
             }
         # Per endpoint, per rung, every statistic the histogram can answer, keyed by the
         # endpoint's own id. This was parallel arrays indexed by endpoint_order, which
@@ -197,7 +199,7 @@ def main():
             rungs = {}
             for rn in rung_ids:
                 row = ep_hist.get((t, rn, eid))
-                if not row:
+                if not row or not row.get("completed", True):
                     continue
                 brow = ep_hist.get((base, rn, eid))
                 h = unpack(row["hist_b64"])

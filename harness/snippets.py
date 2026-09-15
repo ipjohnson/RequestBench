@@ -174,6 +174,43 @@ def marked_end(lines, start):
     return end
 
 
+def enclosing(lines, start):
+    """The chain of open blocks this line sits inside, outermost first.
+
+    A marker above a registration captures a handler. A marker inside a hand-rolled
+    dispatch captures a fragment: node-http's
+
+        if (seg[1] === "bind" && SIZES.has(seg[2])) return json(200, d.bindEcho(body));
+
+    is the whole of what serves /body/bind/small, and on its own it does not say so. What
+    says so is the `if (method === "POST")` and `if (n === 3 && seg[0] === "body")` it is
+    nested in. Those lines are not part of the snippet -- the range has to stay the lines
+    the endpoint is served by, because that is what the permalink points at -- so they
+    travel beside it as context.
+
+    Scanned forwards with a stack rather than backwards by indentation. `} else if (n ===
+    4) {` closes one block and opens another on one line, so it nets zero delimiters and an
+    indentation walk steps straight over it into the sibling branch: /parameters/{one}/
+    with-second/{two} came back labelled `if (n === 1)`, which is the arm that cannot
+    serve it.
+    """
+    stack = []
+    for n in range(start):
+        for c in strip_code(lines[n]):
+            if c in OPEN:
+                stack.append(n)
+            elif c in CLOSE and stack:
+                stack.pop()
+    out, seen = [], set()
+    for n in stack:
+        # One line can open two frames, `app.register(async (scope) => {` being both the
+        # call and the arrow body. It is one line of context either way.
+        if n not in seen and lines[n].strip():
+            seen.add(n)
+            out.append({"line": n + 1, "text": lines[n].rstrip()})
+    return out
+
+
 def annotated_start(lines, line):
     """Walk back over annotations sitting above a declaration.
 
@@ -332,13 +369,21 @@ def resolve(language, target, at=None):
             continue
         how, path, fhash, lines, start, end = hits[0]
         body = text_of(lines, start, end)
-        if how == "derived" and not route_regex(via).search(body):
+        names_route = bool(route_regex(via).search(body))
+        if how == "derived" and not names_route:
             problems.append("%s:%s %s expanded past its own route (%s:%d-%d)"
                             % (language, target, eid, path, start + 1, end + 1))
             continue
+        # A snippet that writes its own route identifies itself and needs nothing more. One
+        # that does not is a fragment of a dispatch, and the blocks it is nested in are what
+        # make it a handler rather than a condition. See enclosing().
+        # Nothing to report when this comes back empty: a block registering routes from a
+        # loop sits at the top level and is self-contained, which is the other thing a
+        # marker is for.
+        context = [] if names_route else enclosing(lines, start)
         out[eid] = {"endpoint": eid, "target": "%s:%s" % (language, target),
                     "path": path, "start_line": start + 1, "end_line": end + 1,
-                    "hash": fhash, "how": how, "text": body}
+                    "hash": fhash, "how": how, "text": body, "context": context}
     return out, problems
 
 

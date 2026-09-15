@@ -1,0 +1,381 @@
+<title>Measurement v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root {
+  --ground: #F4F5F2; --surface: #FCFCFB; --surface2: #EDEFEA;
+  --ink: #121917; --ink2: #58655F; --ink3: #66716A;
+  --rule: #DCE0DB; --rule2: #C3C9C2;
+  --teal: #00836E; --tealtext: #00705E; --tealsoft: #DCEBE6;
+  --amber: #A6670C; --ambersoft: #F6ECDB;
+  --crimson: #A03E5C; --crimsonsoft: #F3E3E8;
+  --onfill: #FFFFFF;
+  --f-display: "Newsreader", Georgia, serif;
+  --f-body: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --ground: #121513; --surface: #1A1E1B; --surface2: #232823;
+  --ink: #E8ECE7; --ink2: #9AA59E; --ink3: #949E98;
+  --rule: #2A302C; --rule2: #3A423C;
+  --teal: #35AD97; --tealtext: #35AD97; --tealsoft: #17302B;
+  --amber: #DDA03C; --ambersoft: #2C2314;
+  --crimson: #C05A78; --crimsonsoft: #2E1A20;
+  --onfill: #101614;
+} }
+:root[data-theme="dark"] {
+  --ground: #121513; --surface: #1A1E1B; --surface2: #232823;
+  --ink: #E8ECE7; --ink2: #9AA59E; --ink3: #949E98;
+  --rule: #2A302C; --rule2: #3A423C;
+  --teal: #35AD97; --tealtext: #35AD97; --tealsoft: #17302B;
+  --amber: #DDA03C; --ambersoft: #2C2314;
+  --crimson: #C05A78; --crimsonsoft: #2E1A20;
+  --onfill: #101614;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--ground); color: var(--ink);
+       font-family: var(--f-body); font-size: 15px; line-height: 1.6;
+       -webkit-font-smoothing: antialiased; }
+.page { max-width: 880px; margin: 0 auto;
+        padding-inline: clamp(16px, 4vw, 40px); padding-block: clamp(28px, 5vw, 56px) 72px; }
+a { color: var(--tealtext); }
+code, .mono { font-family: var(--f-mono); font-size: .92em; }
+code { background: var(--surface2); padding: 1px 4px; border-radius: 2px; }
+
+.eyebrow { font-family: var(--f-mono); font-size: 11px; letter-spacing: .13em;
+           text-transform: uppercase; color: var(--ink3);
+           display: flex; gap: 12px; align-items: center; margin: 0 0 14px; }
+.eyebrow::after { content: ""; flex: 1; height: 1px; background: var(--rule2); }
+h1 { font-family: var(--f-display); font-weight: 600; letter-spacing: -.02em;
+     font-size: clamp(30px, 5vw, 44px); line-height: 1.05; margin: 0 0 16px;
+     text-wrap: balance; }
+.lede { font-family: var(--f-display); font-size: clamp(16px, 2vw, 19px);
+        color: var(--ink2); max-width: 62ch; margin: 0; }
+h2 { font-family: var(--f-display); font-weight: 600; font-size: 25px;
+     letter-spacing: -.01em; margin: 0 0 4px; text-wrap: balance; }
+h3 { font-family: var(--f-body); font-weight: 600; font-size: 16px; margin: 0 0 6px; }
+section > h3 { margin-top: 34px; padding-top: 12px; border-top: 1px solid var(--rule);
+               font-family: var(--f-display); font-size: 19px; }
+p { margin: 0 0 14px; max-width: 68ch; }
+p:last-child { margin-bottom: 0; }
+
+section { margin-top: 52px; }
+.sectionhead { border-top: 2px solid var(--ink); padding-top: 14px; margin-bottom: 24px; }
+.sectionhead .num { font-family: var(--f-mono); font-size: 11px; letter-spacing: .12em;
+                    color: var(--ink3); text-transform: uppercase; display: block; margin-bottom: 8px; }
+.sectionhead p { color: var(--ink2); margin: 6px 0 0; }
+
+.meta { display: flex; flex-wrap: wrap; gap: 8px 28px; margin-top: 26px;
+        padding-top: 18px; border-top: 1px solid var(--rule); }
+.meta div { display: flex; flex-direction: column; gap: 2px; }
+.meta dt { font-family: var(--f-mono); font-size: 10px; letter-spacing: .1em;
+           text-transform: uppercase; color: var(--ink3); }
+.meta dd { margin: 0; font-size: 14px; }
+
+/* the derivation: base endpoint, the one factor added, the endpoint that results */
+.derive { display: grid; grid-template-columns: 1fr auto 1fr; gap: 1px;
+          background: var(--rule); border: 1px solid var(--rule);
+          border-radius: 3px; margin: 20px 0; overflow: hidden; }
+.derive > * { background: var(--surface); padding: 9px 13px; font-size: 13px;
+              display: flex; align-items: center; }
+.derive .hd { background: var(--surface2); font-family: var(--f-mono); font-size: 10px;
+              letter-spacing: .09em; text-transform: uppercase; color: var(--ink3); }
+.derive .f { font-family: var(--f-mono); font-size: 12.5px; }
+.derive .plus { color: var(--tealtext); white-space: nowrap; justify-content: center; }
+.derive .out { font-family: var(--f-mono); font-size: 12.5px; color: var(--tealtext); }
+@media (max-width: 560px) {
+  .derive { grid-template-columns: 1fr; }
+  .derive .hd { display: none; }
+  .derive .plus { justify-content: flex-start; }
+  .derive .out { border-bottom: 2px solid var(--rule2); }
+}
+
+/* one block per family: what it is, the rows, and the three lines that define the delta */
+.grp { border: 1px solid var(--rule); border-radius: 3px; background: var(--surface);
+       margin-bottom: 20px; overflow: hidden; }
+/* a family that is measured but carries no weight in the published aggregate */
+.grp.unweighted { border-color: var(--amber); }
+.grp.unweighted .grphead { background: var(--ambersoft); }
+.zero { font-family: var(--f-mono); font-size: 10px; letter-spacing: .07em;
+        text-transform: uppercase; padding: 1px 6px; border-radius: 2px;
+        background: var(--ambersoft); color: var(--amber); white-space: nowrap; }
+.grp.unweighted .zero { background: var(--surface); }
+.grphead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px;
+           padding: 14px 16px 12px; border-bottom: 1px solid var(--rule); }
+.grphead h3 { font-family: var(--f-mono); font-size: 14px; margin: 0; letter-spacing: -.01em; }
+.grphead .cnt { font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .07em;
+                text-transform: uppercase; color: var(--ink3); margin-left: auto;
+                white-space: nowrap; font-variant-numeric: tabular-nums; }
+.grphead .job { flex-basis: 100%; font-size: 14px; color: var(--ink2); margin: 0; }
+.grp .scroll { border: none; border-radius: 0; margin: 0; }
+.holds { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+         gap: 1px; background: var(--rule); border-top: 1px solid var(--rule); }
+.holds div { background: var(--surface2); padding: 10px 16px; }
+.holds dt { font-family: var(--f-mono); font-size: 9.5px; letter-spacing: .1em;
+            text-transform: uppercase; color: var(--ink3); margin-bottom: 2px; }
+.holds dd { margin: 0; font-size: 13px; color: var(--ink2); }
+.holds dd .mono { font-size: 12px; color: var(--ink); }
+
+.scroll { overflow-x: auto; border: 1px solid var(--rule); border-radius: 3px;
+          margin: 18px 0; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th, td { padding: 7px 11px; text-align: left; border-bottom: 1px solid var(--rule);
+         vertical-align: top; }
+th { font-family: var(--f-mono); font-size: 10px; letter-spacing: .09em;
+     text-transform: uppercase; color: var(--ink3); font-weight: 500;
+     background: var(--surface2); white-space: nowrap; }
+tbody tr:last-child td { border-bottom: none; }
+td.m { font-family: var(--f-mono); font-size: 12.5px; white-space: nowrap; }
+td.w { font-family: var(--f-mono); font-size: 12.5px; }
+td.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap;
+       font-family: var(--f-mono); font-size: 12.5px; }
+td.base { font-family: var(--f-mono); font-size: 11.5px; color: var(--ink3); white-space: nowrap; }
+tr.cut td { color: var(--ink3); }
+tr.cut td.m:first-child { text-decoration: line-through; }
+.v { font-family: var(--f-mono); font-size: 10px; letter-spacing: .07em;
+     text-transform: uppercase; padding: 1px 6px; border-radius: 2px; white-space: nowrap; }
+.v.new { background: var(--tealsoft); color: var(--tealtext); }
+.v.cut { background: var(--crimsonsoft); color: var(--crimson); }
+.v.keep { background: var(--ambersoft); color: var(--amber); }
+
+pre { font-family: var(--f-mono); font-size: 12.5px; line-height: 1.55;
+      background: var(--surface); border: 1px solid var(--rule); border-radius: 3px;
+      padding: 16px 18px; overflow-x: auto; margin: 18px 0; color: var(--ink2); }
+pre b { color: var(--tealtext); font-weight: 500; }
+pre i { color: var(--ink3); font-style: normal; }
+
+ol.steps { list-style: none; counter-reset: s; padding: 0; margin: 18px 0 0; }
+ol.steps li { counter-increment: s; position: relative; padding-left: 38px;
+              margin-bottom: 16px; }
+ol.steps li::before { content: counter(s); position: absolute; left: 0; top: 1px;
+  font-family: var(--f-mono); font-size: 11px; width: 24px; height: 24px;
+  display: grid; place-items: center; border: 1px solid var(--rule2);
+  border-radius: 99px; color: var(--ink3); }
+ol.steps h3 { margin-bottom: 2px; }
+ol.steps p { font-size: 14.5px; color: var(--ink2); margin: 0; }
+
+.note { background: var(--ambersoft); border: 1px solid var(--amber);
+        border-radius: 3px; padding: 16px 18px; margin: 18px 0; }
+.note h3 { color: var(--amber); }
+.note p { font-size: 14.5px; }
+
+footer { margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--rule);
+         font-size: 13px; color: var(--ink3); }
+@media (max-width: 560px) {
+  .meta { gap: 14px 20px; }
+}
+</style>
+<div class="page">
+
+<p class="eyebrow">RequestBench · design</p>
+<h1>Measurement v2</h1>
+<p class="lede">Publish real times instead of ratios. One dedicated machine with a fixed clock makes absolute numbers reproducible, which makes them publishable, which is what a reader needed in the first place: latency in milliseconds at a traffic level they recognise.</p>
+
+<dl class="meta">
+  <div><dt>Date</dt><dd>15 September 2026</dd></div>
+  <div><dt>Replaces</dt><dd>Five-rung ladder, ratio to a per-language baseline</dd></div>
+  <div><dt>Proposes</dt><dd>Two fixed rates, absolute p50 and p99</dd></div>
+  <div><dt>Machine</dt><dd>AMD 5700G, 8 cores, Supermicro 2U</dd></div>
+  <div><dt>Status</dt><dd>Proposed. Nothing implemented. Rates are provisional until the hardware is running.</dd></div>
+</dl>
+
+<section>
+<div class="sectionhead">
+  <span class="num">§1 · The reversal</span>
+  <h2>Nothing absolute was published because the machine moved</h2>
+  <p>That rule was a mitigation, not a principle. The mitigation goes when its cause does.</p>
+</div>
+
+<p>Every result today is a ratio to a bare baseline measured in the same run, because every run landed on a different GitHub-hosted machine and a ratio divides the machine out. The rule worked for what it was for. It also threw away the number a reader came for, and it was never as clean as it looked.</p>
+
+<p>A run on 15 September measured <code>node-http</code>, then <code>fastify</code>, then <code>node-http</code> again: the same image at both ends, ten minutes apart, nothing else on the box.</p>
+
+<div class="scroll">
+<table>
+<thead><tr><th>Rung</th><th class="n">p50 first</th><th class="n">p50 last</th><th class="n">Shift</th><th class="n">p99 first</th><th class="n">p99 last</th><th class="n">Shift</th></tr></thead>
+<tbody>
+<tr><td class="m">1 · 500 rps</td><td class="n">315 µs</td><td class="n">204 µs</td><td class="n">0.65×</td><td class="n">2,952 µs</td><td class="n">1,567 µs</td><td class="n">0.53×</td></tr>
+<tr><td class="m">2 · 1,500 rps</td><td class="n">146 µs</td><td class="n">143 µs</td><td class="n">0.98×</td><td class="n">1,447 µs</td><td class="n">1,419 µs</td><td class="n">0.98×</td></tr>
+<tr><td class="m">3 · 3,000 rps</td><td class="n">134 µs</td><td class="n">127 µs</td><td class="n">0.95×</td><td class="n">1,476 µs</td><td class="n">1,391 µs</td><td class="n">0.94×</td></tr>
+<tr><td class="m">4 · 6,000 rps</td><td class="n">124 µs</td><td class="n">122 µs</td><td class="n">0.98×</td><td class="n">1,630 µs</td><td class="n">1,836 µs</td><td class="n">1.13×</td></tr>
+<tr><td class="m">5 · 12,000 rps</td><td class="n">384 µs</td><td class="n">571 µs</td><td class="n">1.49×</td><td class="n">3,819 µs</td><td class="n">5,348 µs</td><td class="n">1.40×</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Fastify's published ratio at rung 1 is 0.67 against the first baseline and 1.04 against the second. The choice of denominator decides whether the site reports Fastify as faster than bare <code>node:http</code> or level with it. At rung 5 the same choice moves it from 0.91 to 0.61. The middle three rungs held inside six per cent, so the drift is not uniform: it lives at the ends of the ladder, which is where the ladder was most interesting.</p>
+
+<p>Two further things are wrong with the ratio beyond its instability. Nobody deploys bare <code>node:http</code> with hand-rolled routing, so the denominator is a reference the reader cannot obtain and has no feel for. And the generator's own floor does not cancel the way <code>README.md</code> claims. A floor <i>F</i> added to both sides gives (T<sub>f</sub>&nbsp;+&nbsp;F)&nbsp;/&nbsp;(T<sub>b</sub>&nbsp;+&nbsp;F), not T<sub>f</sub>&nbsp;/&nbsp;T<sub>b</sub>. With a 150&nbsp;µs floor, a framework genuinely costing twice the baseline's 50&nbsp;µs reports 1.25 instead of 2.00. Cancellation holds for a difference and fails for a quotient, so every low-load ratio understates overhead, and understates it most where frameworks differ most.</p>
+
+<p>Fix the machine and none of this needs a workaround. Absolute milliseconds are reproducible, they are what a reader can hold against their own traffic and their own SLO, and they are a denominator every language shares — which puts Go against Node on the same axis for the first time, something <code>README.md</code> currently rules out in as many words.</p>
+</section>
+
+<section>
+<div class="sectionhead">
+  <span class="num">§2 · The machine</span>
+  <h2>One box, fixed clock, real cores</h2>
+  <p>Reproducibility is the precondition for everything else here. It is bought with configuration, not with statistics.</p>
+</div>
+
+<p>An AMD 5700G in a Supermicro 2U chassis. Eight Zen 3 cores on a single CCX sharing 16&nbsp;MB of L3, so every core is equivalent and no cpuset assignment has to think about crossing a chiplet. A 65&nbsp;W part with that much air in front of it does not throttle, which removes thermal drift as a design concern rather than as an assumption to be checked each run.</p>
+
+<div class="scroll">
+<table>
+<thead><tr><th>Setting</th><th>Value</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td class="m">SMT</td><td class="w">off</td><td>Two threads on one physical core have throughput that depends on what the sibling is doing. <code>RB_SUT_CPUS="0,1"</code> may be one core wearing two numbers.</td></tr>
+<tr><td class="m">Boost</td><td class="w">off</td><td><code>cpufreq/boost</code> → 0. Boost tracks thermal headroom and active-core count, so it varies within a run by construction. Also removes Zen 3's preferred-core asymmetry.</td></tr>
+<tr><td class="m">Governor</td><td class="w">performance</td><td>No ramp from idle at the start of a rate.</td></tr>
+<tr><td class="m">C-states</td><td class="w">max_cstate=1</td><td>At 1,000 rps the gaps are 1&nbsp;ms, long enough to enter a deep C-state and pay the exit on every request. Global C-State Control off in BIOS as well.</td></tr>
+<tr><td class="m">Isolation</td><td class="w">isolcpus, nohz_full, rcu_nocbs on 0–3</td><td>Keeps the scheduler, timer ticks and RCU callbacks off the measurement cores.</td></tr>
+<tr><td class="m">Docker</td><td class="w">native, not Desktop</td><td>A VM layer re-allocates CPU underneath <code>--cpuset-cpus</code>, so the pinning stops meaning what it says.</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Cores 0–1 carry the target, 2–3 the generator, and 4–7 are left to the kernel and Docker. <code>RB_CPUS</code> stays 2, and it stops being an implementation detail: two-core numbers do not transfer to a four-core task, so the container's CPU budget is part of every published result.</p>
+
+<div class="note">
+<h3>The self-hosted runner must not touch pull requests</h3>
+<p>The repository is public and <code>validate.yml</code> triggers on <code>pull_request</code>, so a fork's code would execute on this machine. <code>measure.yml</code> triggers only on <code>schedule</code> and <code>workflow_dispatch</code>, both of which run from this repository's own ref, and it is the only workflow that moves. <code>validate.yml</code> and <code>deps.yml</code> stay on GitHub-hosted runners, which also keeps <code>DEPS_TOKEN</code> off the box. The runner runs as a non-root user with no credentials beyond its registration token.</p>
+</div>
+</section>
+
+<section>
+<div class="sectionhead">
+  <span class="num">§3 · Two rates</span>
+  <h2>Chosen from the traffic side, identical for every language</h2>
+  <p>Five rungs become two, and the numbers stop being divided by anything.</p>
+</div>
+
+<p>Two fixed offered rates, the same for every target in every language. A regular rate everything is expected to complete, and a raised rate that separates the frameworks with headroom from the ones without. The published statistic is p50 and p99 in real time at each.</p>
+
+<p>The rates come from what a reader might want to serve, not from where the targets break. That distinction decides whether the constant is stable. Set from the population, the rate wants to move every time a language is added and moving it breaks the time series; set from the traffic side it is a spec constant changed rarely and deliberately, with a marked discontinuity when it is. <b>1,000 and 5,000 rps on two cores</b> is the starting pair, and it is a guess until the hardware runs. The live values are in <code>spec/ladder.json</code>, which is the only place they are authoritative.</p>
+
+<p>One rate for every language, not one per language. A per-language raised rate is a relative measurement with an absolute label on it: it grades slow languages on a curve, which is the thing this design exists to stop doing. A customer does not care what language the backend is written in and no host discounts a language, only a CPU. If a language cannot serve 5,000 rps on two cores, that is the result.</p>
+
+<p>The consequence is that the raised rate may be empty for a whole language. That is a finding, not a gap, and §4 is how it renders. If a rate turns out to be so high that it is uninformative for an entire language, the answer is a third global rate rather than a per-language one — same constant for everyone, and the reader picks the row matching their traffic.</p>
+
+<div class="note">
+<h3>Four minutes at the regular rate is below the spec's own floor</h3>
+<p>1,000 rps for 240&nbsp;s is 240,000 requests over 45 endpoints drawn uniformly, about 5,300 each, against <code>min_requests_per_endpoint: 10000</code> in <code>spec/ladder.json</code>. The blend number is unaffected, since it aggregates all 240,000. The per-endpoint drill-down the site renders is: 5,300 samples puts a p99 on roughly 53 observations. Either the regular rate rises, or its sample runs 7.5 minutes, or that constant comes down to what the run delivers. The raised rate has no such problem.</p>
+</div>
+</section>
+<section>
+<div class="sectionhead">
+  <span class="num">§4 · Failure</span>
+  <h2>A target that cannot keep up gets a count, not a latency</h2>
+  <p>No blend is computed at a rate the target did not complete, because the percentile would flatter it.</p>
+</div>
+
+<p><code>gen/blend.mjs</code> drops by never sending. When the in-flight count reaches <code>maxInflight</code> the scheduler increments <code>dropped</code> and moves on, so a dropped request never enters a histogram:</p>
+
+<pre>if (inflight &gt;= maxInflight) { <b>dropped++; issued++; continue;</b> }
+fire((rnd() * eps.length) | 0, dueNs);</pre>
+
+<p>The percentiles at a saturated rate are therefore computed over survivors, and the requests excluded are exactly the ones that would have been slowest. A framework that collapses drops more and reports a <i>better</i> p99 than one that degrades gracefully. That inversion is the reason for the rule rather than a detail of it.</p>
+
+<p>So: a blend is computed only where the target completed the rate. Above the drop threshold there is no blend number at all, and the row instead carries what actually happened.</p>
+
+<div class="scroll">
+<table>
+<thead><tr><th>Target</th><th class="n">Offered</th><th class="n">Achieved</th><th class="n">Dropped</th><th class="n">p50</th><th class="n">p99</th></tr></thead>
+<tbody>
+<tr><td class="m">node-http</td><td class="n">5,000</td><td class="n">5,000</td><td class="n">0</td><td class="n">0.31 ms</td><td class="n">1.9 ms</td></tr>
+<tr><td class="m">fastify</td><td class="n">5,000</td><td class="n">5,000</td><td class="n">0</td><td class="n">0.38 ms</td><td class="n">2.4 ms</td></tr>
+<tr class="cut"><td class="m">express</td><td class="n">5,000</td><td class="n">3,100</td><td class="n">38%</td><td class="n">—</td><td class="n">—</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>The row is flagged in the failure colour and carries its drop count, so it reads as a failure rather than as missing data. Those are opposite meanings and an empty cell renders them identically. Achieved rps is the honest headline at the raised rate: <code>gen/blend.mjs</code> already computes it as <code>done / elapsed</code> and <code>run.py</code> already records it, so nothing new has to be measured.</p>
+
+<p>Abort a failing rate early. A target dropping thirty per cent twenty seconds in will drop thirty per cent four minutes in. Record the failure and move to the next target. Across the slow half of the population that is close to an hour at full build-out, and it is what makes a third rate affordable later.</p>
+
+<p><code>summarize.py</code> already carries <code>SATURATION = 0.01</code> and a <code>baseline_saturated</code> flag from the ratio design. The threshold survives; what it gates changes from a marker on a published number to whether a number is published.</p>
+</section>
+
+<section>
+<div class="sectionhead">
+  <span class="num">§5 · The run</span>
+  <h2>One host a night, about eight hours</h2>
+  <p>Losing the six-hour hosted cap is what pays for the longer samples.</p>
+</div>
+
+<div class="scroll">
+<table>
+<thead><tr><th>Phase</th><th class="n">Duration</th><th>Note</th></tr></thead>
+<tbody>
+<tr><td class="m">boot + conformance</td><td class="n">~60 s</td><td>Longer for a JVM target. The 45-endpoint fingerprint pass is unchanged.</td></tr>
+<tr><td class="m">warmup</td><td class="n">90 s</td><td>Once per target, at the regular rate. JIT class sets the floor and everything shares it.</td></tr>
+<tr><td class="m">regular rate</td><td class="n">240 s</td><td>Recorded.</td></tr>
+<tr><td class="m">settle</td><td class="n">15 s</td><td>Discarded. The connection pool and GC adjust to the new rate; the first seconds would measure that.</td></tr>
+<tr><td class="m">raised rate</td><td class="n">240 s</td><td>Recorded, or aborted early on drops.</td></tr>
+<tr><td class="m">teardown + cooldown</td><td class="n">~25 s</td><td><code>run.py</code> waits for the port and sleeps 0.5 s today; on a persistent box the gap can be longer for free.</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>About eleven minutes a target. Nineteen implemented targets is three and a half hours. The full forty-three is close to eight, which is one host for one night.</p>
+
+<p>That is the scheduling constraint, and it is forced by having one machine rather than chosen. The container host is the expensive one because its suite runs for a fixed duration. The function hosts run the serial suite, which is bounded by a request count instead, so they cost a fraction of a container run and can plausibly share a night — worth timing one serial target before committing to a rotation. The thing that does not fit is splitting the container host into HTTP/1.1 and HTTP/2, which doubles the expensive host to sixteen hours. HTTP/2 also needs a transport <code>gen/blend.mjs</code> does not have, since it is <code>node:http</code> today, so it is its own change on its own night.</p>
+
+<p>Averaging the last three runs was proposed when every run was a different machine. On fixed hardware it is a smoothing convenience rather than a correction, and with one host a night it would put the tail of the window fifteen nights back. Decide it against the observed run-to-run spread once the box has a week of history; if the spread is small, publish the run.</p>
+</section>
+
+<section>
+<div class="sectionhead">
+  <span class="num">§6 · Knowing a run went wrong</span>
+  <h2>The population is the control</h2>
+  <p>Forty targets whose code did not change is a better detector than a baseline booted twice.</p>
+</div>
+
+<p>Most targets in any run are unchanged from the night before. If frameworks that did not change move together, the run is suspect. That has more power than two boots of one baseline, it catches per-target problems a baseline cannot see, and a uniform shift still shows as forty time series moving together, which is a stronger signal than one moving.</p>
+
+<p>What it cannot do is attribute: it says the run is anomalous, not what changed. The known confound is <code>deps.yml</code>, which opens version bumps nightly, so the set of unchanged frameworks shrinks on exactly the nights it is most needed, and a runtime bump moves several targets of one language together in a way that resembles machine drift.</p>
+
+<p>One hole there is worth closing whatever else is decided. <code>bundle_hashes</code> covers the Dockerfiles, so a change to the base image <i>tag</i> is caught, but <code>node:24</code> is a moving tag and the digest under it changes with no file changing. Every hash can be identical while the runtime underneath is different. Recording the resolved image digest per target per run closes it, and it is a <code>docker inspect</code> after the build.</p>
+
+<p>The per-language baselines stay in the run, as published rows rather than as denominators. What a language does with no framework at all is a useful number to a reader when it sits beside the others instead of underneath them.</p>
+</section>
+
+<section>
+<div class="sectionhead">
+  <span class="num">§7 · What publishing a real number obliges</span>
+  <h2>The floor is now inside the result</h2>
+  <p>A ratio partly hid the driver. An absolute does not.</p>
+</div>
+
+<p>At 500 rps the generator's floor measured 150–200&nbsp;µs against target p50s of the same size. Published as an absolute, a 0.4&nbsp;ms result would be wrong by a third. The floor has to be measured against a null target and either subtracted or driven under the noise. Most of it is the C-state exit from §2: baseline p50 by rung ran 315, 146, 134, 124, 384&nbsp;µs, and a target does not get faster as load rises. The monotonic fall from 500 to 6,000 rps is the idle path, not the framework.</p>
+
+<p>The driver must also not be the bottleneck at the raised rate. Its own capacity on two pinned cores needs measuring before 5,000 is fixed as a constant, and the same measurement gives the floor.</p>
+
+<p>Then the machine becomes part of the result and travels with it: CPU, core count, the two-core container budget, fixed clock with boost off, kernel and Docker versions. <code>site/build.py</code> currently tells the reader that runs happen on GitHub-hosted runners whose CPU varies between runs, which is the note this replaces. Worth stating too that the latency is target plus loopback and excludes the load balancer a reader will have in front of it.</p>
+
+<p>The cost of the reversal, so it is a decision and not a surprise: absolute numbers are stranded if the machine dies, where ratios were not. Keep recording the baselines' absolutes every run so a replacement box can be characterised against the same images and the conversion is known. The ratio survives as an internal tool rather than as the published output. And the numbers are true for a two-core container on Zen 3 at a fixed clock; they say nothing about Graviton or about an eight-core task. That is a scope statement to publish, not a flaw to hide.</p>
+</section>
+
+<section>
+<div class="sectionhead">
+  <span class="num">§8 · Order of work</span>
+  <h2>Hardware first, because it sets the constants</h2>
+  <p>The rates cannot be chosen from a laptop.</p>
+</div>
+
+<ol class="steps">
+<li><h3>Build the box and pin it</h3><p>SMT off, boost off, governor <code>performance</code>, <code>max_cstate=1</code>, <code>isolcpus</code> on 0–3, native Docker. Register the runner against <code>measure.yml</code> only.</p></li>
+<li><h3>Characterise the generator</h3><p>Null target, sweep the rate. Produces the floor to subtract and the ceiling the raised rate must stay under. Both are inputs to every number after this.</p></li>
+<li><h3>Fix the two rates</h3><p>Start at 1,000 and 5,000, run the implemented targets, and see what completes. Write the result into <code>spec/ladder.json</code>, which becomes the source of truth.</p></li>
+<li><h3>Collapse the ladder</h3><p><code>run.py</code> loses three rungs and gains the settle gap and the early abort. <code>summarize.py</code> stops dividing and gates the blend on completion instead of flagging saturation.</p></li>
+<li><h3>Record the digest</h3><p><code>docker inspect</code> after build, carried on the target row beside <code>bundle_hash</code>.</p></li>
+<li><h3>Rebuild the display</h3><p>Two permanent rate columns in place of the rung dropdown, real times as the headline, achieved rps and drop count on the raised rate, failure colour on a row that did not complete.</p></li>
+<li><h3>Rewrite the two rules</h3><p><code>README.md</code> opens with "Nothing absolute is ever published." That inverts. The second rule, that behaviour is shared and wiring is not, is untouched and does the same job it always did.</p></li>
+</ol>
+</section>
+
+<footer>
+Written 15 September 2026 against <code>main</code> at <code>3628353</code>. Line references were accurate at that commit. Numeric constants — rates, durations, thresholds — are authoritative in <code>spec/ladder.json</code> and are quoted here only to show the reasoning; this document is not where they live. Successor to the measurement half of <code>docs/plan.html</code>, deleted at <code>998b6f4</code>. Companion to <code>docs/blend-v2.html</code>, which designs what is measured; this designs how.
+</footer>
+
+</div>

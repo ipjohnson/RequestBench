@@ -9,16 +9,6 @@ GROWTH, NBUCKETS = 1.02, 920
 LOG_G = math.log(GROWTH)
 val = lambda i: math.exp((i + 0.5) * LOG_G)
 
-def normalize_env(env):
-    """Runs made before the host split named themselves by language and carried one
-    baseline. Read them through the same plural shape as everything since."""
-    if "languages" not in env:
-        env["languages"] = env.get("shards") or [env.get("language") or env.get("shard")]
-    if "baselines" not in env:
-        env["baselines"] = {env["languages"][0]: env.get("baseline")}
-    return env
-
-
 def unpack(b64):
     raw = base64.b64decode(b64)
     return list(struct.unpack("<%dI" % (len(raw) // 4), raw))
@@ -51,11 +41,9 @@ def main():
     env = next(r for r in rows if r["kind"] == "env")
     samples = [r for r in rows if r["kind"] == "sample"]
     rungs = [r for r in rows if r["kind"] == "rung"]
-    env = normalize_env(env)
     baselines = env["baselines"]
     first = env["languages"][0]
-    # Rows written before the host split carried the language as "shard".
-    language_of = {r["target"]: r.get("language") or r.get("shard") or first for r in rungs}
+    language_of = {r["target"]: r.get("language", first) for r in rungs}
     base_of = {t: baselines.get(language_of[t]) for t in language_of}
     base = baselines[first]
     targets = list(dict.fromkeys(r["target"] for r in rungs))
@@ -79,7 +67,8 @@ def main():
     head = "  %-12s" % "target"
     for rn in rung_ids:
         any_row = next(r for r in rungs if r["rung"] == rn)
-        head += " %-26s" % ("rung %d @ %s rps" % (rn, any_row["offered_rps"]))
+        head += " %-26s" % ("%s @ %s rps" % (any_row.get("rate", "rung %d" % rn),
+                                             any_row["offered_rps"]))
     print(head)
     for t in targets:
         tag = t if len(baselines) == 1 else "%s:%s" % (language_of.get(t, "?"), t)
@@ -89,7 +78,17 @@ def main():
             r, b = by.get((t, rn)), by.get((tb, rn))
             if not r or not b:
                 line += " %-26s" % "-"; continue
-            rat = r["p50_us"] / b["p50_us"] if b["p50_us"] else 0
+            # A rate the target did not complete has no latency to print: the percentiles
+            # would describe only the requests that survived. What it managed and what it
+            # lost is the whole of what happened there.
+            if not r.get("completed", True) or r["p50_us"] is None:
+                offered = r["offered_rps"] * r["seconds"]
+                line += " %-26s" % ("%5d  dropped %4.1f%%"
+                                    % (r["achieved_rps"],
+                                       100 * r["dropped"] / offered if offered else 0))
+                continue
+            rat = (r["p50_us"] / b["p50_us"]
+                   if b.get("completed", True) and b["p50_us"] else 0)
             cell = "%5d %5d %6d %5.2fx" % (r["achieved_rps"], r["p50_us"], r["p99_us"], rat)
             line += " %-26s" % cell
         print(line)

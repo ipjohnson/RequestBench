@@ -1,8 +1,7 @@
 """Which targets does an execution host run, and under which suite?
 
-A job is one suite on one host, and it holds every implemented target in every language
-that host supports. There is no language dimension: every run is cross-language by
-construction, so this answers by host and nothing here knows about languages or dates.
+A job is one suite on one host and holds every implemented target that host supports.
+This answers by host alone; it knows nothing about dates.
 
   python3 harness/hosts.py --host container            # what that host would measure
   python3 harness/hosts.py --host lambda-rie --github-output

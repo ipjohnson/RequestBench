@@ -1,6 +1,10 @@
 # Validation only. A PR proves every target still answers every endpoint identically.
 # No load is generated here: timings from a shared CI runner would be noise.
-# Measurement is its own workflow, and it splits by execution host rather than by language.
+# Measurement is its own workflow and runs per execution host.
+#
+# The jobs below are one per toolchain, because each needs its own setup action and its
+# own dependency cache. That is a CI packaging constraint and nothing to do with how a
+# measurement is shaped.
 name: validate
 
 on:
@@ -78,7 +82,7 @@ jobs:
       - run: npm ci --omit=dev --no-audit --no-fund
         working-directory: targets/node
       - name: Boot and conform every node target
-        run: python3 harness/run.py --language node --targets node-http,fastify,express,hono,koa,h3 --validate-only
+        run: python3 harness/run.py --targets node:node-http,node:fastify,node:express,node:hono,node:koa,node:h3 --validate-only
 
   go:
     name: go targets conform
@@ -92,7 +96,7 @@ jobs:
       - run: go build ./...
         working-directory: targets/go
       - name: Boot and conform every go target against the node reference
-        run: python3 harness/run.py --language go --targets net-http,gin,echo,chi,gorilla-mux,fiber --validate-only
+        run: python3 harness/run.py --targets go:net-http,go:gin,go:echo,go:chi,go:gorilla-mux,go:fiber --validate-only
 
   java:
     name: java targets conform
@@ -110,8 +114,8 @@ jobs:
         working-directory: targets/java
       - name: Boot and conform every java target against the node reference
         run: |
-          python3 harness/run.py --language java --validate-only \
-            --targets bare-netty,javalin,vertx,helidon-se,spring-boot,micronaut,quarkus
+          python3 harness/run.py --validate-only --targets \
+            java:bare-netty,java:javalin,java:vertx,java:helidon-se,java:spring-boot,java:micronaut,java:quarkus
 
   images:
     name: container images build
