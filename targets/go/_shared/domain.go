@@ -928,3 +928,30 @@ func DomainAggregate(region string) (*Report, error) {
 	}
 	return r, nil
 }
+
+// ---- the strings every target answers with ----------------------------------
+//
+// Spelled once so five targets cannot drift on a word, which is the kind of difference
+// that reads as a framework result.
+
+const Cacheable = "public, max-age=60"
+
+func NotFoundBody() map[string]string { return map[string]string{"error": "not_found"} }
+
+func ForbiddenBody() map[string]string { return map[string]string{"error": "forbidden"} }
+
+func InvalidBody(errs []FieldError) map[string]any {
+	return map[string]any{"error": "validation_failed", "errors": errs}
+}
+
+// MalformedBody is the 422 every target answers when the request body is not JSON at all.
+// It is the same error the validator raises so errors.malformed and body.rejected_* share
+// a shape.
+func MalformedBody() *ValidationError {
+	return &ValidationError{Errors: []FieldError{{Field: "body", Rule: "json"}}}
+}
+
+// CreatedLocation is where a created order points. Built by concatenation rather than a
+// format string: "/domain/orders/%d" is indistinguishable from a route with a capture, and
+// harness/snippets.py then finds the domain routes in two places and refuses to guess.
+func CreatedLocation() string { return "/domain/orders/" + strconv.Itoa(NextOrderID) }

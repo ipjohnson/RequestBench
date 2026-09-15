@@ -301,7 +301,9 @@ async def patch_customer(cid: str, body: dict):
     return d.patch_customer(cid, body)
 
 
-@app.delete("/domain/orders/{oid}/lines/{lid}", status_code=204)
+# response_class, because FastAPI's default is JSONResponse and that declares a
+# content-type on a response that by definition has no body.
+@app.delete("/domain/orders/{oid}/lines/{lid}", status_code=204, response_class=Response)
 async def delete_line(oid: str, lid: str):
     d.get_order_line(oid, lid)
 

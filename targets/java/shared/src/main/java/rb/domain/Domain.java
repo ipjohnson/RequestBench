@@ -10,6 +10,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.zip.GZIPOutputStream;
+import java.io.ByteArrayOutputStream;
 import rb.domain.Errors.NotFound;
 import rb.domain.Errors.Validation;
 import rb.domain.Model.*;
@@ -36,6 +39,9 @@ public final class Domain {
   private static Map<Integer, Order> orderById = Map.of();
   private static Map<Integer, List<Order>> ordersByCustomer = Map.of();
   private static Map<String, List<Customer>> customersByRegion = Map.of();
+  private static Map<String, PayloadDoc> payloads = Map.of();
+  private static AuthDoc auth = new AuthDoc("", "");
+  private static final AtomicLong serial = new AtomicLong();
 
   /**
    * The id a created order would get. The fixture holds 1..1000, so it is 1001: synthetic
@@ -47,7 +53,8 @@ public final class Domain {
   // parse both ignore what they do not name, so this does too.
   @com.fasterxml.jackson.annotation.JsonIgnoreProperties(ignoreUnknown = true)
   private record Fixture(List<Product> products, List<Customer> customers,
-                         List<Order> orders, Map<String, List<Review>> reviews) {}
+                         List<Order> orders, Map<String, List<Review>> reviews,
+                         Map<String, PayloadDoc> payloads, AuthDoc auth) {}
 
   public static void load(String path) throws IOException {
     Fixture f = Json.MAPPER.readValue(Files.readAllBytes(Path.of(path)), Fixture.class);
@@ -82,6 +89,9 @@ public final class Domain {
     }
     orderById = byOrder;
     ordersByCustomer = byCust;
+
+    payloads = f.payloads();
+    auth = f.auth();
   }
 
   /** Node parses with Number(); a non-numeric id is simply not found. */
@@ -180,7 +190,10 @@ public final class Domain {
 
   public static OrdersPage listOrders(Map<String, List<String>> q) {
     int page = Math.max(0, qint(q, "page", 0));
-    int size = Math.min(100, Math.max(1, qint(q, "size", 25)));
+    // A size of zero means the default, not one. Every other language reaches that through
+    // `size || 25`, where an explicit 0 is as absent as a missing parameter.
+    int size = qint(q, "size", 25);
+    size = Math.min(100, Math.max(1, size == 0 ? 25 : size));
     String status = qstr(q, "status");
     List<Order> rows = orders;
     if (status != null && !status.isEmpty()) {
@@ -491,5 +504,250 @@ public final class Domain {
 
   public static EchoResult echo(Map<String, Object> body) {
     return new EchoResult(body, Json.bytes(body).length);
+  }
+
+  // ---- blend-v2 ---------------------------------------------------------------------
+  //
+  // The payload is the controlled variable: three fixed responses that every feature family
+  // reuses unchanged, so subtracting a base endpoint from its arm leaves the feature and
+  // nothing else.
+
+  /**
+   * Not pre-serialized. json.small against json.large is one fixture read, one serialize
+   * and one write at three sizes; handing back a cached string would measure none of it.
+   */
+  public static PayloadBody payload(String size) {
+    return payloads.get(size).body();
+  }
+
+  /**
+   * Pinned in the fixture, so what a target spends is emitting the header and comparing it
+   * rather than hashing a body.
+   */
+  public static String etagOf(String size) {
+    return payloads.get(size).etag();
+  }
+
+  /**
+   * Pinned across every language. Compression cost is dominated by codec and level, not by
+   * framework, so an unpinned level makes compressed.* a zlib benchmark.
+   */
+  public static final int GZIP_LEVEL = 6;
+
+  public static final String CACHEABLE = "public, max-age=60";
+
+  /** Compresses at the pinned level, for targets whose framework brings no compressor. */
+  public static byte[] gzip(byte[] raw) {
+    ByteArrayOutputStream out = new ByteArrayOutputStream(raw.length / 2);
+    try (GZIPOutputStream gz = new GZIPOutputStream(out) {
+      {
+        def.setLevel(GZIP_LEVEL);
+      }
+    }) {
+      gz.write(raw);
+    } catch (IOException e) {
+      return raw;
+    }
+    return out.toByteArray();
+  }
+
+  /**
+   * x-rb-serial, monotonic per process. A response served from a cache anywhere in the
+   * path, or precomputed at boot, repeats a number it did not increment, and identical
+   * bytes are the whole point of the fingerprint.
+   */
+  public static String nextSerial() {
+    return Long.toString(serial.incrementAndGet());
+  }
+
+  /**
+   * The denial arm's token differs only in its last character, so this compares the whole
+   * string rather than failing on length. Crypto is not framework cost.
+   */
+  public static boolean tokenOk(String header) {
+    return header != null && header.startsWith("Bearer ")
+        && header.substring(7).equals(auth.token());
+  }
+
+  /**
+   * The Location a created order points at. Built by concatenation rather than a format
+   * string: "/domain/orders/%d" is indistinguishable from a route with a capture, and
+   * harness/snippets.py then finds the domain routes in two places and refuses to guess.
+   */
+  public static String createdLocation() {
+    return "/domain/orders/" + nextOrderId;
+  }
+
+  public static Map<String, String> notFoundBody() {
+    return Map.of("error", "not_found");
+  }
+
+  public static Map<String, String> forbiddenBody() {
+    return Map.of("error", "forbidden");
+  }
+
+  public static Map<String, Object> invalidBody(List<FieldError> errors) {
+    Map<String, Object> out = new LinkedHashMap<>();
+    out.put("error", "validation_failed");
+    out.put("errors", errors);
+    return out;
+  }
+
+  // ---- query ---------------------------------------------------------------------------
+  //
+  // The framework parses the query string, which is the work the family measures; these
+  // coerce what it parsed, so every target in the language answers the same values.
+
+  public static QueryOne coerceOne(Map<String, List<String>> q) {
+    return new QueryOne(qint(q, "page", 0));
+  }
+
+  public static QueryMany coerceMany(Map<String, List<String>> q) {
+    return new QueryMany(qint(q, "page", 0), qint(q, "size", 0), qstr(q, "status"),
+                         qstr(q, "category"), qstr(q, "sort"), qstr(q, "q"),
+                         qint(q, "min_price", 0), qint(q, "max_price", 0));
+  }
+
+  // ---- body ----------------------------------------------------------------------------
+
+  /**
+   * Walks the parsed body. Without a field derived from the parsed structure a target can
+   * pipe request bytes straight to the response and never parse, and the gate would not see
+   * it: the comparison is over parsed values, so even a reordering is invisible.
+   */
+  public static int leafCount(Object v) {
+    if (v instanceof Map<?, ?> m) {
+      int n = 0;
+      for (Object x : m.values()) {
+        n += leafCount(x);
+      }
+      return n;
+    }
+    if (v instanceof List<?> l) {
+      int n = 0;
+      for (Object x : l) {
+        n += leafCount(x);
+      }
+      return n;
+    }
+    return 1;
+  }
+
+  public static BindResult bindEcho(Map<String, Object> body) {
+    return new BindResult(leafCount(body), Json.bytes(body).length, body);
+  }
+
+  /**
+   * validateOrder reports every problem it finds; this stops at the first, which is what
+   * body.rejected_all minus body.rejected_first states as a number: the same walk in the
+   * same order, differing only in where it gives up.
+   */
+  public static ValidatedOrder validateOrderFirst(Map<String, Object> body) {
+    List<FieldError> errs = new ArrayList<>();
+    required(errs, body, "customer_id", "int");
+    if (errs.isEmpty()) {
+      required(errs, body, "status", "string");
+    }
+    if (errs.isEmpty()) {
+      required(errs, body, "lines", "array");
+    }
+    List<?> rawLines = field(body, "lines") instanceof List<?> l ? l : null;
+    if (errs.isEmpty() && rawLines != null) {
+      if (rawLines.isEmpty()) {
+        errs.add(new FieldError("lines", "min_length"));
+      }
+      for (int i = 0; i < rawLines.size() && errs.isEmpty(); i++) {
+        Object pid = lineField(rawLines.get(i), "product_id");
+        Object qty = lineField(rawLines.get(i), "qty");
+        if (!isInt(pid)) {
+          errs.add(new FieldError("lines[" + i + "].product_id", "int"));
+        }
+        if (errs.isEmpty() && (!isInt(qty) || intValue(qty) < 1)) {
+          errs.add(new FieldError("lines[" + i + "].qty", "min"));
+        }
+      }
+    }
+    if (!errs.isEmpty()) {
+      throw new Validation(errs);
+    }
+    return validateOrder(body);
+  }
+
+  // ---- domain ----------------------------------------------------------------------------
+  //
+  // domainFilter, domainJoin and domainAggregate do the work the spec pins. The gate compares
+  // values, and a precomputed page produces the same value as a computed one, so this is the
+  // one family where two conforming implementations can do wildly different amounts of work.
+  // The predicate runs over the live list on every request, the join walks the lines, and the
+  // aggregate folds every matching order. No index, no memoization.
+
+  public static OrdersPage domainFilter(Map<String, List<String>> q) {
+    int page = Math.max(0, qint(q, "page", 0));
+    int size = Math.min(100, Math.max(1, qint(q, "size", 25)));
+    String status = qstr(q, "status");
+    List<Order> rows = new ArrayList<>();
+    for (Order o : orders) {
+      if (o.status().equals(status)) {
+        rows.add(o);
+      }
+    }
+    return new OrdersPage(page, size, rows.size(), slice(rows, page * size, size));
+  }
+
+  public static JoinSummary domainJoin(String cid) {
+    Customer c = found(customerById.get(intOf(cid)));
+    int orderCount = 0;
+    int lifetime = 0;
+    int lineCount = 0;
+    int units = 0;
+    List<RecentOrder> recent = new ArrayList<>();
+    for (Order o : orders) {
+      if (o.customerId() != c.id()) {
+        continue;
+      }
+      orderCount++;
+      lifetime += o.totalCents();
+      for (Line l : o.lines()) {
+        lineCount++;
+        units += l.qty();
+      }
+      recent.add(new RecentOrder(o.id(), o.created(), o.totalCents()));
+    }
+    List<RecentOrder> last = recent.size() > 5
+        ? new ArrayList<>(recent.subList(recent.size() - 5, recent.size()))
+        : recent;
+    return new JoinSummary(c, orderCount, lifetime, lineCount, units, last);
+  }
+
+  public static Report domainAggregate(String region) {
+    List<Customer> inRegion = customersByRegion.get(region);
+    if (inRegion == null || inRegion.isEmpty()) {
+      throw NotFound.INSTANCE;
+    }
+    java.util.Set<Integer> ids = new java.util.HashSet<>(inRegion.size() * 2);
+    for (Customer c : inRegion) {
+      ids.add(c.id());
+    }
+    int count = 0;
+    int revenue = 0;
+    List<Order> matched = new ArrayList<>();
+    for (Order o : orders) {
+      if (!ids.contains(o.customerId())) {
+        continue;
+      }
+      count++;
+      revenue += o.totalCents();
+      matched.add(o);
+    }
+    // Highest first, ties broken by the lower id, and stable so equal keys keep fixture
+    // order. Every other language sorts the same way; a different tiebreak is a failure
+    // rather than a preference.
+    matched.sort(Comparator.comparingInt(Order::totalCents).reversed()
+                           .thenComparingInt(Order::id));
+    List<TopOrder> top = new ArrayList<>();
+    for (Order o : matched.subList(0, Math.min(10, matched.size()))) {
+      top.add(new TopOrder(o.id(), o.totalCents()));
+    }
+    return new Report(region, ids.size(), count, revenue, top);
   }
 }

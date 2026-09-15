@@ -1,5 +1,6 @@
 package rb.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.util.List;
@@ -80,6 +81,37 @@ public final class Model {
                       @JsonProperty("by_region") List<RegionCount> byRegion) {}
 
   // ---- validation ---------------------------------------------------------
+
+  /**
+   * The response json.*, compressed.*, cached.* and template.* all serve. It is the
+   * controlled variable: three fixed bodies that every feature family reuses unchanged, so
+   * subtracting a base endpoint from its arm leaves the feature and nothing else.
+   */
+  public record PayloadBody(int count, List<Product> items, String size) {}
+
+  // The fixture carries bytes and html alongside these two, for the generator and for the
+  // template comparison. A target needs neither, and Jackson refuses an undeclared field
+  // unless it is told not to.
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  public record PayloadDoc(PayloadBody body, String etag) {}
+
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  public record AuthDoc(String token, @JsonProperty("wrong_token") String wrongToken) {}
+
+  public record QueryOne(int page) {}
+
+  public record QueryMany(int page, int size, String status, String category, String sort,
+                          String q,
+                          @JsonProperty("min_price") int minPrice,
+                          @JsonProperty("max_price") int maxPrice) {}
+
+  public record BindResult(int fields, int bytes, Object echo) {}
+
+  public record JoinSummary(Customer customer,
+                            @JsonProperty("order_count") int orderCount,
+                            @JsonProperty("lifetime_cents") int lifetimeCents,
+                            @JsonProperty("line_count") int lineCount,
+                            int units, List<RecentOrder> recent) {}
 
   public record FieldError(String field, String rule) {}
 

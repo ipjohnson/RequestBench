@@ -424,14 +424,13 @@ def main():
                     help="resolve against history instead of the working tree")
     ap.add_argument("--summary", action="store_true", help="one line per target")
     ap.add_argument("--required", action="store_true",
-                    help="every target in matrix.json conformance_required")
+                    help="every implemented target, which all have to locate every endpoint")
     ap.add_argument("--check", action="store_true",
                     help="exit non-zero if a required target is short an endpoint, or any "
                          "target reports a problem")
     a = ap.parse_args()
 
-    required = [tuple(k.split(":", 1))
-                for k in bundle.MATRIX.get("conformance_required", {}).get("targets", [])]
+    required = list(bundle.implemented())
     pairs = list(bundle.implemented()) if a.all else []
     if a.required:
         pairs += required
@@ -446,9 +445,7 @@ def main():
     total_bad = 0
     for language, name in pairs:
         found, problems = resolve(language, name, a.at)
-        # A target that has been rewired to the current spec has to locate all of it. One
-        # that has not is expected to locate almost none, and saying so every night would
-        # retire the check long before the rewiring finished.
+        # Every implemented target has to locate every endpoint it serves.
         if (language, name) in required and len(found) < len(ENDPOINTS):
             problems.append("%s:%s is conformance-required but locates only %d/%d endpoints"
                             % (language, name, len(found), len(ENDPOINTS)))

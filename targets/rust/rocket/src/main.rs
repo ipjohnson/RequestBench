@@ -27,7 +27,9 @@ use std::io::Cursor;
 /// Responder, so the families that set validators or a serial return one of these.
 struct Raw {
     status: Status,
-    content_type: ContentType,
+    /// None for a status that carries no body. A 304 declaring application/json describes
+    /// a body it is not allowed to send.
+    content_type: Option<ContentType>,
     body: Vec<u8>,
     headers: Vec<(&'static str, String)>,
 }
@@ -35,7 +37,10 @@ struct Raw {
 impl<'r> Responder<'r, 'static> for Raw {
     fn respond_to(self, _: &'r Request<'_>) -> rocket::response::Result<'static> {
         let mut b = Response::build();
-        b.status(self.status).header(self.content_type).sized_body(self.body.len(), Cursor::new(self.body));
+        b.status(self.status).sized_body(self.body.len(), Cursor::new(self.body));
+        if let Some(ct) = self.content_type {
+            b.header(ct);
+        }
         for (k, v) in self.headers {
             b.header(Header::new(k, v));
         }
@@ -216,7 +221,7 @@ fn compressed(size: &'static str, accept: Option<&str>) -> Raw {
     } else {
         body
     };
-    Raw { status: Status::Ok, content_type: ContentType::JSON, body, headers }
+    Raw { status: Status::Ok, content_type: Some(ContentType::JSON), body, headers }
 }
 
 #[get("/compressed/small")]
@@ -266,7 +271,7 @@ fn cached(size: &'static str, inm: Option<&str>) -> Raw {
     let fresh = inm.is_some_and(|v| !v.is_empty() && v == etag);
     Raw {
         status: if fresh { Status::NotModified } else { Status::Ok },
-        content_type: ContentType::JSON,
+        content_type: if fresh { None } else { Some(ContentType::JSON) },
         body: if fresh { Vec::new() } else { json_raw(d::payload(size)) },
         headers,
     }
@@ -345,7 +350,7 @@ async fn create(data: Data<'_>) -> R<Raw> {
     };
     Ok(Raw {
         status: Status::Created,
-        content_type: ContentType::JSON,
+        content_type: Some(ContentType::JSON),
         body: json_raw(&v),
         headers: vec![("location", d::created_location())],
     })

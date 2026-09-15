@@ -19,19 +19,27 @@ describe its own configuration rather than a framework.
 
 **Behaviour is shared, wiring is not.** Within a language, every target imports the same
 domain module and differs only in how routes are bound to it. If two targets disagree about
-what an endpoint returns, that is a bug in one of them, not a performance result — which is
-why `conform.py` fingerprints every response and refuses to measure a target that drifts.
+what an endpoint returns, that is a bug in one of them, not a performance result.
+
+**What a correct answer is, is written down.** `spec/expected.json` holds the status, the
+content type, the content encoding and the body for every one of the 3,346 distinct requests
+in the plan. `tests/` boots each target and checks all of them against it; nothing is ever
+compared against another target, because agreement between two frameworks is evidence that
+they are consistent and not that either is right. Every implemented target has to pass, with
+no exemption list.
 
 ## Layout
 
     spec/endpoints.json   45 endpoints in 13 families, drawn uniformly
     spec/blends.json      weight vectors, applied when an aggregate is composed
     spec/ladder.json      five rungs, 500 -> 12000 rps, 60s each
-    spec/matrix.json      languages, frameworks, the anchor each is gated against
+    spec/matrix.json      languages, frameworks, the runtime each is pinned to
+    spec/expected.json    generated, committed: what a correct answer is, per request
     spec/fixture.json     generated, committed: identical data for all 48 targets
     spec/plan.json        generated: pre-resolved concrete requests every driver replays
     spec/sequence.json    generated: the fixed replay order every serial host uses
-    harness/              plan, conformance gate, orchestrator, bundles, aggregator
+    harness/              plan, expectation, conformance gate, orchestrator, bundles
+    tests/                one test per target per endpoint, a file per family
     gen/blend.mjs         open-loop blend driver
     targets/<lang>/       one directory per target, plus _shared/ domain logic
 
@@ -53,6 +61,7 @@ not one.
 ## Running it
 
     make plan
+    make test                                              # every target answers every endpoint
     make run                                               # everything, both rates, 4 min each
     make run LANGUAGES=node SECONDS=12 RUNGS=regular       # host processes, quick loop
     make build TARGETS=go:gin,go:echo,go:chi               # container images
@@ -105,18 +114,19 @@ Working: the spec and plan, the conformance gate with cross-target response comp
 the open-loop generator with per-endpoint histograms, the orchestrator in both host and
 container mode, the aggregator, the machine preflight, the nightly measurement split by
 execution host, the nightly framework update, target bundles with a framework page per
-target, and twenty-eight targets across five languages. Node has Fastify, Express, Hono,
-Koa and h3. Go has Gin, Echo, chi, gorilla/mux and Fiber. Java has Spring Boot, Quarkus,
+target, and twenty-eight targets across five languages, all of them conforming. Node has
+Fastify, Express, Hono, Koa and h3. Go has Gin, Echo, chi, gorilla/mux and Fiber. Java has Spring Boot, Quarkus,
 Micronaut, Helidon SE, Vert.x and Javalin. Rust has axum, actix-web, Rocket, Poem, Salvo
 and warp, and Python has FastAPI, Starlette, Litestar, Sanic, Flask and Django over ASGI.
 All twelve of those answer `blend-v2`.
 
-Each language names an anchor in `spec/matrix.json` — Fastify, Gin, Spring Boot, axum,
-FastAPI. That target boots first and its responses become the fingerprint every other
-target in the language is compared against. Fastify, Gin and all twelve Rust and Python
-targets answer the forty-five endpoints of `blend-v2`; the other fourteen still answer
-`blend-v1`, so the conformance gate reports them as pending rewiring and the orchestrator
-measures nothing for them.
+All twenty-eight answer the forty-five endpoints of `blend-v2`, and all twenty-eight are
+checked against `spec/expected.json` rather than against each other. The expectation is
+derived from `node:fastify`, `go:gin`, `rust:axum` and `python:fastapi` — four languages on
+four HTTP stacks — and only values all four produce are written; a disagreement is reported
+and resolved against `spec/endpoints.json` by hand. One field is deliberately left unpinned,
+listed in the file: whether a framework compresses a 125-byte body, which is what
+`compressed.gzip_small` is in the set to show.
 
 The Rust targets share one Cargo workspace and one lockfile, so a difference between two
 of them is the framework rather than a transitive dependency one happened to resolve

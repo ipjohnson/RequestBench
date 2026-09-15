@@ -8,7 +8,6 @@
 package main
 
 import (
-	_ "embed"
 	"errors"
 	"html/template"
 	"log"
@@ -21,13 +20,6 @@ import (
 	d "github.com/ianjohnson/requestbench/targets/go/_shared"
 )
 
-// Embedded rather than read from disk: the container image is the built binary on a bare
-// alpine, so a template file beside the source would not be there to load.
-//
-//go:embed views/items.tmpl
-var itemsTemplate string
-
-const cacheable = "public, max-age=60"
 
 func fail(c *gin.Context, err error) {
 	var ve *d.ValidationError
@@ -90,7 +82,7 @@ func validatorsFor(size string) gin.HandlerFunc {
 	etag := d.ETagOf(size)
 	return func(c *gin.Context) {
 		c.Header("etag", etag)
-		c.Header("cache-control", cacheable)
+		c.Header("cache-control", d.Cacheable)
 		c.Header("x-rb-serial", d.NextSerial())
 		if inm := c.GetHeader("if-none-match"); inm != "" && inm == etag {
 			c.AbortWithStatus(304)
@@ -119,7 +111,7 @@ func main() {
 	}))
 	// rb:snippet errors.unmatched
 	r.NoRoute(func(c *gin.Context) { c.JSON(404, gin.H{"error": "not_found"}) })
-	r.SetHTMLTemplate(template.Must(template.New("items.tmpl").Parse(itemsTemplate)))
+	r.SetHTMLTemplate(template.Must(template.New("items.tmpl").Parse(hosts.ItemsTemplate)))
 
 	sizes := []string{"small", "medium", "large"}
 	// The response is read once and served from the closure rather than looked up per
@@ -136,9 +128,7 @@ func main() {
 	r.GET("/plaintext", func(c *gin.Context) { c.String(200, "Hello, World!") })
 	r.GET("/health", func(c *gin.Context) { c.String(200, "ok") })
 	r.GET("/__meta", func(c *gin.Context) {
-		m := hosts.Meta("gin", gin.Version)
-		m["template"] = "html/template"
-		c.JSON(200, m)
+		c.JSON(200, hosts.Meta("gin", gin.Version))
 	})
 
 	// Static routes, not /json/:size. The size set is fixed, so a capture would make Gin

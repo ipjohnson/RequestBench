@@ -1,0 +1,3 @@
+# What the harness itself needs. Everything else in harness/ is standard library on
+# purpose; the test suite is the one thing that is not worth hand-rolling.
+pytest~=9.0

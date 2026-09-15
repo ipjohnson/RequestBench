@@ -253,6 +253,15 @@ export const auth = fixture.auth;
 export const payload = (size) => payloads[size].body;
 export const etagOf = (size) => payloads[size].etag;
 
+// The strings every target answers with. Spelled once so five targets cannot drift on a
+// word, which is the kind of difference that reads as a framework result.
+export const CACHEABLE = "public, max-age=60";
+export const notFoundBody = () => ({ error: "not_found" });
+export const forbiddenBody = () => ({ error: "forbidden" });
+export const invalidBody = (errors) => ({ error: "validation_failed", errors });
+export const malformed = () => new ValidationError([{ field: "body", rule: "json" }]);
+export const createdLocation = () => "/domain/orders/" + NEXT_ORDER_ID;
+
 export const GZIP_LEVEL = 6;
 export const gzip = (buf) => gzipSync(buf, { level: GZIP_LEVEL });
 

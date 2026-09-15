@@ -106,6 +106,9 @@ public final class Hosts {
     m.put("runtime", runtime());
     m.put("adapter", String.join(" + ", ADAPTERS));
     m.put("serializer", serializer);
+    // The engine the template family renders with, which every Java target shares for the
+    // same reason the gzip level is pinned.
+    m.put("template", "jmustache " + version("jmustache"));
     return m;
   }
 
