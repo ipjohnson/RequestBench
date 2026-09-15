@@ -49,7 +49,8 @@ BUNDLE_VERSION = "bundle-v1"
 SHARED_DIR = {"java": "shared"}
 HOST_DIR = {"java": "hosts"}
 
-MANIFEST_NAMES = {"package.json", "package-lock.json", "go.mod", "go.sum", "pom.xml"}
+MANIFEST_NAMES = {"package.json", "package-lock.json", "go.mod", "go.sum", "pom.xml",
+                  "Cargo.toml", "Cargo.lock"}
 CONFIG_SUFFIXES = (".properties", ".yaml", ".yml", ".toml", ".ini", ".conf")
 
 # Host entry points that sit inside a target's own directory rather than in the shared

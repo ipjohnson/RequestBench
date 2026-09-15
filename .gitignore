@@ -9,3 +9,6 @@ results/.target-*.log
 results/.ref-*.json
 results/summary/
 targets/java/*/target/
+
+# Cargo's build directory. Cargo.lock is committed; this is not.
+targets/rust/target/

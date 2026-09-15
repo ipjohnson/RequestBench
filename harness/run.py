@@ -137,6 +137,15 @@ class Local:
                                  % built)
             return (["java", "-jar", str(jar)], ROOT / "targets/java",
                     {"RB_FIXTURE": str(ROOT / "spec/fixture.json"), "RB_HOST": host})
+        if self.language == "rust":
+            if host != "container":
+                raise SystemExit("rust has no launcher for host %r" % host)
+            # cargo builds on first launch the way `go run` does, which no boot budget
+            # should punish; the debug profile is what makes that bearable locally.
+            # Measurement uses --mode docker, which builds the release profile.
+            return (["cargo", "run", "--quiet", "-p", "rb-" + d, "--bin", "rb-" + d],
+                    ROOT / "targets/rust",
+                    {"RB_FIXTURE": str(ROOT / "spec/fixture.json"), "RB_HOST": host})
         raise SystemExit("language %r has no local launcher; use --mode docker" % self.language)
 
     def start(self):
@@ -627,7 +636,7 @@ def main():
             # Otherwise the budget is the language's: a JVM target spends seconds starting
             # that a steady runtime does not, and 20s fails Spring Boot on two pinned cores.
             try:
-                wait_healthy(t, 240 if (a.mode == "local" and language == "go")
+                wait_healthy(t, 240 if (a.mode == "local" and language in ("go", "rust"))
                                 else LADDER["boot_timeout_s"][warmup_class(language)])
             except RuntimeError as e:
                 print("  BOOT FAILED: %s" % e)

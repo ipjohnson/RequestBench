@@ -1,6 +1,6 @@
 comma := ,
 
-.PHONY: fixture plan spec machine bundle snippets build java lint validate conform exemplars run vars report clean help
+.PHONY: fixture plan spec machine bundle snippets build java rust lint validate conform exemplars run vars report clean help
 # Everything is on by default: no TARGETS means every implemented target this host
 # supports. The rest narrow it. LANGUAGES/FRAMEWORKS pick what runs, FAMILIES/ENDPOINTS
 # pick what it is asked for, and a narrowed endpoint set is recorded as its own profile
@@ -62,6 +62,9 @@ java: ## build the java target jars, which MODE=local needs  (TARGETS=java:javal
 	  echo $${t#*:}; \
 	done | paste -sd, -); \
 	cd targets/java && mvn -B -q -pl "$$mods" -am -DskipTests package
+
+rust: ## build the rust target binaries, which speeds MODE=local up
+	cd targets/rust && cargo build --locked --bins
 
 lint: ## parse every workflow file, and run actionlint when it is installed
 	python3 harness/lintyaml.py

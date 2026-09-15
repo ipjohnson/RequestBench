@@ -90,6 +90,16 @@ def route_regex(route):
     return re.compile(QUOTE + "/".join(segments) + QUOTE)
 
 
+def attribute(line, i):
+    """Whether the # at `i` opens a Rust attribute rather than a comment.
+
+    Python and YAML comment with #; Rust writes its routes on #[get("/x")]. Reading that
+    as a comment blanked every attribute line, which hid every route in the rocket target
+    and left the delimiter count for the lines around it wrong as well.
+    """
+    return i + 1 < len(line) and line[i + 1] in "[!"
+
+
 def strip_code(line):
     """The line with string bodies and line comments blanked, for delimiter counting.
 
@@ -114,7 +124,7 @@ def strip_code(line):
             out.append(" ")
             i += 1
             continue
-        if line.startswith("//", i) or line.startswith("#", i):
+        if line.startswith("//", i) or (line.startswith("#", i) and not attribute(line, i)):
             break
         out.append(c)
         i += 1
@@ -239,7 +249,17 @@ def method_on(lines, line):
             return m
         if re.search(r"@%sMapping" % m, lines[line], re.I):
             return m
-    return None
+    # actix writes the method after the path -- .route("/x", web::get().to(h)) -- so it is
+    # past the first paren and the head never sees it. Outside the literals, because a
+    # path can contain a method name and must not be read as one.
+    #
+    # Only when the line names exactly one. axum registers two on a line --
+    # get(lookup).put(replace) -- and answering "get" there hides the PUT endpoint, which
+    # is worse than the no-opinion the caller already handles.
+    outside = re.sub(r"%s[^\"\'`]*%s" % (QUOTE, QUOTE), "", text)
+    seen = [m for m in METHODS
+            if re.search(r"(?:^|[^A-Za-z])%s\s*\(" % m, outside, re.I)]
+    return seen[0] if len(seen) == 1 else None
 
 
 def text_of(lines, start, end):
@@ -259,7 +279,12 @@ def comment_at(line):
             continue
         if c in "\"'`":
             quote = c
-        elif line.startswith("//", i) or line.startswith("#", i):
+        elif line.startswith("//", i):
+            return i
+        elif line.startswith("#", i):
+            if attribute(line, i):
+                i += 1
+                continue
             return i
         i += 1
     return len(line)
