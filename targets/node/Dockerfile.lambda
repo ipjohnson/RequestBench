@@ -2,7 +2,7 @@
 # running in Lambda, the Runtime Interface Emulator, so nothing here is a stand-in.
 #   docker build -f targets/node/Dockerfile.lambda --build-arg TARGET=fastify -t rb/node-fastify-lambda .
 FROM public.ecr.aws/lambda/nodejs:24
-ARG TARGET=baseline
+ARG TARGET
 WORKDIR /var/task
 COPY targets/node/package.json targets/node/package-lock.json ./
 RUN npm ci --omit=dev --no-audit --no-fund

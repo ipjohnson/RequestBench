@@ -3,7 +3,7 @@
 # Framework from the same binary, switching on RB_HOST.
 #   docker build -f targets/node/Dockerfile.gcp --build-arg TARGET=fastify -t rb/node-fastify-gcp .
 FROM node:24-alpine
-ARG TARGET=baseline
+ARG TARGET
 WORKDIR /app/targets/node
 COPY targets/node/package.json targets/node/package-lock.json ./
 RUN npm ci --omit=dev --no-audit --no-fund

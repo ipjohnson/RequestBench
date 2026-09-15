@@ -1,6 +1,6 @@
 #   docker build -f targets/node/Dockerfile --build-arg TARGET=fastify -t rb/node-fastify .
 FROM node:24-alpine
-ARG TARGET=baseline
+ARG TARGET
 WORKDIR /app
 COPY targets/node/package.json targets/node/package-lock.json ./targets/node/
 RUN cd targets/node && npm ci --omit=dev --no-audit --no-fund

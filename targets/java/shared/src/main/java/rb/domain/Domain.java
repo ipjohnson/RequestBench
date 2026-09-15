@@ -19,7 +19,7 @@ import rb.domain.Model.*;
  * these methods, so the measured delta is framework overhead.
  *
  * A direct port of targets/go/_shared/domain.go and targets/node/_shared/domain.js. The
- * node baseline is the reference every fingerprint is compared against, so where the three
+ * node reference is what every fingerprint is compared against, so where the three
  * could differ -- field order in a 422 body, an empty list versus a missing one, the
  * tiebreak in a sort -- this follows node.
  */
