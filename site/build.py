@@ -992,7 +992,12 @@ def md(text):
     A dependency would be a build-time install for headings, paragraphs, lists and fenced
     code, and the gate in validate.yml is what keeps the files to that subset.
     """
-    out, lines, i = [], text.splitlines(), 0
+    lines = text.splitlines()
+    # The page already carries the framework's name as its heading, so a README that opens
+    # with one would print it twice.
+    if lines and lines[0].startswith("# "):
+        lines = lines[1:]
+    out, i = [], 0
     def inline(s):
         s = esc(s)
         s = re.sub(r"`([^`]+)`", r"<code>\1</code>", s)
@@ -1054,7 +1059,8 @@ def bundle_at(run, t):
         return None
     recorded = t.get("bundle_hash")
     verified = bool(recorded) and man["bundle_hash"] == recorded
-    return {"manifest": man, "snippets": snips, "problems": problems, "verified": verified}
+    return {"manifest": man, "snippets": snips, "problems": problems, "verified": verified,
+            "linkable": verified and bundle.pushed(commit)}
 
 
 def standing(run, t, rn):
@@ -1081,9 +1087,13 @@ def render_framework(run, t, rn, view):
             % " &middot; ".join(esc(f) for f in facts if f)]
 
     commit = run.get("commit") or ""
-    if view and view["verified"]:
+    if view and view["verified"] and view["linkable"]:
         verdict = ("<span class='verdict ok'>hash verified</span> against "
                    "<code>%s</code>" % esc(commit[:12]))
+    elif view and view["verified"]:
+        verdict = ("<span class='verdict ok'>hash verified</span> against "
+                   "<code>%s</code>, which is not on a remote, so the code is shown "
+                   "without links" % esc(commit[:12]))
     elif view and not t.get("bundle_hash"):
         # A run made before the bundle fields existed has nothing to verify against. That
         # is not a mismatch, and reading as one would accuse the history of being wrong.
@@ -1140,7 +1150,7 @@ def render_framework(run, t, rn, view):
             if s["end_line"] != s["start_line"]:
                 loc += "-%d" % s["end_line"]
             link = ""
-            if view["verified"] and run.get("repo"):
+            if view["linkable"] and run.get("repo"):
                 link = ("<a href='%s'>open on GitHub</a>"
                         % esc(permalink(run["repo"], commit, s["path"],
                                         s["start_line"], s["end_line"])))
@@ -1164,7 +1174,7 @@ def render_framework(run, t, rn, view):
             loc = "%s:%d%s" % (s["path"], s["start_line"],
                                "" if s["end_line"] == s["start_line"] else "-%d" % s["end_line"])
             cell = esc(loc)
-            if view["verified"] and run.get("repo"):
+            if view["linkable"] and run.get("repo"):
                 cell = "<a href='%s'>%s</a>" % (
                     esc(permalink(run["repo"], commit, s["path"],
                                   s["start_line"], s["end_line"])), esc(loc))

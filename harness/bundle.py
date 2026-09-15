@@ -207,6 +207,20 @@ def repo():
     return m.group(1) if m else ""
 
 
+@functools.lru_cache(maxsize=None)
+def pushed(at):
+    """Whether a remote-tracking branch holds this commit.
+
+    A permalink to a commit that was never pushed is a 404, which reads as the code having
+    been deleted rather than as the run having been local. Nightly runs are Actions runs on
+    a pushed commit, so this only ever hides a link for a local run.
+    """
+    try:
+        return bool(git("branch", "-r", "--contains", at).strip())
+    except RuntimeError:
+        return False
+
+
 def manifest(language, target, at=None):
     entries = []
     for path in files(language, target, at):
