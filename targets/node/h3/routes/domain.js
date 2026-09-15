@@ -1,0 +1,44 @@
+// domain: application-shaped handler work and the write methods.
+import { getQuery, getRouterParam, noContent, readBody } from "h3";
+
+import * as d from "../../_shared/domain.js";
+
+const send = (e, v, status = 200) => {
+  if (v === d.NOT_FOUND) {
+    e.res.status = 404;
+    return d.notFoundBody();
+  }
+  e.res.status = status;
+  return v;
+};
+
+export default function domain(app) {
+  app.get("/domain/orders", (e) => d.domainFilter(getQuery(e)));
+
+  app.post("/domain/orders", async (e) => {
+    e.res.headers.set("location", d.createdLocation());
+    return send(e, d.validateOrder(await readBody(e)), 201);
+  });
+
+  app.get("/domain/orders/:oid", (e) => send(e, d.getOrder(getRouterParam(e, "oid"))));
+
+  app.put("/domain/orders/:oid", async (e) => {
+    const oid = getRouterParam(e, "oid");
+    if (d.getOrder(oid) === d.NOT_FOUND) return send(e, d.NOT_FOUND);
+    return { id: Number(oid), ...d.validateOrder(await readBody(e)) };
+  });
+
+  app.get("/domain/customers/:cid/summary", (e) =>
+    send(e, d.domainJoin(getRouterParam(e, "cid"))));
+
+  app.get("/domain/regions/:r/report", (e) =>
+    send(e, d.domainAggregate(getRouterParam(e, "r"))));
+
+  app.patch("/domain/customers/:cid", async (e) =>
+    send(e, d.patchCustomer(getRouterParam(e, "cid"), await readBody(e))));
+
+  app.delete("/domain/orders/:oid/lines/:lid", (e) => {
+    const line = d.getOrderLine(getRouterParam(e, "oid"), getRouterParam(e, "lid"));
+    return line === d.NOT_FOUND ? send(e, d.NOT_FOUND) : noContent();
+  });
+}

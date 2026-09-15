@@ -12,13 +12,11 @@ import Fastify from "fastify";
 import compress from "@fastify/compress";
 import view from "@fastify/view";
 import handlebars from "handlebars";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
 import { pkgVersion } from "../_shared/version.js";
 import { hostMeta } from "../_shared/host.js";
+import { VIEWS } from "../_shared/template.js";
 import * as d from "../_shared/domain.js";
 
-const here = dirname(fileURLToPath(import.meta.url));
 const meta = { framework: "fastify", version: pkgVersion("fastify"),
                runtime: "node " + process.versions.node, template: "handlebars" };
 
@@ -146,7 +144,7 @@ app.delete("/domain/orders/:oid/lines/:lid", (req, reply) =>
 
 // ---- template: the engine named in /__meta, through Fastify's own view plugin ---------
 
-app.register(view, { engine: { handlebars }, root: join(here, "views") });
+app.register(view, { engine: { handlebars }, root: VIEWS });
 app.get("/template/small",  (_, reply) => reply.view("items.hbs", d.payload("small")));
 app.get("/template/medium", (_, reply) => reply.view("items.hbs", d.payload("medium")));
 
