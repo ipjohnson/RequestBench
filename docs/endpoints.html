@@ -162,7 +162,7 @@ footer { margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--rule);
 
 <p>Every statistic rolls up from one place. <code>harness/summarize.py:102</code> states it: an endpoint is a histogram, a family is its endpoints merged, the blend is every family merged. The raw JSONL carries one histogram per endpoint per rung at 3.7&nbsp;KB dense; the summary drops them and keeps only <code>count</code>, <code>errors</code>, <code>mismatch</code>, <code>p50_us</code>, <code>p90_us</code>, <code>p99_us</code>, <code>p999_us</code> and the two ratios.</p>
 
-<p>The headline is a ratio to each language's own baseline. Absolute numbers are comparable only inside the single run that produced them.</p>
+<p>The headline is the time the target took. It is comparable to the other targets in the run that produced it, because they shared a machine and a window.</p>
 </section>
 
 <section>

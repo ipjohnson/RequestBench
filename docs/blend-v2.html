@@ -542,8 +542,7 @@ footer { margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--rule);
 <pre>uniform blend   = sum of h[i]                 <i>no scaling; this is the data as collected</i>
 weighted blend  = sum of h[i] * w[i]          <i>w from spec/blends.json, normalised</i>
 p50 … p99       = <b>percentiles of the merged histogram</b>
-p50_ratio       = <b>percentile(merged_target) / percentile(merged_baseline)</b>
-                                              <i>same vector composes both sides</i></pre>
+                                              <i>published as they are; nothing divides them</i></pre>
 
 <p>Families end up weighted by how many endpoints they hold — <code>domain</code> at 8 of 42, <code>headers</code> at 2 — which is the right default, because a family with more arms is a family testing more distinct things. Anyone who disagrees says so in a weight vector rather than in the sampler.</p>
 
@@ -690,7 +689,7 @@ p50_ratio       = <b>percentile(merged_target) / percentile(merged_baseline)</b>
 <li><h3>Fixture and spec first</h3><p>Payloads, ETags, token, then <code>endpoints.json</code> rewritten whole. Everything downstream reads these two, and they are the cheapest things in the set to change.</p></li>
 <li><h3>Headers through the pipeline</h3><p><code>plan.py</code>, both generators, <code>conform.py</code>. Until a request can carry a header, four of the thirteen families cannot exist.</p></li>
 <li><h3>Uniform sampling and named blends</h3><p><code>blends.json</code>, a uniform draw, and the composed aggregate in <code>summarize.py</code>. Worth doing early and out of order: it removes more code than it adds, touches nothing the target authors touch, and applies to <code>blend-v1</code> as it stands.</p></li>
-<li><h3>One target end to end</h3><p><code>node:node-http</code>, the baseline. It has no framework facilities to use, so it establishes the contract each framework then has to meet with its own.</p></li>
+<li><h3>One target end to end</h3><p><code>node:fastify</code>, the language's anchor. Its responses become the fingerprint every other Node target is gated against, so it establishes the contract the rest then have to meet with their own facilities.</p></li>
 <li><h3>Then one framework per language</h3><p>Fastify, Gin, Spring Boot. These are where the feature wirings are least alike, so they will find whatever the spec left ambiguous.</p></li>
 <li><h3>Then the remaining fifteen</h3><p>Mechanical once three languages have a worked example, and the point at which conformance across forty-five endpoints starts earning its keep again.</p></li>
 <li><h3>Endpoint pages, the delta column, the blend selector</h3><p><code>base</code>, <code>varies</code> and the named blends are already in the spec by then, so the site can state "costs 41&nbsp;µs over <code>json.medium</code>" as generated text rather than leaving the reader to subtract, and can offer five aggregates rather than one.</p></li>

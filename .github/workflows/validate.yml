@@ -82,7 +82,7 @@ jobs:
       - run: npm ci --omit=dev --no-audit --no-fund
         working-directory: targets/node
       - name: Boot and conform every node target
-        run: python3 harness/run.py --targets node:node-http,node:fastify,node:express,node:hono,node:koa,node:h3 --validate-only
+        run: python3 harness/run.py --languages node --validate-only
 
   go:
     name: go targets conform
@@ -96,7 +96,7 @@ jobs:
       - run: go build ./...
         working-directory: targets/go
       - name: Boot and conform every go target against the node reference
-        run: python3 harness/run.py --targets go:net-http,go:gin,go:echo,go:chi,go:gorilla-mux,go:fiber --validate-only
+        run: python3 harness/run.py --languages go --validate-only
 
   java:
     name: java targets conform
@@ -115,7 +115,6 @@ jobs:
       - name: Boot and conform every java target against the node reference
         run: |
           python3 harness/run.py --validate-only --targets \
-            java:bare-netty,java:javalin,java:vertx,java:helidon-se,java:spring-boot,java:micronaut,java:quarkus
 
   images:
     name: container images build
@@ -124,19 +123,16 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { language: node, target: baseline }
           - { language: node, target: express }
           - { language: node, target: fastify }
           - { language: node, target: hono }
           - { language: node, target: koa }
           - { language: node, target: h3 }
-          - { language: go,   target: baseline }
           - { language: go,   target: gin }
           - { language: go,   target: echo }
           - { language: go,   target: chi }
           - { language: go,   target: gorilla-mux }
           - { language: go,   target: fiber }
-          - { language: java, target: baseline }
           - { language: java, target: javalin }
           - { language: java, target: vertx }
           - { language: java, target: helidon-se }

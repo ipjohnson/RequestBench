@@ -147,7 +147,7 @@ jobs:
             echo
             echo "Conformance is not run by the \`deps\` job. The gate is \`validate.yml\` on"
             echo "this pull request: it boots every target and fingerprints every endpoint"
-            echo "against the node baseline. Green here means the frameworks behave"
+            echo "against the language reference. Green here means the frameworks behave"
             echo "identically, not that they are still as fast -- no load is generated on a"
             echo "pull request, so a regression in speed shows up as a ring on the chart"
             echo "after the next nightly measurement."
