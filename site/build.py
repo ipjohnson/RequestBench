@@ -1084,6 +1084,11 @@ def render_framework(run, t, rn, view):
     if view and view["verified"]:
         verdict = ("<span class='verdict ok'>hash verified</span> against "
                    "<code>%s</code>" % esc(commit[:12]))
+    elif view and not t.get("bundle_hash"):
+        # A run made before the bundle fields existed has nothing to verify against. That
+        # is not a mismatch, and reading as one would accuse the history of being wrong.
+        verdict = ("<span class='verdict no'>no bundle recorded</span> this run predates "
+                   "the bundle record, so its source cannot be pinned")
     elif view:
         verdict = ("<span class='verdict no'>hash mismatch</span> the bundle at "
                    "<code>%s</code> is not what this run recorded, so no source is linked"
