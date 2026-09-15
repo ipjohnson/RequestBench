@@ -117,6 +117,10 @@ def main():
     out = {
         "run_id": env["run_id"], "date": env["run_id"][:10],
         "suite": env["suite"], "epoch": env["epoch"], "mode": env.get("mode", "local"),
+        # Rung ids are reused across ladder versions while the rates behind them change,
+        # so two summaries can agree on "rung 2" and mean different offered loads.
+        "ladder": env.get("ladder", "ladder-v1"),
+        "machine": env.get("machine", {}),
         "runner": a.runner, "tracked": a.tracked,
         "exec_host": env.get("exec_host") or "container",
         "host": env["host"], "cpu": env["cpu"], "cores": env["cores"],

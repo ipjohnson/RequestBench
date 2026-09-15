@@ -6,6 +6,7 @@
 import argparse, collections, functools, http.client, json, os, pathlib, platform, re, shutil, signal, socket, subprocess, sys, time, uuid
 
 import bundle
+import machine
 from bundle import target_dir
 
 # Long runs are watched live; block-buffered stdout hides progress for minutes.
@@ -18,6 +19,10 @@ MATRIX = json.loads((SPEC / "matrix.json").read_text())
 # The endpoint set a run measured, carried on every row it writes. Hardcoding it meant a
 # blend-v2 run filed itself as blend-v1 and landed in the same time series as one.
 BLEND = json.loads((SPEC / "endpoints.json").read_text())["version"]
+# And which rates those endpoints were served at. Rung ids are reused across ladder
+# versions while the rates behind them change, so a summary that does not say which
+# ladder produced it cannot be read against an older one.
+LADDER_V = LADDER["version"]
 SEQUENCE = json.loads((SPEC / "sequence.json").read_text())["version"]
 PORT = int(os.environ.get("RB_PORT", "8080"))
 EXEMPLARS = ROOT / "results" / "exemplars"
@@ -380,9 +385,13 @@ def env_fingerprint(run_id, languages, baselines):
             "exec_host": os.environ.get("RB_HOST", "container"),
             "sut_cpus": os.environ.get("RB_SUT_CPUS", ""),
             "gen_cpus": os.environ.get("RB_GEN_CPUS", ""),
+            # Published times are only reproducible while the machine holds still, so what
+            # it was actually doing is part of the result rather than a setup detail.
+            "machine": safely(machine.state) or {"available": False},
             "runtime": subprocess.run(["node", "-v"], capture_output=True, text=True)
                         .stdout.strip(),
-            "generator": "blend.mjs/node", "epoch": 1, "suite": BLEND}
+            "generator": "blend.mjs/node", "epoch": 1, "suite": BLEND,
+            "ladder": LADDER_V}
 
 def main():
     ap = argparse.ArgumentParser()
@@ -405,7 +414,20 @@ def main():
                     help="boot and conform every target, then stop; no load is generated")
     ap.add_argument("--emit-path", metavar="FILE",
                     help="write the results file path here, so callers need not glob")
+    ap.add_argument("--require-pinned", action="store_true",
+                    help="refuse to run unless the machine is configured to be measured "
+                         "on: see harness/machine.py for what that means")
     a = ap.parse_args()
+
+    # A misconfigured machine produces numbers that describe the configuration, and they
+    # are indistinguishable afterwards from numbers that describe a framework. Checked
+    # before anything boots so the failure costs seconds rather than a night.
+    bad = machine.problems(safely(machine.state) or {})
+    if bad:
+        for b in bad:
+            print("machine: %s" % b)
+        if a.require_pinned:
+            sys.exit("refusing to measure: the machine is not pinned")
 
     # A cross-language run is one job on one machine measuring every language back to
     # back. Within-language ratios still work because each language's baseline is in the
