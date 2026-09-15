@@ -1,0 +1,28 @@
+# One workspace, one lockfile, one target directory. Every target resolves the same
+# version of every shared dependency, so a difference between two of them is the framework
+# and not a transitive bump one of them happened to pick up.
+[workspace]
+resolver = "3"
+members = ["_shared", "_hosts", "axum", "actix-web", "poem", "salvo", "rocket", "warp"]
+
+[workspace.package]
+edition = "2024"
+publish = false
+
+[workspace.dependencies]
+rb-domain = { path = "_shared" }
+rb-host = { path = "_hosts" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "net"] }
+minijinja = "2"
+flate2 = "1"
+
+# Measurement, not development. Without this every target is compared while carrying
+# debug assertions and no inlining across crates, which measures the profile rather than
+# the framework.
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+panic = "unwind"
