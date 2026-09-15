@@ -28,10 +28,10 @@ LADDER_V = LADDER["version"]
 SEQUENCE = json.loads((SPEC / "sequence.json").read_text())["version"]
 PORT = int(os.environ.get("RB_PORT", "8080"))
 EXEMPLARS = ROOT / "results" / "exemplars"
-# Which targets the gate actually fails on. Everything implemented is still booted and
-# still reported; a target that has not been rewired to the current endpoint set cannot
-# pass, and failing on it would leave the gate red for as long as the rewiring takes.
-CONFORMANCE_REQUIRED = set(MATRIX.get("conformance_required", {}).get("targets", []))
+# There is no exemption list. Every implemented target has to conform, because a target
+# that does not is not measured and a gate that passes anyway says nothing. The list that
+# used to sit here let fourteen targets answer a two-version-old endpoint set behind a
+# green check for as long as they stayed on it.
 
 # A host with no concurrency of its own gets the serial suite: there is no knee to find,
 # so the question is how long the identical pinned sequence took rather than what rate it
@@ -637,7 +637,7 @@ def main():
               % (run_id, what, a.mode, warm_s,
                  " ".join("%s@%d" % (r["name"], r["rps"]) for r in rungs), len(pairs)))
 
-    conformed, boot_failed, nonconforming, unlisted = 0, [], [], []
+    conformed, boot_failed, nonconforming = 0, [], []
     reference_ok = set()
     for language, target in pairs:
         key = "%s:%s" % (language, target)
@@ -694,15 +694,11 @@ def main():
                 print("  conformance: %s" % line)
                 if not ok:
                     nonconforming.append(key)
-                    print("  %s: target does not conform"
-                          % ("FAILED" if key in CONFORMANCE_REQUIRED else "pending rewiring"))
+                    print("  FAILED: target does not conform")
                     continue
                 conformed += 1
                 if writes_reference:
                     reference_ok.add(language)
-                if key not in CONFORMANCE_REQUIRED:
-                    unlisted.append(key)
-                    print("  conforms but is not in conformance_required; add it there")
             if a.validate_only:
                 continue
 
@@ -811,21 +807,12 @@ def main():
 
     if a.validate_only:
         print("\n%d/%d targets conform" % (conformed, len(pairs)))
-        required_bad = [k for k in nonconforming if k in CONFORMANCE_REQUIRED]
-        pending = [k for k in nonconforming if k not in CONFORMANCE_REQUIRED]
-        if pending:
-            print("  %d not yet rewired to the current spec: %s"
-                  % (len(pending), ", ".join(pending)))
-        # A target that starts conforming on its own is the signal to add it, not something
-        # to pass silently: the list is what the gate protects, so it has to stay current.
-        if unlisted:
-            print("  %d conform but are unlisted: %s" % (len(unlisted), ", ".join(unlisted)))
         if boot_failed:
             print("  %d FAILED TO BOOT: %s" % (len(boot_failed), ", ".join(boot_failed)))
-        if required_bad:
-            print("  %d required and not conforming: %s"
-                  % (len(required_bad), ", ".join(required_bad)))
-        return 1 if (required_bad or boot_failed or unlisted) else 0
+        if nonconforming:
+            print("  %d not conforming: %s"
+                  % (len(nonconforming), ", ".join(nonconforming)))
+        return 1 if (nonconforming or boot_failed) else 0
 
     with out_path.open("w") as f:
         for row in rows:

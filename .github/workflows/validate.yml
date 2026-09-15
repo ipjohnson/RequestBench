@@ -60,6 +60,22 @@ jobs:
       - name: Every conforming target locates every endpoint
         run: python3 harness/snippets.py --check --required
 
+  expectation:
+    name: the expectation matches the spec
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with: { python-version: "3.13" }
+      # spec/expected.json records the digests of the plan and fixture it was taken
+      # against. A regenerated fixture changes every body, and a stale expectation
+      # would then fail every target for a reason belonging to none of them.
+      - name: spec/expected.json describes the committed plan and fixture
+        run: |
+          python3 -c "import sys; sys.path.insert(0, 'harness'); import expected;\
+          why = expected.stale_against_spec();\
+          print(why or 'spec/expected.json is current'); sys.exit(1 if why else 0)"
+
   workflows:
     name: workflow files parse
     runs-on: ubuntu-latest
@@ -81,8 +97,10 @@ jobs:
         with: { python-version: "3.13" }
       - run: npm ci --omit=dev --no-audit --no-fund
         working-directory: targets/node
-      - name: Boot and conform every node target
-        run: python3 harness/run.py --languages node --validate-only
+      - name: Install the test dependencies
+        run: pip install -r harness/requirements.txt
+      - name: Every node target answers spec/expected.json
+        run: python3 -m pytest tests --rb-mode local --rb-targets node:fastify,node:express,node:hono,node:koa,node:h3 -q
 
   go:
     name: go targets conform
@@ -95,8 +113,10 @@ jobs:
         with: { python-version: "3.13" }
       - run: go build ./...
         working-directory: targets/go
-      - name: Boot and conform every go target against the node reference
-        run: python3 harness/run.py --languages go --validate-only
+      - name: Install the test dependencies
+        run: pip install -r harness/requirements.txt
+      - name: Every go target answers spec/expected.json
+        run: python3 -m pytest tests --rb-mode local --rb-targets go:gin,go:echo,go:chi,go:gorilla-mux,go:fiber -q
 
   java:
     name: java targets conform
@@ -112,8 +132,10 @@ jobs:
       - name: Build every java target
         run: mvn -B -q -DskipTests package
         working-directory: targets/java
-      - name: Boot and conform every java target against the java reference
-        run: python3 harness/run.py --validate-only --languages java
+      - name: Install the test dependencies
+        run: pip install -r harness/requirements.txt
+      - name: Every java target answers spec/expected.json
+        run: python3 -m pytest tests --rb-mode local --rb-targets java:spring-boot,java:quarkus,java:micronaut,java:helidon-se,java:vertx,java:javalin -q
 
   python:
     name: python targets conform
@@ -130,8 +152,10 @@ jobs:
       # which is what makes that one install enough.
       - run: pip install -r requirements.txt
         working-directory: targets/python
-      - name: Boot and conform every python target against the python reference
-        run: python3 harness/run.py --validate-only --languages python
+      - name: Install the test dependencies
+        run: pip install -r harness/requirements.txt
+      - name: Every python target answers spec/expected.json
+        run: python3 -m pytest tests --rb-mode local --rb-targets python:fastapi,python:starlette,python:litestar,python:sanic,python:flask,python:django-asgi -q
 
   rust:
     name: rust targets conform
@@ -149,8 +173,10 @@ jobs:
       - name: Build every rust target
         run: cargo build --locked --bins
         working-directory: targets/rust
-      - name: Boot and conform every rust target against the rust reference
-        run: python3 harness/run.py --validate-only --languages rust
+      - name: Install the test dependencies
+        run: pip install -r harness/requirements.txt
+      - name: Every rust target answers spec/expected.json
+        run: python3 -m pytest tests --rb-mode local --rb-targets rust:axum,rust:actix-web,rust:rocket,rust:poem,rust:salvo,rust:warp -q
 
   images:
     name: container images build

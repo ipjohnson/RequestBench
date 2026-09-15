@@ -12,3 +12,7 @@ targets/java/*/target/
 
 # Cargo's build directory. Cargo.lock is committed; this is not.
 targets/rust/target/
+results/captures/
+
+# Written by the maven shade plugin beside each target it shades.
+targets/java/*/dependency-reduced-pom.xml
