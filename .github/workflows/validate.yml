@@ -107,14 +107,13 @@ jobs:
         with: { distribution: temurin, java-version: "25", cache: maven }
       - uses: actions/setup-python@v7
         with: { python-version: "3.13" }
-      # One reactor build for all seven, rather than an image build per target: the local
+      # One reactor build for all six, rather than an image build per target: the local
       # launcher runs the jar the same way the container ENTRYPOINT does.
       - name: Build every java target
         run: mvn -B -q -DskipTests package
         working-directory: targets/java
-      - name: Boot and conform every java target against the node reference
-        run: |
-          python3 harness/run.py --validate-only --targets \
+      - name: Boot and conform every java target against the java reference
+        run: python3 harness/run.py --validate-only --languages java
 
   images:
     name: container images build

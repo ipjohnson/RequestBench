@@ -51,7 +51,10 @@ def select(universe, include, exclude, what):
     inc = {x.strip() for x in include.split(",") if x.strip()}
     exc = {x.strip() for x in exclude.split(",") if x.strip()}
     known = set(universe)
-    for bad in sorted((inc | exc) - known):
+    # Only an include has to name something real. Asking to exclude what is not there is
+    # already satisfied, and failing on it would stop `--not-languages java` composing
+    # with any selection that had no java in it to begin with.
+    for bad in sorted(inc - known):
         sys.exit("unknown %s %r; known: %s" % (what, bad, ", ".join(sorted(known))))
     return [x for x in universe if (not inc or x in inc) and x not in exc]
 
