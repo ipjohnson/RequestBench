@@ -115,6 +115,25 @@ jobs:
       - name: Boot and conform every java target against the java reference
         run: python3 harness/run.py --validate-only --languages java
 
+  rust:
+    name: rust targets conform
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with: { workspaces: targets/rust }
+      - uses: actions/setup-python@v7
+        with: { python-version: "3.13" }
+      # One workspace build for all six, rather than an image build per target: the local
+      # launcher runs the binary the same way the container ENTRYPOINT does, and building
+      # six release binaries per pull request costs more than the gate is worth.
+      - name: Build every rust target
+        run: cargo build --locked --bins
+        working-directory: targets/rust
+      - name: Boot and conform every rust target against the rust reference
+        run: python3 harness/run.py --validate-only --languages rust
+
   images:
     name: container images build
     runs-on: ubuntu-latest
@@ -122,6 +141,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - { language: rust, target: axum }
           - { language: node, target: express }
           - { language: node, target: fastify }
           - { language: node, target: hono }

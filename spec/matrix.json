@@ -99,7 +99,7 @@
       "implemented": []
     },
     "rust": {
-      "runtime": "rust:1.90",
+      "runtime": "rust:1.98",
       "frameworks": [
         "axum",
         "actix-web",
@@ -109,7 +109,14 @@
         "warp"
       ],
       "anchor": "axum",
-      "implemented": []
+      "implemented": [
+        "axum",
+        "actix-web",
+        "rocket",
+        "poem",
+        "salvo",
+        "warp"
+      ]
     }
   },
   "note": "'frameworks' is the plan of record. 'implemented' is what actually exists and is what any runner attempts; a language with an empty list is skipped.",
@@ -117,7 +124,8 @@
     "note": "Targets rewired to the endpoint set in spec/endpoints.json. The gate boots every implemented target and reports all of them, but only these have to pass. A target that has not been rewired yet cannot pass, and requiring it would leave the gate red for as long as the rewiring takes, which is how a check stops being read.",
     "targets": [
       "node:fastify",
-      "go:gin"
+      "go:gin",
+      "rust:axum"
     ]
   },
   "hosts": {
@@ -182,6 +190,9 @@
       "container",
       "gcp-func",
       "lambda-rie"
+    ],
+    "rust": [
+      "container"
     ]
   },
   "host_exceptions": {

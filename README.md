@@ -1,6 +1,6 @@
 # RequestBench
 
-A cross-language HTTP framework benchmark. Thirty-one frameworks across six languages,
+A cross-language HTTP framework benchmark. Thirty-seven frameworks across six languages,
 measured on one machine held still, so what gets published is the time each one took at a
 traffic level you can hold against your own.
 
@@ -104,15 +104,22 @@ Working: the spec and plan, the conformance gate with cross-target response comp
 the open-loop generator with per-endpoint histograms, the orchestrator in both host and
 container mode, the aggregator, the machine preflight, the nightly measurement split by
 execution host, the nightly framework update, target bundles with a framework page per
-target, and sixteen targets across three languages. Node has Fastify, Express, Hono, Koa and h3. Go has Gin,
-Echo, chi, gorilla/mux and Fiber. Java has Spring Boot, Quarkus, Micronaut, Helidon SE,
-Vert.x and Javalin.
+target, and twenty-two targets across four languages. Node has Fastify, Express, Hono, Koa
+and h3. Go has Gin, Echo, chi, gorilla/mux and Fiber. Java has Spring Boot, Quarkus,
+Micronaut, Helidon SE, Vert.x and Javalin. Rust has axum, actix-web, Rocket, Poem, Salvo
+and warp, all six answering `blend-v2`.
 
-Each language names an anchor in `spec/matrix.json` — Fastify, Gin, Spring Boot. That
-target boots first and its responses become the fingerprint every other target in the
-language is compared against. Fastify and Gin answer the forty-five endpoints of
-`blend-v2`; the other fourteen still answer `blend-v1`, so the conformance gate reports
-them as pending rewiring and the orchestrator measures nothing for them.
+Each language names an anchor in `spec/matrix.json` — Fastify, Gin, Spring Boot, axum.
+That target boots first and its responses become the fingerprint every other target in the
+language is compared against. Fastify, Gin and all six Rust targets answer the forty-five
+endpoints of `blend-v2`; the other fourteen still answer `blend-v1`, so the conformance
+gate reports them as pending rewiring and the orchestrator measures nothing for them.
+
+The Rust targets share one Cargo workspace and one lockfile, so a difference between two
+of them is the framework rather than a transitive dependency one happened to resolve
+differently. `targets/rust/_shared` is a port of `targets/go/_shared/domain.go`, and every
+response it produces was compared against the Node capture before the targets were
+listed.
 
 Every run records the commit it measured and a content hash of each target's bundle: its
 own wiring, the shared domain module, the dependency manifests and the Dockerfiles. The
@@ -142,8 +149,8 @@ aws-serverless-java-container. Javalin, Vert.x and Helidon SE have no first-part
 for either function host, and a hand-written shim would measure the shim. Quarkus has one
 for both and is not wired to either yet.
 
-Not built yet: the other three languages, Quarkus on either function host, the ten
-capability suites, and the machine calibrator.
+Not built yet: Python and .NET, Rust on either function host, Quarkus on either function
+host, the ten capability suites, and the machine calibrator.
 
 The current numbers are **not admissible** under the plan's own rules: the generator runs on
 the same machine as the target, there is no calibrator, and no host is pinned. They prove
