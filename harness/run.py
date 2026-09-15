@@ -1,7 +1,7 @@
 """RequestBench orchestrator: boot, gate, warm, ladder, record, tear down.
 
-  python3 harness/run.py --language node --targets node-http,fastify,express
-  python3 harness/run.py --language node --targets fastify --seconds 20 --rungs 3,5
+  python3 harness/run.py --targets node:node-http,node:fastify,node:express
+  python3 harness/run.py --targets node:fastify --seconds 20 --rungs 3,5
 """
 import argparse, collections, functools, http.client, json, os, pathlib, platform, re, shutil, signal, socket, subprocess, sys, time, uuid
 
@@ -386,10 +386,9 @@ def env_fingerprint(run_id, languages, baselines):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--language", help="single language; omit when --targets is fully qualified")
     ap.add_argument("--targets", required=True,
-                    help="comma separated. Either bare names with --language, or "
-                         "language:target pairs to measure several languages in one run")
+                    help="comma separated language:target pairs. A name may repeat, "
+                         "which measures that target in two positions in one run")
     ap.add_argument("--seconds", type=int, default=0, help="override rung duration")
     ap.add_argument("--rungs", default="", help="comma separated rung numbers, default all")
     ap.add_argument("--workers", type=int, default=6)
@@ -416,12 +415,9 @@ def main():
         entry = entry.strip()
         if not entry:
             continue
-        if ":" in entry:
-            lang, _, name = entry.partition(":")
-        elif a.language:
-            lang, name = a.language, entry
-        else:
-            sys.exit("target %r has no language: pass --language or write language:target" % entry)
+        if ":" not in entry:
+            sys.exit("target %r is not language:target" % entry)
+        lang, _, name = entry.partition(":")
         if lang not in MATRIX["languages"]:
             sys.exit("unknown language %r in target %r" % (lang, entry))
         pairs.append((lang, name))
@@ -437,8 +433,8 @@ def main():
     if a.seconds:
         warm_s = max(5, a.seconds // 2)
 
-    # A run is one host. Its identity is the machine it measured on, not the languages
-    # that happened to be on it: naming it by language is what split the matrix in two.
+    # A run is one host. Its identity is the machine it measured on, not the targets that
+    # happened to be on it.
     host = os.environ.get("RB_HOST", "container")
     run_id = "%s.%s.%s" % (time.strftime("%Y-%m-%dT%H:%MZ", time.gmtime()), host,
                            uuid.uuid4().hex[:6])

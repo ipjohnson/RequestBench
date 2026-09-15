@@ -41,10 +41,9 @@ Within a language, a framework is reported as a ratio to that language's bare ba
 which divides out the machine. Across languages there is no shared denominator, so two
 ratios measured on different machines cannot be put side by side.
 
-Runs are split by execution host, never by language, which is what makes the comparison
-possible. One job is one host and boots every implemented target in every language back to
-back, so nothing about the machine changes between targets and the absolute numbers from
-that single run are comparable across languages.
+A run is one execution host. One job boots every implemented target back to back, so
+nothing about the machine changes between targets, and the absolute numbers from that
+single run are comparable to each other.
 
     python3 harness/hosts.py --host container    # what that job would run
     python3 harness/run.py --mode docker \

@@ -1,12 +1,11 @@
 # Measurement on GitHub-hosted runners.
 #
-# A job is one suite on one execution host, and it holds every framework in every language
-# that host supports. There is deliberately no language dimension: splitting by language
-# would put Go and Node on different runners, and nothing then makes their numbers
-# comparable. Every run is cross-language by construction.
+# A job is one suite on one execution host and holds every framework that host supports.
+# One job is one machine, so every absolute number in it was measured under the same
+# conditions and they can be read against each other.
 #
-# Within a run the ratio to each language's own bare baseline is what crosses hosts; the
-# absolute numbers are comparable only inside the single run that produced them.
+# The ratio to each target's own bare baseline is what crosses hosts; the absolute numbers
+# are comparable only inside the single run that produced them.
 name: measure
 
 on:
