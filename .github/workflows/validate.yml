@@ -115,6 +115,24 @@ jobs:
       - name: Boot and conform every java target against the java reference
         run: python3 harness/run.py --validate-only --languages java
 
+  python:
+    name: python targets conform
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+          cache: pip
+          cache-dependency-path: targets/python/requirements.txt
+      # One install for all six, from the lockfile they share. harness/run.py launches them
+      # with the interpreter it is running under when there is no virtualenv beside them,
+      # which is what makes that one install enough.
+      - run: pip install -r requirements.txt
+        working-directory: targets/python
+      - name: Boot and conform every python target against the python reference
+        run: python3 harness/run.py --validate-only --languages python
+
   rust:
     name: rust targets conform
     runs-on: ubuntu-latest
@@ -142,6 +160,12 @@ jobs:
       matrix:
         include:
           - { language: rust, target: axum }
+          - { language: python, target: fastapi }
+          - { language: python, target: starlette }
+          - { language: python, target: litestar }
+          - { language: python, target: sanic }
+          - { language: python, target: flask }
+          - { language: python, target: django-asgi }
           - { language: node, target: express }
           - { language: node, target: fastify }
           - { language: node, target: hono }

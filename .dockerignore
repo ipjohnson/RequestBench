@@ -1,0 +1,12 @@
+# The build context is the repository root, because every Dockerfile bakes in
+# spec/fixture.json. Without this it is also every dependency tree and build directory on
+# the machine, which the daemon tars once per image.
+.git/
+results/
+site/
+**/__pycache__/
+**/*.pyc
+targets/node/node_modules/
+targets/python/.venv/
+targets/rust/target/
+targets/java/*/target/

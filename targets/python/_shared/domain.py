@@ -1,0 +1,402 @@
+"""Behaviour shared by every Python target. Frameworks differ only in how they bind routes
+to these functions, so the measured delta is framework overhead.
+
+A port of ``targets/rust/_shared/src/lib.rs``, which is itself a port of the Go domain. The
+Node target is what every fingerprint was first compared against, so where the languages
+could differ -- field order in a 422 body, an empty list versus a missing one, the tiebreak
+in a sort -- this follows Node.
+
+Failures are exceptions rather than a sentinel return. Every framework here registers
+handlers for them, which is the facility Fastify's ``setErrorHandler`` is, so a handler
+never builds a 404 or a 422 itself and the six targets cannot drift.
+"""
+import gzip as _gzip
+import itertools
+import json
+import os
+
+# ---- fixture -------------------------------------------------------------------------
+
+_DATA = None
+
+
+class _Data:
+    __slots__ = ("orders", "customers", "next_order_id", "products_by_id",
+                 "customers_by_id", "orders_by_id", "payloads", "token")
+
+    def __init__(self, f):
+        self.orders = f["orders"]
+        self.customers = f["customers"]
+        # The fixture holds orders 1..1000, so a created one is 1001: synthetic and
+        # deterministic, which is all a Location header needs when nothing is persisted.
+        self.next_order_id = len(self.orders) + 1
+        self.products_by_id = {p["id"]: p for p in f["products"]}
+        self.customers_by_id = {c["id"]: c for c in self.customers}
+        self.orders_by_id = {o["id"]: o for o in self.orders}
+        self.payloads = f["payloads"]
+        self.token = f["auth"]["token"]
+
+
+def fixture_path():
+    """The path the fixture is read from, honouring the same variable every language uses.
+
+    A host decides the layout, so the path relative to this file is not the same
+    everywhere and RB_FIXTURE wins when it is set.
+    """
+    return os.environ.get("RB_FIXTURE", "../../spec/fixture.json")
+
+
+def load(path):
+    """Read the fixture once."""
+    global _DATA
+    with open(path, "rb") as fh:
+        _DATA = _Data(json.load(fh))
+
+
+def data():
+    return _DATA
+
+
+# Read at import, the way the Node domain does, because a target builds its routes at
+# import too: the cached family closes over an ETag from the fixture while the module is
+# still executing, which is long before anything binds a port.
+try:
+    load(fixture_path())
+except OSError as _e:
+    raise SystemExit("fixture: %s" % _e) from None
+
+
+# ---- errors --------------------------------------------------------------------------
+
+class NotFound(Exception):
+    """Every lookup that misses. Handlers never spell the 404 themselves."""
+
+
+class Invalid(Exception):
+    """A 422 and the field errors that go in its body."""
+
+    def __init__(self, errors):
+        super().__init__("validation failed")
+        self.errors = errors
+
+
+def _err(field, rule):
+    return {"field": field, "rule": rule}
+
+
+def invalid_body(errors):
+    return {"error": "validation_failed", "errors": errors}
+
+
+def not_found_body():
+    return {"error": "not_found"}
+
+
+def forbidden_body():
+    return {"error": "forbidden"}
+
+
+def malformed():
+    """The 422 every target answers when the request body is not JSON at all. It is the
+    same exception the validator raises so ``errors.malformed`` and ``body.rejected_*``
+    share a shape."""
+    return Invalid([_err("body", "json")])
+
+
+def parse_body(raw):
+    """The request body as a value, or the 422. Targets whose framework parses for them
+    call this only on the bytes it hands back untouched."""
+    try:
+        return json.loads(raw)
+    except (ValueError, TypeError):
+        raise malformed() from None
+
+
+# ---- blend-v2 responses --------------------------------------------------------------
+
+def payload(size):
+    """Not pre-serialized. ``json.small`` against ``json.large`` is one fixture read, one
+    serialize and one write at three sizes; handing back a cached string would measure none
+    of it."""
+    return data().payloads[size]["body"]
+
+
+def etag_of(size):
+    """Pinned in the fixture, so what a target spends is emitting the header and comparing
+    it rather than hashing a body."""
+    return data().payloads[size]["etag"]
+
+
+#: Pinned across every language. Compression cost is dominated by codec and level, not by
+#: framework, so an unpinned level makes ``compressed.*`` a zlib benchmark.
+GZIP_LEVEL = 6
+
+CACHEABLE = "public, max-age=60"
+
+#: Where a framework's own compressor takes a size floor, this is the one it is held to.
+#: Django's gzip_page has its own at 200 and takes no setting, which changes nothing here:
+#: the small payload is 125 bytes and the medium one 8131, so both floors fall between the
+#: same two rows.
+GZIP_MIN_SIZE = 500
+
+
+def gzip(raw):
+    """Compresses at the pinned level. Targets whose framework brings its own middleware
+    use that instead and configure it to this level."""
+    return _gzip.compress(raw, compresslevel=GZIP_LEVEL, mtime=0)
+
+
+#: A counter rather than an integer because Flask serves on a thread pool: next() on this
+#: is one bytecode against a C iterator, where ``n += 1`` is a read and a write with a
+#: window between them.
+_serial = itertools.count(1)
+
+
+def next_serial():
+    """``x-rb-serial``, monotonic per process. A response served from a cache anywhere in
+    the path, or precomputed at boot, repeats a number it did not increment, and identical
+    bytes are the whole point of the fingerprint."""
+    return str(next(_serial))
+
+
+def token_ok(header):
+    """The denial arm's token differs only in its last character, so this compares the
+    whole string rather than failing on length. Crypto is not framework cost."""
+    if not header or not header.startswith("Bearer "):
+        return False
+    return header[7:] == data().token
+
+
+def created_location():
+    """The Location a created order points at. Built by concatenation rather than a format
+    string: ``"/domain/orders/{}"`` is indistinguishable from a route with a capture, and
+    harness/snippets.py then finds the domain routes in two places and refuses to guess."""
+    return "/domain/orders/" + str(data().next_order_id)
+
+
+# ---- query families ------------------------------------------------------------------
+#
+# The query arms have to echo the coerced values or the parse can be skipped and the
+# endpoint measures nothing. What arrives here is the framework's own parsed query, not a
+# raw string: parsing it is the thing the family is measuring, so the framework has to do
+# it. Every one of them answers .get(name) with the first value.
+
+def _qstr(q, k):
+    return q.get(k) or ""
+
+
+def _qint(q, k):
+    try:
+        return int(q.get(k))
+    except (TypeError, ValueError):
+        return 0
+
+
+def coerce_one(q):
+    return {"page": _qint(q, "page")}
+
+
+def coerce_many(q):
+    return {
+        "page": _qint(q, "page"),
+        "size": _qint(q, "size"),
+        "status": _qstr(q, "status"),
+        "category": _qstr(q, "category"),
+        "sort": _qstr(q, "sort"),
+        "q": _qstr(q, "q"),
+        "min_price": _qint(q, "min_price"),
+        "max_price": _qint(q, "max_price"),
+    }
+
+
+# ---- body ----------------------------------------------------------------------------
+
+def leaf_count(v):
+    """Walks the parsed body. Without a field derived from the parsed structure a target
+    can pipe request bytes straight to the response and never parse, and conformance would
+    not see it: the comparison is over parsed values, so even a reordering is invisible."""
+    if isinstance(v, dict):
+        return sum(leaf_count(x) for x in v.values())
+    if isinstance(v, list):
+        return sum(leaf_count(x) for x in v)
+    return 1
+
+
+def bind_echo(body):
+    # Compact separators and no escaping, so the count is the UTF-8 byte length that
+    # JSON.stringify and serde_json::to_vec report and the field is compared against.
+    n = len(json.dumps(body, separators=(",", ":"), ensure_ascii=False).encode())
+    return {"fields": leaf_count(body), "bytes": n, "echo": body}
+
+
+# ---- validation ----------------------------------------------------------------------
+#
+# Error field order matches the Node reference exactly; conform.py compares the 422 bodies,
+# so a reordered check here shows up as a conformance failure.
+
+def _is_int(v):
+    """Integral in the way ``Number.isInteger`` is: a JSON number with nothing after the
+    point. ``True`` and ``"3"`` are not numbers and do not pass -- bool is a subclass of
+    int in Python, which is the one place this differs from the other ports."""
+    if isinstance(v, bool):
+        return False
+    if isinstance(v, int):
+        return True
+    return isinstance(v, float) and v.is_integer()
+
+
+def _req_field(errs, m, field, typ):
+    v = m.get(field)
+    if v is None:
+        errs.append(_err(field, "required"))
+    elif typ == "int" and not _is_int(v):
+        errs.append(_err(field, "int"))
+    elif typ == "string" and not isinstance(v, str):
+        errs.append(_err(field, "string"))
+    elif typ == "array" and not isinstance(v, list):
+        errs.append(_err(field, "array"))
+
+
+def validate_order(body, first_error=False):
+    """Reports every problem it finds, or stops at the first, which is what
+    ``body.rejected_all`` minus ``body.rejected_first`` states as a number: the same walk
+    in the same order, differing only in where it gives up."""
+    m = body if isinstance(body, dict) else {}
+    errs = []
+
+    def bail():
+        return first_error and errs
+
+    _req_field(errs, m, "customer_id", "int")
+    if not bail():
+        _req_field(errs, m, "status", "string")
+    if not bail():
+        _req_field(errs, m, "lines", "array")
+
+    rows = m.get("lines")
+    if isinstance(rows, list) and not bail():
+        if not rows:
+            errs.append(_err("lines", "min_length"))
+        for i, line in enumerate(rows):
+            if bail():
+                break
+            line = line if isinstance(line, dict) else {}
+            if not _is_int(line.get("product_id")):
+                errs.append(_err("lines[%d].product_id" % i, "int"))
+            qty = line.get("qty")
+            if not bail() and not (_is_int(qty) and qty >= 1):
+                errs.append(_err("lines[%d].qty" % i, "min"))
+    if errs:
+        raise Invalid(errs)
+
+    products = data().products_by_id
+    lines, total = [], 0
+    for i, line in enumerate(rows):
+        pid, qty = int(line["product_id"]), int(line["qty"])
+        p = products.get(pid)
+        unit = p["price_cents"] if p else 0
+        lines.append({"id": i + 1, "product_id": pid, "qty": qty,
+                      "unit_cents": unit, "total_cents": unit * qty})
+        total += unit * qty
+    return {"customer_id": int(m["customer_id"]), "status": m["status"],
+            "lines": lines, "total_cents": total}
+
+
+def patch_customer(cid, body):
+    d = data()
+    try:
+        c = d.customers_by_id[int(cid)]
+    except (KeyError, TypeError, ValueError):
+        raise NotFound from None
+    out = dict(c)
+    body = body if isinstance(body, dict) else {}
+    if body.get("name"):
+        out["name"] = body["name"]
+    if body.get("region"):
+        out["region"] = body["region"]
+    return out
+
+
+# ---- domain --------------------------------------------------------------------------
+#
+# domain_filter, domain_join and domain_aggregate do the work the spec pins. Conformance
+# compares values, and a precomputed page produces the same value as a computed one, so
+# this is the one family where two conforming implementations can do wildly different
+# amounts of work. The predicate runs over the live list on every request, the join walks
+# the lines, and the aggregate folds every matching order. No index, no memoization.
+
+def get_order(oid):
+    d = data()
+    try:
+        return d.orders_by_id[int(oid)]
+    except (KeyError, TypeError, ValueError):
+        raise NotFound from None
+
+
+def get_order_line(oid, lid):
+    order = get_order(oid)
+    try:
+        n = int(lid)
+    except (TypeError, ValueError):
+        raise NotFound from None
+    for line in order["lines"]:
+        if line["id"] == n:
+            return line
+    raise NotFound
+
+
+def domain_filter(q):
+    d = data()
+    page = max(0, _qint(q, "page"))
+    size = min(100, max(1, _qint(q, "size") or 25))
+    status = _qstr(q, "status")
+    rows = [o for o in d.orders if o["status"] == status]
+    start = page * size
+    return {"page": page, "size": size, "total": len(rows),
+            "items": rows[start:start + size]}
+
+
+def domain_join(cid):
+    d = data()
+    try:
+        customer = d.customers_by_id[int(cid)]
+    except (KeyError, TypeError, ValueError):
+        raise NotFound from None
+    order_count = lifetime = line_count = units = 0
+    recent = []
+    for o in d.orders:
+        if o["customer_id"] != customer["id"]:
+            continue
+        order_count += 1
+        lifetime += o["total_cents"]
+        for line in o["lines"]:
+            line_count += 1
+            units += line["qty"]
+        recent.append({"id": o["id"], "created": o["created"],
+                       "total_cents": o["total_cents"]})
+    return {"customer": customer, "order_count": order_count,
+            "lifetime_cents": lifetime, "line_count": line_count, "units": units,
+            "recent": recent[-5:]}
+
+
+def domain_aggregate(region):
+    d = data()
+    in_region = {c["id"] for c in d.customers if c["region"] == region}
+    if not in_region:
+        raise NotFound
+    orders = revenue = 0
+    matched = []
+    for o in d.orders:
+        if o["customer_id"] not in in_region:
+            continue
+        orders += 1
+        revenue += o["total_cents"]
+        matched.append(o)
+    # Highest first, ties broken by the lower id, and stable so equal keys keep fixture
+    # order. Every other language sorts the same way; a different tiebreak is a
+    # conformance failure rather than a preference.
+    matched.sort(key=lambda o: (-o["total_cents"], o["id"]))
+    return {"region": region, "customers": len(in_region), "orders": orders,
+            "revenue_cents": revenue,
+            "top": [{"id": o["id"], "total_cents": o["total_cents"]}
+                    for o in matched[:10]]}

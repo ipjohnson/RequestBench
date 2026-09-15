@@ -1,0 +1,26 @@
+# The direct dependencies of every Python target, and nothing transitive. requirements.txt
+# beside it is the resolved lockfile: one resolution for all six targets, so a difference
+# between two of them is the framework rather than a transitive dependency one happened to
+# pick up. That is the same reason the Rust targets share one Cargo.lock.
+#
+# Ranges are patch and minor, matching the other languages. A major changes the wiring,
+# and by this repo's rule the wiring is hand-written.
+
+# The six frameworks.
+fastapi~=0.141
+litestar~=2.24
+starlette~=1.6
+django~=6.1
+flask~=3.1
+sanic~=25.12
+
+# The servers. Python is the first language here where the framework is not the server,
+# so each target runs the one its own documentation reaches for first and /__meta records
+# which. uvicorn's standard extras are what fastapi[standard] and litestar[standard] both
+# install, so they are what a reader of either quickstart ends up running.
+uvicorn[standard]~=0.53
+daphne~=4.2
+gunicorn~=23.0
+
+# One template engine for all six, pinned for the same reason the gzip level is.
+jinja2~=3.1
