@@ -65,6 +65,9 @@ func Meta(framework, version string) map[string]string {
 		"version":   version,
 		"runtime":   runtime.Version(),
 		"adapter":   strings.Join(adapters, " + "),
+		// The engine the template family renders with, which every Go target shares for
+		// the same reason the gzip level is pinned.
+		"template": "html/template",
 	}
 }
 
