@@ -176,14 +176,23 @@ class Container:
 
     def start(self):
         subprocess.run(["docker", "rm", "-f", self.cname], capture_output=True)
-        argv = ["docker", "run", "-d", "--rm", "--name", self.cname, "--cpus", self.CPUS,
+        argv = ["docker", "run", "-d", "--rm", "--name", self.cname,
                 # Without this a target defaults to the container host whatever it was
                 # asked for, and the run records the wrong host against real numbers.
                 "-e", "RB_HOST=" + self.host]
         if self.CPUSET:
             # Keeping the target and the load generator off each other's cores is the
             # difference between measuring a framework and measuring contention.
+            #
+            # Placement alone, with no --cpus quota on top of it. The cpuset already caps
+            # the target at the width of the set, and a quota is enforced per 100ms
+            # period: a burst that spends it is throttled until the period rolls over,
+            # which lands in p99 as jitter belonging to the cgroup rather than to the
+            # framework. On a shared machine with no cpuset there is nothing to place
+            # onto, so the quota stays as the only budget there is.
             argv += ["--cpuset-cpus", self.CPUSET]
+        else:
+            argv += ["--cpus", self.CPUS]
         subprocess.run(argv + ["-p", "%d:8080" % PORT, self.image],
                        check=True, capture_output=True)
         return self
@@ -467,7 +476,7 @@ def main():
 
     rows[0]["mode"] = a.mode
     if a.mode == "docker":
-        rows[0]["cpus"] = Container.CPUS
+        rows[0]["cpus"] = Container.CPUSET or Container.CPUS
     suite = a.suite if a.suite != "auto" else SUITE_FOR_HOST.get(host, "blend")
     encoding = ENCODING_FOR_HOST.get(host, "http")
     rows[0]["suite"] = SEQUENCE if suite == "serial" else BLEND
