@@ -28,7 +28,7 @@ why `conform.py` fingerprints every response and refuses to measure a target tha
     spec/blends.json      weight vectors, applied when an aggregate is composed
     spec/ladder.json      five rungs, 500 -> 12000 rps, 60s each
     spec/matrix.json      languages, frameworks, the anchor each is gated against
-    spec/fixture.json     generated, committed: identical data for all 43 targets
+    spec/fixture.json     generated, committed: identical data for all 48 targets
     spec/plan.json        generated: pre-resolved concrete requests every driver replays
     spec/sequence.json    generated: the fixed replay order every serial host uses
     harness/              plan, conformance gate, orchestrator, bundles, aggregator
@@ -45,7 +45,7 @@ target back to back on one machine, and nothing about that machine changes betwe
     python3 harness/run.py --mode docker --languages go,node
 
 A hosted job is capped at six hours, which at roughly 370s per target holds about 58
-targets. The full 43-target plan fits; adding the capability suites would not. Java is in
+targets. The full 48-target plan fits; adding the capability suites would not. Java is in
 the run, and Java warms for 90s rather than 30s, so every target in a run now warms for
 90s: the warmup has to be the same for all of them or the comparison inside the run is
 not one.
@@ -79,8 +79,9 @@ itself as its own profile and the summary carries it, so nothing reads the two t
 `MODE=local` runs targets as host processes, which is the fast edit loop. `MODE=docker`
 builds an image per target and runs it with a pinned CPU budget (`RB_CPUS`, default 2),
 which is what measurement uses. Java needs `make java` first, because the local launcher
-runs a jar the reactor has already built. Rust only has a container path, since the image
-carries the toolchain.
+runs a jar the reactor has already built, and Python needs `make python`, which builds the
+virtualenv it launches them in. Rust only has a container path, since the image carries the
+toolchain.
 
 ## Why the generator is written rather than bought
 
@@ -104,22 +105,34 @@ Working: the spec and plan, the conformance gate with cross-target response comp
 the open-loop generator with per-endpoint histograms, the orchestrator in both host and
 container mode, the aggregator, the machine preflight, the nightly measurement split by
 execution host, the nightly framework update, target bundles with a framework page per
-target, and twenty-two targets across four languages. Node has Fastify, Express, Hono, Koa
-and h3. Go has Gin, Echo, chi, gorilla/mux and Fiber. Java has Spring Boot, Quarkus,
+target, and twenty-eight targets across five languages. Node has Fastify, Express, Hono,
+Koa and h3. Go has Gin, Echo, chi, gorilla/mux and Fiber. Java has Spring Boot, Quarkus,
 Micronaut, Helidon SE, Vert.x and Javalin. Rust has axum, actix-web, Rocket, Poem, Salvo
-and warp, all six answering `blend-v2`.
+and warp, and Python has FastAPI, Starlette, Litestar, Sanic, Flask and Django over ASGI.
+All twelve of those answer `blend-v2`.
 
-Each language names an anchor in `spec/matrix.json` — Fastify, Gin, Spring Boot, axum.
-That target boots first and its responses become the fingerprint every other target in the
-language is compared against. Fastify, Gin and all six Rust targets answer the forty-five
-endpoints of `blend-v2`; the other fourteen still answer `blend-v1`, so the conformance
-gate reports them as pending rewiring and the orchestrator measures nothing for them.
+Each language names an anchor in `spec/matrix.json` — Fastify, Gin, Spring Boot, axum,
+FastAPI. That target boots first and its responses become the fingerprint every other
+target in the language is compared against. Fastify, Gin and all twelve Rust and Python
+targets answer the forty-five endpoints of `blend-v2`; the other fourteen still answer
+`blend-v1`, so the conformance gate reports them as pending rewiring and the orchestrator
+measures nothing for them.
 
 The Rust targets share one Cargo workspace and one lockfile, so a difference between two
 of them is the framework rather than a transitive dependency one happened to resolve
 differently. `targets/rust/_shared` is a port of `targets/go/_shared/domain.go`, and every
 response it produces was compared against the Node capture before the targets were
 listed.
+
+Python is the first language here where the framework is not the server. Five of the six
+ship none, so each target runs the one its own documentation reaches for first — uvicorn
+for FastAPI, Starlette and Litestar, daphne for Django, gunicorn for Flask — and Sanic runs
+its own. Part of every delta between two Python targets is therefore the server, which is
+why `/__meta` records it and its version beside the framework's. Every target is one
+process, like the Node targets, so a Python target uses one of the two pinned cores while
+Go, Rust and Java use both, and the published time says so. The six share one
+`requirements.txt`, resolved from the ranges in `requirements.in`, for the same reason the
+Rust targets share one lockfile.
 
 Every run records the commit it measured and a content hash of each target's bundle: its
 own wiring, the shared domain module, the dependency manifests and the Dockerfiles. The
@@ -128,8 +141,8 @@ recorded hash, and renders a page per target carrying its README, where each end
 wired, and a link to those exact lines on GitHub at the commit that ran. Where the hash
 does not verify the code is shown without a link, because the one failure worth preventing
 is a real number over the wrong lines. `docs/bundles.html` is the design; framework
-metadata, logos and the comparison pages in it are not built yet, and sixteen targets have
-no README.
+metadata, logos and the comparison pages in it are not built yet, and twenty-four targets
+have no README.
 
 Framework versions are not held by hand. `.github/workflows/deps.yml` resolves the latest
 release for each language nightly, patch and minor only, and opens one pull request per
@@ -149,7 +162,7 @@ aws-serverless-java-container. Javalin, Vert.x and Helidon SE have no first-part
 for either function host, and a hand-written shim would measure the shim. Quarkus has one
 for both and is not wired to either yet.
 
-Not built yet: Python and .NET, Rust on either function host, Quarkus on either function
+Not built yet: .NET, Python and Rust on either function host, Quarkus on either function
 host, the ten capability suites, and the machine calibrator.
 
 The current numbers are **not admissible** under the plan's own rules: the generator runs on

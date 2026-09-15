@@ -137,7 +137,13 @@
       "rust:rocket",
       "rust:poem",
       "rust:salvo",
-      "rust:warp"
+      "rust:warp",
+      "python:fastapi",
+      "python:starlette",
+      "python:litestar",
+      "python:sanic",
+      "python:flask",
+      "python:django-asgi"
     ]
   },
   "hosts": {
