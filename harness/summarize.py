@@ -120,6 +120,10 @@ def main():
         # Rung ids are reused across ladder versions while the rates behind them change,
         # so two summaries can agree on "rung 2" and mean different offered loads.
         "ladder": env.get("ladder", "ladder-v1"),
+        # Which endpoints were live. A narrowed run is a different profile, not the full
+        # blend with rows hidden, so nothing may read the two against each other.
+        "profile": env.get("profile", "full"),
+        "endpoints_live": env.get("endpoints_live", len(ep_order)),
         "machine": env.get("machine", {}),
         "runner": a.runner, "tracked": a.tracked,
         "exec_host": env.get("exec_host") or "container",

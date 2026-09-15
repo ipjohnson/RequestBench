@@ -60,11 +60,28 @@ not one.
 ## Running it
 
     make plan
-    make run SECONDS=12 RUNGS=1,3,5                        # node, host processes, quick loop
+    make run                                               # everything, both rates, 4 min each
+    make run LANGUAGES=node SECONDS=12 RUNGS=regular       # host processes, quick loop
     make build TARGETS=go:net-http,go:gin,go:echo          # container images
-    make run TARGETS=go:net-http,go:gin,go:echo MODE=docker
-    make run                                               # full ladder, 5 x 60s
+    make run LANGUAGES=go MODE=docker
+    make machine                                           # is this box fit to measure on
     make report
+    make vars                                              # every variable and its default
+
+Everything is on by default. `make run` with no variables measures every implemented
+target the host supports, at both rates, for the durations in `spec/ladder.json`. The
+variables narrow it: `LANGUAGES` and `FRAMEWORKS` choose what runs, `FAMILIES` and
+`ENDPOINTS` choose what it is asked for, and each has a `NOT_` form that excludes instead.
+`RPS`, `SECONDS` and `WARMUP` override the spec for a quick loop.
+
+    make run FRAMEWORKS=gin,fastify                        # two frameworks, two languages
+    make run NOT_LANGUAGES=java                            # everything but the JVM
+    make run FAMILIES=json,compressed                      # only those endpoints are live
+
+Narrowing the endpoint set is not the blend with rows hidden. A runtime optimises for the
+paths it executes, so nine endpoints running alone are hotter than the same nine inside the
+full forty-five, and the numbers are not comparable to a full run. Such a run records
+itself as its own profile and the summary carries it, so nothing reads the two together.
 
 `MODE=local` runs targets as host processes, which is the fast edit loop. `MODE=docker`
 builds an image per target and runs it with a pinned CPU budget (`RB_CPUS`, default 2),

@@ -34,7 +34,7 @@ def pct(counts, p):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("path")
-    ap.add_argument("--family", action="store_true", help="per-family breakdown at rung 3")
+    ap.add_argument("--family", action="store_true", help="per-family breakdown at the higher rate")
     a = ap.parse_args()
 
     rows = [json.loads(l) for l in pathlib.Path(a.path).read_text().splitlines() if l.strip()]

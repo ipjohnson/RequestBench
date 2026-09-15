@@ -32,18 +32,29 @@ function percentile(counts, total, p) {
 }
 
 // ---- plan ---------------------------------------------------------------------------
-function loadPlan() {
+function loadPlan(only) {
   const plan = JSON.parse(readFileSync(join(ROOT, "spec", "plan.json"), "utf8"));
   if (plan.sampling !== "uniform") throw new Error(`plan sampling is ${plan.sampling}`);
   // Uniform, so there is no cumulative table and no weighted pick. Weighting happens once,
   // in harness/summarize.py, against the per-endpoint histograms this run produces.
-  return { eps: plan.endpoints };
+  let eps = plan.endpoints;
+  if (only && only.length) {
+    // Narrowing here rather than dropping rows afterwards is the whole point: a runtime
+    // optimises for the paths it executes, so a handful of endpoints running alone are
+    // hotter than the same ones inside the full set. Dropping rows later would report the
+    // full set's numbers under a smaller heading.
+    const want = new Set(only);
+    const missing = only.filter((id) => !plan.endpoints.some((e) => e.id === id));
+    if (missing.length) throw new Error(`unknown endpoint id: ${missing.join(", ")}`);
+    eps = eps.filter((e) => want.has(e.id));
+  }
+  return { eps };
 }
 
 // ---- worker -------------------------------------------------------------------------
 if (!isMainThread) {
-  const { host, port, rate, seconds, offsetUs, maxInflight, seed, record } = workerData;
-  const { eps } = loadPlan();
+  const { host, port, rate, seconds, offsetUs, maxInflight, seed, record, only } = workerData;
+  const { eps } = loadPlan(only);
   // Header objects are built once per endpoint rather than per request: they are constant
   // across an endpoint's instances, and this is the hot loop.
   const headersOf = eps.map((ep) => {
@@ -142,7 +153,8 @@ else {
   const workers = Number(argv.workers ?? 4);
   const maxInflight = Number(argv.maxInflight ?? 256);
   const record = argv.record !== "false";
-  const { eps } = loadPlan();
+  const only = argv.only ? argv.only.split(",").filter(Boolean) : null;
+  const { eps } = loadPlan(only);
 
   const perWorker = rate / workers;
   const results = [];
@@ -152,7 +164,7 @@ else {
     const worker = new Worker(fileURLToPath(import.meta.url), {
       workerData: { host, port: Number(port), rate: perWorker, seconds,
                     offsetUs: (w * 1e6) / rate, maxInflight: Math.ceil(maxInflight / workers),
-                    seed: 0x9e3779b9 * (w + 1), record },
+                    seed: 0x9e3779b9 * (w + 1), record, only },
     });
     worker.on("message", (m) => { results.push(m); resolve(); });
     worker.on("error", reject);
@@ -182,6 +194,7 @@ else {
 
   const out = {
     target: `${host}:${port}`, offered_rps: rate, seconds, workers,
+    endpoints_live: eps.length,
     elapsed_s: Number(elapsed.toFixed(2)),
     achieved_rps: Math.round(done / elapsed),
     issued, completed: done, dropped,

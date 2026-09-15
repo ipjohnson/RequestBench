@@ -3,7 +3,7 @@
   python3 harness/run.py --targets node:node-http,node:fastify,node:express
   python3 harness/run.py --targets node:fastify --seconds 20 --rungs 3,5
 """
-import argparse, collections, functools, http.client, json, os, pathlib, platform, re, shutil, signal, socket, subprocess, sys, time, uuid
+import argparse, collections, functools, hashlib, http.client, json, os, pathlib, platform, re, shutil, signal, socket, subprocess, sys, time, uuid
 
 import bundle
 import machine
@@ -18,6 +18,7 @@ LADDER = json.loads((SPEC / "ladder.json").read_text())
 MATRIX = json.loads((SPEC / "matrix.json").read_text())
 # The endpoint set a run measured, carried on every row it writes. Hardcoding it meant a
 # blend-v2 run filed itself as blend-v1 and landed in the same time series as one.
+ENDPOINTS = json.loads((SPEC / "endpoints.json").read_text())["endpoints"]
 BLEND = json.loads((SPEC / "endpoints.json").read_text())["version"]
 # And which rates those endpoints were served at. Rung ids are reused across ladder
 # versions while the rates behind them change, so a summary that does not say which
@@ -38,6 +39,35 @@ SUITE_FOR_HOST = {"container": "blend", "gcp-func": "serial",
                   "lambda-rie": "serial", "azure-func": "serial"}
 ENCODING_FOR_HOST = {"lambda-rie": "lambda"}
 LAMBDA_INVOKE = "/2015-03-31/functions/function/invocations"
+
+
+def select(universe, include, exclude, what):
+    """Narrow a list by an include list, an exclude list, or both. Empty means everything.
+
+    Order follows `universe` rather than the order they were named, because a run measures
+    targets back to back and the order is part of what it recorded.
+    """
+    inc = {x.strip() for x in include.split(",") if x.strip()}
+    exc = {x.strip() for x in exclude.split(",") if x.strip()}
+    known = set(universe)
+    for bad in sorted((inc | exc) - known):
+        sys.exit("unknown %s %r; known: %s" % (what, bad, ", ".join(sorted(known))))
+    return [x for x in universe if (not inc or x in inc) and x not in exc]
+
+
+def implemented_pairs(host):
+    """Every implemented target this execution host supports, in matrix order."""
+    out, exceptions = [], MATRIX.get("host_exceptions", {})
+    for language, entry in MATRIX["languages"].items():
+        built = entry.get("implemented", [])
+        hosts = MATRIX.get("hosts_implemented", {}).get(language, ["container"])
+        if not built or host not in hosts:
+            continue
+        for name in [entry["baseline"]] + built:
+            if host in exceptions.get("%s:%s" % (language, name), {}).get("excluded", []):
+                continue
+            out.append((language, name))
+    return out
 
 
 def lambda_event(method, path):
@@ -255,13 +285,17 @@ def wait_healthy(target, timeout):
         time.sleep(0.1)
     raise RuntimeError("target never became ready in %ss (encoding %s)" % (timeout, encoding))
 
-def run_gen(rate, seconds, workers, record=True):
+def run_gen(rate, seconds, workers, record=True, only=None):
     # Histograms go through a file rather than the pipe: a full rung is megabytes of
     # base64 and stdout stays readable for a human watching the run.
     tmp = ROOT / "results" / (".gen-%s.json" % uuid.uuid4().hex[:8])
     cmd = ["node", str(ROOT / "gen" / "blend.mjs"), "--target", "127.0.0.1:%d" % PORT,
            "--rate", str(rate), "--seconds", str(seconds), "--workers", str(workers),
            "--maxInflight", "1024", "--out", str(tmp)]
+    # The warmup is filtered with the sample. Warming paths the sample never calls is the
+    # opposite of what a narrowed profile is asking to measure.
+    if only:
+        cmd += ["--only", ",".join(only)]
     gen_cpus = os.environ.get("RB_GEN_CPUS", "")
     if gen_cpus and shutil.which("taskset"):
         cmd = ["taskset", "-c", gen_cpus] + cmd
@@ -404,10 +438,31 @@ def env_fingerprint(run_id, languages, baselines):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--targets", required=True,
-                    help="comma separated language:target pairs. A name may repeat, "
-                         "which measures that target in two positions in one run")
-    ap.add_argument("--seconds", type=int, default=0, help="override rung duration")
+    ap.add_argument("--targets", default="",
+                    help="comma separated language:target pairs, exactly. A name may "
+                         "repeat, which measures that target in two positions in one run. "
+                         "Without this the run is every implemented target this host "
+                         "supports, narrowed by --languages and --frameworks")
+    ap.add_argument("--languages", default="", help="only these languages")
+    ap.add_argument("--not-languages", default="", help="every language but these")
+    ap.add_argument("--frameworks", default="", help="only these frameworks, any language")
+    ap.add_argument("--not-frameworks", default="", help="every framework but these")
+    ap.add_argument("--families", default="",
+                    help="only these endpoint families. Narrowing the endpoint set changes "
+                         "what the runtime optimises for, so the result is its own profile "
+                         "and is recorded as one")
+    ap.add_argument("--not-families", default="", help="every family but these")
+    ap.add_argument("--endpoints", default="", help="only these endpoint ids")
+    ap.add_argument("--not-endpoints", default="", help="every endpoint but these")
+    ap.add_argument("--seconds", type=int, default=0, help="override rate duration")
+    ap.add_argument("--warmup", type=int, default=0,
+                    help="override warmup seconds, whatever the language's class asks for")
+    ap.add_argument("--warmup-rps", type=int, default=0,
+                    help="override the warmup rate. Warmup is drawn uniformly too, so the "
+                         "per-endpoint invocation count is this divided by the live "
+                         "endpoint count, which is what a JIT actually sees")
+    ap.add_argument("--rps", default="",
+                    help="override the offered rates, in the order they run")
     ap.add_argument("--rungs", default="",
                     help="comma separated rate names or numbers, default all. "
                          "spec/ladder.json names them: regular, raised")
@@ -441,23 +496,42 @@ def main():
             sys.exit("refusing to measure: the machine is not pinned")
 
     # A cross-language run is one job on one machine measuring every language back to
-    # back. Within-language ratios still work because each language's baseline is in the
-    # list; absolutes become comparable across languages because nothing moved between them.
-    pairs = []
-    for entry in a.targets.split(","):
-        entry = entry.strip()
-        if not entry:
-            continue
-        if ":" not in entry:
-            sys.exit("target %r is not language:target" % entry)
-        lang, _, name = entry.partition(":")
-        if lang not in MATRIX["languages"]:
-            sys.exit("unknown language %r in target %r" % (lang, entry))
-        pairs.append((lang, name))
+    # back. Nothing moves between targets, so the absolute numbers are comparable to each
+    # other however many languages are in the list.
+    host = os.environ.get("RB_HOST", "container")
+    if a.targets:
+        pairs = []
+        for entry in a.targets.split(","):
+            entry = entry.strip()
+            if not entry:
+                continue
+            if ":" not in entry:
+                sys.exit("target %r is not language:target" % entry)
+            lang, _, name = entry.partition(":")
+            if lang not in MATRIX["languages"]:
+                sys.exit("unknown language %r in target %r" % (lang, entry))
+            pairs.append((lang, name))
+    else:
+        pairs = implemented_pairs(host)
+    # Narrowing applies to an explicit list too, so --targets and --not-frameworks compose
+    # rather than one silently winning.
+    langs_in = list(dict.fromkeys(l for l, _ in pairs))
+    keep_l = set(select(langs_in, a.languages, a.not_languages, "language"))
+    names_in = list(dict.fromkeys(n for _, n in pairs))
+    keep_f = set(select(names_in, a.frameworks, a.not_frameworks, "framework"))
+    pairs = [(l, n) for l, n in pairs if l in keep_l and n in keep_f]
     if not pairs:
-        sys.exit("no targets")
+        sys.exit("no targets left after filtering")
     languages = list(dict.fromkeys(lang for lang, _ in pairs))
     baselines = {lang: MATRIX["languages"][lang]["baseline"] for lang in languages}
+    # Selecting frameworks by name easily leaves a language without its baseline. That is
+    # allowed -- absolute times do not need one -- but the conformance gate compares each
+    # target against the baseline measured in the same run, so say so rather than letting
+    # it surface later as "responses are only status-checked".
+    absent = [l for l in languages if (l, baselines[l]) not in pairs]
+    if absent:
+        print("note: no baseline in this run for %s; responses are status-checked only"
+              % ", ".join("%s (%s)" % (l, baselines[l]) for l in absent))
 
     want = [x.strip() for x in a.rungs.split(",") if x.strip()]
     rungs = [r for r in LADDER["rungs"]
@@ -466,20 +540,53 @@ def main():
         sys.exit("no rate matches %r; spec/ladder.json has %s"
                  % (a.rungs, ", ".join("%s (%d)" % (r["name"], r["rung"])
                                        for r in LADDER["rungs"])))
+    # Offered rates are a spec constant, overridable for a quick loop. Given in the order
+    # the selected rates run, so --rungs raised --rps 8000 means what it looks like.
+    if a.rps:
+        want_rps = [int(x) for x in a.rps.split(",") if x.strip()]
+        if len(want_rps) != len(rungs):
+            sys.exit("--rps has %d value(s) for %d rate(s): %s"
+                     % (len(want_rps), len(rungs), ", ".join(r["name"] for r in rungs)))
+        rungs = [{**r, "rps": v} for r, v in zip(rungs, want_rps)]
+
+    # Which endpoints are live. A narrowed set is not the blend with rows hidden: the
+    # runtime optimises for the paths it actually executes, so five endpoints out of
+    # forty-five run hotter than the same five do inside the full set. That makes it a
+    # separate profile, recorded as one so nothing pools it with a full run.
+    fams = list(dict.fromkeys(e["family"] for e in ENDPOINTS))
+    keep_fam = set(select(fams, a.families, a.not_families, "family"))
+    ids = [e["id"] for e in ENDPOINTS if e["family"] in keep_fam]
+    ids = select(ids, a.endpoints, a.not_endpoints, "endpoint")
+    if not ids:
+        sys.exit("no endpoints left after filtering")
+    full_blend = len(ids) == len(ENDPOINTS)
+    profile = "full" if full_blend else "subset-%s" % hashlib.sha256(
+        ",".join(sorted(ids)).encode()).hexdigest()[:8]
+    # None rather than the full list, so a full run passes no filter and the driver keeps
+    # the plan it was given.
+    live = None if full_blend else ids
+
     secs = a.seconds or None
     warm_s = max(LADDER["warmup"]["seconds"][warmup_class(lang)] for lang in languages)
     if a.seconds:
         warm_s = max(5, a.seconds // 2)
+    if a.warmup:
+        warm_s = a.warmup
+    warm_rps = a.warmup_rps or LADDER["warmup"]["rps"]
 
-    # A run is one host. Its identity is the machine it measured on, not the targets that
-    # happened to be on it.
-    host = os.environ.get("RB_HOST", "container")
     run_id = "%s.%s.%s" % (time.strftime("%Y-%m-%dT%H:%MZ", time.gmtime()), host,
                            uuid.uuid4().hex[:6])
     out_path = ROOT / "results" / ("%s.jsonl" % run_id.replace(":", ""))
     out_path.parent.mkdir(exist_ok=True)
     rows = [env_fingerprint(run_id, languages, baselines)]
     rows[0]["cross_language"] = len(languages) > 1
+    # Which endpoints were live, so a narrowed run is never read against a full one. Same
+    # reason the blend and ladder versions are here: they are all statements about what
+    # the numbers describe, and none of them can be reconstructed afterwards.
+    rows[0]["profile"] = profile
+    rows[0]["endpoints_live"] = len(ids)
+    if not full_blend:
+        rows[0]["profile_endpoints"] = ids
 
     rows[0]["mode"] = a.mode
     if a.mode == "docker":
@@ -604,8 +711,9 @@ def main():
                                                   "p99_us", "p999_us")}})
                 continue
 
-            print("  warmup %ss @ %s rps" % (warm_s, LADDER["warmup"]["rps"]))
-            run_gen(LADDER["warmup"]["rps"], warm_s, a.workers, record=False)
+            print("  warmup %ss @ %s rps  (%s per live endpoint)"
+                  % (warm_s, warm_rps, f"{warm_rps * warm_s // len(ids):,}"))
+            run_gen(warm_rps, warm_s, a.workers, record=False, only=live)
 
             for r in rungs:
                 dur = secs or r["seconds"]
@@ -616,7 +724,7 @@ def main():
                 # spending. A target dropping at twenty seconds drops at four minutes.
                 settle_s = min(LADDER.get("settle_s", 0), max(1, dur // 4))
                 if settle_s:
-                    probe = run_gen(r["rps"], settle_s, a.workers, record=False)
+                    probe = run_gen(r["rps"], settle_s, a.workers, record=False, only=live)
                     offered = r["rps"] * settle_s
                     frac = probe["dropped"] / offered if offered else 0
                     if frac > LADDER["abort"]["drop_fraction"]:
@@ -633,7 +741,7 @@ def main():
                                      "count": 0, "p50_us": None, "p90_us": None,
                                      "p99_us": None, "p999_us": None})
                         continue
-                res = run_gen(r["rps"], dur, a.workers)
+                res = run_gen(r["rps"], dur, a.workers, only=live)
                 o = res["overall"]
                 offered = r["rps"] * dur
                 # Percentiles here are computed over what completed, and a dropped request
