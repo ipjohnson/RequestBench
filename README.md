@@ -5,8 +5,7 @@ each measured against a bare baseline in its own runtime, so what gets published
 overhead a framework adds rather than an absolute number that only describes the machine
 it ran on.
 
-The full design and the capability suites are in [docs/plan.md](docs/plan.md). The
-endpoint set is designed in [docs/blend-v2.html](docs/blend-v2.html), and
+The endpoint set is designed in [docs/blend-v2.html](docs/blend-v2.html), and
 [docs/bundles.html](docs/bundles.html) covers tracing a published ratio back to the code
 that produced it.
 

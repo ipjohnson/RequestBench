@@ -11,16 +11,6 @@ import argparse, base64, json, math, pathlib, struct, sys, collections
 GROWTH, NBUCKETS = 1.02, 920
 LOG_G = math.log(GROWTH)
 
-def normalize_env(env):
-    """Runs made before the host split named themselves by language and carried one
-    baseline. Read them through the same plural shape as everything since."""
-    if "languages" not in env:
-        env["languages"] = env.get("shards") or [env.get("language") or env.get("shard")]
-    if "baselines" not in env:
-        env["baselines"] = {env["languages"][0]: env.get("baseline")}
-    return env
-
-
 def unpack(b64):
     raw = base64.b64decode(b64)
     return struct.unpack("<%dI" % (len(raw) // 4), raw)
@@ -90,13 +80,11 @@ def main():
     rungs = [r for r in rows if r["kind"] == "rung"]
     meta = {r["target"]: r for r in rows if r["kind"] == "target"}
     samples = [r for r in rows if r["kind"] == "sample"]
-    # A cross-language run has one baseline per language. Ratios are always within a
-    # language; the absolutes are what carry across, because nothing moved between targets.
-    env = normalize_env(env)
+    # A run has one baseline per language in it. Ratios are always within a language;
+    # the absolutes are what carry across, because nothing moved between targets.
     languages, baselines = env["languages"], env["baselines"]
     first = languages[0]
-    # Rows written before the host split carried the language as "shard".
-    language_of = {r["target"]: r.get("language") or r.get("shard") or first for r in rungs}
+    language_of = {r["target"]: r.get("language", first) for r in rungs}
     base_of = {t: baselines.get(language_of[t]) for t in language_of}
     targets = list(dict.fromkeys(r["target"] for r in rungs))
     by = {(r["target"], r["rung"]): r for r in rungs}
