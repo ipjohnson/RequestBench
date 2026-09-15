@@ -41,6 +41,14 @@ def small():
     return jsonify(d.payload("small"))
 
 
+def no_content():
+    """A 204 carries no body, so it declares no type. Flask's Response defaults to
+    text/html, which describes a body it is not allowed to send."""
+    response = Response(status=204)
+    del response.headers["content-type"]
+    return response
+
+
 # ---- baseline, json, parameters, query, headers --------------------------------------
 
 @app.get("/plaintext")
@@ -279,7 +287,7 @@ def patch_customer(cid):
 @app.delete("/domain/orders/<oid>/lines/<lid>")
 def delete_line(oid, lid):
     d.get_order_line(oid, lid)
-    return "", 204
+    return no_content()
 
 
 # ---- template: the engine named in /__meta -------------------------------------------

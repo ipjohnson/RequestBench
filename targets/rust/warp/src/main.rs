@@ -70,6 +70,20 @@ fn payload_route(size: &'static str) -> Route {
         .boxed()
 }
 
+/// The compressed family's reply, shared by the branch that compresses and the branch that
+/// does not. Only the wrapper differs between them.
+fn compressed_reply(size: String) -> Result<warp::reply::Response, warp::Rejection> {
+    match size.as_str() {
+        "small" | "medium" | "large" => Ok(warp::reply::with_header(
+            warp::reply::json(d::payload(&size)),
+            "x-rb-serial",
+            d::next_serial(),
+        )
+        .into_response()),
+        _ => Err(warp::reject::not_found()),
+    }
+}
+
 #[tokio::main]
 async fn main() {
     let port = rb_host::boot("warp");
@@ -168,23 +182,35 @@ async fn main() {
     // Level is warp's own default, which is the same 6 every other target pins. The size
     // threshold is left alone, because whether a framework bothers to compress a body too
     // small to benefit is what compressed.gzip_small is in the set to show.
+    //
+    // warp::compression::gzip() compresses whatever it wraps and never reads
+    // accept-encoding, so asking for identity got gzip back and compressed.identity_*
+    // measured nothing it was supposed to. The negotiation is a filter instead, which is
+    // how warp composes anything else: the gzip branch requires the header and rejects
+    // without it, and the rejection falls through to the branch that does not compress.
     // rb:snippet compressed.identity_small compressed.identity_medium
     // rb:snippet compressed.identity_large compressed.gzip_small compressed.gzip_medium
     // rb:snippet compressed.gzip_large
-    let compressed = warp::path!("compressed" / String)
-        .and(warp::get())
-        .and_then(|s: String| async move {
-            match s.as_str() {
-                "small" | "medium" | "large" => Ok(warp::reply::with_header(
-                    warp::reply::json(d::payload(&s)),
-                    "x-rb-serial",
-                    d::next_serial(),
-                )
-                .into_response()),
-                _ => Err(warp::reject::not_found()),
+    let compressed_payload = warp::path!("compressed" / String).and(warp::get());
+
+    let wants_gzip = warp::header::optional::<String>("accept-encoding").and_then(
+        |v: Option<String>| async move {
+            if v.unwrap_or_default().contains("gzip") {
+                Ok(())
+            } else {
+                Err(warp::reject::reject())
             }
-        })
+        },
+    );
+
+    let compressed = compressed_payload
+        .clone()
+        .and(wants_gzip)
+        .and_then(|s: String, _| async move { compressed_reply(s) })
         .with(warp::compression::gzip())
+        .map(Reply::into_response)
+        .or(compressed_payload.and_then(|s: String| async move { compressed_reply(s) }))
+        .unify()
         .map(Reply::into_response)
         .boxed();
 

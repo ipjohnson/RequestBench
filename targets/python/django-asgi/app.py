@@ -273,7 +273,11 @@ class Customer(View):
 class OrderLine(View):
     async def delete(self, _, oid, lid):
         d.get_order_line(oid, lid)
-        return HttpResponse(status=204)
+        # A 204 carries no body, so it declares no type. Django sets one from
+        # DEFAULT_CONTENT_TYPE whatever the status is.
+        response = HttpResponse(status=204)
+        del response["content-type"]
+        return response
 
 
 # ---- template: the engine named in /__meta -------------------------------------------
