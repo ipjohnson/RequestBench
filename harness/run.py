@@ -146,6 +146,18 @@ class Local:
             return (["cargo", "run", "--quiet", "-p", "rb-" + d, "--bin", "rb-" + d],
                     ROOT / "targets/rust",
                     {"RB_FIXTURE": str(ROOT / "spec/fixture.json"), "RB_HOST": host})
+        if self.language == "python":
+            if host != "container":
+                raise SystemExit("python has no launcher for host %r" % host)
+            # The virtualenv `make python` builds, when there is one. CI installs the
+            # frameworks into the interpreter it already set up, so falling back to this
+            # one keeps that from needing a second environment.
+            venv = ROOT / "targets/python/.venv/bin/python"
+            return ([str(venv) if venv.exists() else sys.executable,
+                     str(ROOT / "targets/python/_hosts/container.py")],
+                    ROOT / "targets/python",
+                    {"RB_TARGET": d, "RB_FIXTURE": str(ROOT / "spec/fixture.json"),
+                     "RB_HOST": host})
         raise SystemExit("language %r has no local launcher; use --mode docker" % self.language)
 
     def start(self):

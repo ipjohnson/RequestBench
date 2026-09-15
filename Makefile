@@ -1,6 +1,6 @@
 comma := ,
 
-.PHONY: fixture plan spec machine bundle snippets build java rust lint validate conform exemplars run vars report clean help
+.PHONY: fixture plan spec machine bundle snippets build java rust python python-lock lint validate conform exemplars run vars report clean help
 # Everything is on by default: no TARGETS means every implemented target this host
 # supports. The rest narrow it. LANGUAGES/FRAMEWORKS pick what runs, FAMILIES/ENDPOINTS
 # pick what it is asked for, and a narrowed endpoint set is recorded as its own profile
@@ -65,6 +65,15 @@ java: ## build the java target jars, which MODE=local needs  (TARGETS=java:javal
 
 rust: ## build the rust target binaries, which speeds MODE=local up
 	cd targets/rust && cargo build --locked --bins
+
+python: ## create the python virtualenv MODE=local needs, from the pinned lockfile
+	python3 -m venv targets/python/.venv
+	targets/python/.venv/bin/python -m pip install -q -r targets/python/requirements.txt
+
+python-lock: ## recompile targets/python/requirements.txt from requirements.in
+	targets/python/.venv/bin/python -m pip install -q pip-tools
+	cd targets/python && .venv/bin/python -m piptools compile --quiet --strip-extras \
+	  --output-file requirements.txt requirements.in
 
 lint: ## parse every workflow file, and run actionlint when it is installed
 	python3 harness/lintyaml.py

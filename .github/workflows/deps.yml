@@ -23,7 +23,7 @@ on:
     inputs:
       languages:
         description: JSON array of languages to update.
-        default: '["node","go","java"]'
+        default: '["node","go","java","python"]'
         type: string
 
 # The workflow's own token stays read-only. DEPS_TOKEN does all the writing, because a pull
@@ -45,10 +45,11 @@ jobs:
       node: ${{ steps.pr.outputs.node }}
       go: ${{ steps.pr.outputs.go }}
       java: ${{ steps.pr.outputs.java }}
+      python: ${{ steps.pr.outputs.python }}
     strategy:
       fail-fast: false
       matrix:
-        language: ${{ fromJSON(github.event.inputs.languages || '["node","go","java"]') }}
+        language: ${{ fromJSON(github.event.inputs.languages || '["node","go","java","python"]') }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -77,6 +78,13 @@ jobs:
           java-version: "25"
           cache: maven
 
+      - uses: actions/setup-python@v7
+        if: matrix.language == 'python'
+        with:
+          python-version: "3.14"
+          cache: pip
+          cache-dependency-path: targets/python/requirements.txt
+
       - name: Cut the branch fresh from main
         run: |
           git config user.name  "requestbench"
@@ -91,6 +99,11 @@ jobs:
             go)   go get -u ./... && go mod tidy ;;
             java) mvn -q -B versions:update-properties \
                     -DallowMajorUpdates=false -DgenerateBackupPoms=false ;;
+            # requirements.in holds the ranges and is not touched; --upgrade resolves the
+            # newest release inside each of them and rewrites the pins.
+            python) pip install -q pip-tools && \
+                    pip-compile --quiet --upgrade --strip-extras \
+                      --output-file requirements.txt requirements.in ;;
           esac
 
       # The cheap gate: does the manifest still install and compile? A full conformance run
@@ -102,17 +115,22 @@ jobs:
             node) npm ci --omit=dev --no-audit --no-fund ;;
             go)   go build ./... ;;
             java) mvn -q -B -DskipTests package ;;
+            python) pip install -q -r requirements.txt && \
+                    python -m compileall -q _shared _hosts ./*/app.py ;;
           esac
 
       # The manifest diff is the reviewable part: it is the pinned versions and nothing
       # else. A lockfile diff is thousands of lines of transitive churn, and `npm outdated`
-      # reports every package as MISSING before an install has run.
+      # reports every package as MISSING before an install has run. Python is the one
+      # language whose manifest is the lockfile: requirements.in holds the ranges and never
+      # moves, so requirements.txt is both the pins and the transitive set.
       - name: Anything move?
         id: changed
         env:
           MANIFEST: >-
             ${{ matrix.language == 'node' && 'targets/node/package.json'
              || matrix.language == 'go' && 'targets/go/go.mod'
+             || matrix.language == 'python' && 'targets/python/requirements.txt'
              || 'targets/java/pom.xml' }}
         run: |
           if git diff --quiet; then
@@ -181,7 +199,7 @@ jobs:
       - name: Wait for validate.yml on every pull request this run opened
         env:
           GH_TOKEN: ${{ secrets.DEPS_TOKEN || github.token }}
-          NUMBERS: ${{ needs.update.outputs.node }} ${{ needs.update.outputs.go }} ${{ needs.update.outputs.java }}
+          NUMBERS: ${{ needs.update.outputs.node }} ${{ needs.update.outputs.go }} ${{ needs.update.outputs.java }} ${{ needs.update.outputs.python }}
         run: |
           opened=0
           failed=0

@@ -72,7 +72,7 @@
       ]
     },
     "python": {
-      "runtime": "python:3.13",
+      "runtime": "python:3.14",
       "frameworks": [
         "fastapi",
         "litestar",
@@ -82,7 +82,14 @@
         "sanic"
       ],
       "anchor": "fastapi",
-      "implemented": []
+      "implemented": [
+        "fastapi",
+        "starlette",
+        "litestar",
+        "sanic",
+        "flask",
+        "django-asgi"
+      ]
     },
     "dotnet": {
       "runtime": "dotnet/sdk:10.0",
@@ -197,6 +204,9 @@
       "lambda-rie"
     ],
     "rust": [
+      "container"
+    ],
+    "python": [
       "container"
     ]
   },
