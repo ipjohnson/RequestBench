@@ -32,6 +32,11 @@ jobs:
     steps:
       - name: Check out the generator
         uses: actions/checkout@v7
+        with:
+          # Framework pages read each bundle's files out of history at the commit the run
+          # recorded. A shallow clone holds one commit, so every page would report its
+          # source unavailable.
+          fetch-depth: 0
 
       - name: Check out the data
         uses: actions/checkout@v7

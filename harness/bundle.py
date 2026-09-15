@@ -81,12 +81,42 @@ def git(*args):
     return out.stdout
 
 
+def git_bytes(*args):
+    """File contents are hashed, so they have to arrive as bytes and never through a
+    decode. A source file is not always valid UTF-8 and a round trip would not be identity
+    even when it is."""
+    out = subprocess.run(["git", *args], cwd=ROOT, capture_output=True)
+    if out.returncode != 0:
+        raise RuntimeError("git %s: %s" % (" ".join(args), out.stderr.decode().strip()))
+    return out.stdout
+
+
+# Every lookup below takes `at`: None reads the working tree, a commit reads history.
+# A run records the commit it measured, so the site rebuilds that run's manifest from
+# history rather than from today's files, which is the whole point of recording it.
 @functools.lru_cache(maxsize=None)
-def tracked(prefix):
-    return tuple(p for p in git("ls-files", "-z", "--", prefix).split("\0") if p)
+def tracked(prefix, at=None):
+    if at is None:
+        return tuple(p for p in git("ls-files", "-z", "--", prefix).split("\0") if p)
+    return tuple(p for p in git("ls-tree", "-r", "-z", "--name-only", at, "--", prefix)
+                 .split("\0") if p)
 
 
-def roots(language, target):
+@functools.lru_cache(maxsize=None)
+def matrix_at(at):
+    """bundle_roots as it stood at that commit. Reading today's would misresolve a target
+    whose roots were declared later, and the rollup would then fail to verify against a
+    perfectly good run."""
+    return MATRIX if at is None else json.loads(git("show", "%s:spec/matrix.json" % at))
+
+
+def blob(path, at=None):
+    if at is None:
+        return (ROOT / path).read_bytes()
+    return git_bytes("cat-file", "blob", "%s:%s" % (at, path))
+
+
+def roots(language, target, at=None):
     """The paths a target's file set is drawn from.
 
     A path ending in / contributes only the files sitting directly in it. Any other path
@@ -95,7 +125,7 @@ def roots(language, target):
     A target the convention does not fit declares its own list under bundle_roots in
     spec/matrix.json, keyed language:target, the way the host exclusions are declared.
     """
-    declared = MATRIX.get("bundle_roots", {}).get("%s:%s" % (language, target))
+    declared = matrix_at(at).get("bundle_roots", {}).get("%s:%s" % (language, target))
     if declared:
         return list(declared)
     lang = "targets/" + language
@@ -105,22 +135,22 @@ def roots(language, target):
             lang + "/"]
 
 
-def files(language, target):
+def files(language, target, at=None):
     """Every tracked file in the bundle, sorted.
 
     The language directory contributes only the manifests and Dockerfiles sitting directly
     in it. Listing it whole would sweep in every sibling target.
     """
     wanted = set()
-    for root in roots(language, target):
+    for root in roots(language, target, at):
         if root.endswith("/"):
-            wanted.update(p for p in tracked(root.rstrip("/"))
+            wanted.update(p for p in tracked(root.rstrip("/"), at)
                           if "/" not in p[len(root):])
         else:
-            wanted.update(tracked(root))
+            wanted.update(tracked(root, at))
     if not wanted:
         raise RuntimeError("%s:%s has no tracked files under %s"
-                           % (language, target, ", ".join(roots(language, target))))
+                           % (language, target, ", ".join(roots(language, target, at))))
     # The rule is bytewise, which for UTF-8 is what sorting the strings already does:
     # byte order and code point order agree. Only something locale-aware would differ,
     # and that would differ between machines.
@@ -177,16 +207,31 @@ def repo():
     return m.group(1) if m else ""
 
 
-def manifest(language, target):
+@functools.lru_cache(maxsize=None)
+def pushed(at):
+    """Whether a remote-tracking branch holds this commit.
+
+    A permalink to a commit that was never pushed is a 404, which reads as the code having
+    been deleted rather than as the run having been local. Nightly runs are Actions runs on
+    a pushed commit, so this only ever hides a link for a local run.
+    """
+    try:
+        return bool(git("branch", "-r", "--contains", at).strip())
+    except RuntimeError:
+        return False
+
+
+def manifest(language, target, at=None):
     entries = []
-    for path in files(language, target):
-        p = ROOT / path
+    for path in files(language, target, at):
+        raw = blob(path, at)
         entries.append({"path": path, "role": role(language, path),
-                        "bytes": p.stat().st_size, "hash": "sha256:" + sha256(p)})
+                        "bytes": len(raw),
+                        "hash": "sha256:" + hashlib.sha256(raw).hexdigest()})
     return {"bundle_version": BUNDLE_VERSION, "target": "%s:%s" % (language, target),
             "bundle_hash": rollup(entries),
             "code_hash": rollup([e for e in entries if e["role"] != "prose"]),
-            "commit": commit(), "files": entries}
+            "commit": at or commit(), "files": entries}
 
 
 def hashes(language, target):

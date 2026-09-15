@@ -88,18 +88,29 @@ target at that rung and therefore cancels in the ratio.
 
 ## Status
 
-Working: the spec and plan, the conformance gate with cross-target response fingerprinting,
+Working: the spec and plan, the conformance gate with cross-target response comparison,
 the open-loop generator with per-endpoint histograms, the orchestrator in both host and
 container mode, the ratio aggregator, the nightly measurement split by execution host, the
-nightly framework update, and nineteen targets across three languages. Node has
-`node-http`, Fastify, Express, Hono, Koa and h3. Go has `net-http`, Gin, Echo, chi,
-gorilla/mux and Fiber. Java has bare Netty, Spring Boot, Quarkus, Micronaut, Helidon SE,
-Vert.x and Javalin.
+nightly framework update, target bundles with a framework page per target, and nineteen
+targets across three languages. Node has `node-http`, Fastify, Express, Hono, Koa and h3.
+Go has `net-http`, Gin, Echo, chi, gorilla/mux and Fiber. Java has bare Netty, Spring
+Boot, Quarkus, Micronaut, Helidon SE, Vert.x and Javalin.
 
 `node-http` implements the forty-five endpoints of `blend-v2` and is the contract each
-framework then has to meet with its own facilities. The other eighteen still answer
-`blend-v1`, which they fingerprint-match each other on, so the conformance gate fails
-against them until they are rewired.
+framework then has to meet with its own facilities. Fastify and Gin have met it. The other
+sixteen still answer `blend-v1`, so the conformance gate reports them as pending rewiring
+and the orchestrator measures nothing for them. Go has no rewired baseline yet, which is
+why Gin is measured but has no ratio to publish.
+
+Every run records the commit it measured and a content hash of each target's bundle: its
+own wiring, the shared domain module, the dependency manifests and the Dockerfiles. The
+site rebuilds that manifest out of history at the recorded commit, checks it against the
+recorded hash, and renders a page per target carrying its README, where each endpoint is
+wired, and a link to those exact lines on GitHub at the commit that ran. Where the hash
+does not verify the code is shown without a link, because the one failure worth preventing
+is a real number over the wrong lines. `docs/bundles.html` is the design; framework
+metadata, logos and the comparison pages in it are not built yet, and sixteen targets have
+no README.
 
 Framework versions are not held by hand. `.github/workflows/deps.yml` resolves the latest
 release for each language nightly, patch and minor only, and opens one pull request per

@@ -26,6 +26,13 @@ on:
         description: Serial only. How many requests of the pinned sequence to replay.
         default: "40000"
         type: string
+      targets:
+        description: >
+          Measure exactly these targets instead of everything the host supports, as
+          language:target,language:target. A name may repeat, which is how the same target
+          is measured in two positions to separate its cost from its position in the run.
+        default: ""
+        type: string
 
 permissions:
   contents: write
@@ -61,9 +68,19 @@ jobs:
 
       - name: Resolve every target this host supports
         id: resolve
+        env:
+          # Through the environment rather than interpolated into the script: a dispatch
+          # input is attacker-controlled on a public repository.
+          RB_OVERRIDE: ${{ github.event.inputs.targets }}
         run: |
-          python3 harness/hosts.py --host "${{ matrix.host }}" --github-output >> "$GITHUB_OUTPUT"
-          python3 harness/hosts.py --host "${{ matrix.host }}"
+          if [ -n "$RB_OVERRIDE" ]; then
+            echo "targets=$RB_OVERRIDE" >> "$GITHUB_OUTPUT"
+            echo "built=$(echo "$RB_OVERRIDE" | tr ',' '\n' | grep -c .)" >> "$GITHUB_OUTPUT"
+            echo "measuring only: $RB_OVERRIDE"
+          else
+            python3 harness/hosts.py --host "${{ matrix.host }}" --github-output >> "$GITHUB_OUTPUT"
+            python3 harness/hosts.py --host "${{ matrix.host }}"
+          fi
 
       - name: Record the machine
         if: steps.resolve.outputs.built != '0'

@@ -5,7 +5,7 @@ Pages identically, and every slice happens in the browser rather than at build t
 
   python3 site/build.py --summaries results/summary --out site/dist
 """
-import argparse, gzip, html, json, pathlib, sys, datetime as dt
+import argparse, gzip, html, json, pathlib, re, sys, datetime as dt
 
 T = {  # light, dark
     "ground": ("#F4F5F2", "#121513"), "surface": ("#FCFCFB", "#1A1E1B"),
@@ -184,6 +184,32 @@ pre.wire.res { border-left: 2px solid var(--amber); }
 .hrow:last-child { border-bottom: none; }
 .hk { color: var(--tealtext); }
 .hv { color: var(--ink2); word-break: break-all; }
+.fwlink { font-family: var(--f-mono); font-size: 11.5px; margin-left: auto; }
+.crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 7px;
+          font-family: var(--f-mono); font-size: 12px; margin: 0 0 16px; }
+.crumbs button { font: inherit; background: none; border: none; padding: 0; cursor: pointer;
+                 color: var(--tealtext); text-decoration: underline; }
+.crumbs i { font-style: normal; color: var(--ink3); }
+.crumbs span { color: var(--ink); }
+h3.childcap { font-family: var(--f-display); font-size: 17px; font-weight: 600;
+              margin: 20px 0 8px; }
+.childscroll { max-height: 42vh; }
+td.route { font-family: var(--f-mono); font-size: 12px; color: var(--ink2); }
+td.route .verb { color: var(--tealtext); }
+.leafroute { font-family: var(--f-mono); font-size: 13px; color: var(--ink2);
+             margin: 0 0 14px; word-break: break-all; }
+.leafroute .verb { color: var(--tealtext); }
+.childscroll td.go { color: var(--tealtext); text-align: right; }
+.childscroll tbody tr:hover td.go { text-decoration: underline; }
+.sniphead { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: baseline;
+            font-family: var(--f-mono); font-size: 11.5px; margin: 0 0 6px;
+            color: var(--ink3); }
+pre.code { font-family: var(--f-mono); font-size: 12px; line-height: 1.55; margin: 0 0 6px;
+           background: var(--surface); border: 1px solid var(--rule);
+           border-left: 2px solid var(--teal); border-radius: 0 3px 3px 0;
+           padding: 11px 14px; overflow-x: auto; white-space: pre; }
+.how { font-family: var(--f-mono); font-size: 10px; letter-spacing: .08em;
+       text-transform: uppercase; color: var(--ink3); }
 .note { border-left: 2px solid var(--amber); background: var(--surface);
         padding: 13px 17px; border-radius: 0 3px 3px 0; margin-top: 22px;
         font-size: 13.5px; color: var(--ink2); }
@@ -213,6 +239,22 @@ def host_notes():
         return {}
     return {h: {"note": cfg.get("note", ""), "compare_to": cfg.get("compare_to", "")}
             for h, cfg in m.get("hosts", {}).items() if cfg.get("note")}
+
+
+def spec_routes():
+    """Method and route per endpoint id, for the endpoint lists in the dialog.
+
+    The summary carries ids and families but never the route, and an id alone does not say
+    what was asked for. Forty-five short strings, so they ride in the page rather than
+    being fetched.
+    """
+    try:
+        spec = json.loads((pathlib.Path(__file__).resolve().parent.parent
+                           / "spec" / "endpoints.json").read_text())
+    except (OSError, json.JSONDecodeError):
+        return {}
+    return {e["id"]: {"m": e.get("method", ""), "p": e.get("path", "")}
+            for e in spec.get("endpoints", [])}
 
 
 def load_exemplars(d):
@@ -246,28 +288,39 @@ def load_exemplars(d):
     return out
 
 
-def carry_forward(r):
-    """Summaries written before runs were split by host carried the language as "shard"."""
-    if "language" not in r and "shard" in r:
-        r["language"] = r.pop("shard")
-    if "languages" not in r and "shards" in r:
-        r["languages"] = r.pop("shards")
+def is_keyed(r):
+    """Whether this summary holds per-endpoint statistics keyed by endpoint id.
+
+    The shape changed when parallel arrays indexed by endpoint_order were replaced by a
+    map. A summary written before that is skipped rather than converted: reading it
+    positionally is the mistake the map exists to make impossible, and a converter would
+    be code kept alive for data nothing wants.
+    """
     for t in r.get("targets", []):
-        if "language" not in t and "shard" in t:
-            t["language"] = t.pop("shard")
-    return r
+        eps = t.get("endpoints")
+        if isinstance(eps, dict) and eps:
+            return all(isinstance(v, dict) and "rungs" in v for v in eps.values())
+    return True
 
 
 def load(d):
-    runs = []
+    runs, stale = [], 0
     # Summaries are filed by month, so walk rather than glob one level.
     for f in sorted(pathlib.Path(d).rglob("*.json")):
         if f.name.startswith("."):
             continue
         try:
-            runs.append(carry_forward(json.loads(f.read_text())))
+            r = json.loads(f.read_text())
         except json.JSONDecodeError:
             print("  skipping unreadable %s" % f, file=sys.stderr)
+            continue
+        if not is_keyed(r):
+            stale += 1
+            continue
+        runs.append(r)
+    if stale:
+        print("  skipped %d summary file(s) older than the keyed endpoint shape" % stale,
+              file=sys.stderr)
     runs.sort(key=lambda r: r["run_id"])
     return runs
 
@@ -450,25 +503,22 @@ function rows() {
       push({label: t.target, detail: '', value: d[st.metric] ?? null,
             ratio: d.p50_ratio, dead: !!d.baseline_saturated, n: d.achieved_rps});
     } else if (st.gran === 'family') {
-      const fams = (t.families_by_rung || {})[rn] || t.families || {};
+      const fams = famsAt(t, rn);
       for (const [f, rec] of Object.entries(fams)) {
         if (q && !(f.toLowerCase().includes(q) || t.target.toLowerCase().includes(q))) continue;
         push({key: base.key + '|' + f, label: t.target, detail: f,
               value: rec[st.metric] ?? null, ratio: rec.p50_ratio, dead: false, n: rec.count});
       }
     } else {
-      const eps = t.endpoints || {}, order = run.endpoint_order || [],
-            fam = run.endpoint_family || [];
+      const eps = t.endpoints || {}, order = run.endpoint_order || [];
       if (!order.length || !Object.keys(eps).length) continue;
-      const arr = k => (eps[k] && eps[k][rn]) || [];
-      const p50s = arr('p50_us'), vals = arr(st.metric), cnt = arr('count'),
-            rats = arr('p50_ratio');
-      order.forEach((eid, i) => {
+      order.forEach(eid => {
+        const rec = eps[eid]; if (!rec) return;
+        const d = (rec.rungs || {})[rn]; if (!d) return;
         if (q && !(eid.toLowerCase().includes(q) || t.target.toLowerCase().includes(q) ||
-                   (fam[i] || '').toLowerCase().includes(q))) return;
-        if (p50s[i] == null) return;
-        push({key: base.key + '|' + eid, label: t.target, detail: eid, family: fam[i],
-              value: vals[i] ?? null, ratio: rats[i], dead: false, n: cnt[i]});
+                   (rec.family || '').toLowerCase().includes(q))) return;
+        push({key: base.key + '|' + eid, label: t.target, detail: eid, family: rec.family,
+              value: d[st.metric] ?? null, ratio: d.p50_ratio, dead: false, n: d.count});
       });
     }
   }
@@ -612,46 +662,192 @@ function renderHostNote(rs) {
   box.innerHTML = `<strong>${esc(st.host)}</strong> &mdash; ${esc(meta.note)}${delta}`;
 }
 
+/* A framework page is per target, but a row's key carries its slice: node:fastify at blend
+   granularity, node:fastify|domain at family. Look the page up by the target itself, or
+   the link appears on one of the three views and not the other two. */
+const fwPage = (r) => (RB.pages || {})[r.language + ':' + r.target];
+
 /* ---- detail dialog: every field, hidden ones included, plus the captured exchange ---- */
+/* ---- code: one handler document per target, fetched when a dialog asks for one ---- */
+const codeCache = new Map();
+async function fetchCode(key) {
+  if (codeCache.has(key)) return codeCache.get(key);
+  const file = (RB.codeIndex || {})[key];
+  if (!file) return null;
+  const doc = await fetchJson(file).catch(() => null);
+  codeCache.set(key, doc);
+  return doc;
+}
+
+/* ---- the dialog: a drill-down, blend to family to endpoint ---- */
+/* The table shows one level at a time. The dialog is where you go down: a blend opens its
+   families, a family opens the endpoints that made it, and an endpoint is the leaf that
+   carries the handler and the captured exchange. Opening a row at any level lands you at
+   that level rather than at whichever one the table happened to be on. */
+let dlgAt = null;
+
+/* `families` is the middle rung's copy, kept for summaries written before the rung-keyed
+   one existed. Falling back to it per-rung would label mid-rung numbers as whatever rung
+   is selected, so it is used only when the rung-keyed map is absent altogether. */
+function famsAt(t, rn) {
+  const byRung = t.families_by_rung;
+  if (byRung && Object.keys(byRung).length) return byRung[rn] || {};
+  return t.families || {};
+}
+
+function famRowsFor(run, t, rn) {
+  const fams = famsAt(t, rn);
+  return Object.entries(fams).map(([f, rec]) => ({
+    id: f, value: rec[st.metric] ?? rec.p50_us, ratio: rec.p50_ratio, n: rec.count,
+    // Counted from this target rather than from the spec, so the number matches the list
+    // you get when you open the row.
+    eps: epRowsFor(run, t, rn, f).length,
+  })).sort((a, b) => (a.value ?? Infinity) - (b.value ?? Infinity));
+}
+
+function epRowsFor(run, t, rn, family) {
+  const eps = t.endpoints || {}, out = [];
+  for (const eid of run.endpoint_order || []) {
+    const rec = eps[eid];
+    if (!rec || (family && rec.family !== family)) continue;
+    const d = (rec.rungs || {})[rn];
+    if (!d) continue;
+    out.push({id: eid, family: rec.family, value: d[st.metric] ?? d.p50_us,
+              ratio: d.p50_ratio, n: d.count});
+  }
+  return out.sort((a, b) => (a.value ?? Infinity) - (b.value ?? Infinity));
+}
+
+/* A run older than the current spec carries ids the spec no longer defines, so a miss is
+   blank rather than a route belonging to something else. */
+const routeOf = (eid) => (RB.routes || {})[eid];
+
+function childTable(caption, kids, level) {
+  if (!kids.length) return `<p class="empty">Nothing at this level for this target.</p>`;
+  const withRoute = level === 'endpoint';
+  /* Cut the route here rather than in CSS: the table is auto-layout, so a max-width on a
+     cell is advisory and query.many's eight parameters would widen the whole dialog. */
+  const clip = (s, n) => s.length > n ? s.slice(0, n - 1) + '\u2026' : s;
+  const routeCell = (id) => {
+    if (!withRoute) return '';
+    const r = routeOf(id);
+    if (!r) return '<td class="l route">&mdash;</td>';
+    return `<td class="l route" title="${esc(r.m + ' ' + r.p)}">` +
+           `<span class="verb">${esc(r.m)}</span> ${esc(clip(r.p, 44))}</td>`;
+  };
+  const body = kids.map(k => {
+    const route = routeCell(k.id);
+    return `
+    <tr data-down="${esc(level)}" data-id="${esc(k.id)}">
+      <td class="l name">${esc(k.id)}</td>${route}
+      ${withRoute ? '' : `<td class="sub">${k.eps}</td>`}
+      <td>${cell('value', k.value)}</td>
+      <td class="ratio">${k.ratio == null ? '&mdash;' : k.ratio.toFixed(2) + 'x'}</td>
+      <td class="sub">${k.n == null ? '&mdash;' : Math.round(k.n).toLocaleString()}</td>
+      <td class="sub go">open &rarr;</td>
+    </tr>`;
+  }).join('');
+  return `<h3 class="childcap">${esc(caption)}</h3>
+    <div class="scroll childscroll"><table><thead><tr>
+      <th class="l">${withRoute ? 'endpoint' : 'family'}</th>
+      ${withRoute ? '<th class="l">route</th>' : '<th>endpoints</th>'}
+      <th>${esc(METRICS[st.metric].label)}</th><th>vs baseline</th><th>samples</th><th></th>
+    </tr></thead><tbody>${body}</tbody></table></div>`;
+}
+
+function crumbs(t) {
+  const parts = [`<button data-up="blend">${esc(t.target)}</button>`];
+  if (dlgAt.family) parts.push(`<button data-up="family">${esc(dlgAt.family)}</button>`);
+  if (dlgAt.endpoint) parts.push(`<span>${esc(dlgAt.endpoint)}</span>`);
+  return `<nav class="crumbs">${parts.join('<i>›</i>')}</nav>`;
+}
+
 async function openDetail(key) {
   const r = (window.__rows || []).find(x => x.key === key);
   if (!r) return;
-  const wk = wireKeyFor(r);
-  if (wk) await fetchWire(wk);
-  const doc = wireDoc(r);
-  const e = st.gran === 'endpoint' && doc ? doc.endpoints[r.detail] : null;
-  const field = (lab, val, hidden) =>
-    `<div class="frow${hidden ? ' hid' : ''}"><span class="fk">${esc(lab)}${hidden ? ' <em>hidden</em>' : ''}</span><span class="fv">${cell(lab === 'framing' ? 'framing' : '', val)}</span></div>`;
-  const fields = COLS.filter(c => c.label && c.id !== 'bar').map(c => {
-    const v = c.id === 'value' ? r.value : c.get(r);
-    const lab = c.id === 'value' ? METRICS[st.metric].label : c.label;
-    const shown = c.pin || st.cols.has(c.id);
-    return `<div class="frow${shown ? '' : ' hid'}"><span class="fk">${esc(lab)}${shown ? '' : ' <em>hidden</em>'}</span><span class="fv">${cell(c.id, v)}</span></div>`;
-  }).join('');
+  dlgAt = {language: r.language, target: r.target,
+           family: st.gran === 'family' ? r.detail
+                 : st.gran === 'endpoint' ? r.family : null,
+           endpoint: st.gran === 'endpoint' ? r.detail : null};
+  await paintDetail();
+  document.getElementById('dlg').showModal();
+}
+
+async function paintDetail() {
+  const run = latest(); if (!run || !dlgAt) return;
+  const t = run.targets.find(x => x.language === dlgAt.language && x.target === dlgAt.target);
+  if (!t) return;
+  const rn = pickRung(run);
+  const tkey = dlgAt.language + ':' + dlgAt.target;
+  const box = document.getElementById('dlgbody');
+  const head = `
+    <div class="wirehead"><strong>${esc(t.framework || t.target)}</strong>
+      <span class="ver">${esc(t.version || '')}</span>
+      <span class="wmeta">${esc(t.language)}${t.target === t.baseline ? ' · baseline' : ''}</span>
+      ${(RB.pages || {})[tkey] ? `<a class="fwlink" href="${esc(RB.pages[tkey])}">README &amp; bundle &rarr;</a>` : ''}</div>
+    ${crumbs(t)}`;
+
+  if (!dlgAt.endpoint) {
+    const kids = dlgAt.family ? epRowsFor(run, t, rn, dlgAt.family) : famRowsFor(run, t, rn);
+    const self = dlgAt.family ? (famsAt(t, rn)[dlgAt.family] || {})
+                              : (t.rungs || {})[rn] || {};
+    box.innerHTML = head + `
+      <div class="fields">
+        <div class="frow"><span class="fk">${esc(METRICS[st.metric].label)}</span><span class="fv">${cell('value', self[st.metric] ?? self.p50_us)}</span></div>
+        <div class="frow"><span class="fk">vs baseline</span><span class="fv">${self.p50_ratio == null ? '&mdash;' : self.p50_ratio.toFixed(2) + 'x'}</span></div>
+        <div class="frow"><span class="fk">samples</span><span class="fv">${cell('', self.count ?? self.achieved_rps)}</span></div>
+      </div>` +
+      childTable(dlgAt.family ? `Endpoints in ${dlgAt.family}` : 'Families', kids,
+                 dlgAt.family ? 'endpoint' : 'family');
+    return;
+  }
+
+  /* the leaf: this endpoint's handler, then what it actually put on the wire */
+  const eid = dlgAt.endpoint;
+  const d = (((t.endpoints || {})[eid] || {}).rungs || {})[rn] || {};
+  const stat = (lab, k, u) => `<div class="frow"><span class="fk">${esc(lab)}</span><span class="fv">${cell(u, d[k])}</span></div>`;
+  const route = routeOf(eid);
+  box.innerHTML = head + `
+    ${route ? `<p class="leafroute"><span class="verb">${esc(route.m)}</span> ${esc(route.p)}</p>` : ''}
+    <div class="fields">
+      ${stat('p50', 'p50_us', 'value')}${stat('p90', 'p90_us', 'value')}
+      ${stat('p99', 'p99_us', 'value')}${stat('p99.9', 'p999_us', 'value')}
+      <div class="frow"><span class="fk">vs baseline</span><span class="fv">${d.p50_ratio == null ? '&mdash;' : d.p50_ratio.toFixed(2) + 'x'}</span></div>
+      ${stat('samples', 'count', '')}
+    </div>
+    <p class="empty" id="leafload">Loading the handler and the captured exchange…</p>`;
+
+  const [codeDoc, wireKey] = [await fetchCode(tkey), wireKeyFor({language: dlgAt.language, target: dlgAt.target})];
+  if (wireKey) await fetchWire(wireKey);
+  const wdoc = wireKey ? wireCache.get(wireKey) : null;
+  const sn = codeDoc && codeDoc[eid];
+  const e = wdoc && wdoc.endpoints[eid];
+  const loc = sn ? `${sn.f}:${sn.s}${sn.e === sn.s ? '' : '-' + sn.e}` : '';
+  const handler = sn ? `
+    <h3 class="childcap">Handler</h3>
+    <div class="sniphead"><span class="loc">${esc(loc)}</span><span class="how">${esc(sn.h)}</span>
+      ${sn.u ? `<a href="${esc(sn.u)}">open on GitHub &rarr;</a>`
+             : `<span class="how">commit not on a remote, so no link</span>`}</div>
+    <pre class="code">${esc(sn.t)}</pre>`
+    : `<p class="empty">No handler located for this endpoint in this target.</p>`;
   const hdr = hs => hs.map(([k, v]) =>
     `<div class="hrow"><span class="hk">${esc(k)}</span><span class="hv">${esc(v)}</span></div>`).join('');
   const exchange = e ? `
+    <h3 class="childcap">On the wire</h3>
     <div class="wirecols">
       <div><h3>Request</h3>
         <pre class="wire req">${esc(e.m)} ${esc(e.p)}</pre>
         <div class="hdrs">${hdr(e.rh)}</div>
-        ${e.rb ? `<pre class="wire">${esc(e.rb)}${e.rbz > 700 ? '\n\u2026 ' + e.rbz.toLocaleString() + ' bytes total' : ''}</pre>` : '<p class="empty" style="padding:6px 0">no body</p>'}
+        ${e.rb ? `<pre class="wire">${esc(e.rb)}${e.rbz > 700 ? '\n… ' + e.rbz.toLocaleString() + ' bytes total' : ''}</pre>` : '<p class="empty" style="padding:6px 0">no body</p>'}
       </div>
       <div><h3>Response</h3>
         <pre class="wire res">HTTP ${e.s}</pre>
         <div class="hdrs">${hdr(e.sh)}</div>
-        ${e.sb ? `<pre class="wire">${esc(e.sb)}${e.tr ? '\n\u2026 ' + e.sbz.toLocaleString() + ' bytes total' : ''}</pre>` : '<p class="empty" style="padding:6px 0">no body</p>'}
+        ${e.sb ? `<pre class="wire">${esc(e.sb)}${e.tr ? '\n… ' + e.sbz.toLocaleString() + ' bytes total' : ''}</pre>` : '<p class="empty" style="padding:6px 0">no body</p>'}
       </div>
-    </div>`
-    : `<p class="empty">A captured exchange exists per endpoint. Switch granularity to Endpoint to read one.</p>`;
-  document.getElementById('dlgbody').innerHTML = `
-    <div class="wirehead"><strong>${esc(r.label)}</strong>
-      <span class="ver">${esc(r.version || '')}</span>
-      ${r.detail ? `<span class="pill">${esc(r.detail)}</span>` : ''}
-      <span class="wmeta">${esc(r.language)}${doc ? ' \u00b7 ' + esc(doc.framework) : ''}</span></div>
-    <div class="fields">${fields}</div>
-    ${exchange}`;
-  document.getElementById('dlg').showModal();
+    </div>` : '';
+  const load = document.getElementById('leafload');
+  if (load) load.outerHTML = handler + exchange;
 }
 
 /* ---- the time axis ---- */
@@ -680,11 +876,10 @@ function renderTime(rs, langColour) {
         if (kb !== base) return;
         let v = null;
         if (!det) { const d = t.rungs[rn]; v = d ? d[st.metric] : null; }
-        else if ((run.endpoint_order || []).includes(det)) {
-          const i = run.endpoint_order.indexOf(det);
-          const a = (t.endpoints || {})[st.metric]; v = a && a[rn] ? a[rn][i] : null;
+        else if ((t.endpoints || {})[det]) {
+          const d = (t.endpoints[det].rungs || {})[rn]; v = d ? d[st.metric] : null;
         } else {
-          const fams = (t.families_by_rung || {})[rn] || t.families || {};
+          const fams = famsAt(t, rn);
           v = fams[det] ? fams[det][st.metric] : null;
         }
         if (v == null) return;
@@ -779,6 +974,23 @@ document.getElementById('tbody').onkeydown = e => {
   if (tr) { e.preventDefault(); openDetail(tr.dataset.key); }
 };
 document.getElementById('dlgclose').onclick = () => document.getElementById('dlg').close();
+/* Drilling happens inside the dialog, so one delegated handler covers both directions. */
+document.getElementById('dlgbody').onclick = e => {
+  const down = e.target.closest('tr[data-down]');
+  if (down) {
+    if (down.dataset.down === 'family') dlgAt.family = down.dataset.id;
+    else dlgAt.endpoint = down.dataset.id;
+    paintDetail();
+    document.getElementById('dlgbody').scrollTop = 0;
+    return;
+  }
+  const up = e.target.closest('button[data-up]');
+  if (up) {
+    if (up.dataset.up === 'blend') { dlgAt.family = null; dlgAt.endpoint = null; }
+    else dlgAt.endpoint = null;
+    paintDetail();
+  }
+};
 document.getElementById('dlg').onclick = e => {
   if (e.target.id === 'dlg') document.getElementById('dlg').close();
 };
@@ -815,9 +1027,31 @@ def manifest_entry(r):
             "cpu": r.get("cpu", ""), "cores": r.get("cores", 0)}
 
 
-def render(runs, wire):
+def snippet_doc(run, view):
+    """Every endpoint's handler for one target: the code, and where it came from.
+
+    Short keys, because this ships to the browser next to the run it describes.
+    """
+    out = {}
+    for eid, sn in view["snippets"].items():
+        url = None
+        if view["linkable"] and run.get("repo"):
+            url = permalink(run["repo"], run["commit"], sn["path"],
+                            sn["start_line"], sn["end_line"])
+        out[eid] = {"f": sn["path"], "s": sn["start_line"], "e": sn["end_line"],
+                    "h": sn["how"], "u": url, "t": sn["text"]}
+    return out
+
+
+def render(runs, wire, pages=None, code=None):
     tracked = [r for r in runs if r.get("tracked")]
+    pages = pages or {}
+    code = code or {}
     now = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    # Which endpoint sets the page is showing, read from the runs rather than written here:
+    # a hardcoded name kept saying blend-v1 for a page built entirely from blend-v2 runs.
+    suites = sorted({r["suite"] for r in tracked if r.get("suite")})
+    epochs = sorted({str(r["epoch"]) for r in tracked if r.get("epoch")})
     # Embed only the newest tracked run per host, so the table paints without a round trip.
     # Everything else is fetched when something actually needs it; embedding every run made
     # the page grow without bound, one full-matrix run being close to a megabyte.
@@ -832,6 +1066,9 @@ def render(runs, wire):
         "runs": list(newest.values()),
         "manifest": [manifest_entry(r) for r in runs],
         "hosts": host_notes(),
+        "routes": spec_routes(),
+        "pages": pages,
+        "codeIndex": {k: "data/code/%s.json.gz" % k.replace(":", "-") for k in code},
         "wireIndex": {k: {"framework": v["framework"], "version": v["version"],
                           "file": "data/wire/%s.json.gz" % k}
                       for k, v in wire.items()},
@@ -848,7 +1085,7 @@ def render(runs, wire):
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@400;600&family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>__CSS__</style></head><body><div class="page">
 
-<p class="eyebrow">blend-v1 &middot; epoch 1 &middot; built __BUILT__</p>
+<p class="eyebrow">__SUITES__ &middot; built __BUILT__</p>
 <h1>RequestBench Results</h1>
 <p class="lede">Every framework in a run shares one machine and one window, so these are
 real latencies and they rank directly against each other. The ratio column is still each
@@ -918,7 +1155,303 @@ The ratio to each language's bare baseline is what carries across runs and acros
 </body></html>"""
             .replace("__CSS__", CSS).replace("__BUILT__", esc(now))
             .replace("__NRUNS__", str(len(tracked)))
+            .replace("__SUITES__", "%s &middot; epoch %s" % (esc(" + ".join(suites)),
+                                                              esc(", ".join(epochs)))
+                     if suites else "no runs")
             .replace("__DATA__", data).replace("__APP__", app))
+
+
+# ---------------------------------------------------------------------------------------
+# Framework pages: docs/bundles.html §6. One page per target in the newest run on a host,
+# rendered from the bundle manifest at the commit that run recorded rather than from the
+# working tree, so a page about a run made in March shows the code that ran in March.
+
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent / "harness"))
+import bundle, snippets                                            # noqa: E402
+
+FW_CSS = """
+.crumb { font-family: var(--f-mono); font-size: 11.5px; margin: 0 0 18px; }
+.ident { display: flex; gap: 16px; align-items: center; margin: 0 0 6px; }
+.mono-mark { width: 54px; height: 54px; border-radius: 6px; flex: none;
+             background: var(--surface2); border: 1px solid var(--rule2);
+             display: flex; align-items: center; justify-content: center;
+             font-family: var(--f-display); font-size: 26px; font-weight: 600;
+             color: var(--tealtext); }
+.ident h1 { margin: 0; }
+.factline { font-family: var(--f-mono); font-size: 12px; color: var(--ink2);
+            margin: 0 0 4px; display: flex; flex-wrap: wrap; gap: 6px 14px; }
+.verdict { font-family: var(--f-mono); font-size: 11px; letter-spacing: .06em;
+           text-transform: uppercase; padding: 2px 8px; border-radius: 2px; }
+.verdict.ok { background: var(--tealsoft); color: var(--tealtext); }
+.verdict.no { background: var(--surface2); color: var(--amber); }
+.prose > * { max-width: 72ch; }
+.prose > h2:first-child { margin-top: 0; }
+.prose h2 { font-family: var(--f-display); font-size: 19px; margin: 22px 0 6px; }
+.prose p { margin: 0 0 11px; }
+.prose ul { margin: 0 0 11px; padding-left: 20px; }
+.prose code { background: var(--surface2); padding: 1px 4px; border-radius: 2px;
+              font-size: 12.5px; }
+.snip { margin: 0 0 20px; }
+.sniphead { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: baseline;
+            font-family: var(--f-mono); font-size: 11.5px; margin: 0 0 6px; }
+.sniphead .eid { color: var(--ink); font-weight: 500; font-size: 13px; }
+h3.famcap { font-family: var(--f-display); font-size: 17px; font-weight: 600;
+            margin: 26px 0 10px; padding-bottom: 5px; border-bottom: 1px solid var(--rule); }
+h3.famcap:first-child { margin-top: 4px; }
+.sniphead .loc { color: var(--ink3); }
+pre.code { font-family: var(--f-mono); font-size: 12px; line-height: 1.55; margin: 0;
+           background: var(--surface); border: 1px solid var(--rule);
+           border-left: 2px solid var(--teal); border-radius: 0 3px 3px 0;
+           padding: 11px 14px; overflow-x: auto; white-space: pre; }
+.how { font-family: var(--f-mono); font-size: 10px; letter-spacing: .08em;
+       text-transform: uppercase; color: var(--ink3); }
+td.path { font-family: var(--f-mono); font-size: 12px; }
+td.h { font-family: var(--f-mono); font-size: 11px; color: var(--ink3); }
+"""
+
+
+def monogram(name):
+    return esc(name[0].upper())
+
+
+def md(text):
+    """The bundle's README, as much of Markdown as these files actually use.
+
+    A dependency would be a build-time install for headings, paragraphs, lists and fenced
+    code, and the gate in validate.yml is what keeps the files to that subset.
+    """
+    lines = text.splitlines()
+    # The page already carries the framework's name as its heading, so a README that opens
+    # with one would print it twice.
+    if lines and lines[0].startswith("# "):
+        lines = lines[1:]
+    out, i = [], 0
+    def inline(s):
+        s = esc(s)
+        s = re.sub(r"`([^`]+)`", r"<code>\1</code>", s)
+        s = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", s)
+        return s
+    while i < len(lines):
+        line = lines[i]
+        if line.startswith("```"):
+            body = []
+            i += 1
+            while i < len(lines) and not lines[i].startswith("```"):
+                body.append(lines[i])
+                i += 1
+            out.append("<pre class='code'>%s</pre>" % esc("\n".join(body)))
+        elif line.startswith("#"):
+            depth = len(line) - len(line.lstrip("#"))
+            out.append("<h%d>%s</h%d>" % (min(depth + 1, 4), inline(line.lstrip("# ")),
+                                          min(depth + 1, 4)))
+        elif line.strip().startswith(("- ", "* ")):
+            items = []
+            while i < len(lines) and lines[i].strip().startswith(("- ", "* ")):
+                items.append("<li>%s</li>" % inline(lines[i].strip()[2:]))
+                i += 1
+            out.append("<ul>%s</ul>" % "".join(items))
+            continue
+        elif line.strip():
+            para = []
+            while i < len(lines) and lines[i].strip() and not lines[i].startswith(("#", "```")):
+                para.append(lines[i].strip())
+                i += 1
+            out.append("<p>%s</p>" % inline(" ".join(para)))
+            continue
+        i += 1
+    return "\n".join(out)
+
+
+def permalink(repo, commit, path, start, end):
+    """blob rather than raw, so the reader gets highlighting and can browse outward, and
+    the full SHA rather than a branch, so a link from a run in March still opens March's
+    code. A one-line range is #L30, which is what GitHub's own copy-link produces."""
+    frag = "#L%d" % start if start == end else "#L%d-L%d" % (start, end)
+    return "https://github.com/%s/blob/%s/%s%s" % (repo, commit, path, frag)
+
+
+def bundle_at(run, t):
+    """The target's manifest and snippets at the commit this run measured.
+
+    Returns None when history cannot answer: a shallow checkout, a rewritten branch, or a
+    rollup that does not match what the run recorded. Rendering today's file under an old
+    number is the failure this whole mechanism exists to prevent, so nothing is guessed.
+    """
+    commit, language, target = run.get("commit"), t["language"], t["target"]
+    if not commit:
+        return None
+    try:
+        man = bundle.manifest(language, target, at=commit)
+        snips, problems = snippets.resolve(language, target, at=commit)
+    except Exception:
+        return None
+    recorded = t.get("bundle_hash")
+    verified = bool(recorded) and man["bundle_hash"] == recorded
+    return {"manifest": man, "snippets": snips, "problems": problems, "verified": verified,
+            "linkable": verified and bundle.pushed(commit)}
+
+
+def standing(run, t, rn):
+    """This target's own row, and where it sits among the rows it is comparable to."""
+    row = (t.get("rungs") or {}).get(str(rn)) or {}
+    peers = [x for x in run["targets"]
+             if x["language"] == t["language"] and (x.get("rungs") or {}).get(str(rn))]
+    ordered = sorted(peers, key=lambda x: x["rungs"][str(rn)].get("p50_us") or 0)
+    rank = next((i + 1 for i, x in enumerate(ordered) if x["target"] == t["target"]), None)
+    return row, rank, len(ordered)
+
+
+def render_framework(run, t, rn, view):
+    name = t.get("framework") or t["target"]
+    row, rank, n_peers = standing(run, t, rn)
+    facts = ["%s %s" % (name, t.get("version") or "?"), t.get("target_runtime") or ""]
+    for label in ("adapter", "serializer", "template"):
+        if t.get(label):
+            facts.append("%s %s" % (label, t[label]))
+    head = ["<p class='crumb'><a href='../index.html'>&larr; results</a></p>",
+            "<div class='ident'><div class='mono-mark'>%s</div><h1>%s</h1></div>"
+            % (monogram(name), esc(name)),
+            "<p class='factline'>%s</p>"
+            % " &middot; ".join(esc(f) for f in facts if f)]
+
+    commit = run.get("commit") or ""
+    if view and view["verified"] and view["linkable"]:
+        verdict = ("<span class='verdict ok'>hash verified</span> against "
+                   "<code>%s</code>" % esc(commit[:12]))
+    elif view and view["verified"]:
+        verdict = ("<span class='verdict ok'>hash verified</span> against "
+                   "<code>%s</code>, which is not on a remote, so the code is shown "
+                   "without links" % esc(commit[:12]))
+    elif view and not t.get("bundle_hash"):
+        # A run made before the bundle fields existed has nothing to verify against. That
+        # is not a mismatch, and reading as one would accuse the history of being wrong.
+        verdict = ("<span class='verdict no'>no bundle recorded</span> this run predates "
+                   "the bundle record, so its source cannot be pinned")
+    elif view:
+        verdict = ("<span class='verdict no'>hash mismatch</span> the bundle at "
+                   "<code>%s</code> is not what this run recorded, so no source is linked"
+                   % esc(commit[:12]))
+    else:
+        verdict = ("<span class='verdict no'>source unavailable</span> this run recorded "
+                   "no commit, or history here does not hold it")
+    head.append("<p class='factline'>%s</p>" % verdict)
+
+    body = []
+    prose = ""
+    if view:
+        # The target's own README, not any prose the bundle happens to sweep in. The shared
+        # host note is in every Node bundle, and matching it put a page about the host
+        # contract under every framework's name.
+        want = "targets/%s/%s/README.md" % (t["language"],
+                                            bundle.target_dir(t["target"]))
+        if any(e["path"] == want for e in view["manifest"]["files"]):
+            try:
+                prose = bundle.blob(want, commit).decode("utf-8")
+            except Exception:
+                prose = ""
+    if prose:
+        body.append("<div class='panel prose'>%s</div>" % md(prose))
+    else:
+        body.append("<div class='note'>No README in this target's bundle yet. The prose is "
+                    "the hand-written half of docs/bundles.html &sect;2 and is what says "
+                    "how this framework is wired here.</div>")
+
+    if row:
+        ratio = row.get("p50_ratio")
+        body.append(
+            "<div class='panel'><h2>Standing</h2>"
+            "<p class='hint'>At %s offered rps, in the run that produced this page.</p>"
+            "<p class='factline'>p50 %s&nbsp;us &middot; %s &middot; rank %s of %s in %s"
+            " &middot; %s achieved rps</p></div>"
+            % (f"{row.get('offered_rps', 0):,}", f"{row.get('p50_us', 0):,}",
+               ("%.2fx vs %s" % (ratio, esc(t.get("baseline") or "baseline")))
+               if ratio else "baseline",
+               rank, n_peers, esc(t["language"]), f"{row.get('achieved_rps', 0):,}"))
+
+    if view:
+        snips, order = view["snippets"], run.get("endpoint_order") or []
+        fam_of = {eid: rec.get("family", "")
+                  for t2 in run["targets"] for eid, rec in (t2.get("endpoints") or {}).items()}
+        # One block often serves several endpoints: the whole compressed family is one
+        # register call. Listing it six times would pad the page and hide that fact.
+        blocks, seen = [], {}
+        for eid in order:
+            sn = snips.get(eid)
+            if not sn:
+                continue
+            at = (sn["path"], sn["start_line"], sn["end_line"])
+            if at in seen:
+                seen[at]["ids"].append(eid)
+                continue
+            seen[at] = {"ids": [eid], "sn": sn, "family": fam_of.get(eid, "")}
+            blocks.append(seen[at])
+
+        out, current = [], None
+        for b in blocks:
+            if b["family"] != current:
+                current = b["family"]
+                out.append("<h3 class='famcap'>%s</h3>" % esc(current))
+            sn = b["sn"]
+            loc = "%s:%d%s" % (sn["path"], sn["start_line"],
+                               "" if sn["end_line"] == sn["start_line"]
+                               else "-%d" % sn["end_line"])
+            # Why there is no link is said once in the header. Repeating it on every
+            # block turned the page into a column of the same apology.
+            link = ("<a href='%s'>open on GitHub &rarr;</a>"
+                    % esc(permalink(run["repo"], commit, sn["path"],
+                                    sn["start_line"], sn["end_line"]))
+                    if view["linkable"] and run.get("repo") else "")
+            out.append(
+                "<div class='snip'><div class='sniphead'>%s<span class='loc'>%s</span>"
+                "<span class='how'>%s</span>%s</div><pre class='code'>%s</pre></div>"
+                % ("".join("<span class='eid'>%s</span>" % esc(i) for i in b["ids"]),
+                   esc(loc), esc(sn["how"]), link, esc(sn["text"])))
+        missing = [e for e in order if e not in snips]
+        body.append("<div class='panel'><h2>Handlers</h2>"
+                    "<p class='hint'>Every endpoint this target wires, grouped by family. "
+                    "%d blocks cover %d endpoints, because one registration often serves "
+                    "several.%s</p>%s</div>"
+                    % (len(blocks), len(order) - len(missing),
+                       "" if not missing else
+                       " Not located: %s." % esc(", ".join(missing)),
+                       "".join(out) or "<p class='empty'>Nothing located.</p>"))
+
+        frows = []
+        for e in view["manifest"]["files"]:
+            frows.append("<tr><td class='l h'>%s</td><td class='l path'>%s</td>"
+                         "<td class='sub'>%s</td><td class='h'>%s</td></tr>"
+                         % (esc(e["role"]), esc(e["path"]), f"{e['bytes']:,}",
+                            esc(e["hash"][7:19])))
+        body.append("<div class='panel'><h2>Bundle</h2>"
+                    "<p class='hint'>%d files, hashed from history at the measured commit. "
+                    "code %s &middot; bundle %s</p>"
+                    "<div class='scroll'><table><thead><tr><th class='l'>role</th>"
+                    "<th class='l'>path</th><th>bytes</th><th>sha256</th></tr></thead>"
+                    "<tbody>%s</tbody></table></div></div>"
+                    % (len(view["manifest"]["files"]),
+                       esc(view["manifest"]["code_hash"][7:19]),
+                       esc(view["manifest"]["bundle_hash"][7:19]), "".join(frows)))
+        for problem in view["problems"]:
+            body.append("<div class='note'>%s</div>" % esc(problem))
+
+    return ("""<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>__NAME__ &middot; RequestBench</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@400;600&family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>__CSS____FWCSS__</style></head><body><div class="page">
+__HEAD__
+__BODY__
+<footer><span><a href="../index.html">github.com/ipjohnson/RequestBench</a></span>
+<span>run __RUN__</span></footer>
+</div></body></html>"""
+            .replace("__CSS__", CSS).replace("__FWCSS__", FW_CSS)
+            .replace("__NAME__", esc(name))
+            .replace("__HEAD__", "\n".join(head))
+            .replace("__BODY__", "\n".join(body))
+            .replace("__RUN__", esc(run["run_id"])))
 
 
 def main():
@@ -931,7 +1464,38 @@ def main():
     wire = load_exemplars(a.exemplars)
     out = pathlib.Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
-    (out / "index.html").write_text(render(runs, wire))
+
+    # A framework page describes one target as one run measured it, so it is generated for
+    # the newest tracked run on each host and nothing older. An earlier run's page would
+    # differ only in the numbers, and the run it came from is already addressable.
+    newest_tracked = {}
+    for r in runs:
+        if not r.get("tracked"):
+            continue
+        h = r.get("exec_host") or "container"
+        if h not in newest_tracked or r["run_id"] > newest_tracked[h]["run_id"]:
+            newest_tracked[h] = r
+    pages, code, page_dir, built, unavailable = {}, {}, out / "f", 0, 0
+    page_dir.mkdir(parents=True, exist_ok=True)
+    for r in newest_tracked.values():
+        rn = str(r["rungs"][len(r["rungs"]) // 2]) if r.get("rungs") else "1"
+        for t in r["targets"]:
+            key = "%s:%s" % (t["language"], t["target"])
+            view = bundle_at(r, t)
+            built += 1
+            unavailable += 0 if (view and view["verified"]) else 1
+            name = "%s-%s.html" % (t["language"], t["target"])
+            (page_dir / name).write_text(render_framework(r, t, rn, view))
+            pages[key] = "f/" + name
+            # The handler for a row is the thing a reader wants when they open that row,
+            # so it travels with the numbers rather than living only on the page.
+            if view:
+                code[key] = snippet_doc(r, view)
+    print("wrote %d framework page(s)%s"
+          % (built, "" if not unavailable
+             else "; %d could not verify their bundle against history" % unavailable))
+
+    (out / "index.html").write_text(render(runs, wire, pages, code))
     # Clear the data directory: a rename or a dropped run would otherwise leave a stale
     # file behind that the manifest no longer references but Pages keeps serving.
     data_dir = out / "data"
@@ -951,6 +1515,10 @@ def main():
     wire_dir.mkdir(exist_ok=True)
     for key, doc in wire.items():
         put(wire_dir / ("%s.json.gz" % key), doc)
+    code_dir = data_dir / "code"
+    code_dir.mkdir(exist_ok=True)
+    for key, doc in code.items():
+        put(code_dir / ("%s.json.gz" % key.replace(":", "-")), doc)
 
     print("read %d summaries (%d tracked)" % (runs.__len__(),
                                               sum(1 for r in runs if r.get("tracked"))))

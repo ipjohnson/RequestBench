@@ -15,7 +15,12 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 SPEC = ROOT / "spec"
 LADDER = json.loads((SPEC / "ladder.json").read_text())
 MATRIX = json.loads((SPEC / "matrix.json").read_text())
+# The endpoint set a run measured, carried on every row it writes. Hardcoding it meant a
+# blend-v2 run filed itself as blend-v1 and landed in the same time series as one.
+BLEND = json.loads((SPEC / "endpoints.json").read_text())["version"]
+SEQUENCE = json.loads((SPEC / "sequence.json").read_text())["version"]
 PORT = int(os.environ.get("RB_PORT", "8080"))
+EXEMPLARS = ROOT / "results" / "exemplars"
 # Which targets the gate actually fails on. Everything implemented is still booted and
 # still reported; a target that has not been rewired to the current endpoint set cannot
 # pass, and failing on it would leave the gate red for as long as the rewiring takes.
@@ -318,7 +323,7 @@ def billed_durations(text):
     return dict(sorted(hist.items()))
 
 
-def conform(reference, is_reference):
+def conform(reference, is_reference, exemplars=None):
     """Gate the running target, against the language's baseline measured in this run.
 
     The baseline boots first and records what it answered; every target after it is
@@ -331,6 +336,8 @@ def conform(reference, is_reference):
     argv = [sys.executable, str(ROOT / "harness" / "conform.py"),
             "127.0.0.1:%d" % PORT, "--quiet",
             "--reference" if is_reference else "--compare", str(reference)]
+    if exemplars:
+        argv += ["--exemplars", str(exemplars)]
     encoding = ENCODING_FOR_HOST.get(os.environ.get("RB_HOST", "container"), "http")
     if encoding != "http":
         argv += ["--encoding", encoding]
@@ -375,7 +382,7 @@ def env_fingerprint(run_id, languages, baselines):
             "gen_cpus": os.environ.get("RB_GEN_CPUS", ""),
             "runtime": subprocess.run(["node", "-v"], capture_output=True, text=True)
                         .stdout.strip(),
-            "generator": "blend.mjs/node", "epoch": 1, "suite": "blend-v1"}
+            "generator": "blend.mjs/node", "epoch": 1, "suite": BLEND}
 
 def main():
     ap = argparse.ArgumentParser()
@@ -387,6 +394,8 @@ def main():
     ap.add_argument("--rungs", default="", help="comma separated rung numbers, default all")
     ap.add_argument("--workers", type=int, default=6)
     ap.add_argument("--skip-conform", action="store_true")
+    ap.add_argument("--exemplars", action="store_true",
+                    help="rewrite results/exemplars for every target that conforms")
     ap.add_argument("--mode", choices=["local", "docker"], default="local")
     ap.add_argument("--suite", choices=["auto", "blend", "serial"], default="auto",
                     help="auto picks by host: a server gets the ladder, a function host "
@@ -443,7 +452,7 @@ def main():
         rows[0]["cpus"] = Container.CPUS
     suite = a.suite if a.suite != "auto" else SUITE_FOR_HOST.get(host, "blend")
     encoding = ENCODING_FOR_HOST.get(host, "http")
-    rows[0]["suite"] = "serial-v1" if suite == "serial" else "blend-v1"
+    rows[0]["suite"] = SEQUENCE if suite == "serial" else BLEND
     what = "language=%s" % languages[0] if len(languages) == 1 else "languages=%s" % ",".join(languages)
     if a.validate_only:
         print("run %s   %s  mode=%s  VALIDATE ONLY" % (run_id, what, a.mode))
@@ -502,7 +511,12 @@ def main():
                 if not is_reference and not usable:
                     print("  note: no conforming %s reference yet in this run, so responses "
                           "are only status-checked" % language)
-                ok, line = conform(reference, writes_reference)
+                # The site reads one capture per target from results/exemplars, and the
+                # gate is the only thing that has every response in hand. Writing them
+                # here is what keeps them from describing an endpoint set two specs old.
+                exemplars = (EXEMPLARS / ("%s-%s@%s.json" % (language, target, host))
+                             if a.exemplars else None)
+                ok, line = conform(reference, writes_reference, exemplars)
                 print("  conformance: %s" % line)
                 if not ok:
                     nonconforming.append(key)
@@ -536,7 +550,7 @@ def main():
                           % "  ".join("%dms x%s" % (k, f"{v:,}") for k, v in billed.items()))
                 for ep in res["endpoints"]:
                     rows.append({"kind": "sample", "run_id": run_id, "epoch": 1,
-                                 "suite": "serial-v1", "arm": None, "language": language,
+                                 "suite": SEQUENCE, "arm": None, "language": language,
                                  "host": host, "target": target, "rung": 1,
                                  "offered_rps": 0, "achieved_rps": res["achieved_rps"],
                                  "seconds": res["elapsed_s"], "endpoint": ep["id"],
@@ -567,7 +581,7 @@ def main():
                          res["dropped"], res["errors"]))
                 for ep in res["endpoints"]:
                     rows.append({"kind": "sample", "run_id": run_id, "epoch": 1,
-                                 "suite": "blend-v1", "arm": None, "language": language,
+                                 "suite": BLEND, "arm": None, "language": language,
                                  "target": target, "rung": r["rung"], "offered_rps": r["rps"],
                                  "achieved_rps": res["achieved_rps"], "seconds": dur,
                                  "endpoint": ep["id"], "family": ep["family"],

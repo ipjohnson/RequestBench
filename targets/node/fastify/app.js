@@ -79,6 +79,8 @@ app.get("/authorized/small", { onRequest: requireToken }, small);
 
 // ---- compressed: @fastify/compress, registered in its own encapsulated scope ----------
 
+// rb:snippet compressed.identity_small compressed.identity_medium compressed.identity_large
+// rb:snippet compressed.gzip_small compressed.gzip_medium compressed.gzip_large
 app.register(async (scope) => {
   // Threshold is left at the plugin's own default. Whether a framework bothers to compress
   // a body too small to benefit is one of the things compressed.small is there to show, so
@@ -108,6 +110,7 @@ const validators = (size) => {
     done();
   };
 };
+// rb:snippet cached.small cached.medium cached.large cached.revalidate
 app.register(async (scope) => {
   for (const size of ["small", "medium", "large"])
     scope.get("/cached/" + size, { onRequest: validators(size) }, () => d.payload(size));
@@ -147,6 +150,7 @@ app.register(view, { engine: { handlebars }, root: join(here, "views") });
 app.get("/template/small",  (_, reply) => reply.view("items.hbs", d.payload("small")));
 app.get("/template/medium", (_, reply) => reply.view("items.hbs", d.payload("medium")));
 
+// rb:snippet errors.unmatched
 app.setNotFoundHandler((_, reply) => reply.code(404).send({ error: "not_found" }));
 app.setErrorHandler((err, _, reply) =>
   err instanceof d.ValidationError
