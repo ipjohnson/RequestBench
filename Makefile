@@ -1,6 +1,6 @@
 comma := ,
 
-.PHONY: fixture plan spec machine bundle snippets build java rust python python-lock lint validate conform exemplars run vars report clean help
+.PHONY: fixture plan spec expected test machine bundle snippets build java rust python python-lock lint validate conform exemplars run vars report clean help
 # Everything is on by default: no TARGETS means every implemented target this host
 # supports. The rest narrow it. LANGUAGES/FRAMEWORKS pick what runs, FAMILIES/ENDPOINTS
 # pick what it is asked for, and a narrowed endpoint set is recorded as its own profile
@@ -20,6 +20,12 @@ RPS ?=
 RUNGS ?=
 MODE ?= local
 ARGS ?=
+# The targets spec/expected.json is derived from: four languages, four HTTP stacks, four
+# independent implementations. A value only some of them produce is not an expectation.
+EXPECT_FROM ?= node:fastify,go:gin,rust:axum,python:fastapi
+# Tests boot containers by default, not host processes. The container is what measurement
+# runs, and it is the only mode that does not need five toolchains on the machine.
+TEST_MODE ?= docker
 
 select = $(if $(TARGETS),--targets $(TARGETS),) \
 	 $(if $(LANGUAGES),--languages $(LANGUAGES),) \
@@ -75,6 +81,15 @@ python-lock: ## recompile targets/python/requirements.txt from requirements.in
 	cd targets/python && .venv/bin/python -m piptools compile --quiet --strip-extras \
 	  --output-file requirements.txt requirements.in
 
+test: ## boot every target and check every endpoint against spec/expected.json
+	@test -x .venv/bin/python || python3 -m venv .venv
+	@.venv/bin/python -m pip install -q -r harness/requirements.txt
+	.venv/bin/python -m pytest tests $(if $(TARGETS),--rb-targets $(TARGETS),) \
+	  --rb-mode $(TEST_MODE) $(ARGS)
+
+expected: ## re-derive spec/expected.json from the targets named in EXPECT_FROM
+	python3 harness/expected.py --targets $(EXPECT_FROM) --mode $(MODE) --write
+
 lint: ## parse every workflow file, and run actionlint when it is installed
 	python3 harness/lintyaml.py
 	@command -v actionlint >/dev/null && actionlint -color || \
@@ -110,6 +125,8 @@ vars: ## every variable `make run` takes, and what it defaults to
 	  SECONDS    'seconds per rate. Default: spec/ladder.json' \
 	  WARMUP     'warmup seconds. Default: by language warmup class' \
 	  MODE       'local or docker. Default: local' \
+	  TEST_MODE  'how `make test` boots a target. Default: docker' \
+	  EXPECT_FROM 'targets `make expected` derives the expectation from' \
 	  PINNED     'set to 1 to refuse an unpinned machine' \
 	  ARGS       'anything else, passed to harness/run.py verbatim'
 
