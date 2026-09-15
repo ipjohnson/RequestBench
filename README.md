@@ -60,10 +60,11 @@ not one.
 ## Running it
 
     make plan
-    make run SECONDS=12 RUNGS=1,3,5                        # node, host processes, quick loop
+    make run SECONDS=12 RUNGS=regular                      # node, host processes, quick loop
     make build TARGETS=go:net-http,go:gin,go:echo          # container images
     make run TARGETS=go:net-http,go:gin,go:echo MODE=docker
-    make run                                               # full ladder, 5 x 60s
+    make run                                               # both rates, 4 min each
+    make machine                                           # is this box fit to measure on
     make report
 
 `MODE=local` runs targets as host processes, which is the fast edit loop. `MODE=docker`
