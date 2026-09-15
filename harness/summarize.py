@@ -133,6 +133,10 @@ def main():
         "runtime": env["runtime"], "generator": env["generator"],
         "baselines": baselines, "languages": languages,
         "cross_language": env.get("cross_language", False),
+        # What code produced these numbers. The raw JSONL carries it too, but that is a
+        # 90-day artifact and this file is kept forever, so dropping it here is what makes
+        # a ratio permanently unattributable. Neither can be backfilled onto a past run.
+        "commit": env.get("commit", ""), "repo": env.get("repo", ""),
         "rungs": rung_ids, "targets": [],
         # Declared once. Per-target endpoint arrays are parallel to this, which keeps the
         # file small enough to commit on every run and keep forever.
@@ -153,6 +157,15 @@ def main():
                  # Which JSON library did the serializing. Frameworks in one language do
                  # not always agree, and the choice moves the numbers.
                  "serializer": m.get("serializer", ""),
+                 # And which template engine, which the Node targets report instead of a
+                 # serializer. Reading only `serializer` left the column empty for every
+                 # Node and Go row and discarded the one field that explains the template
+                 # family, where handlebars runs several times the baseline's concat.
+                 "template": m.get("template", ""),
+                 # The bundle this target was: code_hash excludes prose, so a corrected
+                 # README does not read as a target that changed.
+                 "bundle_hash": m.get("bundle_hash", ""),
+                 "code_hash": m.get("code_hash", ""),
                  "rungs": {}, "families": {}, "families_by_rung": {}}
         base = base_of.get(t)
         for rn in rung_ids:

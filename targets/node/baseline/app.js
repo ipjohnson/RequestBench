@@ -74,49 +74,66 @@ function route(method, seg, q, body, headers) {
   if (method === "GET") {
     if (n === 1) {
       switch (seg[0]) {
+        // rb:snippet baseline.plaintext
         case "plaintext": return text(200, "Hello, World!");
         // The handler reads no header at all: headers.many minus headers.few is then the
         // cost of materialising 27 nobody asked for.
+        // rb:snippet headers.few headers.many
         case "headers":   return json(200, d.payload("small"));
         case "health":    return text(200, "ok");
         case "__meta":    return json(200, { ...meta, ...hostMeta() });
       }
     } else if (n === 2) {
       switch (seg[0]) {
+        // rb:snippet json.small json.medium json.large
         case "json":       if (SIZES.has(seg[1])) return json(200, d.payload(seg[1])); break;
+        // rb:snippet compressed.identity_small compressed.identity_medium compressed.identity_large
+        // rb:snippet compressed.gzip_small compressed.gzip_medium compressed.gzip_large
         case "compressed": if (SIZES.has(seg[1])) return compressed(seg[1], headers); break;
+        // rb:snippet cached.small cached.medium cached.large cached.revalidate
         case "cached":     if (SIZES.has(seg[1])) return cached(seg[1], headers); break;
+        // rb:snippet template.small template.medium
         case "template":
           if (seg[1] === "small" || seg[1] === "medium")
             return { status: 200, headers: HTML_CT, body: d.renderItems(seg[1]) };
           break;
+        // rb:snippet authorized.allowed authorized.denied
         case "authorized":
           if (seg[1] === "small")
             return d.tokenOk(headers["authorization"])
               ? json(200, d.payload("small")) : json(403, { error: "forbidden" });
           break;
+        // rb:snippet middleware.none middleware.four middleware.sixteen
         case "middleware": {
           const mw = MIDDLEWARE[seg[1]];
           if (mw) return mw(null);
           break;
         }
+        // rb:snippet query.one query.many
         case "query":
           if (seg[1] === "one")  return json(200, d.coerceOne(q));
           if (seg[1] === "many") return json(200, d.coerceMany(q));
           break;
+        // rb:snippet parameters.one
         case "parameters": return json(200, d.payload("small"));
+        // rb:snippet domain.filter
         case "domain":     if (seg[1] === "orders") return json(200, d.domainFilter(q)); break;
       }
     } else if (n === 3) {
+      // rb:snippet domain.lookup errors.not_found
       if (seg[0] === "domain" && seg[1] === "orders") return send(d.getOrder(seg[2]));
     } else if (n === 4) {
       if (seg[0] === "parameters") {
+        // rb:snippet parameters.static
         if (seg[1] === "static" && seg[2] === "segment" && seg[3] === "literal")
           return json(200, d.payload("small"));
+        // rb:snippet parameters.two
         if (seg[2] === "with-second") return json(200, d.payload("small"));
       }
       if (seg[0] === "domain") {
+        // rb:snippet domain.join
         if (seg[1] === "customers" && seg[3] === "summary") return send(d.domainJoin(seg[2]));
+        // rb:snippet domain.aggregate
         if (seg[1] === "regions"   && seg[3] === "report")  return send(d.domainAggregate(seg[2]));
       }
     }
@@ -124,12 +141,16 @@ function route(method, seg, q, body, headers) {
   }
 
   if (method === "POST") {
+    // rb:snippet domain.create
     if (n === 2 && seg[0] === "domain" && seg[1] === "orders")
       return json(201, d.validateOrder(body), { location: "/domain/orders/" + d.NEXT_ORDER_ID });
     if (n === 3 && seg[0] === "body") {
       // bind parses and binds without validating, so validate minus bind is the validator
       // alone rather than the validator plus the parse.
+      // rb:snippet body.bind_small body.bind_medium
       if (seg[1] === "bind" && SIZES.has(seg[2])) return json(200, d.bindEcho(body));
+      // rb:snippet body.validate_small body.validate_medium body.rejected_all
+      // rb:snippet body.rejected_first errors.malformed
       if (seg[1] === "validate") {
         if (SIZES.has(seg[2]))            return json(200, d.validateOrder(body));
         if (seg[2] === "first-error")     return json(200, d.validateOrder(body, true));
@@ -138,18 +159,22 @@ function route(method, seg, q, body, headers) {
     return notFound();
   }
 
+  // rb:snippet domain.replace
   if (method === "PUT" && n === 3 && seg[0] === "domain" && seg[1] === "orders") {
     const o = d.getOrder(seg[2]);
     if (o === d.NOT_FOUND) return notFound();
     return json(200, { id: o.id, ...d.validateOrder(body) });
   }
+  // rb:snippet domain.patch
   if (method === "PATCH" && n === 3 && seg[0] === "domain" && seg[1] === "customers")
     return send(d.patchCustomer(seg[2], body));
+  // rb:snippet domain.delete
   if (method === "DELETE" && n === 5 && seg[0] === "domain" && seg[1] === "orders"
       && seg[3] === "lines") {
     if (d.getOrderLine(seg[2], seg[4]) === d.NOT_FOUND) return notFound();
     return { status: 204, headers: {}, body: "" };
   }
+  // rb:snippet errors.unmatched
   return notFound();
 }
 

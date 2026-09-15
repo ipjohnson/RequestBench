@@ -5,7 +5,7 @@ Pages identically, and every slice happens in the browser rather than at build t
 
   python3 site/build.py --summaries results/summary --out site/dist
 """
-import argparse, gzip, html, json, pathlib, sys, datetime as dt
+import argparse, gzip, html, json, pathlib, re, sys, datetime as dt
 
 T = {  # light, dark
     "ground": ("#F4F5F2", "#121513"), "surface": ("#FCFCFB", "#1A1E1B"),
@@ -184,6 +184,7 @@ pre.wire.res { border-left: 2px solid var(--amber); }
 .hrow:last-child { border-bottom: none; }
 .hk { color: var(--tealtext); }
 .hv { color: var(--ink2); word-break: break-all; }
+.fwlink { font-family: var(--f-mono); font-size: 11.5px; margin-left: auto; }
 .note { border-left: 2px solid var(--amber); background: var(--surface);
         padding: 13px 17px; border-radius: 0 3px 3px 0; margin-top: 22px;
         font-size: 13.5px; color: var(--ink2); }
@@ -648,7 +649,8 @@ async function openDetail(key) {
     <div class="wirehead"><strong>${esc(r.label)}</strong>
       <span class="ver">${esc(r.version || '')}</span>
       ${r.detail ? `<span class="pill">${esc(r.detail)}</span>` : ''}
-      <span class="wmeta">${esc(r.language)}${doc ? ' \u00b7 ' + esc(doc.framework) : ''}</span></div>
+      <span class="wmeta">${esc(r.language)}${doc ? ' \u00b7 ' + esc(doc.framework) : ''}</span>
+      ${(RB.pages || {})[r.key] ? `<a class="fwlink" href="${esc(RB.pages[r.key])}">source &amp; bundle &rarr;</a>` : ''}</div>
     <div class="fields">${fields}</div>
     ${exchange}`;
   document.getElementById('dlg').showModal();
@@ -815,9 +817,14 @@ def manifest_entry(r):
             "cpu": r.get("cpu", ""), "cores": r.get("cores", 0)}
 
 
-def render(runs, wire):
+def render(runs, wire, pages=None):
     tracked = [r for r in runs if r.get("tracked")]
+    pages = pages or {}
     now = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    # Which endpoint sets the page is showing, read from the runs rather than written here:
+    # a hardcoded name kept saying blend-v1 for a page built entirely from blend-v2 runs.
+    suites = sorted({r["suite"] for r in tracked if r.get("suite")})
+    epochs = sorted({str(r["epoch"]) for r in tracked if r.get("epoch")})
     # Embed only the newest tracked run per host, so the table paints without a round trip.
     # Everything else is fetched when something actually needs it; embedding every run made
     # the page grow without bound, one full-matrix run being close to a megabyte.
@@ -832,6 +839,7 @@ def render(runs, wire):
         "runs": list(newest.values()),
         "manifest": [manifest_entry(r) for r in runs],
         "hosts": host_notes(),
+        "pages": pages,
         "wireIndex": {k: {"framework": v["framework"], "version": v["version"],
                           "file": "data/wire/%s.json.gz" % k}
                       for k, v in wire.items()},
@@ -848,7 +856,7 @@ def render(runs, wire):
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@400;600&family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>__CSS__</style></head><body><div class="page">
 
-<p class="eyebrow">blend-v1 &middot; epoch 1 &middot; built __BUILT__</p>
+<p class="eyebrow">__SUITES__ &middot; built __BUILT__</p>
 <h1>RequestBench Results</h1>
 <p class="lede">Every framework in a run shares one machine and one window, so these are
 real latencies and they rank directly against each other. The ratio column is still each
@@ -918,7 +926,288 @@ The ratio to each language's bare baseline is what carries across runs and acros
 </body></html>"""
             .replace("__CSS__", CSS).replace("__BUILT__", esc(now))
             .replace("__NRUNS__", str(len(tracked)))
+            .replace("__SUITES__", "%s &middot; epoch %s" % (esc(" + ".join(suites)),
+                                                              esc(", ".join(epochs)))
+                     if suites else "no runs")
             .replace("__DATA__", data).replace("__APP__", app))
+
+
+# ---------------------------------------------------------------------------------------
+# Framework pages: docs/bundles.html §6. One page per target in the newest run on a host,
+# rendered from the bundle manifest at the commit that run recorded rather than from the
+# working tree, so a page about a run made in March shows the code that ran in March.
+
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent / "harness"))
+import bundle, snippets                                            # noqa: E402
+
+# §6 names three: the plainest possible route, a route with captures, and one feature
+# wiring. A target can be unrepresentative, so the list is a default rather than a rule.
+FEATURED = ("json.small", "parameters.two", "compressed.gzip_small")
+
+FW_CSS = """
+.crumb { font-family: var(--f-mono); font-size: 11.5px; margin: 0 0 18px; }
+.ident { display: flex; gap: 16px; align-items: center; margin: 0 0 6px; }
+.mono-mark { width: 54px; height: 54px; border-radius: 6px; flex: none;
+             background: var(--surface2); border: 1px solid var(--rule2);
+             display: flex; align-items: center; justify-content: center;
+             font-family: var(--f-display); font-size: 26px; font-weight: 600;
+             color: var(--tealtext); }
+.ident h1 { margin: 0; }
+.factline { font-family: var(--f-mono); font-size: 12px; color: var(--ink2);
+            margin: 0 0 4px; display: flex; flex-wrap: wrap; gap: 6px 14px; }
+.verdict { font-family: var(--f-mono); font-size: 11px; letter-spacing: .06em;
+           text-transform: uppercase; padding: 2px 8px; border-radius: 2px; }
+.verdict.ok { background: var(--tealsoft); color: var(--tealtext); }
+.verdict.no { background: var(--surface2); color: var(--amber); }
+.prose > * { max-width: 72ch; }
+.prose > h2:first-child { margin-top: 0; }
+.prose h2 { font-family: var(--f-display); font-size: 19px; margin: 22px 0 6px; }
+.prose p { margin: 0 0 11px; }
+.prose ul { margin: 0 0 11px; padding-left: 20px; }
+.prose code { background: var(--surface2); padding: 1px 4px; border-radius: 2px;
+              font-size: 12.5px; }
+.snip { margin: 0 0 20px; }
+.sniphead { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: baseline;
+            font-family: var(--f-mono); font-size: 11.5px; margin: 0 0 6px; }
+.sniphead .eid { color: var(--ink); font-weight: 500; font-size: 13px; }
+.sniphead .loc { color: var(--ink3); }
+pre.code { font-family: var(--f-mono); font-size: 12px; line-height: 1.55; margin: 0;
+           background: var(--surface); border: 1px solid var(--rule);
+           border-left: 2px solid var(--teal); border-radius: 0 3px 3px 0;
+           padding: 11px 14px; overflow-x: auto; white-space: pre; }
+.how { font-family: var(--f-mono); font-size: 10px; letter-spacing: .08em;
+       text-transform: uppercase; color: var(--ink3); }
+td.path { font-family: var(--f-mono); font-size: 12px; }
+td.h { font-family: var(--f-mono); font-size: 11px; color: var(--ink3); }
+"""
+
+
+def monogram(name):
+    return esc(name[0].upper())
+
+
+def md(text):
+    """The bundle's README, as much of Markdown as these files actually use.
+
+    A dependency would be a build-time install for headings, paragraphs, lists and fenced
+    code, and the gate in validate.yml is what keeps the files to that subset.
+    """
+    out, lines, i = [], text.splitlines(), 0
+    def inline(s):
+        s = esc(s)
+        s = re.sub(r"`([^`]+)`", r"<code>\1</code>", s)
+        s = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", s)
+        return s
+    while i < len(lines):
+        line = lines[i]
+        if line.startswith("```"):
+            body = []
+            i += 1
+            while i < len(lines) and not lines[i].startswith("```"):
+                body.append(lines[i])
+                i += 1
+            out.append("<pre class='code'>%s</pre>" % esc("\n".join(body)))
+        elif line.startswith("#"):
+            depth = len(line) - len(line.lstrip("#"))
+            out.append("<h%d>%s</h%d>" % (min(depth + 1, 4), inline(line.lstrip("# ")),
+                                          min(depth + 1, 4)))
+        elif line.strip().startswith(("- ", "* ")):
+            items = []
+            while i < len(lines) and lines[i].strip().startswith(("- ", "* ")):
+                items.append("<li>%s</li>" % inline(lines[i].strip()[2:]))
+                i += 1
+            out.append("<ul>%s</ul>" % "".join(items))
+            continue
+        elif line.strip():
+            para = []
+            while i < len(lines) and lines[i].strip() and not lines[i].startswith(("#", "```")):
+                para.append(lines[i].strip())
+                i += 1
+            out.append("<p>%s</p>" % inline(" ".join(para)))
+            continue
+        i += 1
+    return "\n".join(out)
+
+
+def permalink(repo, commit, path, start, end):
+    """blob rather than raw, so the reader gets highlighting and can browse outward, and
+    the full SHA rather than a branch, so a link from a run in March still opens March's
+    code. A one-line range is #L30, which is what GitHub's own copy-link produces."""
+    frag = "#L%d" % start if start == end else "#L%d-L%d" % (start, end)
+    return "https://github.com/%s/blob/%s/%s%s" % (repo, commit, path, frag)
+
+
+def bundle_at(run, t):
+    """The target's manifest and snippets at the commit this run measured.
+
+    Returns None when history cannot answer: a shallow checkout, a rewritten branch, or a
+    rollup that does not match what the run recorded. Rendering today's file under an old
+    number is the failure this whole mechanism exists to prevent, so nothing is guessed.
+    """
+    commit, language, target = run.get("commit"), t["language"], t["target"]
+    if not commit:
+        return None
+    try:
+        man = bundle.manifest(language, target, at=commit)
+        snips, problems = snippets.resolve(language, target, at=commit)
+    except Exception:
+        return None
+    recorded = t.get("bundle_hash")
+    verified = bool(recorded) and man["bundle_hash"] == recorded
+    return {"manifest": man, "snippets": snips, "problems": problems, "verified": verified}
+
+
+def standing(run, t, rn):
+    """This target's own row, and where it sits among the rows it is comparable to."""
+    row = (t.get("rungs") or {}).get(str(rn)) or {}
+    peers = [x for x in run["targets"]
+             if x["language"] == t["language"] and (x.get("rungs") or {}).get(str(rn))]
+    ordered = sorted(peers, key=lambda x: x["rungs"][str(rn)].get("p50_us") or 0)
+    rank = next((i + 1 for i, x in enumerate(ordered) if x["target"] == t["target"]), None)
+    return row, rank, len(ordered)
+
+
+def render_framework(run, t, rn, view):
+    name = t.get("framework") or t["target"]
+    row, rank, n_peers = standing(run, t, rn)
+    facts = ["%s %s" % (name, t.get("version") or "?"), t.get("target_runtime") or ""]
+    for label in ("adapter", "serializer", "template"):
+        if t.get(label):
+            facts.append("%s %s" % (label, t[label]))
+    head = ["<p class='crumb'><a href='../index.html'>&larr; results</a></p>",
+            "<div class='ident'><div class='mono-mark'>%s</div><h1>%s</h1></div>"
+            % (monogram(name), esc(name)),
+            "<p class='factline'>%s</p>"
+            % " &middot; ".join(esc(f) for f in facts if f)]
+
+    commit = run.get("commit") or ""
+    if view and view["verified"]:
+        verdict = ("<span class='verdict ok'>hash verified</span> against "
+                   "<code>%s</code>" % esc(commit[:12]))
+    elif view:
+        verdict = ("<span class='verdict no'>hash mismatch</span> the bundle at "
+                   "<code>%s</code> is not what this run recorded, so no source is linked"
+                   % esc(commit[:12]))
+    else:
+        verdict = ("<span class='verdict no'>source unavailable</span> this run recorded "
+                   "no commit, or history here does not hold it")
+    head.append("<p class='factline'>%s</p>" % verdict)
+
+    body = []
+    prose = ""
+    if view:
+        # The target's own README, not any prose the bundle happens to sweep in. The shared
+        # host note is in every Node bundle, and matching it put a page about the host
+        # contract under every framework's name.
+        want = "targets/%s/%s/README.md" % (t["language"],
+                                            bundle.target_dir(t["target"]))
+        if any(e["path"] == want for e in view["manifest"]["files"]):
+            try:
+                prose = bundle.blob(want, commit).decode("utf-8")
+            except Exception:
+                prose = ""
+    if prose:
+        body.append("<div class='panel prose'>%s</div>" % md(prose))
+    else:
+        body.append("<div class='note'>No README in this target's bundle yet. The prose is "
+                    "the hand-written half of docs/bundles.html &sect;2 and is what says "
+                    "how this framework is wired here.</div>")
+
+    if row:
+        ratio = row.get("p50_ratio")
+        body.append(
+            "<div class='panel'><h2>Standing</h2>"
+            "<p class='hint'>At %s offered rps, in the run that produced this page.</p>"
+            "<p class='factline'>p50 %s&nbsp;us &middot; %s &middot; rank %s of %s in %s"
+            " &middot; %s achieved rps</p></div>"
+            % (f"{row.get('offered_rps', 0):,}", f"{row.get('p50_us', 0):,}",
+               ("%.2fx vs %s" % (ratio, esc(t.get("baseline") or "baseline")))
+               if ratio else "baseline",
+               rank, n_peers, esc(t["language"]), f"{row.get('achieved_rps', 0):,}"))
+
+    if view:
+        snips = view["snippets"]
+        featured = [e for e in FEATURED if e in snips] or list(snips)[:3]
+        blocks = []
+        for eid in featured:
+            s = snips[eid]
+            loc = "%s:%d" % (s["path"], s["start_line"])
+            if s["end_line"] != s["start_line"]:
+                loc += "-%d" % s["end_line"]
+            link = ""
+            if view["verified"] and run.get("repo"):
+                link = ("<a href='%s'>open on GitHub</a>"
+                        % esc(permalink(run["repo"], commit, s["path"],
+                                        s["start_line"], s["end_line"])))
+            blocks.append(
+                "<div class='snip'><div class='sniphead'><span class='eid'>%s</span>"
+                "<span class='loc'>%s</span><span class='how'>%s</span>%s</div>"
+                "<pre class='code'>%s</pre></div>"
+                % (esc(eid), esc(loc), esc(s["how"]), link, esc(s["text"])))
+        body.append("<div class='panel'><h2>Handlers</h2>"
+                    "<p class='hint'>Three of %d endpoints this target wires. Every one is "
+                    "in the table below.</p>%s</div>"
+                    % (len(snips), "".join(blocks)))
+
+        rows = []
+        for eid in run.get("endpoint_order", []):
+            s = snips.get(eid)
+            if not s:
+                rows.append("<tr><td class='l'>%s</td><td class='l sub'>not resolved</td>"
+                            "<td></td></tr>" % esc(eid))
+                continue
+            loc = "%s:%d%s" % (s["path"], s["start_line"],
+                               "" if s["end_line"] == s["start_line"] else "-%d" % s["end_line"])
+            cell = esc(loc)
+            if view["verified"] and run.get("repo"):
+                cell = "<a href='%s'>%s</a>" % (
+                    esc(permalink(run["repo"], commit, s["path"],
+                                  s["start_line"], s["end_line"])), esc(loc))
+            rows.append("<tr><td class='l'>%s</td><td class='l path'>%s</td>"
+                        "<td class='h'>%s</td></tr>" % (esc(eid), cell, esc(s["how"])))
+        body.append("<div class='panel'><h2>Every endpoint</h2>"
+                    "<p class='hint'>Where each one is wired, derived from its route or "
+                    "named by a marker where no route literal exists.</p>"
+                    "<div class='scroll'><table><thead><tr><th class='l'>endpoint</th>"
+                    "<th class='l'>wiring</th><th>how</th></tr></thead><tbody>%s</tbody>"
+                    "</table></div></div>" % "".join(rows))
+
+        frows = []
+        for e in view["manifest"]["files"]:
+            frows.append("<tr><td class='l h'>%s</td><td class='l path'>%s</td>"
+                         "<td class='sub'>%s</td><td class='h'>%s</td></tr>"
+                         % (esc(e["role"]), esc(e["path"]), f"{e['bytes']:,}",
+                            esc(e["hash"][7:19])))
+        body.append("<div class='panel'><h2>Bundle</h2>"
+                    "<p class='hint'>%d files, hashed from history at the measured commit. "
+                    "code %s &middot; bundle %s</p>"
+                    "<div class='scroll'><table><thead><tr><th class='l'>role</th>"
+                    "<th class='l'>path</th><th>bytes</th><th>sha256</th></tr></thead>"
+                    "<tbody>%s</tbody></table></div></div>"
+                    % (len(view["manifest"]["files"]),
+                       esc(view["manifest"]["code_hash"][7:19]),
+                       esc(view["manifest"]["bundle_hash"][7:19]), "".join(frows)))
+        for problem in view["problems"]:
+            body.append("<div class='note'>%s</div>" % esc(problem))
+
+    return ("""<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>__NAME__ &middot; RequestBench</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@400;600&family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>__CSS____FWCSS__</style></head><body><div class="page">
+__HEAD__
+__BODY__
+<footer><span><a href="../index.html">github.com/ipjohnson/RequestBench</a></span>
+<span>run __RUN__</span></footer>
+</div></body></html>"""
+            .replace("__CSS__", CSS).replace("__FWCSS__", FW_CSS)
+            .replace("__NAME__", esc(name))
+            .replace("__HEAD__", "\n".join(head))
+            .replace("__BODY__", "\n".join(body))
+            .replace("__RUN__", esc(run["run_id"])))
 
 
 def main():
@@ -931,7 +1220,34 @@ def main():
     wire = load_exemplars(a.exemplars)
     out = pathlib.Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
-    (out / "index.html").write_text(render(runs, wire))
+
+    # A framework page describes one target as one run measured it, so it is generated for
+    # the newest tracked run on each host and nothing older. An earlier run's page would
+    # differ only in the numbers, and the run it came from is already addressable.
+    newest_tracked = {}
+    for r in runs:
+        if not r.get("tracked"):
+            continue
+        h = r.get("exec_host") or "container"
+        if h not in newest_tracked or r["run_id"] > newest_tracked[h]["run_id"]:
+            newest_tracked[h] = r
+    pages, page_dir, built, unavailable = {}, out / "f", 0, 0
+    page_dir.mkdir(parents=True, exist_ok=True)
+    for r in newest_tracked.values():
+        rn = str(r["rungs"][len(r["rungs"]) // 2]) if r.get("rungs") else "1"
+        for t in r["targets"]:
+            key = "%s:%s" % (t["language"], t["target"])
+            view = bundle_at(r, t)
+            built += 1
+            unavailable += 0 if (view and view["verified"]) else 1
+            name = "%s-%s.html" % (t["language"], t["target"])
+            (page_dir / name).write_text(render_framework(r, t, rn, view))
+            pages[key] = "f/" + name
+    print("wrote %d framework page(s)%s"
+          % (built, "" if not unavailable
+             else "; %d could not verify their bundle against history" % unavailable))
+
+    (out / "index.html").write_text(render(runs, wire, pages))
     # Clear the data directory: a rename or a dropped run would otherwise leave a stale
     # file behind that the manifest no longer references but Pages keeps serving.
     data_dir = out / "data"

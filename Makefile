@@ -1,4 +1,6 @@
-.PHONY: fixture plan spec bundle build java lint validate conform run report clean help
+comma := ,
+
+.PHONY: fixture plan spec bundle snippets build java lint validate conform exemplars run report clean help
 TARGETS ?= node:node-http,node:fastify,node:express
 SECONDS ?=
 RUNGS ?=
@@ -45,6 +47,12 @@ validate: ## boot and conform every named target, no load  (TARGETS= MODE=)
 
 conform: ## gate a already-running target on 127.0.0.1:8080  (REF= to compare)
 	python3 harness/conform.py 127.0.0.1:8080 $(if $(REF),--compare $(REF),)
+
+snippets: ## where every endpoint is wired, per target  (TARGETS= or --all)
+	python3 harness/snippets.py $(if $(TARGETS),$(subst $(comma), ,$(TARGETS)),--all) --summary
+
+exemplars: ## recapture results/exemplars for every named target  (TARGETS= MODE=)
+	python3 harness/run.py --targets $(TARGETS) --mode $(MODE) --validate-only --exemplars
 
 run: ## boot, gate, warm, ladder, record  (TARGETS= SECONDS= RUNGS= MODE=)
 	python3 harness/run.py --targets $(TARGETS) \

@@ -117,6 +117,7 @@ func main() {
 		}
 		c.AbortWithStatusJSON(500, gin.H{"error": "internal", "message": msg})
 	}))
+	// rb:snippet errors.unmatched
 	r.NoRoute(func(c *gin.Context) { c.JSON(404, gin.H{"error": "not_found"}) })
 	r.SetHTMLTemplate(template.Must(template.New("items.tmpl").Parse(itemsTemplate)))
 
@@ -144,6 +145,7 @@ func main() {
 	// pay radix parameter cost on the family every other target serves from a static
 	// route, and json.small is the denominator most of the set is read against. It would
 	// also answer 200 with an empty payload for a size that does not exist.
+	// rb:snippet json.small json.medium json.large
 	for _, size := range sizes {
 		r.GET("/json/"+size, payload(size))
 	}
@@ -174,6 +176,8 @@ func main() {
 	// Level is pinned across every language. The default size threshold is left alone:
 	// whether a framework bothers to compress a body too small to benefit is what
 	// compressed.gzip_small is in the set to show, so forcing it would erase the answer.
+	// rb:snippet compressed.identity_small compressed.identity_medium compressed.identity_large
+	// rb:snippet compressed.gzip_small compressed.gzip_medium compressed.gzip_large
 	comp := r.Group("/compressed", gzip.Gzip(d.GzipLevel))
 	for _, size := range sizes {
 		body := d.Payload(size)
@@ -182,16 +186,20 @@ func main() {
 			c.JSON(200, body)
 		})
 	}
+	// rb:snippet-end
 
 	// ---- cached: validator headers and the conditional, scoped the same way ---------
 
+	// rb:snippet cached.small cached.medium cached.large cached.revalidate
 	cached := r.Group("/cached")
 	for _, size := range sizes {
 		cached.GET("/"+size, validatorsFor(size), payload(size))
 	}
+	// rb:snippet-end
 
 	// ---- template -------------------------------------------------------------------
 
+	// rb:snippet template.small template.medium
 	for _, size := range []string{"small", "medium"} {
 		body := d.Payload(size)
 		r.GET("/template/"+size, func(c *gin.Context) { c.HTML(200, "items.tmpl", body) })
@@ -211,6 +219,7 @@ func main() {
 	}
 	// bind parses and binds without validating, so validate minus bind is the validator
 	// alone rather than the validator plus the parse.
+	// rb:snippet body.bind_small body.bind_medium
 	for _, size := range []string{"small", "medium"} {
 		r.POST("/body/bind/"+size, withBody(func(c *gin.Context, m map[string]any) {
 			c.JSON(200, d.BindEcho(m))
