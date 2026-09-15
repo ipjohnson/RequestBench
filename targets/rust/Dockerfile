@@ -10,7 +10,16 @@ WORKDIR /src
 COPY targets/rust/Cargo.toml targets/rust/Cargo.lock ./
 COPY targets/rust/_shared ./_shared
 COPY targets/rust/_hosts ./_hosts
-COPY targets/rust/${TARGET} ./${TARGET}
+# Every member's manifest, not just the one being built: cargo loads the whole workspace
+# before it resolves -p, and a missing member directory fails the build outright. Only the
+# named crate and its own dependency tree are compiled, and only its binary is copied into
+# the final stage, so the image still carries one framework.
+COPY targets/rust/axum ./axum
+COPY targets/rust/actix-web ./actix-web
+COPY targets/rust/poem ./poem
+COPY targets/rust/rocket ./rocket
+COPY targets/rust/salvo ./salvo
+COPY targets/rust/warp ./warp
 # --locked so the image is built from the versions the lockfile records and /__meta
 # reports. Without it a rebuild months later can resolve something newer and the recorded
 # version stops describing the binary.
