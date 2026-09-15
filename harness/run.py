@@ -1,7 +1,8 @@
-"""RequestBench orchestrator: boot, gate, warm, ladder, record, tear down.
+"""RequestBench orchestrator: boot, gate, warm, measure each rate, record, tear down.
 
-  python3 harness/run.py --targets node:node-http,node:fastify,node:express
-  python3 harness/run.py --targets node:fastify --seconds 20 --rungs 3,5
+  python3 harness/run.py --languages node
+  python3 harness/run.py --targets node:fastify --seconds 20 --rungs regular
+  python3 harness/run.py --families json --frameworks gin,fastify
 """
 import argparse, collections, functools, hashlib, http.client, json, os, pathlib, platform, re, shutil, signal, socket, subprocess, sys, time, uuid
 
@@ -63,7 +64,7 @@ def implemented_pairs(host):
         hosts = MATRIX.get("hosts_implemented", {}).get(language, ["container"])
         if not built or host not in hosts:
             continue
-        for name in [entry["baseline"]] + built:
+        for name in built:
             if host in exceptions.get("%s:%s" % (language, name), {}).get("excluded", []):
                 continue
             out.append((language, name))
@@ -372,9 +373,9 @@ def billed_durations(text):
 
 
 def conform(reference, is_reference, exemplars=None):
-    """Gate the running target, against the language's baseline measured in this run.
+    """Gate the running target, against the language's reference measured in this run.
 
-    The baseline boots first and records what it answered; every target after it is
+    The reference boots first and records what it answered; every target after it is
     compared to that. Nothing is stored between runs, because a committed reference makes
     every target answer forever to one target's serialization choices at one moment, and a
     change in the reference then reads as a failure in everything else.
@@ -417,11 +418,11 @@ def bundle_hashes(language, target):
     return safely(bundle.hashes, language, target) or {}
 
 
-def env_fingerprint(run_id, languages, baselines):
+def env_fingerprint(run_id, languages, references):
     # commit and repo are what turn a row of numbers into something traceable back to the
     # code that produced it. They cannot be added later, because the record is meant to say
     # what was true when the measurement was taken. docs/bundles.html §8.
-    return {"kind": "env", "run_id": run_id, "languages": languages, "baselines": baselines,
+    return {"kind": "env", "run_id": run_id, "languages": languages, "references": references,
             "commit": safely(bundle.commit), "repo": safely(bundle.repo),
             "host": platform.node(), "cpu": cpu_model(),
             "cores": os.cpu_count(), "platform": platform.platform(),
@@ -523,15 +524,22 @@ def main():
     if not pairs:
         sys.exit("no targets left after filtering")
     languages = list(dict.fromkeys(lang for lang, _ in pairs))
-    baselines = {lang: MATRIX["languages"][lang]["baseline"] for lang in languages}
-    # Selecting frameworks by name easily leaves a language without its baseline. That is
-    # allowed -- absolute times do not need one -- but the conformance gate compares each
-    # target against the baseline measured in the same run, so say so rather than letting
-    # it surface later as "responses are only status-checked".
-    absent = [l for l in languages if (l, baselines[l]) not in pairs]
+    # What every other target in the language is fingerprint-compared against. It is the
+    # language's anchor -- the framework most people would name first -- because there is
+    # no longer a bare implementation to hold the job. An anchor is an ordinary framework
+    # and can itself be wrong, so a mismatch names both sides rather than blaming the target.
+    references = {lang: MATRIX["languages"][lang]["anchor"] for lang in languages}
+    # The reference has to be measured before the targets compared against it, so it is
+    # moved to the front of its language rather than left wherever the matrix or the
+    # command line put it. A stable partition, so everything else keeps its order and a
+    # repeated name still measures that target in two positions.
+    pairs = [p for p in pairs if p[1] == references[p[0]]] + \
+            [p for p in pairs if p[1] != references[p[0]]]
+    languages = list(dict.fromkeys(lang for lang, _ in pairs))
+    absent = [l for l in languages if (l, references[l]) not in pairs]
     if absent:
-        print("note: no baseline in this run for %s; responses are status-checked only"
-              % ", ".join("%s (%s)" % (l, baselines[l]) for l in absent))
+        print("note: no reference in this run for %s; responses are status-checked only"
+              % ", ".join("%s (%s)" % (l, references[l]) for l in absent))
 
     want = [x.strip() for x in a.rungs.split(",") if x.strip()]
     rungs = [r for r in LADDER["rungs"]
@@ -578,7 +586,7 @@ def main():
                            uuid.uuid4().hex[:6])
     out_path = ROOT / "results" / ("%s.jsonl" % run_id.replace(":", ""))
     out_path.parent.mkdir(exist_ok=True)
-    rows = [env_fingerprint(run_id, languages, baselines)]
+    rows = [env_fingerprint(run_id, languages, references)]
     rows[0]["cross_language"] = len(languages) > 1
     # Which endpoints were live, so a narrowed run is never read against a full one. Same
     # reason the blend and ladder versions are here: they are all statements about what
@@ -640,12 +648,12 @@ def main():
             if not a.skip_conform:
                 reference = ROOT / "results" / (".ref-%s-%s.json"
                                                 % (run_id.replace(":", ""), language))
-                is_reference = target == baselines[language]
-                # Only a baseline that conformed is worth comparing against. One that did
+                is_reference = target == references[language]
+                # Only a reference that conformed is worth comparing against. One that did
                 # not is serving something else, and every difference from it would be
-                # reported against the target rather than against the baseline.
+                # reported against the target rather than against the reference.
                 usable = reference.exists() and language in reference_ok
-                # The baseline goes first in every run and is the reference when it
+                # The reference goes first in every run and holds the job when it
                 # conforms. When it does not, the first target that does takes its place,
                 # so the targets after it are still compared against something rather than
                 # each writing a reference nobody reads.

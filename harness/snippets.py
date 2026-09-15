@@ -177,22 +177,20 @@ def marked_end(lines, start):
 def enclosing(lines, start):
     """The chain of open blocks this line sits inside, outermost first.
 
-    A marker above a registration captures a handler. A marker inside a hand-rolled
-    dispatch captures a fragment: node-http's
+    A marker above a registration captures a handler. A marker deeper inside a nested
+    registration captures a fragment: the lines that serve the endpoint, without the
+    lines that say which endpoint. Those enclosing lines are not part of the snippet --
+    the range has to stay the lines the endpoint is served by, because that is what the
+    permalink points at -- so they travel beside it as context.
 
-        if (seg[1] === "bind" && SIZES.has(seg[2])) return json(200, d.bindEcho(body));
+    Scanned forwards with a stack rather than backwards by indentation, because a line
+    like `} else if (cond) {` closes one block and opens another, nets zero delimiters,
+    and an indentation walk steps straight over it into the sibling branch. That put an
+    endpoint under the arm that could not serve it.
 
-    is the whole of what serves /body/bind/small, and on its own it does not say so. What
-    says so is the `if (method === "POST")` and `if (n === 3 && seg[0] === "body")` it is
-    nested in. Those lines are not part of the snippet -- the range has to stay the lines
-    the endpoint is served by, because that is what the permalink points at -- so they
-    travel beside it as context.
-
-    Scanned forwards with a stack rather than backwards by indentation. `} else if (n ===
-    4) {` closes one block and opens another on one line, so it nets zero delimiters and an
-    indentation walk steps straight over it into the sibling branch: /parameters/{one}/
-    with-second/{two} came back labelled `if (n === 1)`, which is the arm that cannot
-    serve it.
+    Every target now registers routes with the path written down, so this fires only for
+    a group or a loop, where the enclosing frame is the function and adds little. It is
+    kept for the next language in, where the shape is not guaranteed.
     """
     stack = []
     for n in range(start):
