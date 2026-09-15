@@ -185,6 +185,26 @@ pre.wire.res { border-left: 2px solid var(--amber); }
 .hk { color: var(--tealtext); }
 .hv { color: var(--ink2); word-break: break-all; }
 .fwlink { font-family: var(--f-mono); font-size: 11.5px; margin-left: auto; }
+.crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 7px;
+          font-family: var(--f-mono); font-size: 12px; margin: 0 0 16px; }
+.crumbs button { font: inherit; background: none; border: none; padding: 0; cursor: pointer;
+                 color: var(--tealtext); text-decoration: underline; }
+.crumbs i { font-style: normal; color: var(--ink3); }
+.crumbs span { color: var(--ink); }
+h3.childcap { font-family: var(--f-display); font-size: 17px; font-weight: 600;
+              margin: 20px 0 8px; }
+.childscroll { max-height: 42vh; }
+.childscroll td.go { color: var(--tealtext); text-align: right; }
+.childscroll tbody tr:hover td.go { text-decoration: underline; }
+.sniphead { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: baseline;
+            font-family: var(--f-mono); font-size: 11.5px; margin: 0 0 6px;
+            color: var(--ink3); }
+pre.code { font-family: var(--f-mono); font-size: 12px; line-height: 1.55; margin: 0 0 6px;
+           background: var(--surface); border: 1px solid var(--rule);
+           border-left: 2px solid var(--teal); border-radius: 0 3px 3px 0;
+           padding: 11px 14px; overflow-x: auto; white-space: pre; }
+.how { font-family: var(--f-mono); font-size: 10px; letter-spacing: .08em;
+       text-transform: uppercase; color: var(--ink3); }
 .note { border-left: 2px solid var(--amber); background: var(--surface);
         padding: 13px 17px; border-radius: 0 3px 3px 0; margin-top: 22px;
         font-size: 13.5px; color: var(--ink2); }
@@ -619,46 +639,156 @@ function renderHostNote(rs) {
 const fwPage = (r) => (RB.pages || {})[r.language + ':' + r.target];
 
 /* ---- detail dialog: every field, hidden ones included, plus the captured exchange ---- */
+/* ---- code: one handler document per target, fetched when a dialog asks for one ---- */
+const codeCache = new Map();
+async function fetchCode(key) {
+  if (codeCache.has(key)) return codeCache.get(key);
+  const file = (RB.codeIndex || {})[key];
+  if (!file) return null;
+  const doc = await fetchJson(file).catch(() => null);
+  codeCache.set(key, doc);
+  return doc;
+}
+
+/* ---- the dialog: a drill-down, blend to family to endpoint ---- */
+/* The table shows one level at a time. The dialog is where you go down: a blend opens its
+   families, a family opens the endpoints that made it, and an endpoint is the leaf that
+   carries the handler and the captured exchange. Opening a row at any level lands you at
+   that level rather than at whichever one the table happened to be on. */
+let dlgAt = null;
+
+function famRowsFor(run, t, rn) {
+  const fams = (t.families_by_rung || {})[rn] || t.families || {};
+  return Object.entries(fams).map(([f, rec]) => ({
+    id: f, value: rec[st.metric] ?? rec.p50_us, ratio: rec.p50_ratio, n: rec.count,
+  })).sort((a, b) => (a.value ?? Infinity) - (b.value ?? Infinity));
+}
+
+function epRowsFor(run, t, rn, family) {
+  const order = run.endpoint_order || [], fam = run.endpoint_family || [];
+  const eps = t.endpoints || {};
+  const arr = k => (eps[k] && eps[k][rn]) || [];
+  const vals = arr(st.metric), p50s = arr('p50_us'), rats = arr('p50_ratio'), cnt = arr('count');
+  const out = [];
+  order.forEach((eid, i) => {
+    if (family && fam[i] !== family) return;
+    if (p50s[i] == null) return;
+    out.push({id: eid, family: fam[i], value: vals[i] ?? p50s[i], ratio: rats[i], n: cnt[i]});
+  });
+  return out.sort((a, b) => (a.value ?? Infinity) - (b.value ?? Infinity));
+}
+
+function childTable(caption, kids, level) {
+  if (!kids.length) return `<p class="empty">Nothing at this level for this target.</p>`;
+  const body = kids.map(k => `
+    <tr data-down="${esc(level)}" data-id="${esc(k.id)}">
+      <td class="l name">${esc(k.id)}</td>
+      <td>${cell('value', k.value)}</td>
+      <td class="ratio">${k.ratio == null ? '&mdash;' : k.ratio.toFixed(2) + 'x'}</td>
+      <td class="sub">${k.n == null ? '&mdash;' : Math.round(k.n).toLocaleString()}</td>
+      <td class="sub go">open &rarr;</td>
+    </tr>`).join('');
+  return `<h3 class="childcap">${esc(caption)}</h3>
+    <div class="scroll childscroll"><table><thead><tr>
+      <th class="l">${level === 'family' ? 'family' : 'endpoint'}</th>
+      <th>${esc(METRICS[st.metric].label)}</th><th>vs baseline</th><th>samples</th><th></th>
+    </tr></thead><tbody>${body}</tbody></table></div>`;
+}
+
+function crumbs(t) {
+  const parts = [`<button data-up="blend">${esc(t.target)}</button>`];
+  if (dlgAt.family) parts.push(`<button data-up="family">${esc(dlgAt.family)}</button>`);
+  if (dlgAt.endpoint) parts.push(`<span>${esc(dlgAt.endpoint)}</span>`);
+  return `<nav class="crumbs">${parts.join('<i>›</i>')}</nav>`;
+}
+
 async function openDetail(key) {
   const r = (window.__rows || []).find(x => x.key === key);
   if (!r) return;
-  const wk = wireKeyFor(r);
-  if (wk) await fetchWire(wk);
-  const doc = wireDoc(r);
-  const e = st.gran === 'endpoint' && doc ? doc.endpoints[r.detail] : null;
-  const field = (lab, val, hidden) =>
-    `<div class="frow${hidden ? ' hid' : ''}"><span class="fk">${esc(lab)}${hidden ? ' <em>hidden</em>' : ''}</span><span class="fv">${cell(lab === 'framing' ? 'framing' : '', val)}</span></div>`;
-  const fields = COLS.filter(c => c.label && c.id !== 'bar').map(c => {
-    const v = c.id === 'value' ? r.value : c.get(r);
-    const lab = c.id === 'value' ? METRICS[st.metric].label : c.label;
-    const shown = c.pin || st.cols.has(c.id);
-    return `<div class="frow${shown ? '' : ' hid'}"><span class="fk">${esc(lab)}${shown ? '' : ' <em>hidden</em>'}</span><span class="fv">${cell(c.id, v)}</span></div>`;
-  }).join('');
+  dlgAt = {language: r.language, target: r.target,
+           family: st.gran === 'family' ? r.detail
+                 : st.gran === 'endpoint' ? r.family : null,
+           endpoint: st.gran === 'endpoint' ? r.detail : null};
+  await paintDetail();
+  document.getElementById('dlg').showModal();
+}
+
+async function paintDetail() {
+  const run = latest(); if (!run || !dlgAt) return;
+  const t = run.targets.find(x => x.language === dlgAt.language && x.target === dlgAt.target);
+  if (!t) return;
+  const rn = pickRung(run);
+  const tkey = dlgAt.language + ':' + dlgAt.target;
+  const box = document.getElementById('dlgbody');
+  const head = `
+    <div class="wirehead"><strong>${esc(t.framework || t.target)}</strong>
+      <span class="ver">${esc(t.version || '')}</span>
+      <span class="wmeta">${esc(t.language)}${t.target === t.baseline ? ' · baseline' : ''}</span>
+      ${(RB.pages || {})[tkey] ? `<a class="fwlink" href="${esc(RB.pages[tkey])}">README &amp; bundle &rarr;</a>` : ''}</div>
+    ${crumbs(t)}`;
+
+  if (!dlgAt.endpoint) {
+    const kids = dlgAt.family ? epRowsFor(run, t, rn, dlgAt.family) : famRowsFor(run, t, rn);
+    const self = dlgAt.family
+      ? (((t.families_by_rung || {})[rn] || t.families || {})[dlgAt.family] || {})
+      : (t.rungs || {})[rn] || {};
+    box.innerHTML = head + `
+      <div class="fields">
+        <div class="frow"><span class="fk">${esc(METRICS[st.metric].label)}</span><span class="fv">${cell('value', self[st.metric] ?? self.p50_us)}</span></div>
+        <div class="frow"><span class="fk">vs baseline</span><span class="fv">${self.p50_ratio == null ? '&mdash;' : self.p50_ratio.toFixed(2) + 'x'}</span></div>
+        <div class="frow"><span class="fk">samples</span><span class="fv">${cell('', self.count ?? self.achieved_rps)}</span></div>
+      </div>` +
+      childTable(dlgAt.family ? `Endpoints in ${dlgAt.family}` : 'Families', kids,
+                 dlgAt.family ? 'endpoint' : 'family');
+    return;
+  }
+
+  /* the leaf: this endpoint's handler, then what it actually put on the wire */
+  const eid = dlgAt.endpoint;
+  const order = run.endpoint_order || [];
+  const i = order.indexOf(eid);
+  const arr = k => ((t.endpoints || {})[k] || {})[rn] || [];
+  const stat = (lab, k, u) => `<div class="frow"><span class="fk">${esc(lab)}</span><span class="fv">${cell(u, arr(k)[i])}</span></div>`;
+  box.innerHTML = head + `
+    <div class="fields">
+      ${stat('p50', 'p50_us', 'value')}${stat('p90', 'p90_us', 'value')}
+      ${stat('p99', 'p99_us', 'value')}${stat('p99.9', 'p999_us', 'value')}
+      <div class="frow"><span class="fk">vs baseline</span><span class="fv">${arr('p50_ratio')[i] == null ? '&mdash;' : arr('p50_ratio')[i].toFixed(2) + 'x'}</span></div>
+      ${stat('samples', 'count', '')}
+    </div>
+    <p class="empty" id="leafload">Loading the handler and the captured exchange…</p>`;
+
+  const [codeDoc, wireKey] = [await fetchCode(tkey), wireKeyFor({language: dlgAt.language, target: dlgAt.target})];
+  if (wireKey) await fetchWire(wireKey);
+  const wdoc = wireKey ? wireCache.get(wireKey) : null;
+  const sn = codeDoc && codeDoc[eid];
+  const e = wdoc && wdoc.endpoints[eid];
+  const loc = sn ? `${sn.f}:${sn.s}${sn.e === sn.s ? '' : '-' + sn.e}` : '';
+  const handler = sn ? `
+    <h3 class="childcap">Handler</h3>
+    <div class="sniphead"><span class="loc">${esc(loc)}</span><span class="how">${esc(sn.h)}</span>
+      ${sn.u ? `<a href="${esc(sn.u)}">open on GitHub &rarr;</a>`
+             : `<span class="how">commit not on a remote, so no link</span>`}</div>
+    <pre class="code">${esc(sn.t)}</pre>`
+    : `<p class="empty">No handler located for this endpoint in this target.</p>`;
   const hdr = hs => hs.map(([k, v]) =>
     `<div class="hrow"><span class="hk">${esc(k)}</span><span class="hv">${esc(v)}</span></div>`).join('');
   const exchange = e ? `
+    <h3 class="childcap">On the wire</h3>
     <div class="wirecols">
       <div><h3>Request</h3>
         <pre class="wire req">${esc(e.m)} ${esc(e.p)}</pre>
         <div class="hdrs">${hdr(e.rh)}</div>
-        ${e.rb ? `<pre class="wire">${esc(e.rb)}${e.rbz > 700 ? '\n\u2026 ' + e.rbz.toLocaleString() + ' bytes total' : ''}</pre>` : '<p class="empty" style="padding:6px 0">no body</p>'}
+        ${e.rb ? `<pre class="wire">${esc(e.rb)}${e.rbz > 700 ? '\n… ' + e.rbz.toLocaleString() + ' bytes total' : ''}</pre>` : '<p class="empty" style="padding:6px 0">no body</p>'}
       </div>
       <div><h3>Response</h3>
         <pre class="wire res">HTTP ${e.s}</pre>
         <div class="hdrs">${hdr(e.sh)}</div>
-        ${e.sb ? `<pre class="wire">${esc(e.sb)}${e.tr ? '\n\u2026 ' + e.sbz.toLocaleString() + ' bytes total' : ''}</pre>` : '<p class="empty" style="padding:6px 0">no body</p>'}
+        ${e.sb ? `<pre class="wire">${esc(e.sb)}${e.tr ? '\n… ' + e.sbz.toLocaleString() + ' bytes total' : ''}</pre>` : '<p class="empty" style="padding:6px 0">no body</p>'}
       </div>
-    </div>`
-    : `<p class="empty">A captured exchange exists per endpoint. Switch granularity to Endpoint to read one.</p>`;
-  document.getElementById('dlgbody').innerHTML = `
-    <div class="wirehead"><strong>${esc(r.label)}</strong>
-      <span class="ver">${esc(r.version || '')}</span>
-      ${r.detail ? `<span class="pill">${esc(r.detail)}</span>` : ''}
-      <span class="wmeta">${esc(r.language)}${doc ? ' \u00b7 ' + esc(doc.framework) : ''}</span>
-      ${fwPage(r) ? `<a class="fwlink" href="${esc(fwPage(r))}">source &amp; bundle &rarr;</a>` : ''}</div>
-    <div class="fields">${fields}</div>
-    ${exchange}`;
-  document.getElementById('dlg').showModal();
+    </div>` : '';
+  const load = document.getElementById('leafload');
+  if (load) load.outerHTML = handler + exchange;
 }
 
 /* ---- the time axis ---- */
@@ -786,6 +916,23 @@ document.getElementById('tbody').onkeydown = e => {
   if (tr) { e.preventDefault(); openDetail(tr.dataset.key); }
 };
 document.getElementById('dlgclose').onclick = () => document.getElementById('dlg').close();
+/* Drilling happens inside the dialog, so one delegated handler covers both directions. */
+document.getElementById('dlgbody').onclick = e => {
+  const down = e.target.closest('tr[data-down]');
+  if (down) {
+    if (down.dataset.down === 'family') dlgAt.family = down.dataset.id;
+    else dlgAt.endpoint = down.dataset.id;
+    paintDetail();
+    document.getElementById('dlgbody').scrollTop = 0;
+    return;
+  }
+  const up = e.target.closest('button[data-up]');
+  if (up) {
+    if (up.dataset.up === 'blend') { dlgAt.family = null; dlgAt.endpoint = null; }
+    else dlgAt.endpoint = null;
+    paintDetail();
+  }
+};
 document.getElementById('dlg').onclick = e => {
   if (e.target.id === 'dlg') document.getElementById('dlg').close();
 };
@@ -822,9 +969,26 @@ def manifest_entry(r):
             "cpu": r.get("cpu", ""), "cores": r.get("cores", 0)}
 
 
-def render(runs, wire, pages=None):
+def snippet_doc(run, view):
+    """Every endpoint's handler for one target: the code, and where it came from.
+
+    Short keys, because this ships to the browser next to the run it describes.
+    """
+    out = {}
+    for eid, sn in view["snippets"].items():
+        url = None
+        if view["linkable"] and run.get("repo"):
+            url = permalink(run["repo"], run["commit"], sn["path"],
+                            sn["start_line"], sn["end_line"])
+        out[eid] = {"f": sn["path"], "s": sn["start_line"], "e": sn["end_line"],
+                    "h": sn["how"], "u": url, "t": sn["text"]}
+    return out
+
+
+def render(runs, wire, pages=None, code=None):
     tracked = [r for r in runs if r.get("tracked")]
     pages = pages or {}
+    code = code or {}
     now = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     # Which endpoint sets the page is showing, read from the runs rather than written here:
     # a hardcoded name kept saying blend-v1 for a page built entirely from blend-v2 runs.
@@ -845,6 +1009,7 @@ def render(runs, wire, pages=None):
         "manifest": [manifest_entry(r) for r in runs],
         "hosts": host_notes(),
         "pages": pages,
+        "codeIndex": {k: "data/code/%s.json.gz" % k.replace(":", "-") for k in code},
         "wireIndex": {k: {"framework": v["framework"], "version": v["version"],
                           "file": "data/wire/%s.json.gz" % k}
                       for k, v in wire.items()},
@@ -945,10 +1110,6 @@ The ratio to each language's bare baseline is what carries across runs and acros
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent / "harness"))
 import bundle, snippets                                            # noqa: E402
 
-# §6 names three: the plainest possible route, a route with captures, and one feature
-# wiring. A target can be unrepresentative, so the list is a default rather than a rule.
-FEATURED = ("json.small", "parameters.two", "compressed.gzip_small")
-
 FW_CSS = """
 .crumb { font-family: var(--f-mono); font-size: 11.5px; margin: 0 0 18px; }
 .ident { display: flex; gap: 16px; align-items: center; margin: 0 0 6px; }
@@ -975,6 +1136,9 @@ FW_CSS = """
 .sniphead { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: baseline;
             font-family: var(--f-mono); font-size: 11.5px; margin: 0 0 6px; }
 .sniphead .eid { color: var(--ink); font-weight: 500; font-size: 13px; }
+h3.famcap { font-family: var(--f-display); font-size: 17px; font-weight: 600;
+            margin: 26px 0 10px; padding-bottom: 5px; border-bottom: 1px solid var(--rule); }
+h3.famcap:first-child { margin-top: 4px; }
 .sniphead .loc { color: var(--ink3); }
 pre.code { font-family: var(--f-mono); font-size: 12px; line-height: 1.55; margin: 0;
            background: var(--surface); border: 1px solid var(--rule);
@@ -1146,51 +1310,51 @@ def render_framework(run, t, rn, view):
                rank, n_peers, esc(t["language"]), f"{row.get('achieved_rps', 0):,}"))
 
     if view:
-        snips = view["snippets"]
-        featured = [e for e in FEATURED if e in snips] or list(snips)[:3]
-        blocks = []
-        for eid in featured:
-            s = snips[eid]
-            loc = "%s:%d" % (s["path"], s["start_line"])
-            if s["end_line"] != s["start_line"]:
-                loc += "-%d" % s["end_line"]
-            link = ""
-            if view["linkable"] and run.get("repo"):
-                link = ("<a href='%s'>open on GitHub</a>"
-                        % esc(permalink(run["repo"], commit, s["path"],
-                                        s["start_line"], s["end_line"])))
-            blocks.append(
-                "<div class='snip'><div class='sniphead'><span class='eid'>%s</span>"
-                "<span class='loc'>%s</span><span class='how'>%s</span>%s</div>"
-                "<pre class='code'>%s</pre></div>"
-                % (esc(eid), esc(loc), esc(s["how"]), link, esc(s["text"])))
-        body.append("<div class='panel'><h2>Handlers</h2>"
-                    "<p class='hint'>Three of %d endpoints this target wires. Every one is "
-                    "in the table below.</p>%s</div>"
-                    % (len(snips), "".join(blocks)))
-
-        rows = []
-        for eid in run.get("endpoint_order", []):
-            s = snips.get(eid)
-            if not s:
-                rows.append("<tr><td class='l'>%s</td><td class='l sub'>not resolved</td>"
-                            "<td></td></tr>" % esc(eid))
+        snips, order = view["snippets"], run.get("endpoint_order") or []
+        fam_of = dict(zip(order, run.get("endpoint_family") or []))
+        # One block often serves several endpoints: the whole compressed family is one
+        # register call. Listing it six times would pad the page and hide that fact.
+        blocks, seen = [], {}
+        for eid in order:
+            sn = snips.get(eid)
+            if not sn:
                 continue
-            loc = "%s:%d%s" % (s["path"], s["start_line"],
-                               "" if s["end_line"] == s["start_line"] else "-%d" % s["end_line"])
-            cell = esc(loc)
-            if view["linkable"] and run.get("repo"):
-                cell = "<a href='%s'>%s</a>" % (
-                    esc(permalink(run["repo"], commit, s["path"],
-                                  s["start_line"], s["end_line"])), esc(loc))
-            rows.append("<tr><td class='l'>%s</td><td class='l path'>%s</td>"
-                        "<td class='h'>%s</td></tr>" % (esc(eid), cell, esc(s["how"])))
-        body.append("<div class='panel'><h2>Every endpoint</h2>"
-                    "<p class='hint'>Where each one is wired, derived from its route or "
-                    "named by a marker where no route literal exists.</p>"
-                    "<div class='scroll'><table><thead><tr><th class='l'>endpoint</th>"
-                    "<th class='l'>wiring</th><th>how</th></tr></thead><tbody>%s</tbody>"
-                    "</table></div></div>" % "".join(rows))
+            at = (sn["path"], sn["start_line"], sn["end_line"])
+            if at in seen:
+                seen[at]["ids"].append(eid)
+                continue
+            seen[at] = {"ids": [eid], "sn": sn, "family": fam_of.get(eid, "")}
+            blocks.append(seen[at])
+
+        out, current = [], None
+        for b in blocks:
+            if b["family"] != current:
+                current = b["family"]
+                out.append("<h3 class='famcap'>%s</h3>" % esc(current))
+            sn = b["sn"]
+            loc = "%s:%d%s" % (sn["path"], sn["start_line"],
+                               "" if sn["end_line"] == sn["start_line"]
+                               else "-%d" % sn["end_line"])
+            # Why there is no link is said once in the header. Repeating it on every
+            # block turned the page into a column of the same apology.
+            link = ("<a href='%s'>open on GitHub &rarr;</a>"
+                    % esc(permalink(run["repo"], commit, sn["path"],
+                                    sn["start_line"], sn["end_line"]))
+                    if view["linkable"] and run.get("repo") else "")
+            out.append(
+                "<div class='snip'><div class='sniphead'>%s<span class='loc'>%s</span>"
+                "<span class='how'>%s</span>%s</div><pre class='code'>%s</pre></div>"
+                % ("".join("<span class='eid'>%s</span>" % esc(i) for i in b["ids"]),
+                   esc(loc), esc(sn["how"]), link, esc(sn["text"])))
+        missing = [e for e in order if e not in snips]
+        body.append("<div class='panel'><h2>Handlers</h2>"
+                    "<p class='hint'>Every endpoint this target wires, grouped by family. "
+                    "%d blocks cover %d endpoints, because one registration often serves "
+                    "several.%s</p>%s</div>"
+                    % (len(blocks), len(order) - len(missing),
+                       "" if not missing else
+                       " Not located: %s." % esc(", ".join(missing)),
+                       "".join(out) or "<p class='empty'>Nothing located.</p>"))
 
         frows = []
         for e in view["manifest"]["files"]:
@@ -1251,7 +1415,7 @@ def main():
         h = r.get("exec_host") or "container"
         if h not in newest_tracked or r["run_id"] > newest_tracked[h]["run_id"]:
             newest_tracked[h] = r
-    pages, page_dir, built, unavailable = {}, out / "f", 0, 0
+    pages, code, page_dir, built, unavailable = {}, {}, out / "f", 0, 0
     page_dir.mkdir(parents=True, exist_ok=True)
     for r in newest_tracked.values():
         rn = str(r["rungs"][len(r["rungs"]) // 2]) if r.get("rungs") else "1"
@@ -1263,11 +1427,15 @@ def main():
             name = "%s-%s.html" % (t["language"], t["target"])
             (page_dir / name).write_text(render_framework(r, t, rn, view))
             pages[key] = "f/" + name
+            # The handler for a row is the thing a reader wants when they open that row,
+            # so it travels with the numbers rather than living only on the page.
+            if view:
+                code[key] = snippet_doc(r, view)
     print("wrote %d framework page(s)%s"
           % (built, "" if not unavailable
              else "; %d could not verify their bundle against history" % unavailable))
 
-    (out / "index.html").write_text(render(runs, wire, pages))
+    (out / "index.html").write_text(render(runs, wire, pages, code))
     # Clear the data directory: a rename or a dropped run would otherwise leave a stale
     # file behind that the manifest no longer references but Pages keeps serving.
     data_dir = out / "data"
@@ -1287,6 +1455,10 @@ def main():
     wire_dir.mkdir(exist_ok=True)
     for key, doc in wire.items():
         put(wire_dir / ("%s.json.gz" % key), doc)
+    code_dir = data_dir / "code"
+    code_dir.mkdir(exist_ok=True)
+    for key, doc in code.items():
+        put(code_dir / ("%s.json.gz" % key.replace(":", "-")), doc)
 
     print("read %d summaries (%d tracked)" % (runs.__len__(),
                                               sum(1 for r in runs if r.get("tracked"))))
