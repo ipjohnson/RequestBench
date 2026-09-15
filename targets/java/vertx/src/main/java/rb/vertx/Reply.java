@@ -1,0 +1,74 @@
+package rb.vertx;
+
+import io.vertx.core.buffer.Buffer;
+import io.vertx.ext.web.RoutingContext;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import rb.domain.Domain;
+import rb.domain.Errors;
+import rb.domain.Json;
+
+/** What more than one family needs from a RoutingContext. */
+public final class Reply {
+  private Reply() {}
+
+  public static void json(RoutingContext ctx, int status, Object value) {
+    byte[] raw = Json.bytes(value);
+    ctx.response()
+       .setStatusCode(status)
+       .putHeader("content-type", "application/json")
+       .putHeader("content-length", Integer.toString(raw.length))
+       .end(Buffer.buffer(raw));
+  }
+
+  /** A 204 or a 304 carries no body, so it declares neither a type nor a length. */
+  public static void noBody(RoutingContext ctx, int status) {
+    ctx.response().setStatusCode(status).end();
+  }
+
+  /**
+   * Maps the domain's failures onto statuses. Handlers raise and never build a 404 or a 422
+   * themselves, so the six Java targets cannot drift.
+   */
+  public static void fail(RoutingContext ctx, Throwable t) {
+    if (t instanceof Errors.NotFound) {
+      json(ctx, 404, Domain.notFoundBody());
+    } else if (t instanceof Errors.Validation v) {
+      json(ctx, 422, Domain.invalidBody(v.errors()));
+    } else {
+      Map<String, Object> b = new LinkedHashMap<>(2);
+      b.put("error", "internal");
+      b.put("message", t.getMessage() == null ? "internal" : t.getMessage());
+      json(ctx, 500, b);
+    }
+  }
+
+  /** Runs a handler and turns anything it raises into the shared failure shape. */
+  public static void guarded(RoutingContext ctx, Runnable work) {
+    try {
+      work.run();
+    } catch (RuntimeException e) {
+      fail(ctx, e);
+    }
+  }
+
+  /**
+   * Vert.x exposes query parameters as a MultiMap, so they are flattened into the Map the
+   * domain takes. Nothing about that is Vert.x behaviour; it is the one shape difference
+   * between this framework and the others.
+   */
+  public static Map<String, List<String>> query(RoutingContext ctx) {
+    Map<String, List<String>> out = new LinkedHashMap<>();
+    for (Map.Entry<String, String> e : ctx.queryParams()) {
+      out.computeIfAbsent(e.getKey(), k -> new ArrayList<>(1)).add(e.getValue());
+    }
+    return out;
+  }
+
+  /** The request body as a value, or the 422 every target answers when it is not JSON. */
+  public static Map<String, Object> body(RoutingContext ctx) {
+    return Json.body(ctx.body().asString());
+  }
+}
