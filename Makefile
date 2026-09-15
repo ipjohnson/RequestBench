@@ -1,6 +1,6 @@
 comma := ,
 
-.PHONY: fixture plan spec bundle snippets build java lint validate conform exemplars run report clean help
+.PHONY: fixture plan spec machine bundle snippets build java lint validate conform exemplars run report clean help
 TARGETS ?= node:node-http,node:fastify,node:express
 SECONDS ?=
 RUNGS ?=
@@ -17,6 +17,9 @@ plan: ## expand spec/endpoints.json into spec/plan.json and spec/sequence.json
 	python3 harness/sequence.py
 
 spec: fixture plan ## regenerate every generated spec file (commit the result)
+
+machine: ## what this machine is, and whether it is fit to measure on
+	python3 harness/machine.py
 
 bundle: ## file list and hashes for every implemented target's bundle
 	python3 harness/bundle.py --all --summary
@@ -54,11 +57,12 @@ snippets: ## where every endpoint is wired, per target  (TARGETS= or --all)
 exemplars: ## recapture results/exemplars for every named target  (TARGETS= MODE=)
 	python3 harness/run.py --targets $(TARGETS) --mode $(MODE) --validate-only --exemplars
 
-run: ## boot, gate, warm, ladder, record  (TARGETS= SECONDS= RUNGS= MODE=)
-	python3 harness/run.py --targets $(TARGETS) \
-	  $(if $(SECONDS),--seconds $(SECONDS),) $(if $(RUNGS),--rungs $(RUNGS),)
+run: ## boot, gate, warm, measure both rates, record  (TARGETS= SECONDS= RUNGS= MODE= PINNED=1)
+	python3 harness/run.py --targets $(TARGETS) --mode $(MODE) \
+	  $(if $(SECONDS),--seconds $(SECONDS),) $(if $(RUNGS),--rungs $(RUNGS),) \
+	  $(if $(PINNED),--require-pinned,)
 
-report: ## ratios for the newest run
+report: ## the newest run, both rates, per target
 	python3 harness/report.py $$(ls -t results/*.jsonl | head -1) --family
 
 clean:
