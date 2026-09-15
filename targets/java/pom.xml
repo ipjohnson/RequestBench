@@ -43,6 +43,7 @@
     <!-- Frameworks. The deps job moves these, patch and minor only. -->
     <netty.version>4.2.18.Final</netty.version>
     <javalin.version>7.2.3</javalin.version>
+    <jmustache.version>1.16</jmustache.version>
     <vertx.version>5.1.8</vertx.version>
     <helidon.version>4.5.4</helidon.version>
     <spring-boot.version>4.1.1</spring-boot.version>
@@ -85,6 +86,14 @@
         <groupId>io.javalin</groupId>
         <artifactId>javalin</artifactId>
         <version>${javalin.version}</version>
+      </dependency>
+      <!-- The template family's engine, shared by every Java target for the same reason
+           the gzip level is pinned. jmustache is one jar with no transitive dependencies,
+           so it does not drag a tree into six classpaths. -->
+      <dependency>
+        <groupId>com.samskivert</groupId>
+        <artifactId>jmustache</artifactId>
+        <version>${jmustache.version}</version>
       </dependency>
       <dependency>
         <groupId>com.google.cloud.functions</groupId>
