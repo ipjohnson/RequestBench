@@ -7,7 +7,9 @@ it ran on.
 
 The endpoint set is designed in [docs/blend-v2.html](docs/blend-v2.html), and
 [docs/bundles.html](docs/bundles.html) covers tracing a published ratio back to the code
-that produced it.
+that produced it. [docs/measurement-v2.html](docs/measurement-v2.html) is a proposal, not
+yet the design of record: it argues for publishing real times from one dedicated machine
+instead of ratios, which would reverse the first of the two rules below.
 
 ## Two rules the whole thing rests on
 
