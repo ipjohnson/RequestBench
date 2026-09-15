@@ -50,16 +50,19 @@ def saturated(rung_row):
     return offered > 0 and rung_row["dropped"] / offered > SATURATION
 
 def readable(obj, indent=0):
-    """Indented structure, but leaf arrays stay on one line.
+    """Indented structure, but a leaf stays on one line.
 
-    Plain json.dumps(indent=2) puts every one of the forty per-endpoint integers on its
-    own line, which quadruples the file and makes it unreadable in a browser anyway. This
-    keeps the shape legible on github.com while leaving the numeric arrays compact.
+    Plain json.dumps(indent=2) puts every one of the per-endpoint numbers on its own line,
+    which quadruples the file and makes it unreadable in a browser anyway. A leaf is an
+    array or an object holding only scalars: one rung's nine statistics belong on one line,
+    the same as the numeric arrays they replaced.
     """
     pad, inner = "  " * indent, "  " * (indent + 1)
     if isinstance(obj, dict):
         if not obj:
             return "{}"
+        if all(not isinstance(v, (dict, list)) for v in obj.values()):
+            return json.dumps({k: obj[k] for k in sorted(obj)}, separators=(",", ":"))
         items = ['%s%s: %s' % (inner, json.dumps(k), readable(v, indent + 1))
                  for k, v in sorted(obj.items())]
         return "{\n" + ",\n".join(items) + "\n" + pad + "}"
@@ -138,10 +141,10 @@ def main():
         # a ratio permanently unattributable. Neither can be backfilled onto a past run.
         "commit": env.get("commit", ""), "repo": env.get("repo", ""),
         "rungs": rung_ids, "targets": [],
-        # Declared once. Per-target endpoint arrays are parallel to this, which keeps the
-        # file small enough to commit on every run and keep forever.
+        # Ordering only. Every statistic is keyed by endpoint id inside each target, so a
+        # name missing from here or out of place changes what order rows are drawn in and
+        # can never attach a number to the wrong endpoint.
         "endpoint_order": ep_order,
-        "endpoint_family": [ep_family[e] for e in ep_order],
     }
     for t in targets:
         m = meta.get(t, {})
@@ -183,37 +186,33 @@ def main():
                 "p50_ratio": ratio(r["p50_us"], b["p50_us"]) if b else None,
                 "p99_ratio": ratio(r["p99_us"], b["p99_us"]) if b else None,
             }
-        # Per endpoint, per rung, every statistic the histogram can answer. Arrays are
-        # parallel to endpoint_order. Nothing is dropped for size: the repository is
-        # public, so neither Actions minutes nor storage is billed, and a percentile
-        # discarded here is one the 90-day artifact retention eventually takes with it.
-        fields = ("count", "errors", "mismatch", "p50_us", "p90_us", "p99_us", "p999_us",
-                  "p50_ratio", "p99_ratio")
-        eps = {f: {} for f in fields}
-        for rn in rung_ids:
-            acc = {f: [] for f in fields}
-            for eid in ep_order:
+        # Per endpoint, per rung, every statistic the histogram can answer, keyed by the
+        # endpoint's own id. This was parallel arrays indexed by endpoint_order, which
+        # cost 31% less gzipped and put the correctness of every published number on a
+        # convention four separate readers had to honour. Nothing is dropped for size: the
+        # repository is public, so neither Actions minutes nor storage is billed, and a
+        # percentile discarded here is one the 90-day artifact retention takes with it.
+        eps = {}
+        for eid in ep_order:
+            rungs = {}
+            for rn in rung_ids:
                 row = ep_hist.get((t, rn, eid))
-                brow = ep_hist.get((base, rn, eid))
                 if not row:
-                    for f in fields:
-                        acc[f].append(None)
                     continue
+                brow = ep_hist.get((base, rn, eid))
                 h = unpack(row["hist_b64"])
                 bh = unpack(brow["hist_b64"]) if brow else None
                 p50, p90 = pct(h, 50), pct(h, 90)
                 p99, p999 = pct(h, 99), pct(h, 99.9)
-                acc["count"].append(row["count"])
-                acc["errors"].append(row.get("errors", 0))
-                acc["mismatch"].append(row.get("mismatch", 0))
-                acc["p50_us"].append(p50)
-                acc["p90_us"].append(p90)
-                acc["p99_us"].append(p99)
-                acc["p999_us"].append(p999)
-                acc["p50_ratio"].append(ratio(p50, pct(bh, 50)) if bh else None)
-                acc["p99_ratio"].append(ratio(p99, pct(bh, 99)) if bh else None)
-            for f in fields:
-                eps[f][str(rn)] = acc[f]
+                rungs[str(rn)] = {
+                    "count": row["count"], "errors": row.get("errors", 0),
+                    "mismatch": row.get("mismatch", 0),
+                    "p50_us": p50, "p90_us": p90, "p99_us": p99, "p999_us": p999,
+                    "p50_ratio": ratio(p50, pct(bh, 50)) if bh else None,
+                    "p99_ratio": ratio(p99, pct(bh, 99)) if bh else None,
+                }
+            if rungs:
+                eps[eid] = {"family": ep_family[eid], "rungs": rungs}
         entry["endpoints"] = eps
 
         mid = rung_ids[len(rung_ids) // 2]

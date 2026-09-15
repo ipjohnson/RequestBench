@@ -194,6 +194,11 @@ pre.wire.res { border-left: 2px solid var(--amber); }
 h3.childcap { font-family: var(--f-display); font-size: 17px; font-weight: 600;
               margin: 20px 0 8px; }
 .childscroll { max-height: 42vh; }
+td.route { font-family: var(--f-mono); font-size: 12px; color: var(--ink2); }
+td.route .verb { color: var(--tealtext); }
+.leafroute { font-family: var(--f-mono); font-size: 13px; color: var(--ink2);
+             margin: 0 0 14px; word-break: break-all; }
+.leafroute .verb { color: var(--tealtext); }
 .childscroll td.go { color: var(--tealtext); text-align: right; }
 .childscroll tbody tr:hover td.go { text-decoration: underline; }
 .sniphead { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: baseline;
@@ -236,6 +241,22 @@ def host_notes():
             for h, cfg in m.get("hosts", {}).items() if cfg.get("note")}
 
 
+def spec_routes():
+    """Method and route per endpoint id, for the endpoint lists in the dialog.
+
+    The summary carries ids and families but never the route, and an id alone does not say
+    what was asked for. Forty-five short strings, so they ride in the page rather than
+    being fetched.
+    """
+    try:
+        spec = json.loads((pathlib.Path(__file__).resolve().parent.parent
+                           / "spec" / "endpoints.json").read_text())
+    except (OSError, json.JSONDecodeError):
+        return {}
+    return {e["id"]: {"m": e.get("method", ""), "p": e.get("path", "")}
+            for e in spec.get("endpoints", [])}
+
+
 def load_exemplars(d):
     """One request/response pair per endpoint per target, captured by the conformance gate.
 
@@ -267,28 +288,39 @@ def load_exemplars(d):
     return out
 
 
-def carry_forward(r):
-    """Summaries written before runs were split by host carried the language as "shard"."""
-    if "language" not in r and "shard" in r:
-        r["language"] = r.pop("shard")
-    if "languages" not in r and "shards" in r:
-        r["languages"] = r.pop("shards")
+def is_keyed(r):
+    """Whether this summary holds per-endpoint statistics keyed by endpoint id.
+
+    The shape changed when parallel arrays indexed by endpoint_order were replaced by a
+    map. A summary written before that is skipped rather than converted: reading it
+    positionally is the mistake the map exists to make impossible, and a converter would
+    be code kept alive for data nothing wants.
+    """
     for t in r.get("targets", []):
-        if "language" not in t and "shard" in t:
-            t["language"] = t.pop("shard")
-    return r
+        eps = t.get("endpoints")
+        if isinstance(eps, dict) and eps:
+            return all(isinstance(v, dict) and "rungs" in v for v in eps.values())
+    return True
 
 
 def load(d):
-    runs = []
+    runs, stale = [], 0
     # Summaries are filed by month, so walk rather than glob one level.
     for f in sorted(pathlib.Path(d).rglob("*.json")):
         if f.name.startswith("."):
             continue
         try:
-            runs.append(carry_forward(json.loads(f.read_text())))
+            r = json.loads(f.read_text())
         except json.JSONDecodeError:
             print("  skipping unreadable %s" % f, file=sys.stderr)
+            continue
+        if not is_keyed(r):
+            stale += 1
+            continue
+        runs.append(r)
+    if stale:
+        print("  skipped %d summary file(s) older than the keyed endpoint shape" % stale,
+              file=sys.stderr)
     runs.sort(key=lambda r: r["run_id"])
     return runs
 
@@ -471,25 +503,22 @@ function rows() {
       push({label: t.target, detail: '', value: d[st.metric] ?? null,
             ratio: d.p50_ratio, dead: !!d.baseline_saturated, n: d.achieved_rps});
     } else if (st.gran === 'family') {
-      const fams = (t.families_by_rung || {})[rn] || t.families || {};
+      const fams = famsAt(t, rn);
       for (const [f, rec] of Object.entries(fams)) {
         if (q && !(f.toLowerCase().includes(q) || t.target.toLowerCase().includes(q))) continue;
         push({key: base.key + '|' + f, label: t.target, detail: f,
               value: rec[st.metric] ?? null, ratio: rec.p50_ratio, dead: false, n: rec.count});
       }
     } else {
-      const eps = t.endpoints || {}, order = run.endpoint_order || [],
-            fam = run.endpoint_family || [];
+      const eps = t.endpoints || {}, order = run.endpoint_order || [];
       if (!order.length || !Object.keys(eps).length) continue;
-      const arr = k => (eps[k] && eps[k][rn]) || [];
-      const p50s = arr('p50_us'), vals = arr(st.metric), cnt = arr('count'),
-            rats = arr('p50_ratio');
-      order.forEach((eid, i) => {
+      order.forEach(eid => {
+        const rec = eps[eid]; if (!rec) return;
+        const d = (rec.rungs || {})[rn]; if (!d) return;
         if (q && !(eid.toLowerCase().includes(q) || t.target.toLowerCase().includes(q) ||
-                   (fam[i] || '').toLowerCase().includes(q))) return;
-        if (p50s[i] == null) return;
-        push({key: base.key + '|' + eid, label: t.target, detail: eid, family: fam[i],
-              value: vals[i] ?? null, ratio: rats[i], dead: false, n: cnt[i]});
+                   (rec.family || '').toLowerCase().includes(q))) return;
+        push({key: base.key + '|' + eid, label: t.target, detail: eid, family: rec.family,
+              value: d[st.metric] ?? null, ratio: d.p50_ratio, dead: false, n: d.count});
       });
     }
   }
@@ -657,40 +686,71 @@ async function fetchCode(key) {
    that level rather than at whichever one the table happened to be on. */
 let dlgAt = null;
 
+/* `families` is the middle rung's copy, kept for summaries written before the rung-keyed
+   one existed. Falling back to it per-rung would label mid-rung numbers as whatever rung
+   is selected, so it is used only when the rung-keyed map is absent altogether. */
+function famsAt(t, rn) {
+  const byRung = t.families_by_rung;
+  if (byRung && Object.keys(byRung).length) return byRung[rn] || {};
+  return t.families || {};
+}
+
 function famRowsFor(run, t, rn) {
-  const fams = (t.families_by_rung || {})[rn] || t.families || {};
+  const fams = famsAt(t, rn);
   return Object.entries(fams).map(([f, rec]) => ({
     id: f, value: rec[st.metric] ?? rec.p50_us, ratio: rec.p50_ratio, n: rec.count,
+    // Counted from this target rather than from the spec, so the number matches the list
+    // you get when you open the row.
+    eps: epRowsFor(run, t, rn, f).length,
   })).sort((a, b) => (a.value ?? Infinity) - (b.value ?? Infinity));
 }
 
 function epRowsFor(run, t, rn, family) {
-  const order = run.endpoint_order || [], fam = run.endpoint_family || [];
-  const eps = t.endpoints || {};
-  const arr = k => (eps[k] && eps[k][rn]) || [];
-  const vals = arr(st.metric), p50s = arr('p50_us'), rats = arr('p50_ratio'), cnt = arr('count');
-  const out = [];
-  order.forEach((eid, i) => {
-    if (family && fam[i] !== family) return;
-    if (p50s[i] == null) return;
-    out.push({id: eid, family: fam[i], value: vals[i] ?? p50s[i], ratio: rats[i], n: cnt[i]});
-  });
+  const eps = t.endpoints || {}, out = [];
+  for (const eid of run.endpoint_order || []) {
+    const rec = eps[eid];
+    if (!rec || (family && rec.family !== family)) continue;
+    const d = (rec.rungs || {})[rn];
+    if (!d) continue;
+    out.push({id: eid, family: rec.family, value: d[st.metric] ?? d.p50_us,
+              ratio: d.p50_ratio, n: d.count});
+  }
   return out.sort((a, b) => (a.value ?? Infinity) - (b.value ?? Infinity));
 }
 
+/* A run older than the current spec carries ids the spec no longer defines, so a miss is
+   blank rather than a route belonging to something else. */
+const routeOf = (eid) => (RB.routes || {})[eid];
+
 function childTable(caption, kids, level) {
   if (!kids.length) return `<p class="empty">Nothing at this level for this target.</p>`;
-  const body = kids.map(k => `
+  const withRoute = level === 'endpoint';
+  /* Cut the route here rather than in CSS: the table is auto-layout, so a max-width on a
+     cell is advisory and query.many's eight parameters would widen the whole dialog. */
+  const clip = (s, n) => s.length > n ? s.slice(0, n - 1) + '\u2026' : s;
+  const routeCell = (id) => {
+    if (!withRoute) return '';
+    const r = routeOf(id);
+    if (!r) return '<td class="l route">&mdash;</td>';
+    return `<td class="l route" title="${esc(r.m + ' ' + r.p)}">` +
+           `<span class="verb">${esc(r.m)}</span> ${esc(clip(r.p, 44))}</td>`;
+  };
+  const body = kids.map(k => {
+    const route = routeCell(k.id);
+    return `
     <tr data-down="${esc(level)}" data-id="${esc(k.id)}">
-      <td class="l name">${esc(k.id)}</td>
+      <td class="l name">${esc(k.id)}</td>${route}
+      ${withRoute ? '' : `<td class="sub">${k.eps}</td>`}
       <td>${cell('value', k.value)}</td>
       <td class="ratio">${k.ratio == null ? '&mdash;' : k.ratio.toFixed(2) + 'x'}</td>
       <td class="sub">${k.n == null ? '&mdash;' : Math.round(k.n).toLocaleString()}</td>
       <td class="sub go">open &rarr;</td>
-    </tr>`).join('');
+    </tr>`;
+  }).join('');
   return `<h3 class="childcap">${esc(caption)}</h3>
     <div class="scroll childscroll"><table><thead><tr>
-      <th class="l">${level === 'family' ? 'family' : 'endpoint'}</th>
+      <th class="l">${withRoute ? 'endpoint' : 'family'}</th>
+      ${withRoute ? '<th class="l">route</th>' : '<th>endpoints</th>'}
       <th>${esc(METRICS[st.metric].label)}</th><th>vs baseline</th><th>samples</th><th></th>
     </tr></thead><tbody>${body}</tbody></table></div>`;
 }
@@ -729,9 +789,8 @@ async function paintDetail() {
 
   if (!dlgAt.endpoint) {
     const kids = dlgAt.family ? epRowsFor(run, t, rn, dlgAt.family) : famRowsFor(run, t, rn);
-    const self = dlgAt.family
-      ? (((t.families_by_rung || {})[rn] || t.families || {})[dlgAt.family] || {})
-      : (t.rungs || {})[rn] || {};
+    const self = dlgAt.family ? (famsAt(t, rn)[dlgAt.family] || {})
+                              : (t.rungs || {})[rn] || {};
     box.innerHTML = head + `
       <div class="fields">
         <div class="frow"><span class="fk">${esc(METRICS[st.metric].label)}</span><span class="fv">${cell('value', self[st.metric] ?? self.p50_us)}</span></div>
@@ -745,15 +804,15 @@ async function paintDetail() {
 
   /* the leaf: this endpoint's handler, then what it actually put on the wire */
   const eid = dlgAt.endpoint;
-  const order = run.endpoint_order || [];
-  const i = order.indexOf(eid);
-  const arr = k => ((t.endpoints || {})[k] || {})[rn] || [];
-  const stat = (lab, k, u) => `<div class="frow"><span class="fk">${esc(lab)}</span><span class="fv">${cell(u, arr(k)[i])}</span></div>`;
+  const d = (((t.endpoints || {})[eid] || {}).rungs || {})[rn] || {};
+  const stat = (lab, k, u) => `<div class="frow"><span class="fk">${esc(lab)}</span><span class="fv">${cell(u, d[k])}</span></div>`;
+  const route = routeOf(eid);
   box.innerHTML = head + `
+    ${route ? `<p class="leafroute"><span class="verb">${esc(route.m)}</span> ${esc(route.p)}</p>` : ''}
     <div class="fields">
       ${stat('p50', 'p50_us', 'value')}${stat('p90', 'p90_us', 'value')}
       ${stat('p99', 'p99_us', 'value')}${stat('p99.9', 'p999_us', 'value')}
-      <div class="frow"><span class="fk">vs baseline</span><span class="fv">${arr('p50_ratio')[i] == null ? '&mdash;' : arr('p50_ratio')[i].toFixed(2) + 'x'}</span></div>
+      <div class="frow"><span class="fk">vs baseline</span><span class="fv">${d.p50_ratio == null ? '&mdash;' : d.p50_ratio.toFixed(2) + 'x'}</span></div>
       ${stat('samples', 'count', '')}
     </div>
     <p class="empty" id="leafload">Loading the handler and the captured exchange…</p>`;
@@ -817,11 +876,10 @@ function renderTime(rs, langColour) {
         if (kb !== base) return;
         let v = null;
         if (!det) { const d = t.rungs[rn]; v = d ? d[st.metric] : null; }
-        else if ((run.endpoint_order || []).includes(det)) {
-          const i = run.endpoint_order.indexOf(det);
-          const a = (t.endpoints || {})[st.metric]; v = a && a[rn] ? a[rn][i] : null;
+        else if ((t.endpoints || {})[det]) {
+          const d = (t.endpoints[det].rungs || {})[rn]; v = d ? d[st.metric] : null;
         } else {
-          const fams = (t.families_by_rung || {})[rn] || t.families || {};
+          const fams = famsAt(t, rn);
           v = fams[det] ? fams[det][st.metric] : null;
         }
         if (v == null) return;
@@ -1008,6 +1066,7 @@ def render(runs, wire, pages=None, code=None):
         "runs": list(newest.values()),
         "manifest": [manifest_entry(r) for r in runs],
         "hosts": host_notes(),
+        "routes": spec_routes(),
         "pages": pages,
         "codeIndex": {k: "data/code/%s.json.gz" % k.replace(":", "-") for k in code},
         "wireIndex": {k: {"framework": v["framework"], "version": v["version"],
@@ -1311,7 +1370,8 @@ def render_framework(run, t, rn, view):
 
     if view:
         snips, order = view["snippets"], run.get("endpoint_order") or []
-        fam_of = dict(zip(order, run.get("endpoint_family") or []))
+        fam_of = {eid: rec.get("family", "")
+                  for t2 in run["targets"] for eid, rec in (t2.get("endpoints") or {}).items()}
         # One block often serves several endpoints: the whole compressed family is one
         # register call. Listing it six times would pad the page and hide that fact.
         blocks, seen = [], {}
