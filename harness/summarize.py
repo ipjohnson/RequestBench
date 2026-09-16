@@ -199,11 +199,12 @@ def main():
                     continue
                 h = unpack(row["hist_b64"])
                 p50, p90 = pct(h, 50), pct(h, 90)
-                p99, p999 = pct(h, 99), pct(h, 99.9)
+                p95, p99, p999 = pct(h, 95), pct(h, 99), pct(h, 99.9)
                 rungs[str(rn)] = {
                     "count": row["count"], "errors": row.get("errors", 0),
                     "mismatch": row.get("mismatch", 0),
-                    "p50_us": p50, "p90_us": p90, "p99_us": p99, "p999_us": p999,
+                    "p50_us": p50, "p90_us": p90, "p95_us": p95,
+                    "p99_us": p99, "p999_us": p999,
                 }
             if rungs:
                 eps[eid] = {"family": ep_family[eid], "rungs": rungs}
