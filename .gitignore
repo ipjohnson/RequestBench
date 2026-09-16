@@ -27,3 +27,8 @@ targets/dotnet/_shared/bin/
 targets/dotnet/_shared/obj/
 targets/dotnet/_hosts/bin/
 targets/dotnet/_hosts/obj/
+
+# The TypeScript workspace
+node_modules/
+client/dist/
+*.tsbuildinfo
