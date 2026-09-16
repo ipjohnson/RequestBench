@@ -273,6 +273,7 @@ def load_exemplars(d):
         for e in doc.get("endpoints", []):
             req, res = e["request"], e["response"]
             eps[e["endpoint"]] = {
+                "family": e.get("family", ""),
                 "m": req["method"], "p": req["path"],
                 "rh": req["headers"], "rb": (req.get("body") or "")[:700],
                 "rbz": req.get("body_bytes", 0),
@@ -1183,13 +1184,8 @@ FW_CSS = """
 .prose ul { margin: 0 0 11px; padding-left: 20px; }
 .prose code { background: var(--surface2); padding: 1px 4px; border-radius: 2px;
               font-size: 12.5px; }
-.snip { margin: 0 0 20px; }
 .sniphead { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: baseline;
             font-family: var(--f-mono); font-size: 11.5px; margin: 0 0 6px; }
-.sniphead .eid { color: var(--ink); font-weight: 500; font-size: 13px; }
-h3.famcap { font-family: var(--f-display); font-size: 17px; font-weight: 600;
-            margin: 26px 0 10px; padding-bottom: 5px; border-bottom: 1px solid var(--rule); }
-h3.famcap:first-child { margin-top: 4px; }
 .sniphead .loc { color: var(--ink3); }
 pre.code { font-family: var(--f-mono); font-size: 12px; line-height: 1.55; margin: 0;
            background: var(--surface); border: 1px solid var(--rule);
@@ -1199,6 +1195,39 @@ pre.code { font-family: var(--f-mono); font-size: 12px; line-height: 1.55; margi
        text-transform: uppercase; color: var(--ink3); }
 td.path { font-family: var(--f-mono); font-size: 12px; }
 td.h { font-family: var(--f-mono); font-size: 11px; color: var(--ink3); }
+
+/* ---- endpoint explorer: tree picks, pane describes ---- */
+.explorer { display: grid; grid-template-columns: minmax(210px, 264px) 1fr; gap: 26px;
+            align-items: start; }
+@media (max-width: 860px) { .explorer { grid-template-columns: 1fr; } }
+.eptree { position: sticky; top: 16px; max-height: calc(100vh - 32px); overflow-y: auto;
+          border-right: 1px solid var(--rule); padding-right: 14px; }
+@media (max-width: 860px) {
+  .eptree { position: static; max-height: 340px; border-right: none;
+            border-bottom: 1px solid var(--rule); padding: 0 0 12px; } }
+.eptree ul { list-style: none; margin: 0; padding: 0; }
+.eptree .epfam + .epfam { margin-top: 12px; }
+.epfamname { display: block; font-family: var(--f-mono); font-size: 10px;
+             letter-spacing: .1em; text-transform: uppercase; color: var(--ink3);
+             margin: 0 0 4px; }
+.eplink { display: block; text-decoration: none; color: var(--ink2); padding: 4px 8px;
+          border-radius: 3px; border-left: 2px solid transparent; }
+.eplink:hover { background: var(--surface2); }
+.eplink[aria-current="true"] { background: var(--tealsoft); border-left-color: var(--teal);
+                               color: var(--ink); }
+.epid { display: block; font-family: var(--f-mono); font-size: 12.5px; }
+.eproute { display: block; font-family: var(--f-mono); font-size: 10.5px;
+           color: var(--ink3); white-space: nowrap; overflow: hidden;
+           text-overflow: ellipsis; }
+.eplink[aria-current="true"] .eproute { color: var(--ink2); }
+.eppanes { min-width: 0; }
+.eppane .epname { font-family: var(--f-mono); font-size: 17px; margin: 0; }
+/* .fields draws its hairlines by showing a rule-coloured background through a 1px gap,
+   so an unfilled track at the end of a wrapped row reads as an empty grey cell. Outlines
+   overlap in the gap instead, which leaves the unfilled area the surface colour. */
+.eppane .fields { margin-bottom: 4px; background: var(--surface); border: none; }
+.eppane .frow { outline: 1px solid var(--rule); }
+.eppane pre.code { max-height: 460px; overflow: auto; }
 """
 
 
@@ -1293,7 +1322,86 @@ def standing(run, t, rn):
     return row, rank, len(ordered)
 
 
-def render_framework(run, t, rn, view):
+def render_endpoint(eid, route, d, sn, ex, also, linkable, repo, commit):
+    """One endpoint's pane: what it answers, what it cost, how it is wired, what it sent."""
+    def us(v):
+        return "&mdash;" if v is None else "%s&nbsp;us" % f"{v:,}"
+
+    def count(v):
+        return "&mdash;" if v is None else f"{v:,}"
+
+    # p95 is in summaries written after harness/summarize.py started recording it. An
+    # older one carries p90, and the pane says p90 rather than labelling it p95.
+    tail = ("p95", d.get("p95_us")) if "p95_us" in d else ("p90", d.get("p90_us"))
+    stats = [("p50", us(d.get("p50_us"))), (tail[0], us(tail[1])),
+             ("p99", us(d.get("p99_us"))), ("p99.9", us(d.get("p999_us"))),
+             ("samples", count(d.get("count")))]
+    for label in ("errors", "mismatch"):
+        if d.get(label):
+            stats.append((label, count(d[label])))
+    fields = "".join("<div class='frow'><span class='fk'>%s</span>"
+                     "<span class='fv'>%s</span></div>" % (k, v) for k, v in stats)
+    perf = ("<div class='fields'>%s</div>" % fields if d else
+            "<p class='empty'>Not measured at this rate.</p>")
+
+    if sn:
+        loc = "%s:%d%s" % (sn["path"], sn["start_line"],
+                           "" if sn["end_line"] == sn["start_line"]
+                           else "-%d" % sn["end_line"])
+        anchor = ""
+        if linkable:
+            anchor = ("<a href='%s'>open on GitHub &rarr;</a>"
+                      % esc(permalink(repo, commit, sn["path"],
+                                      sn["start_line"], sn["end_line"])))
+        # One registration often answers a whole family. Naming the rest here is what the
+        # old deduplicated list was protecting: without it the same block appears under
+        # six endpoints with nothing to say they are one call.
+        together = ("<p class='hint'>The same registration answers %s.</p>"
+                    % esc(", ".join(also)) if also else "")
+        impl = ("<div class='sniphead'><span class='loc'>%s</span>"
+                "<span class='how'>%s</span>%s</div>%s<pre class='code'>%s</pre>"
+                % (esc(loc), esc(sn["how"]), anchor, together, esc(sn["text"])))
+    else:
+        impl = "<p class='empty'>No handler located for this endpoint.</p>"
+
+    if ex:
+        def hdrs(hs):
+            return "".join("<div class='hrow'><span class='hk'>%s</span>"
+                           "<span class='hv'>%s</span></div>" % (esc(k), esc(v))
+                           for k, v in hs)
+
+        def body_of(text, total, truncated):
+            if not text:
+                return "<p class='empty'>no body</p>"
+            more = "\n&hellip; %s bytes total" % f"{total:,}" if truncated else ""
+            return "<pre class='wire'>%s%s</pre>" % (esc(text), more)
+
+        payload = (
+            "<div class='wirecols'>"
+            "<div><h3>Request</h3><pre class='wire req'>%s %s</pre>"
+            "<div class='hdrs'>%s</div>%s</div>"
+            "<div><h3>Response</h3><pre class='wire res'>HTTP %s</pre>"
+            "<div class='hdrs'>%s</div>%s</div></div>"
+            % (esc(ex["m"]), esc(ex["p"]), hdrs(ex["rh"]),
+               body_of(ex["rb"], ex["rbz"], ex["rbz"] > 700),
+               esc(str(ex["s"])), hdrs(ex["sh"]),
+               body_of(ex["sb"], ex["sbz"], ex["tr"])))
+    else:
+        payload = ("<p class='empty'>No captured exchange for this target. Exemplars are "
+                   "written by <code>make exemplars</code> and only for the targets it "
+                   "has been run against.</p>")
+
+    return ("<section class='eppane' data-ep='%s' hidden>"
+            "<h2 class='epname'>%s</h2>"
+            "<p class='leafroute'><span class='verb'>%s</span> %s</p>"
+            "<h3 class='childcap'>Performance</h3>%s"
+            "<h3 class='childcap'>Implementation</h3>%s"
+            "<h3 class='childcap'>On the wire</h3>%s</section>"
+            % (esc(eid), esc(eid), esc(route.get("m", "")), esc(route.get("p", "")),
+               perf, impl, payload))
+
+
+def render_framework(run, t, rn, view, wire, routes):
     name = t.get("framework") or t["target"]
     row, rank, n_peers = standing(run, t, rn)
     facts = ["%s %s" % (name, t.get("version") or "?"), t.get("target_runtime") or ""]
@@ -1364,54 +1472,75 @@ def render_framework(run, t, rn, view):
             % (f"{row.get('offered_rps', 0):,}", took,
                rank, n_peers, esc(t["language"]), f"{row.get('achieved_rps', 0):,}"))
 
-    if view:
-        snips, order = view["snippets"], run.get("endpoint_order") or []
-        fam_of = {eid: rec.get("family", "")
-                  for t2 in run["targets"] for eid, rec in (t2.get("endpoints") or {}).items()}
-        # One block often serves several endpoints: the whole compressed family is one
-        # register call. Listing it six times would pad the page and hide that fact.
-        blocks, seen = [], {}
-        for eid in order:
+    # The endpoint explorer: the tree picks one endpoint, the pane describes it. Every
+    # pane is in the page rather than fetched, so it works from file:// and a link
+    # carrying an endpoint id opens on that endpoint.
+    snips = view["snippets"] if view else {}
+    order = run.get("endpoint_order") or []
+    own = t.get("endpoints") or {}
+    fam_of = {eid: rec.get("family", "")
+              for t2 in run["targets"] for eid, rec in (t2.get("endpoints") or {}).items()}
+    host = run.get("exec_host") or "container"
+    ex_eps = ((wire.get("%s-%s@%s" % (t["language"], t["target"], host))
+               or wire.get("%s-%s" % (t["language"], t["target"]))
+               or {}).get("endpoints") or {})
+
+    serves = {}
+    for eid in order:
+        sn = snips.get(eid)
+        if sn:
+            serves.setdefault((sn["path"], sn["start_line"], sn["end_line"]), []).append(eid)
+
+    groups = []
+    for eid in order:
+        fam = (own.get(eid) or {}).get("family") or fam_of.get(eid, "")
+        if not groups or groups[-1][0] != fam:
+            groups.append((fam, []))
+        groups[-1][1].append(eid)
+
+    linkable = bool(view and view["linkable"] and run.get("repo"))
+    tree, panes = [], []
+    for fam, eids in groups:
+        tree.append("<li class='epfam'><span class='epfamname'>%s</span><ul>" % esc(fam))
+        for eid in eids:
+            route = routes.get(eid) or {}
+            d = ((own.get(eid) or {}).get("rungs") or {}).get(rn) or {}
             sn = snips.get(eid)
-            if not sn:
-                continue
-            at = (sn["path"], sn["start_line"], sn["end_line"])
-            if at in seen:
-                seen[at]["ids"].append(eid)
-                continue
-            seen[at] = {"ids": [eid], "sn": sn, "family": fam_of.get(eid, "")}
-            blocks.append(seen[at])
+            also = []
+            if sn:
+                at = (sn["path"], sn["start_line"], sn["end_line"])
+                also = [o for o in serves[at] if o != eid]
+            tree.append("<li><a class='eplink' href='#%s' data-ep='%s'>"
+                        "<span class='epid'>%s</span>"
+                        "<span class='eproute'><span class='verb'>%s</span> %s</span>"
+                        "</a></li>"
+                        % (esc(eid), esc(eid), esc(eid),
+                           esc(route.get("m", "")), esc(route.get("p", ""))))
+            panes.append(render_endpoint(eid, route, d, sn, ex_eps.get(eid), also,
+                                         linkable, run.get("repo"), commit))
+        tree.append("</ul></li>")
+    if panes:
+        panes[0] = panes[0].replace(" hidden>", ">", 1)
+        tree[1] = tree[1].replace("<a class='eplink'",
+                                  "<a class='eplink' aria-current='true'", 1)
 
-        out, current = [], None
-        for b in blocks:
-            if b["family"] != current:
-                current = b["family"]
-                out.append("<h3 class='famcap'>%s</h3>" % esc(current))
-            sn = b["sn"]
-            loc = "%s:%d%s" % (sn["path"], sn["start_line"],
-                               "" if sn["end_line"] == sn["start_line"]
-                               else "-%d" % sn["end_line"])
-            # Why there is no link is said once in the header. Repeating it on every
-            # block turned the page into a column of the same apology.
-            link = ("<a href='%s'>open on GitHub &rarr;</a>"
-                    % esc(permalink(run["repo"], commit, sn["path"],
-                                    sn["start_line"], sn["end_line"]))
-                    if view["linkable"] and run.get("repo") else "")
-            out.append(
-                "<div class='snip'><div class='sniphead'>%s<span class='loc'>%s</span>"
-                "<span class='how'>%s</span>%s</div><pre class='code'>%s</pre></div>"
-                % ("".join("<span class='eid'>%s</span>" % esc(i) for i in b["ids"]),
-                   esc(loc), esc(sn["how"]), link, esc(sn["text"])))
+    if not order:
+        body.append("<div class='note'>This run recorded no endpoint order, so there is "
+                    "nothing to explore.</div>")
+    else:
         missing = [e for e in order if e not in snips]
-        body.append("<div class='panel'><h2>Handlers</h2>"
-                    "<p class='hint'>Every endpoint this target wires, grouped by family. "
-                    "%d blocks cover %d endpoints, because one registration often serves "
-                    "several.%s</p>%s</div>"
-                    % (len(blocks), len(order) - len(missing),
-                       "" if not missing else
-                       " Not located: %s." % esc(", ".join(missing)),
-                       "".join(out) or "<p class='empty'>Nothing located.</p>"))
+        note = ("" if not (snips and missing) else
+                " No handler located for %s." % esc(", ".join(missing)))
+        body.append("<div class='panel'><h2>Endpoints</h2>"
+                    "<p class='hint'>%d endpoints in %d families, on the %s host at %s "
+                    "offered rps.%s</p>"
+                    "<div class='explorer'><nav class='eptree'><ul>%s</ul></nav>"
+                    "<div class='eppanes'>%s</div></div></div>"
+                    % (len(order), len(groups), esc(host),
+                       f"{row.get('offered_rps', 0):,}" if row else "?", note,
+                       "".join(tree), "".join(panes)))
 
+    if view:
         frows = []
         for e in view["manifest"]["files"]:
             frows.append("<tr><td class='l h'>%s</td><td class='l path'>%s</td>"
@@ -1442,7 +1571,35 @@ __HEAD__
 __BODY__
 <footer><span><a href="../index.html">github.com/ipjohnson/RequestBench</a></span>
 <span>run __RUN__</span></footer>
-</div></body></html>"""
+</div>
+<script>
+/* The panes are all in the page; the tree only chooses which one is shown. The hash
+   carries the choice, so a link to one endpoint opens on it. */
+(function () {
+  var links = [].slice.call(document.querySelectorAll('.eplink'));
+  var panes = [].slice.call(document.querySelectorAll('.eppane'));
+  if (!links.length) return;
+  function show(id) {
+    var hit = false;
+    panes.forEach(function (p) { var on = p.dataset.ep === id; p.hidden = !on; hit = hit || on; });
+    links.forEach(function (a) { a.setAttribute('aria-current', a.dataset.ep === id ? 'true' : 'false'); });
+    return hit;
+  }
+  links.forEach(function (a) {
+    a.addEventListener('click', function (ev) {
+      ev.preventDefault();
+      history.replaceState(null, '', '#' + a.dataset.ep);
+      show(a.dataset.ep);
+    });
+  });
+  var want = decodeURIComponent((location.hash || '').slice(1));
+  if (!want || !show(want)) show(links[0].dataset.ep);
+  window.addEventListener('hashchange', function () {
+    show(decodeURIComponent((location.hash || '').slice(1)));
+  });
+})();
+</script>
+</body></html>"""
             .replace("__CSS__", CSS).replace("__FWCSS__", FW_CSS)
             .replace("__NAME__", esc(name))
             .replace("__HEAD__", "\n".join(head))
@@ -1458,22 +1615,35 @@ def main():
     a = ap.parse_args()
     runs = load(a.summaries)
     wire = load_exemplars(a.exemplars)
+    routes = spec_routes()
+    # An exemplar captured against an older blend carries endpoint ids nothing in the run
+    # matches, so every payload pane comes out empty with nothing on the page to say why.
+    # That is how blend-v1 captures survived the move to blend-v2 unnoticed.
+    known = {eid for r in runs if r.get("tracked")
+             for eid in (r.get("endpoint_order") or [])}
+    stale = sorted(k for k, v in wire.items()
+                   if known and not set(v["endpoints"]) & known)
+    if stale:
+        print("  %d exemplar capture(s) match no endpoint in any run and will show no "
+              "payload; recapture with `make exemplars`: %s" % (len(stale),
+                                                               ", ".join(stale)))
     out = pathlib.Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
 
-    # A framework page describes one target as one run measured it, so it is generated for
-    # the newest tracked run on each host and nothing older. An earlier run's page would
-    # differ only in the numbers, and the run it came from is already addressable.
-    newest_tracked = {}
+    # A framework page describes one target as one run measured it, and its name carries
+    # no host, so it is generated from the container host alone. Generating every host
+    # into the same name meant the last one written won: go-gin's page reported lambda-rie,
+    # a host with no HTTP in the process. The other hosts need a name of their own before
+    # they can have a page.
+    newest = None
     for r in runs:
-        if not r.get("tracked"):
+        if not r.get("tracked") or (r.get("exec_host") or "container") != "container":
             continue
-        h = r.get("exec_host") or "container"
-        if h not in newest_tracked or r["run_id"] > newest_tracked[h]["run_id"]:
-            newest_tracked[h] = r
+        if newest is None or r["run_id"] > newest["run_id"]:
+            newest = r
     pages, code, page_dir, built, unavailable = {}, {}, out / "f", 0, 0
     page_dir.mkdir(parents=True, exist_ok=True)
-    for r in newest_tracked.values():
+    for r in ([newest] if newest else []):
         # The first rate: the one every target is expected to complete. Picking the middle
         # of the list gave the raised rate once the ladder became two, so a target that
         # could not sustain it had no number on its own page.
@@ -1484,7 +1654,8 @@ def main():
             built += 1
             unavailable += 0 if (view and view["verified"]) else 1
             name = "%s-%s.html" % (t["language"], t["target"])
-            (page_dir / name).write_text(render_framework(r, t, rn, view))
+            (page_dir / name).write_text(
+                render_framework(r, t, rn, view, wire, routes))
             pages[key] = "f/" + name
             # The handler for a row is the thing a reader wants when they open that row,
             # so it travels with the numbers rather than living only on the page.
