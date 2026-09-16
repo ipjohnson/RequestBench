@@ -2,7 +2,7 @@
   "version": "blend-v2",
   "sampling": "uniform",
   "error_bodies": "An endpoint whose expect is 400 or above carries an error body, and its shape is the framework's rather than this repository's. A 2xx body is the controlled variable and is pinned exactly; an error envelope is a framework's own contract -- ProblemDetails, a FluentValidation list, a bare object -- and forcing twenty-eight of them into one shape hides a real difference and charges every target a handler to hide it. What is still required: the status, a non-empty JSON body, and for the two rejected rows the field errors the shared validator produced, found wherever the framework put them. 'accepts' widens the status where more than one is correct. 'field_errors' is what the validator reports for the body the plan sends, so a target cannot answer the right status with the wrong content.",
-  "note": "Every endpoint is drawn with equal probability. There is no share field: the request stream carries no opinion about traffic, and every opinion lives in a weight vector in spec/blends.json applied when an aggregate is composed. Generators never fill params or headers themselves; they replay spec/plan.json, which harness/plan.py derives from this file and the fixture. 'base' names the endpoint to subtract and 'varies' the single factor that differs from it, which is what lets the site render a delta column. 'correlate' names a strategy that keeps related ids consistent.",
+  "note": "Every endpoint is drawn with equal probability. There is no share field: the request stream carries no opinion about traffic, and every opinion lives in a weight vector in spec/blends.json applied when an aggregate is composed. Generators never fill params or headers themselves; they replay spec/plan.json, which harness/plan.py derives from this file and the fixture. 'base' names the endpoint to subtract and 'varies' the single factor that differs from it, which is what lets the site render a delta column. The two are written together or not at all, and 'varies' has to name an entry in 'factors', whose prose is what the delta column prints instead of two endpoint ids. Following 'base' terminates rather than looping, and harness/plan.py rejects a spec where that stops being true. There is no single root: a chain ends wherever subtracting one more factor would start mixing two, so a POST chain does not bottom out on json.small. 'correlate' names a strategy that keeps related ids consistent.",
   "fixture": {
     "products": {
       "min": 1,
@@ -79,6 +79,62 @@
     },
     "template": {
       "exercises": "server-side rendering of the same model the json family serializes; not comparable across languages"
+    }
+  },
+  "factors": {
+    "size": {
+      "reads": "a larger response body, same route and same handler"
+    },
+    "depth": {
+      "reads": "a deeper static route, with no captures in it"
+    },
+    "captures": {
+      "reads": "one more path segment the router has to capture"
+    },
+    "authorization": {
+      "reads": "a bearer token the framework has to check"
+    },
+    "outcome": {
+      "reads": "the request refused rather than served"
+    },
+    "compression_wiring": {
+      "reads": "the compression middleware installed and declining"
+    },
+    "compression": {
+      "reads": "the compression middleware actually compressing"
+    },
+    "validators": {
+      "reads": "ETag and Cache-Control written onto the response"
+    },
+    "conditional": {
+      "reads": "a conditional request answered 304, with no body"
+    },
+    "validation": {
+      "reads": "the bound body checked against a schema"
+    },
+    "error_contract": {
+      "reads": "the first field error reported instead of all of them"
+    },
+    "parse_failure": {
+      "reads": "a body that is not JSON at all"
+    },
+    "query_params": {
+      "reads": "more query string keys parsed and coerced"
+    },
+    "route": {
+      "reads": "a different route carrying the same handler, which should cost nothing"
+    },
+    "header_count": {
+      "reads": "twenty-seven request headers instead of the usual few"
+    },
+    "layers": {
+      "reads": "more no-op middleware layers in front of the handler"
+    },
+    "method": {
+      "reads": "the same write through a different HTTP method"
+    },
+    "renderer": {
+      "reads": "a template rendered instead of the model serialized"
     }
   },
   "header_sets": {

@@ -115,9 +115,12 @@ td.name { font-weight: 600; }
 td.name .swatch { width: 8px; height: 8px; border-radius: 2px; display: inline-block;
                   margin-right: 7px; vertical-align: middle; }
 td.sub { color: var(--ink2); font-family: var(--f-mono); font-size: 12px; }
-td.ratio { font-family: var(--f-mono); }
-td.ratio.up { color: var(--amber); }
-td.ratio.base { color: var(--ink3); }
+/* The delta against the endpoint's base. Amber is a cost, teal a saving, and grey is a
+   number smaller than the histogram can resolve, which is the answer rather than a gap. */
+td.delta { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+td.delta.up { color: var(--amber); }
+td.delta.down { color: var(--tealtext); }
+td.delta.flat, td.delta.root { color: var(--ink3); }
 td.dead { color: var(--ink3); text-decoration: line-through; }
 .barcell { width: 26%; min-width: 120px; }
 .bar { height: 9px; border-radius: 2px; background: var(--teal); min-width: 2px; }
@@ -201,6 +204,14 @@ td.route .verb { color: var(--tealtext); }
 .leafroute .verb { color: var(--tealtext); }
 .childscroll td.go { color: var(--tealtext); text-align: right; }
 .childscroll tbody tr:hover td.go { text-decoration: underline; }
+/* The chain from this endpoint down to its root, one row per factor. */
+table.chain td.factor { font-family: var(--f-mono); font-size: 12px; color: var(--ink); }
+table.chain td.reads { color: var(--ink2); font-size: 13px; }
+table.chain td.step { font-family: var(--f-mono); font-size: 12px; color: var(--ink3);
+                      white-space: nowrap; }
+table.chain tr.total td { border-top: 1px solid var(--rule2); font-weight: 600; }
+table.chain tr.total td.reads { color: var(--ink); font-weight: 500; }
+.nofloor { color: var(--ink3); font-size: 12px; margin: 6px 0 0; }
 .sniphead { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: baseline;
             font-family: var(--f-mono); font-size: 11.5px; margin: 0 0 6px;
             color: var(--ink3); }
@@ -241,20 +252,39 @@ def host_notes():
             for h, cfg in m.get("hosts", {}).items() if cfg.get("note")}
 
 
-def spec_routes():
-    """Method and route per endpoint id, for the endpoint lists in the dialog.
+def read_spec():
+    try:
+        return json.loads((pathlib.Path(__file__).resolve().parent.parent
+                           / "spec" / "endpoints.json").read_text())
+    except (OSError, json.JSONDecodeError):
+        return {}
+
+
+def spec_routes(spec):
+    """Method, route and base edge per endpoint id, for the endpoint lists in the dialog.
 
     The summary carries ids and families but never the route, and an id alone does not say
     what was asked for. Forty-five short strings, so they ride in the page rather than
     being fetched.
+
+    `b` and `v` are the base and the factor varied from it. They come from the spec rather
+    than the run because a run records what was measured and never why two endpoints are a
+    pair, and a delta that named the wrong pair would be wrong in a way no number shows.
+    A run older than the current spec loses its deltas, which is correct: the pairing it
+    was measured under is not this one.
     """
-    try:
-        spec = json.loads((pathlib.Path(__file__).resolve().parent.parent
-                           / "spec" / "endpoints.json").read_text())
-    except (OSError, json.JSONDecodeError):
-        return {}
-    return {e["id"]: {"m": e.get("method", ""), "p": e.get("path", "")}
-            for e in spec.get("endpoints", [])}
+    out = {}
+    for e in spec.get("endpoints", []):
+        row = {"m": e.get("method", ""), "p": e.get("path", "")}
+        if "base" in e and "varies" in e:
+            row["b"], row["v"] = e["base"], e["varies"]
+        out[e["id"]] = row
+    return out
+
+
+def spec_factors(spec):
+    """What each factor reads as, so the delta is a sentence rather than two ids."""
+    return {k: v.get("reads", "") for k, v in (spec.get("factors") or {}).items()}
 
 
 def load_exemplars(d):
@@ -386,6 +416,11 @@ const COLS = [
   {id: 'adapter', label: 'adapter',     def: false, cls: 'sub',   get: r => r.adapter || '\u2014'},
   {id: 'serializer', label: 'serializer', def: false, cls: 'sub', get: r => r.serializer || '\u2014'},
   {id: 'value',   label: '',            def: true,  pin: true,    get: r => r.value},
+  /* Only at endpoint granularity: a family and the blend are merges and have no base.
+     Sorting by it is the cross-framework view, which is what gzip costing actix-web 431 us
+     and gorilla-mux 3,325 us is only visible in. */
+  {id: 'delta',   label: 'over base',   def: true,  gran: 'endpoint',
+                                                                  get: r => r.delta ? r.delta.total : null},
   {id: 'n',       label: 'samples',     def: true,  cls: 'sub',   get: r => r.n},
   {id: 'hdrz',    label: 'header B',    def: false, cls: 'sub',   get: r => r.hdrz},
   {id: 'bodyz',   label: 'body B',      def: false, cls: 'sub',   get: r => r.bodyz},
@@ -515,7 +550,8 @@ function rows() {
         if (q && !(eid.toLowerCase().includes(q) || t.target.toLowerCase().includes(q) ||
                    (rec.family || '').toLowerCase().includes(q))) return;
         push({key: base.key + '|' + eid, label: t.target, detail: eid, family: rec.family,
-              value: d[st.metric] ?? null, dead: false, n: d.count});
+              value: d[st.metric] ?? null, dead: false, n: d.count,
+              delta: deltaFor(t, eid, rn)});
       });
     }
   }
@@ -554,7 +590,8 @@ function emptyWhy(run) {
 }
 
 /* ---- render ---- */
-function visibleCols() { return COLS.filter(c => c.pin || st.cols.has(c.id)); }
+const forGran = c => !c.gran || c.gran === st.gran;
+function visibleCols() { return COLS.filter(c => (c.pin || st.cols.has(c.id)) && forGran(c)); }
 
 function render() {
   const {run, rn, rows: rs} = rows();
@@ -573,7 +610,7 @@ function render() {
       `<button class="chip" data-lang="${l}" aria-pressed="${st.langs.has(l)}"` +
       `${st.langs.has(l) ? ` style="background:${langColour[l]}"` : ''}>` +
       `<i style="background:${st.langs.has(l) ? 'currentColor' : langColour[l]}"></i>${l}</button>`).join('');
-  document.getElementById('colchips').innerHTML = COLS.filter(c => !c.pin && c.label).map(c =>
+  document.getElementById('colchips').innerHTML = COLS.filter(c => !c.pin && c.label && forGran(c)).map(c =>
       `<button class="chip sm" data-col="${c.id}" aria-pressed="${st.cols.has(c.id)}">${c.label}</button>`).join('');
   document.getElementById('q').value = st.q;
   for (const id of ['q', 'qlabel'])
@@ -607,6 +644,7 @@ function render() {
     const tds = vc.map(c => {
       if (c.id === 'bar')
         return `<td class="barcell"><div class="bar" style="width:${w}%;background:${langColour[r.language]}"></div></td>`;
+      if (c.id === 'delta') return deltaCell(r.delta);
       const v = c.get(r);
       const extra = c.id === 'value' && r.dead ? ' dead' : '';
       return `<td class="${c.cls || ''}${extra}">${cell(c.id, v)}</td>`;
@@ -709,7 +747,7 @@ function epRowsFor(run, t, rn, family) {
     const d = (rec.rungs || {})[rn];
     if (!d) continue;
     out.push({id: eid, family: rec.family, value: d[st.metric] ?? d.p50_us,
-              n: d.count});
+              n: d.count, delta: deltaFor(t, eid, rn)});
   }
   return out.sort((a, b) => (a.value ?? Infinity) - (b.value ?? Infinity));
 }
@@ -717,6 +755,94 @@ function epRowsFor(run, t, rn, family) {
 /* A run older than the current spec carries ids the spec no longer defines, so a miss is
    blank rather than a route belonging to something else. */
 const routeOf = (eid) => (RB.routes || {})[eid];
+
+/* ---- the delta against an endpoint's base ----
+
+   spec/endpoints.json pairs most endpoints with a base and names the one factor that
+   differs. Walking `base` to a root gives a chain, and because every step is a difference
+   of the same two published numbers the chain telescopes: the steps sum to the total over
+   the root exactly. So one subtraction answers both "what did gzip cost" and "what does
+   this endpoint cost over the floor", and the two always agree.
+
+   There is no single root. A chain ends wherever subtracting one more factor would start
+   mixing two, so json.small roots the GET chains and body.bind_small roots the POST ones.
+   Comparing a POST to json.small would fold request parsing into the delta. */
+const MAX_CHAIN = 16;
+
+function chainOf(eid) {
+  const steps = [];
+  let cur = eid;
+  /* harness/plan.py rejects a cycle, so this bound is only reached if a page is serving a
+     spec that check never saw. Stopping quietly beats hanging the tab. */
+  while (steps.length < MAX_CHAIN) {
+    const r = routeOf(cur);
+    if (!r || !r.b) break;
+    steps.push({arm: cur, base: r.b, factor: r.v});
+    cur = r.b;
+  }
+  return steps;
+}
+
+/* Every percentile is read off a histogram that grows 2% a bucket, so a published number
+   is one grid point and a difference of two carries both their errors. Twice the bucket
+   at the larger of the pair is the smallest difference that is the framework rather than
+   the grid. Below it the honest reading is that the factor adds no measurable time, which
+   is a result: sixteen no-op layers costing nothing is what that family is there to say.
+
+   This is the resolution of the instrument, not a measured repeatability floor. Setting
+   the second takes repeat runs of one target at one rung, which no run has done, and it
+   will be the larger of the two. */
+const BUCKET = 0.02, FLOOR_BUCKETS = 2;
+const floorFor = (a, b) => BUCKET * FLOOR_BUCKETS * Math.max(Math.abs(a), Math.abs(b));
+
+/* The value the delta is taken on is the selected metric and nothing else. achieved_rps
+   and dropped are rung statistics no endpoint carries, and substituting p50 there would
+   put a p50 difference under a column headed dropped. No delta is the honest answer. */
+function epValue(t, eid, rn) {
+  const d = (((t.endpoints || {})[eid] || {}).rungs || {})[rn];
+  return d ? d[st.metric] ?? null : null;
+}
+
+/* One step of a chain, measured on this target at this rung. */
+function stepDelta(t, step, rn) {
+  const arm = epValue(t, step.arm, rn), base = epValue(t, step.base, rn);
+  if (arm == null || base == null) return null;
+  const d = arm - base;
+  return {...step, arm_v: arm, base_v: base, d,
+          measurable: Math.abs(d) >= floorFor(arm, base)};
+}
+
+/* The whole chain plus its total. `null` when the endpoint is a root, or when the run is
+   missing either end: an endpoint the spec pairs but this run never measured has no
+   delta rather than a delta against nothing. */
+function deltaFor(t, eid, rn) {
+  const steps = chainOf(eid).map(s => stepDelta(t, s, rn));
+  if (!steps.length || steps.some(s => s === null)) return null;
+  const root = steps[steps.length - 1].base;
+  const arm = steps[0].arm_v, base = steps[steps.length - 1].base_v;
+  const total = arm - base;
+  return {steps, root, arm_v: arm, base_v: base, total,
+          measurable: Math.abs(total) >= floorFor(arm, base)};
+}
+
+const unitSuffix = () => METRICS[st.metric].unit ? ' ' + METRICS[st.metric].unit : '';
+const signed = v => (v > 0 ? '+' : v < 0 ? '−' : '±') +
+                    Math.round(Math.abs(v)).toLocaleString() + unitSuffix();
+
+/* The cell shown in a table: the number, and grey with the reason when it is smaller than
+   the instrument can see. */
+/* Takes either a whole chain, whose delta is `total` against `root`, or one of its steps,
+   whose delta is `d` against `base`. */
+function deltaCell(x) {
+  if (!x) return `<td class="delta root" title="This endpoint carries no base.">&mdash;</td>`;
+  const v = x.total ?? x.d, against = x.root ?? x.base;
+  const state = !x.measurable ? 'flat' : v > 0 ? 'up' : 'down';
+  const why = x.measurable ? `${signed(v)} over ${against}`
+    : `${signed(v)} is inside the ${Math.round(floorFor(x.arm_v, x.base_v))}` +
+      `${unitSuffix()} the histogram can resolve at this magnitude, so this factor adds ` +
+      `no measurable time`;
+  return `<td class="delta ${state}" title="${esc(why)}">${signed(v)}</td>`;
+}
 
 function childTable(caption, kids, level) {
   if (!kids.length) return `<p class="empty">Nothing at this level for this target.</p>`;
@@ -738,7 +864,7 @@ function childTable(caption, kids, level) {
       <td class="l name">${esc(k.id)}</td>${route}
       ${withRoute ? '' : `<td class="sub">${k.eps}</td>`}
       <td>${cell('value', k.value)}</td>
-      <td class="ratio">${k.ratio == null ? '&mdash;' : k.ratio.toFixed(2) + 'x'}</td>
+      ${withRoute ? deltaCell(k.delta) : ''}
       <td class="sub">${k.n == null ? '&mdash;' : Math.round(k.n).toLocaleString()}</td>
       <td class="sub go">open &rarr;</td>
     </tr>`;
@@ -747,8 +873,43 @@ function childTable(caption, kids, level) {
     <div class="scroll childscroll"><table><thead><tr>
       <th class="l">${withRoute ? 'endpoint' : 'family'}</th>
       ${withRoute ? '<th class="l">route</th>' : '<th>endpoints</th>'}
-      <th>${esc(METRICS[st.metric].label)}</th><th>samples</th><th></th>
+      <th>${esc(METRICS[st.metric].label)}</th>
+      ${withRoute ? '<th title="Against the root of this endpoint\'s base chain">over base</th>' : ''}
+      <th>samples</th><th></th>
     </tr></thead><tbody>${body}</tbody></table></div>`;
+}
+
+/* What this endpoint costs over its base, one row per factor, ending in the total over the
+   root. The rows sum to the total exactly, because every one of them is a difference of
+   two numbers on this page and the middles cancel. */
+function chainTable(x) {
+  if (!x) return '';
+  const reads = (RB.factors || {});
+  const rows = x.steps.map(s => `
+    <tr>
+      <td class="l factor">${esc(s.factor || '')}</td>
+      <td class="l reads">${esc(reads[s.factor] || '')}</td>
+      <td class="step">${Math.round(s.base_v).toLocaleString()} → ${Math.round(s.arm_v).toLocaleString()}</td>
+      ${deltaCell(s)}
+    </tr>`).join('');
+  const total = `
+    <tr class="total">
+      <td class="l factor"></td>
+      <td class="l reads">everything over ${esc(x.root)}</td>
+      <td class="step">${Math.round(x.base_v).toLocaleString()} → ${Math.round(x.arm_v).toLocaleString()}</td>
+      ${deltaCell(x)}
+    </tr>`;
+  /* Named once under the table rather than per row, because on most endpoints it applies
+     to every row or to none. */
+  const flat = x.steps.filter(s => !s.measurable).map(s => s.factor);
+  const note = flat.length ? `<p class="nofloor">${esc(flat.join(', '))} ` +
+      `${flat.length === 1 ? 'adds' : 'add'} no measurable time: the difference is smaller ` +
+      `than the 2% buckets the histogram is read off, so what it shows is the grid.</p>` : '';
+  return `<h3 class="childcap">What it costs over its base</h3>
+    <div class="scroll"><table class="chain"><thead><tr>
+      <th class="l">factor</th><th class="l">what it adds</th>
+      <th>${esc(METRICS[st.metric].label)}</th><th>delta</th>
+    </tr></thead><tbody>${rows}${total}</tbody></table></div>${note}`;
 }
 
 function crumbs(t) {
@@ -809,6 +970,7 @@ async function paintDetail() {
       ${stat('p99', 'p99_us', 'value')}${stat('p99.9', 'p999_us', 'value')}
       ${stat('samples', 'count', '')}
     </div>
+    ${chainTable(deltaFor(t, eid, rn))}
     <p class="empty" id="leafload">Loading the handler and the captured exchange…</p>`;
 
   const [codeDoc, wireKey] = [await fetchCode(tkey), wireKeyFor({language: dlgAt.language, target: dlgAt.target})];
@@ -1056,11 +1218,13 @@ def render(runs, wire, pages=None, code=None):
             newest[h] = r
     # Wire captures are per target and only read when a dialog opens, so ship the index
     # and fetch the bodies. Embedding all of them was most of the page weight.
+    spec = read_spec()
     data = json.dumps({
         "runs": list(newest.values()),
         "manifest": [manifest_entry(r) for r in runs],
         "hosts": host_notes(),
-        "routes": spec_routes(),
+        "routes": spec_routes(spec),
+        "factors": spec_factors(spec),
         "pages": pages,
         "codeIndex": {k: "data/code/%s.json.gz" % k.replace(":", "-") for k in code},
         "wireIndex": {k: {"framework": v["framework"], "version": v["version"],
@@ -1322,7 +1486,77 @@ def standing(run, t, rn):
     return row, rank, len(ordered)
 
 
-def render_endpoint(eid, route, d, sn, ex, also, linkable, repo, commit):
+# The same rule the explorer's delta column applies, written a second time because a
+# framework page is rendered here and the column is rendered in the browser. These are the
+# JS constants of the same name, and changing one without the other would leave two pages
+# disagreeing about one subtraction.
+BUCKET, FLOOR_BUCKETS = 0.02, 2
+
+
+def base_chain(eid, routes, own, rn):
+    """Every step from this endpoint down to the root of its base chain, on this target.
+
+    None when the endpoint is a root, and None when this run did not measure every endpoint
+    in the chain: a step against a number that is not there is a step against nothing.
+
+    p50 and not the selected metric, because a framework page is rendered once and has no
+    metric selector; the panel it feeds is headed p50 for the same reason.
+    """
+    def at(i):
+        return (((own.get(i) or {}).get("rungs") or {}).get(rn) or {}).get("p50_us")
+
+    steps, cur = [], eid
+    while len(steps) < 16:                    # harness/plan.py rejects a cycle; this is the belt
+        r = routes.get(cur) or {}
+        if not r.get("b"):
+            break
+        arm, base = at(cur), at(r["b"])
+        if arm is None or base is None:
+            return None
+        steps.append({"factor": r.get("v", ""), "base_id": r["b"],
+                      "base": base, "arm": arm, "d": arm - base})
+        cur = r["b"]
+    if not steps:
+        return None
+    return {"steps": steps, "root": cur, "base": steps[-1]["base"], "arm": steps[0]["arm"],
+            "total": steps[0]["arm"] - steps[-1]["base"]}
+
+
+def resolves(d, a, b):
+    """Whether a difference of two percentiles is larger than the grid they were read off."""
+    return abs(d) >= BUCKET * FLOOR_BUCKETS * max(abs(a), abs(b))
+
+
+def chain_panel(chain, factors):
+    """What this endpoint costs over its base, one row per factor, ending in the total."""
+    if not chain:
+        return ""
+
+    def row(factor, reads, base, arm, d, cls=""):
+        state = "up" if d > 0 else "down" if d < 0 else "flat"
+        if not resolves(d, arm, base):
+            state = "flat"
+        sign = "+" if d > 0 else "&minus;" if d < 0 else "&plusmn;"
+        return ("<tr class='%s'><td class='l factor'>%s</td><td class='l reads'>%s</td>"
+                "<td class='step'>%s &rarr; %s</td><td class='delta %s'>%s%s&nbsp;us</td></tr>"
+                % (cls, esc(factor), esc(reads), f"{base:,}", f"{arm:,}", state, sign,
+                   f"{abs(d):,}"))
+
+    rows = "".join(row(s["factor"], factors.get(s["factor"], ""),
+                       s["base"], s["arm"], s["d"]) for s in chain["steps"])
+    rows += row("", "everything over %s" % chain["root"], chain["base"], chain["arm"],
+                chain["total"], cls="total")
+    flat = [s["factor"] for s in chain["steps"] if not resolves(s["d"], s["arm"], s["base"])]
+    note = ("<p class='nofloor'>%s %s no measurable time: the difference is smaller than "
+            "the 2%% buckets the histogram is read off, so what it shows is the grid.</p>"
+            % (esc(", ".join(flat)), "adds" if len(flat) == 1 else "add")) if flat else ""
+    return ("<h3>What it costs over its base</h3>"
+            "<div class='scroll'><table class='chain'><thead><tr><th class='l'>factor</th>"
+            "<th class='l'>what it adds</th><th>p50</th><th>delta</th></tr></thead>"
+            "<tbody>%s</tbody></table></div>%s" % (rows, note))
+
+
+def render_endpoint(eid, route, d, sn, ex, also, linkable, repo, commit, chain, factors):
     """One endpoint's pane: what it answers, what it cost, how it is wired, what it sent."""
     def us(v):
         return "&mdash;" if v is None else "%s&nbsp;us" % f"{v:,}"
@@ -1343,6 +1577,7 @@ def render_endpoint(eid, route, d, sn, ex, also, linkable, repo, commit):
                      "<span class='fv'>%s</span></div>" % (k, v) for k, v in stats)
     perf = ("<div class='fields'>%s</div>" % fields if d else
             "<p class='empty'>Not measured at this rate.</p>")
+    perf += chain_panel(chain, factors)
 
     if sn:
         loc = "%s:%d%s" % (sn["path"], sn["start_line"],
@@ -1401,7 +1636,7 @@ def render_endpoint(eid, route, d, sn, ex, also, linkable, repo, commit):
                perf, impl, payload))
 
 
-def render_framework(run, t, rn, view, wire, routes):
+def render_framework(run, t, rn, view, wire, routes, factors):
     name = t.get("framework") or t["target"]
     row, rank, n_peers = standing(run, t, rn)
     facts = ["%s %s" % (name, t.get("version") or "?"), t.get("target_runtime") or ""]
@@ -1517,7 +1752,8 @@ def render_framework(run, t, rn, view, wire, routes):
                         % (esc(eid), esc(eid), esc(eid),
                            esc(route.get("m", "")), esc(route.get("p", ""))))
             panes.append(render_endpoint(eid, route, d, sn, ex_eps.get(eid), also,
-                                         linkable, run.get("repo"), commit))
+                                         linkable, run.get("repo"), commit,
+                                         base_chain(eid, routes, own, rn), factors))
         tree.append("</ul></li>")
     if panes:
         panes[0] = panes[0].replace(" hidden>", ">", 1)
@@ -1615,7 +1851,8 @@ def main():
     a = ap.parse_args()
     runs = load(a.summaries)
     wire = load_exemplars(a.exemplars)
-    routes = spec_routes()
+    spec = read_spec()
+    routes, factors = spec_routes(spec), spec_factors(spec)
     # An exemplar captured against an older blend carries endpoint ids nothing in the run
     # matches, so every payload pane comes out empty with nothing on the page to say why.
     # That is how blend-v1 captures survived the move to blend-v2 unnoticed.
@@ -1655,7 +1892,7 @@ def main():
             unavailable += 0 if (view and view["verified"]) else 1
             name = "%s-%s.html" % (t["language"], t["target"])
             (page_dir / name).write_text(
-                render_framework(r, t, rn, view, wire, routes))
+                render_framework(r, t, rn, view, wire, routes, factors))
             pages[key] = "f/" + name
             # The handler for a row is the thing a reader wants when they open that row,
             # so it travels with the numbers rather than living only on the page.

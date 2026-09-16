@@ -16,14 +16,30 @@ def unpack(b64):
     return struct.unpack("<%dI" % (len(raw) // 4), raw)
 
 def pct(counts, p):
+    """The p-th percentile, positioned inside its bucket rather than snapped to the middle.
+
+    Returning the midpoint made every published percentile a point on a grid that grows 2%
+    a step, which is 3 us at 150 us. That is invisible while a number is read on its own
+    and decides the answer as soon as two are subtracted: middleware.sixteen minus
+    middleware.none came out as exactly +0 on five of twenty-six targets and +3 on six
+    more, which is the grid and not the frameworks. Interpolating assumes the bucket is
+    filled uniformly, which at 2% wide it near enough is.
+
+    This moves every percentile a summary publishes. The move is bounded by the bucket the
+    value already sat in, so under 2% of the value, and it is a move off the middle towards
+    wherever in the bucket the rank actually falls. Summaries written before it stay as
+    they were, so a series that spans the change carries a step of that size where it
+    crosses, and the two sides of it are not comparable below that.
+    """
     total = sum(counts)
     if not total:
         return 0
-    want, seen = math.ceil(p / 100 * total), 0
+    want, seen = p / 100 * total, 0
     for i, c in enumerate(counts):
+        if c and seen + c >= want:
+            lo, hi = math.exp(i * LOG_G), math.exp((i + 1) * LOG_G)
+            return round(lo + (hi - lo) * min(1.0, max(0.0, (want - seen) / c)))
         seen += c
-        if seen >= want:
-            return round(math.exp((i + 0.5) * LOG_G))
     return 0
 
 # Past this fraction of dropped requests a target is serving less than it was offered, so
