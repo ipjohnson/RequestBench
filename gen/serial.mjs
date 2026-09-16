@@ -94,6 +94,10 @@ let timeouts = 0;
 const hist = eps.map(() => new Uint32Array(NBUCKETS));
 const counts = new Uint32Array(eps.length);
 const mismatch = new Uint32Array(eps.length);
+// The statuses an endpoint may answer with. Usually one. A body that will not
+// parse is a 400 by RFC and a 422 by the contract the validator answers with, and
+// the endpoint set accepts either.
+const accepted = eps.map((ep) => new Set(ep.accepts ?? [ep.expect]));
 const errors = new Uint32Array(eps.length);
 
 const TIMEOUT_MS = Number(argv.timeout ?? 10000);
@@ -116,7 +120,7 @@ function once(i, record) {
         if (record) {
           hist[idx][bucketOf(us)]++;
           counts[idx]++;
-          if (status !== ep.expect) mismatch[idx]++;
+          if (!accepted[idx].has(status)) mismatch[idx]++;
         }
         resolve();
       });

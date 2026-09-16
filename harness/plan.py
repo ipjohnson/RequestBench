@@ -103,7 +103,10 @@ def build():
             rows.append(path)
         entry = {"id": ep["id"], "family": ep["family"], "method": ep["method"],
                  "expect": ep["expect"], "paths": rows}
-        for key in ("base", "varies", "payload"):
+        # Carried rather than re-read from the spec, because every driver replays the plan
+        # and nothing else. accepts widens the status where more than one is correct;
+        # field_errors is what the shared validator reports for the body being sent.
+        for key in ("accepts", "field_errors", "base", "varies", "payload"):
             if key in ep:
                 entry[key] = ep[key]
         if "headers" in ep:

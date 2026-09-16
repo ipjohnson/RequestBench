@@ -1,6 +1,7 @@
 {
   "version": "blend-v2",
   "sampling": "uniform",
+  "error_bodies": "An endpoint whose expect is 400 or above carries an error body, and its shape is the framework's rather than this repository's. A 2xx body is the controlled variable and is pinned exactly; an error envelope is a framework's own contract -- ProblemDetails, a FluentValidation list, a bare object -- and forcing twenty-eight of them into one shape hides a real difference and charges every target a handler to hide it. What is still required: the status, a non-empty JSON body, and for the two rejected rows the field errors the shared validator produced, found wherever the framework put them. 'accepts' widens the status where more than one is correct. 'field_errors' is what the validator reports for the body the plan sends, so a target cannot answer the right status with the wrong content.",
   "note": "Every endpoint is drawn with equal probability. There is no share field: the request stream carries no opinion about traffic, and every opinion lives in a weight vector in spec/blends.json applied when an aggregate is composed. Generators never fill params or headers themselves; they replay spec/plan.json, which harness/plan.py derives from this file and the fixture. 'base' names the endpoint to subtract and 'varies' the single factor that differs from it, which is what lets the site render a delta column. 'correlate' names a strategy that keeps related ids consistent.",
   "fixture": {
     "products": {
@@ -366,6 +367,11 @@
       "path": "/body/validate/small",
       "expect": 422,
       "body": "order_invalid",
+      "field_errors": [
+        ["customer_id", "int"],
+        ["status", "string"],
+        ["lines", "array"]
+      ],
       "base": "body.validate_small",
       "varies": "outcome"
     },
@@ -376,6 +382,9 @@
       "path": "/body/validate/first-error",
       "expect": 422,
       "body": "order_invalid",
+      "field_errors": [
+        ["customer_id", "int"]
+      ],
       "base": "body.rejected_all",
       "varies": "error_contract"
     },
@@ -532,6 +541,10 @@
       "method": "POST",
       "path": "/body/validate/small",
       "expect": 422,
+      "accepts": [
+        400,
+        422
+      ],
       "body": "malformed",
       "base": "body.rejected_all",
       "varies": "parse_failure"

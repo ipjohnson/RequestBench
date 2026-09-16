@@ -244,6 +244,9 @@ def main():
         headers = dict(ep.get("headers") or {})
         if body:
             headers["content-type"] = "application/json"
+        # Usually one status. A body that will not parse is a 400 by RFC and a 422 by the
+        # contract the validator answers with, and the endpoint set accepts either.
+        allowed = set(ep.get("accepts") or [ep["expect"]])
         fresh = ep["id"].startswith(FRESH) and not a.skip_headers
         seen, bad, stale, last_serial = collections.Counter(), None, None, None
         for path in paths:
@@ -270,15 +273,16 @@ def main():
                 bad = bad or "transport:%s" % type(e).__name__
             sent += 1
             seen[status] += 1
-            if status != ep["expect"] and bad is None:
-                bad = "expected %d, got %d on %s" % (ep["expect"], status, path)
+            if status not in allowed and bad is None:
+                bad = "expected %s, got %d on %s" % (
+                    "/".join(str(x) for x in sorted(allowed)), status, path)
             # Only a response that actually arrived with the right status may define the
             # endpoint's fingerprint; otherwise a single early hiccup gets recorded as the
             # reference body and every later comparison reports drift that is not real.
-            if fresh and status == ep["expect"]:
+            if fresh and status in allowed:
                 stale = stale or advanced(hdrs, last_serial)
                 last_serial = serial_of(hdrs, last_serial)
-            if status == ep["expect"]:
+            if status in allowed:
                 responses.setdefault(ep["id"] + " " + path, comparable(decoded(raw, hdrs), ctype))
                 if ep["id"] not in seen_once:
                     seen_once.add(ep["id"])
@@ -303,7 +307,7 @@ def main():
                         },
                     })
 
-        ok = set(seen) == {ep["expect"]} and stale is None
+        ok = set(seen) <= allowed and len(seen) == 1 and stale is None
         if not ok:
             failures.append((ep["id"], bad or stale or "mixed statuses %s" % dict(seen)))
         note = ""
@@ -320,7 +324,7 @@ def main():
         if not a.quiet:
             print("  %s %-18s %-6s %-3d instances  %s%s" %
                   ("ok  " if ok else "FAIL", ep["id"], ep["method"], len(paths),
-                   dict(seen) if not ok else ep["expect"], note))
+                   dict(seen) if not ok else next(iter(seen), ep["expect"]), note))
 
     total = len(PLAN["endpoints"])
     print("\n%d/%d endpoints conform  (%d requests sent)" % (total - len(failures), total, sent))
