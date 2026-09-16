@@ -32,7 +32,7 @@ no exemption list.
 
     spec/endpoints.json   45 endpoints in 13 families, drawn uniformly
     spec/blends.json      weight vectors, applied when an aggregate is composed
-    spec/ladder.json      five rungs, 500 -> 12000 rps, 60s each
+    spec/ladder.json      two rungs, 1000 and 5000 rps, 240s each
     spec/matrix.json      languages, frameworks, the runtime each is pinned to
     spec/expected.json    generated, committed: what a correct answer is, per request
     spec/fixture.json     generated, committed: identical data for all 53 targets
