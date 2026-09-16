@@ -13,6 +13,22 @@ import type { Encoding } from "./checks.js";
 
 const pad = (s: string | number, w: number): string => String(s).padEnd(w);
 
+class UsageError extends Error {}
+
+/** argparse's choices=, which a cast to the union type only pretends to do. */
+function asEncoding(v: string): Encoding {
+  if (v !== "http" && v !== "lambda") {
+    throw new UsageError(`argument --encoding: invalid choice: '${v}' (choose from 'http', 'lambda')`);
+  }
+  return v;
+}
+
+/** argparse's type=int. NaN would otherwise read as "every instance". */
+function asCount(v: string): number {
+  if (!/^\d+$/.test(v)) throw new UsageError(`argument --instances: invalid int value: '${v}'`);
+  return Number(v);
+}
+
 function summarise(r: EndpointResult): string {
   const status = r.ok ? (r.seen.keys().next().value ?? "") : dictRepr(r.seen);
   const note = r.drift ? `  <- ${r.drift}` : "";
@@ -50,8 +66,8 @@ async function main(): Promise<number> {
     : null;
 
   const result = await gate(plan, hostport, {
-    instances: Number(values.instances) || 0,
-    encoding: values.encoding as Encoding,
+    instances: asCount(values.instances),
+    encoding: asEncoding(values.encoding),
     skipHeaders: values["skip-headers"],
     reference,
     onEndpoint: (r) => { if (!values.quiet) console.log(summarise(r)); },
@@ -97,4 +113,10 @@ async function main(): Promise<number> {
   return failures.length > 0 || result.drift.length > 0 || result.headerProblems.length > 0 ? 1 : 0;
 }
 
-process.exitCode = await main();
+try {
+  process.exitCode = await main();
+} catch (e) {
+  if (!(e instanceof UsageError)) throw e;
+  console.error(`rb-client: error: ${e.message}`);
+  process.exitCode = 2;
+}

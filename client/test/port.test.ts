@@ -1,6 +1,8 @@
 // The cases the port is easy to get wrong. The broad check is differential: both
 // implementations run against one booted target and their output is diffed.
 import { describe, expect, test } from "vitest";
+import { spawnSync } from "node:child_process";
+import { join } from "node:path";
 import { comparable, firstDifference } from "../src/compare.js";
 import { checkHeaders, framing, decoded, advanced } from "../src/checks.js";
 import { pairFound, shapeOf, contentProblems } from "../src/errors.js";
@@ -123,5 +125,25 @@ describe("error envelopes", () => {
     const spec = { statuses: [422], field_errors: [["lines", "array"]] } as const;
     expect(contentProblems(spec, { status: 422, body_class: "json", encoding: "", body: ours }))
       .toEqual(["does not report lines=array"]);
+  });
+});
+
+describe("argument validation", () => {
+  // argparse rejects these; a cast to the union type only pretends to. --encoding banana
+  // used to run the whole plan against the plain-HTTP transport without saying anything.
+  const run = (args: string[]) =>
+    spawnSync(process.execPath, [join(import.meta.dirname, "..", "dist", "cli.js"), ...args],
+              { encoding: "utf8" });
+
+  test("an encoding that is not a choice is refused", () => {
+    const r = run(["127.0.0.1:9", "--encoding", "banana"]);
+    expect(r.status).toBe(2);
+    expect(r.stderr).toContain("invalid choice: 'banana'");
+  });
+
+  test("an instance count that is not an integer is refused", () => {
+    const r = run(["127.0.0.1:9", "--instances", "abc"]);
+    expect(r.status).toBe(2);
+    expect(r.stderr).toContain("invalid int value: 'abc'");
   });
 });
