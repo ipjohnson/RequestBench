@@ -16,5 +16,9 @@
          resolve something newer and the version /__meta reports stops describing the
          binary. -->
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <!-- Each framework's error contract sits in client-exception/ beside its project. It is
+         TypeScript read by the conformance client, and the Web SDK's default Content globs
+         would otherwise publish its package.json and tsconfig.json with the target. -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);client-exception/**</DefaultItemExcludes>
   </PropertyGroup>
 </Project>
