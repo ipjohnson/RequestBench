@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <RootNamespace>RequestBench.FastEndpointsTarget</RootNamespace>
+    <AssemblyName>RequestBench.FastEndpoints</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../_shared/RequestBench.Domain.csproj" />
+    <ProjectReference Include="../_hosts/RequestBench.Hosts.csproj" />
+    <PackageReference Include="FastEndpoints" />
+  </ItemGroup>
+</Project>
