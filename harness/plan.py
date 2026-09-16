@@ -124,17 +124,62 @@ def check_references(plan):
     A weight vector is the only place a traffic opinion lives, and a renamed endpoint
     turns one of its entries into a no-op rather than an error: the blend quietly starts
     counting a row it was written to leave out, and the number still looks fine.
+
+    The base edges are checked harder than that, because the site publishes a subtraction
+    over them. A cycle makes walking to the root non-terminating, a base without a varies
+    publishes a number with nothing to call it, and a varies outside spec/endpoints.json's
+    factors prints an id where a sentence belongs.
     """
     ids = {e["id"] for e in plan["endpoints"]}
+    factors = set(SPEC.get("factors", {}))
     bad = []
     for e in plan["endpoints"]:
+        eid = e["id"]
         if "base" in e and e["base"] not in ids:
-            bad.append("%s names base %s, which is not an endpoint" % (e["id"], e["base"]))
+            bad.append("%s names base %s, which is not an endpoint" % (eid, e["base"]))
+        if ("base" in e) != ("varies" in e):
+            bad.append("%s carries %s without the other; they are written together or "
+                       "not at all" % (eid, "base" if "base" in e else "varies"))
+        if e.get("base") == eid:
+            bad.append("%s names itself as its base" % eid)
+        if "varies" in e and e["varies"] not in factors:
+            bad.append("%s varies %s, which is not in factors" % (eid, e["varies"]))
+    used = {e["varies"] for e in plan["endpoints"] if "varies" in e}
+    for f in sorted(factors - used):
+        bad.append("factor %s is defined and nothing varies by it" % f)
+    bad.extend(cycles(plan, ids))
     blends = json.loads((ROOT / "spec" / "blends.json").read_text())
     for name, blend in blends["blends"].items():
         for eid in blend["weights"]:
             if eid not in ids:
                 bad.append("blend %s weights %s, which is not an endpoint" % (name, eid))
+    return bad
+
+
+def cycles(plan, ids):
+    """Endpoints whose base chain does not terminate.
+
+    Reported once per cycle rather than once per member, because every member of one is
+    equally guilty and forty-five copies of the same sentence is not a better error.
+    """
+    base = {e["id"]: e.get("base") for e in plan["endpoints"]}
+    bad, seen = [], set()
+    for start in base:
+        if start in seen:
+            continue
+        path, cur = [], start
+        while cur in base and cur not in path:
+            path.append(cur)
+            cur = base[cur]
+            if cur is not None and cur not in ids:
+                cur = None                      # already reported as a dangling base
+        if cur in path:
+            loop = path[path.index(cur):]
+            # A self-loop is already reported by name, and saying it twice is not clearer.
+            if len(loop) > 1 and not set(loop) & seen:
+                bad.append("base cycle: %s -> %s" % (" -> ".join(loop), loop[0]))
+            seen.update(loop)
+        seen.update(path)
     return bad
 
 
