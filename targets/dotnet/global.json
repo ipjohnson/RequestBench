@@ -1,7 +1,7 @@
 {
   "comment": "The SDK the targets are built with, pinned so a machine carrying a newer preview builds what the container does. spec/matrix.json names the same major.",
   "sdk": {
-    "version": "10.0.0",
+    "version": "10.0.100",
     "rollForward": "latestFeature"
   }
 }
