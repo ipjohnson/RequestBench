@@ -16,6 +16,7 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "harness"))
 
 import conform  # noqa: E402
+import expected as expectation  # noqa: E402
 from expected import keys_of  # noqa: E402
 
 PLAN = json.loads((ROOT / "spec" / "plan.json").read_text())
@@ -45,23 +46,59 @@ def difference(key, want, got):
     return "%s: %s" % (key, diff) if diff else None
 
 
+def error_difference(key, endpoint, contract, recorded, got):
+    """Why an error answer is not acceptable.
+
+    An error envelope is the framework's own, so nothing here compares one target against
+    another. What is required is the status, a body that says what failed, and -- once the
+    target's own envelope has been recorded -- that it has not changed since.
+    """
+    if got["status"] not in contract["statuses"]:
+        return "%s: expected %s, got %d" % (
+            key, "/".join(str(s) for s in contract["statuses"]), got["status"])
+    problems = expectation.content_problems(endpoint, got)
+    if problems:
+        return "%s: %s" % (key, "; ".join(problems))
+    if recorded is None:
+        return None
+    if recorded["status"] != got["status"]:
+        return "%s: answered %d, but %d was recorded for this target" % (
+            key, got["status"], recorded["status"])
+    # Shape, not values: a ProblemDetails traceId changes per connection and is not part of
+    # the envelope. A key appearing, disappearing or changing type is.
+    shape = sorted(expectation.shape_of(got["body"]))
+    if shape != recorded["shape"]:
+        gained = [f for f in shape if f not in recorded["shape"]]
+        lost = [f for f in recorded["shape"] if f not in shape]
+        return "%s: envelope changed since it was recorded%s%s" % (
+            key,
+            "; gained " + ", ".join(gained) if gained else "",
+            "; lost " + ", ".join(lost) if lost else "")
+    return None
+
+
 def build(family):
     eps = endpoints(family)
 
     @pytest.mark.parametrize("endpoint", eps, ids=[e["id"].split(".", 1)[1] for e in eps])
     def test_endpoint(target, endpoint, answers, expected):
-        got, want = answers(target), expected["requests"]
-        missing = [k for k in keys_of(endpoint) if k not in want]
-        if missing:
-            pytest.fail("spec/expected.json says nothing about %d request(s) of %s, "
-                        "starting with %s" % (len(missing), endpoint["id"], missing[0]))
+        got = answers(target)
+        error = expected.get("errors", {}).get(endpoint["id"])
+        want = expected["requests"]
+        if error is None:
+            missing = [k for k in keys_of(endpoint) if k not in want]
+            if missing:
+                pytest.fail("spec/expected.json says nothing about %d request(s) of %s, "
+                            "starting with %s" % (len(missing), endpoint["id"], missing[0]))
 
+        recorded = expected.get("targets", {}).get(target, {})
         problems = []
         for key in keys_of(endpoint):
             if key not in got:
                 problems.append("%s: the target was never asked" % key)
                 continue
-            why = difference(key, want[key], got[key])
+            why = (error_difference(key, endpoint, error, recorded.get(key), got[key])
+                   if error is not None else difference(key, want[key], got[key]))
             if why:
                 problems.append(why)
         if problems:

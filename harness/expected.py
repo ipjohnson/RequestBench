@@ -27,6 +27,7 @@ import json
 import pathlib
 import sys
 
+import bundle
 import conform
 import run
 
@@ -35,7 +36,7 @@ SPEC = ROOT / "spec"
 PLAN = json.loads((SPEC / "plan.json").read_text())
 OUT = SPEC / "expected.json"
 
-EXPECTED_VERSION = "expected-v1"
+EXPECTED_VERSION = "expected-v2"
 
 # Four languages, four HTTP stacks, four independent implementations. Deriving from all
 # twenty-eight would make the expectation a vote rather than an agreement, and a mistake
@@ -47,6 +48,99 @@ DEFAULT_CONTRIBUTORS = ("node:fastify", "go:gin", "rust:axum", "python:fastapi")
 # -- so one expectation per endpoint could only ever describe the first of them.
 def keys_of(ep):
     return [(ep["id"] + " " + p) for p in dict.fromkeys(ep["paths"])]
+
+
+def is_error(ep):
+    """Whether this endpoint answers with an error body.
+
+    Derived from the status rather than declared: an endpoint expecting 400 or above
+    carries one. A 2xx body is the controlled variable and is pinned exactly; an error
+    envelope is the framework's own contract and is not.
+    """
+    return max(ep.get("accepts") or [ep["expect"]]) >= 400
+
+
+def strings_of(node):
+    """Every string in a subtree, keys and values alike."""
+    if isinstance(node, dict):
+        out = set(node)
+        for v in node.values():
+            out |= strings_of(v)
+        return out
+    if isinstance(node, list):
+        out = set()
+        for v in node:
+            out |= strings_of(v)
+        return out
+    return {node} if isinstance(node, str) else set()
+
+
+def pair_found(node, field, rule):
+    """Whether a field error is reported somewhere in this body, in either shape anyone
+    uses for one.
+
+    Two shapes, because those are the two anyone writes. An object carrying both as
+    values is this repository's own {"field": ..., "rule": ...}; a key equal to the field
+    whose subtree names the rule is what ProblemDetails and the FluentValidation-shaped
+    lists produce. Anything else fails, which is the right outcome: a third shape is worth
+    looking at rather than pattern-matching blind.
+    """
+    if isinstance(node, dict):
+        if field in node and rule in strings_of(node[field]):
+            return True
+        values = {v for v in node.values() if isinstance(v, str)}
+        if field in values and rule in values:
+            return True
+        return any(pair_found(v, field, rule) for v in node.values())
+    if isinstance(node, list):
+        return any(pair_found(v, field, rule) for v in node)
+    return False
+
+
+def shape_of(node, path=""):
+    """An error envelope with the values taken out: every key path and the type at it.
+
+    What is being held still is the shape, not the contents. ASP.NET's ProblemDetails
+    carries a traceId that changes per connection, so an exact body could never match
+    twice; a key appearing, disappearing or changing type is what a changed envelope
+    actually is.
+    """
+    kinds = {str: "string", bool: "bool", int: "number", float: "number", type(None): "null"}
+    if isinstance(node, dict):
+        if not node:
+            return {path + "{}"}
+        out = set()
+        for key, value in node.items():
+            out |= shape_of(value, (path + "." if path else "") + key)
+        return out
+    if isinstance(node, list):
+        if not node:
+            return {path + "[]"}
+        out = set()
+        for value in node:
+            out |= shape_of(value, path + "[]")
+        return out
+    return {"%s:%s" % (path, kinds.get(type(node), "other"))}
+
+
+def envelope(answer):
+    """What is recorded for one target's error response."""
+    return {
+        "status": answer["status"],
+        "body_class": answer["body_class"],
+        "shape": sorted(shape_of(answer["body"])),
+    }
+
+
+def content_problems(ep, answer):
+    """Why an error body is not acceptable, however the framework shaped it."""
+    if answer["body_class"] != "json":
+        return ["body is %s, not json" % answer["body_class"]]
+    if not answer["body"]:
+        return ["body is empty"]
+    missing = [(f, r) for f, r in ep.get("field_errors", [])
+               if not pair_found(answer["body"], f, r)]
+    return ["does not report %s=%s" % (f, r) for f, r in missing]
 
 
 def digest(path):
@@ -142,20 +236,35 @@ def boot_and_capture(language, target, mode, cached=False):
     return answers
 
 
-def agree(captures):
+def agree(captures, everyone=None):
     """The expectation, and everything the contributors did not agree on.
 
     A request every contributor answered the same way becomes an expectation. A request
     they answered differently becomes a disagreement, and nothing is written for it: one of
     them is wrong and this file cannot say which.
     """
+    everyone = everyone or captures
     expected, disagreements, partial, unpinned = {}, [], [], {}
+    per_target, bad_content = {n: {} for n in sorted(everyone)}, []
     names = sorted(captures)
     for ep in PLAN["endpoints"]:
         for key in keys_of(ep):
             answers = {n: captures[n][key] for n in names if key in captures[n]}
             if len(answers) < len(names):
                 partial.append(key)
+                continue
+            # An error body is the framework's own shape, so it is recorded per target
+            # rather than agreed between them. What every target still owes is the status,
+            # a non-empty JSON body, and the field errors the shared validator produced.
+            if is_error(ep):
+                for name in sorted(everyone):
+                    answer = everyone[name].get(key)
+                    if answer is None:
+                        continue
+                    problems = content_problems(ep, answer)
+                    if problems:
+                        bad_content.append((key, name, problems))
+                    per_target[name][key] = envelope(answer)
                 continue
             first = answers[names[0]]
             odd = [n for n in names[1:] if answers[n] != first]
@@ -173,7 +282,7 @@ def agree(captures):
                 expected[key] = {**first, "encoding": None}
                 continue
             disagreements.append((key, odd, answers))
-    return expected, disagreements, partial, unpinned
+    return expected, disagreements, partial, unpinned, per_target, bad_content
 
 
 def differs_only_on_encoding(a, b):
@@ -181,7 +290,7 @@ def differs_only_on_encoding(a, b):
            {k: v for k, v in b.items() if k != "encoding"}
 
 
-def document(expected, contributors, unpinned):
+def document(expected, contributors, unpinned, per_target):
     return {
         "version": EXPECTED_VERSION,
         "blend": PLAN["version"],
@@ -195,7 +304,22 @@ def document(expected, contributors, unpinned):
         "plan": digest("plan.json"),
         "fixture": digest("fixture.json"),
         "agreed_by": sorted(contributors),
+        # What an endpoint answering 400 or above must satisfy whatever its envelope: the
+        # status, a non-empty JSON body, and these field errors found wherever it put them.
+        "errors": {
+            ep["id"]: {
+                "statuses": sorted(set(ep.get("accepts") or [ep["expect"]])),
+                "field_errors": [list(pair) for pair in ep.get("field_errors", [])],
+            }
+            for ep in PLAN["endpoints"] if is_error(ep)
+        },
         "requests": dict(sorted(expected.items())),
+        # The shape of the error body each target answered with: every key path and the
+        # type at it, values dropped. Not a contract between targets -- it is how a
+        # target's own envelope is held still, so a change to it is caught without
+        # twenty-eight of them being made to share one.
+        "targets": {name: dict(sorted(rows.items()))
+                    for name, rows in sorted(per_target.items()) if rows},
     }
 
 
@@ -268,6 +392,10 @@ def main():
                     help="exit non-zero unless the committed file is what they answer now")
     ap.add_argument("--cached", action="store_true",
                     help="reuse results/captures/ instead of booting anything")
+    ap.add_argument("--record", default="",
+                    help="language:target,... whose error envelopes are recorded. Default: "
+                         "every implemented target, because an envelope nobody recorded is "
+                         "an envelope that can change without anyone noticing")
     a = ap.parse_args()
 
     named = [t for t in a.targets.split(",") if t.strip()]
@@ -277,20 +405,39 @@ def main():
         sys.exit("at least two independent targets are needed; agreement between one "
                  "target and itself is not evidence of anything")
 
-    print("deriving the expectation from %d targets, mode=%s" % (len(named), a.mode))
+    recorded = [t for t in a.record.split(",") if t.strip()]
+    if not recorded:
+        recorded = ["%s:%s" % p for p in bundle.implemented()]
+    # The contributors decide what a 2xx answer is. Every target's error envelope is
+    # recorded, because an envelope is the framework's own and holding it still is the only
+    # way a change to it is noticed.
+    order = named + [t for t in recorded if t not in named]
+
+    print("deriving the expectation from %d targets, recording error envelopes from %d, "
+          "mode=%s" % (len(named), len(order), a.mode))
     captures = {}
-    for entry in named:
+    for entry in order:
         language, _, target = entry.partition(":")
         print("  %-24s booting" % entry, end="", flush=True)
         captures[entry] = boot_and_capture(language, target, a.mode, a.cached)
         reached = sum(1 for v in captures[entry].values() if v["status"])
         print("\r  %-24s %d/%d requests answered" % (entry, reached, len(captures[entry])))
 
-    expected, disagreements, partial, unpinned = agree(captures)
+    expected, disagreements, partial, unpinned, per_target, bad_content = agree(
+        {n: captures[n] for n in named}, captures)
     print("\n%d/%d requests agreed by all %d targets"
           % (len(expected), sum(len(keys_of(e)) for e in PLAN["endpoints"]), len(named)))
     if partial:
         print("  %d request(s) some target never answered at all" % len(partial))
+    errors_recorded = sum(len(rows) for rows in per_target.values())
+    if errors_recorded:
+        print("  %d error response(s) recorded per target; their envelopes are not shared"
+              % errors_recorded)
+    if bad_content:
+        print("\n%d error body/bodies do not say what failed:" % len(bad_content))
+        for key, name, problems in bad_content[:12]:
+            print("  %-40s %-22s %s" % (key, name, "; ".join(problems)))
+        return 1
     if disagreements:
         report_disagreements(disagreements)
         return 1
@@ -300,7 +447,7 @@ def main():
         for key, who in sorted(unpinned.items()):
             print("  %-40s content-encoding: %s" % (
                 key, ", ".join("%s=%s" % (n, v) for n, v in sorted(who.items()))))
-    doc = document(expected, named, unpinned)
+    doc = document(expected, named, unpinned, per_target)
     if a.check:
         if not OUT.exists():
             print("spec/expected.json does not exist")
