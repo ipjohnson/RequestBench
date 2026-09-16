@@ -1461,19 +1461,20 @@ def main():
     out = pathlib.Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
 
-    # A framework page describes one target as one run measured it, so it is generated for
-    # the newest tracked run on each host and nothing older. An earlier run's page would
-    # differ only in the numbers, and the run it came from is already addressable.
-    newest_tracked = {}
+    # A framework page describes one target as one run measured it, and its name carries
+    # no host, so it is generated from the container host alone. Generating every host
+    # into the same name meant the last one written won: go-gin's page reported lambda-rie,
+    # a host with no HTTP in the process. The other hosts need a name of their own before
+    # they can have a page.
+    newest = None
     for r in runs:
-        if not r.get("tracked"):
+        if not r.get("tracked") or (r.get("exec_host") or "container") != "container":
             continue
-        h = r.get("exec_host") or "container"
-        if h not in newest_tracked or r["run_id"] > newest_tracked[h]["run_id"]:
-            newest_tracked[h] = r
+        if newest is None or r["run_id"] > newest["run_id"]:
+            newest = r
     pages, code, page_dir, built, unavailable = {}, {}, out / "f", 0, 0
     page_dir.mkdir(parents=True, exist_ok=True)
-    for r in newest_tracked.values():
+    for r in ([newest] if newest else []):
         # The first rate: the one every target is expected to complete. Picking the middle
         # of the list gave the raised rate once the ladder became two, so a target that
         # could not sustain it had no number on its own page.
