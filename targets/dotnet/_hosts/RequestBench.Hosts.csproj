@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>RequestBench.Hosts</RootNamespace>
+    <AssemblyName>RequestBench.Hosts</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../_shared/RequestBench.Domain.csproj" />
+    <PackageReference Include="Scriban" />
+  </ItemGroup>
+</Project>
