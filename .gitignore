@@ -31,4 +31,6 @@ targets/dotnet/_hosts/obj/
 # The TypeScript workspace
 node_modules/
 client/dist/
+packages/*/dist/
+targets/*/*/client-exception/dist/
 *.tsbuildinfo

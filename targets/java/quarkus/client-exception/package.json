@@ -1,0 +1,15 @@
+{
+  "name": "@rb/client-exception-java-quarkus",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc --build",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@rb/schema": "*"
+  }
+}

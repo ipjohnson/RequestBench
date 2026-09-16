@@ -5,7 +5,7 @@ import { spawnSync } from "node:child_process";
 import { join } from "node:path";
 import { comparable, firstDifference } from "../src/compare.js";
 import { checkHeaders, framing, decoded, advanced } from "../src/checks.js";
-import { pairFound, shapeOf, contentProblems } from "../src/errors.js";
+import { pairFound, shapeOf } from "@rb/schema";
 
 const buf = (s: string) => Buffer.from(s, "utf8");
 
@@ -115,17 +115,6 @@ describe("error envelopes", () => {
     expect([...shapeOf(problem)].sort()).toContain("errors.customer_id[]:string");
   });
 
-  test("an html error body is not acceptable however it reads", () => {
-    const spec = { statuses: [422], field_errors: [] } as const;
-    expect(contentProblems(spec, { status: 422, body_class: "html", encoding: "", body: "<p>no</p>" }))
-      .toEqual(["body is html, not json"]);
-  });
-
-  test("a json body missing a required pair says which", () => {
-    const spec = { statuses: [422], field_errors: [["lines", "array"]] } as const;
-    expect(contentProblems(spec, { status: 422, body_class: "json", encoding: "", body: ours }))
-      .toEqual(["does not report lines=array"]);
-  });
 });
 
 describe("argument validation", () => {
@@ -136,14 +125,20 @@ describe("argument validation", () => {
               { encoding: "utf8" });
 
   test("an encoding that is not a choice is refused", () => {
-    const r = run(["127.0.0.1:9", "--encoding", "banana"]);
+    const r = run(["127.0.0.1:9", "--target", "go:gin", "--encoding", "banana"]);
     expect(r.status).toBe(2);
     expect(r.stderr).toContain("invalid choice: 'banana'");
   });
 
   test("an instance count that is not an integer is refused", () => {
-    const r = run(["127.0.0.1:9", "--instances", "abc"]);
+    const r = run(["127.0.0.1:9", "--target", "go:gin", "--instances", "abc"]);
     expect(r.status).toBe(2);
     expect(r.stderr).toContain("invalid int value: 'abc'");
+  });
+
+  test("a run without a target is refused rather than gated on a guess", () => {
+    const r = run(["127.0.0.1:9"]);
+    expect(r.status).toBe(2);
+    expect(r.stderr).toContain("required: --target");
   });
 });

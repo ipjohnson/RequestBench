@@ -2,13 +2,14 @@
   "name": "requestbench-tools",
   "private": true,
   "type": "module",
-  "comment": "The TypeScript workspace: the conformance client and the site. targets/node is deliberately NOT a member. It holds one resolution shared by every Node target so a difference between two of them is the framework and not a transitive bump, and pulling it in here would put this workspace's dependencies in reach of measured code.",
+  "comment": "The TypeScript workspace: the conformance client and the site. Each framework's error contract is a member too, at targets/<language>/<framework>/client-exception, so it is edited, built and tested where the framework lives. The client-exception subdirectory is what makes that possible: the framework's own directory never becomes a package, so targets/node stays out. It holds one resolution shared by every Node target so a difference between two of them is the framework and not a transitive bump, and pulling it in here would put this workspace's dependencies in reach of measured code.",
   "engines": {
     "node": ">=22"
   },
   "workspaces": [
     "client",
-    "packages/*"
+    "packages/*",
+    "targets/*/*/client-exception"
   ],
   "scripts": {
     "build": "npm run build --workspaces --if-present",

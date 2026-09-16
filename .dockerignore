@@ -8,5 +8,8 @@ site/
 **/*.pyc
 targets/node/node_modules/
 targets/python/.venv/
+# Each framework's error contract sits beside it but is read by the client, never by the
+# target. Nothing in an image needs it.
+targets/*/*/client-exception/
 targets/rust/target/
 targets/java/*/target/

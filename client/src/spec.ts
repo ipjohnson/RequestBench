@@ -5,6 +5,7 @@ import { readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import type { Ask } from "@rb/schema";
 
 export const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const SPEC = join(ROOT, "spec");
@@ -16,6 +17,8 @@ export type PlanEndpoint = {
   readonly expect: number;
   readonly paths: readonly string[];
   readonly accepts?: readonly number[];
+  /** What the validator reports for the body being sent, wherever the framework puts it. */
+  readonly field_errors?: readonly (readonly [string, string])[];
   readonly body?: string;
   readonly headers?: Readonly<Record<string, string>>;
 };
@@ -92,6 +95,16 @@ export const statusesOf = (ep: PlanEndpoint): number[] => [...(ep.accepts ?? [ep
  * one.
  */
 export const isError = (ep: PlanEndpoint): boolean => Math.max(...statusesOf(ep)) >= 400;
+
+/**
+ * What one framework's client-exception package is told about one request.
+ *
+ * Built here rather than at each call site so the gate and the tests ask the same question.
+ */
+export const askFor = (target: string, ep: PlanEndpoint, path: string): Ask => ({
+  target, endpoint: ep.id, family: ep.family, method: ep.method, path,
+  statuses: statusesOf(ep), fieldErrors: ep.field_errors ?? [],
+});
 
 /** Whether the committed expectation describes the plan and fixture now on disk. */
 export function staleAgainstSpec(plan: Plan): string | null {

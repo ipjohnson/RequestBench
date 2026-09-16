@@ -3,12 +3,18 @@
 // Ported from harness/conform.py. Replays every instance in spec/plan.json against one
 // running target and asserts the status, the response header contract, and x-rb-serial
 // freshness on the families that carry it.
+//
+// One thing the Python does not do: an error endpoint is judged against the contract the
+// framework declared for itself, not against the reference target. Two frameworks answering
+// their own envelopes is the point of the endpoint set, and comparing them reported it as
+// drift.
 import { comparable, firstDifference, type Comparable } from "./compare.js";
 import {
-  advanced, checkHeaders, decoded, framing, headerBytes, isFreshnessChecked, serialOf,
-  type Encoding, type Header,
+  advanced, bodyClass, checkHeaders, contentEncoding, decoded, framing, headerBytes,
+  isFreshnessChecked, serialOf, type Encoding, type Header,
 } from "./checks.js";
-import { keysOf, statusesOf, type Plan, type PlanEndpoint } from "./spec.js";
+import { askFor, isError, keysOf, statusesOf, type Plan, type PlanEndpoint } from "./spec.js";
+import { errorProblem } from "./exceptions.js";
 import { Transport, type Reply } from "./http.js";
 
 const EMPTY = Buffer.alloc(0);
@@ -60,7 +66,16 @@ const requestHeaders = (ep: PlanEndpoint): Record<string, string> => {
   return headers;
 };
 
-export async function gate(plan: Plan, hostport: string, opts: GateOptions = {}): Promise<GateResult> {
+/**
+ * Replay the plan against one running target and say whether it conforms.
+ *
+ * `target` is "node:fastify" and is required, because an error endpoint is judged against the
+ * contract that framework declared in its own client-exception package. A gate that did not
+ * know which target it was talking to could only fall back to accepting any JSON.
+ */
+export async function gate(
+  plan: Plan, hostport: string, target: string, opts: GateOptions = {},
+): Promise<GateResult> {
   const encoding = opts.encoding ?? "http";
   const conn = new Transport(hostport, encoding);
   const responses: Record<string, Comparable> = {};
@@ -83,12 +98,26 @@ export async function gate(plan: Plan, hostport: string, opts: GateOptions = {})
     const paths = opts.instances ? ep.paths.slice(0, opts.instances) : ep.paths;
     const body = ep.body;
     const headers = requestHeaders(ep);
-    // Usually one status. A body that will not parse is a 400 by RFC and a 422 by the
-    // contract the validator answers with, and the endpoint set accepts either.
+    // What the endpoint declares. On an error endpoint this is the default the framework's
+    // package starts from rather than what the gate enforces; see `accepts` below.
     const allowed = new Set(statusesOf(ep));
     const fresh = isFreshnessChecked(ep.id) && !opts.skipHeaders;
+    // An error envelope is the framework's own contract, so this endpoint's body is judged
+    // against the schema the framework declared and never compared against the reference.
+    // Two frameworks answering ProblemDetails and an ErrorResponse are not in disagreement,
+    // and comparing them field by field reports as drift the one thing the endpoint set
+    // deliberately leaves to the framework.
+    const carriesError = isError(ep);
+    // On an error endpoint the framework's own package is the only authority on the status,
+    // because its own facility is what produces it: gin's binding answers 400 where the
+    // endpoint declares 422, and that is gin working. The endpoint's declaration is still
+    // what the package gets by default, so nothing changes for a framework that says nothing.
+    // A status of 0 is a transport failure and is nobody's contract.
+    const accepts = (status: number): boolean =>
+      carriesError ? status !== 0 : allowed.has(status);
     const seen = new Map<number, number>();
     let bad: string | null = null, stale: string | null = null, lastSerial: number | null = null;
+    let envelope: string | null = null;
 
     for (const path of paths) {
       let reply: Reply | null = null;
@@ -104,17 +133,26 @@ export async function gate(plan: Plan, hostport: string, opts: GateOptions = {})
       const hdrs: readonly Header[] = reply?.headers ?? [];
       sent++;
       seen.set(status, (seen.get(status) ?? 0) + 1);
-      if (!allowed.has(status) && bad === null) {
+      if (!accepts(status) && bad === null) {
         bad = `expected ${[...allowed].sort((a, b) => a - b).join("/")}, got ${status} on ${path}`;
       }
       // Only a response that actually arrived with the right status may define the
       // endpoint's comparison; otherwise a single early hiccup gets recorded as the
       // reference body and every later comparison reports drift that is not real.
-      if (fresh && allowed.has(status)) {
+      if (fresh && accepts(status)) {
         stale ??= advanced(hdrs, lastSerial);
         lastSerial = serialOf(hdrs, lastSerial);
       }
-      if (allowed.has(status)) {
+      // Every instance, not just the first of each path: a framework that answers a
+      // different envelope once it has warmed up is exactly what this is here to catch, and
+      // parsing a three-key error body costs nothing next to the request that fetched it.
+      if (carriesError && accepts(status)) {
+        envelope ??= errorProblem(askFor(target, ep, path), {
+          status, body_class: bodyClass(ctype), encoding: contentEncoding(hdrs),
+          body: comparable(decoded(raw, hdrs), ctype),
+        });
+      }
+      if (accepts(status)) {
         const key = `${ep.id} ${path}`;
         if (!(key in responses)) responses[key] = comparable(decoded(raw, hdrs), ctype);
         if (!seenOnce.has(ep.id)) {
@@ -140,9 +178,10 @@ export async function gate(plan: Plan, hostport: string, opts: GateOptions = {})
       }
     }
 
-    const ok = [...seen.keys()].every((s) => allowed.has(s)) && seen.size === 1 && stale === null;
+    const ok = [...seen.keys()].every(accepts) && seen.size === 1
+      && stale === null && envelope === null;
     let note: string | null = null;
-    if (opts.reference) {
+    if (opts.reference && !carriesError) {
       for (const key of keysOf(ep)) {
         if (!(key in opts.reference) || !(key in responses)) continue;
         compared++;
@@ -152,7 +191,7 @@ export async function gate(plan: Plan, hostport: string, opts: GateOptions = {})
     }
     const result: EndpointResult = {
       id: ep.id, method: ep.method, instances: paths.length, ok, seen,
-      why: ok ? null : (bad ?? stale ?? `mixed statuses ${dictRepr(seen)}`),
+      why: ok ? null : (bad ?? stale ?? envelope ?? `mixed statuses ${dictRepr(seen)}`),
       drift: note,
     };
     results.push(result);

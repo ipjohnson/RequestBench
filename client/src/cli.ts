@@ -2,7 +2,7 @@
 // Gate a running target. Ported from harness/conform.py, including its output format, so
 // the two can be run against one target and diffed while both exist.
 //
-//   rb-client 127.0.0.1:8080 [--reference ref.json] [--compare ref.json]
+//   rb-client 127.0.0.1:8080 --target node:fastify [--reference ref.json] [--compare ref.json]
 import { mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { parseArgs } from "node:util";
@@ -45,6 +45,7 @@ async function main(): Promise<number> {
   const { values, positionals } = parseArgs({
     allowPositionals: true,
     options: {
+      target: { type: "string" },
       instances: { type: "string", default: "0" },
       reference: { type: "string" },
       compare: { type: "string" },
@@ -56,16 +57,22 @@ async function main(): Promise<number> {
   });
   const hostport = positionals[0];
   if (!hostport) {
-    console.error("usage: rb-client <host:port> [--reference FILE] [--compare FILE]");
+    console.error("usage: rb-client <host:port> --target <language:framework> "
+      + "[--reference FILE] [--compare FILE]");
     return 2;
   }
+  // Not optional, and not defaulted. An error endpoint is judged against the contract the
+  // framework declared for itself, so a gate that does not know which framework it is
+  // talking to cannot check the thing it exists to check.
+  const target = values.target;
+  if (!target) throw new UsageError("the following arguments are required: --target");
 
   const plan = loadPlan();
   const reference = values.compare
     ? (JSON.parse(readFileSync(values.compare, "utf8")) as Record<string, Comparable>)
     : null;
 
-  const result = await gate(plan, hostport, {
+  const result = await gate(plan, hostport, target, {
     instances: asCount(values.instances),
     encoding: asEncoding(values.encoding),
     skipHeaders: values["skip-headers"],

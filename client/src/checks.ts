@@ -100,6 +100,23 @@ export function decoded(raw: Buffer, headers: readonly Header[]): Buffer {
   return raw;
 }
 
+/**
+ * What kind of body this is, which is part of the contract rather than incidental.
+ *
+ * A target answering the right values as text/plain is not answering correctly.
+ */
+export function bodyClass(contentType: string | undefined): string {
+  const ctype = (contentType ?? "").toLowerCase();
+  if (ctype.includes("json")) return "json";
+  if (ctype.includes("html")) return "html";
+  if (ctype.includes("text")) return "text";
+  return ctype === "" ? "none" : "other";
+}
+
+/** Whether the body arrived compressed, which the decoded bytes no longer say. */
+export const contentEncoding = (headers: readonly Header[]): string =>
+  folded(headers).get("content-encoding") ?? "";
+
 export function serialOf(headers: readonly Header[], previous: number | null): number | null {
   const v = folded(headers).get("x-rb-serial");
   return v !== undefined && /^\d+$/.test(v) ? Number(v) : previous;
