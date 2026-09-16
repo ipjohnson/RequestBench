@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <RootNamespace>RequestBench.MinimalApis</RootNamespace>
+    <AssemblyName>RequestBench.MinimalApis</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../_shared/RequestBench.Domain.csproj" />
+    <ProjectReference Include="../_hosts/RequestBench.Hosts.csproj" />
+  </ItemGroup>
+</Project>

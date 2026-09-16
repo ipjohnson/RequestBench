@@ -1,6 +1,6 @@
 comma := ,
 
-.PHONY: fixture plan spec expected test machine bundle snippets build java rust python python-lock lint validate conform exemplars run vars report clean help
+.PHONY: fixture plan spec expected test machine bundle snippets build java rust dotnet python python-lock lint validate conform exemplars run vars report clean help
 # Everything is on by default: no TARGETS means every implemented target this host
 # supports. The rest narrow it. LANGUAGES/FRAMEWORKS pick what runs, FAMILIES/ENDPOINTS
 # pick what it is asked for, and a narrowed endpoint set is recorded as its own profile
@@ -71,6 +71,9 @@ java: ## build the java target jars, which MODE=local needs  (TARGETS=java:javal
 
 rust: ## build the rust target binaries, which speeds MODE=local up
 	cd targets/rust && cargo build --locked --bins
+
+dotnet: ## build the dotnet targets, which MODE=local needs  (TARGETS=dotnet:carter)
+	cd targets/dotnet && dotnet build -c Release --nologo $(if $(TARGETS),$(subst dotnet:,,$(TARGETS))/*.csproj,)
 
 python: ## create the python virtualenv MODE=local needs, from the pinned lockfile
 	python3 -m venv targets/python/.venv

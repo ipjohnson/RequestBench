@@ -1,0 +1,20 @@
+<Project>
+  <!-- Every target in the language builds the same way, so the settings live here rather
+       than in six csproj files that could drift apart. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <!-- Measurement, not development. Without this every target is compared while carrying
+         debug assertions, which measures the configuration rather than the framework. -->
+    <Optimize Condition="'$(Configuration)' == 'Release'">true</Optimize>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <!-- A restore writes packages.lock.json beside the project, and the container build
+         restores in locked mode against it. Without that a rebuild months later can
+         resolve something newer and the version /__meta reports stops describing the
+         binary. -->
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+  </PropertyGroup>
+</Project>

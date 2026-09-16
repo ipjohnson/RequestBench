@@ -73,6 +73,10 @@ if (!isMainThread) {
   const counts = new Uint32Array(eps.length);
   const errors = new Uint32Array(eps.length);
   const mismatch = new Uint32Array(eps.length);
+  // The statuses an endpoint may answer with. Usually one. A body that will not
+  // parse is a 400 by RFC and a 422 by the contract the validator answers with, and
+  // the endpoint set accepts either.
+  const accepted = eps.map((ep) => new Set(ep.accepts ?? [ep.expect]));
   let dropped = 0, inflight = 0, issued = 0, done = 0;
 
   // xorshift so each worker walks the instance list differently but reproducibly
@@ -89,7 +93,7 @@ if (!isMainThread) {
     const opts = { host, port, path, method: ep.method, agent, headers: headersOf[idx] };
     inflight++;
     const req = http.request(opts, (res) => {
-      if (res.statusCode !== ep.expect) mismatch[idx]++;
+      if (!accepted[idx].has(res.statusCode)) mismatch[idx]++;
       res.resume();
       res.on("end", () => {
         inflight--; done++;

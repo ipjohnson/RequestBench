@@ -1,0 +1,12 @@
+<Solution>
+  <!-- Every .NET project, so `dotnet build` in this directory builds all five targets at
+       once the way the java reactor does. The container builds one target at a time and
+       does not read this file. -->
+  <Project Path="_shared/RequestBench.Domain.csproj" />
+  <Project Path="_hosts/RequestBench.Hosts.csproj" />
+  <Project Path="aspnet-mvc/RequestBench.AspNetMvc.csproj" />
+  <Project Path="carter/RequestBench.Carter.csproj" />
+  <Project Path="fastendpoints/RequestBench.FastEndpoints.csproj" />
+  <Project Path="minimal-apis/RequestBench.MinimalApis.csproj" />
+  <Project Path="wolverine-http/RequestBench.WolverineHttp.csproj" />
+</Solution>

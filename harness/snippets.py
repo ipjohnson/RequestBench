@@ -253,6 +253,12 @@ def method_on(lines, line):
     for m in METHODS:
         if re.search(r"(?:^|[^A-Za-z])%s(?:$|[^A-Za-z])" % m, head, re.I):
             return m
+        # A camelCase hump is a boundary too. Everything else writes the method with a
+        # separator in front of it -- r.GET(, app.get(, @GetMapping -- but .NET runs it
+        # together: MapGet, MapPost, WolverineDelete. Without this both registrations on
+        # /domain/orders look identical and neither can be attributed.
+        if re.search(r"[a-z]%s(?:$|[^a-z])" % m.capitalize(), head):
+            return m
         if re.search(r"@%sMapping" % m, lines[line], re.I):
             return m
     # actix writes the method after the path -- .route("/x", web::get().to(h)) -- so it is

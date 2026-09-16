@@ -157,6 +157,25 @@ jobs:
       - name: Every python target answers spec/expected.json
         run: python3 -m pytest tests --rb-mode local --rb-targets python:fastapi,python:starlette,python:litestar,python:sanic,python:flask,python:django-asgi -q
 
+  dotnet:
+    name: dotnet targets conform
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v5
+        with: { global-json-file: targets/dotnet/global.json }
+      - uses: actions/setup-python@v7
+        with: { python-version: "3.13" }
+      # One build for all five, rather than an image build per target: the local launcher
+      # runs the same dll the container ENTRYPOINT does.
+      - name: Build every dotnet target
+        run: dotnet build -c Release --nologo
+        working-directory: targets/dotnet
+      - name: Install the test dependencies
+        run: pip install -r harness/requirements.txt
+      - name: Every dotnet target answers spec/expected.json
+        run: python3 -m pytest tests --rb-mode local --rb-targets dotnet:minimal-apis,dotnet:aspnet-mvc,dotnet:fastendpoints,dotnet:carter,dotnet:wolverine-http -q
+
   rust:
     name: rust targets conform
     runs-on: ubuntu-latest
@@ -186,6 +205,11 @@ jobs:
       matrix:
         include:
           - { language: rust, target: axum }
+          - { language: dotnet, target: minimal-apis }
+          - { language: dotnet, target: aspnet-mvc }
+          - { language: dotnet, target: fastendpoints }
+          - { language: dotnet, target: carter }
+          - { language: dotnet, target: wolverine-http }
           - { language: python, target: fastapi }
           - { language: python, target: starlette }
           - { language: python, target: litestar }

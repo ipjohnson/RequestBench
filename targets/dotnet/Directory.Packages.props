@@ -1,0 +1,26 @@
+<Project>
+  <!-- One resolution for all six targets, so a difference between two of them is the
+       framework rather than a transitive dependency one happened to pick up. That is the
+       same reason the Rust targets share one Cargo.lock and the Python targets one
+       requirements.txt. -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- What the shared domain takes: a service collection to register itself into, and
+         nothing that knows what HTTP is. -->
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.12" />
+    <!-- The six frameworks. -->
+    <PackageVersion Include="FastEndpoints" Version="8.3.0" />
+    <PackageVersion Include="Carter" Version="10.0.0" />
+    <PackageVersion Include="WolverineFx.Http" Version="6.38.0" />
+    <!-- Wolverine 6 compiles its handlers rather than reflecting over them, and core no
+         longer ships the compiler. The alternative is committing generated code and
+         regenerating it whenever a route moves; this pays Roslyn once at startup instead,
+         which the warmup absorbs and which never touches a measured request. A production
+         deployment would pre-generate and set TypeLoadMode.Static. -->
+    <PackageVersion Include="WolverineFx.RuntimeCompilation" Version="6.38.0" />
+    <!-- One template engine for all six, pinned for the same reason the gzip level is. -->
+    <PackageVersion Include="Scriban" Version="7.4.0" />
+  </ItemGroup>
+</Project>

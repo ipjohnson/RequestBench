@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>RequestBench.Domain</RootNamespace>
+    <AssemblyName>RequestBench.Domain</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- The DI abstractions and nothing else. The domain is behaviour, not a web
+         application: it has no opinion about how a request reached it, and a reference to
+         ASP.NET here would let one leak in. -->
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+  </ItemGroup>
+</Project>

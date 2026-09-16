@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <RootNamespace>RequestBench.WolverineTarget</RootNamespace>
+    <AssemblyName>RequestBench.WolverineHttp</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../_shared/RequestBench.Domain.csproj" />
+    <ProjectReference Include="../_hosts/RequestBench.Hosts.csproj" />
+    <PackageReference Include="WolverineFx.Http" />
+    <PackageReference Include="WolverineFx.RuntimeCompilation" />
+  </ItemGroup>
+</Project>

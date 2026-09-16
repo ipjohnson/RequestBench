@@ -98,12 +98,20 @@
         "aspnet-mvc",
         "fastendpoints",
         "carter",
-        "servicestack",
         "wolverine-http",
         "hardened"
       ],
+      "not_planned": {
+        "servicestack": "Its free tier stops at ten operations and the endpoint set is forty-five, so the host throws LicenseException at startup before serving anything. Running it needs a commercial licence key, and a target nobody can run on a clean clone is not far from an unverified one."
+      },
       "anchor": "minimal-apis",
-      "implemented": []
+      "implemented": [
+        "minimal-apis",
+        "aspnet-mvc",
+        "fastendpoints",
+        "carter",
+        "wolverine-http"
+      ]
     },
     "rust": {
       "runtime": "rust:1.98",
@@ -194,6 +202,9 @@
       "container"
     ],
     "python": [
+      "container"
+    ],
+    "dotnet": [
       "container"
     ]
   },
