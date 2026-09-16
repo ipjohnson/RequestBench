@@ -1,6 +1,6 @@
 # RequestBench
 
-A cross-language HTTP framework benchmark. Thirty-seven frameworks across six languages,
+A cross-language HTTP framework benchmark. Thirty-six frameworks across six languages,
 measured on one machine held still, so what gets published is the time each one took at a
 traffic level you can hold against your own.
 
@@ -35,7 +35,7 @@ no exemption list.
     spec/ladder.json      five rungs, 500 -> 12000 rps, 60s each
     spec/matrix.json      languages, frameworks, the runtime each is pinned to
     spec/expected.json    generated, committed: what a correct answer is, per request
-    spec/fixture.json     generated, committed: identical data for all 48 targets
+    spec/fixture.json     generated, committed: identical data for all 53 targets
     spec/plan.json        generated: pre-resolved concrete requests every driver replays
     spec/sequence.json    generated: the fixed replay order every serial host uses
     harness/              plan, expectation, conformance gate, orchestrator, bundles
@@ -53,7 +53,7 @@ target back to back on one machine, and nothing about that machine changes betwe
     python3 harness/run.py --mode docker --languages go,node
 
 A hosted job is capped at six hours, which at roughly 370s per target holds about 58
-targets. The full 48-target plan fits; adding the capability suites would not. Java is in
+targets. The full 53-target plan fits; adding the capability suites would not. Java is in
 the run, and Java warms for 90s rather than 30s, so every target in a run now warms for
 90s: the warmup has to be the same for all of them or the comparison inside the run is
 not one.
@@ -88,9 +88,9 @@ itself as its own profile and the summary carries it, so nothing reads the two t
 `MODE=local` runs targets as host processes, which is the fast edit loop. `MODE=docker`
 builds an image per target and runs it with a pinned CPU budget (`RB_CPUS`, default 2),
 which is what measurement uses. Java needs `make java` first, because the local launcher
-runs a jar the reactor has already built, and Python needs `make python`, which builds the
-virtualenv it launches them in. Rust only has a container path, since the image carries the
-toolchain.
+runs a jar the reactor has already built, Python needs `make python`, which builds the
+virtualenv it launches them in, and .NET needs `make dotnet`, which publishes the dll the
+container runs. Rust only has a container path, since the image carries the toolchain.
 
 ## Why the generator is written rather than bought
 
@@ -114,13 +114,13 @@ Working: the spec and plan, the conformance gate with cross-target response comp
 the open-loop generator with per-endpoint histograms, the orchestrator in both host and
 container mode, the aggregator, the machine preflight, the nightly measurement split by
 execution host, the nightly framework update, target bundles with a framework page per
-target, and twenty-eight targets across five languages, all of them conforming. Node has
+target, and thirty-three targets across six languages, all of them conforming. Node has
 Fastify, Express, Hono, Koa and h3. Go has Gin, Echo, chi, gorilla/mux and Fiber. Java has Spring Boot, Quarkus,
 Micronaut, Helidon SE, Vert.x and Javalin. Rust has axum, actix-web, Rocket, Poem, Salvo
-and warp, and Python has FastAPI, Starlette, Litestar, Sanic, Flask and Django over ASGI.
-All twelve of those answer `blend-v2`.
+and warp, Python has FastAPI, Starlette, Litestar, Sanic, Flask and Django over ASGI, and
+.NET has minimal APIs, MVC controllers, FastEndpoints, Carter and Wolverine.HTTP.
 
-All twenty-eight answer the forty-five endpoints of `blend-v2`, and all twenty-eight are
+All thirty-three answer the forty-five endpoints of `blend-v2`, and all thirty-three are
 checked against `spec/expected.json` rather than against each other. The expectation is
 derived from `node:fastify`, `go:gin`, `rust:axum` and `python:fastapi` — four languages on
 four HTTP stacks — and only values all four produce are written; a disagreement is reported
@@ -128,11 +128,30 @@ and resolved against `spec/endpoints.json` by hand. One field is deliberately le
 listed in the file: whether a framework compresses a 125-byte body, which is what
 `compressed.gzip_small` is in the set to show.
 
+An error body is the framework's own. A 2xx body is the controlled variable and is pinned
+exactly, but an envelope is a framework's contract — ProblemDetails, a FluentValidation
+list, a bare object — and forcing thirty-three of them into one shape hides a real
+difference and charges every target a handler to hide it. What an endpoint answering 400 or
+above still owes is the status, a non-empty JSON body, and, for the two rejected rows, the
+field errors the shared validator produced, found wherever the framework put them.
+`spec/expected.json` records each target's envelope as a shape — every key path and the type
+at it, values dropped — so a change to one is caught without any of them being made to
+share. `errors.malformed` accepts 400 or 422, because 400 is the RFC status for syntax that
+would not parse and 422 is what the validator's contract answers with.
+
 The Rust targets share one Cargo workspace and one lockfile, so a difference between two
 of them is the framework rather than a transitive dependency one happened to resolve
 differently. `targets/rust/_shared` is a port of `targets/go/_shared/domain.go`, and every
 response it produces was compared against the Node capture before the targets were
 listed.
+
+The .NET targets take the shared domain through the service collection:
+`services.AddRequestBenchDomain()` reads the fixture once and registers one `DomainModel`
+that every target injects. The domain itself depends on nothing but
+`Microsoft.Extensions.DependencyInjection.Abstractions` — it is behaviour, not a web
+application, and a reference to ASP.NET there would let one leak in. ServiceStack is not in
+the .NET list: its free tier stops at ten operations against an endpoint set of forty-five,
+and `spec/matrix.json` records why.
 
 Python is the first language here where the framework is not the server. Five of the six
 ship none, so each target runs the one its own documentation reaches for first — uvicorn
@@ -172,8 +191,8 @@ aws-serverless-java-container. Javalin, Vert.x and Helidon SE have no first-part
 for either function host, and a hand-written shim would measure the shim. Quarkus has one
 for both and is not wired to either yet.
 
-Not built yet: .NET, Python and Rust on either function host, Quarkus on either function
-host, the ten capability suites, and the machine calibrator.
+Not built yet: the .NET hardened target, .NET, Python and Rust on either function host,
+Quarkus on either function host, the ten capability suites, and the machine calibrator.
 
 The current numbers are **not admissible** under the plan's own rules: the generator runs on
 the same machine as the target, there is no calibrator, and no host is pinned. They prove

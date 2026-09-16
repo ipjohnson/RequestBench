@@ -16,3 +16,11 @@ results/captures/
 
 # Written by the maven shade plugin beside each target it shades.
 targets/java/*/dependency-reduced-pom.xml
+
+# The dotnet build output.
+targets/dotnet/*/bin/
+targets/dotnet/*/obj/
+targets/dotnet/_shared/bin/
+targets/dotnet/_shared/obj/
+targets/dotnet/_hosts/bin/
+targets/dotnet/_hosts/obj/

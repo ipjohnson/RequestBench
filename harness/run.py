@@ -158,6 +158,19 @@ class Local:
                     ROOT / "targets/python",
                     {"RB_TARGET": d, "RB_FIXTURE": str(ROOT / "spec/fixture.json"),
                      "RB_HOST": host})
+        if self.language == "dotnet":
+            if host != "container":
+                raise SystemExit("dotnet has no launcher for host %r" % host)
+            # The dll `make dotnet` published, run the way the container ENTRYPOINT runs it.
+            # `dotnet run` would restore and build inside the boot budget, which no boot
+            # budget should pay for.
+            built = ROOT / "targets/dotnet" / d / "bin/Release/net10.0"
+            dll = next((p for p in sorted(built.glob("RequestBench.*.dll"))
+                        if "Domain" not in p.name and "Hosts" not in p.name), None)
+            if dll is None:
+                raise SystemExit("no built dll in %s; run 'make dotnet'" % built)
+            return (["dotnet", str(dll)], ROOT / "targets/dotnet",
+                    {"RB_FIXTURE": str(ROOT / "spec/fixture.json"), "RB_HOST": host})
         raise SystemExit("language %r has no local launcher; use --mode docker" % self.language)
 
     def start(self):
