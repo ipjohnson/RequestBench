@@ -7,9 +7,9 @@
 package main
 
 import (
+	d "github.com/ianjohnson/requestbench/targets/go/_shared"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	d "github.com/ianjohnson/requestbench/targets/go/_shared"
 )
 
 // Level is pinned across every language. The size threshold is left at the library's own

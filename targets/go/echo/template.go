@@ -13,8 +13,8 @@ import (
 	"html/template"
 	"io"
 
-	"github.com/labstack/echo/v4"
 	d "github.com/ianjohnson/requestbench/targets/go/_shared"
+	"github.com/labstack/echo/v4"
 )
 
 //go:embed views/items.tmpl

@@ -13,8 +13,8 @@ import (
 	"strings"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/labstack/echo/v4"
 	d "github.com/ianjohnson/requestbench/targets/go/_shared"
+	"github.com/labstack/echo/v4"
 )
 
 // Report the field by the name it has on the wire rather than by its Go name. The

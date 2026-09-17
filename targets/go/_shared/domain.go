@@ -57,6 +57,19 @@ type fixture struct {
 	Reviews   map[string][]Review   `json:"reviews"`
 	Payloads  map[string]payloadDoc `json:"payloads"`
 	Auth      authDoc               `json:"auth"`
+	Cache     CacheDoc              `json:"cache"`
+}
+
+// CacheDoc is what every target sizes its response cache against: the distinct keys the
+// plan sends, a capacity with room above them, an expiry past the end of a run, and the
+// header values the vary rows carry. Derived and asserted in harness/make_fixture.py
+// rather than chosen per target, because a store smaller than the key count evicts inside
+// the measured window and the family would report eviction policy instead of the feature.
+type CacheDoc struct {
+	Capacity int                            `json:"capacity"`
+	Keys     int                            `json:"keys"`
+	TTLSec   int                            `json:"ttl_s"`
+	Vary     map[string]map[string][]string `json:"vary"`
 }
 
 var (
@@ -67,6 +80,7 @@ var (
 
 	payloads map[string]payloadDoc
 	auth     authDoc
+	cacheDoc CacheDoc
 	serial   atomic.Uint64
 
 	productByID  map[int]*Product
@@ -94,7 +108,7 @@ func Load(path string) error {
 		return err
 	}
 	Products, Customers, Orders, Reviews = f.Products, f.Customers, f.Orders, f.Reviews
-	payloads, auth = f.Payloads, f.Auth
+	payloads, auth, cacheDoc = f.Payloads, f.Auth, f.Cache
 
 	productByID = make(map[int]*Product, len(Products))
 	for i := range Products {
@@ -602,7 +616,7 @@ func (Boom) Error() string { return "deliberate unhandled failure" }
 // reuses unchanged, so subtracting a base endpoint from its arm leaves the feature and
 // nothing else.
 
-// PayloadBody is the response json.*, compressed.*, cached.* and template.* all serve.
+// PayloadBody is the response json.*, compressed.*, etag.*, cache.* and template.* serve.
 type PayloadBody struct {
 	Count int       `json:"count"`
 	Items []Product `json:"items"`
@@ -612,7 +626,6 @@ type PayloadBody struct {
 type payloadDoc struct {
 	Body  PayloadBody `json:"body"`
 	Bytes int         `json:"bytes"`
-	ETag  string      `json:"etag"`
 	HTML  string      `json:"html"`
 }
 
@@ -625,10 +638,6 @@ type authDoc struct {
 // serialize and one write at three sizes; handing back a cached string would measure none
 // of it.
 func Payload(size string) PayloadBody { return payloads[size].Body }
-
-// ETagOf is the value pinned in the fixture, so what a target spends is emitting the
-// header and comparing it rather than hashing a body.
-func ETagOf(size string) string { return payloads[size].ETag }
 
 // GzipLevel is pinned across every language. Compression cost is dominated by codec and
 // level, not by framework, so an unpinned level makes compressed.* a zlib benchmark.
