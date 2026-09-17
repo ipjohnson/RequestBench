@@ -3,6 +3,7 @@ import * as d from "../../_shared/domain.js";
 import { orderOf, validatesOrder } from "../validation.js";
 import { bindsFilter } from "./query.js";
 
+// rb:wiring domain.*,errors.*
 const send = (c, v, status = 200) =>
   v === d.NOT_FOUND ? c.json(d.notFoundBody(), 404) : c.json(v, status);
 

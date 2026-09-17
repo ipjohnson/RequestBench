@@ -22,8 +22,10 @@ import rb.domain.Json;
 public class Compressed {
 
   /** The floor the Java stacks use, so gzip_small lands on the same side of it. */
+  // rb:wiring compressed.*
   private static final int THRESHOLD = 1024;
 
+  // rb:wiring compressed.*
   private static Response serve(String size, String accept) {
     byte[] raw = Json.bytes(Domain.payload(size));
     boolean wanted = accept != null && accept.contains("gzip") && raw.length >= THRESHOLD;
@@ -37,21 +39,20 @@ public class Compressed {
     return b.build();
   }
 
-  // rb:snippet compressed.identity_small compressed.gzip_small
+  // rb:handler compressed.identity_small,compressed.gzip_small
   @GET
   @Path("small")
   public Response small(@HeaderParam("accept-encoding") String accept) {
     return serve("small", accept);
   }
 
-  // rb:snippet compressed.identity_medium compressed.gzip_medium
   @GET
   @Path("medium")
   public Response medium(@HeaderParam("accept-encoding") String accept) {
     return serve("medium", accept);
   }
 
-  // rb:snippet compressed.identity_large compressed.gzip_large
+  // rb:handler compressed.identity_large,compressed.gzip_large
   @GET
   @Path("large")
   public Response large(@HeaderParam("accept-encoding") String accept) {

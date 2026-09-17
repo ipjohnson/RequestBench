@@ -22,6 +22,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// rb:wiring errors.*,domain.*
 func fail(c echo.Context, err error) error {
 	if errors.Is(err, d.ErrNotFound) {
 		return c.JSON(404, d.NotFoundBody())
@@ -29,6 +30,7 @@ func fail(c echo.Context, err error) error {
 	return c.JSON(500, map[string]string{"error": "internal", "message": err.Error()})
 }
 
+// rb:wiring domain.*
 func send(c echo.Context, v any, err error, status int) error {
 	if err != nil {
 		return fail(c, err)
@@ -48,9 +50,11 @@ func main() {
 	e := echo.New()
 	// The validator lives on the engine, so c.Validate is what runs it and no handler calls
 	// a validator directly. That slot is Echo's validation facility.
+	// rb:wiring body.*
 	e.Validator = newValidator()
 	// The renderer lives on the engine too, so c.Render is what reaches the template and no
 	// handler calls a render function. That slot is Echo's view facility.
+	// rb:wiring template.*
 	e.Renderer = newRenderer()
 	e.HideBanner = true
 	e.HidePort = true
@@ -58,7 +62,7 @@ func main() {
 	// errors: the router's own miss and every failure a handler returns. Echo hands both
 	// to one hook, which is what gives errors.unmatched the same body as errors.not_found.
 	//
-	// rb:snippet errors.unmatched
+	// rb:handler errors.unmatched
 	e.HTTPErrorHandler = func(err error, c echo.Context) {
 		if c.Response().Committed {
 			return

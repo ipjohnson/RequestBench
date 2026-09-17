@@ -51,11 +51,13 @@ from _shared.asgi import ConditionalGet, ResponseCache
 # by file path, and this directory is named after the package it measures.
 
 
+# rb:wiring body.*,domain.*
 class LineIn(BaseModel):
     product_id: int
     qty: int = Field(ge=1)
 
 
+# rb:wiring body.*,domain.*
 class OrderIn(BaseModel):
     customer_id: int
     status: str
@@ -79,6 +81,7 @@ META = host.meta("fastapi", adapter="uvicorn",
                        + host.dist_version("cachetools"))
 
 
+# rb:wiring parameters.*,headers.*,middleware.*,authorized.*,json.*
 def small():
     return d.payload("small")
 
@@ -89,11 +92,12 @@ def small():
 # cannot drift. The router's own miss arrives here as an HTTPException, which is what
 # gives errors.unmatched the same body as errors.not_found.
 
-# rb:snippet errors.unmatched
+# rb:handler errors.unmatched
 STATUS_BODY = {403: d.forbidden_body, 404: d.not_found_body}
 
 
 @app.exception_handler(StarletteHTTPException)
+# rb:wiring errors.*
 async def http_error(_: Request, exc: StarletteHTTPException):
     body = STATUS_BODY.get(exc.status_code)
     return JSONResponse(body() if body else {"error": "internal"},
@@ -101,6 +105,7 @@ async def http_error(_: Request, exc: StarletteHTTPException):
 
 
 @app.exception_handler(d.NotFound)
+# rb:wiring errors.*
 async def not_found(_: Request, __: d.NotFound):
     return JSONResponse(d.not_found_body(), status_code=404)
 
@@ -110,6 +115,7 @@ async def not_found(_: Request, __: d.NotFound):
 # the same list, distinguished by their `type`, and both are a 422. The envelope is
 # FastAPI's own, so it is passed through rather than rewritten.
 @app.exception_handler(RequestValidationError)
+# rb:wiring errors.*,body.*
 async def invalid(_: Request, exc: RequestValidationError):
     return JSONResponse({"detail": jsonable_encoder(exc.errors())}, status_code=422)
 
@@ -189,10 +195,12 @@ async def headers():
 
 # ---- middleware: a dependency per layer, scoped to the route -------------------------
 
+# rb:wiring middleware.*
 async def noop():
     """One layer: it is resolved and does nothing else."""
 
 
+# rb:wiring middleware.*
 def layers(n):
     return [Depends(noop) for _ in range(n)]
 
@@ -214,6 +222,7 @@ async def middleware_sixteen():
 
 # ---- authorized: a route dependency, not an if in the handler ------------------------
 
+# rb:wiring authorized.*
 async def require_token(request: Request):
     if not d.token_ok(request.headers.get("authorization")):
         raise HTTPException(status_code=403)
@@ -226,6 +235,7 @@ async def authorized_small():
 
 # ---- compressed: GZipMiddleware on a mounted sub-application -------------------------
 
+# rb:wiring compressed.*
 # Threshold and level are the pinned ones rather than Starlette's defaults. Whether a
 # framework bothers to compress a body too small to benefit is what compressed.gzip_small
 # is in the set to show, so the floor has to be the same floor everywhere or the row
@@ -233,8 +243,10 @@ async def authorized_small():
 gzipped = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
 gzipped.add_middleware(GZipMiddleware, minimum_size=d.GZIP_MIN_SIZE,
                        compresslevel=d.GZIP_LEVEL)
+# rb:end
 
 
+# rb:wiring compressed.*
 def compressed_route(size):
     async def handler(response: Response):
         response.headers["x-rb-serial"] = d.next_serial()
@@ -242,11 +254,11 @@ def compressed_route(size):
     return handler
 
 
-# rb:snippet compressed.identity_small compressed.identity_medium compressed.identity_large
-# rb:snippet compressed.gzip_small compressed.gzip_medium compressed.gzip_large
+# rb:handler compressed.*
 for _size in ("small", "medium", "large"):
     gzipped.add_api_route("/" + _size, compressed_route(_size), methods=["GET"])
 
+# rb:wiring compressed.*
 app.mount("/compressed", gzipped)
 
 
@@ -262,6 +274,7 @@ conditional = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
 conditional.add_middleware(ConditionalGet)
 
 
+# rb:wiring etag.*
 def etag_route(size):
     async def handler(response: Response):
         response.headers["cache-control"] = d.CACHEABLE
@@ -270,7 +283,7 @@ def etag_route(size):
     return handler
 
 
-# rb:snippet etag.small etag.large etag.match_large etag.stale_large
+# rb:handler etag.*
 for _size in ("small", "large"):
     conditional.add_api_route("/" + _size, etag_route(_size), methods=["GET"])
 
@@ -284,6 +297,7 @@ app.mount("/etag", conditional)
 # on are middleware configuration rather than something a handler decides, which is why the
 # middleware takes the map rather than the routes taking a decorator.
 
+# rb:wiring cache.*
 VARY = {"/cache/vary/" + which: d.vary_on(which) for which in ("one", "many")}
 
 cached = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
@@ -294,6 +308,7 @@ cached.add_middleware(
 )
 
 
+# rb:wiring cache.*
 def cache_route(size, vary=()):
     async def handler(response: Response):
         if vary:
@@ -303,10 +318,10 @@ def cache_route(size, vary=()):
     return handler
 
 
-# rb:snippet cache.small cache.medium cache.large
+# rb:handler cache.small,cache.medium,cache.large
 for _size in ("small", "medium", "large"):
     cached.add_api_route("/" + _size, cache_route(_size), methods=["GET"])
-# rb:snippet cache.vary_one cache.vary_many
+# rb:handler cache.vary_one,cache.vary_many
 for _which in ("one", "many"):
     _on = d.vary_on(_which)
     cached.add_api_route("/vary/" + _which, cache_route("small", _on), methods=["GET"])
@@ -403,10 +418,12 @@ async def delete_line(oid: str, lid: str):
 # signature Jinja2Templates requires, not because it reads anything from it. Compiled on
 # first render and cached by the environment: a precomputed string would measure nothing.
 
+# rb:wiring template.*
 templates = Jinja2Templates(
     directory=str(pathlib.Path(__file__).resolve().parent / "templates"))
 
 
+# rb:wiring template.*
 # A copy of the payload, not the payload. Jinja2Templates inserts the request into the
 # context it is handed, and d.payload returns the fixture object the json family
 # serializes, so rendering once put a request key in every json.* body until this copied.

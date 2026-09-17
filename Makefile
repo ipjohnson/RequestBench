@@ -131,7 +131,7 @@ site-dev: ## the site with a reloading server  (SUMMARIES=<dir> DATA_BASE=<url>)
 	RB_ROOT=$(CURDIR) RB_SUMMARIES=$(SUMMARIES) RB_EXEMPLARS=results/exemplars \
 	  RB_DATA_BASE=$(DATA_BASE) npm --prefix site run dev
 
-snippets: ## where every endpoint is wired, per target  (TARGETS= or --all)
+snippets: ## where every endpoint and family is wired, per target  (TARGETS= or --all)
 	python3 harness/snippets.py $(if $(TARGETS),$(subst $(comma), ,$(TARGETS)),--all) --summary
 
 exemplars: ## recapture results/exemplars  (TARGETS= LANGUAGES= FRAMEWORKS= MODE=)

@@ -26,6 +26,7 @@ import rb.domain.Model.PayloadBody;
 public final class Templates {
   private Templates() {}
 
+  // rb:wiring template.*
   private static JsonObject model(String size) {
     PayloadBody body = Domain.payload(size);
     return new JsonObject(Map.of("size", body.size(),
@@ -33,6 +34,7 @@ public final class Templates {
                                  "items", body.items()));
   }
 
+  // rb:wiring template.*
   private static void render(Router router, HandlebarsTemplateEngine engine, String path,
                              String size) {
     JsonObject data = model(size);

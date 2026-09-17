@@ -15,7 +15,7 @@ import rb.domain.Model.PayloadBody;
 @Controller
 public class Authorized {
 
-  // rb:snippet authorized.allowed authorized.denied
+  // rb:handler authorized.*
   @Get("/authorized/small")
   PayloadBody small() {
     return Domain.payload("small");

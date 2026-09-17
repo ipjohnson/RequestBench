@@ -34,7 +34,7 @@ export const meta = { framework: "h3", version: pkgVersion("h3"),
 // errors: the router's own miss arrives here as an HTTPError with status 404, which is
 // what gives errors.unmatched the same body as errors.not_found.
 //
-// rb:snippet errors.unmatched
+// rb:handler errors.unmatched
 const app = new H3({
   onError(wrapped, e) {
     // h3 v2 wraps a thrown error in HTTPError and puts the original on .cause, so the

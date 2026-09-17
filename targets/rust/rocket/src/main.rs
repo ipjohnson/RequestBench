@@ -25,6 +25,7 @@ use std::io::Cursor;
 
 // ---- shared response shapes ---------------------------------------------------
 
+// rb:wiring compressed.*
 /// A body plus whatever headers the family needs. Rocket builds responses from a
 /// Responder, so the families that set validators or a serial return one of these.
 struct Raw {
@@ -58,6 +59,7 @@ fn json_raw<T: serde::Serialize>(v: &T) -> Vec<u8> {
 /// 404 or a 422 themselves.
 type R<T> = Result<T, Custom<Json<Value>>>;
 
+// rb:wiring errors.*,domain.*
 fn fail<T>(e: d::Fail) -> R<T> {
     Err(match e {
         d::Fail::NotFound => Custom(Status::NotFound, Json(d::not_found_body())),
@@ -79,6 +81,7 @@ fn fail<T>(e: d::Fail) -> R<T> {
 // least one. Those are checked here, in this target's own code, because Rocket has no
 // validation layer to put them in.
 
+// rb:wiring body.*,domain.*
 /// The order body as Rocket's guard binds it. serde reports the first field that does not fit.
 #[derive(Debug, Deserialize)]
 struct OrderIn {
@@ -93,6 +96,7 @@ struct LineIn {
     qty: i64,
 }
 
+// rb:wiring body.*,domain.*
 /// The rules a deserialize cannot state. `first_error` stops at the first, which this
 /// target can still answer because the checks are its own.
 fn check(order: &OrderIn, first_error: bool) -> Vec<d::FieldError> {
@@ -111,6 +115,7 @@ fn check(order: &OrderIn, first_error: bool) -> Vec<d::FieldError> {
     errs
 }
 
+// rb:wiring body.*,domain.*
 /// The order, or this target's own answer when its own checks refuse the body.
 fn validated(order: &OrderIn, first_error: bool) -> Result<d::ValidatedOrder, Custom<Json<Value>>> {
     let errs = check(order, first_error);
@@ -128,6 +133,7 @@ fn validated(order: &OrderIn, first_error: bool) -> Result<d::ValidatedOrder, Cu
     Ok(d::price_order(order.customer_id, &order.status, &lines))
 }
 
+// rb:wiring domain.*,errors.*
 fn lift<T>(v: Result<T, d::Fail>) -> R<Json<T>> {
     match v {
         Ok(v) => Ok(Json(v)),
@@ -153,6 +159,7 @@ async fn body_of(data: Data<'_>) -> R<Value> {
 
 // ---- guards -------------------------------------------------------------------
 
+// rb:wiring authorized.*
 /// The bearer check as a Rocket guard, which is Rocket's per-route facility. Failing the
 /// guard hands the 403 to the catcher below, so the body is the same JSON as everywhere.
 struct Token;
@@ -178,11 +185,13 @@ impl<'r> FromRequest<'r> for Token {
 // The fields are plain, so FromForm decides what a missing or unparseable one is, and what
 // Rocket answers when a guard does not fit is Rocket's own. The endpoint set sends neither.
 
+// rb:wiring query.*
 #[derive(Serialize, FromForm)]
 struct QueryOne {
     page: i64,
 }
 
+// rb:wiring query.*
 #[derive(Serialize, FromForm)]
 struct QueryMany {
     page: i64,
@@ -203,6 +212,7 @@ struct OrderFilter {
     status: String,
 }
 
+// rb:wiring middleware.*
 /// One middleware layer. Rocket resolves each guard in turn before the handler runs, so a
 /// chain of these is the framework doing the same work a layer does elsewhere.
 macro_rules! layer {
@@ -300,6 +310,7 @@ fn authorized(_t: Token) -> Json<&'static d::PayloadBody> {
     Json(d::payload("small"))
 }
 
+// rb:wiring compressed.*
 /// Level pinned across every language. The threshold mirrors what the other targets'
 /// middleware defaults to, because whether a framework bothers to compress a body too
 /// small to benefit is what compressed.gzip_small is in the set to show.
@@ -369,6 +380,7 @@ impl<'r, const N: usize> FromRequest<'r> for VaryValue<N> {
     }
 }
 
+// rb:wiring etag.*
 /// etag: the digest and the comparison, in a route.
 ///
 /// Rocket ships no conditional handling, so the digest is the shared one and `/__meta` says
@@ -396,17 +408,18 @@ fn revalidated(size: &'static str, asked: Option<&str>) -> Raw {
     }
 }
 
-// rb:snippet etag.small
+// rb:handler etag.small
 #[get("/etag/small")]
 fn etag_small(h: IfNoneMatch) -> Raw {
     revalidated("small", h.0.as_deref())
 }
-// rb:snippet etag.large etag.match_large etag.stale_large
+// rb:handler etag.large,etag.match_large,etag.stale_large
 #[get("/etag/large")]
 fn etag_large(h: IfNoneMatch) -> Raw {
     revalidated("large", h.0.as_deref())
 }
 
+// rb:wiring cache.*
 /// cache: the store consulted before the payload is built.
 ///
 /// Rocket ships no response cache, so the store is the shared LRU sized from the fixture.
@@ -416,6 +429,7 @@ fn etag_large(h: IfNoneMatch) -> Raw {
 static CACHE: std::sync::LazyLock<d::ResponseStore> =
     std::sync::LazyLock::new(d::ResponseStore::new);
 
+// rb:wiring cache.*
 fn replayed(size: &'static str, path: &str, on: &[&str], values: Vec<String>) -> Raw {
     let key = d::cache_key(path, &values);
     let hit = CACHE.get(&key).unwrap_or_else(|| {
@@ -447,7 +461,7 @@ fn replayed(size: &'static str, path: &str, on: &[&str], values: Vec<String>) ->
 /// is how Rocket gets a header to a route without the route reading one.
 struct VaryValue<const N: usize>([String; N]);
 
-// rb:snippet cache.small cache.medium cache.large
+// rb:handler cache.small,cache.medium,cache.large
 #[get("/cache/small")]
 fn cache_small() -> Raw {
     replayed("small", "/cache/small", &[], Vec::new())
@@ -461,7 +475,7 @@ fn cache_large() -> Raw {
     replayed("large", "/cache/large", &[], Vec::new())
 }
 
-// rb:snippet cache.vary_one cache.vary_many
+// rb:handler cache.vary_one,cache.vary_many
 #[get("/cache/vary/one")]
 fn cache_vary_one(v: VaryValue<1>) -> Raw {
     replayed("small", "/cache/vary/one", VARY_ONE, v.0.to_vec())
@@ -571,7 +585,7 @@ fn delete_line(oid: &str, lid: &str) -> R<Status> {
 
 // ---- catchers -----------------------------------------------------------------
 
-// rb:snippet errors.unmatched
+// rb:handler errors.unmatched
 #[catch(404)]
 fn catch_404() -> Json<Value> {
     Json(d::not_found_body())
@@ -646,6 +660,7 @@ async fn main() -> Result<(), rocket::Error> {
                 filter, lookup, join, aggregate, create, replace, patch_customer, delete_line,
             ],
         )
+        // rb:wiring template.*
         .attach(Template::fairing())
         .register("/", catchers![catch_404, catch_403, catch_422, catch_400])
         .launch()

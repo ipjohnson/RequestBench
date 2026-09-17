@@ -29,6 +29,7 @@ import rb.domain.Json;
 public class Etag {
 
   @ResponseFilter
+  // rb:wiring etag.*
   public void revalidate(HttpRequest<?> request, MutableHttpResponse<?> response) {
     Object body = response.body();
     if (body == null) {
@@ -48,11 +49,12 @@ public class Etag {
   @Controller
   public static class Routes {
 
+    // rb:wiring etag.*
     private static HttpResponse<?> serve(String size) {
       return HttpResponse.ok(Domain.payload(size)).header("x-rb-serial", Domain.nextSerial());
     }
 
-    // rb:snippet etag.small etag.large etag.match_large etag.stale_large
+    // rb:handler etag.*
     @Get("/etag/small")
     HttpResponse<?> small() {
       return serve("small");

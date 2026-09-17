@@ -42,6 +42,7 @@ type structValidator struct{ v *validator.Validate }
 
 func (s *structValidator) Validate(i any) error { return s.v.Struct(i) }
 
+// rb:wiring body.*
 func newValidator() echo.Validator {
 	v := validator.New(validator.WithRequiredStructEnabled())
 	v.RegisterTagNameFunc(jsonName)
@@ -55,12 +56,14 @@ type lineBody struct {
 	Qty       *int `json:"qty"        validate:"required,min=1"`
 }
 
+// rb:wiring body.*,domain.*
 type orderBody struct {
 	CustomerID *int       `json:"customer_id" validate:"required"`
 	Status     *string    `json:"status"      validate:"required"`
 	Lines      []lineBody `json:"lines"       validate:"required,min=1,dive"`
 }
 
+// rb:wiring body.*,domain.*
 func (o orderBody) order() *d.ValidatedOrder {
 	in := make([]d.LineInput, 0, len(o.Lines))
 	for _, l := range o.Lines {
@@ -69,6 +72,7 @@ func (o orderBody) order() *d.ValidatedOrder {
 	return d.PriceOrder(*o.CustomerID, *o.Status, in)
 }
 
+// rb:wiring body.*,domain.*
 // bindOrder runs Echo's binder and then Echo's validator, answering the failure itself.
 //
 // Two failures and two statuses, because Echo draws the line there: Bind answers an

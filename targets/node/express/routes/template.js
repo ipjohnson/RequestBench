@@ -14,12 +14,15 @@ const VIEWS = join(dirname(dirname(fileURLToPath(import.meta.url))), "views");
 export default function template(app) {
   // Compiled on first render and cached by Express in production, rendered per request. A
   // precomputed string would measure nothing.
+  // rb:wiring template.*
   app.set("views", VIEWS);
   app.set("view engine", "pug");
+  // rb:end
 
   // A copy of the payload, not the payload. res.render writes _locals into the object it
   // is handed, and d.payload returns the fixture object the json family serializes, so
   // rendering once put a _locals key in every json.* body until this copied.
+  // rb:wiring template.*
   const small = { ...d.payload("small") };
   const medium = { ...d.payload("medium") };
 

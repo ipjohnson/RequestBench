@@ -14,6 +14,7 @@ import (
 
 // The request body as a value, or this target's own answer when it is not JSON. A body the
 // decoder could not read never reaches the validator, so it names no field.
+// rb:wiring body.*
 func body(w http.ResponseWriter, req *http.Request) (map[string]any, bool) {
 	var m map[string]any
 	if err := json.NewDecoder(req.Body).Decode(&m); err != nil {
@@ -35,6 +36,7 @@ func validateAll(w http.ResponseWriter, req *http.Request) { validate(w, req, fa
 
 func validateFirst(w http.ResponseWriter, req *http.Request) { validate(w, req, true) }
 
+// rb:wiring body.*
 func validate(w http.ResponseWriter, req *http.Request, firstError bool) {
 	m, ok := body(w, req)
 	if !ok {

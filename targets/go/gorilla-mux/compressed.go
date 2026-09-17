@@ -16,10 +16,12 @@ import (
 
 // Level is pinned across every language. There is no size floor of its own, which is one
 // of the things compressed.gzip_small is in the set to show.
+// rb:wiring compressed.*
 func gzip(next http.Handler) http.Handler {
 	return handlers.CompressHandlerLevel(next, d.GzipLevel)
 }
 
+// rb:wiring compressed.*
 func compressedRoute(size string) http.HandlerFunc {
 	body := d.Payload(size)
 	return func(w http.ResponseWriter, _ *http.Request) {
@@ -29,8 +31,7 @@ func compressedRoute(size string) http.HandlerFunc {
 }
 
 func registerCompressed(r *mux.Router) {
-	// rb:snippet compressed.identity_small compressed.identity_medium compressed.identity_large
-	// rb:snippet compressed.gzip_small compressed.gzip_medium compressed.gzip_large
+	// rb:handler compressed.*
 	for _, size := range []string{"small", "medium", "large"} {
 		r.Handle("/compressed/"+size, chain(compressedRoute(size), gzip)).Methods("GET")
 	}

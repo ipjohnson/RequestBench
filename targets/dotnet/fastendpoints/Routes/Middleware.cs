@@ -12,6 +12,7 @@ namespace RequestBench.FastEndpointsTarget.Routes;
 /// One class is one layer: PreProcessor&lt;T&gt;() registers by type, so a repeat of the same
 /// type is one registration and the counts have to be distinct classes.
 /// </summary>
+// rb:wiring middleware.*
 public abstract class NoopLayer : IPreProcessor<EmptyRequest>
 {
     public Task PreProcessAsync(IPreProcessorContext<EmptyRequest> context, CancellationToken ct) =>
@@ -50,6 +51,7 @@ public sealed class Noop14 : NoopLayer;
 
 public sealed class Noop15 : NoopLayer;
 
+// rb:handler middleware.none
 public sealed class MiddlewareNoneEndpoint(DomainModel domain)
     : EndpointWithoutRequest<PayloadBody>
 {
@@ -63,6 +65,7 @@ public sealed class MiddlewareNoneEndpoint(DomainModel domain)
         Task.FromResult(domain.Payload("small"));
 }
 
+// rb:handler middleware.four
 public sealed class MiddlewareFourEndpoint(DomainModel domain)
     : EndpointWithoutRequest<PayloadBody>
 {
@@ -80,6 +83,7 @@ public sealed class MiddlewareFourEndpoint(DomainModel domain)
         Task.FromResult(domain.Payload("small"));
 }
 
+// rb:handler middleware.sixteen
 public sealed class MiddlewareSixteenEndpoint(DomainModel domain)
     : EndpointWithoutRequest<PayloadBody>
 {

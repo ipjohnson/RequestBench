@@ -9,8 +9,10 @@ import * as d from "../../_shared/domain.js";
 
 // The threshold is the one the Node compressors default to, so compressed.gzip_small lands
 // on the same side of it here as it does in the other four targets.
+// rb:wiring compressed.*
 const THRESHOLD = 1024;
 
+// rb:wiring compressed.*
 const gzip = async (e, next) => {
   const value = await next();
   const raw = Buffer.from(JSON.stringify(value));
@@ -33,11 +35,11 @@ const gzip = async (e, next) => {
   });
 };
 
+// rb:wiring compressed.*
 const headersOf = (e) => Object.fromEntries(e.res.headers.entries());
 
 export default function compressed(app) {
-  // rb:snippet compressed.identity_small compressed.identity_medium compressed.identity_large
-  // rb:snippet compressed.gzip_small compressed.gzip_medium compressed.gzip_large
+  // rb:handler compressed.*
   for (const size of ["small", "medium", "large"]) {
     app.get("/compressed/" + size, defineHandler({
       middleware: [gzip],

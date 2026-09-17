@@ -18,10 +18,12 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
+// rb:wiring query.*
 type queryOne struct {
 	Page int `query:"page" json:"page"`
 }
 
+// rb:wiring query.*
 type queryMany struct {
 	Page     int    `query:"page"      json:"page"`
 	Size     int    `query:"size"      json:"size"`
@@ -34,6 +36,7 @@ type queryMany struct {
 }
 
 // What domain.filter pages by. Not a response shape, so it carries no json tags.
+// rb:wiring domain.*
 type orderFilter struct {
 	Page   int    `query:"page"`
 	Size   int    `query:"size"`
@@ -42,6 +45,7 @@ type orderFilter struct {
 
 // bindQuery fills out from the query string, answering the failure itself if there is one.
 // The same 400 shape as a body Fiber could not bind, because it is the same binder refusing.
+// rb:wiring query.*,domain.*
 func bindQuery(c fiber.Ctx, out any) bool {
 	if err := c.Bind().SkipValidation(true).Query(out); err != nil {
 		_ = c.Status(400).JSON(fiber.Map{"error": "invalid_query", "detail": err.Error()})

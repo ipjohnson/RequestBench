@@ -6,10 +6,12 @@ package main
 
 import "github.com/labstack/echo/v4"
 
+// rb:wiring middleware.*
 func noop(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error { return next(c) }
 }
 
+// rb:wiring middleware.*
 func layers(n int) []echo.MiddlewareFunc {
 	out := make([]echo.MiddlewareFunc, n)
 	for i := range out {

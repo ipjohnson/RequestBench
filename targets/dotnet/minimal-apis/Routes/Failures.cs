@@ -17,6 +17,7 @@ public static class Failures
     /// <summary>The domain's field errors as ProblemDetails wants them: field to reasons.</summary>
     public static void Map(WebApplication app)
     {
+        // rb:wiring errors.*
         app.UseExceptionHandler(handler => handler.Run(async context =>
         {
             Exception? error = context.Features
@@ -35,7 +36,7 @@ public static class Failures
             await result.ExecuteAsync(context);
         }));
 
-        // rb:snippet errors.unmatched
+        // rb:handler errors.unmatched
         app.MapFallback(() => Results.Problem(statusCode: 404));
     }
 }

@@ -256,5 +256,1574 @@
       ],
       "why": "koa-bodyparser does not see the body through serverless-express, so the five body-carrying endpoints do not match. Unwired rather than unable: it conforms under gcp-func."
     }
+  },
+  "mechanisms": {
+    "dotnet:aspnet-mvc": {
+      "baseline": {
+        "builtin": "Content() writes the string from the action itself, so the action is all there is."
+      },
+      "json": {
+        "builtin": "Returning the record is the whole of it: System.Text.Json serializes what the action returned."
+      },
+      "parameters": {
+        "builtin": "[HttpGet(\"/parameters/{one}\")] is the capture, and the action under it is the handler."
+      },
+      "authorized": {
+        "mechanism": "an action filter attribute on the one action; authorization filters would bring a policy evaluation the other forty-four endpoints would also pay for"
+      },
+      "compressed": {
+        "mechanism": "a Serve helper on the controller holding the pinned codec and floor; the response compression middleware sits on the application and would contaminate the other forty-two endpoints"
+      },
+      "etag": {
+        "mechanism": "a result filter attribute on this controller alone over the shared digest, which is how MVC scopes behaviour to an action"
+      },
+      "cache": {
+        "mechanism": "ASP.NET Core's own output caching, taken as an OutputCache attribute"
+      },
+      "body": {
+        "builtin": "MVC's own model validation: [ApiController] checks ModelState against the DataAnnotations on the shared OrderIn before the action is entered, and answers ProblemDetails itself."
+      },
+      "query": {
+        "builtin": "[FromQuery] on a typed parameter is the binding, converted before the action runs."
+      },
+      "headers": {
+        "builtin": "ASP.NET materialises the request header map itself; nothing is registered to make it happen."
+      },
+      "middleware": {
+        "mechanism": "one action filter attribute per layer on the action, each awaiting the next and doing nothing else"
+      },
+      "domain": {
+        "builtin": "Routing and the shared domain. The actions call the injected DomainModel directly and nothing is registered for them."
+      },
+      "errors": {
+        "mechanism": "UseExceptionHandler mapping each failure to a ProblemDetails status, plus MapFallback for the router's miss"
+      },
+      "template": {
+        "builtin": "MVC view resolution: View(\"Items\") finds Views/Template/Items.cshtml by convention, and the Web SDK compiles it into the assembly."
+      }
+    },
+    "dotnet:carter": {
+      "baseline": {
+        "builtin": "The route writes the string itself, so the handler is all there is."
+      },
+      "json": {
+        "builtin": "Returning the record is the whole of it: System.Text.Json serializes what the route returned."
+      },
+      "parameters": {
+        "builtin": "MapGet(\"/parameters/{one}\") in AddRoutes is the capture, and the lambda in it is the handler."
+      },
+      "authorized": {
+        "builtin": "An endpoint filter written inline on the route, which the handler block already shows."
+      },
+      "compressed": {
+        "mechanism": "an endpoint filter on these three routes alone, holding the pinned codec and floor; the response compression middleware sits on the application and would contaminate the other forty-two endpoints"
+      },
+      "etag": {
+        "mechanism": "an endpoint filter on these two routes over the shared digest, on the same IEndpointRouteBuilder minimal APIs use"
+      },
+      "cache": {
+        "mechanism": "ASP.NET Core's own output caching through CacheOutput, with the policy deciding the key"
+      },
+      "body": {
+        "mechanism": "FluentValidation, which Carter runs from the module: the validator is declared beside the request class and the route asks it",
+        "dep": "Carter",
+        "mentions": "AbstractValidator"
+      },
+      "query": {
+        "builtin": "A typed lambda parameter is the binding: ASP.NET converts it from the query string before the route runs."
+      },
+      "headers": {
+        "builtin": "ASP.NET materialises the request header map itself; nothing is registered to make it happen."
+      },
+      "middleware": {
+        "mechanism": "one endpoint filter per layer added to the route, each awaiting the next and doing nothing else"
+      },
+      "domain": {
+        "mechanism": "one ICarterModule per family and the shared domain, with the priced order the family shares"
+      },
+      "errors": {
+        "mechanism": "UseExceptionHandler mapping each failure to a ProblemDetails status, plus MapFallback for the router's miss"
+      },
+      "template": {
+        "mechanism": "RazorComponentResult, which is how a minimal-style route renders the Razor components ASP.NET Core ships"
+      }
+    },
+    "dotnet:fastendpoints": {
+      "baseline": {
+        "builtin": "The endpoint class writes the string in ExecuteAsync; nothing sits between them."
+      },
+      "json": {
+        "builtin": "Returning the record from ExecuteAsync is the whole of it: System.Text.Json serializes it."
+      },
+      "parameters": {
+        "builtin": "Get(\"/parameters/{one}\") in Configure is the capture, and ExecuteAsync on the same class is the handler."
+      },
+      "authorized": {
+        "mechanism": "a pre-processor on the one endpoint, which refuses by writing the response and marking it handled"
+      },
+      "compressed": {
+        "builtin": "The pinned codec and floor are applied in ExecuteAsync, which the handler block already shows. The response compression middleware sits on the application and would contaminate the other forty-two endpoints."
+      },
+      "etag": {
+        "mechanism": "a pipeline branch on /etag over the shared digest: FastEndpoints writes the response from inside its own delegate, so a filter around it is handed nothing to hash"
+      },
+      "cache": {
+        "mechanism": "ASP.NET Core's own output caching through Options(b => b.CacheOutput(...)), because ResponseCache() writes Cache-Control and stores nothing"
+      },
+      "body": {
+        "mechanism": "FastEndpoints' own request binding and validation over the annotated request class"
+      },
+      "query": {
+        "builtin": "A property on the request class is the binding: FastEndpoints fills it from the query string before ExecuteAsync runs."
+      },
+      "headers": {
+        "builtin": "ASP.NET materialises the request header map itself; nothing is registered to make it happen."
+      },
+      "middleware": {
+        "mechanism": "one pre-processor per layer named in Configure, each returning without doing anything else"
+      },
+      "domain": {
+        "mechanism": "one endpoint class per route and the shared domain, with the request class and the body reader the family shares"
+      },
+      "errors": {
+        "mechanism": "UseExceptionHandler mapping each failure to a ProblemDetails status, plus a fallback for the router's miss"
+      },
+      "template": {
+        "builtin": "RazorComponentResult is returned from ExecuteAsync, which the handler block already shows."
+      }
+    },
+    "dotnet:minimal-apis": {
+      "baseline": {
+        "builtin": "The endpoint returns the string and ASP.NET writes it; nothing sits between them."
+      },
+      "json": {
+        "builtin": "Returning the record is the whole of it: System.Text.Json serializes what the endpoint returned."
+      },
+      "parameters": {
+        "builtin": "MapGet(\"/parameters/{one}\") is the capture, and the lambda in it is the handler."
+      },
+      "authorized": {
+        "builtin": "An endpoint filter written inline on the route, which the handler block already shows. The authorization middleware would bring a policy evaluation the other forty-four endpoints would also pay for."
+      },
+      "compressed": {
+        "mechanism": "an endpoint filter on these three routes alone, holding the pinned codec and floor; the response compression middleware sits on the application and would contaminate the other forty-two endpoints"
+      },
+      "etag": {
+        "mechanism": "an endpoint filter on these two routes over the shared digest: nothing in ASP.NET Core computes a validator for a dynamic response"
+      },
+      "cache": {
+        "mechanism": "ASP.NET Core's own output caching through CacheOutput, with the policy deciding the key"
+      },
+      "body": {
+        "mechanism": "minimal APIs' own validation, new in .NET 10: the framework checks the annotated record before the endpoint is entered"
+      },
+      "query": {
+        "builtin": "A typed lambda parameter is the binding: ASP.NET converts it from the query string before the endpoint runs."
+      },
+      "headers": {
+        "builtin": "ASP.NET materialises the request header map itself; nothing is registered to make it happen."
+      },
+      "middleware": {
+        "mechanism": "one endpoint filter per layer added to the route, each awaiting the next and doing nothing else"
+      },
+      "domain": {
+        "mechanism": "routing and the shared domain, with the priced order the family shares"
+      },
+      "errors": {
+        "mechanism": "UseExceptionHandler mapping each failure to a ProblemDetails status, plus MapFallback for the router's miss"
+      },
+      "template": {
+        "mechanism": "RazorComponentResult, which is how a minimal endpoint renders the Razor components ASP.NET Core ships"
+      }
+    },
+    "dotnet:wolverine-http": {
+      "baseline": {
+        "builtin": "The endpoint method returns the string and Wolverine writes it; nothing sits between them."
+      },
+      "json": {
+        "builtin": "Returning the record is the whole of it: Wolverine serializes what the endpoint method returned."
+      },
+      "parameters": {
+        "builtin": "[WolverineGet(\"/parameters/{one}\")] is the capture, and the method under it is the handler."
+      },
+      "authorized": {
+        "mechanism": "a Before method found by convention, which refuses by returning a result rather than letting the endpoint run"
+      },
+      "compressed": {
+        "mechanism": "a Serve helper holding the pinned codec and floor; the response compression middleware sits on the application and would contaminate the other forty-two endpoints"
+      },
+      "etag": {
+        "mechanism": "a pipeline branch on /etag over the shared digest: Wolverine compiles its endpoints into their own delegates and writes from inside them"
+      },
+      "cache": {
+        "mechanism": "ASP.NET Core's own output caching, as an OutputCache attribute beside WolverineGet, which Wolverine carries onto the endpoint's metadata"
+      },
+      "body": {
+        "mechanism": "FluentValidation, which Wolverine runs as middleware from the validator declared beside the request class",
+        "dep": "WolverineFx.Http.FluentValidation",
+        "mentions": "AbstractValidator"
+      },
+      "query": {
+        "builtin": "A typed method parameter is the binding: Wolverine fills it from the query string before the endpoint runs."
+      },
+      "headers": {
+        "builtin": "ASP.NET materialises the request header map itself; nothing is registered to make it happen."
+      },
+      "middleware": {
+        "mechanism": "one static class with a Before method per layer, found by convention rather than by an interface"
+      },
+      "domain": {
+        "mechanism": "endpoint methods and the shared domain, with the body reader and the request class the family shares"
+      },
+      "errors": {
+        "mechanism": "UseExceptionHandler mapping each failure to a ProblemDetails status, plus MapFallback for the router's miss"
+      },
+      "template": {
+        "mechanism": "RazorComponentResult returned from the endpoint method, which is how ASP.NET Core's Razor components render"
+      }
+    },
+    "go:chi": {
+      "baseline": {
+        "mechanism": "a net/http write with the content-length filled in by hand, because chi routes plain handlers"
+      },
+      "json": {
+        "mechanism": "encoding/json over a body read once into the closure; chi routes net/http handlers and adds no serializer"
+      },
+      "parameters": {
+        "mechanism": "chi's {one} captures, with the same payload closure behind all three routes"
+      },
+      "authorized": {
+        "mechanism": "a route-scoped middleware through r.With, run before the handler"
+      },
+      "compressed": {
+        "mechanism": "chi's own compress middleware, attached to these three routes alone"
+      },
+      "etag": {
+        "mechanism": "r.With(d.ConditionalGet) on these routes: chi routes net/http handlers, so the conditional itself is shared and what is chi's own is where it attaches"
+      },
+      "cache": {
+        "mechanism": "r.With(d.Replay(store, on)) per route, over one shared store for the target"
+      },
+      "body": {
+        "mechanism": "encoding/json into a map, then this target's own field walk: chi has no validation layer to plug into"
+      },
+      "query": {
+        "mechanism": "r.URL.Query() coerced by hand, which is as far as a router over net/http handlers goes"
+      },
+      "headers": {
+        "mechanism": "net/http's own request header map, which the handler never reads: the route answers the small payload"
+      },
+      "middleware": {
+        "mechanism": "r.With returns a router carrying n no-op layers and nothing else"
+      },
+      "domain": {
+        "mechanism": "routing and the shared domain, with send and fail helpers the family shares"
+      },
+      "errors": {
+        "mechanism": "r.NotFound for the router miss, and one fail helper turning a domain error into its status"
+      },
+      "template": {
+        "mechanism": "html/template parsed once from an embedded file, rendered in the handler: chi adds no view layer"
+      }
+    },
+    "go:echo": {
+      "baseline": {
+        "builtin": "c.String writes the string from the route itself, so the handler is all there is."
+      },
+      "json": {
+        "mechanism": "c.JSON over a body read once into the closure, so the map lookup is not in the measurement"
+      },
+      "parameters": {
+        "mechanism": "Echo's :one captures, with the same payload closure behind all three routes"
+      },
+      "authorized": {
+        "mechanism": "middleware passed as a trailing argument on the route, run before the handler"
+      },
+      "compressed": {
+        "mechanism": "Echo's own gzip middleware, attached to these three routes alone"
+      },
+      "etag": {
+        "mechanism": "Echo middleware over the shared digest, swapping the writer under Echo's own Response so the bytes can be hashed before it commits"
+      },
+      "cache": {
+        "mechanism": "Echo middleware over one shared LRU store, on these routes and nowhere else"
+      },
+      "body": {
+        "mechanism": "c.Bind fills the struct and c.Validate runs the validator the engine holds, so no handler calls one",
+        "dep": "github.com/go-playground/validator/v10",
+        "mentions": "validator"
+      },
+      "query": {
+        "mechanism": "Echo's own binder reading the query: tag, with the bound struct as the response shape"
+      },
+      "headers": {
+        "mechanism": "Echo's own request header map, which the handler never reads: the route answers the small payload"
+      },
+      "middleware": {
+        "mechanism": "middleware as trailing arguments on the route, n no-op layers each calling the next"
+      },
+      "domain": {
+        "mechanism": "routing and the shared domain, with send, fail and the bound order struct the family shares"
+      },
+      "errors": {
+        "mechanism": "e.HTTPErrorHandler, which Echo hands both the router's miss and every error a handler returns"
+      },
+      "template": {
+        "mechanism": "a Renderer on the engine, invoked by c.Render; html/template parsed once from an embedded file"
+      }
+    },
+    "go:fiber": {
+      "baseline": {
+        "builtin": "c.SendString writes the string from the route itself, so the handler is all there is."
+      },
+      "json": {
+        "mechanism": "c.JSON over a body read once into the closure, on static routes rather than a /json/:size capture"
+      },
+      "parameters": {
+        "mechanism": "Fiber's :one captures, with the same payload closure behind all three routes"
+      },
+      "authorized": {
+        "mechanism": "a handler in front of the payload on the same route, answering 403 rather than calling Next"
+      },
+      "compressed": {
+        "mechanism": "Fiber's own compress middleware, attached to these three routes alone"
+      },
+      "etag": {
+        "mechanism": "Fiber's own etag middleware, which hashes the body the handler wrote and answers If-None-Match itself",
+        "dep": "github.com/gofiber/fiber/v3",
+        "mentions": "etag"
+      },
+      "cache": {
+        "mechanism": "Fiber's own cache middleware, storing the whole response and replaying it before the handler is reached",
+        "dep": "github.com/gofiber/fiber/v3",
+        "mentions": "cache"
+      },
+      "body": {
+        "mechanism": "a StructValidator in fiber.Config, which Fiber runs as part of c.Bind().Body(), so binding and validating are one call it owns",
+        "dep": "github.com/go-playground/validator/v10",
+        "mentions": "validator"
+      },
+      "query": {
+        "mechanism": "c.Bind().Query through gofiber/schema, reading the query: tag, with the bound struct as the response shape"
+      },
+      "headers": {
+        "mechanism": "Fiber's own request header map, which the handler never reads: the route answers the small payload"
+      },
+      "middleware": {
+        "mechanism": "handlers listed before the payload on the route, n no-op layers each calling Next"
+      },
+      "domain": {
+        "mechanism": "routing and the shared domain, with send, fail and the bound order struct the family shares"
+      },
+      "errors": {
+        "mechanism": "the app's ErrorHandler for the router miss and every error a handler returns, with isNotFound behind the status"
+      },
+      "template": {
+        "mechanism": "a Views engine on fiber.Config, invoked by c.Render; gofiber/template/html over html/template",
+        "dep": "github.com/gofiber/template/html/v3",
+        "mentions": "html"
+      }
+    },
+    "go:gin": {
+      "baseline": {
+        "builtin": "c.String writes the string from the route itself, so the handler is all there is."
+      },
+      "json": {
+        "mechanism": "c.JSON over a body read once into the closure, on static routes rather than a /json/:size capture"
+      },
+      "parameters": {
+        "mechanism": "Gin's :one radix captures, with the same payload closure behind all three routes"
+      },
+      "authorized": {
+        "mechanism": "middleware on the route, aborting with 403 before the handler runs"
+      },
+      "compressed": {
+        "mechanism": "gin-contrib/gzip on a group carrying only these three routes",
+        "dep": "github.com/gin-contrib/gzip",
+        "mentions": "gzip"
+      },
+      "etag": {
+        "mechanism": "Gin middleware on the /etag group: the digest is the shared one, because neither Gin nor net/http computes a validator for a dynamic response"
+      },
+      "cache": {
+        "mechanism": "a Gin handler in front of each route, over one shared LRU store sized from the fixture"
+      },
+      "body": {
+        "mechanism": "Gin's binder, which parses and validates in one call through the go-playground tags on the struct",
+        "dep": "github.com/go-playground/validator/v10",
+        "mentions": "validator"
+      },
+      "query": {
+        "mechanism": "ShouldBindQuery reading the form: tag, with the bound struct as the response shape"
+      },
+      "headers": {
+        "mechanism": "Gin's own request header map, which the handler never reads: the route answers the small payload"
+      },
+      "middleware": {
+        "mechanism": "Gin handlers appended to the route, n no-op layers each calling c.Next()"
+      },
+      "domain": {
+        "mechanism": "routing and the shared domain, with ok, fail and the bound order struct the family shares"
+      },
+      "errors": {
+        "mechanism": "r.NoRoute for the router miss and CustomRecovery for a panic, with one fail helper behind the bodies"
+      },
+      "template": {
+        "mechanism": "html/template on the engine through SetHTMLTemplate, reached by name from c.HTML"
+      }
+    },
+    "go:gorilla-mux": {
+      "baseline": {
+        "mechanism": "a net/http write with the content-length filled in by hand, because mux routes plain handlers"
+      },
+      "json": {
+        "mechanism": "encoding/json over a body read once into the closure; mux routes net/http handlers and adds no serializer"
+      },
+      "parameters": {
+        "mechanism": "mux's {one} captures, with the same payload closure behind all three routes"
+      },
+      "authorized": {
+        "mechanism": "a middleware chained onto this one handler, run before it"
+      },
+      "compressed": {
+        "mechanism": "gorilla/handlers, the gorilla ecosystem's compressor, wrapping these three routes alone",
+        "dep": "github.com/gorilla/handlers",
+        "mentions": "handlers"
+      },
+      "etag": {
+        "mechanism": "the shared conditional chained onto these two handlers: mux routes net/http handlers, so what is mux's own is where it attaches"
+      },
+      "cache": {
+        "mechanism": "the shared replay chained onto each route, over one store for the target"
+      },
+      "body": {
+        "mechanism": "encoding/json into a map, then this target's own field walk: mux has no validation layer to plug into"
+      },
+      "query": {
+        "mechanism": "r.URL.Query() coerced by hand, which is as far as a router over net/http handlers goes"
+      },
+      "headers": {
+        "mechanism": "net/http's own request header map, which the handler never reads: the route answers the small payload"
+      },
+      "middleware": {
+        "mechanism": "n no-op layers chained onto the one handler that asked for them, because mux.Use applies to a whole router"
+      },
+      "domain": {
+        "mechanism": "routing and the shared domain, with send and fail helpers the family shares"
+      },
+      "errors": {
+        "mechanism": "NotFoundHandler for the router miss, and one fail helper turning a domain error into its status"
+      },
+      "template": {
+        "mechanism": "html/template parsed once from an embedded file, rendered in the handler: mux adds no view layer"
+      }
+    },
+    "java:helidon-se": {
+      "baseline": {
+        "builtin": "res.send writes the string from the route itself, so the handler is all there is."
+      },
+      "json": {
+        "builtin": "res.send over the record is the whole of it; Helidon's media support serializes it."
+      },
+      "parameters": {
+        "builtin": "The route pattern carries the capture and the lambda under it is the handler."
+      },
+      "authorized": {
+        "mechanism": "a route ahead of the endpoint's own on the same path, answering 403 rather than calling next"
+      },
+      "compressed": {
+        "mechanism": "the pinned codec behind a 1024-byte floor in the route itself; Helidon's content encoding is on the WebServer and would contaminate the other forty-two endpoints"
+      },
+      "etag": {
+        "mechanism": "one handler per route over the shared digest: Helidon's filters run before a handler and cannot change a response once send() has been called"
+      },
+      "cache": {
+        "mechanism": "a handler that answers from the shared store before the payload is built, which is this framework's unit of composition"
+      },
+      "body": {
+        "mechanism": "this target's own field walk: Helidon SE is a routing and server library and Bean Validation lives in the MP flavour"
+      },
+      "query": {
+        "builtin": "req.query() is what Helidon parsed, and the handler coerces it in place."
+      },
+      "headers": {
+        "builtin": "Helidon materialises the request header map itself; nothing is registered to make it happen."
+      },
+      "middleware": {
+        "mechanism": "a filter on a path, one registration per layer, each calling the chain and doing nothing else"
+      },
+      "domain": {
+        "mechanism": "routing and the shared domain, with Reply.body and the validation walk the family shares"
+      },
+      "errors": {
+        "mechanism": "r.error by exception type, so a handler raises and never builds a 404 or a 422 itself"
+      },
+      "template": {
+        "mechanism": "Thymeleaf held by this target and rendered in the handler: Helidon SE ships no view layer and recommends no engine",
+        "dep": "thymeleaf",
+        "mentions": "TemplateEngine"
+      }
+    },
+    "java:javalin": {
+      "baseline": {
+        "builtin": "ctx.result writes the string from the route itself, so the handler is all there is."
+      },
+      "json": {
+        "builtin": "ctx.json is Javalin's own serializer call, made in the handler."
+      },
+      "parameters": {
+        "builtin": "The route pattern carries the {one} capture and the lambda under it is the handler."
+      },
+      "authorized": {
+        "mechanism": "a before handler bound to this path, answering 403 rather than letting the route run"
+      },
+      "compressed": {
+        "mechanism": "an after handler bound to /compressed/*, holding the pinned codec and a 1024-byte floor; Javalin configures compression on the whole server and would contaminate the other forty-two endpoints"
+      },
+      "etag": {
+        "mechanism": "a Javalin after-handler scoped to the route pattern, running with the body still in the context rather than on the wire"
+      },
+      "cache": {
+        "mechanism": "a before-handler that answers from the shared store with skipRemainingHandlers, and an after-handler that fills it"
+      },
+      "body": {
+        "mechanism": "Javalin's own validator: bodyValidator runs the checks and raises ValidationException itself, so no handler calls a validator"
+      },
+      "query": {
+        "mechanism": "ctx.queryParamAsClass, Javalin's own converter, with the coerced values as the response shape"
+      },
+      "headers": {
+        "builtin": "Javalin materialises the request header map itself; nothing is registered to make it happen."
+      },
+      "middleware": {
+        "mechanism": "before handlers taking a path, one registration per layer, each running and doing nothing else"
+      },
+      "domain": {
+        "mechanism": "routing and the shared domain, with Support.body and the validated order the family shares"
+      },
+      "errors": {
+        "mechanism": "an exception hook per failure and an error hook for the router's miss, which never reaches a handler"
+      },
+      "template": {
+        "mechanism": "a FileRenderer on the config, reached by ctx.render naming a file; Mustache through javalin-rendering-mustache"
+      }
+    },
+    "java:micronaut": {
+      "baseline": {
+        "builtin": "The controller method returns the string and Micronaut writes it; nothing sits between them."
+      },
+      "json": {
+        "builtin": "Returning the record is the whole of it: Micronaut serializes what the controller method returned."
+      },
+      "parameters": {
+        "builtin": "@Get(\"/parameters/{one}\") is the capture, and the method under it is the handler."
+      },
+      "authorized": {
+        "mechanism": "an @Filter bound to the one path, resolved from its annotation at compile time"
+      },
+      "compressed": {
+        "mechanism": "a serve helper holding the pinned codec and a 1024-byte floor; Micronaut's netty compression setting is on the whole server and would contaminate the other forty-two endpoints"
+      },
+      "etag": {
+        "mechanism": "a @ServerFilter scoped to the route pattern, which serializes the body the controller returned and hashes those bytes"
+      },
+      "cache": {
+        "mechanism": "the shared store consulted before anything is built: @Cacheable caches a return value and would add an annotation processor to the build for one family"
+      },
+      "body": {
+        "mechanism": "Jakarta Bean Validation on the record: @Valid is checked before the method is entered and raises ConstraintViolationException itself",
+        "dep": "micronaut-validation",
+        "mentions": "NotNull"
+      },
+      "query": {
+        "builtin": "@QueryValue names the parameter and declares its type, and Micronaut converts it before the method runs."
+      },
+      "headers": {
+        "builtin": "Micronaut materialises the request header map itself; nothing is registered to make it happen."
+      },
+      "middleware": {
+        "mechanism": "one @Filter bean per layer with the patterns it applies to, because Micronaut resolves filters from annotations at compile time"
+      },
+      "domain": {
+        "builtin": "Routing and the shared domain. The methods call it directly and nothing is registered for them."
+      },
+      "errors": {
+        "mechanism": "ExceptionHandler beans for what a handler raises and an @Error hook for the router's miss, which no ExceptionHandler sees"
+      },
+      "template": {
+        "mechanism": "@View names the template and the method returns the model; Thymeleaf through micronaut-views-thymeleaf",
+        "dep": "micronaut-views-thymeleaf",
+        "mentions": "Map"
+      }
+    },
+    "java:quarkus": {
+      "baseline": {
+        "builtin": "The resource method returns the string and RESTEasy writes it; nothing sits between them."
+      },
+      "json": {
+        "builtin": "Returning the record is the whole of it: Quarkus serializes what the resource method returned."
+      },
+      "parameters": {
+        "builtin": "@Path(\"{one}\") is the capture, and the method under it is the handler."
+      },
+      "authorized": {
+        "mechanism": "a JAX-RS ContainerRequestFilter bound to the one method by a @NameBinding annotation"
+      },
+      "compressed": {
+        "mechanism": "a serve helper holding the pinned codec and a 1024-byte floor; Quarkus enables compression on the whole HTTP server and would contaminate the other forty-two endpoints"
+      },
+      "etag": {
+        "mechanism": "JAX-RS's own Request.evaluatePreconditions, which compares the validator and builds the 304 itself; the digest is the target's because JAX-RS has none"
+      },
+      "cache": {
+        "mechanism": "a resource method consulting the shared store before it builds anything: @CacheResult caches a return value and would need the extension in the build for one family"
+      },
+      "body": {
+        "mechanism": "Jakarta Bean Validation on the record: a @Valid parameter is validated before the method is entered and raises ConstraintViolationException itself",
+        "dep": "quarkus-hibernate-validator",
+        "mentions": "NotNull"
+      },
+      "query": {
+        "builtin": "@QueryParam names the parameter and declares its type, and RESTEasy converts it before the method runs."
+      },
+      "headers": {
+        "builtin": "RESTEasy materialises the request header map itself; nothing is registered to make it happen."
+      },
+      "middleware": {
+        "mechanism": "one @Provider filter per layer, bound to the method by a @NameBinding annotation, because JAX-RS resolves providers from annotations at deployment"
+      },
+      "domain": {
+        "builtin": "Routing and the shared domain. The methods call it directly and nothing is registered for them."
+      },
+      "errors": {
+        "mechanism": "an ExceptionMapper per failure, so handlers raise and never build a 404 or a 422 themselves"
+      },
+      "template": {
+        "mechanism": "Qute, Quarkus's own templating and the only engine it ships: the Template is injected by field name and the method returns a TemplateInstance",
+        "dep": "quarkus-rest-qute",
+        "mentions": "Template"
+      }
+    },
+    "java:spring-boot": {
+      "baseline": {
+        "builtin": "The controller method returns the string and Spring writes it; nothing sits between them."
+      },
+      "json": {
+        "builtin": "Returning the record is the whole of it: Jackson serializes what the controller method returned."
+      },
+      "parameters": {
+        "builtin": "@GetMapping(\"/parameters/{one}\") is the capture, and the method under it is the handler."
+      },
+      "authorized": {
+        "mechanism": "a servlet Filter bound to this path through a FilterRegistrationBean, not an if in the handler"
+      },
+      "compressed": {
+        "mechanism": "a serve helper holding the pinned codec and the connector's own 2048-byte floor; server.compression is on the whole connector and would contaminate the other forty-two endpoints"
+      },
+      "etag": {
+        "mechanism": "Spring's own ShallowEtagHeaderFilter, registered against /etag/* so the buffering does not reach the other forty-six endpoints"
+      },
+      "cache": {
+        "mechanism": "Spring's own cache abstraction: @Cacheable stores the ResponseEntity the method returned and replays it without entering the body"
+      },
+      "body": {
+        "mechanism": "Jakarta Bean Validation on the record: Spring runs the validator on a @Valid parameter before the method is entered",
+        "dep": "spring-boot-starter-validation",
+        "mentions": "NotNull"
+      },
+      "query": {
+        "builtin": "@RequestParam names the parameter and declares its type, and Spring converts it before the method runs."
+      },
+      "headers": {
+        "builtin": "Spring materialises the request header map itself; nothing is registered to make it happen."
+      },
+      "middleware": {
+        "mechanism": "one servlet Filter registration per layer, each with the URL pattern it applies to, registered as singletons from a BeanFactoryPostProcessor"
+      },
+      "domain": {
+        "builtin": "Routing and the shared domain. The handlers call it directly and nothing is registered for them."
+      },
+      "errors": {
+        "mechanism": "a @RestControllerAdvice with one @ExceptionHandler per failure, so handlers raise and never build a 404 or a 422 themselves"
+      },
+      "template": {
+        "mechanism": "Spring MVC view resolution: a @Controller returns a view name and Thymeleaf renders it",
+        "dep": "spring-boot-starter-thymeleaf",
+        "mentions": "Model"
+      }
+    },
+    "java:vertx": {
+      "baseline": {
+        "builtin": "ctx.response().end writes the string from the route itself, so the handler is all there is."
+      },
+      "json": {
+        "mechanism": "one Reply.json helper behind every route, which sets the content type and encodes"
+      },
+      "parameters": {
+        "mechanism": "Vert.x Web's :one captures, with the same Reply.json call behind all three routes"
+      },
+      "authorized": {
+        "mechanism": "a handler ahead of the endpoint's own on the same route, answering 403 rather than calling next"
+      },
+      "compressed": {
+        "mechanism": "a handler ahead of the endpoint's own on these three routes, holding the pinned codec and a 1024-byte floor; Vert.x enables compression on the HttpServer and would contaminate the other forty-two endpoints"
+      },
+      "etag": {
+        "mechanism": "one handler per route over the shared digest: addHeadersEndHandler sees the headers and not the body, so there is nothing to intercept afterwards"
+      },
+      "cache": {
+        "mechanism": "a handler on the route that answers from the shared store and never calls next(), so the handler below it does not run"
+      },
+      "body": {
+        "mechanism": "vertx-web-validation: a ValidationHandler mounted ahead of the business handler, so the handler only ever sees a body that passed",
+        "dep": "vertx-web-validation",
+        "mentions": "ValidationHandler"
+      },
+      "query": {
+        "mechanism": "a ValidationHandler declaring the parameters, so Vert.x parses and coerces before the handler runs",
+        "dep": "vertx-web-validation",
+        "mentions": "ValidationHandler"
+      },
+      "headers": {
+        "mechanism": "Vert.x's own request header map, which the handler never reads: the route answers the small payload"
+      },
+      "middleware": {
+        "mechanism": "handlers chained on the route, n no-op layers each calling next"
+      },
+      "domain": {
+        "mechanism": "routing and the shared domain, with Reply.json, Reply.guarded and the validated order the family shares"
+      },
+      "errors": {
+        "mechanism": "a failure handler on the router, so a handler fails the routing context and never builds a 404 or a 422 itself"
+      },
+      "template": {
+        "mechanism": "a Vert.x Web TemplateEngine reached by naming a template file; Handlebars through vertx-web-templ-handlebars",
+        "dep": "vertx-web-templ-handlebars",
+        "mentions": "engine"
+      }
+    },
+    "node:express": {
+      "baseline": {
+        "builtin": "Express writes the string from the route itself, so the handler is all there is."
+      },
+      "json": {
+        "builtin": "res.json is Express's own serializer, called in the handler."
+      },
+      "parameters": {
+        "mechanism": "Express's :one captures, with one handler behind all three routes"
+      },
+      "authorized": {
+        "mechanism": "route-scoped middleware, run before the handler"
+      },
+      "compressed": {
+        "mechanism": "compression middleware, mounted on a Router carrying only these three routes",
+        "dep": "compression"
+      },
+      "etag": {
+        "mechanism": "Express's own etag setting, enabled on a mounted sub-app so the hash does not reach the other forty-six endpoints"
+      },
+      "cache": {
+        "mechanism": "Express's own middleware chain over lru-cache: the response is captured on the way out and written back verbatim on a hit",
+        "dep": "lru-cache"
+      },
+      "body": {
+        "mechanism": "express.json() mounted per route, then this target's own field walk in validation.js"
+      },
+      "query": {
+        "mechanism": "Express's query parser, coerced by hand: there is no binder to bind to"
+      },
+      "headers": {
+        "builtin": "Express materialises req.headers eagerly; nothing is registered to make it happen."
+      },
+      "middleware": {
+        "mechanism": "Express's per-route middleware array, n no-op layers each calling next()"
+      },
+      "domain": {
+        "builtin": "Routing and the shared domain. The family is application work rather than a framework facility."
+      },
+      "errors": {
+        "mechanism": "a terminal app.use for the router miss, and a four-argument error middleware for a body the parser refused"
+      },
+      "template": {
+        "mechanism": "Express's view layer: an engine set on the app and res.render naming the template",
+        "dep": "pug"
+      }
+    },
+    "node:fastify": {
+      "baseline": {
+        "builtin": "Fastify writes the string from the route itself, so the handler is all there is."
+      },
+      "json": {
+        "builtin": "Returning the object is the whole of it: Fastify serializes what a handler returns."
+      },
+      "parameters": {
+        "mechanism": "Fastify's :one captures, with one handler behind all three routes"
+      },
+      "authorized": {
+        "mechanism": "a route-scoped onRequest hook, run before the handler"
+      },
+      "compressed": {
+        "mechanism": "@fastify/compress, registered inside its own encapsulated scope so the plugin sees only these routes",
+        "dep": "@fastify/compress"
+      },
+      "etag": {
+        "mechanism": "@fastify/etag, registered in its own encapsulated scope",
+        "dep": "@fastify/etag"
+      },
+      "cache": {
+        "mechanism": "@fastify/caching over an abstract-cache store, with the replay hook on these routes alone",
+        "dep": "@fastify/caching"
+      },
+      "body": {
+        "mechanism": "schema.body on the route: Fastify compiles it once and its own ajv runs it before the handler"
+      },
+      "query": {
+        "mechanism": "schema.querystring on the route, which is the binding: ajv coerces what is declared and drops the rest"
+      },
+      "headers": {
+        "mechanism": "Fastify's own request header map, which the handler never reads: the route answers the small payload"
+      },
+      "middleware": {
+        "mechanism": "a route-level onRequest hook array, n no-op layers each calling done()"
+      },
+      "domain": {
+        "mechanism": "routing and the shared domain, with one send helper for the 404 the family shares"
+      },
+      "errors": {
+        "mechanism": "setNotFoundHandler for the router miss, a content-type parser that raises Fastify's own 400 on a body it cannot read, and setErrorHandler to answer both"
+      },
+      "template": {
+        "mechanism": "@fastify/view with ejs, registered on the app; the handler names the template and nothing else",
+        "dep": "@fastify/view"
+      }
+    },
+    "node:h3": {
+      "baseline": {
+        "builtin": "Returning the string from the route is all there is; h3 writes it."
+      },
+      "json": {
+        "builtin": "Returning the object is the whole of it: h3 serializes what a handler returns."
+      },
+      "parameters": {
+        "mechanism": "h3's :one captures, with one handler behind all three routes"
+      },
+      "authorized": {
+        "mechanism": "a middleware list on defineHandler, run before the handler"
+      },
+      "compressed": {
+        "mechanism": "route-scoped middleware around the pinned codec: h3 ships no compression, so the gzip every language shares is what runs"
+      },
+      "etag": {
+        "mechanism": "h3's own handleCacheHeaders, which writes the validator and answers the conditional but takes the tag as an argument: h3 ships no digest, so that half is this target's"
+      },
+      "cache": {
+        "mechanism": "ocache's cached handler, which is the store h3's own cache rule reaches for",
+        "dep": "ocache"
+      },
+      "body": {
+        "mechanism": "readBody, then this target's own field walk in validation.js: h3 has no validation layer"
+      },
+      "query": {
+        "mechanism": "getValidatedQuery: h3 reads the query, runs this target's coercion and owns the refusal"
+      },
+      "headers": {
+        "builtin": "h3 hands the handler the Request's own header map; nothing is registered to make it happen."
+      },
+      "middleware": {
+        "mechanism": "a middleware list on defineHandler, n no-op layers each calling next()"
+      },
+      "domain": {
+        "mechanism": "routing and the shared domain, with send and written helpers the family shares"
+      },
+      "errors": {
+        "mechanism": "onError on the H3 constructor, which is where h3 v2 takes it: the router's own miss arrives as a 404 HTTPError"
+      },
+      "template": {
+        "mechanism": "ejs compiled once in this target's own code; h3 ships no view layer",
+        "dep": "ejs"
+      }
+    },
+    "node:hono": {
+      "baseline": {
+        "builtin": "c.text writes the string from the route itself, so the handler is all there is."
+      },
+      "json": {
+        "builtin": "c.json is Hono's own serializer, called in the handler."
+      },
+      "parameters": {
+        "mechanism": "Hono's :one captures, with one handler behind all three routes"
+      },
+      "authorized": {
+        "mechanism": "route-scoped middleware, awaited before the handler"
+      },
+      "compressed": {
+        "mechanism": "hono/compress mounted on /compressed/* alone; the one compressor here with no level setting, because it goes through the platform's CompressionStream"
+      },
+      "etag": {
+        "mechanism": "hono/etag, scoped to the route prefix; it hashes the body the handler returned and answers the conditional itself"
+      },
+      "cache": {
+        "mechanism": "hono/cache over an LRU shim for the Cache API Node does not have, so the middleware's own key construction and vary handling are what run",
+        "dep": "lru-cache"
+      },
+      "body": {
+        "mechanism": "hono/validator as a route-level hook: Hono reads the body, hands it to this target's walk and short circuits on a refusal"
+      },
+      "query": {
+        "mechanism": "validator(\"query\", fn): Hono runs the coercion and the handler reads the result back with c.req.valid"
+      },
+      "headers": {
+        "builtin": "Hono builds the header map from the Request it was handed; nothing is registered to make it happen."
+      },
+      "middleware": {
+        "mechanism": "middleware spread inline on the route, n no-op layers each awaiting next()"
+      },
+      "domain": {
+        "mechanism": "routing and the shared domain, with one send helper for the 404 the family shares"
+      },
+      "errors": {
+        "mechanism": "app.notFound for the router miss and app.onError for everything raised, both application hooks rather than routes"
+      },
+      "template": {
+        "mechanism": "hono/html, a template-literal tag that escapes every interpolation; the only view facility in the set that needs no dependency"
+      }
+    },
+    "node:koa": {
+      "baseline": {
+        "builtin": "ctx.body takes the string from the route itself, so the handler is all there is."
+      },
+      "json": {
+        "builtin": "Assigning an object to ctx.body is the whole of it: Koa serializes what it was given."
+      },
+      "parameters": {
+        "mechanism": "@koa/router's :one captures, with one handler behind all three routes"
+      },
+      "authorized": {
+        "mechanism": "route-scoped middleware, awaited before the handler"
+      },
+      "compressed": {
+        "mechanism": "koa-compress mounted on these three routes alone",
+        "dep": "koa-compress"
+      },
+      "etag": {
+        "mechanism": "koa-etag and koa-conditional-get, the pair Koa's own documentation wires, registered as route middleware",
+        "dep": "koa-etag"
+      },
+      "cache": {
+        "mechanism": "koa-cash over an LRU sized from the fixture, with the route opting in through ctx.cashed()",
+        "dep": "koa-cash"
+      },
+      "body": {
+        "mechanism": "koa-bodyparser mounted per route, then this target's own field walk in validation.js",
+        "dep": "koa-bodyparser"
+      },
+      "query": {
+        "mechanism": "Koa's query parser, coerced by hand: there is no binder to bind to"
+      },
+      "headers": {
+        "builtin": "Koa materialises ctx.headers eagerly; nothing is registered to make it happen."
+      },
+      "middleware": {
+        "mechanism": "@koa/router takes middleware inline on the route, n no-op layers each awaiting next()"
+      },
+      "domain": {
+        "mechanism": "routing and the shared domain, with send and written helpers the family shares"
+      },
+      "errors": {
+        "mechanism": "one application middleware around the router, which turns Koa's empty 404 and any throw into the shape every other target answers"
+      },
+      "template": {
+        "mechanism": "@koa/ejs, the koajs organisation's own render middleware: it installs ctx.render and the handler names a template",
+        "dep": "@koa/ejs"
+      }
+    },
+    "python:django-asgi": {
+      "baseline": {
+        "builtin": "HttpResponse over the string; nothing sits between the route and the body."
+      },
+      "json": {
+        "mechanism": "JsonResponse from a per-size view factory, on static routes rather than a /json/<size> capture"
+      },
+      "parameters": {
+        "mechanism": "Django's <one> path converters, with the same view factory behind all three routes"
+      },
+      "authorized": {
+        "mechanism": "a view decorator answering 403 before the view it wraps runs"
+      },
+      "compressed": {
+        "mechanism": "gzip_page, which is Django's GZipMiddleware as a decorator, so the other forty-two endpoints never look at accept-encoding"
+      },
+      "etag": {
+        "mechanism": "Django's own ConditionalGetMiddleware, scoped to the view with decorator_from_middleware"
+      },
+      "cache": {
+        "mechanism": "cache_page, Django's own response cache, with vary_on_headers naming what the key folds in"
+      },
+      "body": {
+        "mechanism": "a django.forms.Form: is_valid() runs the declared fields and the view raises Refused with what it found",
+        "dep": "django",
+        "mentions": "forms.Form"
+      },
+      "query": {
+        "mechanism": "a django.forms.Form over request.GET, so the coercion is the framework's and the cleaned data is the response shape",
+        "dep": "django",
+        "mentions": "forms.Form"
+      },
+      "headers": {
+        "builtin": "Django materialises request.headers itself; nothing is registered to make it happen."
+      },
+      "middleware": {
+        "mechanism": "one view decorator per layer, each awaiting the view below it and doing nothing else"
+      },
+      "domain": {
+        "mechanism": "class-based views and the shared domain, with body_of, the bound forms and the validation the family shares"
+      },
+      "errors": {
+        "mechanism": "a middleware turning a raised domain failure into its status, plus handler404 for the router's miss"
+      },
+      "template": {
+        "mechanism": "render() finding the template through the TEMPLATES setting; Django's own engine rather than Jinja2",
+        "dep": "django",
+        "mentions": "TEMPLATES"
+      }
+    },
+    "python:fastapi": {
+      "baseline": {
+        "builtin": "response_class=PlainTextResponse and a returned string; nothing sits between the route and the body."
+      },
+      "json": {
+        "mechanism": "returning the dict, which FastAPI serializes; one small() helper behind the routes that answer the same payload"
+      },
+      "parameters": {
+        "mechanism": "FastAPI's {one} captures, with one small() helper behind all three routes"
+      },
+      "authorized": {
+        "mechanism": "a route dependency through Depends, run before the handler"
+      },
+      "compressed": {
+        "mechanism": "GZipMiddleware on a mounted sub-application, so the other forty-two endpoints never see the check; threshold and level are the pinned ones rather than Starlette's defaults"
+      },
+      "etag": {
+        "mechanism": "the shared conditional middleware on a mounted sub-application: neither FastAPI nor Starlette under it answers if-none-match for a dynamic response"
+      },
+      "cache": {
+        "mechanism": "the shared response cache on one mounted sub-application, so one store serves the family and the header names a route is keyed on are configuration"
+      },
+      "body": {
+        "mechanism": "a Pydantic model as the body parameter: FastAPI validates before the handler is entered and raises RequestValidationError itself",
+        "dep": "pydantic",
+        "mentions": "BaseModel"
+      },
+      "query": {
+        "builtin": "A typed function parameter is the binding: FastAPI coerces it from the query string before the handler runs."
+      },
+      "headers": {
+        "builtin": "Starlette materialises the request header map itself; nothing is registered to make it happen."
+      },
+      "middleware": {
+        "mechanism": "a dependency per layer on the route, each awaiting and doing nothing else"
+      },
+      "domain": {
+        "builtin": "Routing and the shared domain. The handlers call it directly and nothing is registered for them."
+      },
+      "errors": {
+        "mechanism": "an @app.exception_handler per failure, so handlers raise and never build a 404 or a 422 themselves"
+      },
+      "template": {
+        "mechanism": "Starlette's Jinja2Templates, with the handler naming the template and returning a TemplateResponse",
+        "dep": "jinja2",
+        "mentions": "Jinja2Templates"
+      }
+    },
+    "python:flask": {
+      "baseline": {
+        "builtin": "A returned string is the body; nothing sits between the route and it."
+      },
+      "json": {
+        "mechanism": "jsonify from one small helper behind the routes that answer the same payload"
+      },
+      "parameters": {
+        "mechanism": "Flask's <one> captures, with one small helper behind all three routes"
+      },
+      "authorized": {
+        "mechanism": "a before_request hook on its own blueprint: returning a response from it short-circuits the view"
+      },
+      "compressed": {
+        "mechanism": "an after_request hook on its own blueprint holding the pinned codec and floor; Flask ships no compression"
+      },
+      "etag": {
+        "mechanism": "a response hook on its own blueprint over Werkzeug's own add_etag and make_conditional"
+      },
+      "cache": {
+        "mechanism": "Flask-Caching, the response cache the ecosystem reaches for, with key_prefix folding a vary row's header values into the key",
+        "dep": "Flask-Caching",
+        "mentions": "Cache"
+      },
+      "body": {
+        "mechanism": "this target's own field walk, raising Refused: Flask has no validation layer to plug into"
+      },
+      "query": {
+        "builtin": "request.args is Werkzeug's own MultiDict and its get() takes the conversion, so the coercion is the framework's and happens in the view."
+      },
+      "headers": {
+        "builtin": "Werkzeug materialises the request header map itself; nothing is registered to make it happen."
+      },
+      "middleware": {
+        "mechanism": "one blueprint per layer count, each layer a before_request hook doing nothing else"
+      },
+      "domain": {
+        "mechanism": "routing and the shared domain, with body_of and the validation walk the family shares"
+      },
+      "errors": {
+        "mechanism": "an @app.errorhandler per failure, so views raise and never build a 404 or a 422 themselves"
+      },
+      "template": {
+        "mechanism": "render_template over the Jinja2 environment Flask builds and holds on the app",
+        "dep": "flask",
+        "mentions": "template_folder"
+      }
+    },
+    "python:litestar": {
+      "baseline": {
+        "builtin": "media_type=MediaType.TEXT and a returned string; nothing sits between the route and the body."
+      },
+      "json": {
+        "builtin": "Returning the dict is the whole of it: Litestar serializes it with msgspec."
+      },
+      "parameters": {
+        "builtin": "@get(\"/parameters/{one:str}\") is the capture, and the function under it is the handler."
+      },
+      "authorized": {
+        "mechanism": "a guard on the route, which Litestar runs before the handler"
+      },
+      "compressed": {
+        "mechanism": "a DefineMiddleware compression layer named on these three routes, at the pinned level and floor"
+      },
+      "etag": {
+        "mechanism": "the shared conditional middleware on the handler: Litestar's ETag datastructure emits a value the handler already knows and answers nothing"
+      },
+      "cache": {
+        "mechanism": "Litestar's own response cache, configured on the app through ResponseCacheConfig"
+      },
+      "body": {
+        "mechanism": "a typed data parameter: msgspec decodes and checks it before the handler is entered and raises ValidationException itself",
+        "dep": "litestar",
+        "mentions": "dataclass"
+      },
+      "query": {
+        "builtin": "A typed function parameter is the binding: Litestar coerces it from the query string before the handler runs."
+      },
+      "headers": {
+        "builtin": "Litestar materialises the request header map itself; nothing is registered to make it happen."
+      },
+      "middleware": {
+        "mechanism": "an ASGI middleware class per layer named on the route, each awaiting the app below it"
+      },
+      "domain": {
+        "builtin": "Routing and the shared domain. The handlers call it directly and nothing is registered for them."
+      },
+      "errors": {
+        "mechanism": "exception_handlers on the app, so handlers raise and never build a 404 or a 422 themselves"
+      },
+      "template": {
+        "mechanism": "a TemplateConfig on the app holding JinjaTemplateEngine; returning a Template names a file rather than calling a render function",
+        "dep": "jinja2",
+        "mentions": "Jinja"
+      }
+    },
+    "python:sanic": {
+      "baseline": {
+        "builtin": "response.text over the string; nothing sits between the route and the body."
+      },
+      "json": {
+        "mechanism": "response.json from one small helper behind the routes that answer the same payload"
+      },
+      "parameters": {
+        "mechanism": "Sanic's <one> captures, with one small helper behind all three routes"
+      },
+      "authorized": {
+        "mechanism": "on_request middleware on its own blueprint: returning a response from it short-circuits the handler"
+      },
+      "compressed": {
+        "mechanism": "an on_response middleware on its own blueprint holding the pinned codec and floor; Sanic ships no compression"
+      },
+      "etag": {
+        "mechanism": "a response middleware on its own blueprint over the shared digest, the same scoping the compressed family uses"
+      },
+      "cache": {
+        "mechanism": "a request and a response middleware on one blueprint around a TTL store sized from the fixture",
+        "dep": "cachetools",
+        "mentions": "TTLCache"
+      },
+      "body": {
+        "mechanism": "this target's own field walk, raising Refused: Sanic has no validation layer to plug into"
+      },
+      "query": {
+        "mechanism": "request.args coerced by hand, which is as far as Sanic goes"
+      },
+      "headers": {
+        "builtin": "Sanic materialises the request header map itself; nothing is registered to make it happen."
+      },
+      "middleware": {
+        "mechanism": "one blueprint per layer count, each layer registered on it and doing nothing else"
+      },
+      "domain": {
+        "mechanism": "routing and the shared domain, with body_of, the coercers and the validation walk the family shares"
+      },
+      "errors": {
+        "mechanism": "an @app.exception handler per failure, so handlers raise and never build a 404 or a 422 themselves"
+      },
+      "template": {
+        "mechanism": "Sanic Extensions' app.ext.template, which names the file and loads it at startup; the handler returns the context. Sanic ships no view layer and Sanic Extensions is its own first-party package"
+      }
+    },
+    "python:starlette": {
+      "baseline": {
+        "builtin": "PlainTextResponse over the string; nothing sits between the route and the body."
+      },
+      "json": {
+        "mechanism": "JSONResponse from a per-size closure, on static routes rather than a /json/{size} capture"
+      },
+      "parameters": {
+        "mechanism": "Starlette's {one} captures, with one small handler behind all three routes"
+      },
+      "authorized": {
+        "mechanism": "an ASGI middleware class on the route, answering 403 before the app below it runs"
+      },
+      "compressed": {
+        "mechanism": "GZipMiddleware scoped to these three routes, at the pinned level and floor rather than Starlette's defaults"
+      },
+      "etag": {
+        "mechanism": "the shared conditional middleware in Route's own middleware list, which is Starlette's scoping"
+      },
+      "cache": {
+        "mechanism": "the shared response cache in Route's own middleware list, over one TTL store sized from the fixture",
+        "dep": "cachetools",
+        "mentions": "TTLCache"
+      },
+      "body": {
+        "mechanism": "this target's own field walk, raising Refused: Starlette has no validation layer to plug into"
+      },
+      "query": {
+        "mechanism": "request.query_params coerced by hand, which is as far as Starlette goes"
+      },
+      "headers": {
+        "builtin": "Starlette materialises the request header map itself; nothing is registered to make it happen."
+      },
+      "middleware": {
+        "mechanism": "an ASGI middleware class per layer on the route, each awaiting the app below it"
+      },
+      "domain": {
+        "mechanism": "routing and the shared domain, with body_of, the coercers and the validation walk the family shares"
+      },
+      "errors": {
+        "mechanism": "exception_handlers on the app, so handlers raise and never build a 404 or a 422 themselves"
+      },
+      "template": {
+        "mechanism": "Starlette's own Jinja2Templates, with the handler naming the template and returning a TemplateResponse",
+        "dep": "jinja2",
+        "mentions": "Jinja2Templates"
+      }
+    },
+    "rust:actix-web": {
+      "baseline": {
+        "builtin": "The handler returns the string and actix writes it; nothing sits between them."
+      },
+      "json": {
+        "mechanism": "a Route per size holding the serialized body, read once into the closure"
+      },
+      "parameters": {
+        "mechanism": "actix's {one} captures, with one small handler behind all three routes"
+      },
+      "authorized": {
+        "mechanism": "from_fn middleware wrapped around the one resource, run before the handler"
+      },
+      "compressed": {
+        "mechanism": "actix's own Compress middleware wrapped around these three resources alone"
+      },
+      "etag": {
+        "mechanism": "middleware on a scope, which is how actix-web scopes anything; a wrap on the App would hash every response in the blend"
+      },
+      "cache": {
+        "mechanism": "middleware that answers from the shared store before the handler is reached"
+      },
+      "body": {
+        "mechanism": "actix's typed Json extractor for the shape, then this target's own rules for the field checks",
+        "dep": "serde",
+        "mentions": "Deserialize"
+      },
+      "query": {
+        "mechanism": "actix's typed Query extractor over a serde struct, which is also the response shape",
+        "dep": "serde",
+        "mentions": "Deserialize"
+      },
+      "headers": {
+        "mechanism": "actix's own request header map, which the handler never reads: the route answers the small payload"
+      },
+      "middleware": {
+        "mechanism": "from_fn layers wrapped around the resource, n of them each awaiting the next"
+      },
+      "domain": {
+        "mechanism": "one handler per route and the shared domain, with the ok and fail helpers the family shares"
+      },
+      "errors": {
+        "mechanism": "a default service for the router's miss, and one fail helper turning a domain failure into its status"
+      },
+      "template": {
+        "mechanism": "askama, whose derive compiles the template into the binary; the struct names the file and renders per request",
+        "dep": "askama",
+        "mentions": "Template"
+      }
+    },
+    "rust:axum": {
+      "baseline": {
+        "builtin": "The handler returns the string and axum writes it; nothing sits between them."
+      },
+      "json": {
+        "mechanism": "a MethodRouter per size holding serde_json's Json, so the body is read once into the closure"
+      },
+      "parameters": {
+        "mechanism": "axum's {one} captures, with one small handler behind all three routes"
+      },
+      "authorized": {
+        "mechanism": "from_fn middleware layered on the one route, run before the handler"
+      },
+      "compressed": {
+        "mechanism": "tower-http's CompressionLayer on these three routes alone, with a SizeAbove predicate at the pinned floor",
+        "dep": "tower-http",
+        "mentions": "Compression"
+      },
+      "etag": {
+        "mechanism": "a tower layer on these routes and nowhere else: neither axum nor tower-http computes a validator for a dynamic response"
+      },
+      "cache": {
+        "mechanism": "a tower layer that answers from the shared store before the handler is reached"
+      },
+      "body": {
+        "mechanism": "axum's typed Json extractor for the shape, then this target's own rules for the field checks",
+        "dep": "serde",
+        "mentions": "Deserialize"
+      },
+      "query": {
+        "mechanism": "axum's typed Query extractor over a serde struct, which is also the response shape",
+        "dep": "serde",
+        "mentions": "Deserialize"
+      },
+      "headers": {
+        "mechanism": "axum's own request header map, which the handler never reads: the route answers the small payload"
+      },
+      "middleware": {
+        "mechanism": "from_fn layers applied to the MethodRouter, n of them each awaiting the next"
+      },
+      "domain": {
+        "mechanism": "one handler per route and the shared domain, with the ok and fail helpers the family shares"
+      },
+      "errors": {
+        "mechanism": "a fallback handler for the router's miss, and one fail helper turning a domain failure into its status"
+      },
+      "template": {
+        "mechanism": "askama, whose derive compiles the template into the binary; the struct names the file and renders per request",
+        "dep": "askama",
+        "mentions": "Template"
+      }
+    },
+    "rust:poem": {
+      "baseline": {
+        "builtin": "The endpoint returns the string and poem writes it; nothing sits between them."
+      },
+      "json": {
+        "mechanism": "a closure per size holding the serialized body, read once rather than looked up per request"
+      },
+      "parameters": {
+        "mechanism": "poem's :one captures, with one small endpoint behind all three routes"
+      },
+      "authorized": {
+        "mechanism": "an around layer on the one endpoint, run before it"
+      },
+      "compressed": {
+        "mechanism": "poem's own Compression middleware on these three endpoints alone"
+      },
+      "etag": {
+        "mechanism": "middleware on the route, which is poem's own scoping; an Endpoint::with on the whole app would hash every response in the blend"
+      },
+      "cache": {
+        "mechanism": "the shared store consulted before the payload is built"
+      },
+      "body": {
+        "mechanism": "poem's typed Json extractor for the shape, then this target's own rules for the field checks",
+        "dep": "serde",
+        "mentions": "Deserialize"
+      },
+      "query": {
+        "mechanism": "poem's typed Query extractor over a serde struct, which is also the response shape",
+        "dep": "serde",
+        "mentions": "Deserialize"
+      },
+      "headers": {
+        "mechanism": "poem's own request header map, which the endpoint never reads: the route answers the small payload"
+      },
+      "middleware": {
+        "mechanism": "around layers applied to the endpoint, n of them each awaiting the next"
+      },
+      "domain": {
+        "mechanism": "one endpoint per route and the shared domain, with the error types the family shares"
+      },
+      "errors": {
+        "mechanism": "a catch-all endpoint for the router's miss, and ResponseError implementations turning a domain failure into its status"
+      },
+      "template": {
+        "mechanism": "askama, whose derive compiles the template into the binary; the struct names the file and renders per request",
+        "dep": "askama",
+        "mentions": "Template"
+      }
+    },
+    "rust:rocket": {
+      "baseline": {
+        "builtin": "The handler returns the string and Rocket writes it; nothing sits between them."
+      },
+      "json": {
+        "builtin": "Returning Json is the whole of it: Rocket serializes what the handler returned."
+      },
+      "parameters": {
+        "builtin": "#[get(\"/parameters/<_one>\")] is the capture, and the function under it is the handler."
+      },
+      "authorized": {
+        "mechanism": "a request guard, which Rocket resolves before the handler runs; a fairing would be global"
+      },
+      "compressed": {
+        "mechanism": "the pinned codec in this target's own helper; Rocket 0.5 ships no compression and a third-party fairing would be global"
+      },
+      "etag": {
+        "mechanism": "the digest and the comparison in a route: Rocket's fairings attach to the whole application, so one here would hash every response in the blend"
+      },
+      "cache": {
+        "mechanism": "the shared store consulted before the payload is built, with the header values a row varies on arriving through request guards"
+      },
+      "body": {
+        "mechanism": "Rocket's typed Json guard for the shape, then this target's own rules for the field checks",
+        "dep": "serde",
+        "mentions": "Deserialize"
+      },
+      "query": {
+        "mechanism": "Rocket's own FromForm query guard over a struct, which is also the response shape"
+      },
+      "headers": {
+        "builtin": "Rocket materialises the request headers itself; nothing is registered to make it happen."
+      },
+      "middleware": {
+        "mechanism": "a request guard per layer, resolved in turn before the handler: Rocket has no per-route middleware and a fairing would be global"
+      },
+      "domain": {
+        "mechanism": "one handler per route and the shared domain, with the lift and fail helpers the family shares"
+      },
+      "errors": {
+        "mechanism": "a catcher for the router's miss, and one fail helper turning a domain failure into its status"
+      },
+      "template": {
+        "mechanism": "rocket_dyn_templates attached as a fairing, with the handler naming the template",
+        "dep": "rocket_dyn_templates",
+        "mentions": "Template"
+      }
+    },
+    "rust:salvo": {
+      "baseline": {
+        "builtin": "The handler renders the string itself; nothing sits between the route and the body."
+      },
+      "json": {
+        "mechanism": "one handler per size from a macro, rendering Json over the shared payload"
+      },
+      "parameters": {
+        "mechanism": "salvo's {one} captures, with one small handler behind all three routes"
+      },
+      "authorized": {
+        "mechanism": "a hoop on the one route, run before the handler and refusing by setting the response"
+      },
+      "compressed": {
+        "mechanism": "salvo's own Compression hoop at the pinned level, hooped onto these three routes alone"
+      },
+      "etag": {
+        "mechanism": "salvo's own CachingHeaders middleware, hooped onto these routes: the one Rust target that ships the machinery"
+      },
+      "cache": {
+        "mechanism": "salvo's own Cache middleware over the shared store, with a CacheIssuer deciding the key"
+      },
+      "body": {
+        "mechanism": "salvo's typed json extractor for the shape, then this target's own rules for the field checks",
+        "dep": "serde",
+        "mentions": "Deserialize"
+      },
+      "query": {
+        "mechanism": "salvo's own query parsing into a serde struct, which is also the response shape",
+        "dep": "serde",
+        "mentions": "Deserialize"
+      },
+      "headers": {
+        "mechanism": "salvo's own request header map, which the handler never reads: the route answers the small payload"
+      },
+      "middleware": {
+        "mechanism": "n no-op hoops on the route, each doing nothing and letting the flow carry on"
+      },
+      "domain": {
+        "mechanism": "one handler per route and the shared domain, with the ok and fail helpers the family shares"
+      },
+      "errors": {
+        "mechanism": "a catcher for the router's miss, and one fail helper turning a domain failure into its status"
+      },
+      "template": {
+        "mechanism": "askama, whose derive compiles the template into the binary; one handler per size from a macro",
+        "dep": "askama",
+        "mentions": "Template"
+      }
+    },
+    "rust:warp": {
+      "baseline": {
+        "builtin": "The filter chain ends in the string itself, which the handler block already shows."
+      },
+      "json": {
+        "mechanism": "a filter per size, unified into one route, over a body read once into the closure"
+      },
+      "parameters": {
+        "mechanism": "warp's path! captures, with one small closure behind all three routes"
+      },
+      "authorized": {
+        "mechanism": "a header filter ahead of the reply, rejecting before the handler closure runs"
+      },
+      "compressed": {
+        "mechanism": "the pinned codec in this target's own reply helper, chosen by an accept-encoding filter; warp ships no compression"
+      },
+      "etag": {
+        "builtin": "The digest and the comparison are inside the filter that answers, which the handler block already shows. warp has nothing that can rewrite a reply after one has been produced, so there is nowhere else for them to be."
+      },
+      "cache": {
+        "mechanism": "the shared store consulted before the payload is built"
+      },
+      "body": {
+        "mechanism": "warp's json body filter for the shape, then this target's own rules for the field checks",
+        "dep": "serde",
+        "mentions": "Deserialize"
+      },
+      "query": {
+        "mechanism": "warp's typed query filter over a serde struct, which is also the response shape",
+        "dep": "serde",
+        "mentions": "Deserialize"
+      },
+      "headers": {
+        "mechanism": "warp's own header filters, which this route does not use: it answers the small payload"
+      },
+      "middleware": {
+        "mechanism": "n no-op filters combined onto the route, each passing the request along"
+      },
+      "domain": {
+        "mechanism": "a filter chain per route and the shared domain, with the ok and fail helpers the family shares"
+      },
+      "errors": {
+        "mechanism": "a rejection handler for the router's miss, and one fail helper turning a domain failure into its status"
+      },
+      "template": {
+        "mechanism": "askama, whose derive compiles the template into the binary; the struct names the file and renders per request",
+        "dep": "askama",
+        "mentions": "Template"
+      }
+    }
   }
 }

@@ -16,9 +16,11 @@ public final class Compressed {
   private Compressed() {}
 
   /** The floor the Java servlet stacks use, so gzip_small lands on the same side of it. */
+  // rb:wiring compressed.*
   private static final int THRESHOLD = 1024;
 
   public static void register(JavalinConfig cfg) {
+    // rb:wiring compressed.*
     cfg.routes.after("/compressed/*", ctx -> {
       String accept = ctx.header("accept-encoding");
       if (accept == null || !accept.contains("gzip")) {
@@ -37,9 +39,7 @@ public final class Compressed {
       ctx.result(Domain.gzip(raw));
     });
 
-    // rb:snippet compressed.identity_small compressed.identity_medium
-    // rb:snippet compressed.identity_large compressed.gzip_small compressed.gzip_medium
-    // rb:snippet compressed.gzip_large
+    // rb:handler compressed.*
     for (String size : new String[] {"small", "medium", "large"}) {
       cfg.routes.get("/compressed/" + size, ctx -> {
         ctx.header("x-rb-serial", Domain.nextSerial());

@@ -1,121 +1,66 @@
 {
   "version": "marks-v1",
-  "note": "What a snippet has to contain to be worth publishing, and how much of the corpus is allowed to fail that today. harness/snippets.py locates every endpoint in every target and the coverage gate is green, but a located snippet is not a captured one: 403 of them are a bare annotation and several hundred more are a registration naming a handler that lives somewhere else. Those are counted here rather than gated red, because a gate that went red on them would block every branch that is fixing them. An allowance only ever goes down: harness/snippets.py --ratchet rewrites this file from what the tree actually does, and --check fails on anything above it.",
+  "note": "What an endpoint-keyed mark may claim, and what has to be true of what it captured. A mark is `rb:<kind> <selector>[,<selector>...] [<key>=<value>...]`, closed by `rb:end` where the block rule would stop short of what the author meant. A selector is family.endpoint for one, family.* for all of a family, or * for the target. harness/snippets.py reads this file and never learns a kind's name, so adding one is an object under `kinds` and a display section. The assertions are counted against the allowance rather than gated red: they fail on most of the corpus today and a red gate would block every branch that is fixing them. An allowance only ever goes down. --ratchet rewrites it from what the tree does, --check fails on anything above it.",
+  "kinds": {
+    "handler": {
+      "what": "the lines that answer the request",
+      "selects": "endpoint",
+      "required": "every",
+      "cardinality": "one",
+      "into": "handler",
+      "derive": true,
+      "roles": [
+        "source",
+        "host"
+      ],
+      "assert": [
+        "not_only_annotations",
+        "reaches_domain"
+      ]
+    },
+    "wiring": {
+      "what": "the code that makes a feature family work, which the route does not name",
+      "selects": "family",
+      "required": "declared",
+      "cardinality": "many",
+      "into": "support",
+      "derive": false,
+      "roles": [
+        "source",
+        "host",
+        "config"
+      ],
+      "assert": [
+        "mentions_dep"
+      ]
+    }
+  },
   "assertions": {
     "not_only_annotations": {
       "label": "annotation-only",
+      "scope": "handler",
       "what": "a snippet may not be nothing but annotations, attributes and comments",
       "why": "@Get(\"/json/small\") names the route, passes both coverage checks, and says nothing about what answers the request",
       "except": []
     },
     "reaches_domain": {
       "label": "not reaching the domain",
+      "scope": "record",
       "what": "a handler and its support together must name something the shared domain gave the file",
-      "why": "a registration that names a handler defined elsewhere is complete, correct, and shows a reader nothing. The shared domain is where the behaviour is, so a snippet that never gets there has not captured the endpoint",
+      "why": "a registration that names a handler defined elsewhere is complete, correct, and shows a reader nothing. The shared domain is where the behaviour is, so a snippet that never gets there has not captured the endpoint. The exceptions are the two families that have no domain to reach: baseline.plaintext returns a literal, and the query family is parsing and coercion isolated from any use of the values",
       "except": [
-        "baseline.plaintext"
+        "baseline.plaintext",
+        "query.one",
+        "query.many"
       ]
+    },
+    "mentions_dep": {
+      "label": "wiring that does not name its dependency",
+      "scope": "family",
+      "what": "the support parts for a family must mention the dependency spec/matrix.json declares for it",
+      "why": "a mark that drifted onto neighbouring lines stops mentioning it, and a present mark is otherwise indistinguishable from a correct one",
+      "except": []
     }
   },
-  "allowance": {
-    "dotnet:aspnet-mvc": {
-      "reaches_domain": 14
-    },
-    "dotnet:carter": {
-      "reaches_domain": 5
-    },
-    "dotnet:fastendpoints": {
-      "reaches_domain": 43
-    },
-    "dotnet:minimal-apis": {
-      "reaches_domain": 5
-    },
-    "dotnet:wolverine-http": {
-      "reaches_domain": 1
-    },
-    "go:chi": {
-      "reaches_domain": 34
-    },
-    "go:echo": {
-      "reaches_domain": 32
-    },
-    "go:fiber": {
-      "reaches_domain": 34
-    },
-    "go:gin": {
-      "reaches_domain": 25
-    },
-    "go:gorilla-mux": {
-      "reaches_domain": 34
-    },
-    "java:helidon-se": {
-      "reaches_domain": 9
-    },
-    "java:javalin": {
-      "reaches_domain": 9
-    },
-    "java:micronaut": {
-      "reaches_domain": 12
-    },
-    "java:quarkus": {
-      "reaches_domain": 12
-    },
-    "java:spring-boot": {
-      "reaches_domain": 14
-    },
-    "java:vertx": {
-      "reaches_domain": 19
-    },
-    "node:express": {
-      "reaches_domain": 15
-    },
-    "node:fastify": {
-      "reaches_domain": 18
-    },
-    "node:h3": {
-      "reaches_domain": 15
-    },
-    "node:hono": {
-      "reaches_domain": 13
-    },
-    "node:koa": {
-      "reaches_domain": 13
-    },
-    "python:django-asgi": {
-      "reaches_domain": 43
-    },
-    "python:fastapi": {
-      "reaches_domain": 29
-    },
-    "python:flask": {
-      "reaches_domain": 27
-    },
-    "python:litestar": {
-      "reaches_domain": 11
-    },
-    "python:sanic": {
-      "reaches_domain": 29
-    },
-    "python:starlette": {
-      "reaches_domain": 43
-    },
-    "rust:actix-web": {
-      "reaches_domain": 44
-    },
-    "rust:axum": {
-      "reaches_domain": 42
-    },
-    "rust:poem": {
-      "reaches_domain": 42
-    },
-    "rust:rocket": {
-      "reaches_domain": 12
-    },
-    "rust:salvo": {
-      "reaches_domain": 44
-    },
-    "rust:warp": {
-      "reaches_domain": 21
-    }
-  }
+  "allowance": {}
 }

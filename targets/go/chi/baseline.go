@@ -8,6 +8,7 @@ import (
 	hosts "github.com/ianjohnson/requestbench/targets/go/_hosts"
 )
 
+// rb:wiring baseline.*
 func writeText(w http.ResponseWriter, s string) {
 	w.Header().Set("content-type", "text/plain; charset=utf-8")
 	w.Header().Set("content-length", itoa(len(s)))

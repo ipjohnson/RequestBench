@@ -51,6 +51,7 @@ public sealed class OrderFilterRequest
     public string Status { get; set; } = string.Empty;
 }
 
+// rb:handler query.one
 public sealed class QueryOneEndpoint : Endpoint<QueryOneRequest, QueryOne>
 {
     public override void Configure()
@@ -63,6 +64,7 @@ public sealed class QueryOneEndpoint : Endpoint<QueryOneRequest, QueryOne>
         Task.FromResult(new QueryOne(req.Page));
 }
 
+// rb:handler query.many
 public sealed class QueryManyEndpoint : Endpoint<QueryManyRequest, QueryMany>
 {
     public override void Configure()

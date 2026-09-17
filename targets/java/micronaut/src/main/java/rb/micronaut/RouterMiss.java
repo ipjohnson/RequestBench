@@ -12,7 +12,8 @@ import rb.domain.Domain;
 @Controller
 public class RouterMiss {
 
-  // rb:snippet errors.unmatched
+  // rb:handler errors.unmatched
+  // rb:wiring errors.*
   @Error(global = true, status = HttpStatus.NOT_FOUND)
   public HttpResponse<Object> unmatched(HttpRequest<?> request) {
     return HttpResponse.notFound(Domain.notFoundBody());

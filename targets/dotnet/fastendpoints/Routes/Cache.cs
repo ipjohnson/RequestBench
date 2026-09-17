@@ -13,6 +13,7 @@ namespace RequestBench.FastEndpointsTarget.Routes;
 /// nothing, so the server-side half is Options(b => b.CacheOutput(...)), which is the
 /// framework handing the endpoint's builder to the same registration every .NET target uses.
 /// </summary>
+// rb:wiring cache.*
 public abstract class CacheEndpoint(DomainModel domain, string size, string? which)
     : EndpointWithoutRequest
 {
@@ -27,7 +28,7 @@ public abstract class CacheEndpoint(DomainModel domain, string size, string? whi
     }
 }
 
-// rb:snippet cache.small cache.medium cache.large
+// rb:handler cache.small,cache.medium,cache.large
 public sealed class CacheSmallEndpoint(DomainModel domain) : CacheEndpoint(domain, "small", null)
 {
     public override void Configure()
@@ -58,7 +59,7 @@ public sealed class CacheLargeEndpoint(DomainModel domain) : CacheEndpoint(domai
     }
 }
 
-// rb:snippet cache.vary_one cache.vary_many
+// rb:handler cache.vary_one,cache.vary_many
 public sealed class CacheVaryOneEndpoint(DomainModel domain) : CacheEndpoint(domain, "small", "one")
 {
     public override void Configure()

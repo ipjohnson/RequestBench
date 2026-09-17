@@ -20,9 +20,11 @@ import rb.domain.Json;
 @RestController
 public class Compressed {
 
+  // rb:wiring compressed.*
   /** The floor Spring Boot's own connector compression defaults to. */
   private static final int THRESHOLD = 2048;
 
+  // rb:wiring compressed.*
   private static ResponseEntity<byte[]> serve(String size, String accept) {
     byte[] raw = Json.bytes(Domain.payload(size));
     boolean wanted = accept != null && accept.contains("gzip") && raw.length >= THRESHOLD;

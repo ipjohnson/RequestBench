@@ -17,6 +17,7 @@ import rb.domain.Model.ValidatedOrder;
  *
  * The boxed types are what makes a missing field distinguishable from a zero one.
  */
+// rb:wiring body.*,domain.*
 public record OrderIn(@JsonProperty("customer_id") Integer customerId,
                       String status,
                       List<LineIn> lines) {
@@ -24,6 +25,7 @@ public record OrderIn(@JsonProperty("customer_id") Integer customerId,
   public record LineIn(@JsonProperty("product_id") Integer productId, Integer qty) {}
 
   /** The order, once Javalin's validator has said the body is one. */
+  // rb:wiring body.*,domain.*
   public ValidatedOrder order() {
     return Domain.priceOrder(customerId, status,
         lines.stream().map(l -> new LineInput(l.productId(), l.qty())).toList());

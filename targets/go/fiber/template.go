@@ -21,11 +21,13 @@ import (
 	d "github.com/ianjohnson/requestbench/targets/go/_shared"
 )
 
+// rb:wiring template.*
 //go:embed views
 var viewsFS embed.FS
 
 // Parsed once by the engine on first render, then rendered per request. A precomputed
 // string would measure nothing.
+// rb:wiring template.*
 func newViews() fiber.Views {
 	sub, err := fs.Sub(viewsFS, "views")
 	if err != nil {
@@ -34,6 +36,7 @@ func newViews() fiber.Views {
 	return html.NewFileSystem(http.FS(sub), ".tmpl")
 }
 
+// rb:wiring template.*
 func templateRoute(size string) fiber.Handler {
 	body := d.Payload(size)
 	return func(c fiber.Ctx) error { return c.Render("items", body) }

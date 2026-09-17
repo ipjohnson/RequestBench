@@ -23,6 +23,7 @@ public final class Failures {
   private Failures() {}
 
   @Singleton
+  // rb:wiring errors.*
   public static class NotFoundHandler implements ExceptionHandler<Errors.NotFound, HttpResponse<?>> {
     @Override
     public HttpResponse<?> handle(HttpRequest request, Errors.NotFound e) {
@@ -39,6 +40,7 @@ public final class Failures {
    */
   @Singleton
   @Replaces(io.micronaut.validation.exceptions.ConstraintExceptionHandler.class)
+  // rb:wiring errors.*,body.*
   public static class InvalidHandler
       implements ExceptionHandler<ConstraintViolationException, HttpResponse<?>> {
     @Override

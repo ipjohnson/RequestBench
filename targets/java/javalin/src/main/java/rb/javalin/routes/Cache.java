@@ -22,10 +22,12 @@ import rb.domain.ResponseStore;
 public final class Cache {
   private Cache() {}
 
+  // rb:wiring cache.*
   private static final ResponseStore STORE = new ResponseStore();
   /** Path to the header names that path is keyed on, which is the vary. */
   private static final Map<String, List<String>> VARY = new LinkedHashMap<>();
 
+  // rb:wiring cache.*
   private static String keyOf(io.javalin.http.Context ctx) {
     List<String> values = new ArrayList<>();
     for (String name : VARY.getOrDefault(ctx.path(), List.of())) {
@@ -67,14 +69,14 @@ public final class Cache {
       STORE.put(key, new ResponseStore.Stored(200, headers, raw));
       ctx.result(raw);
     });
-    // rb:snippet cache.small cache.medium cache.large
+    // rb:handler cache.small,cache.medium,cache.large
     for (String size : new String[] {"small", "medium", "large"}) {
       cfg.routes.get("/cache/" + size, ctx -> {
         ctx.header("x-rb-serial", Domain.nextSerial());
         ctx.json(Domain.payload(size));
       });
     }
-    // rb:snippet cache.vary_one cache.vary_many
+    // rb:handler cache.vary_one,cache.vary_many
     for (String which : new String[] {"one", "many"}) {
       List<String> on = Domain.varyOn(which);
       cfg.routes.get("/cache/vary/" + which, ctx -> {

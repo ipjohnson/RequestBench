@@ -54,6 +54,7 @@ settings.configure(
     # this module by file path rather than by name, so there is no app to search. With
     # DEBUG false the backend wraps its loaders in the cached one, so the template is
     # parsed on first render and reused: a precomputed string would measure nothing.
+    # rb:wiring template.*
     TEMPLATES=[{
         "BACKEND": "django.template.backends.django.DjangoTemplates",
         "DIRS": [str(pathlib.Path(__file__).resolve().parent / "templates")],
@@ -83,6 +84,7 @@ META = host.meta("django-asgi", dist="django", adapter="daphne",
                  cache="django cache_page, LocMemCache")
 
 
+# rb:wiring body.*,domain.*
 def body_of(request):
     """Django does not parse a request body, so the shared parse does. What happens to the
     value afterwards is the form's."""
@@ -111,6 +113,7 @@ class Refused(Exception):
         self.errors = errors
 
 
+# rb:wiring body.*,errors.*
 def refused_body(errors):
     return {"error": "validation_failed", "errors": errors}
 
@@ -119,6 +122,7 @@ def not_bound_body(detail):
     return {"error": "invalid_body", "detail": detail}
 
 
+# rb:wiring body.*,domain.*
 class OrderForm(forms.Form):
     """The order body, as Django declares a body."""
 
@@ -148,6 +152,7 @@ class OrderForm(forms.Form):
                              self.cleaned_data["status"], self.cleaned_data["lines"])
 
 
+# rb:wiring body.*,domain.*
 def validated(request):
     """The order, or Refused carrying what the form put in form.errors.
 
@@ -178,6 +183,7 @@ FAILURES = {
 }
 
 
+# rb:wiring errors.*
 class Failures:
     """Django's process_exception hook, which is the framework's own way to turn an
     exception into a response. Marked async so Django does not adapt it, which would put a
@@ -198,9 +204,10 @@ class Failures:
         return build(exc) if build else None
 
 
+# rb:handler errors.unmatched
 # Sync, unlike every other view here: Django resolves the error handler off the event loop
 # and does not await what it returns, so a coroutine would reach the client as a 500.
-# rb:snippet errors.unmatched
+# rb:wiring errors.*
 def handler404(request, exception):
     return JsonResponse(d.not_found_body(), status=404)
 
@@ -222,6 +229,7 @@ async def meta(_):
     return JsonResponse(META)
 
 
+# rb:wiring json.*,parameters.*,headers.*,middleware.*,authorized.*
 def payload_view(size):
     """The three sizes are static routes, not json/<size>. The size set is fixed, so a
     capture would make the router pay parameter cost on the family every other target
@@ -260,10 +268,12 @@ async def parameters_two(_, one, two):
 # facility refusing.
 
 
+# rb:wiring query.*
 class QueryOneForm(forms.Form):
     page = forms.IntegerField()
 
 
+# rb:wiring query.*
 class QueryManyForm(forms.Form):
     page = forms.IntegerField()
     size = forms.IntegerField()
@@ -275,6 +285,7 @@ class QueryManyForm(forms.Form):
     max_price = forms.IntegerField()
 
 
+# rb:wiring domain.*
 class OrderFilterForm(forms.Form):
     """What domain.filter pages by."""
 
@@ -283,6 +294,7 @@ class OrderFilterForm(forms.Form):
     status = forms.CharField()
 
 
+# rb:wiring query.*,domain.*
 def bound(form_class, request):
     """The query as the form typed it, or Refused carrying what it put in form.errors."""
     form = form_class(request.GET)
@@ -304,6 +316,7 @@ async def query_many(request):
 
 # ---- middleware: one view decorator per layer ----------------------------------------
 
+# rb:wiring middleware.*
 def noop(view):
     """One layer: it calls the next and does nothing else."""
     async def layer(request, *args, **kwargs):
@@ -311,6 +324,7 @@ def noop(view):
     return layer
 
 
+# rb:wiring middleware.*
 def layered(view, n):
     for _ in range(n):
         view = noop(view)
@@ -319,6 +333,7 @@ def layered(view, n):
 
 # ---- authorized: a view decorator, not an if in the handler --------------------------
 
+# rb:wiring authorized.*
 def require_token(view):
     async def guard(request, *args, **kwargs):
         if not d.token_ok(request.headers.get("authorization")):
@@ -329,6 +344,7 @@ def require_token(view):
 
 # ---- compressed: Django's own per-view gzip ------------------------------------------
 
+# rb:wiring compressed.*
 def compressed_view(size):
     """gzip_page is GZipMiddleware as a decorator, so compression is scoped to these three
     routes and the other forty-two never look at accept-encoding. Django compresses at
@@ -354,9 +370,11 @@ def compressed_view(size):
 # x-rb-serial does not survive it. That arm proves itself with its status instead: a target
 # that ignored the conditional request answers 200 with a body.
 
+# rb:wiring etag.*
 revalidates = decorator_from_middleware(ConditionalGetMiddleware)
 
 
+# rb:wiring etag.*
 def etag_view(size):
     @require_GET
     @revalidates
@@ -376,6 +394,7 @@ def etag_view(size):
 # row is keyed on. The store is the locmem backend, capped from the fixture: the capacity
 # derived from the key count means what it says only if there is one store to count against.
 
+# rb:wiring cache.*
 def cache_view(size, vary=()):
     @require_GET
     async def view(_):
@@ -466,6 +485,7 @@ class OrderLine(View):
 # with Jinja2: its own engine is the Django template language, and that is what its
 # tutorial and its documentation use.
 
+# rb:wiring template.*
 def template_view(size):
     @require_GET
     async def view(request):
@@ -495,7 +515,7 @@ urlpatterns = [
     path("compressed/small", compressed_view("small")),
     path("compressed/medium", compressed_view("medium")),
     path("compressed/large", compressed_view("large")),
-    # rb:snippet etag.match_large etag.stale_large
+    # rb:handler etag.match_large,etag.stale_large
     path("etag/small", etag_view("small")),
     path("etag/large", etag_view("large")),
     path("cache/small", cache_view("small")),

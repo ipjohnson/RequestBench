@@ -7,15 +7,16 @@
 // It is the one compressor here with no level setting: Hono compresses through the
 // platform's CompressionStream, which takes none. The comparison is unaffected because the
 // gate decompresses before it compares, but the time is not the pinned level's.
+// rb:wiring compressed.*
 import { compress } from "hono/compress";
 
 import * as d from "../../_shared/domain.js";
 
 export default function compressed(app) {
+  // rb:wiring compressed.*
   app.use("/compressed/*", compress({ encoding: "gzip" }));
 
-  // rb:snippet compressed.identity_small compressed.identity_medium compressed.identity_large
-  // rb:snippet compressed.gzip_small compressed.gzip_medium compressed.gzip_large
+  // rb:handler compressed.*
   for (const size of ["small", "medium", "large"]) {
     app.get("/compressed/" + size, (c) => {
       c.header("x-rb-serial", d.nextSerial());

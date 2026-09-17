@@ -6,6 +6,7 @@ import { checkOrder, orderOf, refused } from "../validation.js";
 import { filter } from "./query.js";
 
 // A write validates the same way body.validate_* does, because it is the same walk.
+// rb:wiring domain.*
 const written = async (e) => {
   const body = await readBody(e);
   const errs = checkOrder(body, false);
@@ -14,6 +15,7 @@ const written = async (e) => {
   return { errs: refused(errs) };
 };
 
+// rb:wiring domain.*,errors.*
 const send = (e, v, status = 200) => {
   if (v === d.NOT_FOUND) {
     e.res.status = 404;

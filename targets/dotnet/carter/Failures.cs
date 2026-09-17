@@ -13,6 +13,7 @@ namespace RequestBench.CarterTarget;
 /// </summary>
 public static class Failures
 {
+    // rb:wiring errors.*
     public static void Handler(IApplicationBuilder handler) => handler.Run(async context =>
     {
         Exception? error = context.Features.Get<IExceptionHandlerFeature>()?.Error;

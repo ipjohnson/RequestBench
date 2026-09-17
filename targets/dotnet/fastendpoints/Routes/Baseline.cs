@@ -9,6 +9,7 @@ namespace RequestBench.FastEndpointsTarget.Routes;
 /// A family is a file and FastEndpoints wants a class per endpoint, so the classes for one
 /// family sit together here. The framework finds them by scanning the assembly.
 /// </summary>
+// rb:handler baseline.plaintext
 public sealed class PlaintextEndpoint : EndpointWithoutRequest
 {
     public override void Configure()

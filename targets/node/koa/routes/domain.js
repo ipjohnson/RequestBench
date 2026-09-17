@@ -6,6 +6,7 @@ import { checkOrder, orderOf, refused } from "../validation.js";
 import { coerceFilter } from "./query.js";
 
 // A write validates the same way body.validate_* does, because it is the same walk.
+// rb:wiring domain.*
 const written = (ctx) => {
   const errs = checkOrder(ctx.request.body, false);
   if (!errs.length) return true;
@@ -16,6 +17,7 @@ const written = (ctx) => {
 
 const parse = bodyParser({ jsonLimit: "4mb" });
 
+// rb:wiring domain.*,errors.*
 const send = (ctx, v, status = 200) => {
   if (v === d.NOT_FOUND) {
     ctx.status = 404;

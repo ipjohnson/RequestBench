@@ -36,7 +36,7 @@ Alpine and a template file beside the source would not be there to load. The eng
 `html/template`, reported on `/__meta`.
 
 **`NoRoute` answers `errors.unmatched`**, which is a handler with no route and therefore
-the one endpoint here that no path can locate. It is named by an `rb:snippet` marker.
+the one endpoint here that no path can locate. It is named by an `rb:handler` mark.
 
 ## Bundle note
 

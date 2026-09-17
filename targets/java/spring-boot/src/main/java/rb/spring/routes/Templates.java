@@ -21,6 +21,7 @@ import rb.domain.Model.PayloadBody;
 @Controller
 public class Templates {
 
+  // rb:wiring template.*
   private static String render(Model model, String size) {
     PayloadBody body = Domain.payload(size);
     model.addAttribute("size", body.size());

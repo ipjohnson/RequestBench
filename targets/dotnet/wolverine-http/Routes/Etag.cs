@@ -14,13 +14,14 @@ namespace RequestBench.WolverineTarget.Routes;
 /// </summary>
 public static class EtagEndpoints
 {
+    // rb:wiring etag.*
     private static PayloadBody Serve(HttpContext context, DomainModel domain, string size)
     {
         context.Response.Headers["x-rb-serial"] = domain.NextSerial();
         return domain.Payload(size);
     }
 
-    // rb:snippet etag.small etag.large etag.match_large etag.stale_large
+    // rb:handler etag.*
     [WolverineGet("/etag/small")]
     public static PayloadBody Small(HttpContext context, DomainModel domain) =>
         Serve(context, domain, "small");

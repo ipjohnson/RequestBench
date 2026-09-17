@@ -26,12 +26,13 @@ builder.WebHost.UseUrls(HostInfo.Url());
 builder.Logging.ClearProviders();
 
 WebApplication app = builder.Build();
+// rb:wiring errors.*
 app.UseExceptionHandler(Failures.Handler);
 // Output caching sits in the pipeline rather than on an action, so it is added once
 // here and opted into per action by the OutputCache attribute.
 app.UseOutputCache();
 app.MapControllers();
-// rb:snippet errors.unmatched
+// rb:handler errors.unmatched
 app.MapFallback(() => Results.Problem(statusCode: 404));
 
 Console.Error.WriteLine($"container/aspnet-mvc listening on {HostInfo.Port()}");

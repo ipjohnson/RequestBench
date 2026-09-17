@@ -10,17 +10,21 @@ import { getValidatedQuery } from "h3";
 
 import * as d from "../../_shared/domain.js";
 
+// rb:wiring query.*
 const int = (v) => { const n = Number(v); return Number.isInteger(n) ? n : 0; };
 const str = (v) => v ?? null;
 
+// rb:wiring query.*
 const one = (q) => ({ page: int(q.page) });
 
+// rb:wiring query.*
 const many = (q) => ({
   page: int(q.page), size: int(q.size), status: str(q.status),
   category: str(q.category), sort: str(q.sort), q: str(q.q),
   min_price: int(q.min_price), max_price: int(q.max_price),
 });
 
+// rb:wiring domain.*
 /** What domain.filter pages by. */
 export const filter = (q) => ({ page: int(q.page), size: int(q.size), status: str(q.status) });
 

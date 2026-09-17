@@ -15,6 +15,7 @@ namespace RequestBench.WolverineTarget.Routes;
 /// </summary>
 public static class CacheEndpoints
 {
+    // rb:wiring cache.*
     private static PayloadBody Serve(HttpContext context, DomainModel domain,
                                      string size, string? which = null)
     {
@@ -26,7 +27,7 @@ public static class CacheEndpoints
         return domain.Payload(size);
     }
 
-    // rb:snippet cache.small cache.medium cache.large
+    // rb:handler cache.small,cache.medium,cache.large
     [WolverineGet("/cache/small")]
     [OutputCache(PolicyName = Caching.ByPath)]
     public static PayloadBody Small(HttpContext context, DomainModel domain) =>
@@ -42,7 +43,7 @@ public static class CacheEndpoints
     public static PayloadBody Large(HttpContext context, DomainModel domain) =>
         Serve(context, domain, "large");
 
-    // rb:snippet cache.vary_one cache.vary_many
+    // rb:handler cache.vary_one,cache.vary_many
     [WolverineGet("/cache/vary/one")]
     [OutputCache(PolicyName = Caching.VaryOne)]
     public static PayloadBody VaryOne(HttpContext context, DomainModel domain) =>

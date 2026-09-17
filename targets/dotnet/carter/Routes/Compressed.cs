@@ -14,6 +14,7 @@ namespace RequestBench.CarterTarget.Routes;
 /// </summary>
 public sealed class Compressed : ICarterModule
 {
+    // rb:wiring compressed.*
     private static async ValueTask<object?> Gzip(EndpointFilterInvocationContext context,
                                                  EndpointFilterDelegate next)
     {
@@ -31,6 +32,7 @@ public sealed class Compressed : ICarterModule
         return Results.Bytes(DomainModel.Gzip(raw), "application/json");
     }
 
+    // rb:wiring compressed.*
     private static Func<HttpResponse, DomainModel, PayloadBody> Serve(string size) =>
         (response, model) =>
         {

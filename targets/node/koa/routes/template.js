@@ -4,6 +4,7 @@
 // it installs ctx.render, so the handler names a template rather than calling a render
 // function. EJS is the most used template engine on npm by a wide margin, which is where a
 // framework with no recommendation of its own leaves the choice.
+// rb:wiring template.*
 import render from "@koa/ejs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
@@ -17,6 +18,7 @@ export default function template(router, { app }) {
   // measure nothing.
   // layout: false because @koa/ejs wraps every view in layout.ejs by default, and this
   // endpoint renders one page rather than a page inside a shell.
+  // rb:wiring template.*
   render(app, { root: VIEWS, layout: false, viewExt: "ejs", cache: true, async: false });
 
   router.get("/template/small", async (ctx) => {

@@ -15,6 +15,7 @@ namespace RequestBench.AspNetMvc.Controllers;
 /// one. The filter runs around the result's execution, so it sees the bytes the formatter
 /// wrote and hashes those rather than the object above them.
 /// </summary>
+// rb:wiring etag.*
 public sealed class RevalidateAttribute : Attribute, IAsyncResultFilter
 {
     public async Task OnResultExecutionAsync(ResultExecutingContext context,
@@ -28,13 +29,14 @@ public sealed class RevalidateAttribute : Attribute, IAsyncResultFilter
 [Revalidate]
 public sealed class EtagController(DomainModel domain) : ControllerBase
 {
+    // rb:wiring etag.*
     private IActionResult Serve(string size)
     {
         Response.Headers["x-rb-serial"] = domain.NextSerial();
         return Ok(domain.Payload(size));
     }
 
-    // rb:snippet etag.small etag.large etag.match_large etag.stale_large
+    // rb:handler etag.*
     [HttpGet("/etag/small")]
     public IActionResult Small() => Serve("small");
 

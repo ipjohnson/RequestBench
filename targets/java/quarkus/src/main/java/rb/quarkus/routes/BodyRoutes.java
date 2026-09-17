@@ -26,28 +26,28 @@ import rb.domain.Model.ValidatedOrder;
 @Consumes(MediaType.APPLICATION_JSON)
 public class BodyRoutes {
 
-  // rb:snippet body.bind_small
+  // rb:handler body.bind_small
   @POST
   @Path("bind/small")
   public BindResult bindSmall(Map<String, Object> body) {
     return Domain.bindEcho(body);
   }
 
-  // rb:snippet body.bind_medium
+  // rb:handler body.bind_medium
   @POST
   @Path("bind/medium")
   public BindResult bindMedium(Map<String, Object> body) {
     return Domain.bindEcho(body);
   }
 
-  // rb:snippet body.validate_small body.rejected_all errors.malformed
+  // rb:handler body.validate_small,body.rejected_all,errors.malformed
   @POST
   @Path("validate/small")
   public ValidatedOrder validateSmall(@Valid OrderIn body) {
     return body.order();
   }
 
-  // rb:snippet body.validate_medium
+  // rb:handler body.validate_medium
   @POST
   @Path("validate/medium")
   public ValidatedOrder validateMedium(@Valid OrderIn body) {
@@ -57,7 +57,7 @@ public class BodyRoutes {
   // Hibernate Validator reports every constraint that failed and offers no fail-fast mode
   // without configuring the ValidatorFactory for the whole application, which would change
   // this endpoint's neighbour too. So this row answers what Quarkus answers.
-  // rb:snippet body.rejected_first
+  // rb:handler body.rejected_first
   @POST
   @Path("validate/first-error")
   public ValidatedOrder validateFirst(@Valid OrderIn body) {

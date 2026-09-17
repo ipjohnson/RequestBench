@@ -15,6 +15,7 @@ public final class Reply {
 
   /** The request body as a value, or the 422 every target answers when it is not JSON. */
   @SuppressWarnings("unchecked")
+  // rb:wiring body.*,domain.*
   public static Map<String, Object> body(ServerRequest req) {
     try {
       return req.content().as(Map.class);

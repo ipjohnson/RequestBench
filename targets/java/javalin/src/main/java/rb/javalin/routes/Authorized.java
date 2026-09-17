@@ -14,13 +14,14 @@ public final class Authorized {
   private Authorized() {}
 
   public static void register(JavalinConfig cfg) {
+    // rb:wiring authorized.*
     cfg.routes.before("/authorized/small", ctx -> {
       if (!Domain.tokenOk(ctx.header("authorization"))) {
         ctx.status(403).json(Domain.forbiddenBody()).skipRemainingHandlers();
       }
     });
 
-    // rb:snippet authorized.allowed authorized.denied
+    // rb:handler authorized.*
     cfg.routes.get("/authorized/small", ctx -> ctx.json(Domain.payload("small")));
   }
 }

@@ -17,9 +17,11 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// rb:wiring template.*
 //go:embed views/items.tmpl
 var itemsTemplate string
 
+// rb:wiring template.*
 // The echo.Renderer implementation the engine holds. Parsed once, rendered per request: a
 // precomputed string would measure nothing.
 type renderer struct{ templates *template.Template }
@@ -28,10 +30,12 @@ func (r *renderer) Render(w io.Writer, name string, data any, _ echo.Context) er
 	return r.templates.ExecuteTemplate(w, name, data)
 }
 
+// rb:wiring template.*
 func newRenderer() echo.Renderer {
 	return &renderer{templates: template.Must(template.New("items.tmpl").Parse(itemsTemplate))}
 }
 
+// rb:wiring template.*
 func templateRoute(size string) echo.HandlerFunc {
 	body := d.Payload(size)
 	return func(c echo.Context) error { return c.Render(200, "items.tmpl", body) }

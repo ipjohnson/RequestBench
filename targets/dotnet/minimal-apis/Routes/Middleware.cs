@@ -11,9 +11,11 @@ namespace RequestBench.MinimalApis.Routes;
 /// </summary>
 public static class Middleware
 {
+    // rb:wiring middleware.*
     private static ValueTask<object?> Noop(EndpointFilterInvocationContext context,
                                            EndpointFilterDelegate next) => next(context);
 
+    // rb:wiring middleware.*
     private static RouteHandlerBuilder Layers(RouteHandlerBuilder route, int n)
     {
         for (int i = 0; i < n; i++)

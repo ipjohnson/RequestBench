@@ -16,12 +16,11 @@ public final class Compressed {
   private Compressed() {}
 
   /** The floor the Java stacks use, so gzip_small lands on the same side of it. */
+  // rb:wiring compressed.*
   private static final int THRESHOLD = 1024;
 
   public static void register(HttpRouting.Builder r) {
-    // rb:snippet compressed.identity_small compressed.identity_medium
-    // rb:snippet compressed.identity_large compressed.gzip_small compressed.gzip_medium
-    // rb:snippet compressed.gzip_large
+    // rb:handler compressed.*
     for (String size : new String[] {"small", "medium", "large"}) {
       r.get("/compressed/" + size, (req, res) -> {
         byte[] raw = Json.bytes(Domain.payload(size));

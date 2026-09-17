@@ -32,6 +32,7 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 	_, _ = w.Write(buf)
 }
 
+// rb:wiring errors.*,domain.*
 func fail(w http.ResponseWriter, err error) {
 	if errors.Is(err, d.ErrNotFound) {
 		writeJSON(w, 404, d.NotFoundBody())
@@ -40,6 +41,7 @@ func fail(w http.ResponseWriter, err error) {
 	writeJSON(w, 500, map[string]string{"error": "internal", "message": err.Error()})
 }
 
+// rb:wiring domain.*
 func send(w http.ResponseWriter, v any, err error, status int) {
 	if err != nil {
 		fail(w, err)
@@ -59,7 +61,7 @@ func main() {
 
 	r := chi.NewRouter()
 
-	// rb:snippet errors.unmatched
+	// rb:handler errors.unmatched
 	r.NotFound(func(w http.ResponseWriter, _ *http.Request) { writeJSON(w, 404, d.NotFoundBody()) })
 
 	registerBaseline(r)

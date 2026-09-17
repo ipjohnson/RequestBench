@@ -19,6 +19,7 @@ import rb.javalin.Support;
 public final class Etag {
   private Etag() {}
 
+  // rb:wiring etag.*
   public static void register(JavalinConfig cfg) {
     cfg.routes.after("/etag/*", ctx -> {
       String result = ctx.result();
@@ -33,7 +34,7 @@ public final class Etag {
       }
       ctx.result(raw);
     });
-    // rb:snippet etag.small etag.large etag.match_large etag.stale_large
+    // rb:handler etag.*
     for (String size : new String[] {"small", "large"}) {
       cfg.routes.get("/etag/" + size, ctx -> {
         ctx.header("x-rb-serial", Domain.nextSerial());

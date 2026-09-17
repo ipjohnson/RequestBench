@@ -11,6 +11,7 @@ public static class Support
     /// needs the raw document so the validator can produce the exact field errors every
     /// other target produces; the read is still the framework's.
     /// </summary>
+    // rb:wiring body.*,domain.*
     public static async ValueTask<JsonElement> Body(HttpRequest request, CancellationToken ct)
     {
         try

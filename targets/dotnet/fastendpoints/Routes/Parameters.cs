@@ -4,6 +4,7 @@ using RequestBench.Domain;
 namespace RequestBench.FastEndpointsTarget.Routes;
 
 /// <summary>parameters: router captures with segment depth held constant.</summary>
+// rb:handler parameters.static
 public sealed class ParametersStaticEndpoint(DomainModel domain) : EndpointWithoutRequest<PayloadBody>
 {
     public override void Configure()
@@ -16,6 +17,7 @@ public sealed class ParametersStaticEndpoint(DomainModel domain) : EndpointWitho
         Task.FromResult(domain.Payload("small"));
 }
 
+// rb:handler parameters.one
 public sealed class ParametersOneEndpoint(DomainModel domain) : EndpointWithoutRequest<PayloadBody>
 {
     public override void Configure()
@@ -28,6 +30,7 @@ public sealed class ParametersOneEndpoint(DomainModel domain) : EndpointWithoutR
         Task.FromResult(domain.Payload("small"));
 }
 
+// rb:handler parameters.two
 public sealed class ParametersTwoEndpoint(DomainModel domain) : EndpointWithoutRequest<PayloadBody>
 {
     public override void Configure()

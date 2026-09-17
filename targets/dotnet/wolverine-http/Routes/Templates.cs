@@ -16,6 +16,7 @@ namespace RequestBench.WolverineTarget.Routes;
 /// </summary>
 public static class TemplateEndpoints
 {
+    // rb:wiring template.*
     private static RazorComponentResult<Items> Render(PayloadBody body) =>
         new(new Dictionary<string, object?> { ["Body"] = body });
 

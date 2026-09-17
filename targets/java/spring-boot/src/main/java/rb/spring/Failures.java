@@ -23,6 +23,7 @@ import rb.domain.Errors;
 @RestControllerAdvice
 public class Failures {
 
+  // rb:wiring errors.*
   @ExceptionHandler(Errors.NotFound.class)
   ResponseEntity<Object> notFound(Errors.NotFound e) {
     return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Domain.notFoundBody());
@@ -34,6 +35,7 @@ public class Failures {
    * names it and the message Hibernate Validator produced, which is its vocabulary and not
    * this repository's.
    */
+  // rb:wiring errors.*,body.*
   @ExceptionHandler(MethodArgumentNotValidException.class)
   ResponseEntity<Object> invalid(MethodArgumentNotValidException e) {
     List<Map<String, String>> errors = e.getBindingResult().getFieldErrors().stream()
@@ -48,6 +50,7 @@ public class Failures {
    * Spring raises this when Jackson cannot read the request body at all. Nothing validated
    * it, so it names no field, and Spring's own status for an unreadable body is 400.
    */
+  // rb:wiring errors.*
   @ExceptionHandler({HttpMessageNotReadableException.class, Errors.Malformed.class})
   ResponseEntity<Object> malformed(Exception e) {
     return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -72,7 +75,8 @@ public class Failures {
    * once the static-resource handler has also declined it, and NoHandlerFoundException when
    * there is no such handler; both are the same 404 here.
    */
-  // rb:snippet errors.unmatched
+  // rb:handler errors.unmatched
+  // rb:wiring errors.*
   @ExceptionHandler({NoHandlerFoundException.class, NoResourceFoundException.class})
   ResponseEntity<Object> unmatched(Exception e) {
     return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Domain.notFoundBody());

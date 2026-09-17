@@ -22,8 +22,10 @@ import rb.domain.Json;
 public class Compressed {
 
   /** The floor Micronaut's own netty compression defaults to. */
+  // rb:wiring compressed.*
   private static final int THRESHOLD = 1024;
 
+  // rb:wiring compressed.*
   private static MutableHttpResponse<byte[]> serve(String size, String accept) {
     byte[] raw = Json.bytes(Domain.payload(size));
     boolean wanted = accept != null && accept.contains("gzip") && raw.length >= THRESHOLD;

@@ -141,8 +141,8 @@ footer { margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--rule);
 <dl class="meta">
   <div><dt>Date</dt><dd>14 September 2026</dd></div>
   <div><dt>Adds</dt><dd><code>bundle-v1</code>, a per-target file manifest per run</dd></div>
-  <div><dt>Targets</dt><dd>19 implemented, 43 planned</dd></div>
-  <div><dt>Status</dt><dd>Proposed. Nothing implemented.</dd></div>
+  <div><dt>Targets</dt><dd>33 implemented, 43 planned</dd></div>
+  <div><dt>Status</dt><dd>Built. §2 to §4 and §7 ship as <code>harness/bundle.py</code>, <code>harness/snippets.py</code> and <code>spec/marks.json</code>; the framework page of §6 renders from them. §5's framework metadata is still derived at render time only for the version.</dd></div>
 </dl>
 
 <section>
@@ -274,7 +274,7 @@ footer { margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--rule);
 
 <p>Deriving beats declaring here for the same reason the framework version is already derived rather than written into <code>matrix.json</code>: a declared repository URL is correct until the day it is not, and nothing would notice. It also means a framework that moves its repository is reported correctly the next night with no pull request.</p>
 
-<p>What stays declared in <code>spec/matrix.json</code> is the thing no manifest knows: which mechanism each target used for each feature, and why a target has none. That declaration already exists in <code>docs/blend-v2.html</code> for the feature families, and the framework page is where it gets read.</p>
+<p>What stays declared in <code>spec/matrix.json</code> is the thing no manifest knows: which mechanism each target used for each feature, and why a target has none. That declaration is <code>mechanisms</code>, one entry per target per family, and it is what makes a missing feature mark fail: a family that names a mechanism has to produce at least one wiring part, and a family with nothing to show says so in a sentence the page renders instead.</p>
 </section>
 
 <section>
@@ -342,6 +342,14 @@ footer { margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--rule);
 
 <p>Two checks keep an extraction honest. Every snippet must contain the path it claims to implement, which catches a wrong expansion instead of shipping it. And a path that matches in more than one place is an error rather than a first-match, because the prototype's first-match rule is exactly how a comment or a test would get rendered as the implementation.</p>
 
+<p>Both of those ask where a snippet is. Neither asks what is in it, and a bare <code>@Get("/json/small")</code> passes both while showing a reader nothing: 403 of the 1,485 published snippets were exactly that. <code>spec/marks.json</code> holds the assertions that ask the second question — a snippet may not be nothing but annotations, and a handler with its support has to reach the shared domain — against a committed allowance that only ever goes down. It is empty today.</p>
+
+<h3>Marks are typed, and the kinds live in the spec</h3>
+
+<p>A mark is <code>rb:&lt;kind&gt; &lt;selector&gt;[,&lt;selector&gt;…]</code>, closed by <code>rb:end</code> where the block rule would stop short of what the author meant. A selector is <code>family.endpoint</code> for one, <code>family.*</code> for all of a family, or <code>*</code> for the target. <code>spec/marks.json</code> says what each kind selects, which file roles it may read, and what has to be true of what it captured, so <code>harness/snippets.py</code> never learns a kind's name and adding one is an object in the spec and a display section.</p>
+
+<p>Two kinds carry the work. <code>rb:handler</code> names the lines that answer the request, and derivation stays the way in wherever the route literal sits on the declaration: 1,000 of the 1,485 are still located without a mark. <code>rb:wiring</code> names the code that makes a feature family work and that the route does not mention — the gzip express mounts three statements above a route that says nothing about compression — keyed by family, because six <code>compressed.*</code> endpoints share one set of parts.</p>
+
 <h3>Every snippet is a link into GitHub</h3>
 
 <p>The expansion already computes where a snippet starts and ends, so recording those two numbers costs nothing and makes each snippet addressable in the browser. A snippet record is the path, the line range, and the hash of the file it came from.</p>
@@ -373,12 +381,13 @@ footer { margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--rule);
 <tr><td class="m">.gitattributes</td><td>New. <code>* text=auto eol=lf</code>. Without it the hashes are not reproducible across checkouts, which makes everything else here unreliable.</td></tr>
 <tr><td class="m">harness/bundle.py</td><td>New. Resolves a target's roots to a file list through <code>git ls-files</code>, hashes each file, derives the framework metadata from the resolved dependency tree, and emits the manifest. Called by <code>run.py</code> per target and standalone for the site build.</td></tr>
 <tr><td class="m">harness/run.py</td><td>Write <code>bundle_hash</code> and <code>code_hash</code> on each <code>target</code> row and <code>commit</code> plus <code>repo</code> on the <code>env</code> row. This is the only change that has to land before the next run to be worth anything, because it is the only one that cannot be backfilled.</td></tr>
-<tr><td class="m">harness/snippets.py</td><td>New. Derives endpoint wiring from spec paths, reads markers for wiring no path can reach, records each snippet's line range, and enforces the two checks in §7.</td></tr>
-<tr><td class="m">spec/matrix.json</td><td>Bundle roots per target, where the convention does not cover it, and the per-feature mechanism declarations <code>docs/blend-v2.html</code> already calls for.</td></tr>
+<tr><td class="m">harness/snippets.py</td><td>New. Derives endpoint wiring from spec paths, reads typed marks for what no path can reach, records each part's line range, and enforces the checks in §7.</td></tr>
+<tr><td class="m">spec/marks.json</td><td>New. The mark kinds, what each may read and claim, the assertions a captured snippet has to pass, and the allowance recording how much of the corpus still fails them.</td></tr>
+<tr><td class="m">spec/matrix.json</td><td>Bundle roots per target, where the convention does not cover it, and <code>mechanisms</code>: one declaration per target per family, naming the framework facility and the dependency behind it, or saying in a sentence why there is nothing to show.</td></tr>
 <tr><td class="m">targets/&lt;lang&gt;/&lt;target&gt;/README.md</td><td>New, one per target. Nineteen to write now, forty-three eventually. The largest piece of work here and the only part that is not mechanical.</td></tr>
 <tr><td class="m">site/logos/</td><td>New. One normalised mark per target plus <code>index.json</code> recording each one's source, terms and fetch date. Outside the bundle on purpose.</td></tr>
 <tr><td class="m">site/</td><td>Framework pages, endpoint comparison pages, feature comparison pages, rendered by <code>site/src/pages/f/[slug].astro</code>. <code>harness/siteview.py</code> resolves file content from git at the recorded commit and the page verifies it against the manifest. Renders the monogram fallback where no mark is vendored.</td></tr>
-<tr><td class="m">.github/workflows/validate.yml</td><td>Coverage gate, the same shape as the conformance matrix: every target resolves a snippet for every endpoint it implements, every snippet contains its own path, every target has a README, every declared feature dependency exists in that target's manifest, and every target resolves a logo or a declared reason it has none.</td></tr>
+<tr><td class="m">.github/workflows/validate.yml</td><td>Coverage gate, the same shape as the conformance matrix: every target resolves a snippet for every endpoint it implements, every snippet contains its own path and passes the assertions, every family declares a mechanism and produces the wiring it named, every declared feature dependency exists in that target's manifest, and every target has a README.</td></tr>
 </tbody>
 </table>
 </div>
@@ -405,7 +414,7 @@ footer { margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--rule);
 </section>
 
 <footer>
-Written 14 September 2026 against <code>lang/java</code> at <code>853ae6c</code>. Line references were accurate at that commit. Extraction coverage in §7 was measured against the nineteen implemented targets. Companion to <code>docs/blend-v2.html</code>, which designs the endpoint set these bundles implement, and to <code>docs/plan.html</code>, whose invalidation table names the content hash this document specifies.
+Written 14 September 2026 against <code>lang/java</code> at <code>853ae6c</code>. Line references were accurate at that commit, and the extraction coverage measured in §7 was against the nineteen targets implemented then; the marks, assertions and mechanism declarations were added later, against thirty-three. Companion to <code>docs/blend-v2.html</code>, which designs the endpoint set these bundles implement, and to <code>docs/plan.html</code>, whose invalidation table names the content hash this document specifies.
 </footer>
 
 </div>

@@ -15,6 +15,7 @@ namespace RequestBench.FastEndpointsTarget.Routes;
 /// The properties are nullable so NotNull means present: an int is indistinguishable from
 /// an absent one, because both arrive as zero.
 /// </summary>
+// rb:wiring body.*,domain.*
 public sealed class OrderRequest
 {
     public int? CustomerId { get; set; }
@@ -28,6 +29,7 @@ public sealed class OrderRequest
         [.. Lines!.Select(l => new DomainModel.LineInput(l.ProductId!.Value, l.Qty!.Value))];
 }
 
+// rb:wiring body.*,domain.*
 public sealed class LineRequest
 {
     public int? ProductId { get; set; }

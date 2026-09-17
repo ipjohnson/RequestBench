@@ -9,6 +9,7 @@ import (
 	d "github.com/ianjohnson/requestbench/targets/go/_shared"
 )
 
+// rb:wiring authorized.*
 func requireToken(c fiber.Ctx) error {
 	if !d.TokenOK(c.Get("authorization")) {
 		return c.Status(403).JSON(d.ForbiddenBody())

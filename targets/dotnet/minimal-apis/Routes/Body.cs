@@ -35,6 +35,7 @@ public static class Body
     }
 
     /// <summary>The order, once the framework's validator has said the body is one.</summary>
+    // rb:wiring body.*,domain.*
     internal static ValidatedOrder Priced(DomainModel d, OrderIn body) =>
         d.PriceOrder(body.CustomerId!.Value, body.Status!, body.Input());
 }

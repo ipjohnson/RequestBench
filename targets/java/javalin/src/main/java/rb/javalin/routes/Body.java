@@ -35,6 +35,7 @@ public final class Body {
   }
 
   /** Javalin's validator, with this target's checks chained onto it. */
+  // rb:wiring body.*,domain.*
   public static OrderIn validated(Context ctx) {
     return ctx.bodyValidator(OrderIn.class)
               .check(OrderIn::hasCustomerId, "customer_id is required")

@@ -43,6 +43,7 @@ public sealed class Body : ICarterModule
     /// reports the property and its own message, which is its vocabulary rather than this
     /// repository's.
     /// </summary>
+    // rb:wiring body.*,domain.*
     internal static IResult Priced(IValidator<OrderBody> validator, DomainModel d, OrderBody body) =>
         Refused(validator, body)
         ?? Results.Ok(d.PriceOrder(body.CustomerId!.Value, body.Status!, body.Input()));
@@ -51,6 +52,7 @@ public sealed class Body : ICarterModule
     /// What the validator refused, or null when it accepted the body. The writes share this
     /// so a body is validated the same way whichever route took it.
     /// </summary>
+    // rb:wiring body.*,errors.*
     internal static IResult? Refused(IValidator<OrderBody> validator, OrderBody body)
     {
         FluentValidation.Results.ValidationResult result = validator.Validate(body);

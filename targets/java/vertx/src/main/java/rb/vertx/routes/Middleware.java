@@ -13,6 +13,7 @@ import rb.vertx.Reply;
 public final class Middleware {
   private Middleware() {}
 
+  // rb:wiring middleware.*
   private static void layered(Router router, String path, int n) {
     var route = router.get(path);
     for (int i = 0; i < n; i++) {
@@ -25,10 +26,12 @@ public final class Middleware {
     router.get("/middleware/none")
           .handler(ctx -> Reply.json(ctx, 200, Domain.payload("small")));
 
-    // rb:snippet middleware.four
+    // rb:handler middleware.four
+    // rb:wiring middleware.*
     layered(router, "/middleware/four", 4);
 
-    // rb:snippet middleware.sixteen
+    // rb:handler middleware.sixteen
+    // rb:wiring middleware.*
     layered(router, "/middleware/sixteen", 16);
   }
 }

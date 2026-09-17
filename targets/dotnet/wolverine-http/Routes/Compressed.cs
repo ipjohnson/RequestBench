@@ -14,6 +14,7 @@ namespace RequestBench.WolverineTarget.Routes;
 /// </summary>
 public static class CompressedEndpoints
 {
+    // rb:wiring compressed.*
     private static IResult Serve(HttpContext context, DomainModel domain, string size)
     {
         HttpResponse response = context.Response;

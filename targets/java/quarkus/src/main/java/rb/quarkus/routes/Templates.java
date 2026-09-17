@@ -26,8 +26,10 @@ import rb.domain.Model.PayloadBody;
 public class Templates {
 
   @Inject
+  // rb:wiring template.*
   Template items;
 
+  // rb:wiring template.*
   private TemplateInstance render(String size) {
     PayloadBody body = Domain.payload(size);
     return items.data("size", body.size())
@@ -35,14 +37,14 @@ public class Templates {
                 .data("items", body.items());
   }
 
-  // rb:snippet template.small
+  // rb:handler template.small
   @GET
   @Path("small")
   public TemplateInstance small() {
     return render("small");
   }
 
-  // rb:snippet template.medium
+  // rb:handler template.medium
   @GET
   @Path("medium")
   public TemplateInstance medium() {

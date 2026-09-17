@@ -10,6 +10,7 @@ public final class Support {
 
   /** The request body as a value, or the 422 every target answers when it is not JSON. */
   @SuppressWarnings("unchecked")
+  // rb:wiring body.*,domain.*
   public static Map<String, Object> body(Context ctx) {
     try {
       return ctx.bodyAsClass(Map.class);

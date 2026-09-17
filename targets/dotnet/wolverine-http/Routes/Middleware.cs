@@ -12,6 +12,7 @@ namespace RequestBench.WolverineTarget.Routes;
 /// class with a Before, found by convention rather than by an interface; each one runs and
 /// does nothing else.
 /// </summary>
+// rb:wiring middleware.*
 public static class Noop00
 {
     public static void Before() { }

@@ -15,6 +15,7 @@ namespace RequestBench.CarterTarget.Routes;
 /// </summary>
 public sealed class Etag : ICarterModule
 {
+    // rb:wiring etag.*
     private static async ValueTask<object?> Revalidate(EndpointFilterInvocationContext context,
                                                        EndpointFilterDelegate next)
     {
@@ -25,6 +26,7 @@ public sealed class Etag : ICarterModule
             : Results.Bytes(raw, "application/json");
     }
 
+    // rb:wiring etag.*
     private static Func<HttpContext, DomainModel, PayloadBody> Serve(string size) =>
         (context, model) =>
         {
@@ -34,7 +36,7 @@ public sealed class Etag : ICarterModule
 
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        // rb:snippet etag.small etag.large etag.match_large etag.stale_large
+        // rb:handler etag.*
         app.MapGet("/etag/small", Serve("small")).AddEndpointFilter(Revalidate);
 
         app.MapGet("/etag/large", Serve("large")).AddEndpointFilter(Revalidate);

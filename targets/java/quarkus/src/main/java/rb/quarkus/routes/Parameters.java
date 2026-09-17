@@ -12,21 +12,21 @@ import rb.domain.Model.PayloadBody;
 @Produces(MediaType.APPLICATION_JSON)
 public class Parameters {
 
-  // rb:snippet parameters.static
+  // rb:handler parameters.static
   @GET
   @Path("static/segment/literal")
   public PayloadBody staticPath() {
     return Domain.payload("small");
   }
 
-  // rb:snippet parameters.one
+  // rb:handler parameters.one
   @GET
   @Path("{one}")
   public PayloadBody one() {
     return Domain.payload("small");
   }
 
-  // rb:snippet parameters.two
+  // rb:handler parameters.two
   @GET
   @Path("{one}/with-second/{two}")
   public PayloadBody two() {

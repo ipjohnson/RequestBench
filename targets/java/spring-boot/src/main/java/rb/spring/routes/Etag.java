@@ -33,6 +33,7 @@ public class Etag {
     return bean;
   }
 
+  // rb:wiring etag.*
   private static ResponseEntity<Object> serve(String size) {
     return ResponseEntity.ok()
         .header(HttpHeaders.CACHE_CONTROL, Domain.CACHEABLE)
@@ -40,7 +41,7 @@ public class Etag {
         .body(Domain.payload(size));
   }
 
-  // rb:snippet etag.small etag.large etag.match_large etag.stale_large
+  // rb:handler etag.*
   @GetMapping("/etag/small")
   ResponseEntity<Object> small() {
     return serve("small");

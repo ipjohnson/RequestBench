@@ -11,6 +11,7 @@ import (
 	d "github.com/ianjohnson/requestbench/targets/go/_shared"
 )
 
+// rb:wiring authorized.*
 func requireToken(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		if !d.TokenOK(req.Header.Get("authorization")) {

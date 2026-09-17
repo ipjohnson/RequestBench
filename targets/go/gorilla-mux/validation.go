@@ -22,6 +22,7 @@ type fieldError struct {
 	Rule  string `json:"rule"`
 }
 
+// rb:wiring body.*
 func invalidBody(errs []fieldError) map[string]any {
 	return map[string]any{"error": "validation_failed", "errors": errs}
 }
@@ -55,6 +56,7 @@ func reqField(errs *[]fieldError, m map[string]any, field, typ string) {
 
 // validateOrder reports every problem it finds when firstError is false, and stops at the
 // first when it is true.
+// rb:wiring body.*,domain.*
 func validateOrder(m map[string]any, firstError bool) (*d.ValidatedOrder, []fieldError) {
 	var errs []fieldError
 	bail := func() bool { return firstError && len(errs) > 0 }

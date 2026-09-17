@@ -35,12 +35,13 @@ builder.WebHost.UseUrls(HostInfo.Url());
 builder.Logging.ClearProviders();
 
 WebApplication app = builder.Build();
+// rb:wiring errors.*
 app.UseExceptionHandler(Failures.Handler);
 // Output caching sits in the pipeline rather than on a route, so it is added once
 // here and opted into per route by CacheOutput.
 app.UseOutputCache();
 app.MapCarter();
-// rb:snippet errors.unmatched
+// rb:handler errors.unmatched
 app.MapFallback(() => Results.Problem(statusCode: 404));
 
 Console.Error.WriteLine($"container/carter listening on {HostInfo.Port()}");

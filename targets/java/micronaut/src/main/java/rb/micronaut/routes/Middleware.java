@@ -22,13 +22,13 @@ public class Middleware {
     return Domain.payload("small");
   }
 
-  // rb:snippet middleware.four
+  // rb:handler middleware.four
   @Get("/middleware/four")
   PayloadBody four() {
     return Domain.payload("small");
   }
 
-  // rb:snippet middleware.sixteen
+  // rb:handler middleware.sixteen
   @Get("/middleware/sixteen")
   PayloadBody sixteen() {
     return Domain.payload("small");

@@ -12,8 +12,10 @@ import express from "express";
 import * as d from "../../_shared/domain.js";
 import { checkOrder, orderOf, refused } from "../validation.js";
 
+// rb:wiring body.*
 const parse = express.json({ limit: "4mb" });
 
+// rb:wiring body.*
 const validated = (firstError) => (req, res) => {
   const errs = checkOrder(req.body, firstError);
   if (errs.length) return res.status(422).json(refused(errs));

@@ -23,6 +23,7 @@ import rb.domain.Json;
 public final class Etag {
   private Etag() {}
 
+  // rb:wiring etag.*
   private static Handler<RoutingContext> revalidating(String size) {
     return ctx -> {
       byte[] raw = Json.bytes(Domain.payload(size));
@@ -44,7 +45,7 @@ public final class Etag {
   }
 
   public static void register(Router router) {
-    // rb:snippet etag.small etag.large etag.match_large etag.stale_large
+    // rb:handler etag.*
     for (String size : new String[] {"small", "large"}) {
       router.get("/etag/" + size).handler(revalidating(size));
     }

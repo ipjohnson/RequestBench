@@ -19,14 +19,14 @@ import rb.quarkus.Layers;
 @Produces(MediaType.APPLICATION_JSON)
 public class Middleware {
 
-  // rb:snippet middleware.none
+  // rb:handler middleware.none
   @GET
   @Path("none")
   public PayloadBody none() {
     return Domain.payload("small");
   }
 
-  // rb:snippet middleware.four
+  // rb:handler middleware.four
   @GET
   @Path("four")
   @Layers.Four
@@ -34,7 +34,7 @@ public class Middleware {
     return Domain.payload("small");
   }
 
-  // rb:snippet middleware.sixteen
+  // rb:handler middleware.sixteen
   @GET
   @Path("sixteen")
   @Layers.Sixteen

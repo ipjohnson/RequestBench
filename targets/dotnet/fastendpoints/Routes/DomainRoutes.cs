@@ -7,6 +7,7 @@ using Order = RequestBench.Domain.Order;
 namespace RequestBench.FastEndpointsTarget.Routes;
 
 /// <summary>domain: application-shaped handler work and the write methods.</summary>
+// rb:handler domain.filter
 public sealed class DomainFilterEndpoint(DomainModel domain)
     : Endpoint<OrderFilterRequest, OrdersPage>
 {
@@ -20,6 +21,7 @@ public sealed class DomainFilterEndpoint(DomainModel domain)
         Task.FromResult(domain.DomainFilter(req.Page, req.Size, req.Status));
 }
 
+// rb:handler domain.create
 public sealed class DomainCreateEndpoint(DomainModel domain) : Endpoint<OrderRequest, ValidatedOrder>
 {
     public override void Configure()
@@ -37,6 +39,7 @@ public sealed class DomainCreateEndpoint(DomainModel domain) : Endpoint<OrderReq
     }
 }
 
+// rb:handler domain.lookup,errors.not_found
 public sealed class DomainLookupEndpoint(DomainModel domain) : EndpointWithoutRequest<Order>
 {
     public override void Configure()
@@ -49,6 +52,7 @@ public sealed class DomainLookupEndpoint(DomainModel domain) : EndpointWithoutRe
         Task.FromResult(domain.GetOrder(Route<string>("oid")!));
 }
 
+// rb:handler domain.replace
 public sealed class DomainReplaceEndpoint(DomainModel domain) : Endpoint<OrderRequest, ValidatedOrder>
 {
     public override void Configure()
@@ -65,6 +69,7 @@ public sealed class DomainReplaceEndpoint(DomainModel domain) : Endpoint<OrderRe
     }
 }
 
+// rb:handler domain.join
 public sealed class DomainJoinEndpoint(DomainModel domain) : EndpointWithoutRequest<JoinSummary>
 {
     public override void Configure()
@@ -77,6 +82,7 @@ public sealed class DomainJoinEndpoint(DomainModel domain) : EndpointWithoutRequ
         Task.FromResult(domain.DomainJoin(Route<string>("cid")!));
 }
 
+// rb:handler domain.aggregate
 public sealed class DomainAggregateEndpoint(DomainModel domain) : EndpointWithoutRequest<Report>
 {
     public override void Configure()
@@ -89,6 +95,7 @@ public sealed class DomainAggregateEndpoint(DomainModel domain) : EndpointWithou
         Task.FromResult(domain.DomainAggregate(Route<string>("region")!));
 }
 
+// rb:handler domain.patch
 public sealed class DomainPatchEndpoint(DomainModel domain) : EndpointWithoutRequest<Customer>
 {
     public override void Configure()
@@ -101,6 +108,7 @@ public sealed class DomainPatchEndpoint(DomainModel domain) : EndpointWithoutReq
         domain.PatchCustomer(Route<string>("cid")!, await Support.Body(HttpContext.Request, ct));
 }
 
+// rb:handler domain.delete
 public sealed class DomainDeleteEndpoint(DomainModel domain) : EndpointWithoutRequest
 {
     public override void Configure()

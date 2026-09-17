@@ -17,21 +17,21 @@ import rb.domain.Model.PayloadBody;
 @Produces(MediaType.APPLICATION_JSON)
 public class JsonRoutes {
 
-  // rb:snippet json.small
+  // rb:handler json.small
   @GET
   @Path("small")
   public PayloadBody small() {
     return Domain.payload("small");
   }
 
-  // rb:snippet json.medium
+  // rb:handler json.medium
   @GET
   @Path("medium")
   public PayloadBody medium() {
     return Domain.payload("medium");
   }
 
-  // rb:snippet json.large
+  // rb:handler json.large
   @GET
   @Path("large")
   public PayloadBody large() {

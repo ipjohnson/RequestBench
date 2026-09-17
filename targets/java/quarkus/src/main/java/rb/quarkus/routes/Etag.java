@@ -30,6 +30,7 @@ public class Etag {
   @Context
   Request request;
 
+  // rb:wiring etag.*
   private Response serve(String size) {
     byte[] raw = Json.bytes(Domain.payload(size));
     EntityTag tag = new EntityTag(Domain.contentETagValue(raw));
@@ -41,14 +42,14 @@ public class Etag {
             .build();
   }
 
-  // rb:snippet etag.small
+  // rb:handler etag.small
   @GET
   @Path("small")
   public Response small() {
     return serve("small");
   }
 
-  // rb:snippet etag.large etag.match_large etag.stale_large
+  // rb:handler etag.large,etag.match_large,etag.stale_large
   @GET
   @Path("large")
   public Response large() {

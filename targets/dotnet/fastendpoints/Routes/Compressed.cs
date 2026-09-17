@@ -32,6 +32,7 @@ public abstract class CompressedEndpoint(DomainModel domain, string size)
     }
 }
 
+// rb:handler compressed.identity_small,compressed.gzip_small
 public sealed class CompressedSmallEndpoint(DomainModel domain)
     : CompressedEndpoint(domain, "small")
 {
@@ -52,6 +53,7 @@ public sealed class CompressedMediumEndpoint(DomainModel domain)
     }
 }
 
+// rb:handler compressed.identity_large,compressed.gzip_large
 public sealed class CompressedLargeEndpoint(DomainModel domain)
     : CompressedEndpoint(domain, "large")
 {

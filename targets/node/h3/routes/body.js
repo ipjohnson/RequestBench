@@ -8,6 +8,7 @@ import { readBody } from "h3";
 import * as d from "../../_shared/domain.js";
 import { checkOrder, orderOf, refused } from "../validation.js";
 
+// rb:wiring body.*
 const validated = (firstError) => async (e) => {
   const body = await readBody(e);
   const errs = checkOrder(body, firstError);

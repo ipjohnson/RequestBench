@@ -19,6 +19,7 @@ public final class Layers {
   @NameBinding
   @Retention(RetentionPolicy.RUNTIME)
   @Target({ElementType.TYPE, ElementType.METHOD})
+  // rb:wiring middleware.*
   public @interface Four {}
 
   @NameBinding
@@ -29,5 +30,6 @@ public final class Layers {
   @NameBinding
   @Retention(RetentionPolicy.RUNTIME)
   @Target({ElementType.TYPE, ElementType.METHOD})
+  // rb:wiring authorized.*
   public @interface Authorized {}
 }

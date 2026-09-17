@@ -16,6 +16,7 @@ namespace RequestBench.AspNetMvc.Controllers;
 [ApiController]
 public sealed class CacheController(DomainModel domain) : ControllerBase
 {
+    // rb:wiring cache.*
     private IActionResult Serve(string size, string? which = null)
     {
         if (which is not null)
@@ -26,7 +27,7 @@ public sealed class CacheController(DomainModel domain) : ControllerBase
         return Ok(domain.Payload(size));
     }
 
-    // rb:snippet cache.small cache.medium cache.large
+    // rb:handler cache.small,cache.medium,cache.large
     [HttpGet("/cache/small")]
     [OutputCache(PolicyName = Caching.ByPath)]
     public IActionResult Small() => Serve("small");
@@ -39,7 +40,7 @@ public sealed class CacheController(DomainModel domain) : ControllerBase
     [OutputCache(PolicyName = Caching.ByPath)]
     public IActionResult Large() => Serve("large");
 
-    // rb:snippet cache.vary_one cache.vary_many
+    // rb:handler cache.vary_one,cache.vary_many
     [HttpGet("/cache/vary/one")]
     [OutputCache(PolicyName = Caching.VaryOne)]
     public IActionResult VaryOne() => Serve("small", "one");

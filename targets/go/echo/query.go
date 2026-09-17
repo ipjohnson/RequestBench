@@ -14,10 +14,12 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// rb:wiring query.*
 type queryOne struct {
 	Page int `query:"page" json:"page"`
 }
 
+// rb:wiring query.*
 type queryMany struct {
 	Page     int    `query:"page"      json:"page"`
 	Size     int    `query:"size"      json:"size"`
@@ -29,6 +31,7 @@ type queryMany struct {
 	MaxPrice int    `query:"max_price" json:"max_price"`
 }
 
+// rb:wiring domain.*
 // What domain.filter pages by. Not a response shape, so it carries no json tags.
 type orderFilter struct {
 	Page   int    `query:"page"`
@@ -36,6 +39,7 @@ type orderFilter struct {
 	Status string `query:"status"`
 }
 
+// rb:wiring query.*,domain.*
 // bindQuery fills out from the query string, answering the failure itself if there is one.
 // The same 400 shape as a body Echo could not bind, because it is the same binder refusing.
 func bindQuery(c echo.Context, out any) bool {
