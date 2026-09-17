@@ -525,17 +525,12 @@ func Dashboard() *Board {
 	return b
 }
 
-// ---- validation -----------------------------------------------------------
-// Error field order matches the Node reference exactly; conform.py fingerprints the
-// 422 bodies, so a reordered check here shows up as a conformance failure.
-
-type FieldError struct {
-	Field string `json:"field"`
-	Rule  string `json:"rule"`
-}
-type ValidationError struct{ Errors []FieldError }
-
-func (e *ValidationError) Error() string { return "validation failed" }
+// ---- the order body, after validation -------------------------------------
+// Validating is the framework's own job and lives in each target: gin binds with
+// `binding:` tags, echo runs an echo.Validator, fiber a StructValidator, and chi and
+// gorilla-mux hold their own because neither has a validation layer to use. What is
+// left here is what happens once a body is known to be good, which is the same work
+// whichever framework proved it.
 
 type ValidatedOrder struct {
 	CustomerID int    `json:"customer_id"`
@@ -547,145 +542,28 @@ type ValidatedOrderWithID struct {
 	ID int `json:"id"`
 	ValidatedOrder
 }
-type ValidatedCustomer struct {
-	Name   string `json:"name"`
-	Email  string `json:"email"`
-	Region string `json:"region"`
-}
-type ValidatedProduct struct {
-	Name       string `json:"name"`
-	Category   string `json:"category"`
-	PriceCents int    `json:"price_cents"`
-}
-type EchoResult struct {
-	Received any `json:"received"`
-	Bytes    int `json:"bytes"`
+
+// LineInput is one order line as it arrived, before pricing.
+type LineInput struct {
+	ProductID int
+	Qty       int
 }
 
-func isInt(v any) bool {
-	f, ok := v.(float64)
-	return ok && f == float64(int64(f))
-}
-
-func reqField(errs *[]FieldError, m map[string]any, field, typ string) {
-	v, present := m[field]
-	if !present || v == nil {
-		*errs = append(*errs, FieldError{field, "required"})
-		return
-	}
-	switch typ {
-	case "int":
-		if !isInt(v) {
-			*errs = append(*errs, FieldError{field, "int"})
-		}
-	case "string":
-		if _, ok := v.(string); !ok {
-			*errs = append(*errs, FieldError{field, "string"})
-		}
-	case "array":
-		if _, ok := v.([]any); !ok {
-			*errs = append(*errs, FieldError{field, "array"})
-		}
-	}
-}
-
-// ValidateOrder reports every problem it finds. ValidateOrderFirst stops at the first,
-// which is what body.rejected_all minus body.rejected_first states as a number: the same
-// walk in the same order, differing only in where it gives up.
-func ValidateOrder(m map[string]any) (*ValidatedOrder, error) { return validateOrder(m, false) }
-
-func ValidateOrderFirst(m map[string]any) (*ValidatedOrder, error) { return validateOrder(m, true) }
-
-func validateOrder(m map[string]any, firstError bool) (*ValidatedOrder, error) {
-	var errs []FieldError
-	bail := func() bool { return firstError && len(errs) > 0 }
-	reqField(&errs, m, "customer_id", "int")
-	if !bail() {
-		reqField(&errs, m, "status", "string")
-	}
-	if !bail() {
-		reqField(&errs, m, "lines", "array")
-	}
-	raw, isArr := m["lines"].([]any)
-	if isArr && !bail() {
-		if len(raw) == 0 {
-			errs = append(errs, FieldError{"lines", "min_length"})
-		}
-		for i, e := range raw {
-			if bail() {
-				break
-			}
-			l, _ := e.(map[string]any)
-			if !isInt(l["product_id"]) {
-				errs = append(errs, FieldError{"lines[" + strconv.Itoa(i) + "].product_id", "int"})
-			}
-			q, ok := l["qty"].(float64)
-			if !bail() && (!ok || !isInt(l["qty"]) || q < 1) {
-				errs = append(errs, FieldError{"lines[" + strconv.Itoa(i) + "].qty", "min"})
-			}
-		}
-	}
-	if len(errs) > 0 {
-		return nil, &ValidationError{errs}
-	}
-	lines := make([]Line, 0, len(raw))
+// PriceOrder is the work after the validator says yes: look each product up, carry the
+// unit price onto the line, and total it. Identical in every framework, which is why it
+// is here and the validating is not.
+func PriceOrder(customerID int, status string, in []LineInput) *ValidatedOrder {
+	lines := make([]Line, 0, len(in))
 	total := 0
-	for i, e := range raw {
-		l := e.(map[string]any)
-		pid, qty := int(l["product_id"].(float64)), int(l["qty"].(float64))
+	for i, l := range in {
 		unit := 0
-		if p, ok := productByID[pid]; ok {
+		if p, ok := productByID[l.ProductID]; ok {
 			unit = p.PriceCents
 		}
-		lines = append(lines, Line{i + 1, pid, qty, unit, unit * qty})
-		total += unit * qty
+		lines = append(lines, Line{i + 1, l.ProductID, l.Qty, unit, unit * l.Qty})
+		total += unit * l.Qty
 	}
-	return &ValidatedOrder{int(m["customer_id"].(float64)), m["status"].(string), lines, total}, nil
-}
-
-func ValidateCustomer(m map[string]any) (*ValidatedCustomer, error) {
-	var errs []FieldError
-	reqField(&errs, m, "name", "string")
-	reqField(&errs, m, "email", "string")
-	reqField(&errs, m, "region", "string")
-	if e, ok := m["email"].(string); ok && !strings.Contains(e, "@") {
-		errs = append(errs, FieldError{"email", "format"})
-	}
-	if len(errs) > 0 {
-		return nil, &ValidationError{errs}
-	}
-	return &ValidatedCustomer{strings.TrimSpace(m["name"].(string)),
-		strings.ToLower(m["email"].(string)), m["region"].(string)}, nil
-}
-
-func ValidateProduct(m map[string]any) (*ValidatedProduct, error) {
-	var errs []FieldError
-	reqField(&errs, m, "name", "string")
-	reqField(&errs, m, "category", "string")
-	reqField(&errs, m, "price_cents", "int")
-	if p, ok := m["price_cents"].(float64); ok && isInt(m["price_cents"]) && p < 0 {
-		errs = append(errs, FieldError{"price_cents", "min"})
-	}
-	if len(errs) > 0 {
-		return nil, &ValidationError{errs}
-	}
-	return &ValidatedProduct{m["name"].(string), m["category"].(string),
-		int(m["price_cents"].(float64))}, nil
-}
-
-func ValidateLine(m map[string]any) (*Line, error) {
-	var errs []FieldError
-	reqField(&errs, m, "product_id", "int")
-	reqField(&errs, m, "qty", "int")
-	if len(errs) > 0 {
-		return nil, &ValidationError{errs}
-	}
-	pid, qty := int(m["product_id"].(float64)), int(m["qty"].(float64))
-	unit := 0
-	if p, ok := productByID[pid]; ok {
-		unit = p.PriceCents
-	}
-	return &Line{1, pid, qty, unit, unit * qty}, nil
+	return &ValidatedOrder{customerID, status, lines, total}
 }
 
 func PatchCustomer(cid string, m map[string]any) (*Customer, error) {
@@ -701,6 +579,11 @@ func PatchCustomer(cid string, m map[string]any) (*Customer, error) {
 		out.Region = r
 	}
 	return &out, nil
+}
+
+type EchoResult struct {
+	Received any `json:"received"`
+	Bytes    int `json:"bytes"`
 }
 
 func Echo(body any) EchoResult {
@@ -939,17 +822,6 @@ const Cacheable = "public, max-age=60"
 func NotFoundBody() map[string]string { return map[string]string{"error": "not_found"} }
 
 func ForbiddenBody() map[string]string { return map[string]string{"error": "forbidden"} }
-
-func InvalidBody(errs []FieldError) map[string]any {
-	return map[string]any{"error": "validation_failed", "errors": errs}
-}
-
-// MalformedBody is the 422 every target answers when the request body is not JSON at all.
-// It is the same error the validator raises so errors.malformed and body.rejected_* share
-// a shape.
-func MalformedBody() *ValidationError {
-	return &ValidationError{Errors: []FieldError{{Field: "body", Rule: "json"}}}
-}
 
 // CreatedLocation is where a created order points. Built by concatenation rather than a
 // format string: "/domain/orders/%d" is indistinguishable from a route with a capture, and

@@ -1,21 +1,29 @@
-// go:gorilla-mux's error contract, against the envelope it answers today.
+// go:gorilla-mux's error contract, against the bodies it actually sends.
 //
-// The bodies are a worked example of that envelope rather than a restatement of the schema,
-// so a schema loosened to accept anything fails here.
+// This target validates in the handler, so a wrong type is a validation failure rather than
+// a deserialization one, and every wrong field is reported rather than only the first.
 import { describe, expect, test } from "vitest";
 import { askIn, schemaAt, type Answer } from "@rb/schema";
 import pkg from "../src/index.js";
 
 const PAIRS = [["customer_id", "int"], ["status", "string"], ["lines", "array"]] as const;
 
-const judge = (answer: Answer): boolean => {
-  const declared = pkg.schemas["body.rejected_all"]!(
-    askIn(pkg.target, "body.rejected_all", [422], PAIRS));
+const judge = (endpoint: string, statuses: readonly number[], body: unknown): boolean => {
+  const answer = { status: statuses[0]!, body_class: "json", encoding: "", body } as Answer;
+  const declared = pkg.schemas[endpoint]!(askIn(pkg.target, endpoint, statuses, PAIRS));
   return schemaAt(declared, answer.status)?.safeParse(answer).success ?? false;
 };
 
-const answered = (body: unknown): Answer =>
-  ({ status: 422, body_class: "json", encoding: "", body });
+// What the target answered to {"customer_id": "not-an-int", "status": 42, "lines": "nope"}:
+// the walk read the body as a value, so it saw all three.
+const refused = {
+  error: "validation_failed",
+  errors: [
+    { field: "customer_id", rule: "int" },
+    { field: "status", rule: "string" },
+    { field: "lines", rule: "array" },
+  ],
+};
 
 describe(pkg.target, () => {
   test("declares a schema for every error endpoint", () => {
@@ -25,24 +33,26 @@ describe(pkg.target, () => {
     ]);
   });
 
-  test("accepts the shared validator's envelope, which is what it still answers", () => {
-    expect(judge(answered({
-      error: "validation_failed",
-      errors: PAIRS.map(([field, rule]) => ({ field, rule })),
-    }))).toBe(true);
+  test("accepts the envelope its own walk produces", () => {
+    expect(judge("body.rejected_all", [422], refused)).toBe(true);
   });
 
-  test("rejects an envelope it does not answer", () => {
-    expect(judge(answered({
-      type: "about:blank", title: "One or more validation errors occurred.", status: 422,
-      errors: { customer_id: ["int"], status: ["string"], lines: ["array"] },
-    }))).toBe(false);
-  });
-
-  test("rejects its own envelope missing a pair the endpoint declares", () => {
-    expect(judge(answered({
+  test("the endpoint's own pairs still apply, because this target reports them", () => {
+    expect(judge("body.rejected_all", [422], {
       error: "validation_failed",
       errors: [{ field: "customer_id", rule: "int" }],
-    }))).toBe(false);
+    })).toBe(false);
+  });
+
+  test("rejects the envelope a framework with a binder answers", () => {
+    expect(judge("body.rejected_all", [422], {
+      error: "validation_failed", fields: { customer_id: "required" },
+    })).toBe(false);
+  });
+
+  test("a body that is not JSON never reaches the walk, so it is a 400 naming no field", () => {
+    expect(judge("errors.malformed", [400], { error: "invalid_body", detail: "unexpected EOF" }))
+      .toBe(true);
+    expect(judge("errors.malformed", [400], refused)).toBe(false);
   });
 });

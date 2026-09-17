@@ -1,21 +1,30 @@
-// go:fiber's error contract, against the envelope it answers today.
+// go:fiber's error contract, against the bodies it actually sends.
 //
-// The bodies are a worked example of that envelope rather than a restatement of the schema,
-// so a schema loosened to accept anything fails here.
+// The bodies here were taken from the running target, not written from the schema. The two
+// rejection branches are the point: a body that will not deserialize and one that fails a
+// rule are different layers failing, and each has to be refused by the other's branch.
 import { describe, expect, test } from "vitest";
 import { askIn, schemaAt, type Answer } from "@rb/schema";
 import pkg from "../src/index.js";
 
 const PAIRS = [["customer_id", "int"], ["status", "string"], ["lines", "array"]] as const;
 
-const judge = (answer: Answer): boolean => {
-  const declared = pkg.schemas["body.rejected_all"]!(
-    askIn(pkg.target, "body.rejected_all", [422], PAIRS));
+const judge = (endpoint: string, statuses: readonly number[], body: unknown): boolean => {
+  const answer = { status: statuses[0]!, body_class: "json", encoding: "", body } as Answer;
+  const declared = pkg.schemas[endpoint]!(askIn(pkg.target, endpoint, statuses, PAIRS));
   return schemaAt(declared, answer.status)?.safeParse(answer).success ?? false;
 };
 
-const answered = (body: unknown): Answer =>
-  ({ status: 422, body_class: "json", encoding: "", body });
+// What the target answered to {"customer_id": "not-an-int", "status": 42, "lines": "nope"}.
+const notBound = {
+  error: "invalid_body",
+  detail: "json: cannot unmarshal string into Go struct field orderBody.customer_id of type int",
+};
+// What it answered to {}, where the body deserialized and the validator ran.
+const refused = {
+  error: "validation_failed",
+  fields: { customer_id: "required", status: "required", lines: "required" },
+};
 
 describe(pkg.target, () => {
   test("declares a schema for every error endpoint", () => {
@@ -25,24 +34,38 @@ describe(pkg.target, () => {
     ]);
   });
 
-  test("accepts the shared validator's envelope, which is what it still answers", () => {
-    expect(judge(answered({
+  test("a body that would not deserialize is the 400 branch", () => {
+    expect(judge("body.rejected_all", [400], notBound)).toBe(true);
+  });
+
+  test("a body that deserialized and failed a rule is the 422 branch", () => {
+    expect(judge("body.rejected_all", [422], refused)).toBe(true);
+  });
+
+  test("neither branch accepts the other's envelope", () => {
+    expect(judge("body.rejected_all", [400], refused)).toBe(false);
+    expect(judge("body.rejected_all", [422], notBound)).toBe(false);
+  });
+
+  test("a status it does not declare is refused, not waved through", () => {
+    expect(judge("body.rejected_all", [500], notBound)).toBe(false);
+  });
+
+  test("rejects this repository's shared envelope, which it no longer answers", () => {
+    expect(judge("body.rejected_all", [422], {
       error: "validation_failed",
       errors: PAIRS.map(([field, rule]) => ({ field, rule })),
-    }))).toBe(true);
+    })).toBe(false);
   });
 
-  test("rejects an envelope it does not answer", () => {
-    expect(judge(answered({
-      type: "about:blank", title: "One or more validation errors occurred.", status: 422,
-      errors: { customer_id: ["int"], status: ["string"], lines: ["array"] },
-    }))).toBe(false);
+  test("the validator has to name at least one field", () => {
+    expect(judge("body.rejected_all", [422], { error: "validation_failed", fields: {} }))
+      .toBe(false);
   });
 
-  test("rejects its own envelope missing a pair the endpoint declares", () => {
-    expect(judge(answered({
-      error: "validation_failed",
-      errors: [{ field: "customer_id", rule: "int" }],
-    }))).toBe(false);
+  test("a body that is not JSON at all only ever answers 400", () => {
+    expect(judge("errors.malformed", [400], { error: "invalid_body", detail: "unexpected EOF" }))
+      .toBe(true);
+    expect(judge("errors.malformed", [422], refused)).toBe(false);
   });
 });

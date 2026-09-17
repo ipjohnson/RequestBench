@@ -33,15 +33,11 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 }
 
 func fail(w http.ResponseWriter, err error) {
-	var ve *d.ValidationError
-	switch {
-	case errors.Is(err, d.ErrNotFound):
+	if errors.Is(err, d.ErrNotFound) {
 		writeJSON(w, 404, d.NotFoundBody())
-	case errors.As(err, &ve):
-		writeJSON(w, 422, d.InvalidBody(ve.Errors))
-	default:
-		writeJSON(w, 500, map[string]string{"error": "internal", "message": err.Error()})
+		return
 	}
+	writeJSON(w, 500, map[string]string{"error": "internal", "message": err.Error()})
 }
 
 func send(w http.ResponseWriter, v any, err error, status int) {

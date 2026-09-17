@@ -1,5 +1,6 @@
-// The two error shapes the domain returns, recognised without importing errors into every
-// family file.
+// The one error shape the domain still returns, recognised without importing errors into
+// every family file. Validation failures are Fiber's own now and are answered where they
+// happen, so there is nothing to unwrap for them.
 package main
 
 import (
@@ -9,5 +10,3 @@ import (
 )
 
 func isNotFound(err error) bool { return errors.Is(err, d.ErrNotFound) }
-
-func asValidation(err error, target **d.ValidationError) bool { return errors.As(err, target) }
