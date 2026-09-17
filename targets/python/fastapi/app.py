@@ -29,8 +29,11 @@ from pydantic import BaseModel, Field
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.gzip import GZipMiddleware
 
+from cachetools import TTLCache
+
 from _hosts import host
 from _shared import domain as d
+from _shared.asgi import ConditionalGet, ResponseCache
 
 
 # ---- validation: a Pydantic model as the body parameter ------------------------------
@@ -70,7 +73,10 @@ class OrderIn(BaseModel):
 app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
 
 META = host.meta("fastapi", adapter="uvicorn",
-                 template="jinja2 " + host.dist_version("jinja2"))
+                 template="jinja2 " + host.dist_version("jinja2"),
+                 etag="sha1 (fastapi ships no conditional handling)",
+                 cache="starlette middleware over cachetools "
+                       + host.dist_version("cachetools"))
 
 
 def small():
@@ -244,30 +250,68 @@ for _size in ("small", "medium", "large"):
 app.mount("/compressed", gzipped)
 
 
-# ---- cached: validator headers and the conditional -----------------------------------
+# ---- etag: the conditional middleware on a mounted sub-application --------------------
+#
+# FastAPI ships no conditional-request handling and neither does Starlette under it: nothing
+# in either computes a validator for a dynamic response or answers if-none-match. So the
+# digest is the shared one, declared in /__meta, and what is FastAPI's own is the scoping --
+# a mounted sub-application, the same way the compressed family gets its middleware without
+# putting a hash on the other rows.
 
-def cached_route(size):
-    """The ETag is pinned in the fixture, so this measures emitting the header and
-    comparing it rather than hashing the body.
+conditional = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
+conditional.add_middleware(ConditionalGet)
 
-    The comparison requires a non-empty header: matching a missing if-none-match against an
-    empty ETag answers 304 to a client that never asked a conditional question.
-    """
-    etag = d.etag_of(size)
 
-    async def handler(request: Request, response: Response):
-        headers = {"etag": etag, "cache-control": d.CACHEABLE,
-                   "x-rb-serial": d.next_serial()}
-        if request.headers.get("if-none-match") == etag:
-            return Response(status_code=304, headers=headers)
-        response.headers.update(headers)
+def etag_route(size):
+    async def handler(response: Response):
+        response.headers["cache-control"] = d.CACHEABLE
+        response.headers["x-rb-serial"] = d.next_serial()
         return d.payload(size)
     return handler
 
 
-# rb:snippet cached.small cached.medium cached.large cached.revalidate
+# rb:snippet etag.small etag.large etag.match_large etag.stale_large
+for _size in ("small", "large"):
+    conditional.add_api_route("/" + _size, etag_route(_size), methods=["GET"])
+
+app.mount("/etag", conditional)
+
+
+# ---- cache: the response cache on one mounted sub-application ------------------------
+#
+# One sub-application for the whole family, so there is one store and the capacity the
+# fixture derives from the key count means what it says. The header names a route is keyed
+# on are middleware configuration rather than something a handler decides, which is why the
+# middleware takes the map rather than the routes taking a decorator.
+
+VARY = {"/cache/vary/" + which: d.vary_on(which) for which in ("one", "many")}
+
+cached = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
+cached.add_middleware(
+    ResponseCache,
+    store=TTLCache(maxsize=d.cache_spec()["capacity"], ttl=d.cache_spec()["ttl_s"]),
+    vary=VARY,
+)
+
+
+def cache_route(size, vary=()):
+    async def handler(response: Response):
+        if vary:
+            response.headers["vary"] = ", ".join(vary)
+        response.headers["x-rb-serial"] = d.next_serial()
+        return d.payload(size)
+    return handler
+
+
+# rb:snippet cache.small cache.medium cache.large
 for _size in ("small", "medium", "large"):
-    app.add_api_route("/cached/" + _size, cached_route(_size), methods=["GET"])
+    cached.add_api_route("/" + _size, cache_route(_size), methods=["GET"])
+# rb:snippet cache.vary_one cache.vary_many
+for _which in ("one", "many"):
+    _on = d.vary_on(_which)
+    cached.add_api_route("/vary/" + _which, cache_route("small", _on), methods=["GET"])
+
+app.mount("/cache", cached)
 
 
 # ---- body: bind, validate, and the two rejection contracts ---------------------------

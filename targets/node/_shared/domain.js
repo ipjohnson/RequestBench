@@ -201,9 +201,24 @@ export const payloads = fixture.payloads;
 export const auth = fixture.auth;
 
 // Not pre-serialized. json.small against json.large is one fixture read, one serialize and
-// one write at three sizes; handing back a cached string would measure none of it.
+// one write at three sizes; handing back a stored string would measure none of it.
 export const payload = (size) => payloads[size].body;
-export const etagOf = (size) => payloads[size].etag;
+
+// ---- the etag and cache families --------------------------------------------------
+//
+// No ETag value here. Each framework's own conditional machinery computes the validator
+// from the body it is about to send, so it differs by target and each one declares its
+// digest in /__meta. A driver reads the tag off a first response rather than looking it up.
+//
+// What is shared is the store's shape. The key count is derived in the fixture from the
+// vary values the plan sends, because a store smaller than that evicts inside the measured
+// window and the family would report eviction policy instead of the feature.
+export const cacheSpec = fixture.cache;
+export const CACHE_TTL_MS = fixture.cache.ttl_s * 1000;
+export const CACHE_MAX = fixture.cache.capacity;
+
+/** The header names one vary row is keyed on, in the fixture's order. */
+export const varyOn = (which) => Object.keys(fixture.cache.vary[which]);
 
 // The strings every target answers with. Spelled once so five targets cannot drift on a
 // word, which is the kind of difference that reads as a framework result.

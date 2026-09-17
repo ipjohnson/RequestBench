@@ -23,8 +23,11 @@ from starlette.responses import JSONResponse, PlainTextResponse, Response
 from starlette.routing import Route
 from starlette.templating import Jinja2Templates
 
+from cachetools import TTLCache
+
 from _hosts import host
 from _shared import domain as d
+from _shared.asgi import ConditionalGet, ResponseCache
 
 # ---- validation: this target's own walk ----------------------------------------------
 #
@@ -112,7 +115,10 @@ def validated(body, first_error=False):
 
 
 META = host.meta("starlette", adapter="uvicorn",
-                 template="jinja2 " + host.dist_version("jinja2"))
+                 template="jinja2 " + host.dist_version("jinja2"),
+                 etag="sha1 (starlette ships no conditional handling)",
+                 cache="starlette middleware over cachetools "
+                       + host.dist_version("cachetools"))
 
 
 def get(path, endpoint, **kw):
@@ -252,23 +258,39 @@ def compressed_route(size):
     return handler
 
 
-def cached_route(size):
-    """Sets the validators and answers the conditional. The ETag is pinned in the fixture,
-    so what this measures is emitting the header and comparing it rather than hashing a
-    body.
+# ---- etag and cache: middleware on the route, which is Starlette's own scoping --------
+#
+# Starlette ships neither a conditional-request handler for a dynamic response nor a
+# response cache, so both middlewares are held in _shared/asgi.py. What is Starlette's own
+# is where they are attached: Route takes its own middleware list, so each reaches the
+# feature's routes and nothing else without a mount or a sub-application in the way.
+#
+# One store for the target, sized from the fixture, shared by every instance below: the
+# capacity derived from the key count means what it says only if there is one store to
+# count against.
 
-    The comparison requires a non-empty header: matching a missing if-none-match against an
-    empty ETag answers 304 to a client that never asked a conditional question.
-    """
-    etag = d.etag_of(size)
+CONDITIONAL = [Middleware(ConditionalGet)]
+STORE = TTLCache(maxsize=d.cache_spec()["capacity"], ttl=d.cache_spec()["ttl_s"])
 
-    async def handler(request: Request):
-        headers = {"etag": etag, "cache-control": d.CACHEABLE,
-                   "x-rb-serial": d.next_serial()}
-        if request.headers.get("if-none-match") == etag:
-            return Response(status_code=304, headers=headers)
-        return JSONResponse(d.payload(size), headers=headers)
+
+def etag_route(size):
+    async def handler(_: Request):
+        return JSONResponse(d.payload(size), headers={
+            "cache-control": d.CACHEABLE, "x-rb-serial": d.next_serial()})
     return handler
+
+
+def cache_route(size, vary=()):
+    headers = {"vary": ", ".join(vary)} if vary else {}
+
+    async def handler(_: Request):
+        return JSONResponse(d.payload(size),
+                            headers={**headers, "x-rb-serial": d.next_serial()})
+    return handler
+
+
+def cache_scoped(path, vary=()):
+    return [Middleware(ResponseCache, store=STORE, vary={path: vary})]
 
 
 # Starlette's own view facility. Jinja2Templates is what it ships for server-side
@@ -394,9 +416,18 @@ routes = [
     get("/compressed/small", compressed_route("small"), middleware=gzip_scoped),
     get("/compressed/medium", compressed_route("medium"), middleware=gzip_scoped),
     get("/compressed/large", compressed_route("large"), middleware=gzip_scoped),
-    get("/cached/small", cached_route("small")),
-    get("/cached/medium", cached_route("medium")),
-    get("/cached/large", cached_route("large")),
+    # rb:snippet etag.small etag.large etag.match_large etag.stale_large
+    get("/etag/small", etag_route("small"), middleware=CONDITIONAL),
+    get("/etag/large", etag_route("large"), middleware=CONDITIONAL),
+    # rb:snippet cache.small cache.medium cache.large
+    get("/cache/small", cache_route("small"), middleware=cache_scoped("/cache/small")),
+    get("/cache/medium", cache_route("medium"), middleware=cache_scoped("/cache/medium")),
+    get("/cache/large", cache_route("large"), middleware=cache_scoped("/cache/large")),
+    # rb:snippet cache.vary_one cache.vary_many
+    get("/cache/vary/one", cache_route("small", d.vary_on("one")),
+        middleware=cache_scoped("/cache/vary/one", d.vary_on("one"))),
+    get("/cache/vary/many", cache_route("small", d.vary_on("many")),
+        middleware=cache_scoped("/cache/vary/many", d.vary_on("many"))),
     get("/template/small", template_route("small")),
     get("/template/medium", template_route("medium")),
     post("/body/bind/small", bind),

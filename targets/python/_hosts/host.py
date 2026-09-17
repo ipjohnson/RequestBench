@@ -28,7 +28,7 @@ def runtime():
     return "%s %s" % (platform.python_implementation().lower(), platform.python_version())
 
 
-def meta(framework, dist=None, adapter="", template=""):
+def meta(framework, dist=None, adapter="", template="", etag="", cache=""):
     """What a target answers on /__meta. Outside the blend spec on purpose: it is not
     measured and not conformance-checked, it exists so a point on the results chart can be
     attributed to a framework version rather than to a different runner.
@@ -36,6 +36,11 @@ def meta(framework, dist=None, adapter="", template=""):
     `template` is the engine this target renders the template family with. Each target
     passes its own, because each reaches an engine through its own framework's view
     facility and two targets in one language need not agree on which.
+
+    `etag` and `cache` say the same thing about the two caching families: which digest
+    computed the validator, and what stored the response. Both are the framework's own
+    facility where it ships one, so the rows are read against the declaration rather than
+    across targets that are not doing the same thing.
     """
     server = adapter
     if adapter:
@@ -48,6 +53,8 @@ def meta(framework, dist=None, adapter="", template=""):
         "runtime": runtime(),
         "adapter": server,
         "template": template,
+        "etag": etag,
+        "cache": cache,
     }
 
 

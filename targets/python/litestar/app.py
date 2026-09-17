@@ -31,8 +31,16 @@ from litestar.plugins.jinja import JinjaTemplateEngine
 from litestar.template.config import TemplateConfig
 from litestar.types import ASGIApp, Receive, Scope, Send
 
+from litestar.config.response_cache import ResponseCacheConfig
+
 from _hosts import host
 from _shared import domain as d
+from _shared.asgi import ConditionalGet
+
+#: Well past the roughly 600s a target is up for, so no key expires inside the run. The
+#: store Litestar ships is unbounded, which clears the capacity the fixture derives from
+#: the key count without having to be told it.
+CACHE_TTL = d.cache_spec()["ttl_s"]
 
 
 # ---- validation: a typed data parameter, decoded and checked by msgspec --------------
@@ -69,7 +77,9 @@ class OrderIn:
         )
 
 META = host.meta("litestar", adapter="uvicorn",
-                 template="jinja2 " + host.dist_version("jinja2"))
+                 template="jinja2 " + host.dist_version("jinja2"),
+                 etag="sha1 (litestar emits a validator, it does not compare one)",
+                 cache="litestar response cache, MemoryStore")
 
 
 # ---- middleware and guards -----------------------------------------------------------
@@ -106,23 +116,26 @@ gzip_scoped = [DefineMiddleware(
 )]
 
 
-def validators(size):
-    return {"etag": d.etag_of(size), "cache-control": d.CACHEABLE,
-            "x-rb-serial": d.next_serial()}
+# ---- etag and cache: middleware on the handler, and Litestar's own response cache -----
+#
+# Litestar's ETag datastructure emits a value the handler already knows, and nothing in it
+# answers if-none-match for a dynamic response: only FileResponse does. So the conditional
+# is the shared ASGI middleware, attached to the handler, which is Litestar's own scoping
+# and the same way the compressed rows get theirs. The digest is declared in /__meta.
+#
+# The response cache is Litestar's, configured on the application and opted into per handler
+# with cache=. cache_key_builder is what folds a vary row's header values into the key, and
+# because it is the handler's own it does not have to be one builder for every route.
+
+conditional_scoped = [DefineMiddleware(ConditionalGet)]
 
 
-def conditional(request: Request, size: str) -> Response:
-    """Sets the validators and answers the conditional. The ETag is pinned in the fixture,
-    so what this measures is emitting the header and comparing it rather than hashing a
-    body.
-
-    The comparison requires a non-empty header: matching a missing if-none-match against an
-    empty ETag answers 304 to a client that never asked a conditional question.
-    """
-    headers = validators(size)
-    if request.headers.get("if-none-match") == headers["etag"]:
-        return Response(None, status_code=304, headers=headers)
-    return Response(d.payload(size), headers=headers)
+def keyed_on(names):
+    """A key built from the path and the named headers, for one vary row."""
+    def build(request: Request) -> str:
+        return "|".join([request.url.path,
+                         *(request.headers.get(n, "") for n in names)])
+    return build
 
 
 # ---- baseline, json, parameters, query, headers --------------------------------------
@@ -237,19 +250,46 @@ async def compressed_large() -> Response:
     return Response(d.payload("large"), headers={"x-rb-serial": d.next_serial()})
 
 
-@get("/cached/small")
-async def cached_small(request: Request) -> Response:
-    return conditional(request, "small")
+# rb:snippet etag.small etag.large etag.match_large etag.stale_large
+@get("/etag/small", middleware=conditional_scoped)
+async def etag_small() -> Response:
+    return Response(d.payload("small"), headers={
+        "cache-control": d.CACHEABLE, "x-rb-serial": d.next_serial()})
 
 
-@get("/cached/medium")
-async def cached_medium(request: Request) -> Response:
-    return conditional(request, "medium")
+@get("/etag/large", middleware=conditional_scoped)
+async def etag_large() -> Response:
+    return Response(d.payload("large"), headers={
+        "cache-control": d.CACHEABLE, "x-rb-serial": d.next_serial()})
 
 
-@get("/cached/large")
-async def cached_large(request: Request) -> Response:
-    return conditional(request, "large")
+# rb:snippet cache.small cache.medium cache.large
+@get("/cache/small", cache=CACHE_TTL)
+async def cache_small() -> Response:
+    return Response(d.payload("small"), headers={"x-rb-serial": d.next_serial()})
+
+
+@get("/cache/medium", cache=CACHE_TTL)
+async def cache_medium() -> Response:
+    return Response(d.payload("medium"), headers={"x-rb-serial": d.next_serial()})
+
+
+@get("/cache/large", cache=CACHE_TTL)
+async def cache_large() -> Response:
+    return Response(d.payload("large"), headers={"x-rb-serial": d.next_serial()})
+
+
+# rb:snippet cache.vary_one cache.vary_many
+@get("/cache/vary/one", cache=CACHE_TTL, cache_key_builder=keyed_on(d.vary_on("one")))
+async def cache_vary_one() -> Response:
+    return Response(d.payload("small"), headers={
+        "vary": ", ".join(d.vary_on("one")), "x-rb-serial": d.next_serial()})
+
+
+@get("/cache/vary/many", cache=CACHE_TTL, cache_key_builder=keyed_on(d.vary_on("many")))
+async def cache_vary_many() -> Response:
+    return Response(d.payload("small"), headers={
+        "vary": ", ".join(d.vary_on("many")), "x-rb-serial": d.next_serial()})
 
 
 # ---- body ----------------------------------------------------------------------------
@@ -386,7 +426,8 @@ app = Litestar(
         middleware_none, middleware_four, middleware_sixteen,
         authorized_small,
         compressed_small, compressed_medium, compressed_large,
-        cached_small, cached_medium, cached_large,
+        etag_small, etag_large,
+        cache_small, cache_medium, cache_large, cache_vary_one, cache_vary_many,
         bind_small, bind_medium, validate_small, validate_medium, validate_first,
         domain_orders, create_order, lookup_order, replace_order,
         customer_summary, region_report, patch_customer, delete_line,
@@ -402,6 +443,7 @@ app = Litestar(
         d.NotFound: not_found,
     },
     openapi_config=None,
+    response_cache_config=ResponseCacheConfig(default_expiration=CACHE_TTL),
     template_config=TemplateConfig(
         directory=pathlib.Path(__file__).resolve().parent / "templates",
         engine=JinjaTemplateEngine,

@@ -48,23 +48,74 @@ function loadPlan(only) {
     if (missing.length) throw new Error(`unknown endpoint id: ${missing.join(", ")}`);
     eps = eps.filter((e) => want.has(e.id));
   }
-  return { eps };
+  return { eps, captures: plan.captures ?? {} };
+}
+
+// ---- the two-phase capture ----------------------------------------------------------
+// One header value in the plan is a {capture.<name>} placeholder rather than a literal,
+// because it is whatever this target's own ETag machinery computed and no committed file
+// can hold it. Resolved once here, before any worker starts, and passed down as a plain
+// value: the tag is constant for as long as the body is, so reading it per request would
+// measure the extra request.
+const PLACEHOLDER = /\{capture\.([a-z_]+)\}/g;
+
+const referenced = (eps) => new Set(eps.flatMap((ep) =>
+  [...(ep.header_variants ?? [ep.headers ?? {}])].flatMap((h) =>
+    Object.values(h).flatMap((v) => [...v.matchAll(PLACEHOLDER)].map((m) => m[1])))));
+
+function ask(host, port, method, path) {
+  return new Promise((resolve, reject) => {
+    const req = http.request({ host, port, path, method }, (res) => {
+      res.resume();
+      res.on("end", () => resolve(res.headers));
+    });
+    req.on("error", reject);
+    req.end();
+  });
+}
+
+async function resolveCaptures(host, port, captures, eps) {
+  const want = referenced(eps);
+  const out = {};
+  for (const [name, cap] of Object.entries(captures)) {
+    if (!want.has(name)) continue;
+    const headers = await ask(host, port, cap.method, cap.path);
+    const value = headers[cap.header.toLowerCase()];
+    if (value === undefined) {
+      throw new Error(`capture ${name}: ${cap.method} ${cap.path} answered no ${cap.header} `
+        + "header, so the conditional arm cannot be sent");
+    }
+    out[name] = value;
+  }
+  return out;
+}
+
+/** The plan's header sets with every capture filled in, one per vary combination. */
+function headerSets(ep, captured) {
+  const fill = (h) => Object.fromEntries(Object.entries(h).map(([k, v]) =>
+    [k, v.replace(PLACEHOLDER, (_, name) => captured[name])]));
+  const base = { ...(ep.headers ?? {}) };
+  if (ep.body) {
+    base["content-type"] = "application/json";
+    base["content-length"] = Buffer.byteLength(ep.body);
+  }
+  const variants = ep.header_variants ?? [{}];
+  return variants.map((v) => {
+    const h = fill({ ...base, ...v });
+    return Object.keys(h).length ? h : undefined;
+  });
 }
 
 // ---- worker -------------------------------------------------------------------------
 if (!isMainThread) {
-  const { host, port, rate, seconds, offsetUs, maxInflight, seed, record, only } = workerData;
+  const { host, port, rate, seconds, offsetUs, maxInflight, seed, record, only,
+          captured } = workerData;
   const { eps } = loadPlan(only);
-  // Header objects are built once per endpoint rather than per request: they are constant
-  // across an endpoint's instances, and this is the hot loop.
-  const headersOf = eps.map((ep) => {
-    const h = { ...(ep.headers ?? {}) };
-    if (ep.body) {
-      h["content-type"] = "application/json";
-      h["content-length"] = Buffer.byteLength(ep.body);
-    }
-    return Object.keys(h).length ? h : undefined;
-  });
+  // Header objects are built once per endpoint rather than per request, because this is the
+  // hot loop. A vary row has one per combination instead of one for the endpoint, which is
+  // still a lookup rather than an allocation: the instance drawn picks the combination, so
+  // a response cache sees each of them and has a key to hold for each.
+  const headersOf = eps.map((ep) => headerSets(ep, captured));
 
   const agent = new http.Agent({ keepAlive: true, maxSockets: maxInflight,
                                  maxFreeSockets: maxInflight, scheduling: "fifo",
@@ -89,8 +140,10 @@ if (!isMainThread) {
 
   function fire(idx, scheduledNs) {
     const ep = eps[idx];
-    const path = ep.paths[(rnd() * ep.paths.length) | 0];
-    const opts = { host, port, path, method: ep.method, agent, headers: headersOf[idx] };
+    const instance = (rnd() * ep.paths.length) | 0;
+    const sets = headersOf[idx];
+    const opts = { host, port, path: ep.paths[instance], method: ep.method, agent,
+                   headers: sets[instance % sets.length] };
     inflight++;
     const req = http.request(opts, (res) => {
       if (!accepted[idx].has(res.statusCode)) mismatch[idx]++;
@@ -158,7 +211,10 @@ else {
   const maxInflight = Number(argv.maxInflight ?? 256);
   const record = argv.record !== "false";
   const only = argv.only ? argv.only.split(",").filter(Boolean) : null;
-  const { eps } = loadPlan(only);
+  const { eps, captures } = loadPlan(only);
+  // Before anything is offered, and in this thread: four workers each asking the target for
+  // the same tag would be four requests for one answer, and they could disagree.
+  const captured = await resolveCaptures(host, Number(port), captures, eps);
 
   const perWorker = rate / workers;
   const results = [];
@@ -168,7 +224,7 @@ else {
     const worker = new Worker(fileURLToPath(import.meta.url), {
       workerData: { host, port: Number(port), rate: perWorker, seconds,
                     offsetUs: (w * 1e6) / rate, maxInflight: Math.ceil(maxInflight / workers),
-                    seed: 0x9e3779b9 * (w + 1), record, only },
+                    seed: 0x9e3779b9 * (w + 1), record, only, captured },
     });
     worker.on("message", (m) => { results.push(m); resolve(); });
     worker.on("error", reject);

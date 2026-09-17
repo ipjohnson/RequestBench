@@ -76,6 +76,11 @@ export const Target = z
     adapter: z.string().optional(),
     serializer: z.string().optional(),
     template: z.string().optional(),
+    // What computed the validator on the etag rows, and what stored the response on the
+    // cache rows. Both are the framework's own facility where it ships one, so the row is
+    // read against the declaration the way a template row is read against its engine.
+    etag: z.string().optional(),
+    cache: z.string().optional(),
     target_runtime: z.string().optional(),
     bundle_hash: z.string().optional(),
     code_hash: z.string().optional(),

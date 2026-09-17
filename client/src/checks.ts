@@ -18,11 +18,27 @@ const FOR_STATUS: Readonly<Record<number, readonly Rule[]>> = {
 };
 const NO_BODY = new Set([204, 304]);
 
-/** Families whose responses carry x-rb-serial. */
-export const FRESH_PREFIXES = ["compressed.", "cached."] as const;
+/** Families whose responses carry x-rb-serial, and whose handler must run every time. */
+export const FRESH_PREFIXES = ["compressed.", "etag."] as const;
+
+/** Families whose responses carry x-rb-serial, and whose handler must not run every time. */
+export const REPLAY_PREFIXES = ["cache."] as const;
 
 export const isFreshnessChecked = (endpointId: string): boolean =>
   FRESH_PREFIXES.some((p) => endpointId.startsWith(p));
+
+export const isReplayChecked = (endpointId: string): boolean =>
+  REPLAY_PREFIXES.some((p) => endpointId.startsWith(p));
+
+/**
+ * Whether a response of this status can be asked to carry x-rb-serial at all.
+ *
+ * A 304 is written by the framework's own conditional machinery, and what it copies across
+ * is the framework's choice: Django's ConditionalGetMiddleware carries the six headers RFC
+ * 9110 15.4.5 names and drops the rest. The status is the proof for that arm anyway, since
+ * a target that ignored the conditional request answers 200 with a body.
+ */
+export const canProveFreshness = (status: number): boolean => status !== 304;
 
 /** Last value wins on a duplicate, matching the Python dict comprehension. */
 function folded(headers: readonly Header[]): Map<string, string> {
@@ -117,6 +133,17 @@ export function bodyClass(contentType: string | undefined): string {
 export const contentEncoding = (headers: readonly Header[]): string =>
   folded(headers).get("content-encoding") ?? "";
 
+/**
+ * What a response cache would have to be keyed on to tell two of this plan's requests apart.
+ *
+ * The path and every header the request carried. A store keyed on fewer of them is not
+ * caught by comparing two keys, because two requests sharing a key here shared one there
+ * too; it is caught by counting, since a store that ignores a vary header answers fewer
+ * distinct stored responses than the plan sent distinct keys.
+ */
+export const cacheKeyOf = (path: string, sent: Readonly<Record<string, string>>): string =>
+  [path, ...Object.entries(sent).map(([k, v]) => `${k}=${v}`).sort()].join("|");
+
 export function serialOf(headers: readonly Header[], previous: number | null): number | null {
   const v = folded(headers).get("x-rb-serial");
   return v !== undefined && /^\d+$/.test(v) ? Number(v) : previous;
@@ -135,6 +162,28 @@ export function advanced(headers: readonly Header[], previous: number | null): s
   if (!/^\d+$/.test(v)) return `x-rb-serial ${JSON.stringify(v)} is not a number`;
   if (previous !== null && Number(v) <= previous) {
     return `x-rb-serial did not advance (${v} after ${previous})`;
+  }
+  return null;
+}
+
+/**
+ * Why x-rb-serial is unacceptable on a response the cache family expects to be replayed,
+ * or null.
+ *
+ * The counter that forbids a stored response everywhere else is what proves one here. A
+ * replayed response repeats the serial the handler wrote when it ran, so a serial that
+ * moved between two requests for the same cache key means nothing was replayed: either no
+ * response cache is on the route, or the store let the entry go inside the run. `first` is
+ * the serial this key answered the first time it was asked, or null when this is that
+ * first time.
+ */
+export function repeated(headers: readonly Header[], first: number | null): string | null {
+  const v = folded(headers).get("x-rb-serial");
+  if (v === undefined) return "no x-rb-serial (the response must say which run of the handler produced it)";
+  if (!/^\d+$/.test(v)) return `x-rb-serial ${JSON.stringify(v)} is not a number`;
+  if (first !== null && Number(v) !== first) {
+    return `x-rb-serial ${v} where the stored response carries ${first} `
+      + "(the handler ran again, so nothing was replayed)";
   }
   return null;
 }

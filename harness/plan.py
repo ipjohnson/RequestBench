@@ -5,10 +5,17 @@ conformance checker and the load generator sending byte-identical shapes, keeps 
 formatting out of the generator's hot loop, and makes correlated ids (an order and the
 customer who actually owns it) a build-time concern instead of a runtime one.
 
-Request headers are resolved here too, for the same reason paths are. Four families are
+Request headers are resolved here too, for the same reason paths are. Five families are
 defined by what the request carries rather than by where it points: the bearer token, the
-Accept-Encoding, the If-None-Match and the twenty-seven extra headers all have to be the
-same bytes for every target, and two of them are values only the fixture knows.
+Accept-Encoding, the If-None-Match, the vary values and the twenty-seven extra headers all
+have to be the same bytes for every target, and most of them are values only the fixture
+knows.
+
+Two of them cannot be finished here. A matching If-None-Match is whatever the target's own
+ETag machinery computed, so it is left as a {capture.<name>} placeholder and each driver
+resolves it against the target it is about to talk to. And the vary rows need a different
+header value on one instance than on the next, so those get a list of merged header sets
+rather than one; instance i sends combination i modulo the count.
 """
 import json, random, pathlib, re
 
@@ -23,6 +30,7 @@ INSTANCES = 512
 SEED = 424242
 
 ORDERS = FIX["orders"]
+FAMILIES = SPEC["families"]
 
 # Line counts are chosen so the serialized body lands in the same size regime as the
 # response payload of the same name. Asserted in build(), because "medium" meaning two
@@ -67,18 +75,45 @@ def correlate(strategy, params, rng):
         params["line"] = rng.choice(o["lines"])["id"]
     return params
 
-def fixture_value(dotted):
-    """Resolve {auth.token} or {payloads.large.etag} against the committed fixture."""
+def fixture_node(dotted):
+    """Resolve {auth.token} or {cache.vary.one} against the committed fixture."""
     node = FIX
     for part in dotted.split("."):
         node = node[part]
-    return str(node)
+    return node
+
+
+def resolve(dotted):
+    """One placeholder's replacement, or the placeholder itself.
+
+    A capture is not resolvable from a committed file by construction: it is whatever the
+    target answered, and the target has not been asked yet. It is carried through to the
+    plan unchanged and every driver fills it in against the target it is measuring.
+    """
+    if dotted.startswith("capture."):
+        return "{%s}" % dotted
+    return str(fixture_node(dotted))
 
 
 def header_set(name):
     raw = SPEC["header_sets"][name]
-    return {k: re.sub(r"\{([a-z_.]+)\}", lambda m: fixture_value(m.group(1)), v)
+    return {k: re.sub(r"\{([a-z_.]+)\}", lambda m: resolve(m.group(1)), v)
             for k, v in raw.items()}
+
+
+def header_variants(name):
+    """One merged header set per combination of the named axes' values.
+
+    The product is taken over the axes in the order the fixture holds them and over each
+    axis's values in the order it lists them, so a driver in any language reproduces the
+    same list. A response cache has to hold a key for every entry, which is what
+    harness/make_fixture.py derives its capacity from.
+    """
+    axes = fixture_node(SPEC["header_axes"][name]["from"])
+    combos = [{}]
+    for header, values in axes.items():
+        combos = [dict(c, **{header: v}) for c in combos for v in values]
+    return combos
 
 
 def build():
@@ -89,7 +124,7 @@ def build():
     assert 4096 < len(medium) < 16384, \
         "order_medium is %d bytes, which is not the medium regime" % len(medium)
     plan = {"version": SPEC["version"], "sampling": SPEC["sampling"],
-            "instances": INSTANCES, "endpoints": []}
+            "instances": INSTANCES, "captures": SPEC["captures"], "endpoints": []}
     for ep in SPEC["endpoints"]:
         rows = []
         for _ in range(INSTANCES):
@@ -111,12 +146,29 @@ def build():
                 entry[key] = ep[key]
         if "headers" in ep:
             entry["headers"] = header_set(ep["headers"])
+        if "header_axes" in ep:
+            entry["header_variants"] = header_variants(ep["header_axes"])
         if "body" in ep:
             b = BODIES[ep["body"]]
             # A malformed body is raw bytes on purpose; serializing it would repair it.
             entry["body"] = b if isinstance(b, str) else json.dumps(b, separators=(",", ":"))
         plan["endpoints"].append(entry)
     return plan
+
+def weights_of(blend, by_id):
+    """One blend's weight vector, whether it is written out or derived from the families.
+
+    A vector that names ids goes stale in silence: a renamed endpoint turns an entry into
+    a no-op, and the blend starts counting a row it was written to leave out. A derived
+    one cannot, because the reason a row is excluded lives on the family it belongs to and
+    a family added without that reason fails here instead.
+    """
+    if "derive" in blend:
+        want = blend["derive"]["comparable"]
+        return {eid: 0 for eid, ep in by_id.items()
+                if FAMILIES[ep["family"]].get("comparable") != want}
+    return blend["weights"]
+
 
 def check_references(plan):
     """Every base and every weighted id has to name an endpoint that exists.
@@ -130,9 +182,14 @@ def check_references(plan):
     publishes a number with nothing to call it, and a varies outside spec/endpoints.json's
     factors prints an id where a sentence belongs.
     """
-    ids = {e["id"] for e in plan["endpoints"]}
+    by_id = {e["id"]: e for e in plan["endpoints"]}
+    ids = set(by_id)
     factors = set(SPEC.get("factors", {}))
     bad = []
+    for name, family in sorted(FAMILIES.items()):
+        if "comparable" not in family:
+            bad.append("family %s does not say what it is comparable across; the rankable "
+                       "blend is derived from that field" % name)
     for e in plan["endpoints"]:
         eid = e["id"]
         if "base" in e and e["base"] not in ids:
@@ -144,15 +201,49 @@ def check_references(plan):
             bad.append("%s names itself as its base" % eid)
         if "varies" in e and e["varies"] not in factors:
             bad.append("%s varies %s, which is not in factors" % (eid, e["varies"]))
+        if e["family"] not in FAMILIES:
+            bad.append("%s is in family %s, which is not defined" % (eid, e["family"]))
     used = {e["varies"] for e in plan["endpoints"] if "varies" in e}
     for f in sorted(factors - used):
         bad.append("factor %s is defined and nothing varies by it" % f)
     bad.extend(cycles(plan, ids))
+    bad.extend(check_captures(plan))
     blends = json.loads((ROOT / "spec" / "blends.json").read_text())
     for name, blend in blends["blends"].items():
-        for eid in blend["weights"]:
+        if ("weights" in blend) == ("derive" in blend):
+            bad.append("blend %s carries %s; a vector is written out or derived, not both "
+                       "and not neither"
+                       % (name, "both weights and derive" if "weights" in blend
+                          else "neither weights nor derive"))
+            continue
+        for eid in weights_of(blend, by_id):
             if eid not in ids:
                 bad.append("blend %s weights %s, which is not an endpoint" % (name, eid))
+    return bad
+
+
+def check_captures(plan):
+    """A capture has to name a route the endpoint set already serves, and a placeholder
+    has to name a capture.
+
+    The first because a capture is a request every driver sends before it sends anything
+    else, and one pointed at a route no endpoint declares would be asking every target for
+    something the spec never said it serves. The second because an unresolved placeholder
+    reaches the target as the literal string, and a conditional request carrying
+    "{capture.etag_large}" as its If-None-Match answers 200 rather than failing.
+    """
+    bad = []
+    served = {e["path"].split("?")[0] for e in SPEC["endpoints"]}
+    for name, cap in SPEC["captures"].items():
+        if cap["path"] not in served:
+            bad.append("capture %s reads %s, which no endpoint serves" % (name, cap["path"]))
+    named = re.compile(r"\{capture\.([a-z_]+)\}")
+    for e in plan["endpoints"]:
+        for value in (e.get("headers") or {}).values():
+            for ref in named.findall(value):
+                if ref not in SPEC["captures"]:
+                    bad.append("%s asks for capture %s, which is not defined"
+                               % (e["id"], ref))
     return bad
 
 
@@ -201,5 +292,16 @@ if __name__ == "__main__":
     pairs = sum(1 for e in plan["endpoints"] if "base" in e)
     print("  %d carry a request body, %d carry request headers, %d name a base"
           % (bodies, hdrs, pairs))
+    varied = sum(len(e["header_variants"]) for e in plan["endpoints"]
+                 if "header_variants" in e)
+    print("  %d captured header value(s), %d header combination(s) across the vary rows"
+          % (len(plan["captures"]), varied))
+    by_id = {e["id"]: e for e in plan["endpoints"]}
+    blends = json.loads((ROOT / "spec" / "blends.json").read_text())["blends"]
+    for name, blend in sorted(blends.items()):
+        if "derive" in blend:
+            out = sorted(weights_of(blend, by_id))
+            print("  %s is derived: %d endpoint(s) zeroed (%s)"
+                  % (name, len(out), ", ".join(sorted({i.split(".")[0] for i in out}))))
     print("  sampling is %s: every endpoint is drawn with equal probability"
           % plan["sampling"])

@@ -27,12 +27,26 @@ from django.utils.decorators import markcoroutinefunction
 from _hosts import host
 from _shared import domain as d
 
+#: The cache.* routes: three keyed by path, two by header. Each gets a bookkeeping entry
+#: of its own in the store, which is why the capacity below is not the fixture's alone.
+CACHED_PATHS = 5
+
 settings.configure(
     DEBUG=False,
     ALLOWED_HOSTS=["*"],
     ROOT_URLCONF=__name__,
     SECRET_KEY="requestbench",
     MIDDLEWARE=[__name__ + ".Failures"],
+    # The response cache cache_page writes into, with an expiry past the end of a run so
+    # nothing re-misses inside the measured window. The capacity is the one the fixture
+    # derives from the key count plus one entry per cached path: cache_page keeps a second
+    # entry there remembering which headers that path varies on, and Django counts both
+    # against MAX_ENTRIES.
+    CACHES={"default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "OPTIONS": {"MAX_ENTRIES": d.cache_spec()["capacity"] + CACHED_PATHS},
+        "TIMEOUT": d.cache_spec()["ttl_s"],
+    }},
     LOGGING_CONFIG=None,
     USE_TZ=False,
     # Django's own template engine, which is what the framework ships and what its own
@@ -57,10 +71,16 @@ from django.shortcuts import render  # noqa: E402
 from django.urls import path  # noqa: E402
 from django.views import View  # noqa: E402
 from django.views.decorators.gzip import gzip_page  # noqa: E402
-from django.views.decorators.http import condition, require_GET, require_POST  # noqa: E402
+from django.middleware.http import ConditionalGetMiddleware  # noqa: E402
+from django.utils.decorators import decorator_from_middleware  # noqa: E402
+from django.views.decorators.cache import cache_page  # noqa: E402
+from django.views.decorators.http import require_GET, require_POST  # noqa: E402
+from django.views.decorators.vary import vary_on_headers  # noqa: E402
 
 META = host.meta("django-asgi", dist="django", adapter="daphne",
-                 template="django " + host.dist_version("django"))
+                 template="django " + host.dist_version("django"),
+                 etag="django ConditionalGetMiddleware md5",
+                 cache="django cache_page, LocMemCache")
 
 
 def body_of(request):
@@ -323,26 +343,47 @@ def compressed_view(size):
     return view
 
 
-# ---- cached: Django's own conditional decorator --------------------------------------
+# ---- etag: ConditionalGetMiddleware, scoped to the view ------------------------------
+#
+# The middleware hashes the response Django is about to send, writes the ETag when there is
+# none, and answers if-none-match with an HttpResponseNotModified, so nothing here compares
+# anything. Django's own decorator_from_middleware is what scopes it: as a MIDDLEWARE entry
+# it would hash every response in the blend and contaminate the rows these subtract.
+#
+# The 304 it builds carries the six headers RFC 9110 15.4.5 names and drops the rest, so
+# x-rb-serial does not survive it. That arm proves itself with its status instead: a target
+# that ignored the conditional request answers 200 with a body.
 
-def cached_view(size):
-    """The ETag is pinned in the fixture, so condition() is given it rather than asked to
-    hash the body: what this measures is emitting the header and comparing it. The
-    decorator answers the conditional itself and never reaches the view, which is why the
-    two headers it does not know about are set outside it."""
-    etag = d.etag_of(size)
+revalidates = decorator_from_middleware(ConditionalGetMiddleware)
 
-    @condition(etag_func=lambda *_, **__: etag)
-    async def inner(_):
-        return JsonResponse(d.payload(size))
 
+def etag_view(size):
     @require_GET
-    async def view(request, *args, **kwargs):
-        response = await inner(request, *args, **kwargs)
+    @revalidates
+    async def view(_):
+        response = JsonResponse(d.payload(size))
         response["cache-control"] = d.CACHEABLE
         response["x-rb-serial"] = d.next_serial()
         return response
     return view
+
+
+# ---- cache: cache_page, which is Django's own response cache --------------------------
+#
+# cache_page stores the whole response under a key built from the path and the request
+# headers named in the response's Vary, and replays it without entering the view.
+# vary_on_headers is what puts those names there, which is Django's own way to say what a
+# row is keyed on. The store is the locmem backend, capped from the fixture: the capacity
+# derived from the key count means what it says only if there is one store to count against.
+
+def cache_view(size, vary=()):
+    @require_GET
+    async def view(_):
+        return JsonResponse(d.payload(size),
+                            headers={"x-rb-serial": d.next_serial()})
+    if vary:
+        view = vary_on_headers(*vary)(view)
+    return cache_page(d.cache_spec()["ttl_s"])(view)
 
 
 # ---- body ----------------------------------------------------------------------------
@@ -454,9 +495,14 @@ urlpatterns = [
     path("compressed/small", compressed_view("small")),
     path("compressed/medium", compressed_view("medium")),
     path("compressed/large", compressed_view("large")),
-    path("cached/small", cached_view("small")),
-    path("cached/medium", cached_view("medium")),
-    path("cached/large", cached_view("large")),
+    # rb:snippet etag.match_large etag.stale_large
+    path("etag/small", etag_view("small")),
+    path("etag/large", etag_view("large")),
+    path("cache/small", cache_view("small")),
+    path("cache/medium", cache_view("medium")),
+    path("cache/large", cache_view("large")),
+    path("cache/vary/one", cache_view("small", d.vary_on("one"))),
+    path("cache/vary/many", cache_view("small", d.vary_on("many"))),
     path("body/bind/small", bind),
     path("body/bind/medium", bind),
     path("body/validate/small", validate_all),

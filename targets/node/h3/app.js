@@ -12,9 +12,10 @@ import { notBound } from "./validation.js";
 import authorized from "./routes/authorized.js";
 import baseline from "./routes/baseline.js";
 import body from "./routes/body.js";
-import cached from "./routes/cached.js";
+import cache from "./routes/cache.js";
 import compressed from "./routes/compressed.js";
 import domain from "./routes/domain.js";
+import etag from "./routes/etag.js";
 import headers from "./routes/headers.js";
 import json from "./routes/json.js";
 import middleware from "./routes/middleware.js";
@@ -23,7 +24,9 @@ import query from "./routes/query.js";
 import template from "./routes/template.js";
 
 export const meta = { framework: "h3", version: pkgVersion("h3"),
-                      runtime: "node " + process.versions.node, template: "ejs" };
+                      runtime: "node " + process.versions.node, template: "ejs",
+                      etag: "sha1-base64 (h3 compares, it does not hash)",
+                      cache: "ocache " + pkgVersion("ocache") + " memory storage" };
 
 // h3 v2 takes the error handler on the constructor; assigning app.onError afterwards is
 // silently ignored, which showed up as 500s where the contract says 422.
@@ -54,7 +57,7 @@ const app = new H3({
 });
 
 for (const register of [baseline, json, parameters, query, headers, middleware,
-                        authorized, compressed, cached, body, domain, template]) {
+                        authorized, compressed, etag, cache, body, domain, template]) {
   register(app, { meta: () => ({ ...meta, ...hostMeta() }) });
 }
 

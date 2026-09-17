@@ -15,10 +15,11 @@ import * as d from "../_shared/domain.js";
 import authorized from "./routes/authorized.js";
 import baseline from "./routes/baseline.js";
 import body from "./routes/body.js";
-import cached from "./routes/cached.js";
+import cache from "./routes/cache.js";
 import compressed from "./routes/compressed.js";
 import domain from "./routes/domain.js";
 import errors from "./routes/errors.js";
+import etag from "./routes/etag.js";
 import headers from "./routes/headers.js";
 import json from "./routes/json.js";
 import middleware from "./routes/middleware.js";
@@ -27,16 +28,20 @@ import query from "./routes/query.js";
 import template from "./routes/template.js";
 
 export const meta = { framework: "express", version: pkgVersion("express"),
-                      runtime: "node " + process.versions.node, template: "pug" };
+                      runtime: "node " + process.versions.node, template: "pug",
+                      etag: "express weak sha1-base64",
+                      cache: "express middleware over lru-cache " + pkgVersion("lru-cache") };
 
 const app = express();
 app.disable("x-powered-by");        // every production deployment does this
-app.disable("etag");                // the cached family emits the pinned one instead
+// Off everywhere but /etag, whose sub-app turns it back on. A hash on every JSON response
+// would contaminate the baseline the etag rows subtract.
+app.disable("etag");
 
 // Order is registration order in Express, and errors has to be last: its 404 is a
 // catch-all and would otherwise swallow every route registered after it.
 for (const register of [baseline, json, parameters, query, headers, middleware,
-                        authorized, compressed, cached, body, domain, template, errors]) {
+                        authorized, compressed, etag, cache, body, domain, template, errors]) {
   register(app, { meta: () => ({ ...meta, ...hostMeta() }) });
 }
 

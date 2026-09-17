@@ -24,6 +24,15 @@ uvicorn[standard]~=0.53
 daphne~=4.2
 gunicorn~=23.0
 
+# The etag and cache families. Three of the six frameworks answer a conditional request
+# themselves -- Django through ConditionalGetMiddleware, Flask through the add_etag and
+# make_conditional that Werkzeug's Response already carries -- and Litestar brings its own
+# response cache. The other three ship neither, so they hold the digest and drive a store
+# from their own middleware mechanism. cachetools is that store: an LRU with a TTL, sized
+# from the fixture. Flask-Caching is the response cache the Flask ecosystem reaches for.
+cachetools~=7.2
+Flask-Caching~=2.5
+
 # Five of the six render with Jinja2, because it is the engine their own framework
 # reaches for: Flask builds one, FastAPI and Starlette ship Jinja2Templates, Litestar's
 # JinjaTemplateEngine is what litestar[standard] installs, and Jinja is the only engine

@@ -75,14 +75,18 @@ describe("coverage", () => {
 
 describe("the committed exemplars", () => {
   // Real captured responses, which is the only end-to-end evidence available without
-  // booting a target. Three kinds of file contribute nothing and are skipped: one captured
+  // booting a target. Four kinds of file contribute nothing and are skipped: one captured
   // against an older blend, whose endpoint set is not this one; one for a baseline that has
-  // since been removed from the matrix; and a body long enough to have been truncated, which
-  // is not the whole envelope.
+  // since been removed from the matrix; a body long enough to have been truncated, which is
+  // not the whole envelope; and an entry for an endpoint the set no longer carries, since a
+  // capture taken before a row was renamed says nothing about the row that replaced it.
   type Exemplar = {
     endpoint: string;
     response: { status: number; headers: [string, string][]; body: string; truncated: boolean };
   };
+  // An endpoint the plan no longer has answers 200, so isError() drops it the same way it
+  // drops every endpoint that was never an error endpoint.
+  const NOT_IN_SET = { id: "", family: "", method: "GET", expect: 200, paths: [] };
   const dir = join(ROOT, "results", "exemplars");
   const files = readdirSync(dir).filter((f) => f.endsWith(".json"));
   const byId = new Map(plan.endpoints.map((e) => [e.id, e]));
@@ -96,7 +100,7 @@ describe("the committed exemplars", () => {
       { blend: string; endpoints: Exemplar[] };
     if (doc.blend !== plan.version) return [];
     return doc.endpoints
-      .filter((e) => !e.response.truncated && isError(byId.get(e.endpoint)!))
+      .filter((e) => !e.response.truncated && isError(byId.get(e.endpoint) ?? NOT_IN_SET))
       .map((e) => ({ file, target, entry: e }));
   });
 

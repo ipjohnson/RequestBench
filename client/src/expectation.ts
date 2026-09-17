@@ -77,12 +77,15 @@ export async function check(
   const endpoints: EndpointVerdict[] = [];
   let sent = 0;
 
-  for await (const { ep, visits } of run.endpoints()) {
+  for await (const { ep, visits, why } of run.endpoints()) {
     const answered = new Map(visits.map((v) => [`${ep.id} ${v.path}`, v]));
     sent += visits.length;
-    const problems = ep.id in expected.errors
-      ? errorProblems(ep, target, answered)
-      : requestProblems(ep, expected, answered);
+    // A capture the target would not give up. Nothing was sent, so there is nothing to
+    // compare, and calling that a pass would be worse than calling it a failure.
+    const problems = why ? [why]
+      : ep.id in expected.errors
+        ? errorProblems(ep, target, answered)
+        : requestProblems(ep, expected, answered);
     const verdict: EndpointVerdict = {
       id: ep.id,
       ok: problems.length === 0,

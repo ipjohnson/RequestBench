@@ -208,6 +208,50 @@ def body_class(ctype):
     return "none" if not ctype else "other"
 
 
+PLACEHOLDER = re.compile(r"\{capture\.([a-z_]+)\}")
+
+
+def resolve_captures(conn):
+    """The header values only the target on the other end of this connection can supply.
+
+    Every other request header in spec/plan.json is pre-resolved, because the same bytes
+    have to reach every target. A matching If-None-Match cannot be: the etag family lets
+    each framework's own machinery compute the validator, so the value is whatever this
+    target answered. A capture that does not come back leaves the placeholder in place, and
+    the endpoint that needs it answers 200 where it declared 304, which is reported as the
+    disagreement it is.
+    """
+    out = {}
+    for name, cap in (PLAN.get("captures") or {}).items():
+        try:
+            conn.request(cap["method"], cap["path"])
+            r = conn.getresponse()
+            r.read()
+            value = r.headers.get(cap["header"])
+        except Exception:
+            conn.close()
+            continue
+        if value is not None:
+            out[name] = value
+    return out
+
+
+def filled(headers, captured):
+    return {k: PLACEHOLDER.sub(lambda m: captured.get(m.group(1), m.group(0)), v)
+            for k, v in headers.items()}
+
+
+def request_headers(ep, instance, captured):
+    """What one instance of an endpoint carries. The vary rows send a different combination
+    on each instance, so a response cache has a key per combination to hold; every other
+    endpoint has one combination and this is it."""
+    variants = ep.get("header_variants") or [{}]
+    headers = dict(ep.get("headers") or {}, **variants[instance % len(variants)])
+    if ep.get("body"):
+        headers["content-type"] = "application/json"
+    return filled(headers, captured)
+
+
 def capture(hostport):
     """Replay the plan against a running target and return what it answered.
 
@@ -218,12 +262,11 @@ def capture(hostport):
     """
     host, _, port = hostport.partition(":")
     conn = http.client.HTTPConnection(host, int(port or 80), timeout=20)
+    captured = resolve_captures(conn)
     out = {}
     for ep in PLAN["endpoints"]:
         body = ep.get("body")
-        headers = dict(ep.get("headers") or {})
-        if body:
-            headers["content-type"] = "application/json"
+        headers = request_headers(ep, 0, captured)
         for path in dict.fromkeys(ep["paths"]):
             key = ep["id"] + " " + path
             try:
