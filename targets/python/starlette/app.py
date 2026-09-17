@@ -203,12 +203,39 @@ def payload_route(size):
     return handler
 
 
+# Starlette has no binder to plug into: request.query_params is what it parsed, and the
+# coercion is the handler's own work. This is this target's copy on purpose -- sharing one
+# coercer across six frameworks measured that function rather than the framework, which is
+# the defect #37 describes -- and a value that will not parse is the zero value rather than
+# an error contract the family does not have.
+
+def _qstr(q, k):
+    return q.get(k) or ""
+
+
+def _qint(q, k):
+    try:
+        return int(q.get(k))
+    except (TypeError, ValueError):
+        return 0
+
+
 async def query_one(request: Request):
-    return JSONResponse(d.coerce_one(request.query_params))
+    return JSONResponse({"page": _qint(request.query_params, "page")})
 
 
 async def query_many(request: Request):
-    return JSONResponse(d.coerce_many(request.query_params))
+    q = request.query_params
+    return JSONResponse({
+        "page": _qint(q, "page"),
+        "size": _qint(q, "size"),
+        "status": _qstr(q, "status"),
+        "category": _qstr(q, "category"),
+        "sort": _qstr(q, "sort"),
+        "q": _qstr(q, "q"),
+        "min_price": _qint(q, "min_price"),
+        "max_price": _qint(q, "max_price"),
+    })
 
 
 def compressed_route(size):
@@ -261,7 +288,9 @@ async def validate_first(request: Request):
 
 
 async def domain_orders(request: Request):
-    return JSONResponse(d.domain_filter(request.query_params))
+    q = request.query_params
+    return JSONResponse(d.domain_filter(_qint(q, "page"), _qint(q, "size"),
+                                        _qstr(q, "status")))
 
 
 async def create_order(request: Request):

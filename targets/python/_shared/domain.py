@@ -160,41 +160,6 @@ def created_location():
     return "/domain/orders/" + str(data().next_order_id)
 
 
-# ---- query families ------------------------------------------------------------------
-#
-# The query arms have to echo the coerced values or the parse can be skipped and the
-# endpoint measures nothing. What arrives here is the framework's own parsed query, not a
-# raw string: parsing it is the thing the family is measuring, so the framework has to do
-# it. Every one of them answers .get(name) with the first value.
-
-def _qstr(q, k):
-    return q.get(k) or ""
-
-
-def _qint(q, k):
-    try:
-        return int(q.get(k))
-    except (TypeError, ValueError):
-        return 0
-
-
-def coerce_one(q):
-    return {"page": _qint(q, "page")}
-
-
-def coerce_many(q):
-    return {
-        "page": _qint(q, "page"),
-        "size": _qint(q, "size"),
-        "status": _qstr(q, "status"),
-        "category": _qstr(q, "category"),
-        "sort": _qstr(q, "sort"),
-        "q": _qstr(q, "q"),
-        "min_price": _qint(q, "min_price"),
-        "max_price": _qint(q, "max_price"),
-    }
-
-
 # ---- body ----------------------------------------------------------------------------
 
 def leaf_count(v):
@@ -284,11 +249,12 @@ def get_order_line(oid, lid):
     raise NotFound
 
 
-def domain_filter(q):
+def domain_filter(page, size, status):
+    """The page, the size and the status arrive already bound, because binding them is the
+    framework's own job and lives in the target."""
     d = data()
-    page = max(0, _qint(q, "page"))
-    size = min(100, max(1, _qint(q, "size") or 25))
-    status = _qstr(q, "status")
+    page = max(0, page or 0)
+    size = min(100, max(1, size or 25))
     rows = [o for o in d.orders if o["status"] == status]
     start = page * size
     return {"page": page, "size": size, "total": len(rows),

@@ -213,16 +213,58 @@ async def parameters_two(_, one, two):
     return JsonResponse(d.payload("small"))
 
 
-# The framework parses the query string, which is the work this family is here to measure;
-# the domain coerces what it parsed, so all six targets answer the same values.
+# ---- query: a django.forms.Form over request.GET -------------------------------------
+#
+# Django's binder is the same facility as its validator: a Form declares its fields, and
+# is_valid() runs each field's to_python over the values the router parsed. cleaned_data is
+# what comes out, typed, and is what the arm answers.
+#
+# The fields are required, which is Django's default and what makes a missing parameter an
+# error rather than a None the view has to decide about. A value the field cannot convert
+# is refused the same way a body is, in Django's own vocabulary, because it is the same
+# facility refusing.
+
+
+class QueryOneForm(forms.Form):
+    page = forms.IntegerField()
+
+
+class QueryManyForm(forms.Form):
+    page = forms.IntegerField()
+    size = forms.IntegerField()
+    status = forms.CharField()
+    category = forms.CharField()
+    sort = forms.CharField()
+    q = forms.CharField()
+    min_price = forms.IntegerField()
+    max_price = forms.IntegerField()
+
+
+class OrderFilterForm(forms.Form):
+    """What domain.filter pages by."""
+
+    page = forms.IntegerField()
+    size = forms.IntegerField()
+    status = forms.CharField()
+
+
+def bound(form_class, request):
+    """The query as the form typed it, or Refused carrying what it put in form.errors."""
+    form = form_class(request.GET)
+    if form.is_valid():
+        return form.cleaned_data
+    raise Refused([{"field": field, "rule": e.code}
+                   for field, errs in form.errors.as_data().items() for e in errs])
+
+
 @require_GET
 async def query_one(request):
-    return JsonResponse(d.coerce_one(request.GET))
+    return JsonResponse(bound(QueryOneForm, request))
 
 
 @require_GET
 async def query_many(request):
-    return JsonResponse(d.coerce_many(request.GET))
+    return JsonResponse(bound(QueryManyForm, request))
 
 
 # ---- middleware: one view decorator per layer ----------------------------------------
@@ -318,7 +360,8 @@ class Orders(View):
     the view's -- which is what a class-based view is for."""
 
     async def get(self, request):
-        return JsonResponse(d.domain_filter(request.GET))
+        q = bound(OrderFilterForm, request)
+        return JsonResponse(d.domain_filter(q["page"], q["size"], q["status"]))
 
     async def post(self, request):
         out = validated(request)

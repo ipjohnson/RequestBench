@@ -185,16 +185,28 @@ def parameters_two(one, two):
     return small()
 
 
-# The framework parses the query string, which is the work this family is here to measure;
-# the domain coerces what it parsed, so all six targets answer the same values.
+# Flask has no typed binder, but request.args is Werkzeug's own MultiDict and its get()
+# takes the conversion: `type=int` runs it and answers the default if the value is missing
+# or will not convert. So the coercion is the framework's rather than a walk this target
+# holds, and the family keeps its single 200 contract.
 @app.get("/query/one")
 def query_one():
-    return jsonify(d.coerce_one(request.args))
+    return jsonify({"page": request.args.get("page", 0, type=int)})
 
 
 @app.get("/query/many")
 def query_many():
-    return jsonify(d.coerce_many(request.args))
+    a = request.args
+    return jsonify({
+        "page": a.get("page", 0, type=int),
+        "size": a.get("size", 0, type=int),
+        "status": a.get("status", ""),
+        "category": a.get("category", ""),
+        "sort": a.get("sort", ""),
+        "q": a.get("q", ""),
+        "min_price": a.get("min_price", 0, type=int),
+        "max_price": a.get("max_price", 0, type=int),
+    })
 
 
 # The handler reads no header at all, so headers.many minus headers.few is the cost of
@@ -335,7 +347,9 @@ def validate_first():
 
 @app.get("/domain/orders")
 def domain_orders():
-    return jsonify(d.domain_filter(request.args))
+    a = request.args
+    return jsonify(d.domain_filter(a.get("page", 0, type=int), a.get("size", 0, type=int),
+                                   a.get("status", "")))
 
 
 @app.post("/domain/orders")

@@ -154,16 +154,20 @@ async def parameters_two():
     return small()
 
 
-# The framework parses the query string, which is the work this family is here to measure;
-# the domain coerces what it parsed, so all six targets answer the same values.
+# Declared parameters, which is FastAPI's whole query story: the annotation is the binding,
+# and Pydantic coerces the string the router parsed into it before the handler runs. The
+# default is what a missing parameter is; a value Pydantic cannot coerce is a
+# RequestValidationError, which the handler above answers with FastAPI's own 422 envelope.
 @app.get("/query/one")
-async def query_one(request: Request):
-    return d.coerce_one(request.query_params)
+async def query_one(page: int = 0):
+    return {"page": page}
 
 
 @app.get("/query/many")
-async def query_many(request: Request):
-    return d.coerce_many(request.query_params)
+async def query_many(page: int = 0, size: int = 0, status: str = "", category: str = "",
+                     sort: str = "", q: str = "", min_price: int = 0, max_price: int = 0):
+    return {"page": page, "size": size, "status": status, "category": category,
+            "sort": sort, "q": q, "min_price": min_price, "max_price": max_price}
 
 
 # The handler reads no header at all, so headers.many minus headers.few is the cost of
@@ -300,8 +304,8 @@ async def validate_first(body: OrderIn):
 # ---- domain --------------------------------------------------------------------------
 
 @app.get("/domain/orders")
-async def domain_orders(request: Request):
-    return d.domain_filter(request.query_params)
+async def domain_orders(page: int = 0, size: int = 0, status: str = ""):
+    return d.domain_filter(page, size, status)
 
 
 @app.post("/domain/orders", status_code=201)

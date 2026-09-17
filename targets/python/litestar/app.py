@@ -170,16 +170,21 @@ async def parameters_two() -> dict:
     return d.payload("small")
 
 
-# The framework parses the query string, which is the work this family is here to measure;
-# the domain coerces what it parsed, so all six targets answer the same values.
+# Declared parameters, which is how Litestar binds a query: the annotation is the binding,
+# and msgspec coerces the string the router parsed into it before the handler runs. The
+# default is what a missing parameter is; a value msgspec cannot coerce is a
+# ValidationException, which is Litestar's own 400.
 @get("/query/one")
-async def query_one(request: Request) -> dict:
-    return d.coerce_one(request.query_params)
+async def query_one(page: int = 0) -> dict:
+    return {"page": page}
 
 
 @get("/query/many")
-async def query_many(request: Request) -> dict:
-    return d.coerce_many(request.query_params)
+async def query_many(page: int = 0, size: int = 0, status: str = "", category: str = "",
+                     sort: str = "", q: str = "", min_price: int = 0,
+                     max_price: int = 0) -> dict:
+    return {"page": page, "size": size, "status": status, "category": category,
+            "sort": sort, "q": q, "min_price": min_price, "max_price": max_price}
 
 
 # The handler reads no header at all, so headers.many minus headers.few is the cost of
@@ -277,8 +282,8 @@ async def validate_first(data: OrderIn) -> dict:
 # ---- domain --------------------------------------------------------------------------
 
 @get("/domain/orders")
-async def domain_orders(request: Request) -> dict:
-    return d.domain_filter(request.query_params)
+async def domain_orders(page: int = 0, size: int = 0, status: str = "") -> dict:
+    return d.domain_filter(page, size, status)
 
 
 @post("/domain/orders")
