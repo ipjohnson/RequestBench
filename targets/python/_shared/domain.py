@@ -72,22 +72,6 @@ class NotFound(Exception):
     """Every lookup that misses. Handlers never spell the 404 themselves."""
 
 
-class Invalid(Exception):
-    """A 422 and the field errors that go in its body."""
-
-    def __init__(self, errors):
-        super().__init__("validation failed")
-        self.errors = errors
-
-
-def _err(field, rule):
-    return {"field": field, "rule": rule}
-
-
-def invalid_body(errors):
-    return {"error": "validation_failed", "errors": errors}
-
-
 def not_found_body():
     return {"error": "not_found"}
 
@@ -96,20 +80,22 @@ def forbidden_body():
     return {"error": "forbidden"}
 
 
-def malformed():
-    """The 422 every target answers when the request body is not JSON at all. It is the
-    same exception the validator raises so ``errors.malformed`` and ``body.rejected_*``
-    share a shape."""
-    return Invalid([_err("body", "json")])
+class Malformed(Exception):
+    """A body that is not JSON at all. Not a validation failure: nothing validated it, so
+    it names no field, and each target answers it in its own envelope."""
+
+    def __init__(self, detail):
+        super().__init__(detail)
+        self.detail = detail
 
 
 def parse_body(raw):
-    """The request body as a value, or the 422. Targets whose framework parses for them
+    """The request body as a value, or Malformed. Targets whose framework parses for them
     call this only on the bytes it hands back untouched."""
     try:
         return json.loads(raw)
-    except (ValueError, TypeError):
-        raise malformed() from None
+    except (ValueError, TypeError) as e:
+        raise Malformed(str(e)) from None
 
 
 # ---- blend-v2 responses --------------------------------------------------------------
@@ -229,77 +215,30 @@ def bind_echo(body):
     return {"fields": leaf_count(body), "bytes": n, "echo": body}
 
 
-# ---- validation ----------------------------------------------------------------------
-#
-# Error field order matches the Node reference exactly; conform.py compares the 422 bodies,
-# so a reordered check here shows up as a conformance failure.
-
-def _is_int(v):
-    """Integral in the way ``Number.isInteger`` is: a JSON number with nothing after the
-    point. ``True`` and ``"3"`` are not numbers and do not pass -- bool is a subclass of
-    int in Python, which is the one place this differs from the other ports."""
-    if isinstance(v, bool):
-        return False
-    if isinstance(v, int):
-        return True
-    return isinstance(v, float) and v.is_integer()
+# ---- the order body, after validation -------------------------------------------------
+# Validating is the framework's own job and lives in each target: fastapi takes a Pydantic
+# model, litestar a typed dataclass msgspec fills, django-asgi a django.forms.Form, and
+# flask, starlette and sanic hold their own because none of the three has a validation
+# layer to use. What is left here is what happens once a body is known to be good, which
+# is the same work whichever framework proved it.
 
 
-def _req_field(errs, m, field, typ):
-    v = m.get(field)
-    if v is None:
-        errs.append(_err(field, "required"))
-    elif typ == "int" and not _is_int(v):
-        errs.append(_err(field, "int"))
-    elif typ == "string" and not isinstance(v, str):
-        errs.append(_err(field, "string"))
-    elif typ == "array" and not isinstance(v, list):
-        errs.append(_err(field, "array"))
-
-
-def validate_order(body, first_error=False):
-    """Reports every problem it finds, or stops at the first, which is what
-    ``body.rejected_all`` minus ``body.rejected_first`` states as a number: the same walk
-    in the same order, differing only in where it gives up."""
-    m = body if isinstance(body, dict) else {}
-    errs = []
-
-    def bail():
-        return first_error and errs
-
-    _req_field(errs, m, "customer_id", "int")
-    if not bail():
-        _req_field(errs, m, "status", "string")
-    if not bail():
-        _req_field(errs, m, "lines", "array")
-
-    rows = m.get("lines")
-    if isinstance(rows, list) and not bail():
-        if not rows:
-            errs.append(_err("lines", "min_length"))
-        for i, line in enumerate(rows):
-            if bail():
-                break
-            line = line if isinstance(line, dict) else {}
-            if not _is_int(line.get("product_id")):
-                errs.append(_err("lines[%d].product_id" % i, "int"))
-            qty = line.get("qty")
-            if not bail() and not (_is_int(qty) and qty >= 1):
-                errs.append(_err("lines[%d].qty" % i, "min"))
-    if errs:
-        raise Invalid(errs)
-
+def price_order(customer_id, status, lines):
+    """The work after the validator says yes: look each product up, carry the unit price
+    onto the line, and total it. Identical in every framework, which is why it is here and
+    the validating is not."""
     products = data().products_by_id
-    lines, total = [], 0
-    for i, line in enumerate(rows):
+    priced, total = [], 0
+    for i, line in enumerate(lines):
         pid, qty = int(line["product_id"]), int(line["qty"])
         p = products.get(pid)
         unit = p["price_cents"] if p else 0
-        lines.append({"id": i + 1, "product_id": pid, "qty": qty,
-                      "unit_cents": unit, "total_cents": unit * qty})
+        priced.append({"id": i + 1, "product_id": pid, "qty": qty,
+                       "unit_cents": unit, "total_cents": unit * qty})
         total += unit * qty
-    return {"customer_id": int(m["customer_id"]), "status": m["status"],
-            "lines": lines, "total_cents": total}
+    return {"customer_id": int(customer_id), "status": status,
+            "lines": priced, "total_cents": total}
+
 
 
 def patch_customer(cid, body):

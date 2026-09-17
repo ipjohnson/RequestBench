@@ -1,48 +1,76 @@
-// python:fastapi's error contract, against the envelope it answers today.
+// python:fastapi's error contract, against the bodies it actually sends.
 //
-// The bodies are a worked example of that envelope rather than a restatement of the schema,
-// so a schema loosened to accept anything fails here.
+// Both bodies here are 422 in the same envelope: Pydantic treats an unreadable body and a
+// wrong type as the same kind of finding, and only the entry's `type` separates them. That
+// is what the malformed schema pins.
 import { describe, expect, test } from "vitest";
 import { askIn, schemaAt, type Answer } from "@rb/schema";
 import pkg from "../src/index.js";
 
 const PAIRS = [["customer_id", "int"], ["status", "string"], ["lines", "array"]] as const;
 
-const judge = (answer: Answer): boolean => {
-  const declared = pkg.schemas["body.rejected_all"]!(
-    askIn(pkg.target, "body.rejected_all", [422], PAIRS));
-  return schemaAt(declared, answer.status)?.safeParse(answer).success ?? false;
+// The endpoint declares 422 and the answer arrives with whatever status it arrives with.
+// These are separate on purpose: letting the caller declare the status it is testing makes
+// every status assertion pass for the endpoints this package does not override.
+const judge = (
+  endpoint: string, answered: number, body: unknown,
+  pairs: readonly (readonly [string, string])[] = PAIRS,
+): boolean => {
+  const answer = { status: answered, body_class: "json", encoding: "", body } as Answer;
+  const declared = pkg.schemas[endpoint]!(askIn(pkg.target, endpoint, [422], pairs));
+  return schemaAt(declared, answered)?.safeParse(answer).success ?? false;
 };
 
-const answered = (body: unknown): Answer =>
-  ({ status: 422, body_class: "json", encoding: "", body });
+const EVERY = [
+  "authorized.denied", "body.rejected_all", "body.rejected_first",
+  "errors.malformed", "errors.not_found", "errors.unmatched",
+];
+
+const typeError = {
+  detail: [
+    { type: "int_parsing", loc: ["body", "customer_id"],
+      msg: "Input should be a valid integer, unable to parse string as an integer",
+      input: "not-an-int" },
+    { type: "string_type", loc: ["body", "status"],
+      msg: "Input should be a valid string", input: 42 },
+    { type: "list_type", loc: ["body", "lines"],
+      msg: "Input should be a valid list", input: "nope" },
+  ],
+};
+const jsonError = {
+  detail: [
+    { type: "json_invalid", loc: ["body", 29], msg: "JSON decode error", input: {},
+      ctx: { error: "Expecting value" } },
+  ],
+};
 
 describe(pkg.target, () => {
   test("declares a schema for every error endpoint", () => {
-    expect(Object.keys(pkg.schemas).sort()).toEqual([
-      "authorized.denied", "body.rejected_all", "body.rejected_first",
-      "errors.malformed", "errors.not_found", "errors.unmatched",
-    ]);
+    expect(Object.keys(pkg.schemas).sort()).toEqual(EVERY);
   });
 
-  test("accepts the shared validator's envelope, which is what it still answers", () => {
-    expect(judge(answered({
+  test("all three findings are reported, and 422 is the answer for a wrong type", () => {
+    expect(judge("body.rejected_all", 422, typeError)).toBe(true);
+    expect(judge("body.rejected_all", 400, typeError)).toBe(false);
+  });
+
+  test("a body that would not parse is the same envelope at the same status", () => {
+    expect(judge("errors.malformed", 422, jsonError)).toBe(true);
+  });
+
+  test("but the type is pinned there, so a validation finding is not accepted for it", () => {
+    expect(judge("errors.malformed", 422, typeError)).toBe(false);
+  });
+
+  test("rejects this repository's shared envelope, which FastAPI no longer answers", () => {
+    expect(judge("body.rejected_all", 422, {
       error: "validation_failed",
       errors: PAIRS.map(([field, rule]) => ({ field, rule })),
-    }))).toBe(true);
+    })).toBe(false);
   });
 
-  test("rejects an envelope it does not answer", () => {
-    expect(judge(answered({
-      type: "about:blank", title: "One or more validation errors occurred.", status: 422,
-      errors: { customer_id: ["int"], status: ["string"], lines: ["array"] },
-    }))).toBe(false);
-  });
-
-  test("rejects its own envelope missing a pair the endpoint declares", () => {
-    expect(judge(answered({
-      error: "validation_failed",
-      errors: [{ field: "customer_id", rule: "int" }],
-    }))).toBe(false);
+  test("rejects a finding that grew a key", () => {
+    expect(judge("body.rejected_all", 422,
+      { detail: [{ ...typeError.detail[0], extra: 1 }] })).toBe(false);
   });
 });

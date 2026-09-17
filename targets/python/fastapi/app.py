@@ -20,12 +20,47 @@ and the substitutes are what the numbers describe:
 import uvicorn
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from fastapi.exceptions import RequestValidationError
+from fastapi.encoders import jsonable_encoder
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
+from pydantic import BaseModel, Field
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.gzip import GZipMiddleware
 
 from _hosts import host
 from _shared import domain as d
+
+
+# ---- validation: a Pydantic model as the body parameter ------------------------------
+#
+# Declaring the parameter's type is the whole wiring. FastAPI builds a validator from the
+# model at import, runs it before the handler, and raises RequestValidationError itself
+# when the body does not fit, so no handler calls a validator. These routes used to take
+# `body: dict`, which made Pydantic a parser and nothing more.
+#
+# Pydantic draws no line between a wrong type and a wrong value: both are entries in the
+# same error list and both are a 422. A typed binder does the opposite, failing
+# deserialization before any rule runs.
+#
+# It lives here rather than in a sibling module because _hosts/container.py loads a target
+# by file path, and this directory is named after the package it measures.
+
+
+class LineIn(BaseModel):
+    product_id: int
+    qty: int = Field(ge=1)
+
+
+class OrderIn(BaseModel):
+    customer_id: int
+    status: str
+    lines: list[LineIn] = Field(min_length=1)
+
+    def order(self):
+        """The order, once Pydantic has said the body is one."""
+        return d.price_order(
+            self.customer_id, self.status,
+            [{"product_id": line.product_id, "qty": line.qty} for line in self.lines],
+        )
 
 # The documentation routes are off: they are three more entries in the router the
 # benchmark never asks for, and /docs is not part of the endpoint set.
@@ -60,17 +95,13 @@ async def not_found(_: Request, __: d.NotFound):
     return JSONResponse(d.not_found_body(), status_code=404)
 
 
-@app.exception_handler(d.Invalid)
-async def invalid(_: Request, exc: d.Invalid):
-    return JSONResponse(d.invalid_body(exc.errors), status_code=422)
-
-
-# FastAPI parses the request body itself, so a body that is not JSON fails inside the
-# framework rather than in the domain. This is what gives errors.malformed the same 422
-# body as body.rejected_all, which is the comparison that row exists for.
+# FastAPI raises this itself, for a body that will not parse and for one that parsed and
+# did not fit the model alike. Pydantic draws no line between the two: both are entries in
+# the same list, distinguished by their `type`, and both are a 422. The envelope is
+# FastAPI's own, so it is passed through rather than rewritten.
 @app.exception_handler(RequestValidationError)
-async def malformed(_: Request, __: RequestValidationError):
-    return JSONResponse(d.invalid_body(d.malformed().errors), status_code=422)
+async def invalid(_: Request, exc: RequestValidationError):
+    return JSONResponse({"detail": jsonable_encoder(exc.errors())}, status_code=422)
 
 
 # ---- baseline, json, parameters, query, headers --------------------------------------
@@ -246,19 +277,24 @@ async def bind_medium(body: dict):
     return d.bind_echo(body)
 
 
+# The parameter's type is the wiring: FastAPI validates against the model before the
+# handler runs, so a body that does not fit never reaches one.
 @app.post("/body/validate/small")
-async def validate_small(body: dict):
-    return d.validate_order(body)
+async def validate_small(body: OrderIn):
+    return body.order()
 
 
 @app.post("/body/validate/medium")
-async def validate_medium(body: dict):
-    return d.validate_order(body)
+async def validate_medium(body: OrderIn):
+    return body.order()
 
 
+# Pydantic collects every error and offers no way to stop at the first, so this row answers
+# what Pydantic answers. The gap to body.rejected_all is what FastAPI costs rather than the
+# same walk written twice.
 @app.post("/body/validate/first-error")
-async def validate_first(body: dict):
-    return d.validate_order(body, first_error=True)
+async def validate_first(body: OrderIn):
+    return body.order()
 
 
 # ---- domain --------------------------------------------------------------------------
@@ -269,8 +305,8 @@ async def domain_orders(request: Request):
 
 
 @app.post("/domain/orders", status_code=201)
-async def create_order(body: dict, response: Response):
-    out = d.validate_order(body)
+async def create_order(body: OrderIn, response: Response):
+    out = body.order()
     response.headers["location"] = d.created_location()
     return out
 
@@ -281,9 +317,9 @@ async def lookup_order(oid: str):
 
 
 @app.put("/domain/orders/{oid}")
-async def replace_order(oid: str, body: dict):
+async def replace_order(oid: str, body: OrderIn):
     existing = d.get_order(oid)
-    return {"id": existing["id"], **d.validate_order(body)}
+    return {"id": existing["id"], **body.order()}
 
 
 @app.get("/domain/customers/{cid}/summary")

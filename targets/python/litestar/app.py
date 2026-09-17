@@ -14,8 +14,13 @@ import uvicorn
 from litestar import Litestar, MediaType, Request, Response, delete, get, patch, post, put
 from litestar.config.compression import CompressionConfig
 from litestar.connection import ASGIConnection
+from dataclasses import dataclass
+from typing import Annotated
+
+from msgspec import Meta
+
 from litestar.exceptions import (ClientException, NotFoundException,
-                                 PermissionDeniedException)
+                                 PermissionDeniedException, ValidationException)
 from litestar.handlers.base import BaseRouteHandler
 from litestar.middleware import DefineMiddleware
 from litestar.middleware.compression import CompressionMiddleware
@@ -23,6 +28,40 @@ from litestar.types import ASGIApp, Receive, Scope, Send
 
 from _hosts import host
 from _shared import domain as d
+
+
+# ---- validation: a typed data parameter, decoded and checked by msgspec --------------
+#
+# Declaring the parameter's type is the whole wiring. Litestar builds a msgspec decoder
+# from the annotation at import and runs it before the handler, so a body that does not
+# fit never reaches one. These routes used to take `data: dict`, which made msgspec a
+# parser and nothing more.
+#
+# msgspec stops at the first field it cannot decode and reports that one, which is why the
+# first-error row and the collect-all row are the same answer here.
+#
+# It lives here rather than in a sibling module because _hosts/container.py loads a target
+# by file path, and this directory is named after the package it measures.
+
+
+@dataclass
+class LineIn:
+    product_id: int
+    qty: Annotated[int, Meta(ge=1)]
+
+
+@dataclass
+class OrderIn:
+    customer_id: int
+    status: str
+    lines: Annotated[list[LineIn], Meta(min_length=1)]
+
+    def order(self) -> dict:
+        """The order, once msgspec has said the body is one."""
+        return d.price_order(
+            self.customer_id, self.status,
+            [{"product_id": line.product_id, "qty": line.qty} for line in self.lines],
+        )
 
 META = host.meta("litestar", adapter="uvicorn")
 
@@ -219,18 +258,20 @@ async def bind_medium(data: dict) -> dict:
 
 
 @post("/body/validate/small", status_code=200)
-async def validate_small(data: dict) -> dict:
-    return d.validate_order(data)
+async def validate_small(data: OrderIn) -> dict:
+    return data.order()
 
 
 @post("/body/validate/medium", status_code=200)
-async def validate_medium(data: dict) -> dict:
-    return d.validate_order(data)
+async def validate_medium(data: OrderIn) -> dict:
+    return data.order()
 
 
+# msgspec reports the first field it could not decode and offers no collect-all mode, so
+# this row answers what Litestar answers.
 @post("/body/validate/first-error", status_code=200)
-async def validate_first(data: dict) -> dict:
-    return d.validate_order(data, first_error=True)
+async def validate_first(data: OrderIn) -> dict:
+    return data.order()
 
 
 # ---- domain --------------------------------------------------------------------------
@@ -241,8 +282,8 @@ async def domain_orders(request: Request) -> dict:
 
 
 @post("/domain/orders")
-async def create_order(data: dict) -> Response:
-    return Response(d.validate_order(data), status_code=201,
+async def create_order(data: OrderIn) -> Response:
+    return Response(data.order(), status_code=201,
                     headers={"location": d.created_location()})
 
 
@@ -252,9 +293,9 @@ async def lookup_order(oid: str) -> dict:
 
 
 @put("/domain/orders/{oid:str}")
-async def replace_order(oid: str, data: dict) -> dict:
+async def replace_order(oid: str, data: OrderIn) -> dict:
     existing = d.get_order(oid)
-    return {"id": existing["id"], **d.validate_order(data)}
+    return {"id": existing["id"], **data.order()}
 
 
 @get("/domain/customers/{cid:str}/summary")
@@ -303,16 +344,20 @@ def forbidden(_: Request, __: Exception) -> Response:
     return Response(d.forbidden_body(), status_code=403)
 
 
-def invalid(_: Request, exc: d.Invalid) -> Response:
-    return Response(d.invalid_body(exc.errors), status_code=422)
+# Litestar raises ValidationException for a body msgspec could not decode and for one it
+# decoded and then refused alike, and answers 400 for both. Its own envelope carries the
+# status, its own wording and the detail msgspec gave it, so it is passed through rather
+# than rewritten. NotFoundException and PermissionDeniedException are also ClientExceptions,
+# and their own handlers win because Litestar resolves along the MRO.
+def client_error(_: Request, exc: ClientException) -> Response:
+    """Anything else Litestar refused before a handler ran."""
+    return Response({"status_code": exc.status_code, "detail": exc.detail},
+                    status_code=exc.status_code)
 
 
-# Litestar turns a body msgspec could not decode into a ClientException, which is 400; the
-# endpoint set says 422, the same status as a body it parsed and rejected, so this is where
-# the two contracts meet. NotFoundException and PermissionDeniedException are also
-# ClientExceptions, and their own handlers win because Litestar resolves along the MRO.
-def malformed(_: Request, __: ClientException) -> Response:
-    return Response(d.invalid_body(d.malformed().errors), status_code=422)
+def invalid(_: Request, exc: ValidationException) -> Response:
+    return Response({"status_code": 400, "detail": exc.detail,
+                     "extra": exc.extra}, status_code=400)
 
 
 # rb:snippet errors.unmatched
@@ -334,9 +379,11 @@ app = Litestar(
     exception_handlers={
         NotFoundException: not_found,
         PermissionDeniedException: forbidden,
-        ClientException: malformed,
+        # ValidationException is itself a ClientException. Litestar resolves along the MRO,
+        # so the more specific one has to be registered for the body failures to reach it.
+        ValidationException: invalid,
+        ClientException: client_error,
         d.NotFound: not_found,
-        d.Invalid: invalid,
     },
     openapi_config=None,
 )

@@ -22,6 +22,91 @@ from werkzeug.exceptions import BadRequest, HTTPException
 from _hosts import host
 from _shared import domain as d
 
+# ---- validation: this target's own walk ----------------------------------------------
+#
+# Flask has no validation layer to plug into, so the handler validates and the walk lives
+# here. It is this target's copy on purpose: sharing one across six frameworks measured the
+# shared walk rather than the framework, which is the defect #35 describes.
+#
+# Reading the body as a value rather than decoding it into a shape means every wrong field
+# is seen, not only the first one a decoder tripped on. That is what keeps
+# body.rejected_all and body.rejected_first different here.
+
+
+def _err(field, rule):
+    return {"field": field, "rule": rule}
+
+
+def _is_int(v):
+    return isinstance(v, int) and not isinstance(v, bool)
+
+
+def _req_field(errs, m, field, typ):
+    v = m.get(field)
+    if v is None:
+        errs.append(_err(field, "required"))
+    elif typ == "int" and not _is_int(v):
+        errs.append(_err(field, "int"))
+    elif typ == "string" and not isinstance(v, str):
+        errs.append(_err(field, "string"))
+    elif typ == "array" and not isinstance(v, list):
+        errs.append(_err(field, "array"))
+
+
+class Refused(Exception):
+    """A body this target's walk refused, and the fields it named."""
+
+    def __init__(self, errors):
+        super().__init__("validation failed")
+        self.errors = errors
+
+
+def refused_body(errors):
+    return {"error": "validation_failed", "errors": errors}
+
+
+def not_bound_body(detail):
+    return {"error": "invalid_body", "detail": detail}
+
+
+def check_order(body, first_error=False):
+    """Every field that is wrong, or the first one when asked for that."""
+    m = body if isinstance(body, dict) else {}
+    errs = []
+
+    def bail():
+        return first_error and errs
+
+    _req_field(errs, m, "customer_id", "int")
+    if not bail():
+        _req_field(errs, m, "status", "string")
+    if not bail():
+        _req_field(errs, m, "lines", "array")
+
+    rows = m.get("lines")
+    if isinstance(rows, list) and not bail():
+        if not rows:
+            errs.append(_err("lines", "min_length"))
+        for i, line in enumerate(rows):
+            if bail():
+                break
+            line = line if isinstance(line, dict) else {}
+            if not _is_int(line.get("product_id")):
+                errs.append(_err("lines[%d].product_id" % i, "int"))
+            qty = line.get("qty")
+            if not bail() and not (_is_int(qty) and qty >= 1):
+                errs.append(_err("lines[%d].qty" % i, "min"))
+    return errs
+
+
+def validated(body, first_error=False):
+    """The order, or Refused naming every field the walk would not accept."""
+    errs = check_order(body, first_error)
+    if errs:
+        raise Refused(errs)
+    return d.price_order(body["customer_id"], body["status"], body["lines"])
+
+
 #: One process, and enough threads that the worker is not itself the queue.
 THREADS = 16
 
@@ -30,11 +115,12 @@ META = host.meta("flask", adapter="gunicorn")
 
 
 def body_of():
-    """The request body as a value, or the 422 every target answers when it is not JSON."""
+    """The request body as a value, or Malformed. Not a validation failure: nothing
+    validated it, so it names no field."""
     try:
         return request.get_json()
-    except BadRequest:
-        raise d.malformed() from None
+    except BadRequest as e:
+        raise d.Malformed(str(e)) from None
 
 
 def small():
@@ -232,17 +318,17 @@ def bind_medium():
 
 @app.post("/body/validate/small")
 def validate_small():
-    return jsonify(d.validate_order(body_of()))
+    return jsonify(validated(body_of()))
 
 
 @app.post("/body/validate/medium")
 def validate_medium():
-    return jsonify(d.validate_order(body_of()))
+    return jsonify(validated(body_of()))
 
 
 @app.post("/body/validate/first-error")
 def validate_first():
-    return jsonify(d.validate_order(body_of(), first_error=True))
+    return jsonify(validated(body_of(), first_error=True))
 
 
 # ---- domain --------------------------------------------------------------------------
@@ -254,7 +340,7 @@ def domain_orders():
 
 @app.post("/domain/orders")
 def create_order():
-    out = d.validate_order(body_of())
+    out = validated(body_of())
     return jsonify(out), 201, {"location": d.created_location()}
 
 
@@ -266,7 +352,7 @@ def lookup_order(oid):
 @app.put("/domain/orders/<oid>")
 def replace_order(oid):
     existing = d.get_order(oid)
-    return jsonify({"id": existing["id"], **d.validate_order(body_of())})
+    return jsonify({"id": existing["id"], **validated(body_of())})
 
 
 @app.get("/domain/customers/<cid>/summary")
@@ -320,9 +406,16 @@ def not_found(_):
     return jsonify(d.not_found_body()), 404
 
 
-@app.errorhandler(d.Invalid)
-def invalid(exc):
-    return jsonify(d.invalid_body(exc.errors)), 422
+# The walk this target holds answers a refused body; a body that never parsed answers
+# separately, because nothing validated it and it names no field.
+@app.errorhandler(Refused)
+def refused(exc):
+    return jsonify(refused_body(exc.errors)), 422
+
+
+@app.errorhandler(d.Malformed)
+def malformed(exc):
+    return jsonify(not_bound_body(exc.detail)), 400
 
 
 for _bp in (middleware_none, middleware_four, middleware_sixteen, authorized, compressed):
