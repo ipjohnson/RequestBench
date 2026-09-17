@@ -8,6 +8,7 @@ import Router from "@koa/router";
 import { hostMeta } from "../_shared/host.js";
 import { pkgVersion } from "../_shared/version.js";
 import * as d from "../_shared/domain.js";
+import { notBound } from "./validation.js";
 
 import authorized from "./routes/authorized.js";
 import baseline from "./routes/baseline.js";
@@ -50,15 +51,12 @@ app.use(async (ctx, next) => {
       ctx.body = d.notFoundBody();
     }
   } catch (err) {
-    // koa-bodyparser raises on a body it cannot parse, which is what errors.malformed asks
-    // for. The endpoint set answers 422 there, the same status as a body that parsed and
-    // failed validation.
-    if (err instanceof d.ValidationError) {
-      ctx.status = 422;
-      ctx.body = d.invalidBody(err.errors);
-    } else if (err.status === 400 || err instanceof SyntaxError) {
-      ctx.status = 422;
-      ctx.body = d.invalidBody(d.malformed().errors);
+    // koa-bodyparser raises on a body it cannot parse. That never reached the walk, so it
+    // names no field and answers 400; a body that parsed and then failed the walk answers
+    // 422 where the walk itself is.
+    if (err.status === 400 || err instanceof SyntaxError) {
+      ctx.status = 400;
+      ctx.body = notBound(err.message);
     } else {
       ctx.status = 500;
       ctx.body = { error: "internal", message: err.message };

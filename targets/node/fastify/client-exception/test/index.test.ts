@@ -1,21 +1,30 @@
-// node:fastify's error contract, against the envelope it answers today.
+// node:fastify's error contract, against the bodies it actually sends.
 //
-// The bodies are a worked example of that envelope rather than a restatement of the schema,
-// so a schema loosened to accept anything fails here.
+// The bodies here were taken from the running target. The code field is what carries the
+// distinction Fastify draws, so a parse failure must not be accepted where a schema failure
+// is declared, or the other way round.
 import { describe, expect, test } from "vitest";
 import { askIn, schemaAt, type Answer } from "@rb/schema";
 import pkg from "../src/index.js";
 
 const PAIRS = [["customer_id", "int"], ["status", "string"], ["lines", "array"]] as const;
 
-const judge = (answer: Answer): boolean => {
-  const declared = pkg.schemas["body.rejected_all"]!(
-    askIn(pkg.target, "body.rejected_all", [422], PAIRS));
-  return schemaAt(declared, answer.status)?.safeParse(answer).success ?? false;
+const judge = (endpoint: string, status: number, body: unknown): boolean => {
+  const answer = { status, body_class: "json", encoding: "", body } as Answer;
+  const declared = pkg.schemas[endpoint]!(askIn(pkg.target, endpoint, [status], PAIRS));
+  return schemaAt(declared, status)?.safeParse(answer).success ?? false;
 };
 
-const answered = (body: unknown): Answer =>
-  ({ status: 422, body_class: "json", encoding: "", body });
+// ajv refused the body. Note the 400: to Fastify a wrong type is a schema violation.
+const schemaFailed = {
+  statusCode: 400, code: "FST_ERR_VALIDATION", error: "Bad Request",
+  message: "body/customer_id must be integer",
+};
+// The parser could not read it, so no schema ran.
+const parseFailed = {
+  statusCode: 400, code: "FST_ERR_CTP_INVALID_JSON", error: "Bad Request",
+  message: "Unexpected end of JSON input",
+};
 
 describe(pkg.target, () => {
   test("declares a schema for every error endpoint", () => {
@@ -25,24 +34,25 @@ describe(pkg.target, () => {
     ]);
   });
 
-  test("accepts the shared validator's envelope, which is what it still answers", () => {
-    expect(judge(answered({
+  test("a schema failure is 400, because ajv treats a wrong type as one", () => {
+    expect(judge("body.rejected_all", 400, schemaFailed)).toBe(true);
+    expect(judge("body.rejected_all", 422, schemaFailed)).toBe(false);
+  });
+
+  test("the code is what separates the two layers, and it is not interchangeable", () => {
+    expect(judge("errors.malformed", 400, parseFailed)).toBe(true);
+    expect(judge("errors.malformed", 400, schemaFailed)).toBe(false);
+    expect(judge("body.rejected_all", 400, parseFailed)).toBe(false);
+  });
+
+  test("rejects this repository's shared envelope, which Fastify no longer answers", () => {
+    expect(judge("body.rejected_all", 400, {
       error: "validation_failed",
       errors: PAIRS.map(([field, rule]) => ({ field, rule })),
-    }))).toBe(true);
+    })).toBe(false);
   });
 
-  test("rejects an envelope it does not answer", () => {
-    expect(judge(answered({
-      type: "about:blank", title: "One or more validation errors occurred.", status: 422,
-      errors: { customer_id: ["int"], status: ["string"], lines: ["array"] },
-    }))).toBe(false);
-  });
-
-  test("rejects its own envelope missing a pair the endpoint declares", () => {
-    expect(judge(answered({
-      error: "validation_failed",
-      errors: [{ field: "customer_id", rule: "int" }],
-    }))).toBe(false);
+  test("rejects a Fastify envelope that grew a key", () => {
+    expect(judge("body.rejected_all", 400, { ...schemaFailed, validation: [] })).toBe(false);
   });
 });

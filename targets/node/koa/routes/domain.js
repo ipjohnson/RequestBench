@@ -2,6 +2,16 @@
 import bodyParser from "koa-bodyparser";
 
 import * as d from "../../_shared/domain.js";
+import { checkOrder, orderOf, refused } from "../validation.js";
+
+// A write validates the same way body.validate_* does, because it is the same walk.
+const written = (ctx) => {
+  const errs = checkOrder(ctx.request.body, false);
+  if (!errs.length) return true;
+  ctx.status = 422;
+  ctx.body = refused(errs);
+  return false;
+};
 
 const parse = bodyParser({ jsonLimit: "4mb" });
 
@@ -21,14 +31,16 @@ export default function domain(router) {
   router.post("/domain/orders", parse, (ctx) => {
     ctx.set("location", d.createdLocation());
     ctx.status = 201;
-    ctx.body = d.validateOrder(ctx.request.body);
+    if (!written(ctx)) return;
+    ctx.body = orderOf(ctx.request.body);
   });
 
   router.get("/domain/orders/:oid", (ctx) => send(ctx, d.getOrder(ctx.params.oid)));
 
   router.put("/domain/orders/:oid", parse, (ctx) => {
     if (d.getOrder(ctx.params.oid) === d.NOT_FOUND) return send(ctx, d.NOT_FOUND);
-    ctx.body = { id: Number(ctx.params.oid), ...d.validateOrder(ctx.request.body) };
+    if (!written(ctx)) return;
+    ctx.body = { id: Number(ctx.params.oid), ...orderOf(ctx.request.body) };
   });
 
   router.get("/domain/customers/:cid/summary", (ctx) => send(ctx, d.domainJoin(ctx.params.cid)));
