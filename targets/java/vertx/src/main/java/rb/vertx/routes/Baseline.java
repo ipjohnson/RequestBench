@@ -16,6 +16,6 @@ public final class Baseline {
         .putHeader("content-type", "text/plain").end("ok"));
 
     router.get("/__meta").handler(ctx ->
-        Reply.json(ctx, 200, Hosts.meta("vertx", Hosts.version("vertx"))));
+        Reply.json(ctx, 200, Hosts.meta("vertx", Hosts.version("vertx"), "handlebars")));
   }
 }

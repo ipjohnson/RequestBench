@@ -33,6 +33,12 @@
       <groupId>io.vertx</groupId>
       <artifactId>vertx-web</artifactId>
     </dependency>
+    <!-- Vert.x Web's own view facility. Handlebars is the engine its Templates section
+         lists first, and the module brings handlebars-java with it. -->
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-web-templ-handlebars</artifactId>
+    </dependency>
     <!-- Vert.x's validation facility: a handler mounted on the route, which validates the
          body against a JSON schema and fails the context itself. Not in vertx-web, because
          validating is opt-in and #35 is about opting in. Versions come from the stack

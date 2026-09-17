@@ -1,29 +1,41 @@
 package rb.spring.routes;
 
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
 import rb.domain.Domain;
-import rb.hosts.Views;
+import rb.domain.Model.PayloadBody;
 
 /**
  * template: server-side rendering of the same model the json family serializes.
  *
- * The engine is jmustache, shared with every other Java target and named on /__meta.
+ * Spring MVC's own view resolution: a @Controller returns a view name, the resolver finds
+ * the template and renders it. Thymeleaf is the engine, because spring-boot-starter-thymeleaf
+ * is what Spring's own "Serving Web Content with Spring MVC" guide adds. Parsed on first
+ * render and cached by the template resolver: a precomputed string would measure nothing.
+ *
+ * This is a @Controller rather than a @RestController, because @RestController implies
+ * @ResponseBody and the returned String would be written as the body instead of resolved
+ * as a view name.
  */
-@RestController
+@Controller
 public class Templates {
 
+  private static String render(Model model, String size) {
+    PayloadBody body = Domain.payload(size);
+    model.addAttribute("size", body.size());
+    model.addAttribute("count", body.count());
+    model.addAttribute("items", body.items());
+    return "items";
+  }
+
   @GetMapping("/template/small")
-  ResponseEntity<String> small() {
-    return ResponseEntity.ok().contentType(MediaType.TEXT_HTML)
-                         .body(Views.renderItems(Domain.payload("small")));
+  String small(Model model) {
+    return render(model, "small");
   }
 
   @GetMapping("/template/medium")
-  ResponseEntity<String> medium() {
-    return ResponseEntity.ok().contentType(MediaType.TEXT_HTML)
-                         .body(Views.renderItems(Domain.payload("medium")));
+  String medium(Model model) {
+    return render(model, "medium");
   }
 }

@@ -1,29 +1,40 @@
 package rb.micronaut.routes;
 
-import io.micronaut.http.HttpResponse;
-import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
+import io.micronaut.views.View;
+import java.util.Map;
 import rb.domain.Domain;
-import rb.hosts.Views;
+import rb.domain.Model.PayloadBody;
 
 /**
  * template: server-side rendering of the same model the json family serializes.
  *
- * The engine is jmustache, shared with every other Java target and named on /__meta.
+ * Micronaut's own view facility: @View names the template and the method returns the
+ * model, so no method here calls a render function. Thymeleaf is the engine Micronaut
+ * Views lists first, through micronaut-views-thymeleaf. Parsed on first render and cached
+ * by the template engine: a precomputed string would measure nothing.
+ *
+ * The expressions call the record accessors rather than reading properties, because
+ * Thymeleaf outside Spring evaluates with OGNL, which resolves getId() and not id().
  */
 @Controller
 public class Templates {
 
-  @Get("/template/small")
-  HttpResponse<String> small() {
-    return HttpResponse.ok(Views.renderItems(Domain.payload("small")))
-                       .contentType(MediaType.TEXT_HTML);
+  private static Map<String, Object> model(String size) {
+    PayloadBody body = Domain.payload(size);
+    return Map.of("size", body.size(), "count", body.count(), "items", body.items());
   }
 
+  @View("items")
+  @Get("/template/small")
+  Map<String, Object> small() {
+    return model("small");
+  }
+
+  @View("items")
   @Get("/template/medium")
-  HttpResponse<String> medium() {
-    return HttpResponse.ok(Views.renderItems(Domain.payload("medium")))
-                       .contentType(MediaType.TEXT_HTML);
+  Map<String, Object> medium() {
+    return model("medium");
   }
 }

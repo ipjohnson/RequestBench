@@ -13,6 +13,8 @@ public final class Baseline {
 
     r.get("/health", (req, res) -> res.header("content-type", "text/plain").send("ok"));
 
-    r.get("/__meta", (req, res) -> res.send(Hosts.meta("helidon-se", Hosts.version("helidon"))));
+    r.get("/__meta", (req, res) -> res.send(
+        Hosts.meta("helidon-se", Hosts.version("helidon"),
+                   "thymeleaf " + Hosts.version("thymeleaf"))));
   }
 }

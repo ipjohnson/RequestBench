@@ -37,6 +37,12 @@
       <groupId>io.helidon.http.media</groupId>
       <artifactId>helidon-http-media-jackson</artifactId>
     </dependency>
+    <!-- Helidon SE has no view layer, so the engine is a direct dependency here rather
+         than something a framework integration brought in. -->
+    <dependency>
+      <groupId>org.thymeleaf</groupId>
+      <artifactId>thymeleaf</artifactId>
+    </dependency>
   </dependencies>
 
   <build>
