@@ -12,7 +12,9 @@ public final class DomainRoutes {
 
   public static void register(JavalinConfig cfg) {
     cfg.routes.get("/domain/orders",
-                   ctx -> ctx.json(Domain.domainFilter(Support.query(ctx))));
+                   ctx -> ctx.json(Domain.domainFilter(Query.qint(ctx, "page", 0),
+                                                       Query.qint(ctx, "size", 25),
+                                                       Query.qstr(ctx, "status"))));
 
     cfg.routes.post("/domain/orders", ctx -> {
       ValidatedOrder v = Body.validated(ctx).order();

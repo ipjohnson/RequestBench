@@ -3,8 +3,7 @@ package rb.vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
-import io.vertx.ext.web.validation.BodyProcessorException;
-import io.vertx.ext.web.validation.RequestPredicateException;
+import io.vertx.ext.web.validation.BadRequestException;
 import io.vertx.ext.web.validation.ValidationHandler;
 import io.vertx.ext.web.validation.builder.Bodies;
 import io.vertx.ext.web.validation.builder.ValidationHandlerBuilder;
@@ -40,10 +39,7 @@ public final class Validation {
 
   /** One ValidationHandler, built once and mounted on each route that needs it. */
   public static ValidationHandler orderHandler(Router router) {
-    // The repository is what resolves the schema and its meta-schema. Draft 2020-12 is the
-    // current default; the base URI is required and is never dereferenced here.
-    SchemaRepository repository = SchemaRepository.create(
-        new JsonSchemaOptions().setDraft(Draft.DRAFT202012).setBaseUri("https://rb.invalid"));
+    SchemaRepository repository = repository();
     return ValidationHandlerBuilder
         .create(repository)
         .body(Bodies.json(objectSchema()
@@ -55,6 +51,15 @@ public final class Validation {
                     .requiredProperty("product_id", intSchema())
                     .requiredProperty("qty", intSchema().with(minimum(1)))))))
         .build();
+  }
+
+  /**
+   * A repository for a ValidationHandler to resolve its schemas against. Draft 2020-12 is the
+   * current default; the base URI is required and is never dereferenced here.
+   */
+  public static SchemaRepository repository() {
+    return SchemaRepository.create(
+        new JsonSchemaOptions().setDraft(Draft.DRAFT202012).setBaseUri("https://rb.invalid"));
   }
 
   /** The order, from the body the handler already validated. */
@@ -82,7 +87,12 @@ public final class Validation {
         .put("detail", detail);
   }
 
+  /**
+   * Every failure a ValidationHandler raises extends BadRequestException, whether it was the
+   * body, a query parameter or a predicate that did not fit, and 400 is the status Vert.x
+   * gives all three.
+   */
   public static boolean isRefusal(Throwable t) {
-    return t instanceof BodyProcessorException || t instanceof RequestPredicateException;
+    return t instanceof BadRequestException;
   }
 }

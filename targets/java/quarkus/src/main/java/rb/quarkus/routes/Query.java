@@ -1,21 +1,21 @@
 package rb.quarkus.routes;
 
+import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.UriInfo;
-import java.util.LinkedHashMap;
-import rb.domain.Domain;
 import rb.domain.Model.QueryMany;
 import rb.domain.Model.QueryOne;
 
 /**
  * query: query string parsing and coercion, isolated from any use of the values.
  *
- * JAX-RS parses uriInfo.getQueryParameters(), which is the work this family measures; the
- * domain coerces what it parsed, so every target in the language answers the same values.
+ * JAX-RS's own binding: @QueryParam names the parameter and the method signature declares its
+ * type, and RESTEasy converts what the router parsed before the method runs. @DefaultValue is
+ * what an absent one is; a value the converter refuses is what JAX-RS answers for a parameter
+ * it could not convert, not something this repository decides.
  */
 @Path("/query")
 @Produces(MediaType.APPLICATION_JSON)
@@ -24,14 +24,21 @@ public class Query {
   // rb:snippet query.one
   @GET
   @Path("one")
-  public QueryOne one(@Context UriInfo uriInfo) {
-    return Domain.coerceOne(new LinkedHashMap<>(uriInfo.getQueryParameters()));
+  public QueryOne one(@QueryParam("page") @DefaultValue("0") int page) {
+    return new QueryOne(page);
   }
 
   // rb:snippet query.many
   @GET
   @Path("many")
-  public QueryMany many(@Context UriInfo uriInfo) {
-    return Domain.coerceMany(new LinkedHashMap<>(uriInfo.getQueryParameters()));
+  public QueryMany many(@QueryParam("page") @DefaultValue("0") int page,
+                        @QueryParam("size") @DefaultValue("0") int size,
+                        @QueryParam("status") @DefaultValue("") String status,
+                        @QueryParam("category") @DefaultValue("") String category,
+                        @QueryParam("sort") @DefaultValue("") String sort,
+                        @QueryParam("q") @DefaultValue("") String q,
+                        @QueryParam("min_price") @DefaultValue("0") int minPrice,
+                        @QueryParam("max_price") @DefaultValue("0") int maxPrice) {
+    return new QueryMany(page, size, status, category, sort, q, minPrice, maxPrice);
   }
 }

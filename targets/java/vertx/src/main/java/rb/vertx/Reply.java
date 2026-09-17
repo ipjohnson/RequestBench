@@ -2,9 +2,7 @@ package rb.vertx;
 
 import io.vertx.core.buffer.Buffer;
 import io.vertx.ext.web.RoutingContext;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import rb.domain.Domain;
 import rb.domain.Errors;
@@ -72,19 +70,6 @@ public final class Reply {
     } catch (RuntimeException e) {
       fail(ctx, e);
     }
-  }
-
-  /**
-   * Vert.x exposes query parameters as a MultiMap, so they are flattened into the Map the
-   * domain takes. Nothing about that is Vert.x behaviour; it is the one shape difference
-   * between this framework and the others.
-   */
-  public static Map<String, List<String>> query(RoutingContext ctx) {
-    Map<String, List<String>> out = new LinkedHashMap<>();
-    for (Map.Entry<String, String> e : ctx.queryParams()) {
-      out.computeIfAbsent(e.getKey(), k -> new ArrayList<>(1)).add(e.getValue());
-    }
-    return out;
   }
 
   /** The request body as a value, or the 422 every target answers when it is not JSON. */

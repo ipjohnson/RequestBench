@@ -497,21 +497,6 @@ public final class Domain {
     return Map.of("error", "forbidden");
   }
 
-  // ---- query ---------------------------------------------------------------------------
-  //
-  // The framework parses the query string, which is the work the family measures; these
-  // coerce what it parsed, so every target in the language answers the same values.
-
-  public static QueryOne coerceOne(Map<String, List<String>> q) {
-    return new QueryOne(qint(q, "page", 0));
-  }
-
-  public static QueryMany coerceMany(Map<String, List<String>> q) {
-    return new QueryMany(qint(q, "page", 0), qint(q, "size", 0), qstr(q, "status"),
-                         qstr(q, "category"), qstr(q, "sort"), qstr(q, "q"),
-                         qint(q, "min_price", 0), qint(q, "max_price", 0));
-  }
-
   // ---- body ----------------------------------------------------------------------------
 
   /**
@@ -549,10 +534,14 @@ public final class Domain {
   // The predicate runs over the live list on every request, the join walks the lines, and the
   // aggregate folds every matching order. No index, no memoization.
 
-  public static OrdersPage domainFilter(Map<String, List<String>> q) {
-    int page = Math.max(0, qint(q, "page", 0));
-    int size = Math.min(100, Math.max(1, qint(q, "size", 25)));
-    String status = qstr(q, "status");
+  /**
+   * The page, the size and the status arrive already bound, because binding them is the
+   * framework's own job and lives in the target. A target binds size with 25 as its default,
+   * which is what an absent one meant when this read the map itself.
+   */
+  public static OrdersPage domainFilter(int page, int size, String status) {
+    page = Math.max(0, page);
+    size = Math.min(100, Math.max(1, size));
     List<Order> rows = new ArrayList<>();
     for (Order o : orders) {
       if (o.status().equals(status)) {
