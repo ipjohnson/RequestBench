@@ -12,6 +12,7 @@
 use bytes::Bytes;
 use rb_domain as d;
 use serde::Serialize;
+use serde::Deserialize;
 use serde_json::Value;
 use warp::http::{header, StatusCode};
 use warp::reply::Response;
@@ -30,12 +31,74 @@ fn fail(e: d::Fail) -> Response {
             warp::reply::with_status(warp::reply::json(&d::not_found_body()), StatusCode::NOT_FOUND)
                 .into_response()
         }
-        d::Fail::Invalid(errs) => warp::reply::with_status(
-            warp::reply::json(&d::invalid_body(&errs)),
+    }
+}
+
+// ---- validation: warp's json body filter, and this target's own rules ----------
+//
+// `warp::body::json::<OrderIn>()` is the framework's binding half: warp deserializes into
+// the struct as part of the filter chain and rejects a body that will not fit before the
+// handler runs, through its own `BodyDeserializeError`. These routes used to take
+// `body::bytes()` and call serde_json::from_slice, which made the filter a no-op and the
+// binding this repository's rather than warp's.
+//
+// A rejected filter is answered by the recover handler at the end of the chain, which is
+// where warp puts every rejection, so that is where the envelope for one lives.
+//
+// What serde cannot express is the rest: a list needs at least one entry and a qty at
+// least one. Those are checked here, in this target's own code, because warp has no
+// validation layer to put them in.
+
+/// The order body as warp's filter binds it. serde reports the first field that does not fit.
+#[derive(Debug, Deserialize)]
+struct OrderIn {
+    customer_id: i64,
+    status: String,
+    lines: Vec<LineIn>,
+}
+
+#[derive(Debug, Deserialize)]
+struct LineIn {
+    product_id: i64,
+    qty: i64,
+}
+
+/// The rules a deserialize cannot state. `first_error` stops at the first, which this
+/// target can still answer because the checks are its own.
+fn check(order: &OrderIn, first_error: bool) -> Vec<d::FieldError> {
+    let mut errs: Vec<d::FieldError> = Vec::new();
+    if order.lines.is_empty() {
+        errs.push(d::FieldError::new("lines", "min_length"));
+    }
+    for (i, l) in order.lines.iter().enumerate() {
+        if first_error && !errs.is_empty() {
+            break;
+        }
+        if l.qty < 1 {
+            errs.push(d::FieldError::new(format!("lines[{i}].qty"), "min"));
+        }
+    }
+    errs
+}
+
+/// The order as a response, or this target's own answer when its checks refuse the body.
+fn validated(order: &OrderIn, first_error: bool) -> Result<d::ValidatedOrder, Response> {
+    let errs = check(order, first_error);
+    if !errs.is_empty() {
+        return Err(warp::reply::with_status(
+            warp::reply::json(&serde_json::json!({
+                "error": "validation_failed", "errors": errs
+            })),
             StatusCode::UNPROCESSABLE_ENTITY,
         )
-        .into_response(),
+        .into_response());
     }
+    let lines: Vec<d::LineInput> = order
+        .lines
+        .iter()
+        .map(|l| d::LineInput { product_id: l.product_id, qty: l.qty })
+        .collect();
+    Ok(d::price_order(order.customer_id, &order.status, &lines))
 }
 
 fn ok<T: Serialize>(v: Result<T, d::Fail>) -> Response {
@@ -45,8 +108,18 @@ fn ok<T: Serialize>(v: Result<T, d::Fail>) -> Response {
     }
 }
 
-fn parse(b: &Bytes) -> Result<Value, d::Fail> {
-    serde_json::from_slice(b).map_err(|_| d::malformed_body())
+/// An unvalidated body, for the endpoints that only parse. The validate routes use the
+/// filter; this is only for bind, which is measured against them.
+fn parse(b: &Bytes) -> Result<Value, Response> {
+    serde_json::from_slice(b).map_err(|e: serde_json::Error| {
+        warp::reply::with_status(
+            warp::reply::json(&serde_json::json!({
+                "error": "invalid_body", "detail": e.to_string()
+            })),
+            StatusCode::BAD_REQUEST,
+        )
+        .into_response()
+    })
 }
 
 /// The raw query string. `warp::query::raw` rejects when there is none, and every other
@@ -268,17 +341,23 @@ async fn main() {
         .and(warp::body::bytes())
         .map(|_s: String, b: Bytes| match parse(&b) {
             Ok(v) => json(&d::bind_echo(v)),
-            Err(e) => fail(e),
+            Err(r) => r,
         })
         .or(warp::path!("body" / "validate" / "first-error")
             .and(warp::post())
-            .and(warp::body::bytes())
-            .map(|b: Bytes| ok(parse(&b).and_then(|v| d::validate_order(&v, true)))))
+            .and(warp::body::json())
+            .map(|order: OrderIn| match validated(&order, true) {
+                Ok(v) => json(&v),
+                Err(r) => r,
+            }))
         .unify()
         .or(warp::path!("body" / "validate" / String)
             .and(warp::post())
-            .and(warp::body::bytes())
-            .map(|_s: String, b: Bytes| ok(parse(&b).and_then(|v| d::validate_order(&v, false)))))
+            .and(warp::body::json())
+            .map(|_s: String, order: OrderIn| match validated(&order, false) {
+                Ok(v) => json(&v),
+                Err(r) => r,
+            }))
         .unify()
         .boxed();
 
@@ -290,15 +369,15 @@ async fn main() {
         .map(|q: String| json(&d::domain_filter(&d::parse_query(&q))))
         .or(warp::path!("domain" / "orders")
             .and(warp::post())
-            .and(warp::body::bytes())
-            .map(|b: Bytes| match parse(&b).and_then(|v| d::validate_order(&v, false)) {
+            .and(warp::body::json())
+            .map(|order: OrderIn| match validated(&order, false) {
                 Ok(v) => warp::reply::with_header(
                     warp::reply::with_status(warp::reply::json(&v), StatusCode::CREATED),
                     header::LOCATION,
                     d::created_location(),
                 )
                 .into_response(),
-                Err(e) => fail(e),
+                Err(r) => r,
             }))
         .unify()
         .or(warp::path!("domain" / "orders" / String)
@@ -307,18 +386,18 @@ async fn main() {
         .unify()
         .or(warp::path!("domain" / "orders" / String)
             .and(warp::put())
-            .and(warp::body::bytes())
-            .map(|oid: String, b: Bytes| {
+            .and(warp::body::json())
+            .map(|oid: String, order: OrderIn| {
                 let id = match d::get_order(&oid) {
                     Ok(o) => o.id,
                     Err(e) => return fail(e),
                 };
-                match parse(&b).and_then(|v| d::validate_order(&v, false)) {
+                match validated(&order, false) {
                     Ok(mut v) => {
                         v.id = Some(id);
                         json(&v)
                     }
-                    Err(e) => fail(e),
+                    Err(r) => r,
                 }
             }))
         .unify()
@@ -338,7 +417,10 @@ async fn main() {
         .or(warp::path!("domain" / "customers" / String)
             .and(warp::patch())
             .and(warp::body::bytes())
-            .map(|cid: String, b: Bytes| ok(parse(&b).and_then(|v| d::patch_customer(&cid, &v)))))
+            .map(|cid: String, b: Bytes| match parse(&b) {
+                Ok(v) => ok(d::patch_customer(&cid, &v)),
+                Err(r) => r,
+            }))
         .unify()
         .or(warp::path!("domain" / "regions" / String / "report")
             .and(warp::get())
@@ -357,17 +439,31 @@ async fn main() {
         .or(template).unify()
         .or(bodies).unify()
         .or(domain).unify()
-        // Every route warp rejected. Its own rejection page is plain text, and every other
-        // target answers the same JSON.
+        // Every rejection warp raised, answered where warp puts them: .recover is the
+        // framework's own hook, and it is the only place that can tell a body the json
+        // filter refused from a path nothing matched. An `any()` fallthrough cannot -- both
+        // arrive as "no route took this" -- which is why a refused body used to answer 404.
         // rb:snippet errors.unmatched
-        .or(warp::any().map(|| {
-            warp::reply::with_status(
+        .recover(|rejection: warp::Rejection| async move {
+            if let Some(e) = rejection.find::<warp::filters::body::BodyDeserializeError>() {
+                // warp does not separate a body that is not JSON from one of the wrong
+                // shape: BodyDeserializeError is both, and 400 is its status for either.
+                return Ok::<_, std::convert::Infallible>(
+                    warp::reply::with_status(
+                        warp::reply::json(&serde_json::json!({
+                            "error": "invalid_body", "detail": e.to_string()
+                        })),
+                        StatusCode::BAD_REQUEST,
+                    )
+                    .into_response(),
+                );
+            }
+            Ok(warp::reply::with_status(
                 warp::reply::json(&d::not_found_body()),
                 StatusCode::NOT_FOUND,
             )
-            .into_response()
-        }))
-        .unify();
+            .into_response())
+        });
 
     warp::serve(routes).run(([0, 0, 0, 0], port)).await;
 }

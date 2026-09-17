@@ -11,6 +11,7 @@ use salvo::catcher::Catcher;
 use salvo::http::{header, StatusCode};
 use salvo::prelude::*;
 use serde::Serialize;
+use serde::Deserialize;
 use serde_json::Value;
 
 /// Writes the domain's failures onto the response. Handlers call this and never build a
@@ -21,11 +22,81 @@ fn fail(res: &mut Response, e: d::Fail) {
             res.status_code(StatusCode::NOT_FOUND);
             res.render(Json(d::not_found_body()));
         }
-        d::Fail::Invalid(errs) => {
-            res.status_code(StatusCode::UNPROCESSABLE_ENTITY);
-            res.render(Json(d::invalid_body(&errs)));
+    }
+}
+
+// ---- validation: salvo's typed json extractor, and this target's own rules ------
+//
+// `req.parse_json::<OrderIn>()` is the framework's binding half: salvo deserializes into
+// the struct and hands back its own ParseError for a body that will not fit. These routes
+// used to take the payload bytes and call serde_json::from_slice, which made the
+// extractor a no-op and the binding this repository's rather than salvo's.
+//
+// What serde cannot express is the rest: a list needs at least one entry and a qty at
+// least one. Those are checked here, in this target's own code, because salvo has no
+// validation layer to put them in.
+
+/// The order body as salvo binds it. serde reports the first field that does not fit.
+#[derive(Debug, Deserialize)]
+struct OrderIn {
+    customer_id: i64,
+    status: String,
+    lines: Vec<LineIn>,
+}
+
+#[derive(Debug, Deserialize)]
+struct LineIn {
+    product_id: i64,
+    qty: i64,
+}
+
+/// The rules a deserialize cannot state. `first_error` stops at the first, which this
+/// target can still answer because the checks are its own.
+fn check(order: &OrderIn, first_error: bool) -> Vec<d::FieldError> {
+    let mut errs: Vec<d::FieldError> = Vec::new();
+    if order.lines.is_empty() {
+        errs.push(d::FieldError::new("lines", "min_length"));
+    }
+    for (i, l) in order.lines.iter().enumerate() {
+        if first_error && !errs.is_empty() {
+            break;
+        }
+        if l.qty < 1 {
+            errs.push(d::FieldError::new(format!("lines[{i}].qty"), "min"));
         }
     }
+    errs
+}
+
+/// Binds with salvo's extractor and runs this target's own checks, writing whichever
+/// refusal applies. `None` means the response has already been written.
+async fn bound(req: &mut Request, res: &mut Response, first_error: bool)
+    -> Option<d::ValidatedOrder> {
+    let order: OrderIn = match req.parse_json().await {
+        Ok(o) => o,
+        Err(e) => {
+            // salvo's own ParseError, and its own status for one.
+            res.status_code(StatusCode::BAD_REQUEST);
+            res.render(Json(serde_json::json!({
+                "error": "invalid_body", "detail": e.to_string()
+            })));
+            return None;
+        }
+    };
+    let errs = check(&order, first_error);
+    if !errs.is_empty() {
+        res.status_code(StatusCode::UNPROCESSABLE_ENTITY);
+        res.render(Json(serde_json::json!({
+            "error": "validation_failed", "errors": errs
+        })));
+        return None;
+    }
+    let lines: Vec<d::LineInput> = order
+        .lines
+        .iter()
+        .map(|l| d::LineInput { product_id: l.product_id, qty: l.qty })
+        .collect();
+    Some(d::price_order(order.customer_id, &order.status, &lines))
 }
 
 fn ok<T: Serialize + Send>(res: &mut Response, v: Result<T, d::Fail>) {
@@ -35,9 +106,29 @@ fn ok<T: Serialize + Send>(res: &mut Response, v: Result<T, d::Fail>) {
     }
 }
 
-async fn parse(req: &mut Request) -> Result<Value, d::Fail> {
-    let raw = req.payload().await.map_err(|_| d::malformed_body())?;
-    serde_json::from_slice(raw).map_err(|_| d::malformed_body())
+/// An unvalidated body, for the endpoints that only parse. The validate routes use the
+/// extractor; this is only for bind, which is measured against them.
+async fn parse(req: &mut Request, res: &mut Response) -> Option<Value> {
+    let raw = match req.payload().await {
+        Ok(raw) => raw,
+        Err(e) => {
+            res.status_code(StatusCode::BAD_REQUEST);
+            res.render(Json(serde_json::json!({
+                "error": "invalid_body", "detail": e.to_string()
+            })));
+            return None;
+        }
+    };
+    match serde_json::from_slice(raw) {
+        Ok(v) => Some(v),
+        Err(e) => {
+            res.status_code(StatusCode::BAD_REQUEST);
+            res.render(Json(serde_json::json!({
+                "error": "invalid_body", "detail": e.to_string()
+            })));
+            None
+        }
+    }
 }
 
 fn query(req: &Request) -> d::Query {
@@ -109,28 +200,23 @@ async fn query_many(req: &mut Request, res: &mut Response) {
 
 #[handler]
 async fn bind(req: &mut Request, res: &mut Response) {
-    match parse(req).await {
-        Ok(v) => res.render(Json(d::bind_echo(v))),
-        Err(e) => fail(res, e),
+    if let Some(v) = parse(req, res).await {
+        res.render(Json(d::bind_echo(v)));
     }
 }
 
 #[handler]
 async fn validate_all(req: &mut Request, res: &mut Response) {
-    let v = match parse(req).await {
-        Ok(v) => v,
-        Err(e) => return fail(res, e),
-    };
-    ok(res, d::validate_order(&v, false));
+    if let Some(v) = bound(req, res, false).await {
+        res.render(Json(v));
+    }
 }
 
 #[handler]
 async fn validate_first(req: &mut Request, res: &mut Response) {
-    let v = match parse(req).await {
-        Ok(v) => v,
-        Err(e) => return fail(res, e),
-    };
-    ok(res, d::validate_order(&v, true));
+    if let Some(v) = bound(req, res, true).await {
+        res.render(Json(v));
+    }
 }
 
 #[handler]
@@ -155,18 +241,11 @@ async fn aggregate(req: &mut Request, res: &mut Response) {
 
 #[handler]
 async fn create(req: &mut Request, res: &mut Response) {
-    let v = match parse(req).await {
-        Ok(v) => v,
-        Err(e) => return fail(res, e),
-    };
-    match d::validate_order(&v, false) {
-        Ok(v) => {
-            res.status_code(StatusCode::CREATED);
-            res.add_header(header::LOCATION, d::created_location(), true)
-                .ok();
-            res.render(Json(v));
-        }
-        Err(e) => fail(res, e),
+    if let Some(v) = bound(req, res, false).await {
+        res.status_code(StatusCode::CREATED);
+        res.add_header(header::LOCATION, d::created_location(), true)
+            .ok();
+        res.render(Json(v));
     }
 }
 
@@ -176,26 +255,16 @@ async fn replace(req: &mut Request, res: &mut Response) {
         Ok(o) => o.id,
         Err(e) => return fail(res, e),
     };
-    let body = match parse(req).await {
-        Ok(v) => v,
-        Err(e) => return fail(res, e),
-    };
-    match d::validate_order(&body, false) {
-        Ok(mut v) => {
-            v.id = Some(id);
-            res.render(Json(v));
-        }
-        Err(e) => fail(res, e),
+    if let Some(mut v) = bound(req, res, false).await {
+        v.id = Some(id);
+        res.render(Json(v));
     }
 }
 
 #[handler]
 async fn patch_customer(req: &mut Request, res: &mut Response) {
     let cid = param(req, "cid");
-    let body = match parse(req).await {
-        Ok(v) => v,
-        Err(e) => return fail(res, e),
-    };
+    let Some(body) = parse(req, res).await else { return };
     ok(res, d::patch_customer(&cid, &body));
 }
 

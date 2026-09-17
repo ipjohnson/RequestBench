@@ -15,6 +15,7 @@ use axum::{
     Json, Router,
 };
 use rb_domain as d;
+use serde::Deserialize;
 use serde_json::Value;
 use tower_http::compression::{predicate::SizeAbove, CompressionLayer};
 
@@ -25,11 +26,79 @@ use tower_http::compression::{predicate::SizeAbove, CompressionLayer};
 fn fail(e: d::Fail) -> Response {
     match e {
         d::Fail::NotFound => (StatusCode::NOT_FOUND, Json(d::not_found_body())).into_response(),
-        d::Fail::Invalid(errs) => {
-            (StatusCode::UNPROCESSABLE_ENTITY, Json(d::invalid_body(&errs))).into_response()
-        }
     }
 }
+
+// ---- validation: axum's typed Json extractor, and this target's own rules ------
+//
+// `Json<OrderIn>` is the framework's binding half: axum deserializes into the struct
+// before the handler runs, and rejects a body that will not fit without the handler
+// seeing it. The routes used to take `Bytes` and call serde_json::from_slice, which
+// made the extractor a no-op and the binding this repository's rather than axum's.
+//
+// axum draws a line the other frameworks here do not. `JsonRejection` separates
+// `JsonSyntaxError`, a body that is not JSON, from `JsonDataError`, a body that is JSON
+// but will not deserialize into the type -- and answers 400 for the first and 422 for the
+// second. Both are rendered by axum itself, as text, which is why this target is the only
+// one answering an error with a body that is not JSON.
+//
+// What serde cannot express is the rest: a list needs at least one entry and a qty at
+// least one. Those are checked here, in this target's own code, because axum has no
+// validation layer to put them in.
+
+/// The order body as axum binds it. `Option` is what makes a missing field a rejection
+/// rather than a zero, and serde reports the first field that does not fit.
+#[derive(Debug, Deserialize)]
+struct OrderIn {
+    customer_id: i64,
+    status: String,
+    lines: Vec<LineIn>,
+}
+
+#[derive(Debug, Deserialize)]
+struct LineIn {
+    product_id: i64,
+    qty: i64,
+}
+
+/// The rules a deserialize cannot state. Every one that fails is reported; `first_error`
+/// stops at the first, which is what body.rejected_first asks for and what this target can
+/// still answer because the checks are its own.
+fn check(order: &OrderIn, first_error: bool) -> Vec<d::FieldError> {
+    let mut errs: Vec<d::FieldError> = Vec::new();
+    if order.lines.is_empty() {
+        errs.push(d::FieldError::new("lines", "min_length"));
+    }
+    for (i, l) in order.lines.iter().enumerate() {
+        if first_error && !errs.is_empty() {
+            break;
+        }
+        if l.qty < 1 {
+            errs.push(d::FieldError::new(format!("lines[{i}].qty"), "min"));
+        }
+    }
+    errs
+}
+
+/// This target's envelope for a body its own checks refused.
+fn refused(errs: &[d::FieldError]) -> Value {
+    serde_json::json!({ "error": "validation_failed", "errors": errs })
+}
+
+/// The order, or the response this target answers when its own checks refuse the body.
+fn validated(order: &OrderIn, first_error: bool) -> Result<d::ValidatedOrder, Response> {
+    let errs = check(order, first_error);
+    if !errs.is_empty() {
+        return Err((StatusCode::UNPROCESSABLE_ENTITY, Json(refused(&errs))).into_response());
+    }
+    let lines: Vec<d::LineInput> = order
+        .lines
+        .iter()
+        .map(|l| d::LineInput { product_id: l.product_id, qty: l.qty })
+        .collect();
+    Ok(d::price_order(order.customer_id, &order.status, &lines))
+}
+
 
 fn ok<T: serde::Serialize>(v: Result<T, d::Fail>) -> Response {
     match v {
@@ -39,8 +108,15 @@ fn ok<T: serde::Serialize>(v: Result<T, d::Fail>) -> Response {
 }
 
 /// The request body as a value, or the 422 every target answers when it is not JSON.
-fn parse(body: &[u8]) -> Result<Value, d::Fail> {
-    serde_json::from_slice(body).map_err(|_| d::malformed_body())
+/// An unvalidated body, for the endpoints that only parse. Still the extractor's job on
+/// the validate routes; this is only for bind, which is measured against them.
+fn parse(body: &[u8]) -> Result<Value, Response> {
+    serde_json::from_slice(body).map_err(|e| {
+        (StatusCode::BAD_REQUEST, Json(serde_json::json!({
+            "error": "invalid_body", "detail": e.to_string()
+        })))
+            .into_response()
+    })
 }
 
 fn query(raw: Option<String>) -> d::Query {
@@ -216,21 +292,21 @@ async fn main() {
 async fn bind(body: axum::body::Bytes) -> Response {
     match parse(&body) {
         Ok(v) => Json(d::bind_echo(v)).into_response(),
-        Err(e) => fail(e),
+        Err(r) => r,
     }
 }
 
-async fn validate_all(body: axum::body::Bytes) -> Response {
-    match parse(&body).and_then(|v| d::validate_order(&v, false)) {
+async fn validate_all(Json(order): Json<OrderIn>) -> Response {
+    match validated(&order, false) {
         Ok(v) => Json(v).into_response(),
-        Err(e) => fail(e),
+        Err(r) => r,
     }
 }
 
-async fn validate_first(body: axum::body::Bytes) -> Response {
-    match parse(&body).and_then(|v| d::validate_order(&v, true)) {
+async fn validate_first(Json(order): Json<OrderIn>) -> Response {
+    match validated(&order, true) {
         Ok(v) => Json(v).into_response(),
-        Err(e) => fail(e),
+        Err(r) => r,
     }
 }
 
@@ -246,37 +322,38 @@ async fn aggregate(Path(region): Path<String>) -> Response {
     ok(d::domain_aggregate(&region))
 }
 
-async fn create_order(body: axum::body::Bytes) -> Response {
-    match parse(&body).and_then(|v| d::validate_order(&v, false)) {
+async fn create_order(Json(order): Json<OrderIn>) -> Response {
+    match validated(&order, false) {
         Ok(v) => (
             StatusCode::CREATED,
             [(header::LOCATION, d::created_location())],
             Json(v),
         )
             .into_response(),
-        Err(e) => fail(e),
+        Err(r) => r,
     }
 }
 
-async fn replace_order(Path(oid): Path<String>, body: axum::body::Bytes) -> Response {
+async fn replace_order(Path(oid): Path<String>, Json(order): Json<OrderIn>) -> Response {
     let existing = match d::get_order(&oid) {
         Ok(o) => o,
         Err(e) => return fail(e),
     };
-    match parse(&body).and_then(|v| d::validate_order(&v, false)) {
+    match validated(&order, false) {
         Ok(mut v) => {
             v.id = Some(existing.id);
             Json(v).into_response()
         }
-        Err(e) => fail(e),
+        Err(r) => r,
     }
 }
 
 async fn patch_customer(Path(cid): Path<String>, body: axum::body::Bytes) -> Response {
-    match parse(&body).and_then(|v| d::patch_customer(&cid, &v)) {
-        Ok(v) => Json(v).into_response(),
-        Err(e) => fail(e),
-    }
+    let v = match parse(&body) {
+        Ok(v) => v,
+        Err(r) => return r,
+    };
+    ok(d::patch_customer(&cid, &v))
 }
 
 async fn delete_line(Path((oid, lid)): Path<(String, String)>) -> Response {

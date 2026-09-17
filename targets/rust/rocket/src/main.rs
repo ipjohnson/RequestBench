@@ -16,6 +16,7 @@ use rocket::outcome::Outcome;
 use rocket::request::{self, FromRequest};
 use rocket::response::{status::Custom, Responder};
 use rocket::serde::json::Json;
+use serde::Deserialize;
 use rocket::{catch, catchers, get, patch, post, put, delete, routes, Request, Response};
 use rb_domain as d;
 use serde_json::Value;
@@ -59,8 +60,71 @@ type R<T> = Result<T, Custom<Json<Value>>>;
 fn fail<T>(e: d::Fail) -> R<T> {
     Err(match e {
         d::Fail::NotFound => Custom(Status::NotFound, Json(d::not_found_body())),
-        d::Fail::Invalid(errs) => Custom(Status::UnprocessableEntity, Json(d::invalid_body(&errs))),
     })
+}
+
+// ---- validation: Rocket's typed Json guard, and this target's own rules ---------
+//
+// `Json<OrderIn>` is a data guard, which is the framework's binding half: Rocket
+// deserializes into the struct before the route is called and fails the guard for a body
+// that will not fit, without the route seeing it. These routes used to take `Data` and
+// call serde_json::from_slice, which made the guard a no-op and the binding this
+// repository's rather than Rocket's.
+//
+// A failed data guard answers 422 with Rocket's own body, and its catchers are what render
+// it -- the same catchers the authorized family already leans on for its 403.
+//
+// What serde cannot express is the rest: a list needs at least one entry and a qty at
+// least one. Those are checked here, in this target's own code, because Rocket has no
+// validation layer to put them in.
+
+/// The order body as Rocket's guard binds it. serde reports the first field that does not fit.
+#[derive(Debug, Deserialize)]
+struct OrderIn {
+    customer_id: i64,
+    status: String,
+    lines: Vec<LineIn>,
+}
+
+#[derive(Debug, Deserialize)]
+struct LineIn {
+    product_id: i64,
+    qty: i64,
+}
+
+/// The rules a deserialize cannot state. `first_error` stops at the first, which this
+/// target can still answer because the checks are its own.
+fn check(order: &OrderIn, first_error: bool) -> Vec<d::FieldError> {
+    let mut errs: Vec<d::FieldError> = Vec::new();
+    if order.lines.is_empty() {
+        errs.push(d::FieldError::new("lines", "min_length"));
+    }
+    for (i, l) in order.lines.iter().enumerate() {
+        if first_error && !errs.is_empty() {
+            break;
+        }
+        if l.qty < 1 {
+            errs.push(d::FieldError::new(format!("lines[{i}].qty"), "min"));
+        }
+    }
+    errs
+}
+
+/// The order, or this target's own answer when its own checks refuse the body.
+fn validated(order: &OrderIn, first_error: bool) -> Result<d::ValidatedOrder, Custom<Json<Value>>> {
+    let errs = check(order, first_error);
+    if !errs.is_empty() {
+        return Err(Custom(
+            Status::UnprocessableEntity,
+            Json(serde_json::json!({ "error": "validation_failed", "errors": errs })),
+        ));
+    }
+    let lines: Vec<d::LineInput> = order
+        .lines
+        .iter()
+        .map(|l| d::LineInput { product_id: l.product_id, qty: l.qty })
+        .collect();
+    Ok(d::price_order(order.customer_id, &order.status, &lines))
 }
 
 fn lift<T>(v: Result<T, d::Fail>) -> R<Json<T>> {
@@ -70,15 +134,20 @@ fn lift<T>(v: Result<T, d::Fail>) -> R<Json<T>> {
     }
 }
 
+/// An unvalidated body, for the endpoints that only parse. The validate routes use the
+/// guard; this is only for bind, which is measured against them.
 async fn body_of(data: Data<'_>) -> R<Value> {
+    let not_bound = |detail: String| {
+        Custom(
+            Status::BadRequest,
+            Json(serde_json::json!({ "error": "invalid_body", "detail": detail })),
+        )
+    };
     let bytes = match data.open(8.mebibytes()).into_bytes().await {
         Ok(b) if b.is_complete() => b.into_inner(),
-        _ => return fail(d::malformed_body()),
+        _ => return Err(not_bound("the body was not read in full".to_string())),
     };
-    match serde_json::from_slice(&bytes) {
-        Ok(v) => Ok(v),
-        Err(_) => fail(d::malformed_body()),
-    }
+    serde_json::from_slice(&bytes).map_err(|e| not_bound(e.to_string()))
 }
 
 // ---- guards -------------------------------------------------------------------
@@ -309,17 +378,17 @@ async fn bind_small(data: Data<'_>) -> R<Json<d::BindResult>> {
 async fn bind_medium(data: Data<'_>) -> R<Json<d::BindResult>> {
     Ok(Json(d::bind_echo(body_of(data).await?)))
 }
-#[post("/body/validate/small", data = "<data>")]
-async fn validate_small(data: Data<'_>) -> R<Json<d::ValidatedOrder>> {
-    lift(d::validate_order(&body_of(data).await?, false))
+#[post("/body/validate/small", data = "<order>")]
+fn validate_small(order: Json<OrderIn>) -> R<Json<d::ValidatedOrder>> {
+    Ok(Json(validated(&order, false)?))
 }
-#[post("/body/validate/medium", data = "<data>")]
-async fn validate_medium(data: Data<'_>) -> R<Json<d::ValidatedOrder>> {
-    lift(d::validate_order(&body_of(data).await?, false))
+#[post("/body/validate/medium", data = "<order>")]
+fn validate_medium(order: Json<OrderIn>) -> R<Json<d::ValidatedOrder>> {
+    Ok(Json(validated(&order, false)?))
 }
-#[post("/body/validate/first-error", data = "<data>")]
-async fn validate_first(data: Data<'_>) -> R<Json<d::ValidatedOrder>> {
-    lift(d::validate_order(&body_of(data).await?, true))
+#[post("/body/validate/first-error", data = "<order>")]
+fn validate_first(order: Json<OrderIn>) -> R<Json<d::ValidatedOrder>> {
+    Ok(Json(validated(&order, true)?))
 }
 
 #[get("/domain/orders")]
@@ -342,12 +411,9 @@ fn aggregate(region: &str) -> R<Json<d::Report>> {
     lift(d::domain_aggregate(region))
 }
 
-#[post("/domain/orders", data = "<data>")]
-async fn create(data: Data<'_>) -> R<Raw> {
-    let v = match d::validate_order(&body_of(data).await?, false) {
-        Ok(v) => v,
-        Err(e) => return fail(e),
-    };
+#[post("/domain/orders", data = "<order>")]
+fn create(order: Json<OrderIn>) -> R<Raw> {
+    let v = validated(&order, false)?;
     Ok(Raw {
         status: Status::Created,
         content_type: Some(ContentType::JSON),
@@ -356,16 +422,13 @@ async fn create(data: Data<'_>) -> R<Raw> {
     })
 }
 
-#[put("/domain/orders/<oid>", data = "<data>")]
-async fn replace(oid: &str, data: Data<'_>) -> R<Json<d::ValidatedOrder>> {
+#[put("/domain/orders/<oid>", data = "<order>")]
+fn replace(oid: &str, order: Json<OrderIn>) -> R<Json<d::ValidatedOrder>> {
     let existing = match d::get_order(oid) {
         Ok(o) => o.id,
         Err(e) => return fail(e),
     };
-    let mut v = match d::validate_order(&body_of(data).await?, false) {
-        Ok(v) => v,
-        Err(e) => return fail(e),
-    };
+    let mut v = validated(&order, false)?;
     v.id = Some(existing);
     Ok(Json(v))
 }
@@ -396,6 +459,32 @@ fn catch_403() -> Json<Value> {
     Json(d::forbidden_body())
 }
 
+/// A body the Json guard could not deserialize into the struct. Rocket separates the two
+/// layers the way axum does -- 422 when the JSON parsed and would not fit the type, 400
+/// when it would not parse at all -- and its default for both is an HTML page, so the
+/// catchers are what give this target a body of its own.
+#[catch(422)]
+fn catch_422() -> Custom<Json<Value>> {
+    Custom(
+        Status::UnprocessableEntity,
+        Json(serde_json::json!({
+            "error": "invalid_body",
+            "detail": "the body did not fit the target type"
+        })),
+    )
+}
+
+#[catch(400)]
+fn catch_400() -> Custom<Json<Value>> {
+    Custom(
+        Status::BadRequest,
+        Json(serde_json::json!({
+            "error": "invalid_body",
+            "detail": "the body could not be parsed as JSON"
+        })),
+    )
+}
+
 #[rocket::main]
 async fn main() -> Result<(), rocket::Error> {
     let port = rb_host::boot("rocket");
@@ -422,7 +511,7 @@ async fn main() -> Result<(), rocket::Error> {
                 filter, lookup, join, aggregate, create, replace, patch_customer, delete_line,
             ],
         )
-        .register("/", catchers![catch_404, catch_403])
+        .register("/", catchers![catch_404, catch_403, catch_422, catch_400])
         .launch()
         .await
         .map(|_| ())
