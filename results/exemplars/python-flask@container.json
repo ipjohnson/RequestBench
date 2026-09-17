@@ -24,7 +24,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 11:31:13 GMT"
+      "Thu, 17 Sep 2026 18:21:10 GMT"
      ],
      [
       "Connection",
@@ -65,7 +65,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 11:31:13 GMT"
+      "Thu, 17 Sep 2026 18:21:10 GMT"
      ],
      [
       "Connection",
@@ -106,7 +106,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 11:31:14 GMT"
+      "Thu, 17 Sep 2026 18:21:10 GMT"
      ],
      [
       "Connection",
@@ -147,7 +147,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 11:31:14 GMT"
+      "Thu, 17 Sep 2026 18:21:10 GMT"
      ],
      [
       "Connection",
@@ -188,7 +188,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 11:31:14 GMT"
+      "Thu, 17 Sep 2026 18:21:10 GMT"
      ],
      [
       "Connection",
@@ -229,7 +229,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 11:31:15 GMT"
+      "Thu, 17 Sep 2026 18:21:10 GMT"
      ],
      [
       "Connection",
@@ -270,7 +270,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 11:31:15 GMT"
+      "Thu, 17 Sep 2026 18:21:10 GMT"
      ],
      [
       "Connection",
@@ -316,7 +316,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 11:31:15 GMT"
+      "Thu, 17 Sep 2026 18:21:10 GMT"
      ],
      [
       "Connection",
@@ -362,7 +362,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 11:31:15 GMT"
+      "Thu, 17 Sep 2026 18:21:10 GMT"
      ],
      [
       "Connection",
@@ -412,7 +412,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 11:31:16 GMT"
+      "Thu, 17 Sep 2026 18:21:10 GMT"
      ],
      [
       "Connection",
@@ -428,7 +428,7 @@
      ],
      [
       "x-rb-serial",
-      "1"
+      "2"
      ]
     ],
     "header_bytes": 148,
@@ -436,60 +436,6 @@
     "body_bytes": 126,
     "body": "{\"count\":1,\"items\":[{\"category\":\"tools\",\"id\":1,\"in_stock\":true,\"name\":\"slate-lamp-6647\",\"price_cents\":18928}],\"size\":\"small\"}\n",
     "truncated": false
-   }
-  },
-  {
-   "endpoint": "compressed.identity_medium",
-   "family": "compressed",
-   "request": {
-    "method": "GET",
-    "path": "/compressed/medium",
-    "headers": [
-     [
-      "accept-encoding",
-      "identity"
-     ],
-     [
-      "cache-control",
-      "no-cache"
-     ]
-    ],
-    "body": null,
-    "body_bytes": 0
-   },
-   "response": {
-    "status": 200,
-    "headers": [
-     [
-      "Server",
-      "gunicorn"
-     ],
-     [
-      "Date",
-      "Thu, 17 Sep 2026 11:31:16 GMT"
-     ],
-     [
-      "Connection",
-      "keep-alive"
-     ],
-     [
-      "Content-Type",
-      "application/json"
-     ],
-     [
-      "Content-Length",
-      "8132"
-     ],
-     [
-      "x-rb-serial",
-      "513"
-     ]
-    ],
-    "header_bytes": 151,
-    "framing": "content-length",
-    "body_bytes": 8132,
-    "body": "{\"count\":89,\"items\":[{\"category\":\"tools\",\"id\":1,\"in_stock\":true,\"name\":\"slate-lamp-6647\",\"price_cents\":18928},{\"category\":\"garden\",\"id\":2,\"in_stock\":true,\"name\":\"brass-hinge-5716\",\"price_cents\":17577},{\"category\":\"kitchen\",\"id\":3,\"in_stock\":true,\"name\":\"linen-ring-6971\",\"price_cents\":5540},{\"category\":\"outdoor\",\"id\":4,\"in_stock\":true,\"name\":\"copper-bolt-9217\",\"price_cents\":11562},{\"category\":\"office\",\"id\":5,\"in_stock\":true,\"name\":\"linen-lamp-8288\",\"price_cents\":1413},{\"category\":\"tools\",\"id\":6,\"in_stock\":true,\"name\":\"copper-pan-9308\",\"price_cents\":10795},{\"category\":\"garden\",\"id\":7,\"in_stock\":false,\"name\":\"slate-seed-3051\",\"price_cents\":9667},{\"category\":\"kitchen\",\"id\":8,\"in_stock\":false,\"name\":\"oak-lamp-8662\",\"price_cents\":18032},{\"category\":\"outdoor\",\"id\":9,\"in_stock\":true,\"name\":\"amber-hinge-8405\",\"price_cents\":9566},{\"category\":\"office\",\"id\":10,\"in_stock\":true,\"name\":\"linen-lamp-9676\",\"price_cents\":4288},{\"category\":\"tools\",\"id\":11,\"in_stock\":false,\"name\":\"brass-trowel-2042\",\"price_cents\":17701},{\"category\":\"garden\",\"id\":12,\"in_stock\":true,\"name\":\"linen-lamp-5542\",\"price_cents\":12163},{\"category\":\"kitchen\",\"id\":13,\"in_stock\":false,\"name\":\"linen-seed-9760\",\"price_cents\":12305},{\"category\":\"outdoor\",\"id\":14,\"in_stock\":true,\"name\":\"brass-hinge-4996\",\"price_cents\":8489},{\"category\":\"office\",\"id\":15,\"in_stock\":true,\"name\":\"cedar-hinge-8685\",\"price_cents\":15667},{\"category\":\"tools\",\"id\":16,\"in_stock\":true,\"name\":\"slate-seed-3185\",\"price_cents\":4111},{\"category\":\"garden\",\"id\":17,\"in_stock\":true,\"name\":\"cedar-bolt-9891\",\"price_cents\":18370},{\"category\":\"kitchen\",\"id\":18,\"in_stock\":false,\"name\":\"copper-bolt-8081\",\"price_cents\":14318},{\"category\":\"outdoor\",\"id\":19,\"in_stock\":true,\"name\":\"amber-seed-4209\",\"price_cents\":15424},{\"category\":\"office\",\"id\":20,\"in_stock\":true,\"name\":\"oak-bolt-9982\",\"price_cents\":9582},{\"category\":\"tools\",\"id\":21,\"in_stock\":false,\"name\":\"slate-bolt-7099\",\"price_cents\":6732},{\"category\":\"garden\",\"id\":22,\"in_stock\":true,\"name\":\"brass-seed-9718\",\"price_cents\":17198},{\"category\":\"kitchen\",\"id\":23,",
-    "truncated": true
    }
   },
   {
@@ -520,7 +466,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 11:31:16 GMT"
+      "Thu, 17 Sep 2026 18:21:10 GMT"
      ],
      [
       "Connection",
@@ -536,10 +482,10 @@
      ],
      [
       "x-rb-serial",
-      "1025"
+      "3"
      ]
     ],
-    "header_bytes": 154,
+    "header_bytes": 151,
     "framing": "content-length",
     "body_bytes": 131361,
     "body": "{\"count\":1425,\"items\":[{\"category\":\"tools\",\"id\":1,\"in_stock\":true,\"name\":\"slate-lamp-6647\",\"price_cents\":18928},{\"category\":\"garden\",\"id\":2,\"in_stock\":true,\"name\":\"brass-hinge-5716\",\"price_cents\":17577},{\"category\":\"kitchen\",\"id\":3,\"in_stock\":true,\"name\":\"linen-ring-6971\",\"price_cents\":5540},{\"category\":\"outdoor\",\"id\":4,\"in_stock\":true,\"name\":\"copper-bolt-9217\",\"price_cents\":11562},{\"category\":\"office\",\"id\":5,\"in_stock\":true,\"name\":\"linen-lamp-8288\",\"price_cents\":1413},{\"category\":\"tools\",\"id\":6,\"in_stock\":true,\"name\":\"copper-pan-9308\",\"price_cents\":10795},{\"category\":\"garden\",\"id\":7,\"in_stock\":false,\"name\":\"slate-seed-3051\",\"price_cents\":9667},{\"category\":\"kitchen\",\"id\":8,\"in_stock\":false,\"name\":\"oak-lamp-8662\",\"price_cents\":18032},{\"category\":\"outdoor\",\"id\":9,\"in_stock\":true,\"name\":\"amber-hinge-8405\",\"price_cents\":9566},{\"category\":\"office\",\"id\":10,\"in_stock\":true,\"name\":\"linen-lamp-9676\",\"price_cents\":4288},{\"category\":\"tools\",\"id\":11,\"in_stock\":false,\"name\":\"brass-trowel-2042\",\"price_cents\":17701},{\"category\":\"garden\",\"id\":12,\"in_stock\":true,\"name\":\"linen-lamp-5542\",\"price_cents\":12163},{\"category\":\"kitchen\",\"id\":13,\"in_stock\":false,\"name\":\"linen-seed-9760\",\"price_cents\":12305},{\"category\":\"outdoor\",\"id\":14,\"in_stock\":true,\"name\":\"brass-hinge-4996\",\"price_cents\":8489},{\"category\":\"office\",\"id\":15,\"in_stock\":true,\"name\":\"cedar-hinge-8685\",\"price_cents\":15667},{\"category\":\"tools\",\"id\":16,\"in_stock\":true,\"name\":\"slate-seed-3185\",\"price_cents\":4111},{\"category\":\"garden\",\"id\":17,\"in_stock\":true,\"name\":\"cedar-bolt-9891\",\"price_cents\":18370},{\"category\":\"kitchen\",\"id\":18,\"in_stock\":false,\"name\":\"copper-bolt-8081\",\"price_cents\":14318},{\"category\":\"outdoor\",\"id\":19,\"in_stock\":true,\"name\":\"amber-seed-4209\",\"price_cents\":15424},{\"category\":\"office\",\"id\":20,\"in_stock\":true,\"name\":\"oak-bolt-9982\",\"price_cents\":9582},{\"category\":\"tools\",\"id\":21,\"in_stock\":false,\"name\":\"slate-bolt-7099\",\"price_cents\":6732},{\"category\":\"garden\",\"id\":22,\"in_stock\":true,\"name\":\"brass-seed-9718\",\"price_cents\":17198},{\"category\":\"kitchen\",\"id\":2",
@@ -574,7 +520,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 11:31:17 GMT"
+      "Thu, 17 Sep 2026 18:21:10 GMT"
      ],
      [
       "Connection",
@@ -590,75 +536,13 @@
      ],
      [
       "x-rb-serial",
-      "1537"
+      "4"
      ]
     ],
-    "header_bytes": 151,
+    "header_bytes": 148,
     "framing": "content-length",
     "body_bytes": 126,
     "body": "{\"count\":1,\"items\":[{\"category\":\"tools\",\"id\":1,\"in_stock\":true,\"name\":\"slate-lamp-6647\",\"price_cents\":18928}],\"size\":\"small\"}\n",
-    "truncated": false
-   }
-  },
-  {
-   "endpoint": "compressed.gzip_medium",
-   "family": "compressed",
-   "request": {
-    "method": "GET",
-    "path": "/compressed/medium",
-    "headers": [
-     [
-      "accept-encoding",
-      "gzip"
-     ],
-     [
-      "cache-control",
-      "no-cache"
-     ]
-    ],
-    "body": null,
-    "body_bytes": 0
-   },
-   "response": {
-    "status": 200,
-    "headers": [
-     [
-      "Server",
-      "gunicorn"
-     ],
-     [
-      "Date",
-      "Thu, 17 Sep 2026 11:31:17 GMT"
-     ],
-     [
-      "Connection",
-      "keep-alive"
-     ],
-     [
-      "Content-Type",
-      "application/json"
-     ],
-     [
-      "Content-Length",
-      "1489"
-     ],
-     [
-      "x-rb-serial",
-      "2049"
-     ],
-     [
-      "content-encoding",
-      "gzip"
-     ],
-     [
-      "vary",
-      "Accept-Encoding"
-     ]
-    ],
-    "header_bytes": 199,
-    "framing": "content-length",
-    "body_bytes": 1489,
-    "body": "\u001f�\b\u0000\u0000\u0000\u0000\u0000\u0000��Y�n\u001b9\f}�Ϙ�\u0018Ѝ\u0014�_)\u0016�cOZ#�'�'X�\u0016����i:\u0012GT��\t���C\u001eR?���q��g\nO�i\u001e/���ˏᰟ�o����y���|\u001f�/�ó�?�_��tx\u001b�����4\\��1~u?ǿ؝���\u001d�������0~=��9��\u0014\f�|*\u0002�ߎ�u�l��_n��}��t�6��kd�=x_�~;͇m3��t\u001d��[����u\u001d\u001a��*��1\u001f��Dv�ȇ��}��^��\u000bFs@4��c���/���I:AM��Ev�V��\u0014b/���u\u0017��q�\u000f Q�ב_��{]\u001d�q<�\u0002�s@�\u0019�v�i��`�hx�)�P.\u0018\fM8����F�;r\nXҀ(\u0011�՟0\u0018г�v�U�A��hd�̷��3�qD�WZbQ���J;*��6\u001a��+iԶ�y\u000e�J$xT<x,\u001c�I�\u0016㺅�\u0010\u0018��(�T��x\u0018���*AbU\u0012e�j� ��ǵh4�촖����so�������UD\n�\\w>Rģ����L�D�0qF\u0005��3NbҴE�h$\u0019�@��\u0003P�G�,\u001aA���\u0014٫�RF�:T9\u0018{�q���\r��P\u0003]�h\u0004=�\u001a9����S����HE\u0012M[�Y�K���[���[���1�(c���6T�vAd[���3���\u0017�^']\u0012���H��҃�\u0018\u001cCbU���\\.N#SKIbO��&MD��\u0005 �E��b��\u0012��X�\u0015BP���Ѷ�j���\r�`!��ն%�\u0013���:�l\u001f\u0002�#�v%�:Il�<�\u0010�H��ir�c�y\r�g� �-��<F���\u000b\u001b��B]\u0017J�%�!)��7�J���I�e[���\u0012\u0000�\\7N�3ҶE�F��٨@n\u001a*&C\u001b�\u001c=��\r\u0007H���]3�T\u000f�!��4ĊdM�뭏\u0019�8%y�X7�E+xtmM\u0016�'�!x\u0017L\u001d��ҵWȢU9�y\u001f\f��^m��\u001a�$�D�A37卼F:A�+�\u0001��b\u001cH�ҵG�j�v\u0010�v�e]�$�-�\u001c�Q��9\u0016�\u0006_�Q\u0011�\u0016��98��j\b\u001c����̊�g\u0006\u00156��\u0013�\u000fh\u000f�,Ȝ�5\u001ci\fJ��Vd����vȯ.��L\u0005� \f�\u0004G�\"���\u0011��/I\u0004aF�N�� �K %;\u001e�m��E ~\u001f���\u0007��E�\u0001H�ڬ�X��\u001d)8l��1�~\u0019\u001d��\fqa��Q\u000e�:\\_G�٨\u000fĎӁ�\u00143\u001e�D@�b\u0007\u0017��\u0015�=)��Ƹ�rH�c�w�\"�Lk�ڻ\r��\u0004ɲ�0\u001d'\u001d�77P�;�G4m��NYS�Vă�Bb︚�vq�p\u000buY�,b[�+@\b�Am�\u0015�*���۞W\u001b{G��W����\u0015c�cxx�ġ��{N\u000e\u001d�\u0006�z\r��\u0015��T�ל����ݔ���\u0000�G�\u001c�\u0015�6�A]��{\u0007֔�\r�&h͠^���J�H甍�^/�u�(o����h�)cO��.�m����\u000e3�\u0019\f�|C�c� лv�X���\u0005\u001d��8�󦏉��x+Uދ\u0004\n�\u001c�\t\f���h\"�:J\u0002{W�<Z\u0014n��\u0002;�W\u001c�&�p�xN\"\n����:\\�\u0005��Ҳ�!���\u0002o�s��E ��*\\�\u0015X�1Y���� �z7�Ū�e.��ˣz��m���6���)���4�Q\u0007\u0006H0^\\��7\u000f���_N��6~�ô�x\u000f\fhrN���[\u0011s9\u001b~��;z�B�q��7\u0005$�M\u0015{}�Xl�p����]q���\u0018��4�O�=>�����e����\u0016\u0018B\u0012�\u001f\u0000\u0000",
     "truncated": false
    }
   },
@@ -690,7 +574,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 11:31:17 GMT"
+      "Thu, 17 Sep 2026 18:21:10 GMT"
      ],
      [
       "Connection",
@@ -706,7 +590,7 @@
      ],
      [
       "x-rb-serial",
-      "2561"
+      "5"
      ],
      [
       "content-encoding",
@@ -717,7 +601,7 @@
       "Accept-Encoding"
      ]
     ],
-    "header_bytes": 200,
+    "header_bytes": 197,
     "framing": "content-length",
     "body_bytes": 19013,
     "body": "\u001f�\b\u0000\u0000\u0000\u0000\u0000\u0000��}ۮ,Gvܻ?��\"���~�0\u0004j�H\u001ehD\u000eH\n�m�ߝ���+3#v�z\u001a�<S�YQ��\u0016+���������?�g�B������������������������?���o�����ƿ���c�~��?���/���?�������~��?�?�������������Tǟ����ˏ�ˏ_�\u001c�������i{����_�z=9|�����?��������s����k��x���Ͽ��ϳ�����~���Ͽ�g�\\z��sN�x�o���_�������'������?��o���\u001e<�\u0010�K8��o�6����l��W�Bk������\u0015�b������=:|��=+\b�������_�\u001f?~����2��^�F�}���~���]�\u0012�s\u0011��`��u���:����Zr\u0019~t.E\u0001��\u0013\u0004{��E���@�����<,���������K�Fju^��?���\u001e'\u0003\u001f\u001d|9��\u001dF\u001f�����_�H����Ǉ#���\u001f��\nI��\u000bo�u\t����/?����+)\r��q�������<���㓓�\u001a�j��y7�\u000e�ѷX�{�\u0000R\u001c���k�������HZ��띤�:��\u0014�B2|(_\u0017�|%����s;�\u0015� ������u�ɥ�\r�\u0007F+2^G��]}?_�\u000ec\u0010�q~#�����\\��]�!� ���<��%�c��ˣ�Z�u\u001e��\u0010s�O;���ހ��8.�^�\u0011o�q��\u001f�\u0003��y\\�\f\u000eOz�F�\u0013����\u001e�\n\u001e��\u000b��\u001dD�$�#�x��/�&Q�ߟ�yf���\u0011V�\u000bi���+���Lu�ᾑ�!�.o�����?|���\u0002�}%7\u001d\"�y$�n�q����#�K8�u&�8�<~��B�����H�����Im��??�\r���+��\u001a2|�-�w�c����d�9\u0017��!y\u001d#���r}#-\u0006�\u0005b�p ٿ'��3,�\f�e\u0007�wE29�uU\b-�\f\r>�\u0015�d���(��\u001e�͙�m8����v�[$\u0007>�p>|�2}_BnWU�\u001e����\u001fU�(#������=dS5�22�s���3����\n���P���)w<;)�-�������~}�5%xr��|\u001b\u0007��\u001f�%sH\u000e����E�(~\u001f+牜m\u0006�I�d���\u000f��@�\u001f\u001d\u0003��ҝ�[��'r>�+��T��\u0012�f�0�\"H~���[$�\u001c�d��w\u0010�����J[C��қ�\u0019O���/\u0014s��H�A7t���녌T\u001b.�X˙�l\u0018~\u000e_\u0011��8�3��=ʦ\\��\u001c��\u0011\u001f��Q������|\u001f_ ���=���\u0007��Q����(D�\u0004�wE�XI�ׯ����\u001c�JY�����\u001e�\u001b\u0013�����c\t�\u001f��U���1\u0015�Y���j�~��4�g�-����b��(./��\f�:�(��b\u001d�y�UG�\u001eU�Z��q��\u0010\u0013���\f�����G�l\u0003��\u0000��\u0001������u뵈�i�N�\u0001ʣfN�\u000eS�\u0004�zC�Z\r֯\u001f\u001d;�\t�ë^A�ߟ����O\u000e\u0001s�QO����#�>*�.�_\\[��nd��6�ߟ�����p\u0005+$\f[\u001b�5}y,��c���&�q��M_\u0011�ԆW��U\u0002(�\u001c7�=��Ƿ\u0006W�\u000e��ř��\u0015�z���?0�\"�u�\u001b\u0019'��u�X�?��i�,]w^g6M7U�\u001e��\u001c�v\u0011 ��O�2+��D�ܠ��ج�ꕪc1׳??�cReU��o:�_��{ujڬ2�+�\u0017���Pe�߬xx]x89\u0019�����\u0015\u000e�*�Z3�薒LM�U\"��9`�z��\u0006�b����zix�:��\u001e(~\u000e�X{��\u001d�\u0017��\u001b��M�\u000es&u�\u001cRu1�X���\u001c^L�­�\u0001٭f����\u0014�#\f�\u000b�[A�]8c\u0011ڌ\u0012���t�\u0003\u001cV/�\f�Go(��_�\u001a\u0006�g��\u0002\u0015�\u0006�9��M�D�\u0014�j\u0006GV,f�F\u0005��fj�B�\f�\u001e��\u0012�\u0019G\u0017\u0007�N\u0016F.�u��@\u000f�\u0019\u0000�\u001f���VW�\u0004�P�mSc�}p|��Y:��WH��k����q\u001d즆��x���ߙÍ�'^#�G���x'\u0012��Lv2*-\u000e>�\u0003Jk��u�x�wk,pnv(�du��\u001c0�;�e\u001e`>�\u0000�\u0006�FJ0$8��3ǯ'��ip�X�\u001d8��ƼI^9T&\u0013�>�j����,(�B�Y�9�$�X���\u001a�\u0011ի\r'�F/89\u000bi+\u0004�\u001b_sR\u0003H�}��\\%�&��5& \u0012\u001d@\nF�|�_�\u001eї�\u001c\t&2\u0007�ߟ�O͑i�=C�i��\u0011An�5x���\u0000�`�-Ez\nx��\n}�\u0013����N\n�d���\u0013���紏\u000b\u001a#{�мށ\u0014��el�I�9",
@@ -725,11 +609,11 @@
    }
   },
   {
-   "endpoint": "cached.small",
-   "family": "cached",
+   "endpoint": "etag.small",
+   "family": "etag",
    "request": {
     "method": "GET",
-    "path": "/cached/small",
+    "path": "/etag/small",
     "headers": [],
     "body": null,
     "body_bytes": 0
@@ -743,7 +627,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 11:31:18 GMT"
+      "Thu, 17 Sep 2026 18:21:10 GMT"
      ],
      [
       "Connection",
@@ -758,19 +642,19 @@
       "126"
      ],
      [
-      "etag",
-      "\"a7ae6f3c609489a0\""
-     ],
-     [
-      "cache-control",
-      "public, max-age=60"
-     ],
-     [
       "x-rb-serial",
-      "3073"
+      "6"
+     ],
+     [
+      "ETag",
+      "\"08c063440e0101eb913cb6d9946e18933c1f8b02\""
+     ],
+     [
+      "Cache-Control",
+      "public, max-age=60"
      ]
     ],
-    "header_bytes": 212,
+    "header_bytes": 233,
     "framing": "content-length",
     "body_bytes": 126,
     "body": "{\"count\":1,\"items\":[{\"category\":\"tools\",\"id\":1,\"in_stock\":true,\"name\":\"slate-lamp-6647\",\"price_cents\":18928}],\"size\":\"small\"}\n",
@@ -778,11 +662,11 @@
    }
   },
   {
-   "endpoint": "cached.medium",
-   "family": "cached",
+   "endpoint": "etag.large",
+   "family": "etag",
    "request": {
     "method": "GET",
-    "path": "/cached/medium",
+    "path": "/etag/large",
     "headers": [],
     "body": null,
     "body_bytes": 0
@@ -796,60 +680,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 11:31:19 GMT"
-     ],
-     [
-      "Connection",
-      "keep-alive"
-     ],
-     [
-      "Content-Type",
-      "application/json"
-     ],
-     [
-      "Content-Length",
-      "8132"
-     ],
-     [
-      "etag",
-      "\"26ebaac8327a4902\""
-     ],
-     [
-      "cache-control",
-      "public, max-age=60"
-     ],
-     [
-      "x-rb-serial",
-      "3585"
-     ]
-    ],
-    "header_bytes": 213,
-    "framing": "content-length",
-    "body_bytes": 8132,
-    "body": "{\"count\":89,\"items\":[{\"category\":\"tools\",\"id\":1,\"in_stock\":true,\"name\":\"slate-lamp-6647\",\"price_cents\":18928},{\"category\":\"garden\",\"id\":2,\"in_stock\":true,\"name\":\"brass-hinge-5716\",\"price_cents\":17577},{\"category\":\"kitchen\",\"id\":3,\"in_stock\":true,\"name\":\"linen-ring-6971\",\"price_cents\":5540},{\"category\":\"outdoor\",\"id\":4,\"in_stock\":true,\"name\":\"copper-bolt-9217\",\"price_cents\":11562},{\"category\":\"office\",\"id\":5,\"in_stock\":true,\"name\":\"linen-lamp-8288\",\"price_cents\":1413},{\"category\":\"tools\",\"id\":6,\"in_stock\":true,\"name\":\"copper-pan-9308\",\"price_cents\":10795},{\"category\":\"garden\",\"id\":7,\"in_stock\":false,\"name\":\"slate-seed-3051\",\"price_cents\":9667},{\"category\":\"kitchen\",\"id\":8,\"in_stock\":false,\"name\":\"oak-lamp-8662\",\"price_cents\":18032},{\"category\":\"outdoor\",\"id\":9,\"in_stock\":true,\"name\":\"amber-hinge-8405\",\"price_cents\":9566},{\"category\":\"office\",\"id\":10,\"in_stock\":true,\"name\":\"linen-lamp-9676\",\"price_cents\":4288},{\"category\":\"tools\",\"id\":11,\"in_stock\":false,\"name\":\"brass-trowel-2042\",\"price_cents\":17701},{\"category\":\"garden\",\"id\":12,\"in_stock\":true,\"name\":\"linen-lamp-5542\",\"price_cents\":12163},{\"category\":\"kitchen\",\"id\":13,\"in_stock\":false,\"name\":\"linen-seed-9760\",\"price_cents\":12305},{\"category\":\"outdoor\",\"id\":14,\"in_stock\":true,\"name\":\"brass-hinge-4996\",\"price_cents\":8489},{\"category\":\"office\",\"id\":15,\"in_stock\":true,\"name\":\"cedar-hinge-8685\",\"price_cents\":15667},{\"category\":\"tools\",\"id\":16,\"in_stock\":true,\"name\":\"slate-seed-3185\",\"price_cents\":4111},{\"category\":\"garden\",\"id\":17,\"in_stock\":true,\"name\":\"cedar-bolt-9891\",\"price_cents\":18370},{\"category\":\"kitchen\",\"id\":18,\"in_stock\":false,\"name\":\"copper-bolt-8081\",\"price_cents\":14318},{\"category\":\"outdoor\",\"id\":19,\"in_stock\":true,\"name\":\"amber-seed-4209\",\"price_cents\":15424},{\"category\":\"office\",\"id\":20,\"in_stock\":true,\"name\":\"oak-bolt-9982\",\"price_cents\":9582},{\"category\":\"tools\",\"id\":21,\"in_stock\":false,\"name\":\"slate-bolt-7099\",\"price_cents\":6732},{\"category\":\"garden\",\"id\":22,\"in_stock\":true,\"name\":\"brass-seed-9718\",\"price_cents\":17198},{\"category\":\"kitchen\",\"id\":23,",
-    "truncated": true
-   }
-  },
-  {
-   "endpoint": "cached.large",
-   "family": "cached",
-   "request": {
-    "method": "GET",
-    "path": "/cached/large",
-    "headers": [],
-    "body": null,
-    "body_bytes": 0
-   },
-   "response": {
-    "status": 200,
-    "headers": [
-     [
-      "Server",
-      "gunicorn"
-     ],
-     [
-      "Date",
-      "Thu, 17 Sep 2026 11:31:19 GMT"
+      "Thu, 17 Sep 2026 18:21:10 GMT"
      ],
      [
       "Connection",
@@ -864,19 +695,19 @@
       "131361"
      ],
      [
-      "etag",
-      "\"5112b8cee06a736e\""
-     ],
-     [
-      "cache-control",
-      "public, max-age=60"
-     ],
-     [
       "x-rb-serial",
-      "4097"
+      "7"
+     ],
+     [
+      "ETag",
+      "\"a9c5979e127b969dbe5fa2aa3c3ac888624eee80\""
+     ],
+     [
+      "Cache-Control",
+      "public, max-age=60"
      ]
     ],
-    "header_bytes": 215,
+    "header_bytes": 236,
     "framing": "content-length",
     "body_bytes": 131361,
     "body": "{\"count\":1425,\"items\":[{\"category\":\"tools\",\"id\":1,\"in_stock\":true,\"name\":\"slate-lamp-6647\",\"price_cents\":18928},{\"category\":\"garden\",\"id\":2,\"in_stock\":true,\"name\":\"brass-hinge-5716\",\"price_cents\":17577},{\"category\":\"kitchen\",\"id\":3,\"in_stock\":true,\"name\":\"linen-ring-6971\",\"price_cents\":5540},{\"category\":\"outdoor\",\"id\":4,\"in_stock\":true,\"name\":\"copper-bolt-9217\",\"price_cents\":11562},{\"category\":\"office\",\"id\":5,\"in_stock\":true,\"name\":\"linen-lamp-8288\",\"price_cents\":1413},{\"category\":\"tools\",\"id\":6,\"in_stock\":true,\"name\":\"copper-pan-9308\",\"price_cents\":10795},{\"category\":\"garden\",\"id\":7,\"in_stock\":false,\"name\":\"slate-seed-3051\",\"price_cents\":9667},{\"category\":\"kitchen\",\"id\":8,\"in_stock\":false,\"name\":\"oak-lamp-8662\",\"price_cents\":18032},{\"category\":\"outdoor\",\"id\":9,\"in_stock\":true,\"name\":\"amber-hinge-8405\",\"price_cents\":9566},{\"category\":\"office\",\"id\":10,\"in_stock\":true,\"name\":\"linen-lamp-9676\",\"price_cents\":4288},{\"category\":\"tools\",\"id\":11,\"in_stock\":false,\"name\":\"brass-trowel-2042\",\"price_cents\":17701},{\"category\":\"garden\",\"id\":12,\"in_stock\":true,\"name\":\"linen-lamp-5542\",\"price_cents\":12163},{\"category\":\"kitchen\",\"id\":13,\"in_stock\":false,\"name\":\"linen-seed-9760\",\"price_cents\":12305},{\"category\":\"outdoor\",\"id\":14,\"in_stock\":true,\"name\":\"brass-hinge-4996\",\"price_cents\":8489},{\"category\":\"office\",\"id\":15,\"in_stock\":true,\"name\":\"cedar-hinge-8685\",\"price_cents\":15667},{\"category\":\"tools\",\"id\":16,\"in_stock\":true,\"name\":\"slate-seed-3185\",\"price_cents\":4111},{\"category\":\"garden\",\"id\":17,\"in_stock\":true,\"name\":\"cedar-bolt-9891\",\"price_cents\":18370},{\"category\":\"kitchen\",\"id\":18,\"in_stock\":false,\"name\":\"copper-bolt-8081\",\"price_cents\":14318},{\"category\":\"outdoor\",\"id\":19,\"in_stock\":true,\"name\":\"amber-seed-4209\",\"price_cents\":15424},{\"category\":\"office\",\"id\":20,\"in_stock\":true,\"name\":\"oak-bolt-9982\",\"price_cents\":9582},{\"category\":\"tools\",\"id\":21,\"in_stock\":false,\"name\":\"slate-bolt-7099\",\"price_cents\":6732},{\"category\":\"garden\",\"id\":22,\"in_stock\":true,\"name\":\"brass-seed-9718\",\"price_cents\":17198},{\"category\":\"kitchen\",\"id\":2",
@@ -884,15 +715,15 @@
    }
   },
   {
-   "endpoint": "cached.revalidate",
-   "family": "cached",
+   "endpoint": "etag.match_large",
+   "family": "etag",
    "request": {
     "method": "GET",
-    "path": "/cached/large",
+    "path": "/etag/large",
     "headers": [
      [
       "if-none-match",
-      "\"5112b8cee06a736e\""
+      "\"a9c5979e127b969dbe5fa2aa3c3ac888624eee80\""
      ]
     ],
     "body": null,
@@ -907,29 +738,338 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 11:31:19 GMT"
+      "Thu, 17 Sep 2026 18:21:10 GMT"
      ],
      [
       "Connection",
       "keep-alive"
      ],
      [
-      "etag",
-      "\"5112b8cee06a736e\""
-     ],
-     [
-      "cache-control",
-      "public, max-age=60"
-     ],
-     [
       "x-rb-serial",
-      "4609"
+      "8"
+     ],
+     [
+      "ETag",
+      "\"a9c5979e127b969dbe5fa2aa3c3ac888624eee80\""
+     ],
+     [
+      "Cache-Control",
+      "public, max-age=60"
      ]
     ],
-    "header_bytes": 159,
+    "header_bytes": 180,
     "framing": "none",
     "body_bytes": 0,
     "body": "",
+    "truncated": false
+   }
+  },
+  {
+   "endpoint": "etag.stale_large",
+   "family": "etag",
+   "request": {
+    "method": "GET",
+    "path": "/etag/large",
+    "headers": [
+     [
+      "if-none-match",
+      "\"0000000000000000\""
+     ]
+    ],
+    "body": null,
+    "body_bytes": 0
+   },
+   "response": {
+    "status": 200,
+    "headers": [
+     [
+      "Server",
+      "gunicorn"
+     ],
+     [
+      "Date",
+      "Thu, 17 Sep 2026 18:21:10 GMT"
+     ],
+     [
+      "Connection",
+      "keep-alive"
+     ],
+     [
+      "Content-Type",
+      "application/json"
+     ],
+     [
+      "Content-Length",
+      "131361"
+     ],
+     [
+      "x-rb-serial",
+      "9"
+     ],
+     [
+      "ETag",
+      "\"a9c5979e127b969dbe5fa2aa3c3ac888624eee80\""
+     ],
+     [
+      "Cache-Control",
+      "public, max-age=60"
+     ]
+    ],
+    "header_bytes": 236,
+    "framing": "content-length",
+    "body_bytes": 131361,
+    "body": "{\"count\":1425,\"items\":[{\"category\":\"tools\",\"id\":1,\"in_stock\":true,\"name\":\"slate-lamp-6647\",\"price_cents\":18928},{\"category\":\"garden\",\"id\":2,\"in_stock\":true,\"name\":\"brass-hinge-5716\",\"price_cents\":17577},{\"category\":\"kitchen\",\"id\":3,\"in_stock\":true,\"name\":\"linen-ring-6971\",\"price_cents\":5540},{\"category\":\"outdoor\",\"id\":4,\"in_stock\":true,\"name\":\"copper-bolt-9217\",\"price_cents\":11562},{\"category\":\"office\",\"id\":5,\"in_stock\":true,\"name\":\"linen-lamp-8288\",\"price_cents\":1413},{\"category\":\"tools\",\"id\":6,\"in_stock\":true,\"name\":\"copper-pan-9308\",\"price_cents\":10795},{\"category\":\"garden\",\"id\":7,\"in_stock\":false,\"name\":\"slate-seed-3051\",\"price_cents\":9667},{\"category\":\"kitchen\",\"id\":8,\"in_stock\":false,\"name\":\"oak-lamp-8662\",\"price_cents\":18032},{\"category\":\"outdoor\",\"id\":9,\"in_stock\":true,\"name\":\"amber-hinge-8405\",\"price_cents\":9566},{\"category\":\"office\",\"id\":10,\"in_stock\":true,\"name\":\"linen-lamp-9676\",\"price_cents\":4288},{\"category\":\"tools\",\"id\":11,\"in_stock\":false,\"name\":\"brass-trowel-2042\",\"price_cents\":17701},{\"category\":\"garden\",\"id\":12,\"in_stock\":true,\"name\":\"linen-lamp-5542\",\"price_cents\":12163},{\"category\":\"kitchen\",\"id\":13,\"in_stock\":false,\"name\":\"linen-seed-9760\",\"price_cents\":12305},{\"category\":\"outdoor\",\"id\":14,\"in_stock\":true,\"name\":\"brass-hinge-4996\",\"price_cents\":8489},{\"category\":\"office\",\"id\":15,\"in_stock\":true,\"name\":\"cedar-hinge-8685\",\"price_cents\":15667},{\"category\":\"tools\",\"id\":16,\"in_stock\":true,\"name\":\"slate-seed-3185\",\"price_cents\":4111},{\"category\":\"garden\",\"id\":17,\"in_stock\":true,\"name\":\"cedar-bolt-9891\",\"price_cents\":18370},{\"category\":\"kitchen\",\"id\":18,\"in_stock\":false,\"name\":\"copper-bolt-8081\",\"price_cents\":14318},{\"category\":\"outdoor\",\"id\":19,\"in_stock\":true,\"name\":\"amber-seed-4209\",\"price_cents\":15424},{\"category\":\"office\",\"id\":20,\"in_stock\":true,\"name\":\"oak-bolt-9982\",\"price_cents\":9582},{\"category\":\"tools\",\"id\":21,\"in_stock\":false,\"name\":\"slate-bolt-7099\",\"price_cents\":6732},{\"category\":\"garden\",\"id\":22,\"in_stock\":true,\"name\":\"brass-seed-9718\",\"price_cents\":17198},{\"category\":\"kitchen\",\"id\":2",
+    "truncated": true
+   }
+  },
+  {
+   "endpoint": "cache.small",
+   "family": "cache",
+   "request": {
+    "method": "GET",
+    "path": "/cache/small",
+    "headers": [],
+    "body": null,
+    "body_bytes": 0
+   },
+   "response": {
+    "status": 200,
+    "headers": [
+     [
+      "Server",
+      "gunicorn"
+     ],
+     [
+      "Date",
+      "Thu, 17 Sep 2026 18:21:10 GMT"
+     ],
+     [
+      "Connection",
+      "keep-alive"
+     ],
+     [
+      "Content-Type",
+      "application/json"
+     ],
+     [
+      "Content-Length",
+      "126"
+     ],
+     [
+      "x-rb-serial",
+      "10"
+     ]
+    ],
+    "header_bytes": 149,
+    "framing": "content-length",
+    "body_bytes": 126,
+    "body": "{\"count\":1,\"items\":[{\"category\":\"tools\",\"id\":1,\"in_stock\":true,\"name\":\"slate-lamp-6647\",\"price_cents\":18928}],\"size\":\"small\"}\n",
+    "truncated": false
+   }
+  },
+  {
+   "endpoint": "cache.medium",
+   "family": "cache",
+   "request": {
+    "method": "GET",
+    "path": "/cache/medium",
+    "headers": [],
+    "body": null,
+    "body_bytes": 0
+   },
+   "response": {
+    "status": 200,
+    "headers": [
+     [
+      "Server",
+      "gunicorn"
+     ],
+     [
+      "Date",
+      "Thu, 17 Sep 2026 18:21:10 GMT"
+     ],
+     [
+      "Connection",
+      "keep-alive"
+     ],
+     [
+      "Content-Type",
+      "application/json"
+     ],
+     [
+      "Content-Length",
+      "8132"
+     ],
+     [
+      "x-rb-serial",
+      "11"
+     ]
+    ],
+    "header_bytes": 150,
+    "framing": "content-length",
+    "body_bytes": 8132,
+    "body": "{\"count\":89,\"items\":[{\"category\":\"tools\",\"id\":1,\"in_stock\":true,\"name\":\"slate-lamp-6647\",\"price_cents\":18928},{\"category\":\"garden\",\"id\":2,\"in_stock\":true,\"name\":\"brass-hinge-5716\",\"price_cents\":17577},{\"category\":\"kitchen\",\"id\":3,\"in_stock\":true,\"name\":\"linen-ring-6971\",\"price_cents\":5540},{\"category\":\"outdoor\",\"id\":4,\"in_stock\":true,\"name\":\"copper-bolt-9217\",\"price_cents\":11562},{\"category\":\"office\",\"id\":5,\"in_stock\":true,\"name\":\"linen-lamp-8288\",\"price_cents\":1413},{\"category\":\"tools\",\"id\":6,\"in_stock\":true,\"name\":\"copper-pan-9308\",\"price_cents\":10795},{\"category\":\"garden\",\"id\":7,\"in_stock\":false,\"name\":\"slate-seed-3051\",\"price_cents\":9667},{\"category\":\"kitchen\",\"id\":8,\"in_stock\":false,\"name\":\"oak-lamp-8662\",\"price_cents\":18032},{\"category\":\"outdoor\",\"id\":9,\"in_stock\":true,\"name\":\"amber-hinge-8405\",\"price_cents\":9566},{\"category\":\"office\",\"id\":10,\"in_stock\":true,\"name\":\"linen-lamp-9676\",\"price_cents\":4288},{\"category\":\"tools\",\"id\":11,\"in_stock\":false,\"name\":\"brass-trowel-2042\",\"price_cents\":17701},{\"category\":\"garden\",\"id\":12,\"in_stock\":true,\"name\":\"linen-lamp-5542\",\"price_cents\":12163},{\"category\":\"kitchen\",\"id\":13,\"in_stock\":false,\"name\":\"linen-seed-9760\",\"price_cents\":12305},{\"category\":\"outdoor\",\"id\":14,\"in_stock\":true,\"name\":\"brass-hinge-4996\",\"price_cents\":8489},{\"category\":\"office\",\"id\":15,\"in_stock\":true,\"name\":\"cedar-hinge-8685\",\"price_cents\":15667},{\"category\":\"tools\",\"id\":16,\"in_stock\":true,\"name\":\"slate-seed-3185\",\"price_cents\":4111},{\"category\":\"garden\",\"id\":17,\"in_stock\":true,\"name\":\"cedar-bolt-9891\",\"price_cents\":18370},{\"category\":\"kitchen\",\"id\":18,\"in_stock\":false,\"name\":\"copper-bolt-8081\",\"price_cents\":14318},{\"category\":\"outdoor\",\"id\":19,\"in_stock\":true,\"name\":\"amber-seed-4209\",\"price_cents\":15424},{\"category\":\"office\",\"id\":20,\"in_stock\":true,\"name\":\"oak-bolt-9982\",\"price_cents\":9582},{\"category\":\"tools\",\"id\":21,\"in_stock\":false,\"name\":\"slate-bolt-7099\",\"price_cents\":6732},{\"category\":\"garden\",\"id\":22,\"in_stock\":true,\"name\":\"brass-seed-9718\",\"price_cents\":17198},{\"category\":\"kitchen\",\"id\":23,",
+    "truncated": true
+   }
+  },
+  {
+   "endpoint": "cache.large",
+   "family": "cache",
+   "request": {
+    "method": "GET",
+    "path": "/cache/large",
+    "headers": [],
+    "body": null,
+    "body_bytes": 0
+   },
+   "response": {
+    "status": 200,
+    "headers": [
+     [
+      "Server",
+      "gunicorn"
+     ],
+     [
+      "Date",
+      "Thu, 17 Sep 2026 18:21:10 GMT"
+     ],
+     [
+      "Connection",
+      "keep-alive"
+     ],
+     [
+      "Content-Type",
+      "application/json"
+     ],
+     [
+      "Content-Length",
+      "131361"
+     ],
+     [
+      "x-rb-serial",
+      "12"
+     ]
+    ],
+    "header_bytes": 152,
+    "framing": "content-length",
+    "body_bytes": 131361,
+    "body": "{\"count\":1425,\"items\":[{\"category\":\"tools\",\"id\":1,\"in_stock\":true,\"name\":\"slate-lamp-6647\",\"price_cents\":18928},{\"category\":\"garden\",\"id\":2,\"in_stock\":true,\"name\":\"brass-hinge-5716\",\"price_cents\":17577},{\"category\":\"kitchen\",\"id\":3,\"in_stock\":true,\"name\":\"linen-ring-6971\",\"price_cents\":5540},{\"category\":\"outdoor\",\"id\":4,\"in_stock\":true,\"name\":\"copper-bolt-9217\",\"price_cents\":11562},{\"category\":\"office\",\"id\":5,\"in_stock\":true,\"name\":\"linen-lamp-8288\",\"price_cents\":1413},{\"category\":\"tools\",\"id\":6,\"in_stock\":true,\"name\":\"copper-pan-9308\",\"price_cents\":10795},{\"category\":\"garden\",\"id\":7,\"in_stock\":false,\"name\":\"slate-seed-3051\",\"price_cents\":9667},{\"category\":\"kitchen\",\"id\":8,\"in_stock\":false,\"name\":\"oak-lamp-8662\",\"price_cents\":18032},{\"category\":\"outdoor\",\"id\":9,\"in_stock\":true,\"name\":\"amber-hinge-8405\",\"price_cents\":9566},{\"category\":\"office\",\"id\":10,\"in_stock\":true,\"name\":\"linen-lamp-9676\",\"price_cents\":4288},{\"category\":\"tools\",\"id\":11,\"in_stock\":false,\"name\":\"brass-trowel-2042\",\"price_cents\":17701},{\"category\":\"garden\",\"id\":12,\"in_stock\":true,\"name\":\"linen-lamp-5542\",\"price_cents\":12163},{\"category\":\"kitchen\",\"id\":13,\"in_stock\":false,\"name\":\"linen-seed-9760\",\"price_cents\":12305},{\"category\":\"outdoor\",\"id\":14,\"in_stock\":true,\"name\":\"brass-hinge-4996\",\"price_cents\":8489},{\"category\":\"office\",\"id\":15,\"in_stock\":true,\"name\":\"cedar-hinge-8685\",\"price_cents\":15667},{\"category\":\"tools\",\"id\":16,\"in_stock\":true,\"name\":\"slate-seed-3185\",\"price_cents\":4111},{\"category\":\"garden\",\"id\":17,\"in_stock\":true,\"name\":\"cedar-bolt-9891\",\"price_cents\":18370},{\"category\":\"kitchen\",\"id\":18,\"in_stock\":false,\"name\":\"copper-bolt-8081\",\"price_cents\":14318},{\"category\":\"outdoor\",\"id\":19,\"in_stock\":true,\"name\":\"amber-seed-4209\",\"price_cents\":15424},{\"category\":\"office\",\"id\":20,\"in_stock\":true,\"name\":\"oak-bolt-9982\",\"price_cents\":9582},{\"category\":\"tools\",\"id\":21,\"in_stock\":false,\"name\":\"slate-bolt-7099\",\"price_cents\":6732},{\"category\":\"garden\",\"id\":22,\"in_stock\":true,\"name\":\"brass-seed-9718\",\"price_cents\":17198},{\"category\":\"kitchen\",\"id\":2",
+    "truncated": true
+   }
+  },
+  {
+   "endpoint": "cache.vary_one",
+   "family": "cache",
+   "request": {
+    "method": "GET",
+    "path": "/cache/vary/one",
+    "headers": [
+     [
+      "x-rb-tenant",
+      "alpha"
+     ]
+    ],
+    "body": null,
+    "body_bytes": 0
+   },
+   "response": {
+    "status": 200,
+    "headers": [
+     [
+      "Server",
+      "gunicorn"
+     ],
+     [
+      "Date",
+      "Thu, 17 Sep 2026 18:21:10 GMT"
+     ],
+     [
+      "Connection",
+      "keep-alive"
+     ],
+     [
+      "Content-Type",
+      "application/json"
+     ],
+     [
+      "Content-Length",
+      "126"
+     ],
+     [
+      "x-rb-serial",
+      "13"
+     ],
+     [
+      "vary",
+      "x-rb-tenant"
+     ]
+    ],
+    "header_bytes": 168,
+    "framing": "content-length",
+    "body_bytes": 126,
+    "body": "{\"count\":1,\"items\":[{\"category\":\"tools\",\"id\":1,\"in_stock\":true,\"name\":\"slate-lamp-6647\",\"price_cents\":18928}],\"size\":\"small\"}\n",
+    "truncated": false
+   }
+  },
+  {
+   "endpoint": "cache.vary_many",
+   "family": "cache",
+   "request": {
+    "method": "GET",
+    "path": "/cache/vary/many",
+    "headers": [
+     [
+      "x-rb-channel",
+      "web"
+     ],
+     [
+      "x-rb-region",
+      "eu"
+     ],
+     [
+      "x-rb-tenant",
+      "alpha"
+     ]
+    ],
+    "body": null,
+    "body_bytes": 0
+   },
+   "response": {
+    "status": 200,
+    "headers": [
+     [
+      "Server",
+      "gunicorn"
+     ],
+     [
+      "Date",
+      "Thu, 17 Sep 2026 18:21:10 GMT"
+     ],
+     [
+      "Connection",
+      "keep-alive"
+     ],
+     [
+      "Content-Type",
+      "application/json"
+     ],
+     [
+      "Content-Length",
+      "126"
+     ],
+     [
+      "x-rb-serial",
+      "14"
+     ],
+     [
+      "vary",
+      "x-rb-channel, x-rb-region, x-rb-tenant"
+     ]
+    ],
+    "header_bytes": 195,
+    "framing": "content-length",
+    "body_bytes": 126,
+    "body": "{\"count\":1,\"items\":[{\"category\":\"tools\",\"id\":1,\"in_stock\":true,\"name\":\"slate-lamp-6647\",\"price_cents\":18928}],\"size\":\"small\"}\n",
     "truncated": false
    }
   },
@@ -957,7 +1097,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 11:31:20 GMT"
+      "Thu, 17 Sep 2026 18:21:10 GMT"
      ],
      [
       "Connection",
@@ -1003,7 +1143,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 11:31:20 GMT"
+      "Thu, 17 Sep 2026 18:21:10 GMT"
      ],
      [
       "Connection",
@@ -1049,7 +1189,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 11:31:20 GMT"
+      "Thu, 17 Sep 2026 18:21:10 GMT"
      ],
      [
       "Connection",
@@ -1095,7 +1235,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 11:31:20 GMT"
+      "Thu, 17 Sep 2026 18:21:10 GMT"
      ],
      [
       "Connection",
@@ -1141,7 +1281,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 11:31:21 GMT"
+      "Thu, 17 Sep 2026 18:21:10 GMT"
      ],
      [
       "Connection",
@@ -1187,7 +1327,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 11:31:21 GMT"
+      "Thu, 17 Sep 2026 18:21:10 GMT"
      ],
      [
       "Connection",
@@ -1214,7 +1354,7 @@
    "family": "query",
    "request": {
     "method": "GET",
-    "path": "/query/one?page=6",
+    "path": "/query/one?page=0",
     "headers": [],
     "body": null,
     "body_bytes": 0
@@ -1228,7 +1368,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 11:31:21 GMT"
+      "Thu, 17 Sep 2026 18:21:10 GMT"
      ],
      [
       "Connection",
@@ -1246,7 +1386,7 @@
     "header_bytes": 131,
     "framing": "content-length",
     "body_bytes": 11,
-    "body": "{\"page\":6}\n",
+    "body": "{\"page\":0}\n",
     "truncated": false
    }
   },
@@ -1255,7 +1395,7 @@
    "family": "query",
    "request": {
     "method": "GET",
-    "path": "/query/many?page=17&size=25&status=paid&category=kitchen&sort=name&q=bolt&min_price=4&max_price=177",
+    "path": "/query/many?page=10&size=25&status=paid&category=outdoor&sort=created&q=bolt&min_price=17&max_price=64",
     "headers": [],
     "body": null,
     "body_bytes": 0
@@ -1269,7 +1409,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 11:31:22 GMT"
+      "Thu, 17 Sep 2026 18:21:10 GMT"
      ],
      [
       "Connection",
@@ -1281,13 +1421,13 @@
      ],
      [
       "Content-Length",
-      "114"
+      "117"
      ]
     ],
     "header_bytes": 132,
     "framing": "content-length",
-    "body_bytes": 114,
-    "body": "{\"category\":\"kitchen\",\"max_price\":177,\"min_price\":4,\"page\":17,\"q\":\"bolt\",\"size\":25,\"sort\":\"name\",\"status\":\"paid\"}\n",
+    "body_bytes": 117,
+    "body": "{\"category\":\"outdoor\",\"max_price\":64,\"min_price\":17,\"page\":10,\"q\":\"bolt\",\"size\":25,\"sort\":\"created\",\"status\":\"paid\"}\n",
     "truncated": false
    }
   },
@@ -1310,7 +1450,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 11:31:22 GMT"
+      "Thu, 17 Sep 2026 18:21:10 GMT"
      ],
      [
       "Connection",
@@ -1460,7 +1600,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 11:31:22 GMT"
+      "Thu, 17 Sep 2026 18:21:10 GMT"
      ],
      [
       "Connection",
@@ -1501,7 +1641,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 11:31:22 GMT"
+      "Thu, 17 Sep 2026 18:21:10 GMT"
      ],
      [
       "Connection",
@@ -1542,7 +1682,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 11:31:22 GMT"
+      "Thu, 17 Sep 2026 18:21:10 GMT"
      ],
      [
       "Connection",
@@ -1583,7 +1723,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 11:31:23 GMT"
+      "Thu, 17 Sep 2026 18:21:10 GMT"
      ],
      [
       "Connection",
@@ -1610,7 +1750,7 @@
    "family": "domain",
    "request": {
     "method": "GET",
-    "path": "/domain/orders/823",
+    "path": "/domain/orders/253",
     "headers": [],
     "body": null,
     "body_bytes": 0
@@ -1624,7 +1764,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 11:31:23 GMT"
+      "Thu, 17 Sep 2026 18:21:10 GMT"
      ],
      [
       "Connection",
@@ -1636,13 +1776,13 @@
      ],
      [
       "Content-Length",
-      "242"
+      "813"
      ]
     ],
     "header_bytes": 132,
     "framing": "content-length",
-    "body_bytes": 242,
-    "body": "{\"created\":\"2026-05-12\",\"customer_id\":162,\"id\":823,\"lines\":[{\"id\":1,\"product_id\":41,\"qty\":4,\"total_cents\":6068,\"unit_cents\":1517},{\"id\":2,\"product_id\":12,\"qty\":1,\"total_cents\":2863,\"unit_cents\":2863}],\"status\":\"cancelled\",\"total_cents\":8931}\n",
+    "body_bytes": 813,
+    "body": "{\"created\":\"2026-02-02\",\"customer_id\":172,\"id\":253,\"lines\":[{\"id\":1,\"product_id\":37,\"qty\":3,\"total_cents\":50721,\"unit_cents\":16907},{\"id\":2,\"product_id\":38,\"qty\":2,\"total_cents\":9752,\"unit_cents\":4876},{\"id\":3,\"product_id\":33,\"qty\":5,\"total_cents\":26040,\"unit_cents\":5208},{\"id\":4,\"product_id\":2,\"qty\":2,\"total_cents\":27952,\"unit_cents\":13976},{\"id\":5,\"product_id\":2,\"qty\":5,\"total_cents\":69880,\"unit_cents\":13976},{\"id\":6,\"product_id\":28,\"qty\":1,\"total_cents\":14321,\"unit_cents\":14321},{\"id\":7,\"product_id\":35,\"qty\":5,\"total_cents\":6465,\"unit_cents\":1293},{\"id\":8,\"product_id\":40,\"qty\":1,\"total_cents\":15468,\"unit_cents\":15468},{\"id\":9,\"product_id\":43,\"qty\":4,\"total_cents\":53036,\"unit_cents\":13259},{\"id\":10,\"product_id\":43,\"qty\":3,\"total_cents\":39777,\"unit_cents\":13259}],\"status\":\"paid\",\"total_cents\":313412}\n",
     "truncated": false
    }
   },
@@ -1651,7 +1791,7 @@
    "family": "domain",
    "request": {
     "method": "GET",
-    "path": "/domain/orders?status=shipped&page=16&size=25",
+    "path": "/domain/orders?status=paid&page=0&size=50",
     "headers": [],
     "body": null,
     "body_bytes": 0
@@ -1665,7 +1805,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 11:31:23 GMT"
+      "Thu, 17 Sep 2026 18:21:10 GMT"
      ],
      [
       "Connection",
@@ -1677,14 +1817,14 @@
      ],
      [
       "Content-Length",
-      "45"
+      "25422"
      ]
     ],
-    "header_bytes": 131,
+    "header_bytes": 134,
     "framing": "content-length",
-    "body_bytes": 45,
-    "body": "{\"items\":[],\"page\":16,\"size\":25,\"total\":250}\n",
-    "truncated": false
+    "body_bytes": 25422,
+    "body": "{\"items\":[{\"created\":\"2026-02-02\",\"customer_id\":8,\"id\":1,\"lines\":[{\"id\":1,\"product_id\":9,\"qty\":2,\"total_cents\":3418,\"unit_cents\":1709},{\"id\":2,\"product_id\":7,\"qty\":4,\"total_cents\":28280,\"unit_cents\":7070},{\"id\":3,\"product_id\":12,\"qty\":3,\"total_cents\":8589,\"unit_cents\":2863},{\"id\":4,\"product_id\":33,\"qty\":2,\"total_cents\":10416,\"unit_cents\":5208},{\"id\":5,\"product_id\":50,\"qty\":3,\"total_cents\":9282,\"unit_cents\":3094},{\"id\":6,\"product_id\":17,\"qty\":1,\"total_cents\":4526,\"unit_cents\":4526},{\"id\":7,\"product_id\":43,\"qty\":5,\"total_cents\":66295,\"unit_cents\":13259},{\"id\":8,\"product_id\":48,\"qty\":2,\"total_cents\":20370,\"unit_cents\":10185},{\"id\":9,\"product_id\":25,\"qty\":1,\"total_cents\":18282,\"unit_cents\":18282}],\"status\":\"paid\",\"total_cents\":169458},{\"created\":\"2026-06-06\",\"customer_id\":36,\"id\":5,\"lines\":[{\"id\":1,\"product_id\":4,\"qty\":2,\"total_cents\":4120,\"unit_cents\":2060}],\"status\":\"paid\",\"total_cents\":4120},{\"created\":\"2026-01-10\",\"customer_id\":64,\"id\":9,\"lines\":[{\"id\":1,\"product_id\":46,\"qty\":2,\"total_cents\":32466,\"unit_cents\":16233},{\"id\":2,\"product_id\":19,\"qty\":1,\"total_cents\":931,\"unit_cents\":931},{\"id\":3,\"product_id\":41,\"qty\":1,\"total_cents\":1517,\"unit_cents\":1517},{\"id\":4,\"product_id\":12,\"qty\":3,\"total_cents\":8589,\"unit_cents\":2863},{\"id\":5,\"product_id\":20,\"qty\":1,\"total_cents\":335,\"unit_cents\":335}],\"status\":\"paid\",\"total_cents\":43838},{\"created\":\"2026-05-14\",\"customer_id\":92,\"id\":13,\"lines\":[{\"id\":1,\"product_id\":37,\"qty\":2,\"total_cents\":33814,\"unit_cents\":16907},{\"id\":2,\"product_id\":18,\"qty\":4,\"total_cents\":50188,\"unit_cents\":12547},{\"id\":3,\"product_id\":46,\"qty\":4,\"total_cents\":64932,\"unit_cents\":16233},{\"id\":4,\"product_id\":22,\"qty\":2,\"total_cents\":7124,\"unit_cents\":3562},{\"id\":5,\"product_id\":19,\"qty\":5,\"total_cents\":4655,\"unit_cents\":931},{\"id\":6,\"product_id\":45,\"qty\":1,\"total_cents\":15500,\"unit_cents\":15500},{\"id\":7,\"product_id\":5,\"qty\":2,\"total_cents\":32566,\"unit_cents\":16283}],\"status\":\"paid\",\"total_cents\":208779},{\"created\":\"2026-09-18\",\"customer_id\":120,\"id\":17,\"lines\":[{\"id\":1,\"product_id\":40,\"qty\":3,\"total_cents\":4",
+    "truncated": true
    }
   },
   {
@@ -1692,7 +1832,7 @@
    "family": "domain",
    "request": {
     "method": "GET",
-    "path": "/domain/customers/160/summary",
+    "path": "/domain/customers/21/summary",
     "headers": [],
     "body": null,
     "body_bytes": 0
@@ -1706,7 +1846,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 11:31:23 GMT"
+      "Thu, 17 Sep 2026 18:21:10 GMT"
      ],
      [
       "Connection",
@@ -1724,7 +1864,7 @@
     "header_bytes": 132,
     "framing": "content-length",
     "body_bytes": 473,
-    "body": "{\"customer\":{\"created\":\"2025-05-21\",\"email\":\"user160@example.invalid\",\"id\":160,\"name\":\"grace thompson\",\"region\":\"north\"},\"lifetime_cents\":739820,\"line_count\":27,\"order_count\":5,\"recent\":[{\"created\":\"2026-03-26\",\"id\":137,\"total_cents\":168085},{\"created\":\"2026-05-02\",\"id\":337,\"total_cents\":36746},{\"created\":\"2026-07-06\",\"id\":537,\"total_cents\":253587},{\"created\":\"2026-09-10\",\"id\":737,\"total_cents\":184701},{\"created\":\"2026-02-14\",\"id\":937,\"total_cents\":96701}],\"units\":72}\n",
+    "body": "{\"customer\":{\"created\":\"2025-10-22\",\"email\":\"user21@example.invalid\",\"id\":21,\"name\":\"alan thompson\",\"region\":\"south\"},\"lifetime_cents\":1080565,\"line_count\":44,\"order_count\":5,\"recent\":[{\"created\":\"2026-07-05\",\"id\":60,\"total_cents\":279379},{\"created\":\"2026-09-09\",\"id\":260,\"total_cents\":103763},{\"created\":\"2026-02-13\",\"id\":460,\"total_cents\":110791},{\"created\":\"2026-04-17\",\"id\":660,\"total_cents\":351644},{\"created\":\"2026-06-21\",\"id\":860,\"total_cents\":234988}],\"units\":123}\n",
     "truncated": false
    }
   },
@@ -1733,7 +1873,7 @@
    "family": "domain",
    "request": {
     "method": "GET",
-    "path": "/domain/regions/north/report",
+    "path": "/domain/regions/west/report",
     "headers": [],
     "body": null,
     "body_bytes": 0
@@ -1747,7 +1887,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 11:31:23 GMT"
+      "Thu, 17 Sep 2026 18:21:10 GMT"
      ],
      [
       "Connection",
@@ -1759,13 +1899,13 @@
      ],
      [
       "Content-Length",
-      "398"
+      "399"
      ]
     ],
     "header_bytes": 132,
     "framing": "content-length",
-    "body_bytes": 398,
-    "body": "{\"customers\":50,\"orders\":250,\"region\":\"north\",\"revenue_cents\":39454155,\"top\":[{\"id\":857,\"total_cents\":403527},{\"id\":65,\"total_cents\":402726},{\"id\":813,\"total_cents\":397838},{\"id\":869,\"total_cents\":396555},{\"id\":549,\"total_cents\":395497},{\"id\":345,\"total_cents\":389067},{\"id\":893,\"total_cents\":387377},{\"id\":49,\"total_cents\":379663},{\"id\":577,\"total_cents\":357682},{\"id\":469,\"total_cents\":356134}]}\n",
+    "body_bytes": 399,
+    "body": "{\"customers\":50,\"orders\":250,\"region\":\"west\",\"revenue_cents\":42661397,\"top\":[{\"id\":994,\"total_cents\":445278},{\"id\":718,\"total_cents\":442781},{\"id\":970,\"total_cents\":423049},{\"id\":454,\"total_cents\":420035},{\"id\":990,\"total_cents\":409466},{\"id\":874,\"total_cents\":407754},{\"id\":162,\"total_cents\":395104},{\"id\":686,\"total_cents\":384901},{\"id\":158,\"total_cents\":375846},{\"id\":222,\"total_cents\":367583}]}\n",
     "truncated": false
    }
   },
@@ -1793,7 +1933,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 11:31:24 GMT"
+      "Thu, 17 Sep 2026 18:21:10 GMT"
      ],
      [
       "Connection",
@@ -1824,7 +1964,7 @@
    "family": "domain",
    "request": {
     "method": "PUT",
-    "path": "/domain/orders/848",
+    "path": "/domain/orders/544",
     "headers": [
      [
       "content-type",
@@ -1843,7 +1983,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 11:31:24 GMT"
+      "Thu, 17 Sep 2026 18:21:10 GMT"
      ],
      [
       "Connection",
@@ -1861,7 +2001,7 @@
     "header_bytes": 132,
     "framing": "content-length",
     "body_bytes": 141,
-    "body": "{\"customer_id\":1,\"id\":848,\"lines\":[{\"id\":1,\"product_id\":1,\"qty\":1,\"total_cents\":7825,\"unit_cents\":7825}],\"status\":\"open\",\"total_cents\":7825}\n",
+    "body": "{\"customer_id\":1,\"id\":544,\"lines\":[{\"id\":1,\"product_id\":1,\"qty\":1,\"total_cents\":7825,\"unit_cents\":7825}],\"status\":\"open\",\"total_cents\":7825}\n",
     "truncated": false
    }
   },
@@ -1870,7 +2010,7 @@
    "family": "domain",
    "request": {
     "method": "PATCH",
-    "path": "/domain/customers/80",
+    "path": "/domain/customers/44",
     "headers": [
      [
       "content-type",
@@ -1889,7 +2029,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 11:31:24 GMT"
+      "Thu, 17 Sep 2026 18:21:10 GMT"
      ],
      [
       "Connection",
@@ -1907,7 +2047,7 @@
     "header_bytes": 131,
     "framing": "content-length",
     "body_bytes": 99,
-    "body": "{\"created\":\"2025-09-25\",\"email\":\"user80@example.invalid\",\"id\":80,\"name\":\"Ada L.\",\"region\":\"south\"}\n",
+    "body": "{\"created\":\"2025-09-17\",\"email\":\"user44@example.invalid\",\"id\":44,\"name\":\"Ada L.\",\"region\":\"south\"}\n",
     "truncated": false
    }
   },
@@ -1916,7 +2056,7 @@
    "family": "domain",
    "request": {
     "method": "DELETE",
-    "path": "/domain/orders/330/lines/9",
+    "path": "/domain/orders/87/lines/2",
     "headers": [],
     "body": null,
     "body_bytes": 0
@@ -1930,7 +2070,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 11:31:24 GMT"
+      "Thu, 17 Sep 2026 18:21:10 GMT"
      ],
      [
       "Connection",
@@ -1963,7 +2103,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 11:31:25 GMT"
+      "Thu, 17 Sep 2026 18:21:10 GMT"
      ],
      [
       "Connection",
@@ -2004,7 +2144,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 11:31:25 GMT"
+      "Thu, 17 Sep 2026 18:21:10 GMT"
      ],
      [
       "Connection",
@@ -2050,7 +2190,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 11:31:25 GMT"
+      "Thu, 17 Sep 2026 18:21:10 GMT"
      ],
      [
       "Connection",
@@ -2091,7 +2231,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 11:31:25 GMT"
+      "Thu, 17 Sep 2026 18:21:10 GMT"
      ],
      [
       "Connection",
@@ -2132,7 +2272,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 11:31:25 GMT"
+      "Thu, 17 Sep 2026 18:21:10 GMT"
      ],
      [
       "Connection",

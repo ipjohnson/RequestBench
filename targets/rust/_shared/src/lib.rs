@@ -55,8 +55,8 @@ pub struct Order {
     pub lines: Vec<Line>,
 }
 
-/// The response `json.*`, `compressed.*`, `cached.*` and `template.*` all serve. It is the
-/// controlled variable: three fixed bodies that every feature family reuses unchanged, so
+/// The response `json.*`, `compressed.*`, `etag.*`, `cache.*` and `template.*` all serve. It
+/// is the controlled variable: three fixed bodies that every feature family reuses, so
 /// subtracting a base endpoint from its arm leaves the feature and nothing else.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct PayloadBody {

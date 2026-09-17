@@ -18,7 +18,7 @@ public sealed record Order(int Id, int CustomerId, string Status, string Created
                            int TotalCents, IReadOnlyList<Line> Lines);
 
 /// <summary>
-/// The response json.*, compressed.*, cached.* and template.* all serve. It is the
+/// The response json.*, compressed.*, etag.*, cache.* and template.* all serve. It is the
 /// controlled variable: three fixed bodies that every feature family reuses unchanged, so
 /// subtracting a base endpoint from its arm leaves the feature and nothing else.
 /// </summary>
