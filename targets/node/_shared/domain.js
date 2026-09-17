@@ -247,23 +247,17 @@ export const bindEcho = (body) => ({
   fields: leafCount(body), bytes: JSON.stringify(body ?? null).length, echo: body,
 });
 
-// Query coercion. The response has to echo the coerced values or the parse can be skipped
-// and the endpoint measures nothing.
-export const coerceOne = (q) => ({ page: int(q.page) || 0 });
-export const coerceMany = (q) => ({
-  page: int(q.page) || 0, size: int(q.size) || 0, status: q.status ?? null,
-  category: q.category ?? null, sort: q.sort ?? null, q: q.q ?? null,
-  min_price: int(q.min_price) || 0, max_price: int(q.max_price) || 0,
-});
-
 // §4 pins the work these three do. Conformance compares bytes, and a precomputed page
 // produces the same bytes as a computed one, so this is the one family where two
 // conforming implementations can do wildly different amounts of work.
-export function domainFilter(q) {
-  const page = Math.max(0, int(q.page) || 0);
-  const size = Math.min(100, Math.max(1, int(q.size) || 25));
+//
+// The page, the size and the status arrive already bound, because binding them is the
+// framework's own job and lives in the target.
+export function domainFilter(page, size, status) {
+  page = Math.max(0, page || 0);
+  size = Math.min(100, Math.max(1, size || 25));
   const rows = [];
-  for (const o of orders) if (o.status === q.status) rows.push(o);
+  for (const o of orders) if (o.status === status) rows.push(o);
   const start = page * size;
   return { page, size, total: rows.length, items: rows.slice(start, start + size) };
 }

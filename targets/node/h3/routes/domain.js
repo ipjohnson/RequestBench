@@ -1,8 +1,9 @@
 // domain: application-shaped handler work and the write methods.
-import { getQuery, getRouterParam, noContent, readBody } from "h3";
+import { getRouterParam, getValidatedQuery, noContent, readBody } from "h3";
 
 import * as d from "../../_shared/domain.js";
 import { checkOrder, orderOf, refused } from "../validation.js";
+import { filter } from "./query.js";
 
 // A write validates the same way body.validate_* does, because it is the same walk.
 const written = async (e) => {
@@ -23,7 +24,10 @@ const send = (e, v, status = 200) => {
 };
 
 export default function domain(app) {
-  app.get("/domain/orders", (e) => d.domainFilter(getQuery(e)));
+  app.get("/domain/orders", async (e) => {
+    const q = await getValidatedQuery(e, filter);
+    return d.domainFilter(q.page, q.size, q.status);
+  });
 
   app.post("/domain/orders", async (e) => {
     e.res.headers.set("location", d.createdLocation());

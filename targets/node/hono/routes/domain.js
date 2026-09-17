@@ -1,12 +1,16 @@
 // domain: application-shaped handler work and the write methods.
 import * as d from "../../_shared/domain.js";
 import { orderOf, validatesOrder } from "../validation.js";
+import { bindsFilter } from "./query.js";
 
 const send = (c, v, status = 200) =>
   v === d.NOT_FOUND ? c.json(d.notFoundBody(), 404) : c.json(v, status);
 
 export default function domain(app) {
-  app.get("/domain/orders", (c) => c.json(d.domainFilter(c.req.query())));
+  app.get("/domain/orders", bindsFilter, (c) => {
+    const q = c.req.valid("query");
+    return c.json(d.domainFilter(q.page, q.size, q.status));
+  });
 
   // The validator hook has to be on the route for c.req.valid to have anything: Hono runs
   // it before the handler, and without it the handler is reading a value nothing produced.
