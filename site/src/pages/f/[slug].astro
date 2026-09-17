@@ -76,13 +76,14 @@ const serves = new Map<string, string[]>();
 for (const eid of order) {
   const sn = snips[eid];
   if (!sn) continue;
-  const at = `${sn.path}:${sn.start_line}-${sn.end_line}`;
+  const at = `${sn.handler.path}:${sn.handler.start_line}-${sn.handler.end_line}`;
   serves.set(at, [...(serves.get(at) ?? []), eid]);
 }
 const alsoFor = (eid: string): string[] => {
   const sn = snips[eid];
   if (!sn) return [];
-  return (serves.get(`${sn.path}:${sn.start_line}-${sn.end_line}`) ?? []).filter((o) => o !== eid);
+  const h = sn.handler;
+  return (serves.get(`${h.path}:${h.start_line}-${h.end_line}`) ?? []).filter((o) => o !== eid);
 };
 
 const groups: [string, string[]][] = [];
@@ -100,7 +101,8 @@ const rate = row ? (row.offered_rps ?? 0).toLocaleString() : "?";
 const prose = view?.readme ? md(view.readme) : "";
 const linkFor = (eid: string): string | null => {
   const sn = snips[eid];
-  return linkable && repo && sn ? permalink(repo, commit, sn.path, sn.start_line, sn.end_line) : null;
+  if (!sn || !linkable || !repo) return null;
+  return permalink(repo, commit, sn.handler.path, sn.handler.start_line, sn.handler.end_line);
 };
 ---
 

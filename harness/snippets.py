@@ -577,9 +577,14 @@ def allowed(language, target):
 def resolve(language, target, at=None):
     """One record per endpoint this target wires, plus one complaint per problem.
 
-    A record is the path, the one-based inclusive line range, and the hash of the file it
-    came from. The hash is what lets the site refuse to link when history no longer holds
-    the bytes that were measured.
+    A record is a handler and the parts that make it work. Each part is a path, a one-based
+    inclusive line range and the hash of the file it came from; the hash is what lets the
+    site refuse to link when history no longer holds the bytes that were measured.
+
+    Support parts come from other files than the handler -- express mounts its gzip three
+    statements above the route it never mentions -- so each carries its own three rather
+    than sharing the handler's. Nothing fills the list yet: the marks that do are the next
+    commit, and the shape lands first so one plumbing change serves all of it.
     """
     files = sources(language, target, at)
     marked = {path: markers(lines, language) for path, (lines, _) in files.items()}
@@ -632,9 +637,17 @@ def resolve(language, target, at=None):
         # marker is for.
         context = [] if names_route else enclosing(lines, start, language)
         out[eid] = {"endpoint": eid, "target": "%s:%s" % (language, target),
-                    "path": path, "start_line": start + 1, "end_line": end + 1,
-                    "hash": fhash, "how": how, "text": body, "context": context}
+                    "handler": {"path": path, "start_line": start + 1, "end_line": end + 1,
+                                "hash": fhash, "how": how, "text": body, "context": context},
+                    "support": []}
     return out, problems
+
+
+def located(rec):
+    """The record without its source: where every part is, and nothing of what it says."""
+    where = lambda p: {k: v for k, v in p.items() if k != "text"}
+    return {**rec, "handler": where(rec["handler"]),
+            "support": [where(p) for p in rec["support"]]}
 
 
 def main():
@@ -684,7 +697,7 @@ def main():
                                 % (language, name, k, n, was,
                                    ", ".join(failed[k][:4]) + (", …" if n > 4 else "")))
         total_bad += len(problems)
-        derived = sum(1 for r in found.values() if r["how"] == "derived")
+        derived = sum(1 for r in found.values() if r["handler"]["how"] == "derived")
         if a.summary or a.check or a.ratchet:
             print("%-22s %2d/%d endpoints  (%d derived, %d marked)%s%s"
                   % ("%s:%s" % (language, name), len(found), len(ENDPOINTS),
@@ -693,8 +706,7 @@ def main():
                              for k in sorted(counts)),
                      "  %d PROBLEM(S)" % len(problems) if problems else ""))
         else:
-            print(json.dumps([{k: v for k, v in r.items() if k != "text"}
-                              for r in found.values()], indent=2))
+            print(json.dumps([located(r) for r in found.values()], indent=2))
         for line in problems:
             print("  %s" % line)
         for k in sorted(cap):

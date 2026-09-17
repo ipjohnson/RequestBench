@@ -39,9 +39,8 @@ const fields: [string, string][] = [
     .map((k): [string, string] => [k, cell(d[k])]),
 ];
 const measured = Object.keys(d).length > 0;
-const loc = snippet
-  ? `${snippet.path}:${snippet.start_line}${snippet.end_line === snippet.start_line ? "" : `-${snippet.end_line}`}`
-  : "";
+const h = snippet?.handler;
+const loc = h ? `${h.path}:${h.start_line}${h.end_line === h.start_line ? "" : `-${h.end_line}`}` : "";
 const hdrs = (hs: readonly (readonly [string, string])[]): string =>
   hs
     .map(([k, v]) => `<div class='hrow'><span class='hk'>${esc(k)}</span><span class='hv'>${esc(v)}</span></div>`)
@@ -71,17 +70,17 @@ const hdrs = (hs: readonly (readonly [string, string])[]): string =>
 
   <h3 class="childcap">Implementation</h3>
   {
-    snippet ? (
+    h ? (
       <>
         <div class="sniphead">
           <span class="loc">{loc}</span>
-          <span class="how">{snippet.how}</span>
+          <span class="how">{h.how}</span>
           {link && <a href={link}>open on GitHub &rarr;</a>}
         </div>
         {also.length > 0 && (
           <p class="hint">The same registration answers {also.join(", ")}.</p>
         )}
-        <pre class="code">{snippet.text}</pre>
+        <pre class="code">{h.text}</pre>
       </>
     ) : (
       <p class="empty">No handler located for this endpoint.</p>

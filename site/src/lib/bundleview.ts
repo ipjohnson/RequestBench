@@ -25,18 +25,29 @@ export const Manifest = z.object({
 });
 export type Manifest = z.infer<typeof Manifest>;
 
-// `context` is the blocks a fragment is nested in, which snippets.py works out so the gate can
-// tell a handler from a condition. Nothing on a page shows it, so it rides through undeclared.
-export const Snippet = z
+// One range of one file. `context` is the blocks a fragment is nested in, which snippets.py
+// works out so the gate can tell a handler from a condition; it rides through undeclared.
+export const SnippetPart = z
   .object({
-    endpoint: z.string(),
-    target: z.string(),
     path: z.string(),
     start_line: z.number(),
     end_line: z.number(),
     hash: z.string(),
     how: z.string(),
     text: z.string(),
+  })
+  .passthrough();
+export type SnippetPart = z.infer<typeof SnippetPart>;
+
+// A handler and the parts that make it work. Support comes from other files than the handler
+// -- express mounts its gzip three statements above the route that never mentions it -- so
+// each part carries its own path, range and hash rather than sharing the handler's.
+export const Snippet = z
+  .object({
+    endpoint: z.string(),
+    target: z.string(),
+    handler: SnippetPart,
+    support: z.array(SnippetPart),
   })
   .passthrough();
 export type Snippet = z.infer<typeof Snippet>;
@@ -123,7 +134,10 @@ export function permalink(
   return `https://github.com/${repo}/blob/${commit}/${path}${frag}`;
 }
 
-/** Every endpoint's handler for one target: the code, and where it came from.
+/** One range: where it is, whether it links, and what it says. */
+export type CodePart = { f: string; s: number; e: number; h: string; u: string | null; t: string };
+
+/** Every endpoint's handler for one target, and the support parts that make it work.
  *
  *  Short keys, because this ships to the browser next to the run it describes. */
 export function snippetDoc(
@@ -131,17 +145,18 @@ export function snippetDoc(
   repo: string,
   commit: string,
   linkable: boolean,
-): Record<string, { f: string; s: number; e: number; h: string; u: string | null; t: string }> {
-  const out: Record<string, { f: string; s: number; e: number; h: string; u: string | null; t: string }> = {};
+): Record<string, CodePart & { sup: CodePart[] }> {
+  const part = (p: SnippetPart): CodePart => ({
+    f: p.path,
+    s: p.start_line,
+    e: p.end_line,
+    h: p.how,
+    u: linkable && repo ? permalink(repo, commit, p.path, p.start_line, p.end_line) : null,
+    t: p.text,
+  });
+  const out: Record<string, CodePart & { sup: CodePart[] }> = {};
   for (const [eid, sn] of Object.entries(view.snippets)) {
-    out[eid] = {
-      f: sn.path,
-      s: sn.start_line,
-      e: sn.end_line,
-      h: sn.how,
-      u: linkable && repo ? permalink(repo, commit, sn.path, sn.start_line, sn.end_line) : null,
-      t: sn.text,
-    };
+    out[eid] = { ...part(sn.handler), sup: sn.support.map(part) };
   }
   return out;
 }
