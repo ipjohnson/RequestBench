@@ -3,11 +3,16 @@
 // the two can be run against one target and diffed while both exist.
 //
 //   rb-client 127.0.0.1:8080 --target node:fastify [--reference ref.json] [--compare ref.json]
+//   rb-client 127.0.0.1:8080 --target node:fastify --mode expect
+//
+// Two authorities, one replay. The gate checks a target against another target measured in
+// the same run; expect checks it against spec/expected.json and never against another target.
 import { mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { parseArgs } from "node:util";
 import { gate, dictRepr, type EndpointResult } from "./gate.js";
-import { loadPlan } from "./spec.js";
+import { check, type EndpointVerdict } from "./expectation.js";
+import { loadExpected, loadPlan, type Plan } from "./spec.js";
 import type { Comparable } from "./compare.js";
 import type { Encoding } from "./checks.js";
 
@@ -19,6 +24,14 @@ class UsageError extends Error {}
 function asEncoding(v: string): Encoding {
   if (v !== "http" && v !== "lambda") {
     throw new UsageError(`argument --encoding: invalid choice: '${v}' (choose from 'http', 'lambda')`);
+  }
+  return v;
+}
+
+/** argparse's choices=, for the authority the replay is judged by. */
+function asMode(v: string): "gate" | "expect" {
+  if (v !== "gate" && v !== "expect") {
+    throw new UsageError(`argument --mode: invalid choice: '${v}' (choose from 'gate', 'expect')`);
   }
   return v;
 }
@@ -41,11 +54,37 @@ function write(path: string, text: string): number {
   return statSync(path).size;
 }
 
+/** One line per endpoint, then the distinct complaints under each that failed. */
+function report(v: EndpointVerdict): string {
+  const head = `  ${v.ok ? "ok  " : "FAIL"} ${pad(v.id, 18)} ${v.total} request(s)`;
+  if (v.ok) return head;
+  // An endpoint has up to 512 distinct requests and they usually fail identically, so the
+  // count goes on the header line and each distinct complaint gets one line under it.
+  return [`${head}  ${v.wrong} wrong`, ...v.problems.map((p) => `         ${p}`)].join("\n");
+}
+
+async function expect(
+  plan: Plan, hostport: string, target: string,
+  opts: { instances: number; encoding: Encoding; quiet: boolean },
+): Promise<number> {
+  const expected = loadExpected(plan);
+  const result = await check(plan, expected, hostport, target, {
+    instances: opts.instances,
+    encoding: opts.encoding,
+    onEndpoint: (v) => { if (!opts.quiet || !v.ok) console.log(report(v)); },
+  });
+  const failed = result.endpoints.filter((e) => !e.ok);
+  console.log(`\n${result.endpoints.length - failed.length}/${result.endpoints.length} `
+    + `endpoints answer spec/expected.json  (${result.sent} requests sent)`);
+  return failed.length > 0 ? 1 : 0;
+}
+
 async function main(): Promise<number> {
   const { values, positionals } = parseArgs({
     allowPositionals: true,
     options: {
       target: { type: "string" },
+      mode: { type: "string", default: "gate" },
       instances: { type: "string", default: "0" },
       reference: { type: "string" },
       compare: { type: "string" },
@@ -68,6 +107,13 @@ async function main(): Promise<number> {
   if (!target) throw new UsageError("the following arguments are required: --target");
 
   const plan = loadPlan();
+  if (asMode(values.mode) === "expect") {
+    return await expect(plan, hostport, target, {
+      instances: asCount(values.instances),
+      encoding: asEncoding(values.encoding),
+      quiet: values.quiet,
+    });
+  }
   const reference = values.compare
     ? (JSON.parse(readFileSync(values.compare, "utf8")) as Record<string, Comparable>)
     : null;

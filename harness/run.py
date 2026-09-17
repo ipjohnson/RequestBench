@@ -409,7 +409,40 @@ def billed_durations(text):
     return dict(sorted(hist.items()))
 
 
-def conform(reference, is_reference, exemplars=None):
+CLIENT = ROOT / "client" / "dist" / "cli.js"
+
+
+def client(target, *args):
+    """The conformance client, which is the only thing that talks HTTP to a target.
+
+    One replay, two authorities: --mode gate compares against another target measured in
+    this run, --mode expect against spec/expected.json. Python boots targets; TypeScript
+    asks them questions.
+    """
+    if not CLIENT.exists():
+        raise SystemExit("the client is not built. Run 'npm ci && npm run build'.")
+    argv = ["node", str(CLIENT), "127.0.0.1:%d" % PORT, "--target", target, *args]
+    # The client has to speak the host's encoding. A RIE container serves only the
+    # invocations endpoint, so plain HTTP reaches nothing and every target fails.
+    encoding = ENCODING_FOR_HOST.get(os.environ.get("RB_HOST", "container"), "http")
+    if encoding != "http":
+        argv += ["--encoding", encoding]
+    return subprocess.run(argv, capture_output=True, text=True, cwd=ROOT)
+
+
+def expect(target):
+    """Check the running target against spec/expected.json, which never consults another
+    target. Replaces the pytest suite; the authority and the wording are the same."""
+    out = client(target, "--mode", "expect", "--quiet")
+    lines = [l.strip() for l in out.stdout.strip().splitlines() if l.strip()]
+    i = next((k for k in reversed(range(len(lines)))
+              if "endpoints answer spec/expected.json" in lines[k]), None)
+    if i is None:
+        return out.returncode == 0, (lines[-1] if lines else out.stderr.strip())
+    return out.returncode == 0, "\n      ".join([lines[i]] + lines[:i][:12])
+
+
+def conform(target, reference, is_reference, exemplars=None):
     """Gate the running target, against the language's reference measured in this run.
 
     The reference boots first and records what it answered; every target after it is
@@ -417,17 +450,10 @@ def conform(reference, is_reference, exemplars=None):
     every target answer forever to one target's serialization choices at one moment, and a
     change in the reference then reads as a failure in everything else.
     """
-    # The gate has to speak the host's encoding. A RIE container serves only the
-    # invocations endpoint, so plain HTTP reaches nothing and every target fails.
-    argv = [sys.executable, str(ROOT / "harness" / "conform.py"),
-            "127.0.0.1:%d" % PORT, "--quiet",
-            "--reference" if is_reference else "--compare", str(reference)]
+    args = ["--quiet", "--reference" if is_reference else "--compare", str(reference)]
     if exemplars:
-        argv += ["--exemplars", str(exemplars)]
-    encoding = ENCODING_FOR_HOST.get(os.environ.get("RB_HOST", "container"), "http")
-    if encoding != "http":
-        argv += ["--encoding", encoding]
-    out = subprocess.run(argv, capture_output=True, text=True, cwd=ROOT)
+        args += ["--exemplars", str(exemplars)]
+    out = client(target, *args)
     lines = [l.strip() for l in out.stdout.strip().splitlines() if l.strip()]
     # The summary line is what says how bad it is. Reporting the last line reported whichever
     # diagnostic happened to print last, so a target failing forty-one endpoints announced
@@ -516,6 +542,9 @@ def main():
                     help="serial suite: how many requests of the pinned sequence to replay")
     ap.add_argument("--validate-only", action="store_true",
                     help="boot and conform every target, then stop; no load is generated")
+    ap.add_argument("--expect", action="store_true",
+                    help="boot every target and check it against spec/expected.json, then "
+                         "stop; no load is generated")
     ap.add_argument("--emit-path", metavar="FILE",
                     help="write the results file path here, so callers need not glob")
     ap.add_argument("--require-pinned", action="store_true",
@@ -703,7 +732,7 @@ def main():
                 # here is what keeps them from describing an endpoint set two specs old.
                 exemplars = (EXEMPLARS / ("%s-%s@%s.json" % (language, target, host))
                              if a.exemplars else None)
-                ok, line = conform(reference, writes_reference, exemplars)
+                ok, line = conform(key, reference, writes_reference, exemplars)
                 print("  conformance: %s" % line)
                 if not ok:
                     nonconforming.append(key)
@@ -712,7 +741,14 @@ def main():
                 conformed += 1
                 if writes_reference:
                     reference_ok.add(language)
-            if a.validate_only:
+            if a.expect:
+                ok, line = expect(key)
+                print("  expectation: %s" % line)
+                if not ok:
+                    nonconforming.append(key)
+                    print("  FAILED: target does not answer spec/expected.json")
+                    continue
+            if a.validate_only or a.expect:
                 continue
 
             if suite == "serial":
@@ -818,13 +854,14 @@ def main():
                 print("  WARNING: port %d still held after teardown" % PORT)
             time.sleep(0.5)   # cooldown so the next target does not inherit a warm socket table
 
-    if a.validate_only:
-        print("\n%d/%d targets conform" % (conformed, len(pairs)))
+    if a.validate_only or a.expect:
+        checked = len(pairs) - len(nonconforming) - len(boot_failed)
+        print("\n%d/%d targets %s" % (checked, len(pairs),
+              "answer spec/expected.json" if a.expect else "conform"))
         if boot_failed:
             print("  %d FAILED TO BOOT: %s" % (len(boot_failed), ", ".join(boot_failed)))
         if nonconforming:
-            print("  %d not conforming: %s"
-                  % (len(nonconforming), ", ".join(nonconforming)))
+            print("  %d failing: %s" % (len(nonconforming), ", ".join(nonconforming)))
         return 1 if (nonconforming or boot_failed) else 0
 
     with out_path.open("w") as f:

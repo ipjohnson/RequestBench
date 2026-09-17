@@ -25,10 +25,11 @@ import hashlib
 import http.client
 import json
 import pathlib
+import re
 import sys
+import zlib
 
 import bundle
-import conform
 import run
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -143,6 +144,53 @@ def content_problems(ep, answer):
     return ["does not report %s=%s" % (f, r) for f, r in missing]
 
 
+def decoded(raw, headers):
+    """The bytes to fingerprint, which are not always the bytes on the wire.
+
+    gzip output differs between zlib, Java's Deflater and Go's compress/flate at the same
+    level. The decompressed bytes must not, so the fingerprint is taken over those. The
+    wire bytes are still what the content-length contract is checked against.
+    """
+    enc = {k.lower(): v for k, v in headers}.get("content-encoding", "")
+    if raw and "gzip" in enc:
+        try:
+            return zlib.decompress(raw, 16 + zlib.MAX_WBITS)
+        except zlib.error:
+            return raw
+    return raw
+
+
+def comparable(raw, ctype):
+    """The response as a value, not as bytes.
+
+    Two targets that mean the same thing can write it differently: key order follows
+    whatever the language's serializer does, and a number can come back 18928 or 18928.0.
+    Parsing first makes those stop mattering, and it makes a mismatch legible -- the
+    failure names the field that differs instead of two hex strings that do not match.
+    """
+    if not raw:
+        return None
+    if "json" in (ctype or ""):
+        try:
+            return json.loads(raw)
+        except Exception:
+            return "unparseable-json"
+    if "html" in (ctype or ""):
+        # Five template engines cannot agree on formatting without every template being
+        # contorted to match, so the spec pins content and leaves whitespace free: same
+        # elements, same order, same values.
+        #
+        # Collapsing runs is not enough on its own to make it free. It leaves an engine's
+        # indentation as a space where a string concat has nothing, so the two still differ
+        # and no engine could ever match. Whitespace at an element boundary goes entirely;
+        # whitespace inside text is collapsed and kept, because there it is content.
+        raw = re.sub(rb"\s+", b" ", raw)
+        raw = re.sub(rb">\s+", b">", raw)
+        raw = re.sub(rb"\s+<", b"<", raw)
+        raw = raw.strip()
+    return raw.decode("utf-8", "replace")
+
+
 def digest(path):
     return "sha256:" + hashlib.sha256((SPEC / path).read_bytes()).hexdigest()
 
@@ -199,7 +247,7 @@ def capture(hostport):
                 # answered the right JSON -- a target that quietly stopped compressing
                 # would pass. Fiber did exactly that, for a week.
                 "encoding": lower.get("content-encoding", ""),
-                "body": conform.comparable(conform.decoded(raw, hdrs), ctype),
+                "body": comparable(decoded(raw, hdrs), ctype),
             }
     conn.close()
     return out

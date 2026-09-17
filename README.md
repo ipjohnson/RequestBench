@@ -23,10 +23,15 @@ what an endpoint returns, that is a bug in one of them, not a performance result
 
 **What a correct answer is, is written down.** `spec/expected.json` holds the status, the
 content type, the content encoding and the body for every one of the 3,346 distinct requests
-in the plan. `tests/` boots each target and checks all of them against it; nothing is ever
+in the plan. `make test` boots each target and checks all of them against it; nothing is ever
 compared against another target, because agreement between two frameworks is evidence that
 they are consistent and not that either is right. Every implemented target has to pass, with
 no exemption list.
+
+The exception is an error body. An envelope is the framework's own contract, so each one
+declares what it answers in `targets/<lang>/<framework>/client-exception` and is held to
+that. Forcing ProblemDetails and a FluentValidation list into one shape would hide a real
+difference and charge every target a handler to hide it.
 
 ## Layout
 
@@ -38,10 +43,12 @@ no exemption list.
     spec/fixture.json     generated, committed: identical data for all 53 targets
     spec/plan.json        generated: pre-resolved concrete requests every driver replays
     spec/sequence.json    generated: the fixed replay order every serial host uses
-    harness/              plan, expectation, conformance gate, orchestrator, bundles
-    tests/                one test per target per endpoint, a file per family
+    harness/              plan, expectation, orchestrator, bundles. Boots targets.
+    client/               the conformance client. The only thing that talks HTTP to a target
+    packages/schema       the pieces a framework's error contract is built from
     gen/blend.mjs         open-loop blend driver
     targets/<lang>/       one directory per target, plus _shared/ domain logic
+    targets/*/*/client-exception   what that framework answers on an error endpoint
 
 ## Comparing across languages
 

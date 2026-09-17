@@ -1,6 +1,6 @@
 comma := ,
 
-.PHONY: fixture plan spec expected test machine bundle snippets build java rust dotnet python python-lock lint validate conform exemplars run vars report clean help
+.PHONY: fixture plan spec expected test machine bundle snippets build client java rust dotnet python python-lock lint validate conform expect exemplars run vars report clean help
 # Everything is on by default: no TARGETS means every implemented target this host
 # supports. The rest narrow it. LANGUAGES/FRAMEWORKS pick what runs, FAMILIES/ENDPOINTS
 # pick what it is asked for, and a narrowed endpoint set is recorded as its own profile
@@ -26,6 +26,8 @@ EXPECT_FROM ?= node:fastify,go:gin,rust:axum,python:fastapi
 # Tests boot containers by default, not host processes. The container is what measurement
 # runs, and it is the only mode that does not need five toolchains on the machine.
 TEST_MODE ?= docker
+# One target for `make conform` and `make expect`, which talk to something already running.
+TARGET ?=
 
 select = $(if $(TARGETS),--targets $(TARGETS),) \
 	 $(if $(LANGUAGES),--languages $(LANGUAGES),) \
@@ -84,11 +86,8 @@ python-lock: ## recompile targets/python/requirements.txt from requirements.in
 	cd targets/python && .venv/bin/python -m piptools compile --quiet --strip-extras \
 	  --output-file requirements.txt requirements.in
 
-test: ## boot every target and check every endpoint against spec/expected.json
-	@test -x .venv/bin/python || python3 -m venv .venv
-	@.venv/bin/python -m pip install -q -r harness/requirements.txt
-	.venv/bin/python -m pytest tests $(if $(TARGETS),--rb-targets $(TARGETS),) \
-	  --rb-mode $(TEST_MODE) $(ARGS)
+test: client ## boot every target and check every endpoint against spec/expected.json
+	python3 harness/run.py $(select) --mode $(TEST_MODE) --expect $(ARGS)
 
 expected: ## re-derive spec/expected.json from the targets named in EXPECT_FROM
 	python3 harness/expected.py --targets $(EXPECT_FROM) --mode $(MODE) --write
@@ -101,8 +100,14 @@ lint: ## parse every workflow file, and run actionlint when it is installed
 validate: ## boot and conform, no load  (TARGETS= LANGUAGES= FRAMEWORKS= MODE=)
 	python3 harness/run.py $(select) --mode $(MODE) --validate-only $(ARGS)
 
-conform: ## gate a already-running target on 127.0.0.1:8080  (REF= to compare)
-	python3 harness/conform.py 127.0.0.1:8080 $(if $(REF),--compare $(REF),)
+conform: client ## gate an already-running target  (TARGET=go:gin, REF= to compare)
+	node client/dist/cli.js 127.0.0.1:8080 --target $(TARGET) $(if $(REF),--compare $(REF),)
+
+expect: client ## check an already-running target against spec/expected.json  (TARGET=go:gin)
+	node client/dist/cli.js 127.0.0.1:8080 --target $(TARGET) --mode expect
+
+client: ## build the TypeScript workspace, which every check now runs through
+	npm run build --silent
 
 snippets: ## where every endpoint is wired, per target  (TARGETS= or --all)
 	python3 harness/snippets.py $(if $(TARGETS),$(subst $(comma), ,$(TARGETS)),--all) --summary
