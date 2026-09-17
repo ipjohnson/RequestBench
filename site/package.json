@@ -1,0 +1,21 @@
+{
+  "name": "@rb/site",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node ./tools/build.js",
+    "dev": "astro dev",
+    "preview": "astro preview",
+    "test": "vitest run",
+    "typecheck": "astro check"
+  },
+  "dependencies": {
+    "@rb/schema": "*",
+    "astro": "^7.3.3",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.4"
+  }
+}

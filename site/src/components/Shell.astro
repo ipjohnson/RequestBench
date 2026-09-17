@@ -1,0 +1,45 @@
+---
+// The frame every page shares: the fonts, the palette and the footer.
+import "../styles/tokens.css";
+import "../styles/app.css";
+
+type Props = {
+  title: string;
+  description?: string;
+  /** Where the browser reads results from, when this build was pointed somewhere. */
+  dataBase?: string | null;
+  footerLeft: string;
+  footerLeftHref?: string;
+  footerRight: string;
+};
+
+const { title, description, dataBase, footerLeft, footerLeftHref, footerRight } = Astro.props;
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>{title}</title>
+    {description && <meta name="description" content={description} />}
+    {dataBase && <meta name="rb:data" content={dataBase} />}
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Newsreader:wght@400;600&family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+    />
+    <slot name="head" />
+  </head>
+  <body>
+    <div class="page">
+      <slot />
+      <footer>
+        <span>
+          {footerLeftHref ? <a href={footerLeftHref}>{footerLeft}</a> : footerLeft}
+        </span>
+        <span set:html={footerRight} />
+      </footer>
+    </div>
+  </body>
+</html>

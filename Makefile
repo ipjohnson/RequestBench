@@ -1,6 +1,6 @@
 comma := ,
 
-.PHONY: fixture plan spec expected test machine bundle snippets build client java rust dotnet python python-lock lint validate conform expect exemplars run vars report clean help
+.PHONY: fixture plan spec expected test machine bundle snippets build client site site-dev java rust dotnet python python-lock lint validate conform expect exemplars run vars report clean help
 # Everything is on by default: no TARGETS means every implemented target this host
 # supports. The rest narrow it. LANGUAGES/FRAMEWORKS pick what runs, FAMILIES/ENDPOINTS
 # pick what it is asked for, and a narrowed endpoint set is recorded as its own profile
@@ -92,7 +92,8 @@ test: client ## boot every target and check every endpoint against spec/expected
 expected: ## re-derive spec/expected.json from the targets named in EXPECT_FROM
 	python3 harness/expected.py --targets $(EXPECT_FROM) --mode $(MODE) --write
 
-lint: ## parse every workflow file, and run actionlint when it is installed
+lint: ## lint the workspace and the workflow files
+	npm run lint --silent
 	python3 harness/lintyaml.py
 	@command -v actionlint >/dev/null && actionlint -color || \
 	  echo "  (actionlint not installed; CI runs it, with shellcheck, which catches more)"
@@ -108,6 +109,23 @@ expect: client ## check an already-running target against spec/expected.json  (T
 
 client: ## build the TypeScript workspace, which every check now runs through
 	npm run build --silent
+
+# Summaries live on the orphan `results` branch, so a local build needs somewhere to read them
+# from: SUMMARIES=_results/summary after checking that branch out, or nothing for a shell that
+# fetches them at runtime. DATA_BASE points the published page at a results site instead of at
+# the data directory this writes.
+SUMMARIES ?=
+DATA_BASE ?=
+
+site: ## render site/dist  (SUMMARIES=<dir> DATA_BASE=<url>)
+	node site/tools/build.js \
+	  $(if $(SUMMARIES),--summaries $(SUMMARIES),) \
+	  --exemplars results/exemplars --out site/dist \
+	  $(if $(DATA_BASE),--data-base $(DATA_BASE),)
+
+site-dev: ## the site with a reloading server  (SUMMARIES=<dir> DATA_BASE=<url>)
+	RB_ROOT=$(CURDIR) RB_SUMMARIES=$(SUMMARIES) RB_EXEMPLARS=results/exemplars \
+	  RB_DATA_BASE=$(DATA_BASE) npm --prefix site run dev
 
 snippets: ## where every endpoint is wired, per target  (TARGETS= or --all)
 	python3 harness/snippets.py $(if $(TARGETS),$(subst $(comma), ,$(TARGETS)),--all) --summary
@@ -143,3 +161,4 @@ report: ## the newest run, both rates, per target
 
 clean:
 	rm -f results/*.jsonl results/.gen-*.json results/.ref-*.json
+	rm -rf site/dist site/.astro

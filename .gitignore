@@ -9,8 +9,9 @@ results/.target-*.log
 results/.ref-*.json
 results/summary/
 
-# The rendered site. CI builds it from site/build.py and publishes the artifact.
+# The rendered site. CI builds it and publishes the artifact.
 site/dist/
+site/.astro/
 targets/java/*/target/
 
 # Cargo's build directory. Cargo.lock is committed; this is not.

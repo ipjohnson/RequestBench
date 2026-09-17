@@ -53,6 +53,7 @@ difference and charge every target a handler to hide it.
     spec/sequence.json    generated: the fixed replay order every serial host uses
     harness/              plan, expectation, orchestrator, bundles. Boots targets.
     client/               the conformance client. The only thing that talks HTTP to a target
+    site/                 the results explorer, an Astro app in the same workspace
     packages/schema       the pieces a framework's error contract is built from
     gen/blend.mjs         open-loop blend driver
     targets/<lang>/       one directory per target, plus _shared/ domain logic
@@ -99,6 +100,24 @@ Narrowing the endpoint set is not the blend with rows hidden. A runtime optimise
 paths it executes, so nine endpoints running alone are hotter than the same nine inside the
 full forty-five, and the numbers are not comparable to a full run. Such a run records
 itself as its own profile and the summary carries it, so nothing reads the two together.
+
+The site is built from the same workspace. Summaries live on the orphan `results` branch, so
+a local build reads them from wherever that branch is checked out.
+
+    git worktree add _results results
+    make site SUMMARIES=_results/summary                   # renders site/dist
+    make site-dev SUMMARIES=_results/summary               # the same, with a reloading server
+
+`DATA_BASE` points the page at a results site instead of at the data directory the build
+writes, which is what to use once the results move to a repository of their own.
+
+    make site DATA_BASE=https://ipjohnson.github.io/RequestBench-results/
+
+That build carries no results at all; the page fetches the catalog on load. A published page
+can be pointed elsewhere without rebuilding, with `?data=<url>`, which is how you read one
+machine's results in another deployment's explorer. Either way the source has to allow the
+read: GitHub Pages sends `Access-Control-Allow-Origin: *`, so a results repository published
+there works as it stands.
 
 `MODE=local` runs targets as host processes, which is the fast edit loop. `MODE=docker`
 builds an image per target and runs it with a pinned CPU budget (`RB_CPUS`, default 2),

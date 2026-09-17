@@ -1,0 +1,123 @@
+---
+// One endpoint's pane: what it answers, what it cost, how it is wired, what it sent.
+import { chainTable } from "../lib/views.js";
+import { cell } from "../lib/metrics.js";
+import { esc } from "../lib/html.js";
+import type { Chain } from "../lib/delta.js";
+import type { EndpointRung, Route, WireEndpoint } from "../lib/types.js";
+import type { Snippet } from "../lib/bundleview.js";
+
+type Props = {
+  eid: string;
+  route: Route | undefined;
+  stats: EndpointRung | undefined;
+  snippet: Snippet | undefined;
+  /** Endpoints the same registration answers, so six panes do not each claim the block. */
+  also: string[];
+  link: string | null;
+  exchange: WireEndpoint | undefined;
+  chain: Chain | null;
+  factors: Record<string, string>;
+  first: boolean;
+};
+
+const { eid, route, stats, snippet, also, link, exchange, chain, factors, first } = Astro.props;
+
+const d = stats ?? {};
+// p95 is in summaries written after harness/summarize.py started recording it. An older one
+// carries p90, and the pane says p90 rather than labelling it p95.
+const tail: [string, number | null | undefined] =
+  "p95_us" in d ? ["p95", d.p95_us] : ["p90", d.p90_us];
+const fields: [string, string][] = [
+  ["p50", cell(d.p50_us, "us")],
+  [tail[0], cell(tail[1], "us")],
+  ["p99", cell(d.p99_us, "us")],
+  ["p99.9", cell(d.p999_us, "us")],
+  ["samples", cell(d.count)],
+  ...(["errors", "mismatch"] as const)
+    .filter((k) => d[k])
+    .map((k): [string, string] => [k, cell(d[k])]),
+];
+const measured = Object.keys(d).length > 0;
+const loc = snippet
+  ? `${snippet.path}:${snippet.start_line}${snippet.end_line === snippet.start_line ? "" : `-${snippet.end_line}`}`
+  : "";
+const hdrs = (hs: readonly (readonly [string, string])[]): string =>
+  hs
+    .map(([k, v]) => `<div class='hrow'><span class='hk'>${esc(k)}</span><span class='hv'>${esc(v)}</span></div>`)
+    .join("");
+---
+
+<section class="eppane" data-ep={eid} hidden={!first}>
+  <h2 class="epname">{eid}</h2>
+  <p class="leafroute"><span class="verb">{route?.m ?? ""}</span> {route?.p ?? ""}</p>
+
+  <h3 class="childcap">Performance</h3>
+  {
+    measured ? (
+      <div class="fields">
+        {fields.map(([k, v]) => (
+          <div class="frow">
+            <span class="fk">{k}</span>
+            <span class="fv">{v}</span>
+          </div>
+        ))}
+      </div>
+    ) : (
+      <p class="empty">Not measured at this rate.</p>
+    )
+  }
+  <Fragment set:html={chainTable(chain, factors, "p50", "us")} />
+
+  <h3 class="childcap">Implementation</h3>
+  {
+    snippet ? (
+      <>
+        <div class="sniphead">
+          <span class="loc">{loc}</span>
+          <span class="how">{snippet.how}</span>
+          {link && <a href={link}>open on GitHub &rarr;</a>}
+        </div>
+        {also.length > 0 && (
+          <p class="hint">The same registration answers {also.join(", ")}.</p>
+        )}
+        <pre class="code">{snippet.text}</pre>
+      </>
+    ) : (
+      <p class="empty">No handler located for this endpoint.</p>
+    )
+  }
+
+  <h3 class="childcap">On the wire</h3>
+  {
+    exchange ? (
+      <div class="wirecols">
+        <div>
+          <h3>Request</h3>
+          <pre class="wire req">{exchange.m} {exchange.p}</pre>
+          <div class="hdrs" set:html={hdrs(exchange.rh)} />
+          {exchange.rb ? (
+            <pre class="wire">{exchange.rb}{exchange.rbz > 700 ? `\n… ${exchange.rbz.toLocaleString()} bytes total` : ""}</pre>
+          ) : (
+            <p class="empty">no body</p>
+          )}
+        </div>
+        <div>
+          <h3>Response</h3>
+          <pre class="wire res">HTTP {exchange.s}</pre>
+          <div class="hdrs" set:html={hdrs(exchange.sh)} />
+          {exchange.sb ? (
+            <pre class="wire">{exchange.sb}{exchange.tr ? `\n… ${exchange.sbz.toLocaleString()} bytes total` : ""}</pre>
+          ) : (
+            <p class="empty">no body</p>
+          )}
+        </div>
+      </div>
+    ) : (
+      <p class="empty">
+        No captured exchange for this target. Exemplars are written by <code>make exemplars</code>{" "}
+        and only for the targets it has been run against.
+      </p>
+    )
+  }
+</section>

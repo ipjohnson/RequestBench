@@ -1,0 +1,243 @@
+---
+// One framework, as one run measured it.
+//
+// docs/bundles.html §6. Rendered from the bundle manifest at the commit that run recorded
+// rather than from the working tree, so a page about a run made in March shows the code that
+// ran in March.
+import Shell from "../../components/Shell.astro";
+import EndpointPane from "../../components/EndpointPane.astro";
+import "../../styles/framework.css";
+import { permalink } from "../../lib/bundleview.js";
+import { deltaFor } from "../../lib/delta.js";
+import { md } from "../../lib/markdown.js";
+import { cell } from "../../lib/metrics.js";
+import { site, type FrameworkPage } from "../../lib/site.js";
+
+export function getStaticPaths() {
+  return site().pages.map((page) => ({ params: { slug: page.slug }, props: { page } }));
+}
+
+const { page } = Astro.props as { page: FrameworkPage };
+const { run, target: t, rn, view, verified, linkable, repo, commit } = page;
+const { wire, routes, factors } = site();
+
+const name = t.framework || t.target;
+const facts = [
+  `${name} ${t.version || "?"}`,
+  t.target_runtime ?? "",
+  ...(["adapter", "serializer", "template"] as const)
+    .filter((k) => t[k])
+    .map((k) => `${k} ${t[k]}`),
+].filter(Boolean);
+
+const short = commit.slice(0, 12);
+const verdict = !view
+  ? `<span class='verdict no'>source unavailable</span> this run recorded no commit, or history here does not hold it`
+  : verified && linkable
+    ? `<span class='verdict ok'>hash verified</span> against <code>${short}</code>`
+    : verified
+      ? `<span class='verdict ok'>hash verified</span> against <code>${short}</code>, which is not on a remote, so the code is shown without links`
+      : // A run made before the bundle fields existed has nothing to verify against. That is
+        // not a mismatch, and reading as one would accuse the history of being wrong.
+        !t.bundle_hash
+        ? `<span class='verdict no'>no bundle recorded</span> this run predates the bundle record, so its source cannot be pinned`
+        : `<span class='verdict no'>hash mismatch</span> the bundle at <code>${short}</code> is not what this run recorded, so no source is linked`;
+
+/** This target's own row, and where it sits among the rows it is comparable to. */
+const row = t.rungs[rn];
+const peers = run.targets.filter((x) => x.language === t.language && x.rungs[rn]);
+const ordered = [...peers].sort((a, b) => (a.rungs[rn]?.p50_us ?? 0) - (b.rungs[rn]?.p50_us ?? 0));
+const rank = ordered.findIndex((x) => x.target === t.target) + 1;
+
+// A rate the target did not complete has no latency to state, so the line says what it
+// achieved and what it lost instead of formatting a null.
+const offered = (row?.offered_rps ?? 0) * (row?.seconds ?? 0);
+const took =
+  row?.p50_us != null
+    ? `p50 ${row.p50_us.toLocaleString()} us`
+    : `did not sustain the rate, dropping ${offered ? ((100 * (row?.dropped ?? 0)) / offered).toFixed(1) : "0.0"}%`;
+
+const order = run.endpoint_order ?? [];
+const own = t.endpoints ?? {};
+const snips = view?.snippets ?? {};
+const famOf = new Map<string, string>(
+  run.targets.flatMap((t2) =>
+    Object.entries(t2.endpoints ?? {}).map(([eid, rec]): [string, string] => [eid, rec.family ?? ""]),
+  ),
+);
+const host = run.exec_host || "container";
+const exemplars =
+  (wire[`${t.language}-${t.target}@${host}`] ?? wire[`${t.language}-${t.target}`])?.endpoints ?? {};
+
+// One registration often answers a whole family. Naming the rest on the pane is what the old
+// deduplicated list was protecting: without it the same block appears under six endpoints with
+// nothing to say they are one call.
+const serves = new Map<string, string[]>();
+for (const eid of order) {
+  const sn = snips[eid];
+  if (!sn) continue;
+  const at = `${sn.path}:${sn.start_line}-${sn.end_line}`;
+  serves.set(at, [...(serves.get(at) ?? []), eid]);
+}
+const alsoFor = (eid: string): string[] => {
+  const sn = snips[eid];
+  if (!sn) return [];
+  return (serves.get(`${sn.path}:${sn.start_line}-${sn.end_line}`) ?? []).filter((o) => o !== eid);
+};
+
+const groups: [string, string[]][] = [];
+for (const eid of order) {
+  const fam = own[eid]?.family || famOf.get(eid) || "";
+  const last = groups[groups.length - 1];
+  if (!last || last[0] !== fam) groups.push([fam, [eid]]);
+  else last[1].push(eid);
+}
+
+const missing = order.filter((e) => !snips[e]);
+const note =
+  Object.keys(snips).length && missing.length ? ` No handler located for ${missing.join(", ")}.` : "";
+const rate = row ? (row.offered_rps ?? 0).toLocaleString() : "?";
+const prose = view?.readme ? md(view.readme) : "";
+const linkFor = (eid: string): string | null => {
+  const sn = snips[eid];
+  return linkable && repo && sn ? permalink(repo, commit, sn.path, sn.start_line, sn.end_line) : null;
+};
+---
+
+<Shell
+  title={`${name} · RequestBench`}
+  footerLeft="github.com/ipjohnson/RequestBench"
+  footerLeftHref="../index.html"
+  footerRight={`run ${run.run_id}`}
+>
+  <p class="crumb"><a href="../index.html">&larr; results</a></p>
+  <div class="ident">
+    <div class="mono-mark">{name[0]?.toUpperCase()}</div>
+    <h1>{name}</h1>
+  </div>
+  <p class="factline">{facts.join(" · ")}</p>
+  <p class="factline" set:html={verdict} />
+
+  {
+    prose ? (
+      <div class="panel prose" set:html={prose} />
+    ) : (
+      <div class="note">
+        No README in this target's bundle yet. The prose is the hand-written half of
+        docs/bundles.html &sect;2 and is what says how this framework is wired here.
+      </div>
+    )
+  }
+
+  {
+    row && (
+      <div class="panel">
+        <h2>Standing</h2>
+        <p class="hint">At {rate} offered rps, in the run that produced this page.</p>
+        <p
+          class="factline"
+          set:html={`${took} &middot; rank ${rank} of ${ordered.length} in ${t.language} &middot; ${(row.achieved_rps ?? 0).toLocaleString()} achieved rps`}
+        />
+      </div>
+    )
+  }
+
+  {
+    !order.length ? (
+      <div class="note">This run recorded no endpoint order, so there is nothing to explore.</div>
+    ) : (
+      <div class="panel">
+        <h2>Endpoints</h2>
+        <p class="hint">
+          {order.length} endpoints in {groups.length} families, on the {host} host at {rate} offered
+          rps.{note}
+        </p>
+        <div class="explorer">
+          <nav class="eptree">
+            <ul>
+              {groups.map(([fam, eids]) => (
+                <li class="epfam">
+                  <span class="epfamname">{fam}</span>
+                  <ul>
+                    {eids.map((eid) => (
+                      <li>
+                        <a
+                          class="eplink"
+                          href={`#${eid}`}
+                          data-ep={eid}
+                          aria-current={eid === order[0] ? "true" : undefined}
+                        >
+                          <span class="epid">{eid}</span>
+                          <span class="eproute">
+                            <span class="verb">{routes[eid]?.m ?? ""}</span> {routes[eid]?.p ?? ""}
+                          </span>
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </li>
+              ))}
+            </ul>
+          </nav>
+          <div class="eppanes">
+            {order.map((eid) => (
+              <EndpointPane
+                eid={eid}
+                route={routes[eid]}
+                stats={own[eid]?.rungs?.[rn]}
+                snippet={snips[eid]}
+                also={alsoFor(eid)}
+                link={linkFor(eid)}
+                exchange={exemplars[eid]}
+                chain={deltaFor(t, eid, rn, routes, "p50_us")}
+                factors={factors}
+                first={eid === order[0]}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  {
+    view && (
+      <div class="panel">
+        <h2>Bundle</h2>
+        <p class="hint">
+          {view.manifest.files.length} files, hashed from history at the measured commit. code{" "}
+          {view.manifest.code_hash.slice(7, 19)} &middot; bundle{" "}
+          {view.manifest.bundle_hash.slice(7, 19)}
+        </p>
+        <div class="scroll">
+          <table>
+            <thead>
+              <tr>
+                <th class="l">role</th>
+                <th class="l">path</th>
+                <th>bytes</th>
+                <th>sha256</th>
+              </tr>
+            </thead>
+            <tbody>
+              {view.manifest.files.map((e) => (
+                <tr>
+                  <td class="l h">{e.role}</td>
+                  <td class="l path">{e.path}</td>
+                  <td class="sub">{cell(e.bytes)}</td>
+                  <td class="h">{e.hash.slice(7, 19)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    )
+  }
+  {view?.problems.map((p) => <div class="note">{p}</div>)}
+
+  <script>
+    import { startTree } from "../../client/endpoint-tree.js";
+    startTree();
+  </script>
+</Shell>
