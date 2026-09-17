@@ -12,14 +12,11 @@ func registerDomain(app *fiber.App) {
 	})
 
 	app.Post("/domain/orders", func(c fiber.Ctx) error {
-		m, err := body(c)
-		if err != nil {
-			return fail(c, err)
+		ob, ok := bindOrder(c)
+		if !ok {
+			return nil
 		}
-		v, err := d.ValidateOrder(m)
-		if err != nil {
-			return fail(c, err)
-		}
+		v := ob.order()
 		c.Set("location", d.CreatedLocation())
 		return c.Status(201).JSON(v)
 	})
@@ -34,14 +31,11 @@ func registerDomain(app *fiber.App) {
 		if err != nil {
 			return fail(c, err)
 		}
-		m, err := body(c)
-		if err != nil {
-			return fail(c, err)
+		ob, ok := bindOrder(c)
+		if !ok {
+			return nil
 		}
-		v, err := d.ValidateOrder(m)
-		if err != nil {
-			return fail(c, err)
-		}
+		v := ob.order()
 		return c.JSON(d.ValidatedOrderWithID{ID: o.ID, ValidatedOrder: *v})
 	})
 
@@ -56,9 +50,9 @@ func registerDomain(app *fiber.App) {
 	})
 
 	app.Patch("/domain/customers/:cid", func(c fiber.Ctx) error {
-		m, err := body(c)
-		if err != nil {
-			return fail(c, err)
+		m, ok := bindAny(c)
+		if !ok {
+			return nil
 		}
 		v, err := d.PatchCustomer(c.Params("cid"), m)
 		return send(c, v, err, 200)

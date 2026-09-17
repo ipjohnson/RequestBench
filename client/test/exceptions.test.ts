@@ -159,7 +159,9 @@ describe("one framework's envelope against another's contract", () => {
   const answer = (body: unknown): Answer =>
     ({ status: 422, body_class: "json", encoding: "", body });
 
-  // What each framework actually answers, as spec/expected.json recorded its shape.
+  // What each framework actually answers, taken from the running targets.
+  // go:chi validates in the handler, so a wrong type is a validation failure it reports in
+  // full. go:gin binds first, so the same body never reaches its validator.
   const shared = {
     error: "validation_failed",
     errors: [
@@ -180,8 +182,15 @@ describe("one framework's envelope against another's contract", () => {
     errors: { customer_id: ["int"], status: ["string"], lines: ["array"] },
   };
 
+  // go:gin answers this only when the body deserialized and then failed a rule.
+  const ginRefused = {
+    error: "validation_failed",
+    fields: { customer_id: "required", status: "required", lines: "required" },
+  };
+
   test("each is accepted by its own", () => {
-    expect(errorProblem(ask("go:gin"), answer(shared))).toBeNull();
+    expect(errorProblem(ask("go:chi"), answer(shared))).toBeNull();
+    expect(errorProblem(ask("go:gin"), answer(ginRefused))).toBeNull();
     expect(errorProblem(ask("dotnet:aspnet-mvc"), answer(problemDetails))).toBeNull();
     expect(errorProblem(ask("dotnet:fastendpoints"), answer(fastEndpoints))).toBeNull();
   });
@@ -192,8 +201,11 @@ describe("one framework's envelope against another's contract", () => {
   test("each is rejected by the others", () => {
     expect(errorProblem(ask("dotnet:aspnet-mvc"), answer(fastEndpoints))).not.toBeNull();
     expect(errorProblem(ask("dotnet:fastendpoints"), answer(problemDetails))).not.toBeNull();
-    expect(errorProblem(ask("go:gin"), answer(problemDetails))).not.toBeNull();
+    expect(errorProblem(ask("go:chi"), answer(problemDetails))).not.toBeNull();
     expect(errorProblem(ask("dotnet:carter"), answer(shared))).not.toBeNull();
+    // The two Go styles do not accept each other either, which is what #35 set out to show.
+    expect(errorProblem(ask("go:gin"), answer(shared))).not.toBeNull();
+    expect(errorProblem(ask("go:chi"), answer(ginRefused))).not.toBeNull();
   });
 
   test("a key the framework never answers fails, so a changed envelope is caught", () => {
@@ -219,7 +231,7 @@ describe("one framework's envelope against another's contract", () => {
 
   test("an html body is not an error envelope however it reads", () => {
     const html = { status: 422, body_class: "html", encoding: "", body: "<p>no</p>" };
-    expect(errorProblem(ask("go:gin"), html)).not.toBeNull();
+    expect(errorProblem(ask("go:chi"), html)).not.toBeNull();
   });
 
   test("a target with no package fails rather than passing on nothing", () => {

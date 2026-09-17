@@ -12,38 +12,40 @@ import (
 	d "github.com/ianjohnson/requestbench/targets/go/_shared"
 )
 
-// The request body as a value, or the 422 every target answers when it is not JSON.
-func body(req *http.Request) (map[string]any, error) {
+// The request body as a value, or this target's own answer when it is not JSON. A body the
+// decoder could not read never reaches the validator, so it names no field.
+func body(w http.ResponseWriter, req *http.Request) (map[string]any, bool) {
 	var m map[string]any
 	if err := json.NewDecoder(req.Body).Decode(&m); err != nil {
-		return nil, d.MalformedBody()
+		writeJSON(w, 400, map[string]any{"error": "invalid_body", "detail": err.Error()})
+		return nil, false
 	}
-	return m, nil
+	return m, true
 }
 
 func bind(w http.ResponseWriter, req *http.Request) {
-	m, err := body(req)
-	send(w, d.BindEcho(m), err, 200)
-}
-
-func validateAll(w http.ResponseWriter, req *http.Request) {
-	m, err := body(req)
-	if err != nil {
-		fail(w, err)
+	m, ok := body(w, req)
+	if !ok {
 		return
 	}
-	v, err := d.ValidateOrder(m)
-	send(w, v, err, 200)
+	writeJSON(w, 200, d.BindEcho(m))
 }
 
-func validateFirst(w http.ResponseWriter, req *http.Request) {
-	m, err := body(req)
-	if err != nil {
-		fail(w, err)
+func validateAll(w http.ResponseWriter, req *http.Request) { validate(w, req, false) }
+
+func validateFirst(w http.ResponseWriter, req *http.Request) { validate(w, req, true) }
+
+func validate(w http.ResponseWriter, req *http.Request, firstError bool) {
+	m, ok := body(w, req)
+	if !ok {
 		return
 	}
-	v, err := d.ValidateOrderFirst(m)
-	send(w, v, err, 200)
+	v, errs := validateOrder(m, firstError)
+	if errs != nil {
+		writeJSON(w, 422, invalidBody(errs))
+		return
+	}
+	writeJSON(w, 200, v)
 }
 
 func registerBody(r chi.Router) {

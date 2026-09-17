@@ -12,14 +12,11 @@ func registerDomain(e *echo.Echo) {
 	})
 
 	e.POST("/domain/orders", func(c echo.Context) error {
-		m, err := body(c)
-		if err != nil {
-			return fail(c, err)
+		ob, ok := bindOrder(c)
+		if !ok {
+			return nil
 		}
-		v, err := d.ValidateOrder(m)
-		if err != nil {
-			return fail(c, err)
-		}
+		v := ob.order()
 		c.Response().Header().Set("location", d.CreatedLocation())
 		return c.JSON(201, v)
 	})
@@ -34,14 +31,11 @@ func registerDomain(e *echo.Echo) {
 		if err != nil {
 			return fail(c, err)
 		}
-		m, err := body(c)
-		if err != nil {
-			return fail(c, err)
+		ob, ok := bindOrder(c)
+		if !ok {
+			return nil
 		}
-		v, err := d.ValidateOrder(m)
-		if err != nil {
-			return fail(c, err)
-		}
+		v := ob.order()
 		return c.JSON(200, d.ValidatedOrderWithID{ID: o.ID, ValidatedOrder: *v})
 	})
 
@@ -56,9 +50,9 @@ func registerDomain(e *echo.Echo) {
 	})
 
 	e.PATCH("/domain/customers/:cid", func(c echo.Context) error {
-		m, err := body(c)
-		if err != nil {
-			return fail(c, err)
+		m, ok := bindAny(c)
+		if !ok {
+			return nil
 		}
 		v, err := d.PatchCustomer(c.Param("cid"), m)
 		return send(c, v, err, 200)

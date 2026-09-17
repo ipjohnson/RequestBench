@@ -27,15 +27,10 @@ func query(c fiber.Ctx) map[string][]string {
 }
 
 func fail(c fiber.Ctx, err error) error {
-	var ve *d.ValidationError
-	switch {
-	case isNotFound(err):
+	if isNotFound(err) {
 		return c.Status(404).JSON(d.NotFoundBody())
-	case asValidation(err, &ve):
-		return c.Status(422).JSON(d.InvalidBody(ve.Errors))
-	default:
-		return c.Status(500).JSON(fiber.Map{"error": "internal", "message": err.Error()})
 	}
+	return c.Status(500).JSON(fiber.Map{"error": "internal", "message": err.Error()})
 }
 
 func send(c fiber.Ctx, v any, err error, status int) error {
@@ -61,14 +56,6 @@ func route(app *fiber.App, method, path string, chain ...fiber.Handler) {
 }
 
 // The request body as a value, or the 422 every target answers when it is not JSON.
-func body(c fiber.Ctx) (map[string]any, error) {
-	var m map[string]any
-	if err := c.Bind().Body(&m); err != nil {
-		return nil, d.MalformedBody()
-	}
-	return m, nil
-}
-
 func main() {
 	fx := os.Getenv("RB_FIXTURE")
 	if fx == "" {
@@ -80,6 +67,9 @@ func main() {
 
 	app := fiber.New(fiber.Config{
 		ErrorHandler: func(c fiber.Ctx, err error) error { return fail(c, err) },
+		// Fiber's validation facility: Bind().Body() runs this after binding, so no handler
+		// calls a validator.
+		StructValidator: newValidator(),
 	})
 	// ErrorHandler only sees returned errors. A panic escapes it and takes the process
 	// down, which showed up as a connection reset rather than the 500 the contract asks

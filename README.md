@@ -21,6 +21,14 @@ describe its own configuration rather than a framework.
 domain module and differs only in how routes are bound to it. If two targets disagree about
 what an endpoint returns, that is a bug in one of them, not a performance result.
 
+What counts as wiring includes the framework's own facilities, not just its router. A target
+validates with its own validation layer, renders with its own view engine and binds query
+parameters with its own binder; a framework that ships none of those does the work in its own
+handler and holds its own copy. Sharing one hand-written validator across five frameworks
+measured that function rather than the framework, which is what issues #35 to #38 are
+removing. Where this changes what a target answers, the framework declares its own contract
+in `targets/<lang>/<framework>/client-exception`.
+
 **What a correct answer is, is written down.** `spec/expected.json` holds the status, the
 content type, the content encoding and the body for every one of the 3,346 distinct requests
 in the plan. `make test` boots each target and checks all of them against it; nothing is ever

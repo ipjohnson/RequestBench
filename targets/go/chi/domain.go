@@ -14,14 +14,13 @@ func registerDomain(r chi.Router) {
 	})
 
 	r.Post("/domain/orders", func(w http.ResponseWriter, req *http.Request) {
-		m, err := body(req)
-		if err != nil {
-			fail(w, err)
+		m, ok := body(w, req)
+		if !ok {
 			return
 		}
-		v, err := d.ValidateOrder(m)
-		if err != nil {
-			fail(w, err)
+		v, errs := validateOrder(m, false)
+		if errs != nil {
+			writeJSON(w, 422, invalidBody(errs))
 			return
 		}
 		w.Header().Set("location", d.CreatedLocation())
@@ -39,14 +38,13 @@ func registerDomain(r chi.Router) {
 			fail(w, err)
 			return
 		}
-		m, err := body(req)
-		if err != nil {
-			fail(w, err)
+		m, ok := body(w, req)
+		if !ok {
 			return
 		}
-		v, err := d.ValidateOrder(m)
-		if err != nil {
-			fail(w, err)
+		v, errs := validateOrder(m, false)
+		if errs != nil {
+			writeJSON(w, 422, invalidBody(errs))
 			return
 		}
 		writeJSON(w, 200, d.ValidatedOrderWithID{ID: o.ID, ValidatedOrder: *v})
@@ -63,9 +61,8 @@ func registerDomain(r chi.Router) {
 	})
 
 	r.Patch("/domain/customers/{cid}", func(w http.ResponseWriter, req *http.Request) {
-		m, err := body(req)
-		if err != nil {
-			fail(w, err)
+		m, ok := body(w, req)
+		if !ok {
 			return
 		}
 		v, err := d.PatchCustomer(chi.URLParam(req, "cid"), m)

@@ -22,15 +22,11 @@ import (
 
 
 func fail(c *gin.Context, err error) {
-	var ve *d.ValidationError
-	switch {
-	case errors.Is(err, d.ErrNotFound):
+	if errors.Is(err, d.ErrNotFound) {
 		c.JSON(404, gin.H{"error": "not_found"})
-	case errors.As(err, &ve):
-		c.JSON(422, gin.H{"error": "validation_failed", "errors": ve.Errors})
-	default:
-		c.JSON(500, gin.H{"error": "internal", "message": err.Error()})
+		return
 	}
+	c.JSON(500, gin.H{"error": "internal", "message": err.Error()})
 }
 
 func ok(c *gin.Context, v any, err error, status int) {
@@ -39,14 +35,6 @@ func ok(c *gin.Context, v any, err error, status int) {
 		return
 	}
 	c.JSON(status, v)
-}
-
-func body(c *gin.Context) (map[string]any, error) {
-	var m map[string]any
-	if err := c.ShouldBindJSON(&m); err != nil {
-		return nil, &d.ValidationError{Errors: []d.FieldError{{Field: "body", Rule: "json"}}}
-	}
-	return m, nil
 }
 
 // requireToken is Gin middleware, not a check inside the handler. An if in the handler
@@ -199,12 +187,18 @@ func main() {
 
 	withBody := func(fn func(*gin.Context, map[string]any)) gin.HandlerFunc {
 		return func(c *gin.Context) {
-			m, err := body(c)
-			if err != nil {
-				fail(c, err)
-				return
+			if m, ok := bindAny(c); ok {
+				fn(c, m)
 			}
-			fn(c, m)
+		}
+	}
+	// validate and the two rejection contracts go through Gin's binder, which parses and
+	// validates in one call, so they take the context rather than a parsed map.
+	validated := func(fn func(*gin.Context, *orderBody)) gin.HandlerFunc {
+		return func(c *gin.Context) {
+			if ob, ok := bindOrder(c); ok {
+				fn(c, ob)
+			}
 		}
 	}
 	// bind parses and binds without validating, so validate minus bind is the validator
@@ -215,17 +209,18 @@ func main() {
 			c.JSON(200, d.BindEcho(m))
 		}))
 	}
-	r.POST("/body/validate/small", withBody(func(c *gin.Context, m map[string]any) {
-		v, err := d.ValidateOrder(m)
-		ok(c, v, err, 200)
+	r.POST("/body/validate/small", validated(func(c *gin.Context, ob *orderBody) {
+		c.JSON(200, ob.order())
 	}))
-	r.POST("/body/validate/medium", withBody(func(c *gin.Context, m map[string]any) {
-		v, err := d.ValidateOrder(m)
-		ok(c, v, err, 200)
+	r.POST("/body/validate/medium", validated(func(c *gin.Context, ob *orderBody) {
+		c.JSON(200, ob.order())
 	}))
-	r.POST("/body/validate/first-error", withBody(func(c *gin.Context, m map[string]any) {
-		v, err := d.ValidateOrderFirst(m)
-		ok(c, v, err, 200)
+	// go-playground reports every rule that refused, and offers no way to stop at the first.
+	// That is the framework's answer to this endpoint, so it is the answer, and the gap
+	// between this row and body.rejected_all is what Gin actually costs rather than a walk
+	// written twice.
+	r.POST("/body/validate/first-error", validated(func(c *gin.Context, ob *orderBody) {
+		c.JSON(200, ob.order())
 	}))
 
 	// ---- domain ---------------------------------------------------------------------
@@ -243,28 +238,22 @@ func main() {
 		v, err := d.DomainAggregate(c.Param("region"))
 		ok(c, v, err, 200)
 	})
-	r.POST("/domain/orders", withBody(func(c *gin.Context, m map[string]any) {
-		v, err := d.ValidateOrder(m)
-		if err != nil {
-			fail(c, err)
-			return
-		}
+	r.POST("/domain/orders", validated(func(c *gin.Context, ob *orderBody) {
 		c.Header("location", "/domain/orders/"+strconv.Itoa(d.NextOrderID))
-		c.JSON(201, v)
+		c.JSON(201, ob.order())
 	}))
-	r.PUT("/domain/orders/:oid", withBody(func(c *gin.Context, m map[string]any) {
+	r.PUT("/domain/orders/:oid", func(c *gin.Context) {
 		o, err := d.GetOrder(c.Param("oid"))
 		if err != nil {
 			fail(c, err)
 			return
 		}
-		v, err := d.ValidateOrder(m)
-		if err != nil {
-			fail(c, err)
+		ob, ok := bindOrder(c)
+		if !ok {
 			return
 		}
-		c.JSON(200, d.ValidatedOrderWithID{ID: o.ID, ValidatedOrder: *v})
-	}))
+		c.JSON(200, d.ValidatedOrderWithID{ID: o.ID, ValidatedOrder: *ob.order()})
+	})
 	r.PATCH("/domain/customers/:cid", withBody(func(c *gin.Context, m map[string]any) {
 		v, err := d.PatchCustomer(c.Param("cid"), m)
 		ok(c, v, err, 200)

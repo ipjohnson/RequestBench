@@ -23,15 +23,10 @@ import (
 )
 
 func fail(c echo.Context, err error) error {
-	var ve *d.ValidationError
-	switch {
-	case errors.Is(err, d.ErrNotFound):
+	if errors.Is(err, d.ErrNotFound) {
 		return c.JSON(404, d.NotFoundBody())
-	case errors.As(err, &ve):
-		return c.JSON(422, d.InvalidBody(ve.Errors))
-	default:
-		return c.JSON(500, map[string]string{"error": "internal", "message": err.Error()})
 	}
+	return c.JSON(500, map[string]string{"error": "internal", "message": err.Error()})
 }
 
 func send(c echo.Context, v any, err error, status int) error {
@@ -51,6 +46,9 @@ func main() {
 	}
 
 	e := echo.New()
+	// The validator lives on the engine, so c.Validate is what runs it and no handler calls
+	// a validator directly. That slot is Echo's validation facility.
+	e.Validator = newValidator()
 	e.HideBanner = true
 	e.HidePort = true
 
