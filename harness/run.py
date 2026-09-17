@@ -4,7 +4,7 @@
   python3 harness/run.py --targets node:fastify --seconds 20 --rungs regular
   python3 harness/run.py --families json --frameworks gin,fastify
 """
-import argparse, collections, functools, hashlib, http.client, json, os, pathlib, platform, re, shutil, signal, socket, subprocess, sys, time, uuid
+import argparse, collections, functools, hashlib, http.client, json, os, pathlib, platform, random, re, shutil, signal, socket, subprocess, sys, time, uuid
 
 import bundle
 import machine
@@ -26,7 +26,16 @@ BLEND = json.loads((SPEC / "endpoints.json").read_text())["version"]
 # ladder produced it cannot be read against an older one.
 LADDER_V = LADDER["version"]
 SEQUENCE = json.loads((SPEC / "sequence.json").read_text())["version"]
-PORT = int(os.environ.get("RB_PORT", "8080"))
+# Every target in a run gets its own published port, claimed as one block at startup, so
+# two runs on one machine never fight over 8080. Above the crowded 8080/8443 neighbourhood
+# and below the ephemeral floor on both platforms -- Linux defaults ip_local_port_range to
+# 32768-60999 and macOS portrange.first to 49152 -- so a block can never collide with an
+# outbound socket.
+PORT_RANGE = (19080, 32768)
+# Wide enough for the 36 frameworks spec/matrix.json lists, of which 33 are implemented.
+PORT_BLOCK = 40
+# An explicit base, for pointing a run at a target booted by hand.
+PORT_BASE = int(os.environ["RB_PORT"]) if os.environ.get("RB_PORT") else None
 EXEMPLARS = ROOT / "results" / "exemplars"
 # There is no exemption list. Every implemented target has to conform, because a target
 # that does not is not measured and a gate that passes anyway says nothing. The list that
@@ -95,8 +104,9 @@ def lambda_event(method, path):
 class Local:
     """Run a target as a host process. The fast edit loop, and what CI validates with."""
 
-    def __init__(self, language, name):
-        self.language, self.name, self.proc, self.fh = language, name, None, None
+    def __init__(self, language, name, port):
+        self.language, self.name, self.port = language, name, port
+        self.proc, self.fh = None, None
         self.log = ROOT / "results" / (".target-%s-%s.log" % (language, name))
 
     def _argv(self):
@@ -113,7 +123,7 @@ class Local:
                 # is the one used here rather than a hand-rolled server around the library.
                 return ([str(nd / "node_modules/.bin/functions-framework"),
                          "--target=rb", "--source=_hosts/gcp-func.mjs",
-                         "--port=%d" % PORT], nd, env)
+                         "--port=%d" % self.port], nd, env)
             raise SystemExit("node has no launcher for host %r" % host)
         if self.language == "go":
             if host != "container":
@@ -181,7 +191,11 @@ class Local:
         # during conformance. The file also survives the run, so a boot failure is readable.
         self.log.parent.mkdir(exist_ok=True)
         self.fh = self.log.open("wb")
-        self.proc = subprocess.Popen(argv, cwd=cwd, env={**os.environ, **extra},
+        # PORT last, and set for every language: each target reads it to decide what to
+        # bind, and an inherited one would put the target somewhere the harness is not
+        # looking.
+        self.proc = subprocess.Popen(argv, cwd=cwd,
+                                     env={**os.environ, **extra, "PORT": str(self.port)},
                                      stdout=self.fh, stderr=subprocess.STDOUT,
                                      start_new_session=True)
         return self
@@ -222,12 +236,14 @@ class Container:
     CPUS = os.environ.get("RB_CPUS", "2")
     CPUSET = os.environ.get("RB_SUT_CPUS", "")
 
-    def __init__(self, language, name):
-        self.language, self.name = language, name
+    def __init__(self, language, name, port):
+        self.language, self.name, self.port = language, name, port
         self.host = os.environ.get("RB_HOST", "container")
         special = (ROOT / "targets" / language / ("Dockerfile." + self.host.split("-")[0])).exists()
         suffix = "-" + self.host.split("-")[0] if special else ""
-        self.cname = "rb-%s-%s%s" % (language, name, suffix)
+        # The port is in the name so two runs measuring the same target on one machine do
+        # not remove each other's container the way a shared name would.
+        self.cname = "rb-%s-%s%s-%d" % (language, name, suffix, port)
         self.image = "rb/%s-%s%s" % (language, name, suffix)
 
     def build(self):
@@ -261,7 +277,9 @@ class Container:
             argv += ["--cpuset-cpus", self.CPUSET]
         else:
             argv += ["--cpus", self.CPUS]
-        subprocess.run(argv + ["-p", "%d:8080" % PORT, self.image],
+        # Only the published side moves. Inside the container every target still binds
+        # 8080, which is what its Dockerfile sets and exposes.
+        subprocess.run(argv + ["-p", "%d:8080" % self.port, self.image],
                        check=True, capture_output=True)
         return self
 
@@ -278,13 +296,14 @@ class Container:
         subprocess.run(["docker", "stop", "-t", "3", self.cname], capture_output=True)
 
 
-def launcher(mode, language, name):
-    return Local(language, name) if mode == "local" else Container(language, name).build()
+def launcher(mode, language, name, port):
+    return (Local(language, name, port) if mode == "local"
+            else Container(language, name, port).build())
 
 def warmup_class(language):
     return "jit" if language in MATRIX["warmup_classes"]["jit"] else "steady"
 
-def wait_healthy(target, timeout):
+def wait_healthy(target, port, timeout):
     """Wait for a 200 from /health, not merely for the port to accept.
 
     `docker run -p` publishes the port before the process inside has bound, so a TCP
@@ -300,7 +319,7 @@ def wait_healthy(target, timeout):
         if not target.alive():
             raise RuntimeError("target exited during boot")
         try:
-            c = http.client.HTTPConnection("127.0.0.1", PORT, timeout=2.0)
+            c = http.client.HTTPConnection("127.0.0.1", port, timeout=2.0)
             if encoding == "lambda":
                 # RIE serves only the invocations endpoint, so readiness is a real
                 # invocation and the status lives inside the returned envelope.
@@ -323,11 +342,11 @@ def wait_healthy(target, timeout):
         time.sleep(0.1)
     raise RuntimeError("target never became ready in %ss (encoding %s)" % (timeout, encoding))
 
-def run_gen(rate, seconds, workers, record=True, only=None):
+def run_gen(port, rate, seconds, workers, record=True, only=None):
     # Histograms go through a file rather than the pipe: a full rung is megabytes of
     # base64 and stdout stays readable for a human watching the run.
     tmp = ROOT / "results" / (".gen-%s.json" % uuid.uuid4().hex[:8])
-    cmd = ["node", str(ROOT / "gen" / "blend.mjs"), "--target", "127.0.0.1:%d" % PORT,
+    cmd = ["node", str(ROOT / "gen" / "blend.mjs"), "--target", "127.0.0.1:%d" % port,
            "--rate", str(rate), "--seconds", str(seconds), "--workers", str(workers),
            "--maxInflight", "1024", "--out", str(tmp)]
     # The warmup is filtered with the sample. Warming paths the sample never calls is the
@@ -347,24 +366,54 @@ def run_gen(rate, seconds, workers, record=True, only=None):
     finally:
         tmp.unlink(missing_ok=True)
 
-def wait_port_free(port, timeout):
-    deadline = time.time() + timeout
-    while time.time() < deadline:
-        with socket.socket() as s:
-            s.settimeout(0.3)
-            if s.connect_ex(("127.0.0.1", port)) != 0:
-                return True
-        time.sleep(0.2)
-    return False
+def port_free(port):
+    """Free means nothing refuses the bind and nothing answers on it.
+
+    Two checks, because neither alone is enough. SO_REUSEADDR keeps a port whose last
+    connections are still in TIME_WAIT from reading as busy, and on BSD it also lets the
+    bind succeed while a container holds the wildcard address, which the connect catches.
+    """
+    with socket.socket() as s:
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        try:
+            s.bind(("127.0.0.1", port))
+        except OSError:
+            return False
+    with socket.socket() as s:
+        s.settimeout(0.3)
+        return s.connect_ex(("127.0.0.1", port)) != 0
 
 
-def read_meta():
+def claim_ports(n, tries=50):
+    """Pick a base with `n` free ports after it, so target N binds base + N.
+
+    The base is random rather than the lowest one free, because a run claims its whole
+    block up front and then binds one port at a time over the length of the run. Scanning
+    from the bottom would hand a run starting now the ports an earlier run claimed and has
+    not reached yet, which is the collision this is here to prevent.
+
+    It isolates runs from each other. It does not make concurrent measurement possible:
+    the loop below is strictly sequential and stops each target before starting the next,
+    because two targets sharing a CPU is contention recorded as framework overhead.
+    """
+    if PORT_BASE:
+        return PORT_BASE
+    lo, hi = PORT_RANGE
+    for _ in range(tries):
+        base = random.randrange(lo, hi - n)
+        if all(port_free(p) for p in range(base, base + n)):
+            return base
+    sys.exit("no free block of %d ports in %d-%d after %d tries; set RB_PORT to a base "
+             "of your own" % (n, lo, hi - 1, tries))
+
+
+def read_meta(port):
     """Ask the target what it is. /__meta is outside the blend spec on purpose: it is not
     measured and not conformance-checked, it exists so a point on the results chart can be
     attributed to a framework version rather than to a different runner."""
     encoding = ENCODING_FOR_HOST.get(os.environ.get("RB_HOST", "container"), "http")
     try:
-        c = http.client.HTTPConnection("127.0.0.1", PORT, timeout=5)
+        c = http.client.HTTPConnection("127.0.0.1", port, timeout=5)
         if encoding == "lambda":
             c.request("POST", LAMBDA_INVOKE, body=lambda_event("GET", "/__meta"),
                       headers={"content-type": "application/json"})
@@ -383,9 +432,9 @@ def read_meta():
     return {}
 
 
-def run_serial(count, encoding, warmup):
+def run_serial(port, count, encoding, warmup):
     tmp = ROOT / "results" / (".gen-%s.json" % uuid.uuid4().hex[:8])
-    cmd = ["node", str(ROOT / "gen" / "serial.mjs"), "--target", "127.0.0.1:%d" % PORT,
+    cmd = ["node", str(ROOT / "gen" / "serial.mjs"), "--target", "127.0.0.1:%d" % port,
            "--encoding", encoding, "--count", str(count), "--warmup", str(warmup),
            "--out", str(tmp)]
     gen_cpus = os.environ.get("RB_GEN_CPUS", "")
@@ -412,7 +461,7 @@ def billed_durations(text):
 CLIENT = ROOT / "client" / "dist" / "cli.js"
 
 
-def client(target, *args):
+def client(port, target, *args):
     """The conformance client, which is the only thing that talks HTTP to a target.
 
     One replay, two authorities: --mode gate compares against another target measured in
@@ -421,7 +470,7 @@ def client(target, *args):
     """
     if not CLIENT.exists():
         raise SystemExit("the client is not built. Run 'npm ci && npm run build'.")
-    argv = ["node", str(CLIENT), "127.0.0.1:%d" % PORT, "--target", target, *args]
+    argv = ["node", str(CLIENT), "127.0.0.1:%d" % port, "--target", target, *args]
     # The client has to speak the host's encoding. A RIE container serves only the
     # invocations endpoint, so plain HTTP reaches nothing and every target fails.
     encoding = ENCODING_FOR_HOST.get(os.environ.get("RB_HOST", "container"), "http")
@@ -430,10 +479,10 @@ def client(target, *args):
     return subprocess.run(argv, capture_output=True, text=True, cwd=ROOT)
 
 
-def expect(target):
+def expect(port, target):
     """Check the running target against spec/expected.json, which never consults another
     target. Replaces the pytest suite; the authority and the wording are the same."""
-    out = client(target, "--mode", "expect", "--quiet")
+    out = client(port, target, "--mode", "expect", "--quiet")
     lines = [l.strip() for l in out.stdout.strip().splitlines() if l.strip()]
     i = next((k for k in reversed(range(len(lines)))
               if "endpoints answer spec/expected.json" in lines[k]), None)
@@ -442,7 +491,7 @@ def expect(target):
     return out.returncode == 0, "\n      ".join([lines[i]] + lines[:i][:12])
 
 
-def conform(target, reference, is_reference, exemplars=None):
+def conform(port, target, reference, is_reference, exemplars=None):
     """Gate the running target, against the language's reference measured in this run.
 
     The reference boots first and records what it answered; every target after it is
@@ -453,7 +502,7 @@ def conform(target, reference, is_reference, exemplars=None):
     args = ["--quiet", "--reference" if is_reference else "--compare", str(reference)]
     if exemplars:
         args += ["--exemplars", str(exemplars)]
-    out = client(target, *args)
+    out = client(port, target, *args)
     lines = [l.strip() for l in out.stdout.strip().splitlines() if l.strip()]
     # The summary line is what says how bad it is. Reporting the last line reported whichever
     # diagnostic happened to print last, so a target failing forty-one endpoints announced
@@ -669,36 +718,42 @@ def main():
     encoding = ENCODING_FOR_HOST.get(host, "http")
     rows[0]["suite"] = SEQUENCE if suite == "serial" else BLEND
     what = "language=%s" % languages[0] if len(languages) == 1 else "languages=%s" % ",".join(languages)
+    base = claim_ports(max(PORT_BLOCK, len(pairs)))
+    print("run %s  ports=%d+" % (run_id, base))
     if a.validate_only:
-        print("run %s   %s  mode=%s  VALIDATE ONLY" % (run_id, what, a.mode))
+        print("  %s  mode=%s  VALIDATE ONLY" % (what, a.mode))
     elif suite == "serial":
-        print("run %s   %s  host=%s  suite=serial  %s requests  %d targets"
-              % (run_id, what, host, f"{a.count:,}", len(pairs)))
+        print("  %s  host=%s  suite=serial  %s requests  %d targets"
+              % (what, host, f"{a.count:,}", len(pairs)))
     else:
-        print("run %s   %s  mode=%s  warmup=%ss  rates=%s  %d targets"
-              % (run_id, what, a.mode, warm_s,
+        print("  %s  mode=%s  warmup=%ss  rates=%s  %d targets"
+              % (what, a.mode, warm_s,
                  " ".join("%s@%d" % (r["name"], r["rps"]) for r in rungs), len(pairs)))
 
     conformed, boot_failed, nonconforming = 0, [], []
     reference_ok = set()
-    for language, target in pairs:
+    for n, (language, target) in enumerate(pairs):
         key = "%s:%s" % (language, target)
-        print("\n=== %s%s ===" % (("%s:" % language) if len(languages) > 1 else "", target))
-        t = launcher(a.mode, language, target).start()
+        port = base + n
+        print("\n%-24s port %d"
+              % ("=== %s%s ===" % (("%s:" % language) if len(languages) > 1 else "", target),
+                 port))
+        t = launcher(a.mode, language, target, port).start()
         try:
             # `go run` compiles on first launch, which no boot budget should punish.
             # Otherwise the budget is the language's: a JVM target spends seconds starting
             # that a steady runtime does not, and 20s fails Spring Boot on two pinned cores.
             try:
-                wait_healthy(t, 240 if (a.mode == "local" and language in ("go", "rust"))
-                                else LADDER["boot_timeout_s"][warmup_class(language)])
+                wait_healthy(t, port,
+                             240 if (a.mode == "local" and language in ("go", "rust"))
+                             else LADDER["boot_timeout_s"][warmup_class(language)])
             except RuntimeError as e:
                 print("  BOOT FAILED: %s" % e)
                 boot_failed.append(key)
                 if hasattr(t, "tail"):
                     print("  --- target log ---\n%s" % t.tail())
                 continue
-            meta = read_meta()
+            meta = read_meta(port)
             if meta:
                 print("  booted   %s %s on %s%s" % (meta.get("framework", target),
                                                     meta.get("version", "?"),
@@ -732,7 +787,7 @@ def main():
                 # here is what keeps them from describing an endpoint set two specs old.
                 exemplars = (EXEMPLARS / ("%s-%s@%s.json" % (language, target, host))
                              if a.exemplars else None)
-                ok, line = conform(key, reference, writes_reference, exemplars)
+                ok, line = conform(port, key, reference, writes_reference, exemplars)
                 print("  conformance: %s" % line)
                 if not ok:
                     nonconforming.append(key)
@@ -742,7 +797,7 @@ def main():
                 if writes_reference:
                     reference_ok.add(language)
             if a.expect:
-                ok, line = expect(key)
+                ok, line = expect(port, key)
                 print("  expectation: %s" % line)
                 if not ok:
                     nonconforming.append(key)
@@ -755,7 +810,8 @@ def main():
                 # A JIT runtime is still compiling after the few hundred invocations a
                 # steady runtime needs, so the warmup count is the language's too.
                 warm_n = LADDER["warmup"]["serial_requests"][warmup_class(language)]
-                res = run_serial(a.count, encoding, min(warm_n, max(1, a.count // 2)))
+                res = run_serial(port, a.count, encoding,
+                                 min(warm_n, max(1, a.count // 2)))
                 o = res["overall"]
                 print("  serial  %s requests in %6.2fs -> %5d rps   p50 %5dus  p99 %6dus"
                       % (f"{res['completed']:,}", res["elapsed_s"], res["achieved_rps"],
@@ -790,7 +846,7 @@ def main():
 
             print("  warmup %ss @ %s rps  (%s per live endpoint)"
                   % (warm_s, warm_rps, f"{warm_rps * warm_s // len(ids):,}"))
-            run_gen(warm_rps, warm_s, a.workers, record=False, only=live)
+            run_gen(port, warm_rps, warm_s, a.workers, record=False, only=live)
 
             for r in rungs:
                 dur = secs or r["seconds"]
@@ -801,7 +857,8 @@ def main():
                 # spending. A target dropping at twenty seconds drops at four minutes.
                 settle_s = min(LADDER.get("settle_s", 0), max(1, dur // 4))
                 if settle_s:
-                    probe = run_gen(r["rps"], settle_s, a.workers, record=False, only=live)
+                    probe = run_gen(port, r["rps"], settle_s, a.workers,
+                                    record=False, only=live)
                     offered = r["rps"] * settle_s
                     frac = probe["dropped"] / offered if offered else 0
                     if frac > LADDER["abort"]["drop_fraction"]:
@@ -818,7 +875,7 @@ def main():
                                      "count": 0, "p50_us": None, "p90_us": None,
                                      "p99_us": None, "p999_us": None})
                         continue
-                res = run_gen(r["rps"], dur, a.workers, only=live)
+                res = run_gen(port, r["rps"], dur, a.workers, only=live)
                 o = res["overall"]
                 offered = r["rps"] * dur
                 # Percentiles here are computed over what completed, and a dropped request
@@ -848,10 +905,6 @@ def main():
                                  k: o[k] for k in ("count", "p50_us", "p90_us", "p99_us", "p999_us")}})
         finally:
             t.stop()
-            # A survivor still holding the port makes the next target contend with it, which
-            # showed up as a wildly inflated elapsed time with normal-looking percentiles.
-            if not wait_port_free(PORT, 15):
-                print("  WARNING: port %d still held after teardown" % PORT)
             time.sleep(0.5)   # cooldown so the next target does not inherit a warm socket table
 
     if a.validate_only or a.expect:

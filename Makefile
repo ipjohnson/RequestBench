@@ -27,7 +27,10 @@ EXPECT_FROM ?= node:fastify,go:gin,rust:axum,python:fastapi
 # runs, and it is the only mode that does not need five toolchains on the machine.
 TEST_MODE ?= docker
 # One target for `make conform` and `make expect`, which talk to something already running.
+# They are told where it is: harness/run.py gives each container its own port now, and 8080
+# is only right for one started by hand with a plain `docker run -p 8080:8080`.
 TARGET ?=
+PORT ?= 8080
 
 select = $(if $(TARGETS),--targets $(TARGETS),) \
 	 $(if $(LANGUAGES),--languages $(LANGUAGES),) \
@@ -102,11 +105,11 @@ lint: ## lint the workspace and the workflow files
 validate: ## boot and conform, no load  (TARGETS= LANGUAGES= FRAMEWORKS= MODE=)
 	python3 harness/run.py $(select) --mode $(MODE) --validate-only $(ARGS)
 
-conform: client ## gate an already-running target  (TARGET=go:gin, REF= to compare)
-	node client/dist/cli.js 127.0.0.1:8080 --target $(TARGET) $(if $(REF),--compare $(REF),)
+conform: client ## gate an already-running target  (TARGET=go:gin, PORT=, REF= to compare)
+	node client/dist/cli.js 127.0.0.1:$(PORT) --target $(TARGET) $(if $(REF),--compare $(REF),)
 
-expect: client ## check an already-running target against spec/expected.json  (TARGET=go:gin)
-	node client/dist/cli.js 127.0.0.1:8080 --target $(TARGET) --mode expect
+expect: client ## check an already-running target against spec/expected.json  (TARGET=go:gin, PORT=)
+	node client/dist/cli.js 127.0.0.1:$(PORT) --target $(TARGET) --mode expect
 
 client: ## build the TypeScript workspace, which every check now runs through
 	npm run build --silent
