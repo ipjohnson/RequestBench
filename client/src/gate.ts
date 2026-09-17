@@ -91,6 +91,16 @@ export async function gate(
     const replayed = isReplayChecked(ep.id) && !opts.skipHeaders;
     /** The serial each distinct cache key answered with the first time it was asked. */
     const stored = new Map<string, number>();
+    /**
+     * Whether a replayed response has had its headers checked yet.
+     *
+     * The check below runs once per endpoint, on the first response that arrived, and on a
+     * cache row that response is the one the handler built. What a store writes back is a
+     * different response, and the two can disagree: Sanic writes the content type from the
+     * response object rather than from the header map, so a replay built from the headers
+     * alone went out as application/octet-stream and a cold store hid it.
+     */
+    let replayChecked = opts.skipHeaders ?? false;
     // An error envelope is the framework's own contract, so this endpoint's body is judged
     // against the schema the framework declared and never compared against the reference.
     // Two frameworks answering ProblemDetails and an ErrorResponse are not in disagreement,
@@ -129,6 +139,12 @@ export async function gate(
         stale ??= repeated(hdrs, first ?? null);
         const got = serialOf(hdrs, null);
         if (first === undefined && got !== null) stored.set(key, got);
+        else if (!replayChecked) {
+          replayChecked = true;
+          for (const msg of checkHeaders(status, hdrs, raw, encoding)) {
+            headerProblems.push([ep.id, `replayed: ${msg}`]);
+          }
+        }
       }
       // Every instance, not just the first of each path: a framework that answers a
       // different envelope once it has warmed up is exactly what this is here to catch, and

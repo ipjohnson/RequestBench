@@ -46,6 +46,8 @@ type Faults = {
   readonly noStore?: boolean;
   /** Store one entry per path, ignoring the header the row varies. */
   readonly ignoresVary?: boolean;
+  /** Replay the stored bytes under the type a store defaults to rather than the handler's. */
+  readonly forgetsType?: boolean;
 };
 
 const servers: Server[] = [];
@@ -78,7 +80,17 @@ async function serve(faults: Faults = {}): Promise<string> {
       }
       const key = faults.ignoresVary ? path : `${path}|${req.headers["accept-language"] ?? ""}`;
       const hit = faults.noStore ? undefined : store.get(key);
-      if (hit) return send(200, hit.body, { "x-rb-serial": hit.serial });
+      if (hit) {
+        if (faults.forgetsType) {
+          const buf = Buffer.from(hit.body);
+          res.writeHead(200, {
+            "content-type": "application/octet-stream",
+            "content-length": buf.length, "x-rb-serial": hit.serial,
+          });
+          return res.end(buf);
+        }
+        return send(200, hit.body, { "x-rb-serial": hit.serial });
+      }
       const fresh = { body: SMALL, serial: String(++serial) };
       store.set(key, fresh);
       return send(200, fresh.body, { "x-rb-serial": fresh.serial });
@@ -130,6 +142,16 @@ describe("a target that gets one piece wrong", () => {
     const r = await gate(plan, await serve({ noStore: true }), "node:fastify");
     expect(why(r, "cache.small")).toContain("the handler ran again, so nothing was replayed");
     expect(why(r, "cache.vary_one")).toContain("the handler ran again");
+  });
+
+  test("a replay that loses the content type is caught, though the first response is not", async () => {
+    const r = await gate(plan, await serve({ forgetsType: true }), "node:fastify");
+    // The row still conforms: the bytes and the counter are right, and the handler was
+    // skipped. What is wrong is the response the store wrote back, which is why the
+    // complaint says so rather than reading as a failure of the first one.
+    expect(why(r, "cache.small")).toBeNull();
+    expect(r.headerProblems.map(([, msg]) => msg))
+      .toContain("replayed: JSON body served as application/octet-stream");
   });
 
   test("a store that ignores the vary header answers fewer responses than keys", async () => {

@@ -365,15 +365,18 @@ def cache_key(request):
 async def replay(request):
     hit = store.get(cache_key(request))
     if hit is not None:
-        body, headers = hit
-        return response.raw(body, status=200, headers=headers)
+        body, content_type, headers = hit
+        return response.raw(body, status=200, content_type=content_type, headers=headers)
 
 
 @cached.on_response
 async def keep(request, res):
     key = cache_key(request)
     if res.status == 200 and key not in store:
-        store[key] = (res.body, dict(res.headers))
+        # The content type is stored beside the headers rather than inside them: Sanic
+        # writes it from the response object, so res.headers does not carry it and a
+        # replay built from them alone goes out as application/octet-stream.
+        store[key] = (res.body, res.content_type, dict(res.headers))
 
 
 def cache_route(size, vary=()):
