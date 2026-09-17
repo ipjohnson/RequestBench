@@ -80,6 +80,14 @@ SNIPPET_ROLES = ("source", "host")
 
 OPEN, CLOSE = "([{", ")]}"
 
+# An annotation, an attribute, or a comment. None of them is a handler.
+ANNOTATION = re.compile(r"^\s*(?:@|#\[|\[[A-Za-z])")
+COMMENT = re.compile(r"^\s*(?://|/\*|\*|#(?!\[))")
+
+# Languages where ' is a character literal rather than a string delimiter. Rust spells a
+# lifetime with the same tick, which is neither. See char_literal().
+CHAR_QUOTE = ("go", "java", "dotnet", "rust")
+
 
 def route_of(ep):
     """The path a router would be given: no query string, no fragment."""
@@ -121,7 +129,23 @@ def attribute(line, i):
     return i + 1 < len(line) and line[i + 1] in "[!"
 
 
-def strip_code(line):
+def char_literal(line, i):
+    """Whether the ' at `i` opens a character literal rather than a lifetime.
+
+    Rust spells both with the same tick: 'a' is a char and &'static is a lifetime. Reading
+    the lifetime as an open quote blanks the rest of the line, so
+    `fn json_small() -> Json<&'static d::PayloadBody> {` strips to
+    `fn json_small() -> Json<&`, the brace disappears, and the line reports that it opens
+    no block. Every rocket handler is that shape.
+    """
+    if i + 1 >= len(line):
+        return False
+    if line[i + 1] == "\\":
+        return "'" in line[i + 2:i + 12]
+    return i + 2 < len(line) and line[i + 2] == "'"
+
+
+def strip_code(line, lang):
     """The line with string bodies and line comments blanked, for delimiter counting.
 
     Counting delimiters over raw source miscounts the moment a route contains a brace or a
@@ -140,6 +164,10 @@ def strip_code(line):
                 quote = None
             i += 1
             continue
+        if c == "'" and lang in CHAR_QUOTE and not char_literal(line, i):
+            out.append(c)
+            i += 1
+            continue
         if c in "\"'`":
             quote = c
             out.append(" ")
@@ -152,7 +180,7 @@ def strip_code(line):
     return "".join(out)
 
 
-def block_end(lines, start):
+def block_end(lines, start, lang):
     """The last line of the delimited block opening on `start`.
 
     Forward to balanced delimiters, per docs/bundles.html §7. A registration that fits on
@@ -162,7 +190,7 @@ def block_end(lines, start):
     """
     depth, opened = 0, False
     for n in range(start, min(len(lines), start + 80)):
-        for c in strip_code(lines[n]):
+        for c in strip_code(lines[n], lang):
             if c in OPEN:
                 depth += 1
                 opened = True
@@ -177,24 +205,21 @@ def indent_of(line):
     return len(line) - len(line.lstrip())
 
 
-def opens_block(line):
+def opens_block(line, lang):
     """Whether this line leaves a delimiter open. A route registration does; a switch case
     label does not, and the two need different end rules."""
     depth = 0
-    for c in strip_code(line):
+    for c in strip_code(line, lang):
         depth += 1 if c in OPEN else -1 if c in CLOSE else 0
     return depth > 0
 
 
-def marked_end(lines, start):
-    """The last line of a block a marker labels.
+def dedent_end(lines, start):
+    """The last line of the indentation block opening on `start`.
 
-    A marker sits above either a registration, which the balanced rule ends correctly, or a
-    switch case, which opens nothing and therefore balances on its own first line. A case
-    runs until the source dedents back to it, which is where the next case begins.
+    What a delimiter count cannot answer: a Python `async def` and a switch case label both
+    open a block by indentation alone and balance their own parentheses on their own line.
     """
-    if opens_block(lines[start]):
-        return block_end(lines, start)
     base, end = indent_of(lines[start]), start
     for n in range(start + 1, len(lines)):
         if lines[n].strip() and indent_of(lines[n]) <= base:
@@ -205,7 +230,56 @@ def marked_end(lines, start):
     return end
 
 
-def enclosing(lines, start):
+def marked_end(lines, start, lang):
+    """The last line of a block a marker labels.
+
+    A marker sits above either a registration, which the balanced rule ends correctly, or a
+    switch case, which opens nothing and therefore balances on its own first line. A case
+    runs until the source dedents back to it, which is where the next case begins.
+    """
+    if opens_block(lines[start], lang):
+        return block_end(lines, start, lang)
+    return dedent_end(lines, start)
+
+
+def annotation_run(lines, start, end):
+    """Whether these lines hold nothing but annotations, attributes and comments."""
+    return all(not s or COMMENT.match(s) or ANNOTATION.match(s)
+               for s in (l.strip() for l in lines[start:end + 1]))
+
+
+def declaration_end(lines, start, lang):
+    """Where the declaration on `start` ends.
+
+    Python needs its own branch. A decorated `async def` is an indentation block, and the
+    balanced rule would end it on the closing paren of its parameter list, which is the
+    seam where counting delimiters stops being enough.
+    """
+    return dedent_end(lines, start) if lang == "python" else block_end(lines, start, lang)
+
+
+def through_annotations(lines, start, end, lang):
+    """Extend a block that turned out to be only annotations onto what it annotates.
+
+    An annotation balances its own parentheses on its own line, so it is a complete block
+    and block_end() stops on it. The declaration underneath is never read, which is how 403
+    of the 1485 published snippets came to be a bare `@Get("/json/small")`.
+
+    annotated_start() already walks the other way, from a declaration back over the
+    annotations above it. Nothing walked forward, and the route is on the annotation in ten
+    of the thirty-three targets.
+    """
+    if not annotation_run(lines, start, end):
+        return end
+    for n in range(end + 1, len(lines)):
+        s = lines[n].strip()
+        if not s or COMMENT.match(s) or ANNOTATION.match(s):
+            continue
+        return max(end, declaration_end(lines, n, lang))
+    return end
+
+
+def enclosing(lines, start, lang):
     """The chain of open blocks this line sits inside, outermost first.
 
     A marker above a registration captures a handler. A marker deeper inside a nested
@@ -225,7 +299,7 @@ def enclosing(lines, start):
     """
     stack = []
     for n in range(start):
-        for c in strip_code(lines[n]):
+        for c in strip_code(lines[n], lang):
             if c in OPEN:
                 stack.append(n)
             elif c in CLOSE and stack:
@@ -256,14 +330,14 @@ def annotated_start(lines, line):
     return n
 
 
-def method_on(lines, line):
+def method_on(lines, line, lang):
     """The HTTP method a route registration on this line names, if it names one.
 
     Read from the line itself rather than from the framework's API shape, so `app.post(`,
     `r.POST(`, `.delete(` and `@GetMapping` all answer the same way. Without it
     /domain/orders matches its GET and its POST and the endpoint gets the wrong one.
     """
-    text = strip_code(lines[line])
+    text = strip_code(lines[line], lang)
     head = text.split("(", 1)[0]
     for m in METHODS:
         if re.search(r"(?:^|[^A-Za-z])%s(?:$|[^A-Za-z])" % m, head, re.I):
@@ -293,7 +367,7 @@ def text_of(lines, start, end):
     return "\n".join(lines[start:end + 1])
 
 
-def comment_at(line):
+def comment_at(line, lang):
     """Where a line comment starts, or the length of the line. Quote-aware, so a `//`
     inside a route literal does not truncate it."""
     i, quote = 0, None
@@ -303,6 +377,9 @@ def comment_at(line):
             i += 2 if c == "\\" else 1
             if c == quote:
                 quote = None
+            continue
+        if c == "'" and lang in CHAR_QUOTE and not char_literal(line, i):
+            i += 1
             continue
         if c in "\"'`":
             quote = c
@@ -317,7 +394,7 @@ def comment_at(line):
     return len(line)
 
 
-def derive(lines, ep):
+def derive(lines, ep, lang):
     """Every place this endpoint's route is registered, as (start, end) line indexes."""
     rx = route_regex(route_of(ep))
     method = ep["method"].lower()
@@ -326,17 +403,17 @@ def derive(lines, ep):
         m = rx.search(line)
         # A route literal also appears in the prose above a neighbouring route. Counting
         # that would make a correct file ambiguous and fail the whole target.
-        if not m or m.start() >= comment_at(line):
+        if not m or m.start() >= comment_at(line, lang):
             continue
-        found = method_on(lines, n)
+        found = method_on(lines, n, lang)
         if found and found != method:
             continue
         start = annotated_start(lines, n)
-        hits.append((start, block_end(lines, n)))
+        hits.append((start, through_annotations(lines, start, block_end(lines, n, lang), lang)))
     return hits
 
 
-def markers(lines):
+def markers(lines, lang):
     """Every rb:snippet marker in the file, as {endpoint id: (start, end)}."""
     out = {}
     for n, line in enumerate(lines):
@@ -349,7 +426,7 @@ def markers(lines):
             start += 1
         if start >= len(lines):
             continue
-        end = marked_end(lines, start)
+        end = through_annotations(lines, start, marked_end(lines, start, lang), lang)
         closed = next((k for k in range(start, len(lines)) if MARKER_END.search(lines[k])), None)
         opened = next((k for k in range(start, len(lines)) if MARKER.search(lines[k])), None)
         if closed is not None and (opened is None or closed < opened):
@@ -380,10 +457,6 @@ def sources(language, target, at=None):
 # Locating a snippet is not the same as capturing one. `@Get("/json/small")` contains the
 # path it claims, matches in exactly one place, and passes both of the checks above while
 # saying nothing about what answers the request. These ask the other question.
-
-# An annotation, an attribute, or a comment. None of them is a handler.
-ANNOTATION = re.compile(r"^\s*(?:@|#\[|\[[A-Za-z])")
-COMMENT = re.compile(r"^\s*(?://|/\*|\*|#(?!\[))")
 
 # What a file that uses the shared domain imports, per language. The directory the bundle
 # lists is not enough: Rust publishes it as the crate rb_domain, Java as the package
@@ -509,7 +582,7 @@ def resolve(language, target, at=None):
     the bytes that were measured.
     """
     files = sources(language, target, at)
-    marked = {path: markers(lines) for path, (lines, _) in files.items()}
+    marked = {path: markers(lines, language) for path, (lines, _) in files.items()}
     out, problems = {}, []
 
     for ep in ENDPOINTS:
@@ -521,7 +594,7 @@ def resolve(language, target, at=None):
                 hits.append(("marker", path, fhash, lines, start, end))
         if not hits:
             for path, (lines, fhash) in files.items():
-                for start, end in derive(lines, ep):
+                for start, end in derive(lines, ep, language):
                     hits.append(("derived", path, fhash, lines, start, end))
         # An endpoint with no route of its own is served by the parameterised route it is
         # an instance of: errors.not_found asks for /domain/orders/999999, which nothing
@@ -533,7 +606,7 @@ def resolve(language, target, at=None):
             if base_route != via and instance_regex(base_route).fullmatch(via):
                 via = base_route
                 for path, (lines, fhash) in files.items():
-                    for start, end in derive(lines, BY_ID[ep["base"]]):
+                    for start, end in derive(lines, BY_ID[ep["base"]], language):
                         hits.append(("derived", path, fhash, lines, start, end))
 
         if not hits:
@@ -557,7 +630,7 @@ def resolve(language, target, at=None):
         # Nothing to report when this comes back empty: a block registering routes from a
         # loop sits at the top level and is self-contained, which is the other thing a
         # marker is for.
-        context = [] if names_route else enclosing(lines, start)
+        context = [] if names_route else enclosing(lines, start, language)
         out[eid] = {"endpoint": eid, "target": "%s:%s" % (language, target),
                     "path": path, "start_line": start + 1, "end_line": end + 1,
                     "hash": fhash, "how": how, "text": body, "context": context}
