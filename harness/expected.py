@@ -260,7 +260,7 @@ def cache_path(language, target, mode):
     return CACHE / ("%s-%s.%s.json" % (language, target, mode))
 
 
-def boot_and_capture(language, target, mode, cached=False):
+def boot_and_capture(language, target, mode, port, cached=False):
     """Start the target the way a measurement would, wait for it to answer, replay.
 
     The capture is written beside the run so a second look at what a target answered costs
@@ -270,15 +270,15 @@ def boot_and_capture(language, target, mode, cached=False):
     out = cache_path(language, target, mode)
     if cached and out.exists():
         return json.loads(out.read_text())
-    launcher = run.launcher(mode, language, target)
+    launcher = run.launcher(mode, language, target, port)
     launcher.start()
     try:
-        run.wait_healthy(launcher, 240 if (mode == "local" and language in ("go", "rust"))
+        run.wait_healthy(launcher, port,
+                         240 if (mode == "local" and language in ("go", "rust"))
                          else run.LADDER["boot_timeout_s"][run.warmup_class(language)])
-        answers = capture("127.0.0.1:%d" % run.PORT)
+        answers = capture("127.0.0.1:%d" % port)
     finally:
         launcher.stop()
-        run.wait_port_free(run.PORT, 20)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(answers, sort_keys=True))
     return answers
@@ -464,10 +464,14 @@ def main():
     print("deriving the expectation from %d targets, recording error envelopes from %d, "
           "mode=%s" % (len(named), len(order), a.mode))
     captures = {}
-    for entry in order:
+    # One port per target, from a block claimed for this derivation, the way a run claims
+    # one. Contributors boot one at a time here too, so this is isolation from whatever
+    # else is on the machine rather than room to boot them together.
+    base = run.claim_ports(max(run.PORT_BLOCK, len(order)))
+    for n, entry in enumerate(order):
         language, _, target = entry.partition(":")
         print("  %-24s booting" % entry, end="", flush=True)
-        captures[entry] = boot_and_capture(language, target, a.mode, a.cached)
+        captures[entry] = boot_and_capture(language, target, a.mode, base + n, a.cached)
         reached = sum(1 for v in captures[entry].values() if v["status"])
         print("\r  %-24s %d/%d requests answered" % (entry, reached, len(captures[entry])))
 
