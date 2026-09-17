@@ -18,6 +18,7 @@ import { pkgVersion } from "../_shared/version.js";
 import { hostMeta } from "../_shared/host.js";
 import * as d from "../_shared/domain.js";
 import { orderOf, validatesOrder } from "./validation.js";
+import { bindsFilter, bindsMany, bindsOne } from "./query.js";
 
 const meta = { framework: "fastify", version: pkgVersion("fastify"),
                runtime: "node " + process.versions.node, template: "ejs" };
@@ -58,8 +59,10 @@ app.get("/parameters/static/segment/literal", small);
 app.get("/parameters/:one", small);
 app.get("/parameters/:one/with-second/:two", small);
 
-app.get("/query/one",  (req) => d.coerceOne(req.query));
-app.get("/query/many", (req) => d.coerceMany(req.query));
+// The schema is the binding: ajv coerces the declared parameters and drops the rest, so
+// req.query is already what the arm answers.
+app.get("/query/one",  bindsOne,  (req) => req.query);
+app.get("/query/many", bindsMany, (req) => req.query);
 
 // The handler reads no header at all, so headers.many minus headers.few is the cost of
 // materialising 27 nobody asked for.
@@ -135,7 +138,8 @@ app.post("/body/validate/first-error", validatesOrder, (req) => orderOf(req.body
 
 // ---- domain --------------------------------------------------------------------------
 
-app.get("/domain/orders", (req) => d.domainFilter(req.query));
+app.get("/domain/orders", bindsFilter,
+  (req) => d.domainFilter(req.query.page, req.query.size, req.query.status));
 app.get("/domain/orders/:oid", (req, reply) => send(reply, d.getOrder(req.params.oid)));
 app.get("/domain/customers/:cid/summary", (req, reply) => send(reply, d.domainJoin(req.params.cid)));
 app.get("/domain/regions/:r/report", (req, reply) => send(reply, d.domainAggregate(req.params.r)));

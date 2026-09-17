@@ -3,6 +3,7 @@ import express from "express";
 
 import * as d from "../../_shared/domain.js";
 import { checkOrder, orderOf, refused } from "../validation.js";
+import { coerceFilter } from "./query.js";
 
 // A write validates the same way body.validate_* does, because it is the same walk.
 const written = (req, res, then) => {
@@ -16,7 +17,10 @@ const send = (res, v, status = 200) =>
   v === d.NOT_FOUND ? res.status(404).json(d.notFoundBody()) : res.status(status).json(v);
 
 export default function domain(app) {
-  app.get("/domain/orders", (req, res) => res.json(d.domainFilter(req.query)));
+  app.get("/domain/orders", (req, res) => {
+    const q = coerceFilter(req.query);
+    res.json(d.domainFilter(q.page, q.size, q.status));
+  });
 
   app.post("/domain/orders", parse, (req, res) =>
     written(req, res, (v) => res.status(201).location(d.createdLocation()).json(v)));

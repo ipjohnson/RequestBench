@@ -3,6 +3,7 @@ import bodyParser from "koa-bodyparser";
 
 import * as d from "../../_shared/domain.js";
 import { checkOrder, orderOf, refused } from "../validation.js";
+import { coerceFilter } from "./query.js";
 
 // A write validates the same way body.validate_* does, because it is the same walk.
 const written = (ctx) => {
@@ -26,7 +27,10 @@ const send = (ctx, v, status = 200) => {
 };
 
 export default function domain(router) {
-  router.get("/domain/orders", (ctx) => { ctx.body = d.domainFilter(ctx.query); });
+  router.get("/domain/orders", (ctx) => {
+    const q = coerceFilter(ctx.query);
+    ctx.body = d.domainFilter(q.page, q.size, q.status);
+  });
 
   router.post("/domain/orders", parse, (ctx) => {
     ctx.set("location", d.createdLocation());
