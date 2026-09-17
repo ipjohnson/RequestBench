@@ -11,5 +11,5 @@ func registerBaseline(e *echo.Echo) {
 
 	e.GET("/health", func(c echo.Context) error { return c.String(200, "ok") })
 
-	e.GET("/__meta", func(c echo.Context) error { return c.JSON(200, hosts.Meta("echo", echo.Version)) })
+	e.GET("/__meta", func(c echo.Context) error { return c.JSON(200, hosts.Meta("echo", echo.Version, "html/template")) })
 }

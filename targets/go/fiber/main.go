@@ -70,6 +70,9 @@ func main() {
 		// Fiber's validation facility: Bind().Body() runs this after binding, so no handler
 		// calls a validator.
 		StructValidator: newValidator(),
+		// Fiber's view facility: c.Render reaches this engine, so no handler calls a
+		// render function.
+		Views: newViews(),
 	})
 	// ErrorHandler only sees returned errors. A panic escapes it and takes the process
 	// down, which showed up as a connection reset rather than the 500 the contract asks
