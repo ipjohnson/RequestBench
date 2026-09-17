@@ -1,7 +1,6 @@
 package rb.micronaut.routes;
 
 import io.micronaut.http.HttpHeaders;
-import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Body;
 import jakarta.validation.Valid;
@@ -10,6 +9,7 @@ import io.micronaut.http.annotation.Delete;
 import io.micronaut.http.annotation.Get;
 import io.micronaut.http.annotation.Patch;
 import io.micronaut.http.annotation.Post;
+import io.micronaut.http.annotation.QueryValue;
 import io.micronaut.http.annotation.Put;
 import java.util.Map;
 import rb.domain.Domain;
@@ -21,15 +21,16 @@ import rb.domain.Model.OrdersPage;
 import rb.domain.Model.Report;
 import rb.domain.Model.ValidatedOrder;
 import rb.domain.Model.ValidatedOrderWithId;
-import rb.micronaut.Support;
 
 /** domain: application-shaped handler work and the write methods. */
 @Controller
 public class DomainRoutes {
 
   @Get("/domain/orders")
-  OrdersPage filter(HttpRequest<?> request) {
-    return Domain.domainFilter(Support.query(request));
+  OrdersPage filter(@QueryValue(value = "page", defaultValue = "0") int page,
+                    @QueryValue(value = "size", defaultValue = "25") int size,
+                    @QueryValue(value = "status", defaultValue = "") String status) {
+    return Domain.domainFilter(page, size, status);
   }
 
   @Post("/domain/orders")

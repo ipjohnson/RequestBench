@@ -1,7 +1,6 @@
 package rb.javalin;
 
 import io.javalin.http.Context;
-import java.util.List;
 import java.util.Map;
 import rb.domain.Errors;
 
@@ -17,10 +16,6 @@ public final class Support {
     } catch (RuntimeException e) {
       throw new Errors.Malformed(e.getMessage());
     }
-  }
-
-  public static Map<String, List<String>> query(Context ctx) {
-    return ctx.queryParamMap();
   }
 
   /**

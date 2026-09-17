@@ -8,6 +8,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 import rb.domain.Domain;
@@ -52,6 +53,18 @@ public class Failures {
     return ResponseEntity.status(HttpStatus.BAD_REQUEST)
         .body(Map.of("error", "invalid_body",
                      "detail", e.getMessage() == null ? "unreadable" : e.getMessage()));
+  }
+
+  /**
+   * Spring raises this when a @RequestParam will not convert to the type the method declared.
+   * Nothing validated it, so it names the parameter and the conversion that failed, and
+   * Spring's own status for an unconvertible parameter is 400.
+   */
+  @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+  ResponseEntity<Object> mistyped(MethodArgumentTypeMismatchException e) {
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        .body(Map.of("error", "invalid_query",
+                     "detail", e.getMessage() == null ? "unconvertible" : e.getMessage()));
   }
 
   /**

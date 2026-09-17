@@ -22,15 +22,16 @@ import rb.domain.Model.OrdersPage;
 import rb.domain.Model.Report;
 import rb.domain.Model.ValidatedOrder;
 import rb.domain.Model.ValidatedOrderWithId;
-import rb.spring.Support;
 
 /** domain: application-shaped handler work and the write methods. */
 @RestController
 public class DomainRoutes {
 
   @GetMapping("/domain/orders")
-  OrdersPage filter(@RequestParam Map<String, String> q) {
-    return Domain.domainFilter(Support.query(q));
+  OrdersPage filter(@RequestParam(name = "page", defaultValue = "0") int page,
+                    @RequestParam(name = "size", defaultValue = "25") int size,
+                    @RequestParam(name = "status", defaultValue = "") String status) {
+    return Domain.domainFilter(page, size, status);
   }
 
   @PostMapping("/domain/orders")

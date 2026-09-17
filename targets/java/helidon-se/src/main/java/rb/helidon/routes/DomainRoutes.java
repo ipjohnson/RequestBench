@@ -12,7 +12,9 @@ public final class DomainRoutes {
   private DomainRoutes() {}
 
   public static void register(HttpRouting.Builder r) {
-    r.get("/domain/orders", (req, res) -> res.send(Domain.domainFilter(Reply.query(req))));
+    r.get("/domain/orders", (req, res) -> res.send(
+        Domain.domainFilter(Query.qint(req, "page", 0), Query.qint(req, "size", 25),
+                            Query.qstr(req, "status"))));
 
     r.post("/domain/orders", (req, res) -> {
       ValidatedOrder v = Validation.validated(Reply.body(req), false);

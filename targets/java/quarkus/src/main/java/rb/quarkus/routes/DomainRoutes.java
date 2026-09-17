@@ -1,6 +1,7 @@
 package rb.quarkus.routes;
 
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.PATCH;
@@ -10,11 +11,9 @@ import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.UriInfo;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import rb.domain.Domain;
 import rb.quarkus.OrderIn;
@@ -35,8 +34,10 @@ public class DomainRoutes {
   // rb:snippet domain.filter
   @GET
   @Path("orders")
-  public OrdersPage filter(@Context UriInfo uriInfo) {
-    return Domain.domainFilter(new LinkedHashMap<>(uriInfo.getQueryParameters()));
+  public OrdersPage filter(@QueryParam("page") @DefaultValue("0") int page,
+                           @QueryParam("size") @DefaultValue("25") int size,
+                           @QueryParam("status") @DefaultValue("") String status) {
+    return Domain.domainFilter(page, size, status);
   }
 
   // rb:snippet domain.create

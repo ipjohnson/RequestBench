@@ -21,8 +21,12 @@ public final class DomainRoutes {
   }
 
   public static void register(Router router) {
-    router.get("/domain/orders").handler(ctx ->
-        Reply.guarded(ctx, () -> Reply.json(ctx, 200, Domain.domainFilter(Reply.query(ctx)))));
+    router.get("/domain/orders")
+          .handler(Query.filterHandler())
+          .handler(ctx -> Reply.guarded(ctx, () -> Reply.json(ctx, 200,
+              Domain.domainFilter(Query.qint(ctx, "page", 0), Query.qint(ctx, "size", 25),
+                                  Query.qstr(ctx, "status")))))
+          .failureHandler(Reply::failure);
 
     // The same ValidationHandler as the body family: a write validates the same way, and
     // through the same facility.
