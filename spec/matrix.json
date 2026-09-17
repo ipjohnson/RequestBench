@@ -845,7 +845,7 @@
         "mechanism": "one @Filter bean per layer with the patterns it applies to, because Micronaut resolves filters from annotations at compile time"
       },
       "domain": {
-        "builtin": "Routing and the shared domain. The methods call it directly and nothing is registered for them."
+        "mechanism": "routing and the shared domain, with the Bean Validation record the write endpoints bind"
       },
       "errors": {
         "mechanism": "ExceptionHandler beans for what a handler raises and an @Error hook for the router's miss, which no ExceptionHandler sees"
@@ -893,7 +893,7 @@
         "mechanism": "one @Provider filter per layer, bound to the method by a @NameBinding annotation, because JAX-RS resolves providers from annotations at deployment"
       },
       "domain": {
-        "builtin": "Routing and the shared domain. The methods call it directly and nothing is registered for them."
+        "mechanism": "routing and the shared domain, with the Bean Validation record the write endpoints bind"
       },
       "errors": {
         "mechanism": "an ExceptionMapper per failure, so handlers raise and never build a 404 or a 422 themselves"
@@ -941,7 +941,7 @@
         "mechanism": "one servlet Filter registration per layer, each with the URL pattern it applies to, registered as singletons from a BeanFactoryPostProcessor"
       },
       "domain": {
-        "builtin": "Routing and the shared domain. The handlers call it directly and nothing is registered for them."
+        "mechanism": "routing and the shared domain, with the Bean Validation record the write endpoints bind"
       },
       "errors": {
         "mechanism": "a @RestControllerAdvice with one @ExceptionHandler per failure, so handlers raise and never build a 404 or a 422 themselves"
@@ -1270,7 +1270,7 @@
         "mentions": "forms.Form"
       },
       "headers": {
-        "builtin": "Django materialises request.headers itself; nothing is registered to make it happen."
+        "mechanism": "Django's own request.headers, which the view never reads: the route answers the small payload"
       },
       "middleware": {
         "mechanism": "one view decorator per layer, each awaiting the view below it and doing nothing else"
@@ -1318,13 +1318,13 @@
         "builtin": "A typed function parameter is the binding: FastAPI coerces it from the query string before the handler runs."
       },
       "headers": {
-        "builtin": "Starlette materialises the request header map itself; nothing is registered to make it happen."
+        "mechanism": "FastAPI's own request header map, which the handler never reads: the route answers the small payload through the same helper the json family uses"
       },
       "middleware": {
         "mechanism": "a dependency per layer on the route, each awaiting and doing nothing else"
       },
       "domain": {
-        "builtin": "Routing and the shared domain. The handlers call it directly and nothing is registered for them."
+        "mechanism": "routing and the shared domain, with the Pydantic model the write endpoints bind"
       },
       "errors": {
         "mechanism": "an @app.exception_handler per failure, so handlers raise and never build a 404 or a 422 themselves"
@@ -1366,7 +1366,7 @@
         "builtin": "request.args is Werkzeug's own MultiDict and its get() takes the conversion, so the coercion is the framework's and happens in the view."
       },
       "headers": {
-        "builtin": "Werkzeug materialises the request header map itself; nothing is registered to make it happen."
+        "mechanism": "Werkzeug's own request header map, which the view never reads: the route answers the small payload"
       },
       "middleware": {
         "mechanism": "one blueprint per layer count, each layer a before_request hook doing nothing else"
@@ -1420,7 +1420,7 @@
         "mechanism": "an ASGI middleware class per layer named on the route, each awaiting the app below it"
       },
       "domain": {
-        "builtin": "Routing and the shared domain. The handlers call it directly and nothing is registered for them."
+        "mechanism": "routing and the shared domain, with the typed data parameter the write endpoints bind"
       },
       "errors": {
         "mechanism": "exception_handlers on the app, so handlers raise and never build a 404 or a 422 themselves"
@@ -1462,7 +1462,7 @@
         "mechanism": "request.args coerced by hand, which is as far as Sanic goes"
       },
       "headers": {
-        "builtin": "Sanic materialises the request header map itself; nothing is registered to make it happen."
+        "mechanism": "Sanic's own request header map, which the handler never reads: the route answers the small payload"
       },
       "middleware": {
         "mechanism": "one blueprint per layer count, each layer registered on it and doing nothing else"
@@ -1508,7 +1508,7 @@
         "mechanism": "request.query_params coerced by hand, which is as far as Starlette goes"
       },
       "headers": {
-        "builtin": "Starlette materialises the request header map itself; nothing is registered to make it happen."
+        "mechanism": "Starlette's own request header map, which the handler never reads: the route answers the small payload"
       },
       "middleware": {
         "mechanism": "an ASGI middleware class per layer on the route, each awaiting the app below it"

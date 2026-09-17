@@ -908,7 +908,13 @@ def requirements(language, target, found, conforming, at=None):
                 if decl.get("dep") and decl["dep"] not in manifests:
                     out.append("%s:%s declares %s for %s and no manifest names it"
                                % (language, target, decl["dep"], family))
-            elif "builtin" not in decl:
+            elif "builtin" in decl:
+                # The declaration says there is nothing to show and the page renders the
+                # reason as a sentence, so a part contradicts it rather than adding to it.
+                if support.get(family):
+                    out.append("%s:%s declares %s built in and marks %d %s part(s) for it"
+                               % (language, target, family, len(support[family]), kind))
+            else:
                 out.append("%s:%s declares neither a mechanism nor builtin for %s"
                            % (language, target, family))
     return out
