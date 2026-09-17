@@ -189,7 +189,7 @@ async fn health() -> impl IntoResponse {
 }
 
 async fn meta() -> Json<Value> {
-    Json(rb_host::meta("axum"))
+    Json(rb_host::meta("axum", "askama"))
 }
 
 async fn small() -> Json<&'static d::PayloadBody> {
@@ -252,9 +252,27 @@ fn template_route(size: &'static str) -> MethodRouter {
     get(move || async move {
         (
             [(header::CONTENT_TYPE, "text/html; charset=utf-8")],
-            rb_host::render_items(d::payload(size)),
+            items_html(size),
         )
     })
+}
+
+// ---- template ------------------------------------------------------------------
+//
+// axum ships no view layer. Askama is what axum's own examples/templates uses.
+//
+// Askama is a compile-time engine: the template is checked and turned into Rust when the
+// binary is built, so this family measures the render and never a parse. The template is
+// this target's own, under its own templates/ directory.
+#[derive(askama::Template)]
+#[template(path = "items.html")]
+struct Items {
+    body: &'static d::PayloadBody,
+}
+
+fn items_html(size: &'static str) -> String {
+    use askama::Template;
+    Items { body: d::payload(size) }.render().unwrap_or_default()
 }
 
 // ---- main ---------------------------------------------------------------------

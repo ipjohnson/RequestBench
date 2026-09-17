@@ -1,0 +1,24 @@
+<!doctype html>
+<html>
+  <head><title>items</title></head>
+  <body>
+    <h1>{{ body.size }}</h1>
+    <table>
+      <thead>
+        <tr><th>id</th><th>name</th><th>category</th><th>price</th><th>stock</th></tr>
+      </thead>
+      <tbody>
+        {% for it in body.items %}
+        <tr>
+          <td>{{ it.id }}</td>
+          <td>{{ it.name }}</td>
+          <td>{{ it.category }}</td>
+          <td>{{ it.price_cents }}</td>
+          <td>{% if it.in_stock %}yes{% else %}no{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <p>{{ body.count }} rows</p>
+  </body>
+</html>

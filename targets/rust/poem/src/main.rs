@@ -198,6 +198,26 @@ fn layered(n: usize, ep: poem::endpoint::BoxEndpoint<'static>) -> poem::endpoint
     (0..n).fold(ep, |acc, _| acc.around(|ep, req| async move { ep.call(req).await }).boxed())
 }
 
+// ---- template ------------------------------------------------------------------
+//
+// poem ships no view layer and recommends no engine. Askama is the compile-time
+// engine axum's own examples reach for, and it is what every Rust target without a view
+// layer renders with here.
+//
+// Askama is a compile-time engine: the template is checked and turned into Rust when the
+// binary is built, so this family measures the render and never a parse. The template is
+// this target's own, under its own templates/ directory.
+#[derive(askama::Template)]
+#[template(path = "items.html")]
+struct Items {
+    body: &'static d::PayloadBody,
+}
+
+fn items_html(size: &'static str) -> String {
+    use askama::Template;
+    Items { body: d::payload(size) }.render().unwrap_or_default()
+}
+
 #[tokio::main]
 async fn main() -> Result<(), std::io::Error> {
     let port = rb_host::boot("poem");
@@ -246,7 +266,7 @@ async fn main() -> Result<(), std::io::Error> {
 
     let template_route = |size: &'static str| {
         get(make(move |_| async move {
-            rb_host::render_items(d::payload(size))
+            items_html(size)
                 .with_content_type("text/html; charset=utf-8")
                 .into_response()
         }))
@@ -259,7 +279,7 @@ async fn main() -> Result<(), std::io::Error> {
         .at("/health", get(make(|_| async {
             "ok".with_content_type("text/plain; charset=utf-8").into_response()
         })))
-        .at("/__meta", get(make(|_| async { Json(rb_host::meta("poem")) })))
+        .at("/__meta", get(make(|_| async { Json(rb_host::meta("poem", "askama")) })))
         .at("/json/small", payload_route("small"))
         .at("/json/medium", payload_route("medium"))
         .at("/json/large", payload_route("large"))

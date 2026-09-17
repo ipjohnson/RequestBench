@@ -200,7 +200,7 @@ async fn health(res: &mut Response) {
 
 #[handler]
 async fn meta(res: &mut Response) {
-    res.render(Json(rb_host::meta("salvo")));
+    res.render(Json(rb_host::meta("salvo", "askama")));
 }
 
 #[handler]
@@ -387,12 +387,32 @@ macro_rules! template_handler {
     ($name:ident, $size:literal) => {
         #[handler]
         async fn $name(res: &mut Response) {
-            res.render(Text::Html(rb_host::render_items(d::payload($size))));
+            res.render(Text::Html(items_html($size)));
         }
     };
 }
 template_handler!(tpl_small, "small");
 template_handler!(tpl_medium, "medium");
+
+// ---- template ------------------------------------------------------------------
+//
+// salvo ships no view layer and recommends no engine. Askama is the compile-time
+// engine axum's own examples reach for, and it is what every Rust target without a view
+// layer renders with here.
+//
+// Askama is a compile-time engine: the template is checked and turned into Rust when the
+// binary is built, so this family measures the render and never a parse. The template is
+// this target's own, under its own templates/ directory.
+#[derive(askama::Template)]
+#[template(path = "items.html")]
+struct Items {
+    body: &'static d::PayloadBody,
+}
+
+fn items_html(size: &'static str) -> String {
+    use askama::Template;
+    Items { body: d::payload(size) }.render().unwrap_or_default()
+}
 
 #[tokio::main]
 async fn main() {

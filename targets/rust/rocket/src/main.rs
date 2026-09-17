@@ -16,6 +16,7 @@ use rocket::outcome::Outcome;
 use rocket::request::{self, FromRequest};
 use rocket::response::{status::Custom, Responder};
 use rocket::serde::json::Json;
+use rocket_dyn_templates::{context, Template};
 use serde::{Deserialize, Serialize};
 use rocket::{catch, catchers, get, patch, post, put, delete, routes, FromForm, Request, Response};
 use rb_domain as d;
@@ -232,7 +233,7 @@ fn health() -> (ContentType, &'static str) {
 
 #[get("/__meta")]
 fn meta() -> Json<Value> {
-    Json(rb_host::meta("rocket"))
+    Json(rb_host::meta("rocket", "tera"))
 }
 
 #[get("/json/small")]
@@ -382,13 +383,24 @@ fn cached_large(h: IfNoneMatch) -> Raw {
     cached("large", h.0.as_deref())
 }
 
+// template: server-side rendering of the same model the json family serializes.
+//
+// Rocket's own view facility: rocket_dyn_templates, mounted as a fairing, with
+// Template::render naming a file. It is the one Rust target here with a view layer, and
+// the engine follows from the file extension: .tera is Tera, which is what Rocket's guide
+// and its own templating example use. Parsed at launch and rendered per request, so a
+// precomputed string would measure nothing.
+//
+// The templates are read from disk rather than compiled in, which is what
+// rocket_dyn_templates does. ROCKET_TEMPLATE_DIR is where the container image puts them;
+// without it Rocket looks beside the crate, which is right for MODE=local.
 #[get("/template/small")]
-fn tpl_small() -> (ContentType, String) {
-    (ContentType::HTML, rb_host::render_items(d::payload("small")))
+fn tpl_small() -> Template {
+    Template::render("items", context! { body: d::payload("small") })
 }
 #[get("/template/medium")]
-fn tpl_medium() -> (ContentType, String) {
-    (ContentType::HTML, rb_host::render_items(d::payload("medium")))
+fn tpl_medium() -> Template {
+    Template::render("items", context! { body: d::payload("medium") })
 }
 
 // bind parses and binds without validating, so validate minus bind is the validator alone
@@ -514,7 +526,14 @@ fn catch_400() -> Custom<Json<Value>> {
 #[rocket::main]
 async fn main() -> Result<(), rocket::Error> {
     let port = rb_host::boot("rocket");
+    // rocket_dyn_templates resolves template_dir against the working directory, which under
+    // MODE=local is the repo root rather than this crate. The compile-time default points at
+    // the crate's own templates; the container sets ROCKET_TEMPLATE_DIR to where the image
+    // put them.
+    let template_dir = std::env::var("ROCKET_TEMPLATE_DIR")
+        .unwrap_or_else(|_| concat!(env!("CARGO_MANIFEST_DIR"), "/templates").to_string());
     let figment = rocket::Config::figment()
+        .merge(("template_dir", template_dir))
         .merge(("port", port))
         .merge(("address", "0.0.0.0"))
         .merge(("log_level", "off"))
@@ -537,6 +556,7 @@ async fn main() -> Result<(), rocket::Error> {
                 filter, lookup, join, aggregate, create, replace, patch_customer, delete_line,
             ],
         )
+        .attach(Template::fairing())
         .register("/", catchers![catch_404, catch_403, catch_422, catch_400])
         .launch()
         .await

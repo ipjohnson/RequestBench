@@ -185,7 +185,7 @@ async fn health() -> impl Responder {
 }
 
 async fn meta() -> impl Responder {
-    HttpResponse::Ok().json(rb_host::meta("actix-web"))
+    HttpResponse::Ok().json(rb_host::meta("actix-web", "askama"))
 }
 
 async fn small() -> impl Responder {
@@ -237,7 +237,7 @@ fn template_route(size: &'static str) -> actix_web::Route {
     web::get().to(move || async move {
         HttpResponse::Ok()
             .content_type("text/html; charset=utf-8")
-            .body(rb_host::render_items(d::payload(size)))
+            .body(items_html(size))
     })
 }
 
@@ -314,6 +314,26 @@ async fn delete_line(p: web::Path<(String, String)>) -> HttpResponse {
         Ok(_) => HttpResponse::NoContent().finish(),
         Err(e) => fail(e),
     }
+}
+
+// ---- template ------------------------------------------------------------------
+//
+// actix-web ships no view layer and recommends no engine. Askama is the
+// compile-time engine axum's own examples reach for, and it is what every Rust target
+// without a view layer renders with here.
+//
+// Askama is a compile-time engine: the template is checked and turned into Rust when the
+// binary is built, so this family measures the render and never a parse. The template is
+// this target's own, under its own templates/ directory.
+#[derive(askama::Template)]
+#[template(path = "items.html")]
+struct Items {
+    body: &'static d::PayloadBody,
+}
+
+fn items_html(size: &'static str) -> String {
+    use askama::Template;
+    Items { body: d::payload(size) }.render().unwrap_or_default()
 }
 
 #[actix_web::main]
