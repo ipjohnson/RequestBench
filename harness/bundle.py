@@ -63,6 +63,13 @@ MANIFEST_NAMES = {"package.json", "package-lock.json", "go.mod", "go.sum", "pom.
 MANIFEST_SUFFIXES = (".csproj",)
 CONFIG_SUFFIXES = (".properties", ".yaml", ".yml", ".toml", ".ini", ".conf")
 
+# An API description a target routes from is not configuration: it defines what the target
+# serves, so it is code_hash's business and harness/snippets.py derives handlers out of it.
+# Matched by name rather than by suffix, because a .yaml in a target directory is far more
+# often a setting, and putting every one of them in reach of route derivation is the latent
+# ambiguity the client-exception exclusion was added to avoid.
+CONTRACT_NAMES = {"openapi.yaml", "openapi.yml", "openapi.json"}
+
 # Host entry points that sit inside a target's own directory rather than in the shared
 # host module: Go names the file, Java gives it a package.
 HOST_IN_TARGET = re.compile(r"/rb/(lambda|gcp)/|/lambda\.go$")
@@ -186,6 +193,8 @@ def role(language, path):
     # dependency bump in it is not a dependency bump in the target.
     if CONTRACT in path:
         return "test"
+    if name in CONTRACT_NAMES:
+        return "contract"
     if name.endswith(".md"):
         return "prose"
     if name in MANIFEST_NAMES or name.endswith(MANIFEST_SUFFIXES):

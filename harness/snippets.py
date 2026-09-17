@@ -469,7 +469,11 @@ def derive(lines, ep, syntax):
         if found and found != method:
             continue
         start = annotated_start(lines, n)
-        hits.append((start, through_annotations(lines, start, block_end(lines, n, syntax), syntax)))
+        # A data file has no delimiters to balance: an OpenAPI path is a key and what it
+        # serves is the block indented under it, which is the rule a mark already gets.
+        end = (dedent_end(lines, n) if syntax == "data"
+               else block_end(lines, n, syntax))
+        hits.append((start, through_annotations(lines, start, end, syntax)))
     return hits
 
 

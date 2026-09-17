@@ -11,7 +11,8 @@
       "derive": true,
       "roles": [
         "source",
-        "host"
+        "host",
+        "contract"
       ],
       "assert": [
         "not_only_annotations",
@@ -28,7 +29,8 @@
       "roles": [
         "source",
         "host",
-        "config"
+        "config",
+        "contract"
       ],
       "assert": [
         "mentions_dep"
