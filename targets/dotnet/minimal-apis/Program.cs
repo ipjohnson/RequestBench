@@ -14,6 +14,10 @@ WebApplicationBuilder builder = WebApplication.CreateSlimBuilder(args);
 // has nothing to call. The fixture is read here, before the host is built, so a target that
 // cannot read it fails at startup rather than on the first request.
 builder.Services.AddRequestBenchDomain();
+// ASP.NET Core's own response cache, sized from the fixture. A policy per shape a
+// cache.* row is keyed by, which is where the vary rows say what folds into the key.
+builder.Services.AddRequestBenchOutputCache(
+    DomainModel.Load(DomainModel.FixturePath()));
 // The template family renders a Razor component, which is what ASP.NET Core ships for
 // server-side HTML. Nothing else here needs it.
 builder.Services.AddRazorComponents();
@@ -35,6 +39,10 @@ builder.WebHost.UseUrls(HostInfo.Url());
 builder.Logging.ClearProviders();
 
 WebApplication app = builder.Build();
+DomainModel model = app.Services.GetRequiredService<DomainModel>();
+// Output caching sits in the pipeline rather than on an endpoint, so it is added once
+// here and opted into per route by CacheOutput.
+app.UseOutputCache();
 
 Failures.Map(app);
 Baseline.Map(app);
@@ -45,7 +53,8 @@ Headers.Map(app);
 Middleware.Map(app);
 Authorized.Map(app);
 Compressed.Map(app);
-Cached.Map(app);
+Etag.Map(app);
+Cache.Map(app, model);
 Body.Map(app);
 DomainRoutes.Map(app);
 Templates.Map(app);

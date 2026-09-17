@@ -5,5 +5,9 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../_shared/RequestBench.Domain.csproj" />
+    <!-- Caching.cs holds one ASP.NET Core middleware and the output-cache registration
+         every target shares, so this project needs the framework the targets are built
+         against rather than only the base libraries. -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 </Project>

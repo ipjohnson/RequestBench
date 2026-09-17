@@ -37,7 +37,6 @@ public static class HostInfo
     public static string Version(Type typeFromAssembly) => Version(typeFromAssembly.Assembly);
 
     /// <summary>
-    /// <summary>
     /// The Razor version the five targets that render with it report. Resolved by assembly
     /// name rather than by referencing a component type, because this project is a plain
     /// library and referencing one would make it a web project.
@@ -47,6 +46,7 @@ public static class HostInfo
             .FirstOrDefault(a => a.GetName().Name == "Microsoft.AspNetCore.Components")
             ?.GetName().Version?.ToString(3) ?? "");
 
+    /// <summary>
     /// What a target answers on /__meta. Outside the blend spec on purpose: it is not
     /// measured and not checked against spec/expected.json, it exists so a point on the
     /// results chart can be attributed to a framework version rather than to a different
@@ -56,6 +56,12 @@ public static class HostInfo
     /// requests. template is the engine this target renders the template family with. Each
     /// target passes its own, because each reaches an engine through its own framework's
     /// view facility.
+    ///
+    /// etag and cache are not passed, because here the five targets really do share them.
+    /// ASP.NET Core computes no validator for a dynamic response, so the digest is the one
+    /// in Caching.Revalidates and five copies would only drift; the response cache is the
+    /// framework's own output caching, which every target wires the same way and differs
+    /// only in where it attaches.
     /// </summary>
     public static IReadOnlyDictionary<string, string> Meta(
         string framework, string version, string template,
@@ -68,5 +74,7 @@ public static class HostInfo
             ["adapter"] = "",
             ["serializer"] = serializer,
             ["template"] = template,
+            ["etag"] = "sha1 (asp.net core ships no conditional handling)",
+            ["cache"] = "asp.net core output caching",
         };
 }

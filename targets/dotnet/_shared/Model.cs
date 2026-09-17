@@ -24,7 +24,16 @@ public sealed record Order(int Id, int CustomerId, string Status, string Created
 /// </summary>
 public sealed record PayloadBody(int Count, IReadOnlyList<Product> Items, string Size);
 
-public sealed record PayloadDoc(PayloadBody Body, string Etag);
+public sealed record PayloadDoc(PayloadBody Body);
+
+/// <summary>
+/// What every target sizes its response cache against: the distinct keys the plan sends,
+/// a capacity with room above them, an expiry past the end of a run, and the header values
+/// the vary rows carry. Derived and asserted in harness/make_fixture.py rather than chosen
+/// per target, because a store smaller than the key count evicts inside the measured window.
+/// </summary>
+public sealed record CacheDoc(int Capacity, int Keys, int TtlS,
+                              IReadOnlyDictionary<string, IReadOnlyDictionary<string, IReadOnlyList<string>>> Vary);
 
 public sealed record AuthDoc(string Token, string WrongToken);
 
@@ -60,4 +69,5 @@ public sealed record ValidatedOrder(
 /// <summary>The fixture as it sits on disk.</summary>
 public sealed record Fixture(IReadOnlyList<Product> Products, IReadOnlyList<Customer> Customers,
                              IReadOnlyList<Order> Orders,
-                             IReadOnlyDictionary<string, PayloadDoc> Payloads, AuthDoc Auth);
+                             IReadOnlyDictionary<string, PayloadDoc> Payloads, AuthDoc Auth,
+                             CacheDoc Cache);

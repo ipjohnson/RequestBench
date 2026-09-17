@@ -1,5 +1,6 @@
 using System.Collections.Frozen;
 using System.IO.Compression;
+using System.Security.Cryptography;
 using System.Text.Json;
 
 namespace RequestBench.Domain;
@@ -46,6 +47,7 @@ public sealed partial class DomainModel
         _orderById = fixture.Orders.ToFrozenDictionary(o => o.Id);
         _payloads = fixture.Payloads.ToFrozenDictionary();
         _token = fixture.Auth.Token;
+        Cache = fixture.Cache;
     }
 
     /// <summary>The path the fixture is read from, honouring the variable every language uses.</summary>
@@ -68,11 +70,26 @@ public sealed partial class DomainModel
     /// </summary>
     public PayloadBody Payload(string size) => _payloads[size].Body;
 
+    // ---- the etag and cache families ------------------------------------------------
+    //
+    // No ETag value here. ASP.NET Core ships no conditional handling for a dynamic
+    // response, so every .NET target computes the validator itself over the body it is
+    // about to send, through the one middleware in RequestBench.Hosts, and declares the
+    // digest in /__meta.
+
     /// <summary>
-    /// Pinned in the fixture, so what a target spends is emitting the header and comparing
-    /// it rather than hashing a body.
+    /// The validator, over the exact response bytes. sha1, quoted and strong, which is what
+    /// Werkzeug and the Node ecosystem both reach for. Spelled once so five targets cannot
+    /// drift on an algorithm and have it read as a framework result.
     /// </summary>
-    public string ETagOf(string size) => _payloads[size].Etag;
+    public static string ContentETag(ReadOnlySpan<byte> raw) =>
+        "\"" + Convert.ToHexStringLower(SHA1.HashData(raw)) + "\"";
+
+    /// <summary>What the fixture pins about the response cache every target holds.</summary>
+    public CacheDoc Cache { get; }
+
+    /// <summary>The header names one vary row is keyed on, in the fixture's order.</summary>
+    public string[] VaryOn(string which) => [.. Cache.Vary[which].Keys];
 
     /// <summary>
     /// Pinned across every language. Compression cost is dominated by codec and level, not

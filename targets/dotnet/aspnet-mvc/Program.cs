@@ -10,6 +10,10 @@ using RequestBench.Hosts;
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddRequestBenchDomain();
+// ASP.NET Core's own response cache, sized from the fixture. A policy per shape a
+// cache.* row is keyed by, which is where the vary rows say what folds into the key.
+builder.Services.AddRequestBenchOutputCache(
+    DomainModel.Load(DomainModel.FixturePath()));
 builder.Services.AddControllersWithViews()
     .AddJsonOptions(options =>
     {
@@ -23,6 +27,9 @@ builder.Logging.ClearProviders();
 
 WebApplication app = builder.Build();
 app.UseExceptionHandler(Failures.Handler);
+// Output caching sits in the pipeline rather than on an action, so it is added once
+// here and opted into per action by the OutputCache attribute.
+app.UseOutputCache();
 app.MapControllers();
 // rb:snippet errors.unmatched
 app.MapFallback(() => Results.Problem(statusCode: 404));
