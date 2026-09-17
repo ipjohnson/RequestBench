@@ -9,7 +9,10 @@ site/
 targets/node/node_modules/
 targets/python/.venv/
 # Each framework's error contract sits beside it but is read by the client, never by the
-# target. Nothing in an image needs it.
+# target. Nothing in an image needs it. The same goes for a target's test suite and the
+# client generated from its API description: both are held to the image, never run in it.
 targets/*/*/client-exception/
+targets/*/*/suite/
+targets/*/*/client/
 targets/rust/target/
 targets/java/*/target/

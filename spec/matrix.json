@@ -2024,5 +2024,78 @@
       "docs": "https://docs.rs/warp",
       "package": "https://crates.io/crates/warp"
     }
-  }
+  },
+  "suites": {
+    "dotnet:minimal-apis": {
+      "compressed": {
+        "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, over the xunit `dotnet new xunit` writes",
+        "dep": "Microsoft.AspNetCore.Mvc.Testing",
+        "transport": "testserver",
+        "reaches": "the codec, because these routes compress inside the request pipeline rather than leaving it to the server underneath, which a testserver transport would not reach. Where that stops being true the declaration moves to \"kestrel\": WebApplicationFactory.UseKestrel(0) with StartServer() puts a real server on a loopback port in the same process, so a socket costs one line here and not a second process"
+      },
+      "middleware": {
+        "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, over the xunit `dotnet new xunit` writes",
+        "dep": "Microsoft.AspNetCore.Mvc.Testing",
+        "transport": "testserver",
+        "reaches": "every layer, because the host boots the application rather than calling the handler, which is the way this family is failed without noticing"
+      }
+    },
+    "dotnet:aspnet-mvc": {
+      "compressed": {
+        "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, over the xunit `dotnet new xunit` writes",
+        "dep": "Microsoft.AspNetCore.Mvc.Testing",
+        "transport": "testserver",
+        "reaches": "the codec, because these routes compress inside the request pipeline rather than leaving it to the server underneath, which a testserver transport would not reach. Where that stops being true the declaration moves to \"kestrel\": WebApplicationFactory.UseKestrel(0) with StartServer() puts a real server on a loopback port in the same process, so a socket costs one line here and not a second process"
+      },
+      "middleware": {
+        "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, over the xunit `dotnet new xunit` writes",
+        "dep": "Microsoft.AspNetCore.Mvc.Testing",
+        "transport": "testserver",
+        "reaches": "every layer, because the host boots the application rather than calling the handler, which is the way this family is failed without noticing"
+      }
+    },
+    "dotnet:carter": {
+      "compressed": {
+        "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, reached for directly because Carter ships no test package of its own",
+        "dep": "Microsoft.AspNetCore.Mvc.Testing",
+        "transport": "testserver",
+        "reaches": "the codec, because these routes compress inside the request pipeline rather than leaving it to the server underneath, which a testserver transport would not reach. Where that stops being true the declaration moves to \"kestrel\": WebApplicationFactory.UseKestrel(0) with StartServer() puts a real server on a loopback port in the same process, so a socket costs one line here and not a second process"
+      },
+      "middleware": {
+        "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, reached for directly because Carter ships no test package of its own",
+        "dep": "Microsoft.AspNetCore.Mvc.Testing",
+        "transport": "testserver",
+        "reaches": "every layer, because the host boots the application rather than calling the handler, which is the way this family is failed without noticing"
+      }
+    },
+    "dotnet:fastendpoints": {
+      "compressed": {
+        "facility": "AppFixture<Program> from FastEndpoints.Testing, the framework's own package, which brings xunit.v3 with it",
+        "dep": "FastEndpoints.Testing",
+        "transport": "testserver",
+        "reaches": "the codec, because these routes compress inside the request pipeline rather than leaving it to the server underneath, which a testserver transport would not reach. Where that stops being true the declaration moves to \"kestrel\": WebApplicationFactory.UseKestrel(0) with StartServer() puts a real server on a loopback port in the same process, so a socket costs one line here and not a second process"
+      },
+      "middleware": {
+        "facility": "AppFixture<Program> from FastEndpoints.Testing, the framework's own package, which brings xunit.v3 with it",
+        "dep": "FastEndpoints.Testing",
+        "transport": "testserver",
+        "reaches": "every layer, because the host boots the application rather than calling the handler, which is the way this family is failed without noticing"
+      }
+    },
+    "dotnet:wolverine-http": {
+      "compressed": {
+        "facility": "AlbaHost.For<Program>, which Wolverine's documentation names for HTTP tests",
+        "dep": "Alba",
+        "transport": "testserver",
+        "reaches": "the codec, because these routes compress inside the request pipeline rather than leaving it to the server underneath, which a testserver transport would not reach. Where that stops being true the declaration moves to \"kestrel\": WebApplicationFactory.UseKestrel(0) with StartServer() puts a real server on a loopback port in the same process, so a socket costs one line here and not a second process"
+      },
+      "middleware": {
+        "facility": "AlbaHost.For<Program>, which Wolverine's documentation names for HTTP tests",
+        "dep": "Alba",
+        "transport": "testserver",
+        "reaches": "every layer, because the host boots the application rather than calling the handler, which is the way this family is failed without noticing"
+      }
+    }
+  },
+  "suites_note": "What each target's own suite tests a family with, and what it talks to. transport is \"testserver\" for an in-memory transport with no socket at all, \"kestrel\" for a real server on a loopback port in the test's own process, or \"process\" for a target booted the way harness/run.py boots one. The three are not interchangeable: a framework that compresses in its request pipeline is reached by all three, and one that leaves it to the server underneath is reached only by the last two. Per family rather than per target, because whether a test reaches the code under test is not a fact about a framework: MockMvc and @SpringBootTest(webEnvironment = RANDOM_PORT) are both Spring, and a target that tests against a socket for compressed and in memory for everything else is the case a per-target flag would hide. A family with no marked test needs no entry here; one with a marked test has to have one, and the dependency it names has to be in that target's suite project."
 }

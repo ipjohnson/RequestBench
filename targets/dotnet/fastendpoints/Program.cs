@@ -48,3 +48,8 @@ app.MapFallback(() => Results.Json(DomainModel.NotFoundBody(), statusCode: 404))
 
 Console.Error.WriteLine($"container/fastendpoints listening on {HostInfo.Port()}");
 app.Run();
+
+// Top-level statements compile to an internal Program, which FastEndpoints.Testing's App<Program> in suite/
+// cannot name. Declaring it public is what the ASP.NET Core integration-testing
+// documentation asks a target to do, and it is the whole of what testing costs this target.
+public partial class Program;

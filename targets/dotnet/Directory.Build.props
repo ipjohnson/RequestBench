@@ -18,7 +18,10 @@
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
     <!-- Each framework's error contract sits in client-exception/ beside its project. It is
          TypeScript read by the conformance client, and the Web SDK's default Content globs
-         would otherwise publish its package.json and tsconfig.json with the target. -->
-    <DefaultItemExcludes>$(DefaultItemExcludes);client-exception/**</DefaultItemExcludes>
+         would otherwise publish its package.json and tsconfig.json with the target. The
+         suite and the generated client sit beside it for the same reason and are excluded
+         for a sharper one: suite/ is C# the Web SDK would compile into the target, which
+         would put xunit in the measured binary. -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);client-exception/**;suite/**;client/**</DefaultItemExcludes>
   </PropertyGroup>
 </Project>

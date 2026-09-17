@@ -115,6 +115,12 @@ CHAR_QUOTE = ("go", "java", "dotnet", "rust")
 # indentation-structured and commented with #, which is what dedent_end already does.
 DATA = ".yaml", ".yml", ".json", ".toml", ".properties", ".ini", ".conf"
 
+# A suite's own dependency manifest. Role test covers every file in suite/, most of which are
+# the tests themselves, so the manifest is picked out by name the way bundle.py picks out a
+# target's.
+SUITE_MANIFEST = re.compile(r"/(?:package\.json|go\.mod|pom\.xml|Cargo\.toml|"
+                            r"requirements\.txt|[^/]+\.csproj)$")
+
 
 def syntax_of(path, language):
     """The punctuation to read this file with: its own where it has one, else the
@@ -815,6 +821,29 @@ def mechanisms(language, target, at=None):
     return bundle.matrix_at(at).get("mechanisms", {}).get("%s:%s" % (language, target), {})
 
 
+def suites(language, target, at=None):
+    """What each family's suite tests with in this target, as spec/matrix.json declares it."""
+    return bundle.matrix_at(at).get("suites", {}).get("%s:%s" % (language, target), {})
+
+
+def suite_text(language, target, at=None):
+    """Every manifest the suite brought, concatenated.
+
+    Separate from manifest_text because a suite's project file is role test: it is what the
+    target is held to rather than what the target runs, so it is out of code_hash and out of
+    the set a declared wiring dependency is checked against.
+    """
+    out = []
+    for entry in bundle.manifest(language, target, at)["files"]:
+        if entry["role"] != "test" or not SUITE_MANIFEST.search(entry["path"]):
+            continue
+        try:
+            out.append(bundle.blob(entry["path"], at).decode("utf-8"))
+        except UnicodeDecodeError:
+            continue
+    return "\n".join(out)
+
+
 def manifest_text(language, target, at=None):
     """Every dependency manifest in the bundle, concatenated. A declared dependency that is
     not in one of these is a declaration describing a target that no longer exists."""
@@ -837,6 +866,14 @@ def supporting(found):
     return out
 
 
+def tested(found):
+    """The test parts each family produced, as {family: [part, ...]}."""
+    out = {}
+    for eid, rec in found.items():
+        out.setdefault(BY_ID[eid]["family"], []).extend(rec["test"])
+    return out
+
+
 def mentioned(decl):
     """The token a family's support has to contain. Defaults to the dependency itself, and
     is written out where the source spells it differently: go.mod carries
@@ -849,6 +886,13 @@ RECORD_ASSERT = {
     "not_only_annotations": lambda rec, names: only_annotations(rec["handler"]["text"]),
     "reaches_domain": lambda rec, names: not reaches_domain(
         "\n".join(p["text"] for p in [rec["handler"], *rec["support"]]), names),
+    # Coverage rather than a claim about a snippet, riding the allowance because that is the
+    # machinery a count that only goes down already has. See required: "ratchet".
+    "no_test": lambda rec, names: not rec["test"],
+    # Silent where there is no test at all: that is what no_test counts, and reporting both
+    # would ratchet the same endpoint down twice.
+    "reads_expectation": lambda rec, names: bool(rec["test"]) and not all(
+        rec["endpoint"] in p["text"] for p in rec["test"]),
 }
 
 # An assertion reads one family's support against what that family declared.
@@ -903,6 +947,9 @@ def requirements(language, target, found, conforming, at=None):
     """
     out, declared, support = [], mechanisms(language, target, at), supporting(found)
     for kind, spec in KINDS.items():
+        if spec["required"] == "ratchet":
+            out += facilities(language, target, found, at)
+            continue
         if spec["required"] == "every" and conforming:
             missing = [e["id"] for e in ENDPOINTS if not found.get(e["id"], {}).get(spec["into"])]
             if missing:
@@ -933,6 +980,45 @@ def requirements(language, target, found, conforming, at=None):
             else:
                 out.append("%s:%s declares neither a mechanism nor builtin for %s"
                            % (language, target, family))
+    return out
+
+
+def facilities(language, target, found, at=None):
+    """What a family that has tests owes spec/matrix.json, as one complaint per shortfall.
+
+    The mirror of the `declared` rule for wiring, and absent for the same reason it is there:
+    what a test talks to is not a fact about a framework, it is a fact about the helper the
+    author picked, and nothing in the tree says which. All five .NET suites resolve IServer to
+    TestHost.TestServer, and the same WebApplicationFactory puts a real Kestrel on a loopback
+    port for one more line, so the tree looks identical either way. A family
+    with no test yet owes nothing; no_test is what counts those.
+
+    The dependency is checked against the suite's own project file rather than the target's.
+    A test host in a target's manifest would be a test host in the measured binary.
+
+    The client-exception packages are not a suite and owe nothing here. They describe the
+    error envelope a framework declares and are run by the conformance client against no
+    booted target, so there is no facility and no transport to declare. They still count for
+    coverage, because holding a target to the contract it declares is what the kind is for.
+    """
+    out, declared = [], suites(language, target, at)
+    marked = {family: [p for p in parts if bundle.CONTRACT not in p["path"]]
+              for family, parts in tested(found).items()}
+    for family in sorted(marked):
+        if not marked[family]:
+            continue
+        decl = declared.get(family)
+        if not decl:
+            out.append("%s:%s marks %d test(s) for %s and declares no suite facility for it "
+                       "in spec/matrix.json"
+                       % (language, target, len(marked[family]), family))
+            continue
+        if "facility" not in decl or "transport" not in decl:
+            out.append("%s:%s declares a suite for %s with no facility or no transport"
+                       % (language, target, family))
+        elif decl.get("dep") and decl["dep"] not in suite_text(language, target, at):
+            out.append("%s:%s declares %s for the %s suite and no suite manifest names it"
+                       % (language, target, decl["dep"], family))
     return out
 
 
