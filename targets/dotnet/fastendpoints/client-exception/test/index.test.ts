@@ -1,63 +1,68 @@
-// dotnet:fastendpoints' error contract, against the envelopes the framework produces.
+// dotnet:fastendpoints's error contract, against the bodies it actually sends.
 //
-// Two of them, and the test is here partly to keep the difference visible: the validator's
-// ErrorResponse spells the field status_code, and SendForbidden spells it statusCode.
+// The only one of the five that separates the layers: 400 when the binder could not read the body, 422 when the validator refused it. And the only one reporting the field by its name on the wire.
 import { describe, expect, test } from "vitest";
 import { askIn, schemaAt, type Answer } from "@rb/schema";
-import pkg from "../src/index.js";
+import pkg, { validationFailure } from "../src/index.js";
 
 const PAIRS = [["customer_id", "int"], ["status", "string"], ["lines", "array"]] as const;
+const EVERY = [
+  "authorized.denied", "body.rejected_all", "body.rejected_first",
+  "errors.malformed", "errors.not_found", "errors.unmatched",
+];
 
-const judge = (
-  endpoint: string, statuses: readonly number[],
-  pairs: readonly (readonly [string, string])[], body: unknown,
-): boolean => {
-  const answer = { status: statuses[0]!, body_class: "json", encoding: "", body } as Answer;
-  const declared = pkg.schemas[endpoint]!(askIn(pkg.target, endpoint, statuses, pairs));
-  return schemaAt(declared, answer.status)?.safeParse(answer).success ?? false;
+// The endpoint's declaration and the answered status are separate, so a status assertion
+// cannot pass just because the caller declared the status it was testing.
+const judge = (endpoint: string, answered: number, body: unknown): boolean => {
+  const answer = { status: answered, body_class: "json", encoding: "", body } as Answer;
+  const resolved = pkg.schemas[endpoint]!(askIn(pkg.target, endpoint, [422], PAIRS));
+  return schemaAt(resolved, answered)?.safeParse(answer).success ?? false;
 };
 
-const errorResponse = {
-  message: "One or more errors occurred!",
-  status_code: 422,
-  errors: { customer_id: ["int"], status: ["string"], lines: ["array"] },
-};
+// What the target answered to {"customer_id": "not-an-int", ...} and to a truncated body.
+const notBound = { status_code: 400, message: "One or more errors occurred!", errors: { customer_id: ["Either the JSON value is not in a supported format, or is out of bounds for an Int32."] } };
+
+// What it answers when its validator is reached, which the plan never does.
+const refused = { status_code: 422, message: "One or more errors occurred!", errors: { customer_id: ["'customer_id' must not be empty."] } };
 
 describe(pkg.target, () => {
   test("declares a schema for every error endpoint", () => {
-    expect(Object.keys(pkg.schemas).sort()).toEqual([
-      "authorized.denied", "body.rejected_all", "body.rejected_first",
-      "errors.malformed", "errors.not_found", "errors.unmatched",
-    ]);
+    expect(Object.keys(pkg.schemas).sort()).toEqual(EVERY);
   });
 
-  test("accepts the ErrorResponse a failed validator produces", () => {
-    expect(judge("body.rejected_all", [422], PAIRS, errorResponse)).toBe(true);
+  test("the rejection endpoints answer the unreadable-body envelope at 400", () => {
+    expect(judge("body.rejected_all", 400, notBound)).toBe(true);
+    expect(judge("body.rejected_all", 422, notBound)).toBe(false);
   });
 
-  test("rejects ProblemDetails, which this framework does not answer", () => {
-    expect(judge("body.rejected_all", [422], PAIRS, {
-      type: "about:blank", title: "Invalid", status: 422, errors: errorResponse.errors,
+  test("a body that is not JSON at all is the same envelope", () => {
+    expect(judge("errors.malformed", 400, notBound)).toBe(true);
+  });
+
+  test("this repository's shared envelope is not what it answers", () => {
+    expect(judge("body.rejected_all", 400, {
+      error: "validation_failed",
+      errors: PAIRS.map(([field, rule]) => ({ field, rule })),
     })).toBe(false);
   });
 
-  test("SendForbidden and SendNotFound spell the field statusCode, not status_code", () => {
-    expect(judge("authorized.denied", [403], [], { message: "Forbidden", statusCode: 403 }))
-      .toBe(true);
-    expect(judge("authorized.denied", [403], [], { message: "Forbidden", status_code: 403 }))
-      .toBe(false);
+  test("the shape its validator produces is described, not left undescribed", () => {
+    expect(validationFailure.safeParse(refused).success).toBe(true);
   });
 
-  test("an unclaimed route never reaches the framework, so the host's 404 answers it", () => {
-    expect(judge("errors.unmatched", [404], [], { error: "not_found" })).toBe(true);
-    expect(judge("errors.unmatched", [404], [], { message: "Not Found", statusCode: 404 }))
-      .toBe(false);
+  test("the validator answers 422, which is the layer the other four do not separate", () => {
+    expect(validationFailure.safeParse(refused).success).toBe(true);
+    expect((refused as { status_code: number }).status_code).toBe(422);
   });
 
-  test("a body the binder could not read is a validation failure like any other", () => {
-    expect(judge("errors.malformed", [400, 422], [], {
-      message: "One or more errors occurred!", status_code: 422,
-      errors: { body: ["The request body is invalid."] },
-    })).toBe(true);
+  test("it reports the wire name, not the CLR property", () => {
+    expect(Object.keys((refused as { errors: Record<string, unknown> }).errors))
+      .toEqual(["customer_id"]);
+  });
+
+  test("ProblemDetails is not what this framework answers", () => {
+    expect(judge("body.rejected_all", 400, {
+      type: "about:blank", title: "Bad Request", status: 400,
+    })).toBe(false);
   });
 });

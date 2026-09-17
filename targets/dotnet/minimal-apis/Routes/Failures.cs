@@ -15,10 +15,6 @@ namespace RequestBench.MinimalApis.Routes;
 public static class Failures
 {
     /// <summary>The domain's field errors as ProblemDetails wants them: field to reasons.</summary>
-    public static Dictionary<string, string[]> ByField(IReadOnlyList<FieldError> errors) =>
-        errors.GroupBy(e => e.Field)
-              .ToDictionary(g => g.Key, g => g.Select(e => e.Rule).ToArray());
-
     public static void Map(WebApplication app)
     {
         app.UseExceptionHandler(handler => handler.Run(async context =>
@@ -28,12 +24,12 @@ public static class Failures
             IResult result = error switch
             {
                 NotFoundException => Results.Problem(statusCode: 404),
-                ValidationException invalid =>
-                    Results.ValidationProblem(ByField(invalid.Errors), statusCode: 422),
-                // The framework raises this when it cannot read the request body, which is
-                // what errors.malformed asks for. 400 is the RFC status for syntax it could
-                // not parse, and the endpoint set accepts it alongside 422.
-                BadHttpRequestException or JsonException => Results.Problem(statusCode: 400),
+                // A body the framework could not read, and a body the shared parse could not
+                // read on the endpoints that take a free-form object. Nothing validated
+                // either, so neither names a field, and 400 is the framework's own status
+                // for an unreadable body.
+                MalformedException or BadHttpRequestException or JsonException =>
+                    Results.Problem(statusCode: 400),
                 _ => Results.Problem(statusCode: 500, detail: error?.Message),
             };
             await result.ExecuteAsync(context);

@@ -7,5 +7,6 @@
     <ProjectReference Include="../_shared/RequestBench.Domain.csproj" />
     <ProjectReference Include="../_hosts/RequestBench.Hosts.csproj" />
     <PackageReference Include="Carter" />
+    <PackageReference Include="FluentValidation" />
   </ItemGroup>
 </Project>

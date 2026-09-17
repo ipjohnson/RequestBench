@@ -38,26 +38,34 @@ const plan: Plan = {
 
 const pairs = { customer_id: ["int"], status: ["string"], lines: ["array"] };
 
-/** What ASP.NET MVC answers: RFC 7807 throughout, and a bare status on the 403. */
+/**
+ * What ASP.NET MVC answers: RFC 7807 throughout, a bare status on the 403, and 400 with the
+ * validation map on every body it could not accept -- MVC routes a parse failure through
+ * ModelState too, so one envelope covers both layers.
+ */
 const problemDetails: Record<string, [number, unknown]> = {
   "/plaintext": [200, "Hello, World!"],
   "/authorized/small": [403, { status: 403 }],
   "/domain/orders/999999": [404, { type: "about:blank", title: "Not Found", status: 404 }],
   "/errors/unmatched": [404, { type: "about:blank", title: "Not Found", status: 404 }],
-  "/body/validate/small": [422, { type: "about:blank", title: "Invalid", status: 422, errors: pairs }],
-  "/body/validate/first-error": [422, { type: "about:blank", title: "Invalid", status: 422, errors: { customer_id: ["int"] } }],
+  "/body/validate/small": [400, { type: "about:blank", title: "Invalid", status: 400, errors: pairs }],
+  "/body/validate/first-error": [400, { type: "about:blank", title: "Invalid", status: 400, errors: { customer_id: ["int"] } }],
   "/errors/malformed": [400, { type: "about:blank", title: "Bad", status: 400, traceId: "00-a-01", errors: { $: ["json"] } }],
 };
 
-/** What FastEndpoints answers: its own ErrorResponse, and the host's 404 on an unclaimed route. */
+/**
+ * What FastEndpoints answers: its own ErrorResponse, and the host's 404 on an unclaimed
+ * route. Its binder and its validator answer different statuses, and the rejection
+ * endpoints reach the binder, so 400 is what the stub sends.
+ */
 const errorResponse: Record<string, [number, unknown]> = {
   "/plaintext": [200, "Hello, World!"],
   "/authorized/small": [403, { message: "Forbidden", statusCode: 403 }],
   "/domain/orders/999999": [404, { message: "Not Found", statusCode: 404 }],
   "/errors/unmatched": [404, { error: "not_found" }],
-  "/body/validate/small": [422, { message: "One or more errors occurred!", status_code: 422, errors: pairs }],
-  "/body/validate/first-error": [422, { message: "One or more errors occurred!", status_code: 422, errors: { customer_id: ["int"] } }],
-  "/errors/malformed": [422, { message: "One or more errors occurred!", status_code: 422, errors: { body: ["json"] } }],
+  "/body/validate/small": [400, { message: "One or more errors occurred!", status_code: 400, errors: pairs }],
+  "/body/validate/first-error": [400, { message: "One or more errors occurred!", status_code: 400, errors: { customer_id: ["int"] } }],
+  "/errors/malformed": [400, { message: "One or more errors occurred!", status_code: 400, errors: { body: ["json"] } }],
 };
 
 const servers: Server[] = [];

@@ -35,94 +35,34 @@ public sealed partial class DomainModel
         body.ValueKind == JsonValueKind.Object && body.TryGetProperty(name, out JsonElement v)
             ? v : null;
 
-    private static void Require(List<FieldError> errs, JsonElement body, string field, string type)
-    {
-        JsonElement? v = Field(body, field);
-        if (v is null || v.Value.ValueKind == JsonValueKind.Null)
-        {
-            errs.Add(new FieldError(field, "required"));
-            return;
-        }
-        bool ok = type switch
-        {
-            "int" => IsInt(v),
-            "string" => v.Value.ValueKind == JsonValueKind.String,
-            "array" => v.Value.ValueKind == JsonValueKind.Array,
-            _ => true,
-        };
-        if (!ok)
-        {
-            errs.Add(new FieldError(field, type));
-        }
-    }
+    // ---- the order body, after validation --------------------------------------------
+    //
+    // Validating is the framework's own job and lives in each target: aspnet-mvc and
+    // minimal-apis annotate a record for DataAnnotations, fastendpoints declares a
+    // FluentValidation Validator, carter runs one itself, and wolverine-http puts one in
+    // its middleware. What is left here is what happens once a body is known to be good,
+    // which is the same work whichever framework proved it.
+
+    /// <summary>One order line as it arrived, before pricing.</summary>
+    public readonly record struct LineInput(int ProductId, int Qty);
 
     /// <summary>
-    /// Reports every problem it finds, or stops at the first, which is what
-    /// body.rejected_all minus body.rejected_first states as a number: the same walk in the
-    /// same order, differing only in where it gives up.
+    /// The work after the validator says yes: look each product up, carry the unit price
+    /// onto the line, and total it. Identical in every framework, which is why it is here
+    /// and the validating is not.
     /// </summary>
-    public ValidatedOrder ValidateOrder(JsonElement body, bool firstError = false)
+    public ValidatedOrder PriceOrder(int customerId, string status, IReadOnlyList<LineInput> input)
     {
-        List<FieldError> errs = [];
-        bool Bail() => firstError && errs.Count > 0;
-
-        Require(errs, body, "customer_id", "int");
-        if (!Bail())
-        {
-            Require(errs, body, "status", "string");
-        }
-        if (!Bail())
-        {
-            Require(errs, body, "lines", "array");
-        }
-
-        JsonElement? raw = Field(body, "lines");
-        bool haveLines = raw is { ValueKind: JsonValueKind.Array };
-        if (haveLines && !Bail())
-        {
-            JsonElement rows = raw!.Value;
-            if (rows.GetArrayLength() == 0)
-            {
-                errs.Add(new FieldError("lines", "min_length"));
-            }
-            int i = 0;
-            foreach (JsonElement row in rows.EnumerateArray())
-            {
-                if (Bail())
-                {
-                    break;
-                }
-                JsonElement? pid = Field(row, "product_id");
-                JsonElement? qty = Field(row, "qty");
-                if (!IsInt(pid))
-                {
-                    errs.Add(new FieldError($"lines[{i}].product_id", "int"));
-                }
-                if (!Bail() && (!IsInt(qty) || qty!.Value.GetDouble() < 1))
-                {
-                    errs.Add(new FieldError($"lines[{i}].qty", "min"));
-                }
-                i++;
-            }
-        }
-        if (errs.Count > 0)
-        {
-            throw new ValidationException(errs);
-        }
-
         List<Line> lines = [];
         int total = 0;
         int index = 0;
-        foreach (JsonElement row in raw!.Value.EnumerateArray())
+        foreach (LineInput l in input)
         {
-            int productId = (int)Field(row, "product_id")!.Value.GetDouble();
-            int quantity = (int)Field(row, "qty")!.Value.GetDouble();
-            int unit = _productById.TryGetValue(productId, out Product? p) ? p.PriceCents : 0;
-            lines.Add(new Line(++index, productId, quantity, unit, unit * quantity));
-            total += unit * quantity;
+            int unit = _productById.TryGetValue(l.ProductId, out Product? p) ? p.PriceCents : 0;
+            lines.Add(new Line(++index, l.ProductId, l.Qty, unit, unit * l.Qty));
+            total += unit * l.Qty;
         }
-        return new ValidatedOrder(null, (int)Field(body, "customer_id")!.Value.GetDouble(),
-                                  Field(body, "status")!.Value.GetString()!, lines, total);
+        return new ValidatedOrder(null, customerId, status, lines, total);
     }
 
     public Customer PatchCustomer(string cid, JsonElement body)

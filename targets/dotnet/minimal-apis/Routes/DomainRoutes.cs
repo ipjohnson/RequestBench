@@ -11,19 +11,19 @@ public static class DomainRoutes
         app.MapGet("/domain/orders", (HttpRequest request, DomainModel d) =>
             d.DomainFilter(Support.Query(request)));
 
-        app.MapPost("/domain/orders", (JsonElement body, DomainModel d, HttpResponse response) =>
+        app.MapPost("/domain/orders", (OrderIn body, DomainModel d, HttpResponse response) =>
         {
-            ValidatedOrder order = d.ValidateOrder(body);
+            ValidatedOrder order = Body.Priced(d, body);
             response.Headers.Location = d.CreatedLocation();
             return Results.Json(order, statusCode: 201);
         });
 
         app.MapGet("/domain/orders/{oid}", (string oid, DomainModel d) => d.GetOrder(oid));
 
-        app.MapPut("/domain/orders/{oid}", (string oid, JsonElement body, DomainModel d) =>
+        app.MapPut("/domain/orders/{oid}", (string oid, OrderIn body, DomainModel d) =>
         {
             Order existing = d.GetOrder(oid);
-            return d.ValidateOrder(body) with { Id = existing.Id };
+            return Body.Priced(d, body) with { Id = existing.Id };
         });
 
         app.MapGet("/domain/customers/{cid}/summary", (string cid, DomainModel d) => d.DomainJoin(cid));

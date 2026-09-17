@@ -13,19 +13,17 @@ namespace RequestBench.WolverineTarget;
 /// </summary>
 public static class Failures
 {
-    public static Dictionary<string, string[]> ByField(IReadOnlyList<FieldError> errors) =>
-        errors.GroupBy(e => e.Field)
-              .ToDictionary(g => g.Key, g => g.Select(e => e.Rule).ToArray());
-
     public static void Handler(IApplicationBuilder handler) => handler.Run(async context =>
     {
         Exception? error = context.Features.Get<IExceptionHandlerFeature>()?.Error;
         IResult result = error switch
         {
             NotFoundException => Results.Problem(statusCode: 404),
-            ValidationException invalid =>
-                Results.ValidationProblem(ByField(invalid.Errors), statusCode: 422),
-            BadHttpRequestException or JsonException => Results.Problem(statusCode: 400),
+            // A refused body never reaches here: Wolverine's middleware answers it before
+            // the endpoint method. What is left is a body nothing could read, which names
+            // no field.
+            MalformedException or BadHttpRequestException or JsonException =>
+                Results.Problem(statusCode: 400),
             _ => Results.Problem(statusCode: 500, detail: error?.Message),
         };
         await result.ExecuteAsync(context);

@@ -7,6 +7,7 @@
     <ProjectReference Include="../_shared/RequestBench.Domain.csproj" />
     <ProjectReference Include="../_hosts/RequestBench.Hosts.csproj" />
     <PackageReference Include="WolverineFx.Http" />
+    <PackageReference Include="WolverineFx.Http.FluentValidation" />
     <PackageReference Include="WolverineFx.RuntimeCompilation" />
   </ItemGroup>
 </Project>

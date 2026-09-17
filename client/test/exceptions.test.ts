@@ -156,8 +156,10 @@ describe("a framework that declares one envelope per status", () => {
 describe("one framework's envelope against another's contract", () => {
   const rejectedAll = plan.endpoints.find((e) => e.id === "body.rejected_all")!;
   const ask = (target: string) => askFor(target, rejectedAll, firstPath(rejectedAll));
-  const answer = (body: unknown): Answer =>
-    ({ status: 422, body_class: "json", encoding: "", body });
+  // 422 is what a target that reads the body as a value answers. A target whose binder
+  // refuses it first answers its own status, which is why the .NET cases below pass 400.
+  const answer = (body: unknown, status = 422): Answer =>
+    ({ status, body_class: "json", encoding: "", body });
 
   // What each framework actually answers, taken from the running targets.
   // go:chi validates in the handler, so a wrong type is a validation failure it reports in
@@ -170,16 +172,18 @@ describe("one framework's envelope against another's contract", () => {
       { field: "lines", rule: "array" },
     ],
   };
+  // Both .NET targets refuse the plan's body at the binder, before any validator, and both
+  // answer 400 -- in envelopes that are nothing like each other.
   const problemDetails = {
     type: "https://tools.ietf.org/html/rfc9110#section-15.5.21",
     title: "One or more validation errors occurred.",
-    status: 422,
-    errors: { customer_id: ["int"], status: ["string"], lines: ["array"] },
+    status: 400,
+    errors: { body: ["The body field is required."], "$.customer_id": ["not convertible"] },
   };
   const fastEndpoints = {
     message: "One or more errors occurred!",
-    status_code: 422,
-    errors: { customer_id: ["int"], status: ["string"], lines: ["array"] },
+    status_code: 400,
+    errors: { customer_id: ["Either the JSON value is not in a supported format."] },
   };
 
   // go:gin answers this only when the body deserialized and then failed a rule.
@@ -191,16 +195,16 @@ describe("one framework's envelope against another's contract", () => {
   test("each is accepted by its own", () => {
     expect(errorProblem(ask("go:chi"), answer(shared))).toBeNull();
     expect(errorProblem(ask("go:gin"), answer(ginRefused))).toBeNull();
-    expect(errorProblem(ask("dotnet:aspnet-mvc"), answer(problemDetails))).toBeNull();
-    expect(errorProblem(ask("dotnet:fastendpoints"), answer(fastEndpoints))).toBeNull();
+    expect(errorProblem(ask("dotnet:aspnet-mvc"), answer(problemDetails, 400))).toBeNull();
+    expect(errorProblem(ask("dotnet:fastendpoints"), answer(fastEndpoints, 400))).toBeNull();
   });
 
   // The reason the gate no longer compares error bodies against a reference. Before this,
   // dotnet:fastendpoints measured after dotnet:aspnet-mvc had its ProblemDetails compared
   // field by field against an ErrorResponse and the difference was reported as drift.
   test("each is rejected by the others", () => {
-    expect(errorProblem(ask("dotnet:aspnet-mvc"), answer(fastEndpoints))).not.toBeNull();
-    expect(errorProblem(ask("dotnet:fastendpoints"), answer(problemDetails))).not.toBeNull();
+    expect(errorProblem(ask("dotnet:aspnet-mvc"), answer(fastEndpoints, 400))).not.toBeNull();
+    expect(errorProblem(ask("dotnet:fastendpoints"), answer(problemDetails, 400))).not.toBeNull();
     expect(errorProblem(ask("go:chi"), answer(problemDetails))).not.toBeNull();
     expect(errorProblem(ask("dotnet:carter"), answer(shared))).not.toBeNull();
     // The two Go styles do not accept each other either, which is what #35 set out to show.
@@ -215,18 +219,22 @@ describe("one framework's envelope against another's contract", () => {
 
   test("traceId comes and goes with tracing and is not pinned either way", () => {
     const traced = { ...problemDetails, traceId: "00-4bf92f-00f067-01" };
-    expect(errorProblem(ask("dotnet:aspnet-mvc"), answer(traced))).toBeNull();
+    expect(errorProblem(ask("dotnet:aspnet-mvc"), answer(traced, 400))).toBeNull();
   });
 
-  test("the right envelope missing a declared pair still fails, and says which", () => {
-    const short = { ...problemDetails, errors: { customer_id: ["int"] } };
-    expect(errorProblem(ask("dotnet:aspnet-mvc"), answer(short)))
-      .toContain("does not report status=string");
+  // The pairs are only required where the target reports them. MVC reports its own keys --
+  // the JSON path, or the CLR property -- so its package drops the endpoint's pairs and the
+  // envelope is what holds the shape.
+  test("a target that names its own keys is held to the envelope, not to the pairs", () => {
+    const short = { ...problemDetails, errors: { "$.customer_id": ["not convertible"] } };
+    expect(errorProblem(ask("dotnet:aspnet-mvc"), answer(short, 400))).toBeNull();
+    expect(errorProblem(ask("dotnet:aspnet-mvc"), answer({ ...problemDetails, errors: {} }, 400)))
+      .not.toBeNull();
   });
 
-  test("the right envelope with the wrong status fails", () => {
-    const wrong = { ...answer(problemDetails), status: 400 };
-    expect(errorProblem(ask("dotnet:aspnet-mvc"), wrong)).toContain("expected 422, got 400");
+  test("the right envelope with a status it does not answer fails", () => {
+    expect(errorProblem(ask("dotnet:aspnet-mvc"), answer(problemDetails, 422)))
+      .toContain("expected 400, got 422");
   });
 
   test("an html body is not an error envelope however it reads", () => {

@@ -24,18 +24,23 @@ public static class BodyEndpoints
     [WolverinePost("/body/bind/medium")]
     public static BindResult BindMedium(JsonElement body) => DomainModel.BindEcho(body);
 
+    // The request type is the wiring: Wolverine's FluentValidation middleware finds a
+    // validator for it and runs it before the method is entered, so a body that fails never
+    // reaches one.
     [WolverinePost("/body/validate/small")]
-    public static ValidatedOrder ValidateSmall(JsonElement body,
+    public static ValidatedOrder ValidateSmall(OrderBody body,
                                                [FromServices] DomainModel domain) =>
-        domain.ValidateOrder(body);
+        domain.PriceOrder(body.CustomerId!.Value, body.Status!, body.Input());
 
     [WolverinePost("/body/validate/medium")]
-    public static ValidatedOrder ValidateMedium(JsonElement body,
+    public static ValidatedOrder ValidateMedium(OrderBody body,
                                                 [FromServices] DomainModel domain) =>
-        domain.ValidateOrder(body);
+        domain.PriceOrder(body.CustomerId!.Value, body.Status!, body.Input());
 
+    // FluentValidation collects every rule that failed, and the middleware runs the one
+    // validator, so this row answers what Wolverine answers.
     [WolverinePost("/body/validate/first-error")]
-    public static ValidatedOrder ValidateFirst(JsonElement body,
+    public static ValidatedOrder ValidateFirst(OrderBody body,
                                                [FromServices] DomainModel domain) =>
-        domain.ValidateOrder(body, firstError: true);
+        domain.PriceOrder(body.CustomerId!.Value, body.Status!, body.Input());
 }

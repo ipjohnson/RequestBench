@@ -27,15 +27,10 @@ public static class Failures
                 await context.Response.WriteAsJsonAsync(
                     new { statusCode = 404, message = "not found" });
                 break;
-            case ValidationException invalid:
-                await context.Response.SendErrorsAsync(
-                    [.. invalid.Errors.Select(e =>
-                        new FluentValidation.Results.ValidationFailure(e.Field, e.Rule))],
-                    statusCode: 422);
-                break;
-            // 400 is the RFC status for syntax the framework could not parse, and the
-            // endpoint set accepts it alongside 422.
-            case BadHttpRequestException or JsonException:
+            // A failed Validator never reaches here: FastEndpoints answers it itself, with
+            // its own ErrorResponse, before the handler is entered. What is left is a body
+            // nothing could read, which names no field.
+            case MalformedException or BadHttpRequestException or JsonException:
                 context.Response.StatusCode = 400;
                 await context.Response.WriteAsJsonAsync(
                     new { statusCode = 400, message = "the request body is not json" });

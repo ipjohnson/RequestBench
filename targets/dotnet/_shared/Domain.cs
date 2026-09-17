@@ -125,6 +125,4 @@ public sealed partial class DomainModel
     public static IReadOnlyDictionary<string, string> ForbiddenBody() =>
         new Dictionary<string, string> { ["error"] = "forbidden" };
 
-    public static IReadOnlyDictionary<string, object> InvalidBody(IReadOnlyList<FieldError> errors) =>
-        new Dictionary<string, object> { ["error"] = "validation_failed", ["errors"] = errors };
 }

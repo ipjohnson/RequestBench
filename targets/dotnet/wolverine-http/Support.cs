@@ -20,9 +20,9 @@ public static class Support
         {
             return await request.ReadFromJsonAsync<JsonElement>(Json.Options);
         }
-        catch (JsonException)
+        catch (JsonException e)
         {
-            throw ValidationException.Malformed();
+            throw new MalformedException(e.Message);
         }
     }
 }

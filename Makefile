@@ -58,11 +58,12 @@ bundle: ## file list and hashes for every implemented target's bundle
 	python3 harness/bundle.py --all --summary
 
 build: ## build container images  (TARGETS=go:gin,go:echo)
-	@for t in $$(echo $(TARGETS) | tr ',' ' '); do \
+	@set -e; for t in $$(echo $(TARGETS) | tr ',' ' '); do \
 	  lang=$${t%%:*}; name=$${t#*:}; \
 	  echo "building rb/$$lang-$$name"; \
 	  docker build -q -f targets/$$lang/Dockerfile --build-arg TARGET=$$name \
-	    -t rb/$$lang-$$name . >/dev/null; \
+	    -t rb/$$lang-$$name . >/dev/null \
+	    || { echo "  FAILED to build rb/$$lang-$$name" >&2; exit 1; }; \
 	done
 
 java: ## build the java target jars, which MODE=local needs  (TARGETS=java:javalin)

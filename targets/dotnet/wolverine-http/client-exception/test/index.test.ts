@@ -1,52 +1,65 @@
-// dotnet:wolverine-http's error contract. The interesting one is errors.malformed, where
-// the JSON reader's own failure is surfaced rather than replaced.
+// dotnet:wolverine-http's error contract, against the bodies it actually sends.
+//
+// A body Wolverine could not read gets its own envelope and its own wording -- neither ProblemDetails with errors nor a bare one, which makes it a fifth shape among the five.
 import { describe, expect, test } from "vitest";
 import { askIn, schemaAt, type Answer } from "@rb/schema";
-import pkg from "../src/index.js";
+import pkg, { validationFailure } from "../src/index.js";
 
 const PAIRS = [["customer_id", "int"], ["status", "string"], ["lines", "array"]] as const;
+const EVERY = [
+  "authorized.denied", "body.rejected_all", "body.rejected_first",
+  "errors.malformed", "errors.not_found", "errors.unmatched",
+];
 
-const judge = (
-  endpoint: string, statuses: readonly number[],
-  pairs: readonly (readonly [string, string])[], body: unknown,
-): boolean => {
-  const answer = { status: statuses[0]!, body_class: "json", encoding: "", body } as Answer;
-  const declared = pkg.schemas[endpoint]!(askIn(pkg.target, endpoint, statuses, pairs));
-  return schemaAt(declared, answer.status)?.safeParse(answer).success ?? false;
+// The endpoint's declaration and the answered status are separate, so a status assertion
+// cannot pass just because the caller declared the status it was testing.
+const judge = (endpoint: string, answered: number, body: unknown): boolean => {
+  const answer = { status: answered, body_class: "json", encoding: "", body } as Answer;
+  const resolved = pkg.schemas[endpoint]!(askIn(pkg.target, endpoint, [422], PAIRS));
+  return schemaAt(resolved, answered)?.safeParse(answer).success ?? false;
 };
+
+// What the target answered to {"customer_id": "not-an-int", ...} and to a truncated body.
+const notBound = { type: "https://httpstatuses.com/400", title: "Invalid JSON format", status: 400, detail: "The JSON value could not be converted to System.Nullable`1[System.Int32].", instance: "/body/validate/small", lineNumber: 0, bytePositionInLine: 27 };
+
+// What it answers when its validator is reached, which the plan never does.
+const refused = { type: "about:blank", title: "One or more validation errors occurred.", status: 400, errors: { CustomerId: ["'Customer Id' must not be empty."] } };
 
 describe(pkg.target, () => {
   test("declares a schema for every error endpoint", () => {
-    expect(Object.keys(pkg.schemas).sort()).toEqual([
-      "authorized.denied", "body.rejected_all", "body.rejected_first",
-      "errors.malformed", "errors.not_found", "errors.unmatched",
-    ]);
+    expect(Object.keys(pkg.schemas).sort()).toEqual(EVERY);
   });
 
-  test("accepts ProblemDetails carrying the validation map", () => {
-    expect(judge("body.rejected_all", [422], PAIRS, {
-      type: "about:blank", title: "One or more validation errors occurred.", status: 422,
-      errors: { customer_id: ["int"], status: ["string"], lines: ["array"] },
-    })).toBe(true);
+  test("the rejection endpoints answer the unreadable-body envelope at 400", () => {
+    expect(judge("body.rejected_all", 400, notBound)).toBe(true);
+    expect(judge("body.rejected_all", 422, notBound)).toBe(false);
   });
 
-  test("a malformed body reports where the reader stopped", () => {
-    expect(judge("errors.malformed", [400, 422], [], {
-      type: "about:blank", title: "Bad Request", status: 400,
-      detail: "'{' is an invalid start of a property name.",
-      instance: "/errors/malformed", lineNumber: 0, bytePositionInLine: 1,
-    })).toBe(true);
+  test("a body that is not JSON at all is the same envelope", () => {
+    expect(judge("errors.malformed", 400, notBound)).toBe(true);
   });
 
-  test("the reader's diagnostics are required there, not optional decoration", () => {
-    expect(judge("errors.malformed", [400, 422], [], {
-      type: "about:blank", title: "Bad Request", status: 400,
+  test("this repository's shared envelope is not what it answers", () => {
+    expect(judge("body.rejected_all", 400, {
+      error: "validation_failed",
+      errors: PAIRS.map(([field, rule]) => ({ field, rule })),
     })).toBe(false);
   });
 
-  test("and are not accepted on the endpoints that do not carry them", () => {
-    expect(judge("errors.not_found", [404], [], {
-      type: "about:blank", title: "Not Found", status: 404, lineNumber: 0,
+  test("the shape its validator produces is described, not left undescribed", () => {
+    expect(validationFailure.safeParse(refused).success).toBe(true);
+  });
+
+  test("the title is Wolverine's own wording and is pinned", () => {
+    expect(judge("body.rejected_all", 400, {
+      type: "https://httpstatuses.com/400", title: "Bad Request", status: 400,
+      detail: "x", instance: "/y", lineNumber: 0, bytePositionInLine: 1,
+    })).toBe(false);
+  });
+
+  test("a bare ProblemDetails is not what it answers", () => {
+    expect(judge("body.rejected_all", 400, {
+      type: "about:blank", title: "Bad Request", status: 400,
     })).toBe(false);
   });
 });

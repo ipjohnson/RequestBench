@@ -20,13 +20,21 @@ public static class Body
 
         app.MapPost("/body/bind/medium", (JsonElement body) => DomainModel.BindEcho(body));
 
+        // The parameter's type is the wiring: AddValidation() has the framework check its
+        // DataAnnotations before the handler runs, so a body that fails never reaches one.
         app.MapPost("/body/validate/small",
-                    (JsonElement body, DomainModel d) => d.ValidateOrder(body));
+                    (OrderIn body, DomainModel d) => Priced(d, body));
 
         app.MapPost("/body/validate/medium",
-                    (JsonElement body, DomainModel d) => d.ValidateOrder(body));
+                    (OrderIn body, DomainModel d) => Priced(d, body));
 
+        // DataAnnotations reports every attribute that failed and offers no mode that stops
+        // at the first, so this row answers what the framework answers.
         app.MapPost("/body/validate/first-error",
-                    (JsonElement body, DomainModel d) => d.ValidateOrder(body, firstError: true));
+                    (OrderIn body, DomainModel d) => Priced(d, body));
     }
+
+    /// <summary>The order, once the framework's validator has said the body is one.</summary>
+    internal static ValidatedOrder Priced(DomainModel d, OrderIn body) =>
+        d.PriceOrder(body.CustomerId!.Value, body.Status!, body.Input());
 }
