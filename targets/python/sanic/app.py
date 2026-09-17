@@ -13,6 +13,8 @@ those rows have their own paths instead of riding on /json with an accept-encodi
 The blueprints carry no url_prefix. Scoping is what they are here for, and a prefix would
 take the route's own path out of the source, which is where harness/snippets.py finds it.
 """
+import pathlib
+
 from sanic import Blueprint, Sanic, response
 from sanic.exceptions import NotFound as RouteMiss
 from sanic.exceptions import SanicException
@@ -106,7 +108,20 @@ def validated(body, first_error=False):
 
 
 app = Sanic("requestbench")
-META = host.meta("sanic", adapter="sanic")
+# Sanic Extensions loads itself whenever it is installed, and it brings more than
+# templating. OAS would publish /docs and /openapi.json, and the extras below add
+# behaviour to routes this set measures, so only the piece this target asked for is left
+# on. The template path is absolute because _hosts/container.py loads this module by file
+# path rather than by name.
+app.config.OAS = False
+app.config.CORS = False
+app.config.HTTP_ALL_METHODS = False
+app.config.AUTO_EXTEND = True
+app.config.TEMPLATING_PATH_TO_TEMPLATES = str(
+    pathlib.Path(__file__).resolve().parent / "templates")
+
+META = host.meta("sanic", adapter="sanic",
+                 template="jinja2 " + host.dist_version("jinja2"))
 
 
 def body_of(request):
@@ -364,16 +379,29 @@ async def delete_line(_, oid, lid):
     return response.empty()
 
 
-# ---- template: the engine named in /__meta -------------------------------------------
+# ---- template: Sanic Extensions' own view facility -----------------------------------
+#
+# Sanic ships no view layer, but Sanic Extensions does and it is the framework's own
+# first-party package. app.ext.template names the file and loads it at startup; the
+# handler returns the context and never calls a render function. Jinja is the only engine
+# Sanic Extensions supports, so it is the framework's choice rather than one made here.
+
+# A copy of the payload, not the payload. The renderer inserts the request into the
+# context it is handed, and d.payload returns the fixture object the json family
+# serializes, so rendering once put a request key in every json.* body until this copied.
+TEMPLATE_MODELS = {size: dict(d.payload(size)) for size in ("small", "medium")}
+
 
 @app.get("/template/small")
+@app.ext.template("items.html")
 async def template_small(_):
-    return response.html(host.render_items(d.payload("small")))
+    return TEMPLATE_MODELS["small"]
 
 
 @app.get("/template/medium")
+@app.ext.template("items.html")
 async def template_medium(_):
-    return response.html(host.render_items(d.payload("medium")))
+    return TEMPLATE_MODELS["medium"]
 
 
 # ---- failures ------------------------------------------------------------------------

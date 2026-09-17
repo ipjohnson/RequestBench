@@ -18,6 +18,8 @@ answers POST /json/small with 200.
 Django writes a URL pattern without a leading slash, because path() matches what is left
 after the one the request carried.
 """
+import pathlib
+
 import django
 from django.conf import settings
 from django.utils.decorators import markcoroutinefunction
@@ -33,6 +35,17 @@ settings.configure(
     MIDDLEWARE=[__name__ + ".Failures"],
     LOGGING_CONFIG=None,
     USE_TZ=False,
+    # Django's own template engine, which is what the framework ships and what its own
+    # tutorial renders with. The directory is absolute because _hosts/container.py loads
+    # this module by file path rather than by name, so there is no app to search. With
+    # DEBUG false the backend wraps its loaders in the cached one, so the template is
+    # parsed on first render and reused: a precomputed string would measure nothing.
+    TEMPLATES=[{
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [str(pathlib.Path(__file__).resolve().parent / "templates")],
+        "APP_DIRS": False,
+        "OPTIONS": {},
+    }],
 )
 django.setup()
 
@@ -40,12 +53,14 @@ from django.http import HttpResponse, JsonResponse  # noqa: E402
 from django import forms  # noqa: E402
 from django.core.exceptions import ValidationError  # noqa: E402
 from django.core.validators import MinLengthValidator  # noqa: E402
+from django.shortcuts import render  # noqa: E402
 from django.urls import path  # noqa: E402
 from django.views import View  # noqa: E402
 from django.views.decorators.gzip import gzip_page  # noqa: E402
 from django.views.decorators.http import condition, require_GET, require_POST  # noqa: E402
 
-META = host.meta("django-asgi", dist="django", adapter="daphne")
+META = host.meta("django-asgi", dist="django", adapter="daphne",
+                 template="django " + host.dist_version("django"))
 
 
 def body_of(request):
@@ -360,13 +375,17 @@ class OrderLine(View):
         return response
 
 
-# ---- template: the engine named in /__meta -------------------------------------------
+# ---- template: Django's own view facility --------------------------------------------
+#
+# render() finds the template through the TEMPLATES setting and writes the response, so no
+# view calls a render function. Django is the one Python target here that does not render
+# with Jinja2: its own engine is the Django template language, and that is what its
+# tutorial and its documentation use.
 
 def template_view(size):
     @require_GET
-    async def view(_):
-        return HttpResponse(host.render_items(d.payload(size)),
-                            content_type="text/html; charset=utf-8")
+    async def view(request):
+        return render(request, "items.html", d.payload(size))
     return view
 
 

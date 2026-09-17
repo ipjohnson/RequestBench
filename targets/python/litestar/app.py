@@ -10,6 +10,8 @@ riding on /json with an accept-encoding header.
 Litestar writes a path parameter as ``{oid:str}``: the type is part of the syntax, not an
 annotation this repository added.
 """
+import pathlib
+
 import uvicorn
 from litestar import Litestar, MediaType, Request, Response, delete, get, patch, post, put
 from litestar.config.compression import CompressionConfig
@@ -24,6 +26,9 @@ from litestar.exceptions import (ClientException, NotFoundException,
 from litestar.handlers.base import BaseRouteHandler
 from litestar.middleware import DefineMiddleware
 from litestar.middleware.compression import CompressionMiddleware
+from litestar.response import Template
+from litestar.plugins.jinja import JinjaTemplateEngine
+from litestar.template.config import TemplateConfig
 from litestar.types import ASGIApp, Receive, Scope, Send
 
 from _hosts import host
@@ -63,7 +68,8 @@ class OrderIn:
             [{"product_id": line.product_id, "qty": line.qty} for line in self.lines],
         )
 
-META = host.meta("litestar", adapter="uvicorn")
+META = host.meta("litestar", adapter="uvicorn",
+                 template="jinja2 " + host.dist_version("jinja2"))
 
 
 # ---- middleware and guards -----------------------------------------------------------
@@ -318,16 +324,21 @@ async def delete_line(oid: str, lid: str) -> None:
     d.get_order_line(oid, lid)
 
 
-# ---- template: the engine named in /__meta -------------------------------------------
+# ---- template: Litestar's own view facility ------------------------------------------
+#
+# A TemplateConfig on the app holds the engine, and returning a Template names a file
+# rather than calling a render function. JinjaTemplateEngine is the engine Litestar's own
+# templating docs lead with and the one litestar[standard] installs. Compiled on first
+# render and cached by the engine: a precomputed string would measure nothing.
 
 @get("/template/small", media_type=MediaType.HTML)
-async def template_small() -> str:
-    return host.render_items(d.payload("small"))
+async def template_small() -> Template:
+    return Template(template_name="items.html", context=d.payload("small"))
 
 
 @get("/template/medium", media_type=MediaType.HTML)
-async def template_medium() -> str:
-    return host.render_items(d.payload("medium"))
+async def template_medium() -> Template:
+    return Template(template_name="items.html", context=d.payload("medium"))
 
 
 # ---- failures ------------------------------------------------------------------------
@@ -386,6 +397,10 @@ app = Litestar(
         d.NotFound: not_found,
     },
     openapi_config=None,
+    template_config=TemplateConfig(
+        directory=pathlib.Path(__file__).resolve().parent / "templates",
+        engine=JinjaTemplateEngine,
+    ),
 )
 
 

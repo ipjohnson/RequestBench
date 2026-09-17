@@ -14,7 +14,9 @@ import astro from "eslint-plugin-astro";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["**/dist/**", "**/node_modules/**", "**/.astro/**"] },
+  // .venv is what `make python` builds for MODE=local. It is gitignored, but eslint
+  // walks the working tree rather than the index and site-packages ships JavaScript.
+  { ignores: ["**/dist/**", "**/node_modules/**", "**/.astro/**", "**/.venv/**"] },
   {
     files: ["site/**/*.ts"],
     // The Astro processor hands each .astro frontmatter to the linter as a virtual

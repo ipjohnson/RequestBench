@@ -13,6 +13,8 @@ starlette~=1.6
 django~=6.1
 flask~=3.1
 sanic~=25.12
+# Sanic's own first-party extensions package, which is where its templating lives.
+sanic-ext~=25.12
 
 # The servers. Python is the first language here where the framework is not the server,
 # so each target runs the one its own documentation reaches for first and /__meta records
@@ -22,5 +24,9 @@ uvicorn[standard]~=0.53
 daphne~=4.2
 gunicorn~=23.0
 
-# One template engine for all six, pinned for the same reason the gzip level is.
+# Five of the six render with Jinja2, because it is the engine their own framework
+# reaches for: Flask builds one, FastAPI and Starlette ship Jinja2Templates, Litestar's
+# JinjaTemplateEngine is what litestar[standard] installs, and Jinja is the only engine
+# Sanic Extensions supports. django-asgi renders with Django's own template language and
+# needs nothing here.
 jinja2~=3.1
