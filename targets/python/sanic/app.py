@@ -187,16 +187,41 @@ async def parameters_two(request, one, two):
     return small(request)
 
 
-# The framework parses the query string, which is the work this family is here to measure;
-# the domain coerces what it parsed, so all six targets answer the same values.
+# Sanic has no binder to plug into: request.args is what it parsed, and the coercion is the
+# handler's own work. This is this target's copy on purpose -- sharing one coercer across
+# six frameworks measured that function rather than the framework, which is the defect #37
+# describes -- and a value that will not parse is the zero value rather than an error
+# contract the family does not have. request.args.get answers the first value.
+
+def _qstr(q, k):
+    return q.get(k) or ""
+
+
+def _qint(q, k):
+    try:
+        return int(q.get(k))
+    except (TypeError, ValueError):
+        return 0
+
+
 @app.get("/query/one")
 async def query_one(request):
-    return response.json(d.coerce_one(request.args))
+    return response.json({"page": _qint(request.args, "page")})
 
 
 @app.get("/query/many")
 async def query_many(request):
-    return response.json(d.coerce_many(request.args))
+    q = request.args
+    return response.json({
+        "page": _qint(q, "page"),
+        "size": _qint(q, "size"),
+        "status": _qstr(q, "status"),
+        "category": _qstr(q, "category"),
+        "sort": _qstr(q, "sort"),
+        "q": _qstr(q, "q"),
+        "min_price": _qint(q, "min_price"),
+        "max_price": _qint(q, "max_price"),
+    })
 
 
 # The handler reads no header at all, so headers.many minus headers.few is the cost of
@@ -337,7 +362,9 @@ async def validate_first(request):
 
 @app.get("/domain/orders")
 async def domain_orders(request):
-    return response.json(d.domain_filter(request.args))
+    q = request.args
+    return response.json(d.domain_filter(_qint(q, "page"), _qint(q, "size"),
+                                         _qstr(q, "status")))
 
 
 @app.post("/domain/orders")
