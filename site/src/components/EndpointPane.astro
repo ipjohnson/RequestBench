@@ -1,16 +1,27 @@
 ---
 // One endpoint's pane: what it answers, what it cost, how it is wired, what it sent.
+import EndpointHistogram from "./EndpointHistogram.astro";
 import { chainTable } from "../lib/views.js";
 import { cell } from "../lib/metrics.js";
 import { esc } from "../lib/html.js";
 import type { Chain } from "../lib/delta.js";
-import type { EndpointRung, Route, WireEndpoint } from "../lib/types.js";
+import type { BinGrid, EndpointRung, Route, WireEndpoint } from "../lib/types.js";
 import type { Mechanism, Snippet, SnippetPart } from "../lib/bundleview.js";
+
+/** What this endpoint did at one offered rate. Everything else on the pane is rate-agnostic. */
+export type PaneRung = {
+  rn: string;
+  stats: EndpointRung | undefined;
+  chain: Chain | null;
+  span: { c0: number; c1: number; n: number } | null;
+  shown: boolean;
+};
 
 type Props = {
   eid: string;
   route: Route | undefined;
-  stats: EndpointRung | undefined;
+  rungs: PaneRung[];
+  grid: BinGrid | undefined;
   snippet: Snippet | undefined;
   /** Endpoints the same registration answers, so six panes do not each claim the block. */
   also: string[];
@@ -24,30 +35,33 @@ type Props = {
   /** The contract tests that hold this target to the envelope it declares. */
   tests: { part: SnippetPart; link: string | null }[];
   exchange: WireEndpoint | undefined;
-  chain: Chain | null;
   factors: Record<string, string>;
   first: boolean;
 };
 
-const { eid, route, stats, snippet, also, link, support, alsoWired, mechanism, tests,
-        exchange, chain, factors, first } = Astro.props;
+const { eid, route, rungs, grid, snippet, also, link, support, alsoWired, mechanism, tests,
+        exchange, factors, first } = Astro.props;
 
-const d = stats ?? {};
-// p95 is in summaries written after harness/summarize.py started recording it. An older one
-// carries p90, and the pane says p90 rather than labelling it p95.
-const tail: [string, number | null | undefined] =
-  "p95_us" in d ? ["p95", d.p95_us] : ["p90", d.p90_us];
-const fields: [string, string][] = [
-  ["p50", cell(d.p50_us, "us")],
-  [tail[0], cell(tail[1], "us")],
-  ["p99", cell(d.p99_us, "us")],
-  ["p99.9", cell(d.p999_us, "us")],
-  ["samples", cell(d.count)],
-  ...(["errors", "mismatch"] as const)
-    .filter((k) => d[k])
-    .map((k): [string, string] => [k, cell(d[k])]),
-];
-const measured = Object.keys(d).length > 0;
+const measure = (stats: EndpointRung | undefined): { fields: [string, string][]; measured: boolean } => {
+  const d = stats ?? {};
+  // p95 is in summaries written after harness/summarize.py started recording it. An older
+  // one carries p90, and the pane says p90 rather than labelling it p95.
+  const tail: [string, number | null | undefined] =
+    "p95_us" in d ? ["p95", d.p95_us] : ["p90", d.p90_us];
+  return {
+    measured: Object.keys(d).length > 0,
+    fields: [
+      ["p50", cell(d.p50_us, "us")],
+      [tail[0], cell(tail[1], "us")],
+      ["p99", cell(d.p99_us, "us")],
+      ["p99.9", cell(d.p999_us, "us")],
+      ["samples", cell(d.count)],
+      ...(["errors", "mismatch"] as const)
+        .filter((k) => d[k])
+        .map((k): [string, string] => [k, cell(d[k])]),
+    ],
+  };
+};
 const h = snippet?.handler;
 const loc = h ? `${h.path}:${h.start_line}${h.end_line === h.start_line ? "" : `-${h.end_line}`}` : "";
 const where = (p: SnippetPart): string =>
@@ -68,20 +82,28 @@ const hdrs = (hs: readonly (readonly [string, string])[]): string =>
 
   <h3 class="childcap">Performance</h3>
   {
-    measured ? (
-      <div class="fields">
-        {fields.map(([k, v]) => (
-          <div class="frow">
-            <span class="fk">{k}</span>
-            <span class="fv">{v}</span>
-          </div>
-        ))}
-      </div>
-    ) : (
-      <p class="empty">Not measured at this rate.</p>
-    )
+    rungs.map((r) => {
+      const { fields, measured } = measure(r.stats);
+      return (
+        <div class="eprate" data-rung={r.rn} hidden={!r.shown}>
+          {measured ? (
+            <div class="fields">
+              {fields.map(([k, v]) => (
+                <div class="frow">
+                  <span class="fk">{k}</span>
+                  <span class="fv">{v}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p class="empty">Not measured at this rate.</p>
+          )}
+          {grid && r.span && <EndpointHistogram grid={grid} stats={r.stats} span={r.span} eid={eid} />}
+          <Fragment set:html={chainTable(r.chain, factors, "p50", "us")} />
+        </div>
+      );
+    })
   }
-  <Fragment set:html={chainTable(chain, factors, "p50", "us")} />
 
   <h3 class="childcap">Implementation</h3>
   {

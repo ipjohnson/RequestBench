@@ -1,0 +1,106 @@
+---
+// One endpoint's latency histogram: the distribution the table above it takes its
+// percentiles from.
+//
+// Share on a linear axis against latency on the grid's log one, so the bars are readable as
+// proportions while three decades of latency still fit. The x span is the whole target's,
+// not this endpoint's, so stepping through the tree moves the bars instead of rescaling the
+// axis under them.
+import { binEdge, scaleFor, usLabel } from "../lib/bins.js";
+import type { BinGrid, EndpointRung } from "../lib/types.js";
+import { esc } from "../lib/html.js";
+
+type Props = {
+  grid: BinGrid;
+  stats: EndpointRung | undefined;
+  span: { c0: number; c1: number; n: number };
+  eid: string;
+};
+const { grid, stats, span, eid } = Astro.props as Props;
+
+const bins = stats?.bins ?? [];
+const total = bins.reduce((a, b) => a + b, 0);
+
+const W = 720;
+const H = 132;
+const M = { t: 10, r: 10, b: 26, l: 34 };
+const pw = W - M.l - M.r;
+const ph = H - M.t - M.b;
+const sc = scaleFor(grid, span.c0, span.c1, M.l, pw);
+const cw = pw / span.n;
+
+const shares = bins.map((c) => (total ? (100 * c) / total : 0));
+const peak = Math.max(...shares.slice(span.c0, span.c1 + 1), 1);
+// A round ceiling, so the one gridline the axis carries names a number rather than the peak.
+const top = peak > 50 ? 100 : peak > 25 ? 50 : peak > 10 ? 25 : peak > 5 ? 10 : 5;
+const y = (v: number): number => M.t + ph - (v / top) * ph;
+
+/** p50 and p99 are what the table leads with, so they are what the shape is annotated against. */
+const marks: { name: string; v: number }[] = [];
+for (const [name, v] of [
+  ["p50", stats?.p50_us],
+  ["p99", stats?.p99_us],
+] as [string, number | null | undefined][]) {
+  if (typeof v === "number" && v > 0) marks.push({ name, v });
+}
+---
+
+{
+  total > 0 && (
+    <figure class="ephist">
+      <svg
+        viewBox={`0 0 ${W} ${H}`}
+        width={W}
+        height={H}
+        role="img"
+        aria-label={`Latency histogram for ${eid}. The percentiles in the table above are read from this distribution.`}
+      >
+        {[0, top / 2, top].map((v) => (
+          <Fragment>
+            <line x1={M.l} x2={W - M.r} y1={y(v)} y2={y(v)} class={v ? "distgrid" : "distrule"} />
+            <text x={M.l - 6} y={y(v) + 3.5} text-anchor="end" class="disttick">
+              {v}%
+            </text>
+          </Fragment>
+        ))}
+        {bins.map((c, j) => {
+          const sh = shares[j] ?? 0;
+          if (!c || j < span.c0 || j > span.c1) return null;
+          return (
+            <rect
+              x={M.l + (j - span.c0) * cw + 1}
+              y={y(sh)}
+              width={Math.max(1, cw - 2)}
+              height={Math.max(1.5, (sh / top) * ph)}
+              rx="1.5"
+              class="ephistbar"
+            >
+              <title
+                set:html={esc(
+                  `${usLabel(binEdge(grid, j))}–${usLabel(binEdge(grid, j + 1))} · ` +
+                    `${c.toLocaleString()} requests (${sh < 0.1 ? "<0.1" : sh.toFixed(1)}%)`,
+                )}
+              />
+            </rect>
+          );
+        })}
+        {marks.map((m) => (
+          <Fragment>
+            <line x1={sc.x(m.v)} x2={sc.x(m.v)} y1={M.t} y2={M.t + ph} class="ephistmark" />
+            <text x={sc.x(m.v) + 4} y={M.t + 9} class="ephistmarklabel">
+              {m.name}
+            </text>
+          </Fragment>
+        ))}
+        {sc.decades.map((v) => (
+          <text x={sc.x(v)} y={H - 8} text-anchor="middle" class="disttick">
+            {usLabel(v)}
+          </text>
+        ))}
+      </svg>
+      <figcaption>
+        Share of this endpoint's {total.toLocaleString()} requests, by latency.
+      </figcaption>
+    </figure>
+  )
+}

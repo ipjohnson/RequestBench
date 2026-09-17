@@ -1,0 +1,125 @@
+---
+// One target's latency distribution at one rate: a row per endpoint, a column per latency bin.
+//
+// docs/measurement-v2.html is what the percentiles mean; this is the shape they were taken
+// from. A row is normalised against its own count, so a cell reads as "this share of what
+// this endpoint served", and rows with different counts stay comparable side by side.
+//
+// A view of one target. Two of these read against each other is worse than the ratio the
+// index already publishes, which is why it lives here and not on a comparison page.
+import { binEdge, scaleFor, usLabel, usedSpan } from "../lib/bins.js";
+import type { BinGrid, EndpointRecord } from "../lib/types.js";
+import { esc } from "../lib/html.js";
+
+type Props = {
+  grid: BinGrid;
+  /** Endpoint ids in the order the run lists them, already grouped by family. */
+  groups: [string, string[]][];
+  endpoints: Record<string, EndpointRecord>;
+  rn: string;
+  /** Hidden until its rate is the one picked. */
+  shown: boolean;
+};
+const { grid, groups, endpoints, rn, shown } = Astro.props as Props;
+
+const CW = 22;
+const RH = 15;
+
+const rows = groups.flatMap(([fam, eids], gi) =>
+  eids.map((eid, i) => ({
+    eid,
+    fam,
+    /** A family's first row carries the rule that separates it from the one above. */
+    first: i === 0 && gi > 0,
+    rung: endpoints[eid]?.rungs?.[rn],
+  })),
+);
+
+const span = usedSpan(endpoints, rows.map((r) => r.eid), rn);
+
+// The names sit where the tree's names sit, so switching tabs moves the grid in beside a
+// list that has not moved. 210 is the tree column's own minimum; a target whose longest id
+// needs more than that takes more. IBM Plex Mono is 0.6em to the advance.
+const LAB = Math.max(210, Math.ceil(Math.max(...rows.map((r) => r.eid.length)) * 11 * 0.6) + 20);
+
+const nc = span?.n ?? 0;
+const W = LAB + nc * CW + 14;
+const H = 30 + rows.length * RH + 6;
+const sc = span ? scaleFor(grid, span.c0, span.c1, LAB, nc * CW) : null;
+
+// Seven steps, so a reader can name a cell's band from the key rather than guess a shade.
+const STOPS = [0.5, 2, 5, 12, 25, 50];
+const step = (share: number): number => STOPS.findIndex((s) => share < s) + 1 || 7;
+---
+
+{
+  span && sc && (
+    <div class="dist" data-rung={rn} hidden={!shown}>
+      <div class="distscroll">
+        <svg
+          class="distsvg"
+          viewBox={`0 0 ${W} ${H}`}
+          width={W}
+          height={H}
+          role="img"
+          aria-label={`Latency distribution for ${rows.length} endpoints. Every value is on the endpoint's own pane.`}
+        >
+          {sc.decades.map((v) => (
+            <Fragment>
+              <line x1={sc.x(v)} x2={sc.x(v)} y1={24} y2={H - 6} class="distgrid" />
+              <text x={sc.x(v)} y={18} text-anchor="middle" class="disttick">
+                {usLabel(v)}
+              </text>
+            </Fragment>
+          ))}
+          {rows.map((r, i) => {
+            const y = 30 + i * RH;
+            const bins = r.rung?.bins ?? [];
+            const n = bins.reduce((a, b) => a + b, 0);
+            return (
+              <Fragment>
+                {r.first && <line x1={0} x2={W - 14} y1={y} y2={y} class="distrule" />}
+                <a href={`#${encodeURIComponent(r.eid)}`} class="distrow" data-ep={r.eid}>
+                  <rect x={0} y={y} width={W - 14} height={RH} class="disthit" />
+                  <rect x={0} y={y + 1} width={2} height={RH - 2} class="distrail" />
+                  <text x={2} y={y + RH / 2 + 3.5} class="distlabel">
+                    {r.eid}
+                  </text>
+                </a>
+                {bins.map((c, j) => {
+                  if (!c || j < span.c0 || j > span.c1) return null;
+                  const share = (100 * c) / n;
+                  const title =
+                    `${r.eid} · ${usLabel(binEdge(grid, j))}–${usLabel(binEdge(grid, j + 1))} · ` +
+                    `${c.toLocaleString()} of ${n.toLocaleString()} requests ` +
+                    `(${share < 0.1 ? "<0.1" : share.toFixed(1)}%)`;
+                  return (
+                    <rect
+                      x={LAB + (j - span.c0) * CW + 1}
+                      y={y + 1}
+                      width={CW - 2}
+                      height={RH - 2}
+                      rx="1"
+                      class={`distcell s${step(share)}`}
+                    >
+                      <title set:html={esc(title)} />
+                    </rect>
+                  );
+                })}
+              </Fragment>
+            );
+          })}
+        </svg>
+      </div>
+      <p class="distkey">
+        <span>Share of the endpoint's own requests</span>
+        <span class="distramp">
+          {[1, 2, 3, 4, 5, 6, 7].map((s) => (
+            <i class={`s${s}`} />
+          ))}
+        </span>
+        <span class="distscale">none · &lt;0.5% · 2 · 5 · 12 · 25 · &ge;50%</span>
+      </p>
+    </div>
+  )
+}

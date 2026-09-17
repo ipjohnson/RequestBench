@@ -5,12 +5,14 @@
 // rather than from the working tree, so a page about a run made in March shows the code that
 // ran in March.
 import Shell from "../../components/Shell.astro";
+import Distribution from "../../components/Distribution.astro";
 import EndpointPane from "../../components/EndpointPane.astro";
 import "../../styles/framework.css";
 import { permalink, type SnippetPart } from "../../lib/bundleview.js";
 import { deltaFor } from "../../lib/delta.js";
 import { md } from "../../lib/markdown.js";
 import { cell } from "../../lib/metrics.js";
+import { usedSpan } from "../../lib/bins.js";
 import { site, type FrameworkPage } from "../../lib/site.js";
 
 export function getStaticPaths() {
@@ -115,6 +117,25 @@ for (const eid of order) {
   else last[1].push(eid);
 }
 
+// A summary written before bins existed has none, and one whose target did not complete the
+// rate has no histogram to draw. Either way the page renders as it did before rather than an
+// empty grid, the same treatment a missing bundle_hash gets above.
+const grid = run.bin_grid;
+
+// Every rate the run recorded for this target, not just the one the page opens on. The
+// reader flips between them in the browser, so both are rendered and one is shown; fetching
+// on demand would be a second data path for a page that is already a static file.
+const rates = (run.rungs ?? [])
+  .map(String)
+  .filter((r) => t.rungs[r])
+  .map((r) => ({
+    rn: r,
+    label: `${(t.rungs[r]?.offered_rps ?? 0).toLocaleString()} rps`,
+    span: usedSpan(own, order, r),
+    shown: r === rn,
+  }));
+const hasBins = Boolean(grid) && rates.some((r) => r.span);
+
 const missing = order.filter((e) => !snips[e]);
 const note =
   Object.keys(snips).length && missing.length ? ` No handler located for ${missing.join(", ")}.` : "";
@@ -172,10 +193,53 @@ const linkFor = (eid: string): string | null => {
       <div class="panel">
         <h2>Endpoints</h2>
         <p class="hint">
-          {order.length} endpoints in {groups.length} families, on the {host} host at {rate} offered
-          rps.{note}
+          {order.length} endpoints in {groups.length} families, on the {host} host
+          {rates.length > 1 ? ", at the rate picked on the right" : ` at ${rate} offered rps`}.{note}
         </p>
-        <div class="explorer">
+        {hasBins && grid && (
+          <div class="eptabs">
+            <div role="tablist" aria-label="How to read these endpoints">
+              <button type="button" role="tab" id="tab-info" aria-controls="view-info" aria-selected="true">
+                Info
+              </button>
+              <button
+                type="button"
+                role="tab"
+                id="tab-dist"
+                aria-controls="view-dist"
+                aria-selected="false"
+              >
+                Distribution
+              </button>
+            </div>
+            {rates.length > 1 && (
+              <div class="eprates" role="group" aria-label="Offered rate">
+                {rates.map((r) => (
+                  <button
+                    type="button"
+                    class="eprate-pick"
+                    data-rung={r.rn}
+                    aria-pressed={r.shown}
+                  >
+                    {r.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+        {hasBins && grid && (
+          <div class="epdist" id="view-dist" role="tabpanel" aria-labelledby="tab-dist" hidden>
+            <p class="hint">
+              Where each endpoint's requests landed, as a share of what that endpoint served.
+              The percentiles on its pane are read from this same histogram. Pick a row to open it.
+            </p>
+            {rates.map((r) => (
+              <Distribution grid={grid} groups={groups} endpoints={own} rn={r.rn} shown={r.shown} />
+            ))}
+          </div>
+        )}
+        <div class="explorer" id="view-info" role="tabpanel" aria-labelledby="tab-info">
           <nav class="eptree">
             <ul>
               {groups.map(([fam, eids]) => (
@@ -191,9 +255,6 @@ const linkFor = (eid: string): string | null => {
                           aria-current={eid === order[0] ? "true" : undefined}
                         >
                           <span class="epid">{eid}</span>
-                          <span class="eproute">
-                            <span class="verb">{routes[eid]?.m ?? ""}</span> {routes[eid]?.p ?? ""}
-                          </span>
                         </a>
                       </li>
                     ))}
@@ -207,7 +268,14 @@ const linkFor = (eid: string): string | null => {
               <EndpointPane
                 eid={eid}
                 route={routes[eid]}
-                stats={own[eid]?.rungs?.[rn]}
+                rungs={rates.map((r) => ({
+                  rn: r.rn,
+                  stats: own[eid]?.rungs?.[r.rn],
+                  chain: deltaFor(t, eid, r.rn, routes, "p50_us"),
+                  span: r.span,
+                  shown: r.shown,
+                }))}
+                grid={grid}
                 snippet={snips[eid]}
                 also={alsoFor(eid)}
                 link={linkFor(eid)}
@@ -216,7 +284,6 @@ const linkFor = (eid: string): string | null => {
                 alsoWired={alsoWired(eid)}
                 mechanism={view?.mechanisms[eid.split(".")[0] ?? ""]}
                 exchange={exemplars[eid]}
-                chain={deltaFor(t, eid, rn, routes, "p50_us")}
                 factors={factors}
                 first={eid === order[0]}
               />

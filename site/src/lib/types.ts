@@ -32,6 +32,15 @@ export const Rung = z
   .passthrough();
 export type Rung = z.infer<typeof Rung>;
 
+/** The grid a summary counted its `bins` on. Recorded by the summary so the axis is
+ *  labelled from the data being drawn rather than from a constant agreed out of band. */
+export const BinGrid = z.object({
+  lo_us: z.number(),
+  per_decade: z.number(),
+  count: z.number(),
+});
+export type BinGrid = z.infer<typeof BinGrid>;
+
 /** One endpoint's statistics at one rung. The keys are narrower than a rung's. */
 export const EndpointRung = z
   .object({
@@ -43,6 +52,12 @@ export const EndpointRung = z
     p95_us: z.number().nullable().optional(),
     p99_us: z.number().nullable().optional(),
     p999_us: z.number().nullable().optional(),
+    /**
+     * The endpoint's latency histogram on the coarse grid harness/summarize.py re-bins to,
+     * counts per bin. Optional because every summary written before that change has none,
+     * and a run from March must still render.
+     */
+    bins: z.array(z.number()).optional(),
   })
   .passthrough();
 export type EndpointRung = z.infer<typeof EndpointRung>;
@@ -108,6 +123,7 @@ export const Run = z
     languages: z.array(z.string()).optional(),
     rungs: z.array(z.union([z.number(), z.string()])).default([]),
     endpoint_order: z.array(z.string()).optional(),
+    bin_grid: BinGrid.optional(),
     targets: z.array(Target).default([]),
   })
   .passthrough();
