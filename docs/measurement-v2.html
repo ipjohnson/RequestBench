@@ -351,7 +351,7 @@ fire((rnd() * eps.length) | 0, dueNs);</pre>
 
 <p>The driver must also not be the bottleneck at the raised rate. Its own capacity on two pinned cores needs measuring before 5,000 is fixed as a constant, and the same measurement gives the floor.</p>
 
-<p>Then the machine becomes part of the result and travels with it: CPU, core count, the two-core container budget, fixed clock with boost off, kernel and Docker versions. <code>site/build.py</code> currently tells the reader that runs happen on GitHub-hosted runners whose CPU varies between runs, which is the note this replaces. Worth stating too that the latency is target plus loopback and excludes the load balancer a reader will have in front of it.</p>
+<p>Then the machine becomes part of the result and travels with it: CPU, core count, the two-core container budget, fixed clock with boost off, kernel and Docker versions. <code>site/</code> currently tells the reader that runs happen on GitHub-hosted runners whose CPU varies between runs, which is the note this replaces. Worth stating too that the latency is target plus loopback and excludes the load balancer a reader will have in front of it.</p>
 
 <p>The cost of the reversal, so it is a decision and not a surprise: absolute numbers are stranded if the machine dies, where ratios were not. A replacement box has to be characterised against the one it replaces by running the same target images on both, which means keeping the old one alive long enough to do it. And the numbers are true for a two-core container on Zen 3 at a fixed clock; they say nothing about Graviton or about an eight-core task. That is a scope statement to publish, not a flaw to hide.</p>
 </section>

@@ -12,6 +12,9 @@ on:
     branches: [main]
     paths:
       - site/**
+      - package.json
+      - package-lock.json
+      - harness/siteview.py
       - .github/workflows/pages.yml
   workflow_dispatch:
 
@@ -44,14 +47,29 @@ jobs:
           ref: results
           path: _results
 
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: npm
+
+      # Both, because the seam runs one way: the site is TypeScript, and harness/siteview.py is
+      # what reads the bundle and locates the handlers in git history for the framework pages.
       - uses: actions/setup-python@v7
         with:
           python-version: "3.13"
 
+      - run: npm ci --no-audit --no-fund
+
+      - name: Check the site
+        run: |
+          npm run lint
+          npm run typecheck --workspace=@rb/site
+          npm test --workspace=@rb/site
+
       # Exemplars come from main beside the targets; summaries come from the data branch.
       - name: Build the site
         run: |
-          python3 site/build.py \
+          node site/tools/build.js \
             --summaries _results/summary \
             --exemplars results/exemplars \
             --out site/dist

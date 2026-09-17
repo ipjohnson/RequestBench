@@ -377,7 +377,7 @@ footer { margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--rule);
 <tr><td class="m">spec/matrix.json</td><td>Bundle roots per target, where the convention does not cover it, and the per-feature mechanism declarations <code>docs/blend-v2.html</code> already calls for.</td></tr>
 <tr><td class="m">targets/&lt;lang&gt;/&lt;target&gt;/README.md</td><td>New, one per target. Nineteen to write now, forty-three eventually. The largest piece of work here and the only part that is not mechanical.</td></tr>
 <tr><td class="m">site/logos/</td><td>New. One normalised mark per target plus <code>index.json</code> recording each one's source, terms and fetch date. Outside the bundle on purpose.</td></tr>
-<tr><td class="m">site/build.py</td><td>Framework pages, endpoint comparison pages, feature comparison pages. Resolves file content from git at the recorded commit and verifies it against the manifest. Renders the monogram fallback where no mark is vendored.</td></tr>
+<tr><td class="m">site/</td><td>Framework pages, endpoint comparison pages, feature comparison pages, rendered by <code>site/src/pages/f/[slug].astro</code>. <code>harness/siteview.py</code> resolves file content from git at the recorded commit and the page verifies it against the manifest. Renders the monogram fallback where no mark is vendored.</td></tr>
 <tr><td class="m">.github/workflows/validate.yml</td><td>Coverage gate, the same shape as the conformance matrix: every target resolves a snippet for every endpoint it implements, every snippet contains its own path, every target has a README, every declared feature dependency exists in that target's manifest, and every target resolves a logo or a declared reason it has none.</td></tr>
 </tbody>
 </table>

@@ -1,8 +1,8 @@
 # Keep the measured framework versions current.
 #
 # Framework version is a measured variable here, not maintenance. Every target serves
-# /__meta, every result row carries the version, and site/build.py draws a ring on the
-# trend chart when it changes. This job is what produces those rings.
+# /__meta, every result row carries the version, and the site's time chart draws a ring when
+# it changes. This job is what produces those rings.
 #
 # Scope is patch and minor, deliberately. express is "^5.1.0" and gofiber/fiber/v3 cannot
 # reach v4 without a module path change, and -DallowMajorUpdates=false holds Java to the

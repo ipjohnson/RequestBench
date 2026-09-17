@@ -1,0 +1,80 @@
+/* The palette, light then dark.
+
+   The dark block is written twice on purpose: once behind prefers-color-scheme for a reader
+   who set nothing, and once behind [data-theme] so an explicit choice wins in both
+   directions. A token defined only inside a media query has no light value to fall back to.
+
+   --s0..--s5 are the categorical set the charts and the language chips read. Both orders
+   clear the validator's CVD, chroma and contrast checks on their own surface, which is why
+   they are a fixed list rather than a hue rotation. src/lib/series.ts holds the same six for
+   the browser, which needs them as values rather than as custom properties. */
+
+:root {
+  --ground: #F4F5F2;
+  --surface: #FCFCFB;
+  --surface2: #EDEFEA;
+  --ink: #121917;
+  --ink2: #58655F;
+  --ink3: #66716A;
+  --rule: #DCE0DB;
+  --rule2: #C3C9C2;
+  --teal: #00836E;
+  --tealtext: #00705E;
+  --amber: #A6670C;
+  --tealsoft: #DCEBE6;
+  --onfill: #FFFFFF;
+  --bar: #DCEBE6;
+  --s0: #00836E;
+  --s1: #B5651D;
+  --s2: #3F6FB0;
+  --s3: #A03E5C;
+  --s4: #6B8E23;
+  --s5: #7D5BA6;
+  --f-display: "Newsreader", Georgia, serif;
+  --f-body: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --ground: #121513;
+  --surface: #1A1E1B;
+  --surface2: #232823;
+  --ink: #E8ECE7;
+  --ink2: #9AA59E;
+  --ink3: #949E98;
+  --rule: #2A302C;
+  --rule2: #3A423C;
+  --teal: #35AD97;
+  --tealtext: #35AD97;
+  --amber: #DDA03C;
+  --tealsoft: #17302B;
+  --onfill: #101614;
+  --bar: #1D3B34;
+  --s0: #2E9B85;
+  --s1: #C77A2A;
+  --s2: #5A85C4;
+  --s3: #C05A78;
+  --s4: #7FA03A;
+  --s5: #9478BE;
+} }
+:root[data-theme="dark"] {
+  --ground: #121513;
+  --surface: #1A1E1B;
+  --surface2: #232823;
+  --ink: #E8ECE7;
+  --ink2: #9AA59E;
+  --ink3: #949E98;
+  --rule: #2A302C;
+  --rule2: #3A423C;
+  --teal: #35AD97;
+  --tealtext: #35AD97;
+  --amber: #DDA03C;
+  --tealsoft: #17302B;
+  --onfill: #101614;
+  --bar: #1D3B34;
+  --s0: #2E9B85;
+  --s1: #C77A2A;
+  --s2: #5A85C4;
+  --s3: #C05A78;
+  --s4: #7FA03A;
+  --s5: #9478BE;
+}

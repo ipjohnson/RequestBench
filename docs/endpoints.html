@@ -365,8 +365,8 @@ footer { margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--rule);
       …                    <i>8 files</i>
 
 <b>site/</b>
-  build.py                 <i>unchanged entry point; gains --endpoint-docs</i>
-  endpoints.py             <i>new. renders the index and the 40 detail pages</i>
+  tools/build.js           <i>unchanged entry point; gains --endpoint-docs</i>
+  src/pages/endpoints/     <i>new. renders the index and the 40 detail pages</i>
   <b>dist/</b>
     index.html             <i>the results table, unchanged</i>
     <b>endpoints/</b>
@@ -390,8 +390,8 @@ footer { margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--rule);
 <ol class="steps">
 <li><h3>Settle the open questions</h3><p>Everything marked undecided above. Cheapest to change now, most expensive once forty pages describe it.</p></li>
 <li><h3>Write <code>site/endpoints.py</code></h3><p>Reads <code>spec/endpoints.json</code> for structure, <code>spec/endpoints/*.md</code> for prose, one exemplar for wire bytes. Emits the index and the detail pages.</p></li>
-<li><h3>Wire it into <code>build.py</code></h3><p>Pass the docs directory through <code>main()</code> and call the renderer. The <code>--out</code> tree gains one subdirectory.</p></li>
-<li><h3>Link from the results table</h3><p>At endpoint granularity the detail cell at <code>site/build.py:568</code> renders the id as text. It becomes an anchor to <code>endpoints/&lt;id&gt;.html</code>.</p></li>
+<li><h3>Wire it into the site build</h3><p>Pass the docs directory through <code>site/tools/build.js</code> and add the route. The <code>--out</code> tree gains one subdirectory.</p></li>
+<li><h3>Link from the results table</h3><p>At endpoint granularity the detail cell the explorer writes in <code>site/src/client/explorer.ts</code> renders the id as text. It becomes an anchor to <code>endpoints/&lt;id&gt;.html</code>.</p></li>
 <li><h3>Add the parity check</h3><p>A validate job that fails when an id has no markdown file or a markdown file names an id that does not exist, matching how the spec drift check already works.</p></li>
 <li><h3>Write the eight family files</h3><p>Highest-value prose in the set, because this is where "must do" and "must not do" get stated before another language lands.</p></li>
 <li><h3>Write the forty endpoint files</h3><p>The bulk of the work, and mechanical once the families set the rules.</p></li>
