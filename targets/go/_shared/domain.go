@@ -690,46 +690,20 @@ func BindEcho(body any) BindResult {
 	return BindResult{Fields: LeafCount(body), Bytes: len(b), Echo: body}
 }
 
-// The query arms have to echo the coerced values or the parse can be skipped and the
-// endpoint measures nothing.
-type QueryOne struct {
-	Page int `json:"page"`
-}
-type QueryMany struct {
-	Page     int    `json:"page"`
-	Size     int    `json:"size"`
-	Status   string `json:"status"`
-	Category string `json:"category"`
-	Sort     string `json:"sort"`
-	Q        string `json:"q"`
-	MinPrice int    `json:"min_price"`
-	MaxPrice int    `json:"max_price"`
-}
-
-func CoerceOne(q map[string][]string) QueryOne { return QueryOne{Page: qint(q, "page")} }
-
-func CoerceMany(q map[string][]string) QueryMany {
-	return QueryMany{
-		Page: qint(q, "page"), Size: qint(q, "size"),
-		Status: qstr(q, "status"), Category: qstr(q, "category"),
-		Sort: qstr(q, "sort"), Q: qstr(q, "q"),
-		MinPrice: qint(q, "min_price"), MaxPrice: qint(q, "max_price"),
-	}
-}
-
 // DomainFilter, DomainJoin and DomainAggregate do the work the spec pins. Conformance
 // compares bytes, and a precomputed page produces the same bytes as a computed one, so
 // this is the one family where two conforming implementations can do wildly different
 // amounts of work. The predicate runs over the live list on every request, the join walks
 // the lines, and the aggregate folds every matching order. No index, no memoization.
-func DomainFilter(q map[string][]string) OrdersPage {
-	page := max(0, qint(q, "page"))
-	size := qint(q, "size")
+//
+// The page, the size and the status arrive already bound, because binding them is the
+// framework's own job and lives in the target.
+func DomainFilter(page, size int, status string) OrdersPage {
+	page = max(0, page)
 	if size == 0 {
 		size = 25
 	}
 	size = min(100, max(1, size))
-	status := qstr(q, "status")
 	rows := make([]*Order, 0, len(Orders))
 	for i := range Orders {
 		if Orders[i].Status == status {

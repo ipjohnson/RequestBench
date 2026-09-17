@@ -8,7 +8,11 @@ import (
 
 func registerDomain(e *echo.Echo) {
 	e.GET("/domain/orders", func(c echo.Context) error {
-		return c.JSON(200, d.DomainFilter(c.QueryParams()))
+		var f orderFilter
+		if !bindQuery(c, &f) {
+			return nil
+		}
+		return c.JSON(200, d.DomainFilter(f.Page, f.Size, f.Status))
 	})
 
 	e.POST("/domain/orders", func(c echo.Context) error {

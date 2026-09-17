@@ -8,7 +8,11 @@ import (
 
 func registerDomain(app *fiber.App) {
 	app.Get("/domain/orders", func(c fiber.Ctx) error {
-		return c.JSON(d.DomainFilter(query(c)))
+		var f orderFilter
+		if !bindQuery(c, &f) {
+			return nil
+		}
+		return c.JSON(d.DomainFilter(f.Page, f.Size, f.Status))
 	})
 
 	app.Post("/domain/orders", func(c fiber.Ctx) error {

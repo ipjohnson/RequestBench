@@ -11,7 +11,8 @@ import (
 func registerDomain(r *mux.Router) {
  // rb:snippet domain.filter
 	r.HandleFunc("/domain/orders", func(w http.ResponseWriter, req *http.Request) {
-		writeJSON(w, 200, d.DomainFilter(req.URL.Query()))
+		q := req.URL.Query()
+		writeJSON(w, 200, d.DomainFilter(qint(q, "page"), qint(q, "size"), qstr(q, "status")))
 	}).Methods("GET")
 
  // rb:snippet domain.create
