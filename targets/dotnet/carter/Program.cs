@@ -12,6 +12,9 @@ using RequestBench.Hosts;
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddRequestBenchDomain();
+// The template family renders a Razor component, which is what ASP.NET Core ships for
+// server-side HTML. Nothing else here needs it.
+builder.Services.AddRazorComponents();
 builder.Services.AddCarter();
 // Carter 10 ships no validation, so the validator is registered here and injected into the
 // routes that need it. One validator, declared once in OrderBodyValidator.

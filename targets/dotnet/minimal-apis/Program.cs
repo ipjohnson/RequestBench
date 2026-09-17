@@ -14,6 +14,9 @@ WebApplicationBuilder builder = WebApplication.CreateSlimBuilder(args);
 // has nothing to call. The fixture is read here, before the host is built, so a target that
 // cannot read it fails at startup rather than on the first request.
 builder.Services.AddRequestBenchDomain();
+// The template family renders a Razor component, which is what ASP.NET Core ships for
+// server-side HTML. Nothing else here needs it.
+builder.Services.AddRazorComponents();
 // Minimal APIs' own validation, new in .NET 10: this makes the framework check the
 // DataAnnotations on a parameter's type before the handler runs and answer a
 // ValidationProblem itself when they fail. Without it the attributes are inert and no

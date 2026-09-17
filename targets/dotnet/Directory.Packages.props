@@ -27,7 +27,5 @@
          Already resolved transitively by Carter and FastEndpoints; pinned here so all three
          run the same version and a difference between them is the framework. -->
     <PackageVersion Include="FluentValidation" Version="12.1.1" />
-    <!-- One template engine for all six, pinned for the same reason the gzip level is. -->
-    <PackageVersion Include="Scriban" Version="7.4.0" />
   </ItemGroup>
 </Project>

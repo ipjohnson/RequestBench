@@ -10,6 +10,9 @@ using Wolverine.Http.FluentValidation;
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddRequestBenchDomain();
+// The template family renders a Razor component, which is what ASP.NET Core ships for
+// server-side HTML. Nothing else here needs it.
+builder.Services.AddRazorComponents();
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
     options.SerializerOptions.PropertyNamingPolicy = Json.Options.PropertyNamingPolicy;

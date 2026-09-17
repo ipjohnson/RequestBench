@@ -37,17 +37,29 @@ public static class HostInfo
     public static string Version(Type typeFromAssembly) => Version(typeFromAssembly.Assembly);
 
     /// <summary>
+    /// <summary>
+    /// The Razor version the five targets that render with it report. Resolved by assembly
+    /// name rather than by referencing a component type, because this project is a plain
+    /// library and referencing one would make it a web project.
+    /// </summary>
+    public static string Razor =>
+        "razor " + (AppDomain.CurrentDomain.GetAssemblies()
+            .FirstOrDefault(a => a.GetName().Name == "Microsoft.AspNetCore.Components")
+            ?.GetName().Version?.ToString(3) ?? "");
+
     /// What a target answers on /__meta. Outside the blend spec on purpose: it is not
     /// measured and not checked against spec/expected.json, it exists so a point on the
     /// results chart can be attributed to a framework version rather than to a different
     /// runner.
     ///
     /// adapter is empty under the container contract, where the framework serves its own
-    /// requests. template is the engine the template family renders with, which every .NET
-    /// target shares for the same reason the gzip level is pinned.
+    /// requests. template is the engine this target renders the template family with. Each
+    /// target passes its own, because each reaches an engine through its own framework's
+    /// view facility.
     /// </summary>
     public static IReadOnlyDictionary<string, string> Meta(
-        string framework, string version, string serializer = "System.Text.Json") =>
+        string framework, string version, string template,
+        string serializer = "System.Text.Json") =>
         new Dictionary<string, string>
         {
             ["framework"] = framework,
@@ -55,6 +67,6 @@ public static class HostInfo
             ["runtime"] = RuntimeInformation.FrameworkDescription,
             ["adapter"] = "",
             ["serializer"] = serializer,
-            ["template"] = "scriban " + Version(typeof(Scriban.Template)),
+            ["template"] = template,
         };
 }

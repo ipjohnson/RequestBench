@@ -1,23 +1,24 @@
 using Microsoft.AspNetCore.Mvc;
 using RequestBench.Domain;
-using RequestBench.Hosts;
 
 namespace RequestBench.AspNetMvc.Controllers;
 
 /// <summary>
 /// template: server-side rendering of the same model the json family serializes.
 ///
-/// The engine is scriban, shared with every other .NET target and named on /__meta. MVC's
-/// own view engine is Razor, and the engine is pinned for the same reason the gzip level is.
+/// MVC's own view engine, which is Razor: the action returns a view name and a model and
+/// the view engine finds Views/Template/Items.cshtml. The Web SDK compiles the view into
+/// the assembly at build, so nothing is parsed per request and a precomputed string would
+/// measure nothing.
+///
+/// This derives from Controller rather than ControllerBase, which is what carries View(),
+/// and it is not an [ApiController]: that attribute is for the JSON families.
 /// </summary>
-[ApiController]
-public sealed class TemplateController(DomainModel domain) : ControllerBase
+public sealed class TemplateController(DomainModel domain) : Controller
 {
     [HttpGet("/template/small")]
-    public ContentResult Small() =>
-        Content(Views.RenderItems(domain.Payload("small")), "text/html");
+    public IActionResult Small() => View("Items", domain.Payload("small"));
 
     [HttpGet("/template/medium")]
-    public ContentResult Medium() =>
-        Content(Views.RenderItems(domain.Payload("medium")), "text/html");
+    public IActionResult Medium() => View("Items", domain.Payload("medium"));
 }

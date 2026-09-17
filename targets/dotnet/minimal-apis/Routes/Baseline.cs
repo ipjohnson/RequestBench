@@ -12,6 +12,6 @@ public static class Baseline
         app.MapGet("/health", () => Results.Text("ok"));
 
         app.MapGet("/__meta", () => HostInfo.Meta(
-            "minimal-apis", HostInfo.Version(typeof(WebApplication))));
+            "minimal-apis", HostInfo.Version(typeof(WebApplication)), HostInfo.Razor));
     }
 }

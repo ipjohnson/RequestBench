@@ -28,7 +28,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 14:36:51 GMT"
+      "Thu, 17 Sep 2026 16:56:24 GMT"
      ],
      [
       "Server",
@@ -61,7 +61,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 14:36:51 GMT"
+      "Thu, 17 Sep 2026 16:56:24 GMT"
      ],
      [
       "Server",
@@ -98,7 +98,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 14:36:51 GMT"
+      "Thu, 17 Sep 2026 16:56:24 GMT"
      ],
      [
       "Server",
@@ -135,7 +135,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 14:36:51 GMT"
+      "Thu, 17 Sep 2026 16:56:24 GMT"
      ],
      [
       "Server",
@@ -172,7 +172,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 14:36:52 GMT"
+      "Thu, 17 Sep 2026 16:56:25 GMT"
      ],
      [
       "Server",
@@ -209,7 +209,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 14:36:52 GMT"
+      "Thu, 17 Sep 2026 16:56:25 GMT"
      ],
      [
       "Server",
@@ -246,7 +246,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 14:36:52 GMT"
+      "Thu, 17 Sep 2026 16:56:25 GMT"
      ],
      [
       "Server",
@@ -288,7 +288,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 14:36:52 GMT"
+      "Thu, 17 Sep 2026 16:56:25 GMT"
      ],
      [
       "Server",
@@ -330,7 +330,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 14:36:52 GMT"
+      "Thu, 17 Sep 2026 16:56:25 GMT"
      ],
      [
       "Server",
@@ -380,7 +380,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 14:36:53 GMT"
+      "Thu, 17 Sep 2026 16:56:25 GMT"
      ],
      [
       "Server",
@@ -430,7 +430,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 14:36:53 GMT"
+      "Thu, 17 Sep 2026 16:56:25 GMT"
      ],
      [
       "Server",
@@ -480,7 +480,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 14:36:53 GMT"
+      "Thu, 17 Sep 2026 16:56:26 GMT"
      ],
      [
       "Server",
@@ -530,7 +530,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 14:36:54 GMT"
+      "Thu, 17 Sep 2026 16:56:26 GMT"
      ],
      [
       "Server",
@@ -580,7 +580,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 14:36:54 GMT"
+      "Thu, 17 Sep 2026 16:56:26 GMT"
      ],
      [
       "Server",
@@ -638,7 +638,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 14:36:54 GMT"
+      "Thu, 17 Sep 2026 16:56:26 GMT"
      ],
      [
       "Server",
@@ -683,7 +683,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 14:36:55 GMT"
+      "Thu, 17 Sep 2026 16:56:27 GMT"
      ],
      [
       "Server",
@@ -732,7 +732,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 14:36:55 GMT"
+      "Thu, 17 Sep 2026 16:56:27 GMT"
      ],
      [
       "Server",
@@ -781,7 +781,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 14:36:55 GMT"
+      "Thu, 17 Sep 2026 16:56:28 GMT"
      ],
      [
       "Server",
@@ -831,7 +831,7 @@
     "headers": [
      [
       "Date",
-      "Thu, 17 Sep 2026 14:36:55 GMT"
+      "Thu, 17 Sep 2026 16:56:28 GMT"
      ],
      [
       "Server",
@@ -881,7 +881,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 14:36:55 GMT"
+      "Thu, 17 Sep 2026 16:56:28 GMT"
      ],
      [
       "Server",
@@ -923,7 +923,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 14:36:55 GMT"
+      "Thu, 17 Sep 2026 16:56:28 GMT"
      ],
      [
       "Server",
@@ -965,7 +965,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 14:36:56 GMT"
+      "Thu, 17 Sep 2026 16:56:29 GMT"
      ],
      [
       "Server",
@@ -1007,7 +1007,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 14:36:56 GMT"
+      "Thu, 17 Sep 2026 16:56:29 GMT"
      ],
      [
       "Server",
@@ -1049,7 +1049,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 14:36:56 GMT"
+      "Thu, 17 Sep 2026 16:56:29 GMT"
      ],
      [
       "Server",
@@ -1063,7 +1063,7 @@
     "header_bytes": 137,
     "framing": "chunked",
     "body_bytes": 365,
-    "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.1\",\"title\":\"One or more validation errors occurred.\",\"status\":400,\"errors\":{\"body\":[\"The body field is required.\"],\"$.customer_id\":[\"The JSON value could not be converted to System.Nullable`1[System.Int32]. Path: $.customer_id | LineNumber: 0 | BytePositionInLine: 27.\"]},\"traceId\":\"0HNOKP4ED1917:00002E02\"}",
+    "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.1\",\"title\":\"One or more validation errors occurred.\",\"status\":400,\"errors\":{\"body\":[\"The body field is required.\"],\"$.customer_id\":[\"The JSON value could not be converted to System.Nullable`1[System.Int32]. Path: $.customer_id | LineNumber: 0 | BytePositionInLine: 27.\"]},\"traceId\":\"0HNOKRIDNN3NB:00002E02\"}",
     "truncated": false
    }
   },
@@ -1091,7 +1091,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 14:36:57 GMT"
+      "Thu, 17 Sep 2026 16:56:29 GMT"
      ],
      [
       "Server",
@@ -1105,7 +1105,7 @@
     "header_bytes": 137,
     "framing": "chunked",
     "body_bytes": 365,
-    "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.1\",\"title\":\"One or more validation errors occurred.\",\"status\":400,\"errors\":{\"body\":[\"The body field is required.\"],\"$.customer_id\":[\"The JSON value could not be converted to System.Nullable`1[System.Int32]. Path: $.customer_id | LineNumber: 0 | BytePositionInLine: 27.\"]},\"traceId\":\"0HNOKP4ED1917:00003002\"}",
+    "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.1\",\"title\":\"One or more validation errors occurred.\",\"status\":400,\"errors\":{\"body\":[\"The body field is required.\"],\"$.customer_id\":[\"The JSON value could not be converted to System.Nullable`1[System.Int32]. Path: $.customer_id | LineNumber: 0 | BytePositionInLine: 27.\"]},\"traceId\":\"0HNOKRIDNN3NB:00003002\"}",
     "truncated": false
    }
   },
@@ -1128,7 +1128,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 14:36:57 GMT"
+      "Thu, 17 Sep 2026 16:56:30 GMT"
      ],
      [
       "Server",
@@ -1165,7 +1165,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 14:36:57 GMT"
+      "Thu, 17 Sep 2026 16:56:30 GMT"
      ],
      [
       "Server",
@@ -1202,7 +1202,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 14:36:57 GMT"
+      "Thu, 17 Sep 2026 16:56:30 GMT"
      ],
      [
       "Server",
@@ -1348,7 +1348,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 14:36:57 GMT"
+      "Thu, 17 Sep 2026 16:56:30 GMT"
      ],
      [
       "Server",
@@ -1385,7 +1385,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 14:36:57 GMT"
+      "Thu, 17 Sep 2026 16:56:30 GMT"
      ],
      [
       "Server",
@@ -1422,7 +1422,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 14:36:57 GMT"
+      "Thu, 17 Sep 2026 16:56:30 GMT"
      ],
      [
       "Server",
@@ -1459,7 +1459,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 14:36:57 GMT"
+      "Thu, 17 Sep 2026 16:56:30 GMT"
      ],
      [
       "Server",
@@ -1496,7 +1496,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 14:36:57 GMT"
+      "Thu, 17 Sep 2026 16:56:30 GMT"
      ],
      [
       "Server",
@@ -1533,7 +1533,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 14:36:58 GMT"
+      "Thu, 17 Sep 2026 16:56:30 GMT"
      ],
      [
       "Server",
@@ -1570,7 +1570,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 14:36:58 GMT"
+      "Thu, 17 Sep 2026 16:56:30 GMT"
      ],
      [
       "Server",
@@ -1607,7 +1607,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 14:36:58 GMT"
+      "Thu, 17 Sep 2026 16:56:31 GMT"
      ],
      [
       "Server",
@@ -1649,7 +1649,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 14:36:58 GMT"
+      "Thu, 17 Sep 2026 16:56:31 GMT"
      ],
      [
       "Server",
@@ -1695,7 +1695,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 14:36:58 GMT"
+      "Thu, 17 Sep 2026 16:56:31 GMT"
      ],
      [
       "Server",
@@ -1737,7 +1737,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 14:36:58 GMT"
+      "Thu, 17 Sep 2026 16:56:31 GMT"
      ],
      [
       "Server",
@@ -1770,7 +1770,7 @@
     "headers": [
      [
       "Date",
-      "Thu, 17 Sep 2026 14:36:58 GMT"
+      "Thu, 17 Sep 2026 16:56:31 GMT"
      ],
      [
       "Server",
@@ -1803,7 +1803,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 14:36:58 GMT"
+      "Thu, 17 Sep 2026 16:56:31 GMT"
      ],
      [
       "Server",
@@ -1852,7 +1852,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 14:36:58 GMT"
+      "Thu, 17 Sep 2026 16:56:31 GMT"
      ],
      [
       "Server",
@@ -1894,7 +1894,7 @@
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 14:36:59 GMT"
+      "Thu, 17 Sep 2026 16:56:31 GMT"
      ],
      [
       "Server",
@@ -1908,7 +1908,7 @@
     "header_bytes": 137,
     "framing": "chunked",
     "body_bytes": 404,
-    "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.1\",\"title\":\"One or more validation errors occurred.\",\"status\":400,\"errors\":{\"body\":[\"The body field is required.\"],\"$.lines[0]\":[\"Expected depth to be zero at the end of the JSON payload. There is an open JSON object or array that should be closed. Path: $.lines[0] | LineNumber: 0 | BytePositionInLine: 29.\"]},\"traceId\":\"0HNOKP4ED1917:00005402\"}",
+    "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.1\",\"title\":\"One or more validation errors occurred.\",\"status\":400,\"errors\":{\"body\":[\"The body field is required.\"],\"$.lines[0]\":[\"Expected depth to be zero at the end of the JSON payload. There is an open JSON object or array that should be closed. Path: $.lines[0] | LineNumber: 0 | BytePositionInLine: 29.\"]},\"traceId\":\"0HNOKRIDNN3NB:00005402\"}",
     "truncated": false
    }
   },
@@ -1926,26 +1926,26 @@
     "status": 200,
     "headers": [
      [
-      "Content-Length",
-      "530"
-     ],
-     [
       "Content-Type",
-      "text/html"
+      "text/html; charset=utf-8"
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 14:36:59 GMT"
+      "Thu, 17 Sep 2026 16:56:31 GMT"
      ],
      [
       "Server",
       "Kestrel"
+     ],
+     [
+      "Transfer-Encoding",
+      "chunked"
      ]
     ],
-    "header_bytes": 100,
-    "framing": "content-length",
-    "body_bytes": 530,
-    "body": "<!doctype html>\n<html>\n  <head><title>items</title></head>\n  <body>\n    <h1>small</h1>\n    <table>\n      <thead>\n        <tr><th>id</th><th>name</th><th>category</th><th>price</th><th>stock</th></tr>\n      </thead>\n      <tbody>\n        \n                <tr>\n                  <td>1</td>\n                  <td>slate-lamp-6647</td>\n                  <td>tools</td>\n                  <td>18928</td>\n                  <td>yes</td>\n                </tr>\n                \n      </tbody>\n    </table>\n    <p>1 rows</p>\n  </body>\n</html>",
+    "header_bytes": 122,
+    "framing": "chunked",
+    "body_bytes": 449,
+    "body": "<!doctype html>\n<html>\n  <head><title>items</title></head>\n  <body>\n    <h1>small</h1>\n    <table>\n      <thead>\n        <tr><th>id</th><th>name</th><th>category</th><th>price</th><th>stock</th></tr>\n      </thead>\n      <tbody>\n        <tr>\n          <td>1</td>\n          <td>slate-lamp-6647</td>\n          <td>tools</td>\n          <td>18928</td>\n          <td>yes</td>\n        </tr>\n      </tbody>\n    </table>\n    <p>1 rows</p>\n  </body>\n</html>\n",
     "truncated": false
    }
   },
@@ -1963,26 +1963,26 @@
     "status": 200,
     "headers": [
      [
-      "Content-Length",
-      "20826"
-     ],
-     [
       "Content-Type",
-      "text/html"
+      "text/html; charset=utf-8"
      ],
      [
       "Date",
-      "Thu, 17 Sep 2026 14:36:59 GMT"
+      "Thu, 17 Sep 2026 16:56:31 GMT"
      ],
      [
       "Server",
       "Kestrel"
+     ],
+     [
+      "Transfer-Encoding",
+      "chunked"
      ]
     ],
-    "header_bytes": 102,
-    "framing": "content-length",
-    "body_bytes": 20826,
-    "body": "<!doctype html>\n<html>\n  <head><title>items</title></head>\n  <body>\n    <h1>medium</h1>\n    <table>\n      <thead>\n        <tr><th>id</th><th>name</th><th>category</th><th>price</th><th>stock</th></tr>\n      </thead>\n      <tbody>\n        \n                <tr>\n                  <td>1</td>\n                  <td>slate-lamp-6647</td>\n                  <td>tools</td>\n                  <td>18928</td>\n                  <td>yes</td>\n                </tr>\n                \n                <tr>\n                  <td>2</td>\n                  <td>brass-hinge-5716</td>\n                  <td>garden</td>\n                  <td>17577</td>\n                  <td>yes</td>\n                </tr>\n                \n                <tr>\n                  <td>3</td>\n                  <td>linen-ring-6971</td>\n                  <td>kitchen</td>\n                  <td>5540</td>\n                  <td>yes</td>\n                </tr>\n                \n                <tr>\n                  <td>4</td>\n                  <td>copper-bolt-9217</td>\n                  <td>outdoor</td>\n                  <td>11562</td>\n                  <td>yes</td>\n                </tr>\n                \n                <tr>\n                  <td>5</td>\n                  <td>linen-lamp-8288</td>\n                  <td>office</td>\n                  <td>1413</td>\n                  <td>yes</td>\n                </tr>\n                \n                <tr>\n                  <td>6</td>\n                  <td>copper-pan-9308</td>\n                  <td>tools</td>\n                  <td>10795</td>\n                  <td>yes</td>\n                </tr>\n                \n                <tr>\n                  <td>7</td>\n                  <td>slate-seed-3051</td>\n                  <td>garden</td>\n                  <td>9667</td>\n                  <td>no</td>\n                </tr>\n                \n                <tr>\n                  <td>8</td>\n                  <td>oak-lamp-8662</td>\n                  <td>kitchen</td>\n                  <td>18032</td>\n                  <td>no</td>\n            ",
+    "header_bytes": 122,
+    "framing": "chunked",
+    "body_bytes": 14321,
+    "body": "<!doctype html>\n<html>\n  <head><title>items</title></head>\n  <body>\n    <h1>medium</h1>\n    <table>\n      <thead>\n        <tr><th>id</th><th>name</th><th>category</th><th>price</th><th>stock</th></tr>\n      </thead>\n      <tbody>\n        <tr>\n          <td>1</td>\n          <td>slate-lamp-6647</td>\n          <td>tools</td>\n          <td>18928</td>\n          <td>yes</td>\n        </tr>\n        <tr>\n          <td>2</td>\n          <td>brass-hinge-5716</td>\n          <td>garden</td>\n          <td>17577</td>\n          <td>yes</td>\n        </tr>\n        <tr>\n          <td>3</td>\n          <td>linen-ring-6971</td>\n          <td>kitchen</td>\n          <td>5540</td>\n          <td>yes</td>\n        </tr>\n        <tr>\n          <td>4</td>\n          <td>copper-bolt-9217</td>\n          <td>outdoor</td>\n          <td>11562</td>\n          <td>yes</td>\n        </tr>\n        <tr>\n          <td>5</td>\n          <td>linen-lamp-8288</td>\n          <td>office</td>\n          <td>1413</td>\n          <td>yes</td>\n        </tr>\n        <tr>\n          <td>6</td>\n          <td>copper-pan-9308</td>\n          <td>tools</td>\n          <td>10795</td>\n          <td>yes</td>\n        </tr>\n        <tr>\n          <td>7</td>\n          <td>slate-seed-3051</td>\n          <td>garden</td>\n          <td>9667</td>\n          <td>no</td>\n        </tr>\n        <tr>\n          <td>8</td>\n          <td>oak-lamp-8662</td>\n          <td>kitchen</td>\n          <td>18032</td>\n          <td>no</td>\n        </tr>\n        <tr>\n          <td>9</td>\n          <td>amber-hinge-8405</td>\n          <td>outdoor</td>\n          <td>9566</td>\n          <td>yes</td>\n        </tr>\n        <tr>\n          <td>10</td>\n          <td>linen-lamp-9676</td>\n          <td>office</td>\n          <td>4288</td>\n          <td>yes</td>\n        </tr>\n        <tr>\n          <td>11</td>\n          <td>brass-trowel-2042</td>\n          <td>tools</td>\n          <td>17701</td>\n          <td>no</td>\n        </tr>\n        <tr>\n          <td>12</td>\n          <td>linen-lamp-5542</td>\n          <td>garden</t",
     "truncated": true
    }
   }
