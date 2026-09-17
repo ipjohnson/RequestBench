@@ -37,6 +37,9 @@ settings.configure(
 django.setup()
 
 from django.http import HttpResponse, JsonResponse  # noqa: E402
+from django import forms  # noqa: E402
+from django.core.exceptions import ValidationError  # noqa: E402
+from django.core.validators import MinLengthValidator  # noqa: E402
 from django.urls import path  # noqa: E402
 from django.views import View  # noqa: E402
 from django.views.decorators.gzip import gzip_page  # noqa: E402
@@ -46,9 +49,82 @@ META = host.meta("django-asgi", dist="django", adapter="daphne")
 
 
 def body_of(request):
-    """Django does not parse a request body, so the domain does: it is the same parse, and
-    the same 422, in all six targets."""
+    """Django does not parse a request body, so the shared parse does. What happens to the
+    value afterwards is the form's."""
     return d.parse_body(request.body)
+
+# ---- validation: a django.forms.Form ------------------------------------------------
+#
+# Django's validation facility is forms. A Form declares its fields, and is_valid() runs
+# each field's own to_python and validate plus any clean_<field> the form adds, collecting
+# every error into form.errors. That is the framework doing the work rather than a walk in
+# the view.
+#
+# What a Form cannot express is the nested list: forms are flat, and `lines` is a list of
+# objects. So `lines` is a JSONField the form declares and clean_lines checks with
+# django.core.validators, which is still Django's facility rather than an if in the view.
+#
+# It lives here rather than in a sibling module because _hosts/container.py loads a target
+# by file path, and this directory is not a legal module name.
+
+
+class Refused(Exception):
+    """A body the form refused, and the fields it named."""
+
+    def __init__(self, errors):
+        super().__init__("validation failed")
+        self.errors = errors
+
+
+def refused_body(errors):
+    return {"error": "validation_failed", "errors": errors}
+
+
+def not_bound_body(detail):
+    return {"error": "invalid_body", "detail": detail}
+
+
+class OrderForm(forms.Form):
+    """The order body, as Django declares a body."""
+
+    customer_id = forms.IntegerField()
+    status = forms.CharField()
+    lines = forms.JSONField()
+
+    def clean_lines(self):
+        rows = self.cleaned_data["lines"]
+        if not isinstance(rows, list):
+            raise ValidationError("Enter a list.", code="invalid_list")
+        MinLengthValidator(1, message="Enter at least one line.")(rows)
+        for i, row in enumerate(rows):
+            row = row if isinstance(row, dict) else {}
+            if not isinstance(row.get("product_id"), int):
+                raise ValidationError("Line %(i)s: enter a whole number.",
+                                      code="invalid", params={"i": i})
+            qty = row.get("qty")
+            if not isinstance(qty, int) or qty < 1:
+                raise ValidationError("Line %(i)s: enter a number 1 or greater.",
+                                      code="min_value", params={"i": i})
+        return rows
+
+    def order(self):
+        """The order, once the form has said the body is one."""
+        return d.price_order(self.cleaned_data["customer_id"],
+                             self.cleaned_data["status"], self.cleaned_data["lines"])
+
+
+def validated(request):
+    """The order, or Refused carrying what the form put in form.errors.
+
+    Django reports its own codes -- required, invalid, min_value -- so nothing here
+    translates them into this repository's vocabulary.
+    """
+    form = OrderForm(body_of(request))
+    if form.is_valid():
+        return form.order()
+    raise Refused([{"field": field, "rule": e.code}
+                   for field, errs in form.errors.as_data().items() for e in errs])
+
 
 
 async def small(_):
@@ -62,7 +138,8 @@ async def small(_):
 
 FAILURES = {
     d.NotFound: lambda exc: JsonResponse(d.not_found_body(), status=404),
-    d.Invalid: lambda exc: JsonResponse(d.invalid_body(exc.errors), status=422),
+    Refused: lambda exc: JsonResponse(refused_body(exc.errors), status=422),
+    d.Malformed: lambda exc: JsonResponse(not_bound_body(exc.detail), status=400),
 }
 
 
@@ -223,12 +300,15 @@ async def bind(request):
 
 @require_POST
 async def validate_all(request):
-    return JsonResponse(d.validate_order(body_of(request)))
+    return JsonResponse(validated(request))
 
 
+# A Form collects every error and offers no way to stop at the first, so this row answers
+# what the form answers. The gap to body.rejected_all is what Django costs rather than the
+# same walk written twice.
 @require_POST
 async def validate_first(request):
-    return JsonResponse(d.validate_order(body_of(request), first_error=True))
+    return JsonResponse(validated(request))
 
 
 # ---- domain --------------------------------------------------------------------------
@@ -241,7 +321,7 @@ class Orders(View):
         return JsonResponse(d.domain_filter(request.GET))
 
     async def post(self, request):
-        out = d.validate_order(body_of(request))
+        out = validated(request)
         return JsonResponse(out, status=201,
                             headers={"location": d.created_location()})
 
@@ -252,7 +332,7 @@ class Order(View):
 
     async def put(self, request, oid):
         existing = d.get_order(oid)
-        return JsonResponse({"id": existing["id"], **d.validate_order(body_of(request))})
+        return JsonResponse({"id": existing["id"], **validated(request)})
 
 
 @require_GET
