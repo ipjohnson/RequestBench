@@ -49,6 +49,9 @@ func main() {
 	// The validator lives on the engine, so c.Validate is what runs it and no handler calls
 	// a validator directly. That slot is Echo's validation facility.
 	e.Validator = newValidator()
+	// The renderer lives on the engine too, so c.Render is what reaches the template and no
+	// handler calls a render function. That slot is Echo's view facility.
+	e.Renderer = newRenderer()
 	e.HideBanner = true
 	e.HidePort = true
 

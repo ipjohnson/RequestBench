@@ -23,8 +23,8 @@ var fiberVersion = func() string {
 	return ""
 }()
 
-// Built here rather than through _hosts.Meta: that package is net/http, and importing it
-// would pull an HTTP stack Fiber does not use into the binary.
+// Built here rather than through _hosts.Meta, which is net/http: Fiber serves on fasthttp
+// and shares none of that package's helpers.
 func meta() fiber.Map {
 	return fiber.Map{
 		"framework": "fiber",

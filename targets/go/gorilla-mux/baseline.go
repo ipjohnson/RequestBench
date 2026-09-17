@@ -40,6 +40,6 @@ func registerBaseline(r *mux.Router) {
 	}).Methods("GET")
 
 	r.HandleFunc("/__meta", func(w http.ResponseWriter, _ *http.Request) {
-		writeJSON(w, 200, hosts.Meta("gorilla-mux", muxVersion))
+		writeJSON(w, 200, hosts.Meta("gorilla-mux", muxVersion, "html/template"))
 	}).Methods("GET")
 }

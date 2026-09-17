@@ -59,15 +59,16 @@ func mod(path string) string {
 // adapter is there because a host adapter can move a target's numbers with the framework
 // version unchanged, and then nothing recorded explains the step. It is empty under
 // container, where the framework serves its own requests.
-func Meta(framework, version string) map[string]string {
+// tmpl is the engine the target renders the template family with. Each target passes its
+// own, because each reaches an engine through its own framework's view facility and two
+// targets in one language need not agree on which.
+func Meta(framework, version, tmpl string) map[string]string {
 	return map[string]string{
 		"framework": framework,
 		"version":   version,
 		"runtime":   runtime.Version(),
 		"adapter":   strings.Join(adapters, " + "),
-		// The engine the template family renders with, which every Go target shares for
-		// the same reason the gzip level is pinned.
-		"template": "html/template",
+		"template":  tmpl,
 	}
 }
 
