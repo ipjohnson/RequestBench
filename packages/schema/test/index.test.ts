@@ -1,8 +1,8 @@
 // The pieces every framework's contract is built from.
 import { describe, expect, test } from "vitest";
 import {
-  askIn, errorEnvelope, fieldErrorMap, pairFound, problemDetails, shapeOf,
-  sharedValidatorEnvelope, z, type Answer,
+  askIn, byStatus, declaredStatuses, errorEnvelope, fieldErrorMap, pairFound,
+  problemDetails, schemaAt, shapeOf, z, type Answer,
 } from "../src/index.js";
 
 const PAIRS = [["customer_id", "int"], ["status", "string"]] as const;
@@ -139,20 +139,51 @@ describe("problemDetails", () => {
   });
 });
 
-describe("sharedValidatorEnvelope", () => {
-  const pkg = sharedValidatorEnvelope("go:gin");
-
-  test("covers every error endpoint", () => {
-    expect(Object.keys(pkg.schemas).sort()).toEqual([
-      "authorized.denied", "body.rejected_all", "body.rejected_first",
-      "errors.malformed", "errors.not_found", "errors.unmatched",
-    ]);
+describe("byStatus", () => {
+  // Why the map exists: a framework's binder and its validator can fail at different layers,
+  // and the status is how it says which. axum answers 400 when the JSON will not parse and
+  // 422 when it parses but will not deserialize into T.
+  const syntax = z.object({ error: z.string() }).strict();
+  const data = z
+    .object({ error: z.string(), fields: z.record(z.string(), z.string()) })
+    .strict();
+  const declared = byStatus(askIn("rust:axum", "errors.malformed", [400, 422]), {
+    400: syntax,
+    422: { body: data, reports: [["customer_id", "invalid type"]] },
   });
 
-  test("the bare envelope does not accept the validation one, or the reverse", () => {
-    const denied = askIn("go:gin", "authorized.denied", [403]);
-    const bare = pkg.schemas["authorized.denied"]!(denied);
-    expect(bare.safeParse(answered({ error: "forbidden" }, { status: 403 })).success).toBe(true);
-    expect(bare.safeParse(answered({ error: "x", errors: [] }, { status: 403 })).success).toBe(false);
+  test("the key is the status, so a branch never restates its own", () => {
+    expect(declaredStatuses(declared)).toEqual([400, 422]);
+    expect(schemaAt(declared, 400)!.safeParse(
+      answered({ error: "expected value at line 1" }, { status: 400 }),
+    ).success).toBe(true);
+  });
+
+  test("each status is judged by its own envelope, not the other's", () => {
+    expect(schemaAt(declared, 400)!.safeParse(
+      answered({ error: "x", fields: { customer_id: "invalid type" } }, { status: 400 }),
+    ).success).toBe(false);
+    expect(schemaAt(declared, 422)!.safeParse(
+      answered({ error: "x" }, { status: 422 }),
+    ).success).toBe(false);
+  });
+
+  test("a branch carries its own field errors, because a parse failure names none", () => {
+    expect(schemaAt(declared, 422)!.safeParse(
+      answered({ error: "x", fields: { customer_id: "invalid type" } }, { status: 422 }),
+    ).success).toBe(true);
+    expect(schemaAt(declared, 422)!.safeParse(
+      answered({ error: "x", fields: { status: "invalid type" } }, { status: 422 }),
+    ).success).toBe(false);
+  });
+
+  test("a status the framework never declared resolves to nothing", () => {
+    expect(schemaAt(declared, 500)).toBeNull();
+  });
+
+  test("a bare schema answers for every status, and declares none", () => {
+    const single = errorEnvelope(ask, z.object({ error: z.string() }).strict());
+    expect(schemaAt(single, 499)).toBe(single);
+    expect(declaredStatuses(single)).toEqual([]);
   });
 });

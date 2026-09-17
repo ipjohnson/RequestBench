@@ -3,7 +3,7 @@
 // Two of them, and the test is here partly to keep the difference visible: the validator's
 // ErrorResponse spells the field status_code, and SendForbidden spells it statusCode.
 import { describe, expect, test } from "vitest";
-import { askIn, type Answer } from "@rb/schema";
+import { askIn, schemaAt, type Answer } from "@rb/schema";
 import pkg from "../src/index.js";
 
 const PAIRS = [["customer_id", "int"], ["status", "string"], ["lines", "array"]] as const;
@@ -11,10 +11,11 @@ const PAIRS = [["customer_id", "int"], ["status", "string"], ["lines", "array"]]
 const judge = (
   endpoint: string, statuses: readonly number[],
   pairs: readonly (readonly [string, string])[], body: unknown,
-): boolean =>
-  pkg.schemas[endpoint]!(askIn(pkg.target, endpoint, statuses, pairs))
-    .safeParse({ status: statuses[0], body_class: "json", encoding: "", body } as Answer)
-    .success;
+): boolean => {
+  const answer = { status: statuses[0]!, body_class: "json", encoding: "", body } as Answer;
+  const declared = pkg.schemas[endpoint]!(askIn(pkg.target, endpoint, statuses, pairs));
+  return schemaAt(declared, answer.status)?.safeParse(answer).success ?? false;
+};
 
 const errorResponse = {
   message: "One or more errors occurred!",

@@ -8,9 +8,11 @@ import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { bodyClass } from "../src/checks.js";
 import { comparable } from "../src/compare.js";
-import { declaredExceptions, errorProblem, schemaFor } from "../src/exceptions.js";
+import {
+  declaredExceptions, errorProblem, problemAgainst, schemaFor,
+} from "../src/exceptions.js";
 import { ROOT, askFor, isError, loadPlan, type PlanEndpoint } from "../src/spec.js";
-import type { Answer } from "@rb/schema";
+import { byStatus, z, type Answer } from "@rb/schema";
 
 const plan = loadPlan();
 const errorEndpoints = plan.endpoints.filter(isError);
@@ -113,6 +115,41 @@ describe("the committed exemplars", () => {
       body: comparable(Buffer.from(entry.response.body, "utf8"), ctype),
     };
     expect(errorProblem(askFor(target, ep, firstPath(ep)), answer)).toBeNull();
+  });
+});
+
+describe("a framework that declares one envelope per status", () => {
+  // No framework needs this yet: every one of the 33 fails at a single layer today, so a
+  // single schema is the honest declaration. It is here because #35 splits them -- axum's
+  // Json<T> answers 400 for JSON that will not parse and 422 for JSON that will not
+  // deserialize into T -- and the branch selection should not arrive untested.
+  const malformed = plan.endpoints.find((e) => e.id === "errors.malformed")!;
+  const ask = askFor("rust:axum", malformed, firstPath(malformed));
+  const declared = byStatus(ask, {
+    400: z.object({ error: z.string() }).strict(),
+    422: z.object({ error: z.string(), fields: z.record(z.string(), z.string()) }).strict(),
+  });
+  const answer = (status: number, body: unknown): Answer =>
+    ({ status, body_class: "json", encoding: "", body });
+
+  test("the branch for the status that arrived is the one applied", () => {
+    expect(problemAgainst(declared, ask, answer(400, { error: "expected value" }))).toBeNull();
+    expect(problemAgainst(declared, ask, answer(422, {
+      error: "invalid type", fields: { customer_id: "expected i64" },
+    }))).toBeNull();
+  });
+
+  test("the other status's envelope is not accepted in its place", () => {
+    expect(problemAgainst(declared, ask, answer(400, {
+      error: "invalid type", fields: { customer_id: "expected i64" },
+    }))).toBe("body: Unrecognized key(s) in object: 'fields' "
+      + "(answered error:string, fields.customer_id:string)");
+  });
+
+  test("a status it never declared fails and names the ones it did", () => {
+    expect(problemAgainst(declared, ask, answer(500, { error: "boom" })))
+      .toBe("answered 500, which rust:axum does not declare for errors.malformed "
+        + "(it declares 400, 422; answered error:string)");
   });
 });
 

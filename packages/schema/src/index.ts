@@ -52,8 +52,24 @@ export type ExceptionPackage = {
   readonly target: string;
   /** Why this framework answers the way it does, shown on the scenario page. */
   readonly because: string;
-  readonly schemas: Readonly<Record<string, (ask: Ask) => z.ZodType<unknown>>>;
+  readonly schemas: Readonly<Record<string, (ask: Ask) => Resolved>>;
 };
+
+/**
+ * A framework's answer for one endpoint: one schema, or one per status it may answer.
+ *
+ * The map form exists because frameworks disagree about which layer a bad body failed at,
+ * and the status is how they say so. axum's Json<T> answers 400 when the JSON will not
+ * parse and 422 when it parses but will not deserialize into T; FastAPI answers 422 for
+ * both, because to Pydantic a wrong type and a wrong value are the same finding; Fastify
+ * and Spring answer 400 for both. A framework declares the statuses it legitimately
+ * answers, with the envelope that comes with each, and is gated on whichever arrives.
+ *
+ * One key is the normal case. Two is a statement that this framework really can answer
+ * either, and is worth justifying in review rather than reaching for to make a failure go
+ * away.
+ */
+export type Resolved = z.ZodType<unknown> | Readonly<Record<number, z.ZodType<unknown>>>;
 
 // ---- finding a field error, wherever the framework put it ----------------------------
 
@@ -211,42 +227,64 @@ export function problemDetails(extra: z.ZodRawShape = {}): z.ZodType<unknown> {
 /** The validation map both ProblemDetails and the FluentValidation lists carry. */
 export const fieldErrorMap = z.record(z.string(), z.array(z.string()).min(1));
 
-// ---- the envelope every target still on the shared validator answers ------------------
+// ---- one answer per status ------------------------------------------------------------
 
 /**
- * What a target answers while it still calls the shared validator in `_shared/domain`.
+ * What a framework sends with one status, where a bare schema is not enough to say it.
  *
- * One envelope for every language, which is the defect #35 describes rather than a property
- * worth keeping. A framework moving to its own validation facility replaces this call in its
- * own client-exception package and touches nothing else -- including when its facility
- * answers a different status or names the rules differently, which it says through the
- * `instead` argument to errorEnvelope.
+ * `reports` is how this framework names the endpoint's field errors at that status. A
+ * deserialization failure never reaches the validator, so nothing there names a field and
+ * the right value is `[]`; leaving it out keeps the endpoint's own declaration.
  */
-export function sharedValidatorEnvelope(target: string): ExceptionPackage {
-  const bare = z.object({ error: z.string().min(1) }).strict();
-  const validation = z
-    .object({
-      error: z.string().min(1),
-      errors: z
-        .array(z.object({ field: z.string(), rule: z.string() }).strict())
-        .min(1),
-    })
-    .strict();
-  const envelope = (body: z.ZodType<unknown>) => (ask: Ask) => errorEnvelope(ask, body);
-  return {
-    target,
-    because:
-      "Still validates by calling the shared validator in _shared/domain, so it answers " +
-      "this repository's envelope rather than its own. See issue #35.",
-    schemas: {
-      "authorized.denied": envelope(bare),
-      "errors.not_found": envelope(bare),
-      "errors.unmatched": envelope(bare),
-      "body.rejected_all": envelope(validation),
-      "body.rejected_first": envelope(validation),
-      "errors.malformed": envelope(validation),
-    },
-  };
+export type Branch = {
+  readonly body: z.ZodType<unknown>;
+  readonly reports?: readonly (readonly [string, string])[];
+  readonly bodyClass?: string;
+};
+
+const isBranch = (v: Branch | z.ZodType<unknown>): v is Branch =>
+  typeof (v as { safeParse?: unknown }).safeParse !== "function";
+
+/**
+ * One envelope per status this framework answers, keyed by the status.
+ *
+ * The key is the declaration, so a branch never repeats its own status and the two cannot
+ * drift apart. A value is the body schema, or a Branch where the field errors or the body
+ * class differ at that status.
+ */
+export function byStatus(
+  ask: Ask, branches: Readonly<Record<number, Branch | z.ZodType<unknown>>>,
+): Readonly<Record<number, z.ZodType<unknown>>> {
+  const out: Record<number, z.ZodType<unknown>> = {};
+  for (const [key, value] of Object.entries(branches)) {
+    const status = Number(key);
+    const branch: Branch = isBranch(value) ? value : { body: value };
+    out[status] = errorEnvelope(ask, branch.body, {
+      statuses: [status],
+      ...(branch.reports === undefined ? {} : { fieldErrors: branch.reports }),
+      ...(branch.bodyClass === undefined ? {} : { bodyClass: branch.bodyClass }),
+    });
+  }
+  return out;
+}
+
+/**
+ * The schema that judges an answer with this status, or null if none is declared for it.
+ *
+ * A framework that answered a status it never declared is a failure rather than a pass: the
+ * whole point of declaring them is that an undeclared one gets looked at.
+ */
+export function schemaAt(resolved: Resolved, status: number): z.ZodType<unknown> | null {
+  if (typeof (resolved as { safeParse?: unknown }).safeParse === "function") {
+    return resolved as z.ZodType<unknown>;
+  }
+  return (resolved as Record<number, z.ZodType<unknown>>)[status] ?? null;
+}
+
+/** Every status a framework declared for one endpoint, for a failure that names them. */
+export function declaredStatuses(resolved: Resolved): number[] {
+  if (typeof (resolved as { safeParse?: unknown }).safeParse === "function") return [];
+  return Object.keys(resolved as Record<number, unknown>).map(Number).sort((a, b) => a - b);
 }
 
 /**
@@ -263,19 +301,3 @@ export const askIn = (
   target, endpoint, family: endpoint.split(".")[0] ?? "", method: "POST",
   path: "/body/validate/small", statuses, fieldErrors,
 });
-
-// ---- reporting -----------------------------------------------------------------------
-
-/**
- * Why an answer does not satisfy the schema, as one line.
- *
- * The first issue only. An envelope that changed usually produces one issue per key, and
- * listing them all buries the one that says what happened.
- */
-export function explain(error: z.ZodError, answer: Answer): string {
-  const issue = error.issues[0];
-  if (!issue) return "does not match the declared envelope";
-  const where = issue.path.length > 0 ? `${issue.path.join(".")}: ` : "";
-  const shape = [...shapeOf(answer.body)].sort().join(", ");
-  return `${where}${issue.message} (answered ${shape || "an empty body"})`;
-}
