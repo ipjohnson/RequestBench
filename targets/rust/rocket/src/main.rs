@@ -16,8 +16,8 @@ use rocket::outcome::Outcome;
 use rocket::request::{self, FromRequest};
 use rocket::response::{status::Custom, Responder};
 use rocket::serde::json::Json;
-use serde::Deserialize;
-use rocket::{catch, catchers, get, patch, post, put, delete, routes, Request, Response};
+use serde::{Deserialize, Serialize};
+use rocket::{catch, catchers, get, patch, post, put, delete, routes, FromForm, Request, Response};
 use rb_domain as d;
 use serde_json::Value;
 use std::io::Cursor;
@@ -168,15 +168,38 @@ impl<'r> FromRequest<'r> for Token {
     }
 }
 
-/// The raw query string, split the way every other language's first-value lookup does.
-struct RawQuery(d::Query);
+// ---- query: Rocket's own FromForm query guard ---------------------------------
+//
+// Rocket binds a query through the route attribute: `?<q..>` names a guard, and the
+// derived FromForm parses and types each field before the handler runs. The struct it
+// fills is the struct the handler answers.
+//
+// The fields are plain, so FromForm decides what a missing or unparseable one is, and what
+// Rocket answers when a guard does not fit is Rocket's own. The endpoint set sends neither.
 
-#[rocket::async_trait]
-impl<'r> FromRequest<'r> for RawQuery {
-    type Error = ();
-    async fn from_request(req: &'r Request<'_>) -> request::Outcome<Self, ()> {
-        Outcome::Success(RawQuery(d::parse_query(req.uri().query().map_or("", |q| q.as_str()))))
-    }
+#[derive(Serialize, FromForm)]
+struct QueryOne {
+    page: i64,
+}
+
+#[derive(Serialize, FromForm)]
+struct QueryMany {
+    page: i64,
+    size: i64,
+    status: String,
+    category: String,
+    sort: String,
+    q: String,
+    min_price: i64,
+    max_price: i64,
+}
+
+/// What domain.filter pages by. Not a response shape, so it derives no Serialize.
+#[derive(FromForm)]
+struct OrderFilter {
+    page: i64,
+    size: i64,
+    status: String,
 }
 
 /// One middleware layer. Rocket resolves each guard in turn before the handler runs, so a
@@ -238,13 +261,13 @@ fn param_two(_one: &str, _two: &str) -> Json<&'static d::PayloadBody> {
     Json(d::payload("small"))
 }
 
-#[get("/query/one")]
-fn query_one(q: RawQuery) -> Json<d::QueryOne> {
-    Json(d::coerce_one(&q.0))
+#[get("/query/one?<q..>")]
+fn query_one(q: QueryOne) -> Json<QueryOne> {
+    Json(q)
 }
-#[get("/query/many")]
-fn query_many(q: RawQuery) -> Json<d::QueryMany> {
-    Json(d::coerce_many(&q.0))
+#[get("/query/many?<q..>")]
+fn query_many(q: QueryMany) -> Json<QueryMany> {
+    Json(q)
 }
 
 /// The handler reads no header at all, so headers.many minus headers.few is the cost of
@@ -391,9 +414,9 @@ fn validate_first(order: Json<OrderIn>) -> R<Json<d::ValidatedOrder>> {
     Ok(Json(validated(&order, true)?))
 }
 
-#[get("/domain/orders")]
-fn filter(q: RawQuery) -> Json<d::OrdersPage> {
-    Json(d::domain_filter(&q.0))
+#[get("/domain/orders?<f..>")]
+fn filter(f: OrderFilter) -> Json<d::OrdersPage> {
+    Json(d::domain_filter(f.page, f.size, &f.status))
 }
 
 #[get("/domain/orders/<oid>")]
@@ -463,13 +486,16 @@ fn catch_403() -> Json<Value> {
 /// layers the way axum does -- 422 when the JSON parsed and would not fit the type, 400
 /// when it would not parse at all -- and its default for both is an HTML page, so the
 /// catchers are what give this target a body of its own.
+/// Rocket's status for a guard that parsed but did not fit the type it was asked for,
+/// which is both a body the Json guard refused and a query the FromForm guard refused.
+/// The catcher sees the status rather than the guard, so the envelope names neither.
 #[catch(422)]
 fn catch_422() -> Custom<Json<Value>> {
     Custom(
         Status::UnprocessableEntity,
         Json(serde_json::json!({
-            "error": "invalid_body",
-            "detail": "the body did not fit the target type"
+            "error": "unprocessable",
+            "detail": "the request did not fit the target type"
         })),
     )
 }

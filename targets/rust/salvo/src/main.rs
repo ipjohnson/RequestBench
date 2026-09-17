@@ -131,8 +131,55 @@ async fn parse(req: &mut Request, res: &mut Response) -> Option<Value> {
     }
 }
 
-fn query(req: &Request) -> d::Query {
-    d::parse_query(req.uri().query().unwrap_or(""))
+// ---- query: salvo's own query parsing -----------------------------------------
+//
+// `req.parse_queries::<T>()` is the framework's binding half, the same shape as
+// `parse_json` on the body: salvo deserializes the query string into the struct and
+// answers its own ParseError for what will not fit. The struct it fills is the struct the
+// handler answers.
+//
+// The fields are plain, so serde decides what a missing or unparseable one is, and the
+// status written for it is salvo's own, the same 400 a body that will not parse gets. The
+// endpoint set sends neither.
+
+#[derive(Serialize, Deserialize)]
+struct QueryOne {
+    page: i64,
+}
+
+#[derive(Serialize, Deserialize)]
+struct QueryMany {
+    page: i64,
+    size: i64,
+    status: String,
+    category: String,
+    sort: String,
+    q: String,
+    min_price: i64,
+    max_price: i64,
+}
+
+/// What domain.filter pages by. Not a response shape, so it is deserialize only.
+#[derive(Deserialize)]
+struct OrderFilter {
+    page: i64,
+    size: i64,
+    status: String,
+}
+
+/// Binds the query with salvo's parser, writing its refusal if there is one.
+fn bound_query<T: serde::de::DeserializeOwned>(req: &mut Request, res: &mut Response)
+    -> Option<T> {
+    match req.parse_queries::<T>() {
+        Ok(v) => Some(v),
+        Err(e) => {
+            res.status_code(StatusCode::BAD_REQUEST);
+            res.render(Json(serde_json::json!({
+                "error": "invalid_query", "detail": e.to_string()
+            })));
+            None
+        }
+    }
 }
 
 fn param(req: &mut Request, name: &str) -> String {
@@ -190,12 +237,16 @@ async fn noop() {}
 
 #[handler]
 async fn query_one(req: &mut Request, res: &mut Response) {
-    res.render(Json(d::coerce_one(&query(req))));
+    if let Some(q) = bound_query::<QueryOne>(req, res) {
+        res.render(Json(q));
+    }
 }
 
 #[handler]
 async fn query_many(req: &mut Request, res: &mut Response) {
-    res.render(Json(d::coerce_many(&query(req))));
+    if let Some(q) = bound_query::<QueryMany>(req, res) {
+        res.render(Json(q));
+    }
 }
 
 #[handler]
@@ -221,7 +272,9 @@ async fn validate_first(req: &mut Request, res: &mut Response) {
 
 #[handler]
 async fn filter(req: &mut Request, res: &mut Response) {
-    res.render(Json(d::domain_filter(&query(req))));
+    if let Some(f) = bound_query::<OrderFilter>(req, res) {
+        res.render(Json(d::domain_filter(f.page, f.size, &f.status)));
+    }
 }
 
 #[handler]

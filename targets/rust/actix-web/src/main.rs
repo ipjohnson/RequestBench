@@ -13,7 +13,7 @@ use actix_web::{
     web, App, HttpRequest, HttpResponse, HttpServer, Responder,
 };
 use rb_domain as d;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 fn fail(e: d::Fail) -> HttpResponse {
@@ -101,8 +101,39 @@ fn parse(body: &[u8]) -> Result<Value, HttpResponse> {
     })
 }
 
-fn query(req: &HttpRequest) -> d::Query {
-    d::parse_query(req.query_string())
+// ---- query: actix's typed Query extractor -------------------------------------
+//
+// `web::Query<T>` is the framework's binding half, the same shape as `web::Json<T>` on the
+// body: actix deserializes the query string into the struct before the handler runs and
+// rejects what will not fit without the handler seeing it. The struct it fills is the
+// struct the handler answers.
+//
+// The fields are plain, so serde decides what a missing or unparseable one is: a
+// QueryPayloadError, which actix renders as its own 400. The endpoint set sends neither.
+
+#[derive(Serialize, Deserialize)]
+struct QueryOne {
+    page: i64,
+}
+
+#[derive(Serialize, Deserialize)]
+struct QueryMany {
+    page: i64,
+    size: i64,
+    status: String,
+    category: String,
+    sort: String,
+    q: String,
+    min_price: i64,
+    max_price: i64,
+}
+
+/// What domain.filter pages by. Not a response shape, so it is deserialize only.
+#[derive(Deserialize)]
+struct OrderFilter {
+    page: i64,
+    size: i64,
+    status: String,
 }
 
 /// actix middleware, not a check inside the handler. An `if` in the handler would measure
@@ -231,8 +262,8 @@ async fn validate_first(order: web::Json<OrderIn>) -> HttpResponse {
     }
 }
 
-async fn filter(req: HttpRequest) -> HttpResponse {
-    HttpResponse::Ok().json(d::domain_filter(&query(&req)))
+async fn filter(f: web::Query<OrderFilter>) -> HttpResponse {
+    HttpResponse::Ok().json(d::domain_filter(f.page, f.size, &f.status))
 }
 
 async fn lookup(p: web::Path<String>) -> HttpResponse {
@@ -299,11 +330,11 @@ async fn main() -> std::io::Result<()> {
             .route("/parameters/static/segment/literal", web::get().to(small))
             .route("/parameters/{one}", web::get().to(small))
             .route("/parameters/{one}/with-second/{two}", web::get().to(small))
-            .route("/query/one", web::get().to(|r: HttpRequest| async move {
-                HttpResponse::Ok().json(d::coerce_one(&query(&r)))
+            .route("/query/one", web::get().to(|q: web::Query<QueryOne>| async move {
+                HttpResponse::Ok().json(q.into_inner())
             }))
-            .route("/query/many", web::get().to(|r: HttpRequest| async move {
-                HttpResponse::Ok().json(d::coerce_many(&query(&r)))
+            .route("/query/many", web::get().to(|q: web::Query<QueryMany>| async move {
+                HttpResponse::Ok().json(q.into_inner())
             }))
             .route("/headers", web::get().to(small))
             .route("/middleware/none", web::get().to(small))
