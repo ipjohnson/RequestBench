@@ -26,14 +26,17 @@ describe(pkg.target, () => {
     expect(Object.keys(pkg.schemas).sort()).toEqual(EVERY);
   });
 
+  // rb:test body.rejected_all
   test("the extractor's own rejection is what the rejection endpoints answer", () => {
     expect(judge("body.rejected_all", 422, "json", { error: "unprocessable", detail: "the request did not fit the target type" })).toBe(true);
   });
 
+  // rb:test errors.malformed
   test("a body that is not JSON at all answers 400", () => {
     expect(judge("errors.malformed", 400, "json", { error: "invalid_body", detail: "the body could not be parsed as JSON" })).toBe(true);
   });
 
+  // rb:test body.rejected_all
   test("this repository's shared envelope is not what it answers", () => {
     expect(judge("body.rejected_all", 422, "json", {
       error: "validation_failed",
@@ -41,6 +44,7 @@ describe(pkg.target, () => {
     })).toBe(false);
   });
 
+  // rb:test body.rejected_all
   test("the kind of body matters, not only the status", () => {
     expect(judge("body.rejected_all", 422, "json" === "text" ? "json" : "text", { error: "unprocessable", detail: "the request did not fit the target type" }))
       .toBe(false);

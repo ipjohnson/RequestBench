@@ -19,7 +19,8 @@ import bundle, snippets
 
 
 def view(language, target, at):
-    """The target's manifest, snippets and README at `at`, or None when history cannot answer.
+    """The target's manifest, snippets, mechanisms and README at `at`, or None when history
+    cannot answer.
 
     None is a shallow checkout, a rewritten branch, or a rollup that does not match what the
     run recorded. Rendering today's file under an old number is the failure this whole
@@ -41,6 +42,11 @@ def view(language, target, at):
         except Exception:
             readme = ""
     return {"manifest": man, "snippets": snips, "problems": problems,
+            # What each family is wired with, as spec/matrix.json declared it at this
+            # commit. The page renders it beside the support parts, and renders the reason
+            # instead where a family has nothing to show: a blank section reads as missing
+            # data rather than as a framework that needed no wiring.
+            "mechanisms": snippets.mechanisms(language, target, at),
             "pushed": bundle.pushed(at), "readme": readme}
 
 

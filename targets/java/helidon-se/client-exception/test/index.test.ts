@@ -38,21 +38,25 @@ describe(pkg.target, () => {
     expect(Object.keys(pkg.schemas).sort()).toEqual(EVERY);
   });
 
+  // rb:test body.rejected_all
   test("accepts the envelope its own walk produces, with every field named", () => {
     expect(judge("body.rejected_all", 422, refused)).toBe(true);
   });
 
+  // rb:test body.rejected_first
   test("the first-error row reports one field, and that is still this envelope", () => {
     expect(judge("body.rejected_first", 422,
       { error: "validation_failed", errors: [refused.errors[0]] },
       [422], [["customer_id", "int"]])).toBe(true);
   });
 
+  // rb:test body.rejected_all
   test("the endpoint's own pairs still apply, because this target reports them", () => {
     expect(judge("body.rejected_all", 422,
       { error: "validation_failed", errors: [refused.errors[0]] })).toBe(false);
   });
 
+  // rb:test body.rejected_all
   test("rejects the envelopes the other five Java targets answer", () => {
     expect(judge("body.rejected_all", 422, { error: "invalid_body", detail: "x" })).toBe(false);
     expect(judge("body.rejected_all", 422, {
@@ -64,6 +68,7 @@ describe(pkg.target, () => {
     })).toBe(false);
   });
 
+  // rb:test errors.malformed
   test("a body that is not JSON never reaches the walk, so it is 400 naming no field", () => {
     expect(judge("errors.malformed", 400, {
       error: "invalid_body", detail: "Failed to deserialize JSON to interface java.util.Map",

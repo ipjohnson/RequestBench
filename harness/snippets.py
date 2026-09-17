@@ -11,16 +11,25 @@ silently and a derivation cannot: it is matched against the spec on every run.
 
 Two ways in, in this order:
 
-  derived   The endpoint's route is looked for as a string literal, tolerating whatever
-            capture syntax the framework spells a parameter with and whatever it names it.
-            gin writes /domain/orders/:oid where the spec writes /domain/orders/{order},
-            and both have to land on the same line.
+  marked    A mark claims a range for one or more endpoints or families:
 
-  marker    A comment naming one or more endpoint ids, for wiring no path can reach. Two
-            cases, both real: a route registered from a loop over sizes, where the literal
-            /compressed/small is never written down, and a handler with no route at all,
-            like the framework's 404. A marker names several ids at once, so a baseline's
-            segment switch takes about twenty of them rather than forty-five.
+                rb:<kind> <selector>[,<selector>...]   closed by rb:end
+                rb:handler json.small
+                rb:wiring compressed.*
+
+            A selector is family.endpoint for one, family.* for all of a family, or * for
+            the target. The kinds are in spec/marks.json, which says what each selects,
+            which file roles it may read and what has to be true of what it captured, so
+            nothing here learns a kind's name.
+
+  derived   With no mark, the endpoint's route is looked for as a string literal,
+            tolerating whatever capture syntax the framework spells a parameter with and
+            whatever it names it. gin writes /domain/orders/:oid where the spec writes
+            /domain/orders/{order}, and both have to land on the same line. That is still
+            how most of the corpus is located, and 1,485 hand-written marks would be 700
+            to 900 comment lines in files whose whole job is to read as clean framework
+            code. Derive where the route sits on the declaration and the assertions pass;
+            mark where they do not.
 
 Nothing is stored. The site rebuilds a run's snippets from the commit that run recorded,
 which is also the only way a page can be right about a run made months ago.
@@ -33,11 +42,15 @@ The two checks from docs/bundles.html §7, both of which have caught something:
     first-match is exactly how a comment or a test gets rendered as the implementation
 
 Both of those ask where a snippet is. Neither asks what is in it, and `@Get("/json/small")`
-passes both while showing a reader nothing. spec/marks.json holds the assertions that ask
-the second question, and the allowance that says how much of the corpus fails them today.
-They are counted rather than fatal, because they fail on most of the corpus and a red gate
-would block the branches fixing it. --ratchet rewrites the allowance downward; --check
-fails on anything above it.
+passes both while showing a reader nothing. The assertions in spec/marks.json ask the
+second question, counted against an allowance that only ever goes down: --ratchet rewrites
+it from what the tree does, --check fails on anything above it. It is empty today.
+
+The other half of the claim is per family rather than per endpoint. spec/matrix.json
+declares what each target wires each family with; a family that names a mechanism has to
+produce the wiring it named, and the dependency it declares has to be in that target's
+manifest and be mentioned by the parts claiming it. A family with nothing to show says so
+in a sentence, because a page that renders a blank section reads as missing data.
 """
 import argparse, functools, json, pathlib, re, sys
 
@@ -566,7 +579,8 @@ def resolve(language, target, at=None):
                                    role, path, mk["line"] + 1))
                 continue
             got = part(path, fhash, lines, mk["start"], mk["end"], "marker")
-            got["keys"] = mk["keys"]
+            if mk["keys"]:
+                got["keys"] = mk["keys"]
             for subject in mk["subjects"]:
                 claimed[mk["kind"]].setdefault(subject, []).append(got)
 
@@ -914,9 +928,11 @@ def allowed(language, target):
 
 def located(rec):
     """The record without its source: where every part is, and nothing of what it says."""
-    where = lambda p: {k: v for k, v in p.items() if k != "text"}
-    return {**rec, "handler": where(rec["handler"]),
-            "support": [where(p) for p in rec["support"]]}
+    def where(v):
+        if isinstance(v, list):
+            return [where(p) for p in v]
+        return {k: x for k, x in v.items() if k != "text"} if isinstance(v, dict) else v
+    return {k: where(v) for k, v in rec.items()}
 
 
 def main():

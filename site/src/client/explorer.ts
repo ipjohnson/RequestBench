@@ -11,7 +11,7 @@ import type { PageData } from "../lib/page-data.js";
 import { SERIES_DARK, SERIES_LIGHT } from "../lib/series.js";
 import type { Run, Target } from "../lib/types.js";
 import { chainTable, deltaCell } from "../lib/views.js";
-import { Data, resolveSource } from "./source.js";
+import { Data, resolveSource, type CodePart } from "./source.js";
 import {
   epRowsFor,
   famRowsFor,
@@ -430,14 +430,29 @@ class Explorer {
 
     const sn = codeDoc?.[eid];
     const e = wdoc?.endpoints[eid];
-    const loc = sn ? `${sn.f}:${sn.s}${sn.e === sn.s ? "" : `-${sn.e}`}` : "";
+    const block = (p: CodePart): string =>
+      `<div class="sniphead"><span class="loc">${esc(`${p.f}:${p.s}${p.e === p.s ? "" : `-${p.e}`}`)}</span><span class="how">${esc(p.h)}</span>
+      ${p.u ? `<a href="${esc(p.u)}">open on GitHub &rarr;</a>` : `<span class="how">commit not on a remote, so no link</span>`}</div>
+    <pre class="code">${esc(p.t)}</pre>`;
     const handler = sn
       ? `
     <h3 class="childcap">Handler</h3>
-    <div class="sniphead"><span class="loc">${esc(loc)}</span><span class="how">${esc(sn.h)}</span>
-      ${sn.u ? `<a href="${esc(sn.u)}">open on GitHub &rarr;</a>` : `<span class="how">commit not on a remote, so no link</span>`}</div>
-    <pre class="code">${esc(sn.t)}</pre>`
+    ${block(sn)}`
       : `<p class="empty">No handler located for this endpoint in this target.</p>`;
+    // The code the route does not name: what the family is wired with, and the parts that
+    // do it. A family with nothing to show says so, because a blank section reads as
+    // missing data rather than as a framework that needed no wiring.
+    const declared = sn?.w?.m
+      ? `<p class="mech">${esc(sn.w.m)}${sn.w.d ? ` &middot; <code>${esc(sn.w.d)}</code>` : ""}</p>`
+      : sn?.w?.b
+        ? `<p class="mech">${esc(sn.w.b)}</p>`
+        : "";
+    const wiring =
+      declared || sn?.sup?.length
+        ? `
+    <h3 class="childcap">Wiring</h3>
+    <div class="wiring">${declared}${(sn?.sup ?? []).map(block).join("")}</div>`
+        : "";
     const hdr = (hs: readonly (readonly [string, string])[]): string =>
       hs
         .map(
@@ -462,7 +477,12 @@ class Explorer {
     </div>`
       : "";
     const load = document.getElementById("leafload");
-    if (load) load.outerHTML = handler + exchange;
+    const tests = sn?.tst?.length
+      ? `
+    <h3 class="childcap">Contract test</h3>
+    <div class="wiring">${sn.tst.map(block).join("")}</div>`
+      : "";
+    if (load) load.outerHTML = handler + wiring + tests + exchange;
   }
 
   /* ---- the time axis ---- */

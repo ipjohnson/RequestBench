@@ -27,6 +27,7 @@ const refused = {
 };
 
 describe(pkg.target, () => {
+  // rb:test authorized.denied,body.rejected_all,body.rejected_first,errors.not_found,errors.unmatched,errors.malformed
   test("declares a schema for every error endpoint", () => {
     expect(Object.keys(pkg.schemas).sort()).toEqual([
       "authorized.denied", "body.rejected_all", "body.rejected_first",
@@ -34,23 +35,28 @@ describe(pkg.target, () => {
     ]);
   });
 
+  // rb:test body.rejected_all
   test("a body that would not deserialize is the 400 branch", () => {
     expect(judge("body.rejected_all", [400], notBound)).toBe(true);
   });
 
+  // rb:test body.rejected_all
   test("a body that deserialized and failed a rule is the 422 branch", () => {
     expect(judge("body.rejected_all", [422], refused)).toBe(true);
   });
 
+  // rb:test body.rejected_all
   test("neither branch accepts the other's envelope", () => {
     expect(judge("body.rejected_all", [400], refused)).toBe(false);
     expect(judge("body.rejected_all", [422], notBound)).toBe(false);
   });
 
+  // rb:test body.rejected_all
   test("a status it does not declare is refused, not waved through", () => {
     expect(judge("body.rejected_all", [500], notBound)).toBe(false);
   });
 
+  // rb:test body.rejected_all
   test("rejects this repository's shared envelope, which it no longer answers", () => {
     expect(judge("body.rejected_all", [422], {
       error: "validation_failed",
@@ -58,11 +64,13 @@ describe(pkg.target, () => {
     })).toBe(false);
   });
 
+  // rb:test body.rejected_all
   test("the validator has to name at least one field", () => {
     expect(judge("body.rejected_all", [422], { error: "validation_failed", fields: {} }))
       .toBe(false);
   });
 
+  // rb:test errors.malformed
   test("a body that is not JSON at all only ever answers 400", () => {
     expect(judge("errors.malformed", [400], { error: "invalid_body", detail: "unexpected EOF" }))
       .toBe(true);

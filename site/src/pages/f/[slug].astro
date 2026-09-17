@@ -7,7 +7,7 @@
 import Shell from "../../components/Shell.astro";
 import EndpointPane from "../../components/EndpointPane.astro";
 import "../../styles/framework.css";
-import { permalink } from "../../lib/bundleview.js";
+import { permalink, type SnippetPart } from "../../lib/bundleview.js";
 import { deltaFor } from "../../lib/delta.js";
 import { md } from "../../lib/markdown.js";
 import { cell } from "../../lib/metrics.js";
@@ -85,6 +85,27 @@ const alsoFor = (eid: string): string[] => {
   const h = sn.handler;
   return (serves.get(`${h.path}:${h.start_line}-${h.end_line}`) ?? []).filter((o) => o !== eid);
 };
+
+// Wiring is keyed by family, so every endpoint of a family renders the same support parts.
+// Naming the rest is what keeps six identical sections from reading as six separate answers.
+const wiredWith = (eid: string): string =>
+  (snips[eid]?.support ?? []).map((p) => `${p.path}:${p.start_line}-${p.end_line}`).join(" ");
+const shares = new Map<string, string[]>();
+for (const eid of order) {
+  const at = wiredWith(eid);
+  if (!snips[eid] || !at) continue;
+  shares.set(at, [...(shares.get(at) ?? []), eid]);
+}
+const alsoWired = (eid: string): string[] =>
+  (shares.get(wiredWith(eid)) ?? []).filter((o) => o !== eid);
+
+/** Parts with their own permalinks: they come from other files than the handler. */
+const linked = (parts: SnippetPart[]): { part: SnippetPart; link: string | null }[] =>
+  parts.map((part) => ({
+    part,
+    link:
+      linkable && repo ? permalink(repo, commit, part.path, part.start_line, part.end_line) : null,
+  }));
 
 const groups: [string, string[]][] = [];
 for (const eid of order) {
@@ -190,6 +211,10 @@ const linkFor = (eid: string): string | null => {
                 snippet={snips[eid]}
                 also={alsoFor(eid)}
                 link={linkFor(eid)}
+                support={linked(snips[eid]?.support ?? [])}
+                tests={linked(snips[eid]?.test ?? [])}
+                alsoWired={alsoWired(eid)}
+                mechanism={view?.mechanisms[eid.split(".")[0] ?? ""]}
                 exchange={exemplars[eid]}
                 chain={deltaFor(t, eid, rn, routes, "p50_us")}
                 factors={factors}

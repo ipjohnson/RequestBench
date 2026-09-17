@@ -39,15 +39,18 @@ describe(pkg.target, () => {
     expect(Object.keys(pkg.schemas).sort()).toEqual(EVERY);
   });
 
+  // rb:test body.rejected_all
   test("accepts the two fields the form names, in Django's own codes", () => {
     expect(judge("body.rejected_all", 422, refused, DJANGO)).toBe(true);
   });
 
+  // rb:test body.rejected_all
   test("a form that stopped refusing one of them fails", () => {
     expect(judge("body.rejected_all", 422,
       { error: "validation_failed", errors: [refused.errors[0]] }, DJANGO)).toBe(false);
   });
 
+  // rb:test body.rejected_all
   test("this repository's rule names are not Django's, and are not accepted", () => {
     expect(judge("body.rejected_all", 422, {
       error: "validation_failed",
@@ -55,6 +58,7 @@ describe(pkg.target, () => {
     }, DJANGO)).toBe(false);
   });
 
+  // rb:test errors.malformed
   test("the shared parse giving up is 400 and names no field", () => {
     expect(judge("errors.malformed", 400,
       { error: "invalid_body", detail: "Expecting value: line 1 column 30 (char 29)" })).toBe(true);

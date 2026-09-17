@@ -48,14 +48,28 @@ export const Snippet = z
     target: z.string(),
     handler: SnippetPart,
     support: z.array(SnippetPart),
+    test: z.array(SnippetPart).default([]),
   })
   .passthrough();
 export type Snippet = z.infer<typeof Snippet>;
+
+// What one family is wired with in one target, from spec/matrix.json: either a named
+// mechanism and the dependency behind it, or the reason there is nothing to show. A family
+// with neither is a gate failure, not something a page has to render.
+export const Mechanism = z
+  .object({
+    mechanism: z.string().optional(),
+    dep: z.string().optional(),
+    builtin: z.string().optional(),
+  })
+  .passthrough();
+export type Mechanism = z.infer<typeof Mechanism>;
 
 export const TargetView = z.object({
   manifest: Manifest,
   snippets: z.record(z.string(), Snippet),
   problems: z.array(z.string()),
+  mechanisms: z.record(z.string(), Mechanism).default({}),
   pushed: z.boolean(),
   readme: z.string(),
 });
@@ -137,6 +151,14 @@ export function permalink(
 /** One range: where it is, whether it links, and what it says. */
 export type CodePart = { f: string; s: number; e: number; h: string; u: string | null; t: string };
 
+/** The handler, the support parts behind it, the contract tests that hold it, and what its
+ *  family declares it is wired with. */
+export type CodeEntry = CodePart & {
+  sup: CodePart[];
+  tst: CodePart[];
+  w?: { m?: string | undefined; d?: string | undefined; b?: string | undefined };
+};
+
 /** Every endpoint's handler for one target, and the support parts that make it work.
  *
  *  Short keys, because this ships to the browser next to the run it describes. */
@@ -145,7 +167,7 @@ export function snippetDoc(
   repo: string,
   commit: string,
   linkable: boolean,
-): Record<string, CodePart & { sup: CodePart[] }> {
+): Record<string, CodeEntry> {
   const part = (p: SnippetPart): CodePart => ({
     f: p.path,
     s: p.start_line,
@@ -154,9 +176,15 @@ export function snippetDoc(
     u: linkable && repo ? permalink(repo, commit, p.path, p.start_line, p.end_line) : null,
     t: p.text,
   });
-  const out: Record<string, CodePart & { sup: CodePart[] }> = {};
+  const out: Record<string, CodeEntry> = {};
   for (const [eid, sn] of Object.entries(view.snippets)) {
-    out[eid] = { ...part(sn.handler), sup: sn.support.map(part) };
+    const w = view.mechanisms[eid.split(".")[0] ?? ""];
+    out[eid] = {
+      ...part(sn.handler),
+      sup: sn.support.map(part),
+      tst: sn.test.map(part),
+      ...(w ? { w: { m: w.mechanism, d: w.dep, b: w.builtin } } : {}),
+    };
   }
   return out;
 }

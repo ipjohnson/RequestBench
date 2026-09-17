@@ -33,6 +33,18 @@
       "assert": [
         "mentions_dep"
       ]
+    },
+    "test": {
+      "what": "the assertion that holds this target to the contract it declares",
+      "selects": "endpoint",
+      "required": "never",
+      "cardinality": "many",
+      "into": "test",
+      "derive": false,
+      "roles": [
+        "test"
+      ],
+      "assert": []
     }
   },
   "assertions": {
