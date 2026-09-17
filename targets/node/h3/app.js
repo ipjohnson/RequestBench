@@ -23,7 +23,7 @@ import query from "./routes/query.js";
 import template from "./routes/template.js";
 
 export const meta = { framework: "h3", version: pkgVersion("h3"),
-                      runtime: "node " + process.versions.node, template: "handlebars" };
+                      runtime: "node " + process.versions.node, template: "ejs" };
 
 // h3 v2 takes the error handler on the constructor; assigning app.onError afterwards is
 // silently ignored, which showed up as 500s where the contract says 422.

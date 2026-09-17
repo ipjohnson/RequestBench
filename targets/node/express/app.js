@@ -27,7 +27,7 @@ import query from "./routes/query.js";
 import template from "./routes/template.js";
 
 export const meta = { framework: "express", version: pkgVersion("express"),
-                      runtime: "node " + process.versions.node, template: "handlebars" };
+                      runtime: "node " + process.versions.node, template: "pug" };
 
 const app = express();
 app.disable("x-powered-by");        // every production deployment does this

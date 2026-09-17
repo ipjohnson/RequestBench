@@ -24,7 +24,7 @@ import query from "./routes/query.js";
 import template from "./routes/template.js";
 
 export const meta = { framework: "koa", version: pkgVersion("koa"),
-                      runtime: "node " + process.versions.node, template: "handlebars" };
+                      runtime: "node " + process.versions.node, template: "ejs" };
 
 const app = new Koa();
 app.silent = true;
@@ -33,7 +33,7 @@ const router = new Router();
 
 for (const register of [baseline, json, parameters, query, headers, middleware,
                         authorized, compressed, cached, body, domain, template]) {
-  register(router, { meta: () => ({ ...meta, ...hostMeta() }) });
+  register(router, { app, meta: () => ({ ...meta, ...hostMeta() }) });
 }
 
 // errors: the router's own miss and every failure a handler raises. Koa answers an
