@@ -16,8 +16,10 @@ namespace RequestBench.WolverineTarget.Routes;
 public static class DomainEndpoints
 {
     [WolverineGet("/domain/orders")]
-    public static OrdersPage Filter(HttpRequest request, DomainModel domain) =>
-        domain.DomainFilter(Support.Query(request));
+    public static OrdersPage Filter([FromQuery] int page, [FromQuery] int size,
+                                    [FromQuery] string status,
+                                    [FromServices] DomainModel domain) =>
+        domain.DomainFilter(page, size, status);
 
     [WolverinePost("/domain/orders")]
     public static IResult Create(OrderBody body, [FromServices] DomainModel domain,

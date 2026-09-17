@@ -30,14 +30,16 @@ public sealed partial class DomainModel
         throw NotFoundException.Instance;
     }
 
-    public OrdersPage DomainFilter(QueryLookup q)
+    /// <summary>
+    /// The page, the size and the status arrive already bound, because binding them is the
+    /// framework's own job and lives in the target.
+    /// </summary>
+    public OrdersPage DomainFilter(int page, int size, string status)
     {
-        int page = Math.Max(0, Int(q, "page"));
+        page = Math.Max(0, page);
         // A size of zero means the default, not one. Every other language reaches that
         // through `size || 25`, where an explicit 0 is as absent as a missing parameter.
-        int size = Int(q, "size");
         size = Math.Min(100, Math.Max(1, size == 0 ? 25 : size));
-        string status = Str(q, "status");
 
         List<Order> rows = [];
         foreach (Order o in Orders)

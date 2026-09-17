@@ -6,9 +6,6 @@ namespace RequestBench.FastEndpointsTarget;
 /// <summary>What more than one endpoint needs.</summary>
 public static class Support
 {
-    public static QueryLookup Query(HttpRequest request) =>
-        name => request.Query.TryGetValue(name, out var v) ? v.ToString() : null;
-
     /// <summary>
     /// The request body as a value. FastEndpoints binds a request DTO, and the endpoint set
     /// needs the raw document so the validator can produce the exact field errors every

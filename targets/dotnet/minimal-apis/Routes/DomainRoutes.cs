@@ -8,8 +8,8 @@ public static class DomainRoutes
 {
     public static void Map(WebApplication app)
     {
-        app.MapGet("/domain/orders", (HttpRequest request, DomainModel d) =>
-            d.DomainFilter(Support.Query(request)));
+        app.MapGet("/domain/orders", (int page, int size, string status, DomainModel d) =>
+            d.DomainFilter(page, size, status));
 
         app.MapPost("/domain/orders", (OrderIn body, DomainModel d, HttpResponse response) =>
         {
