@@ -1,5 +1,6 @@
 // domain: application-shaped handler work and the write methods.
 import * as d from "../../_shared/domain.js";
+import { orderOf, validatesOrder } from "../validation.js";
 
 const send = (c, v, status = 200) =>
   v === d.NOT_FOUND ? c.json(d.notFoundBody(), 404) : c.json(v, status);
@@ -7,17 +8,19 @@ const send = (c, v, status = 200) =>
 export default function domain(app) {
   app.get("/domain/orders", (c) => c.json(d.domainFilter(c.req.query())));
 
-  app.post("/domain/orders", async (c) => {
+  // The validator hook has to be on the route for c.req.valid to have anything: Hono runs
+  // it before the handler, and without it the handler is reading a value nothing produced.
+  app.post("/domain/orders", validatesOrder(), (c) => {
     c.header("location", d.createdLocation());
-    return c.json(d.validateOrder(await c.req.json()), 201);
+    return c.json(orderOf(c.req.valid("json")), 201);
   });
 
   app.get("/domain/orders/:oid", (c) => send(c, d.getOrder(c.req.param("oid"))));
 
-  app.put("/domain/orders/:oid", async (c) => {
+  app.put("/domain/orders/:oid", validatesOrder(), (c) => {
     const oid = c.req.param("oid");
     if (d.getOrder(oid) === d.NOT_FOUND) return c.json(d.notFoundBody(), 404);
-    return c.json({ id: Number(oid), ...d.validateOrder(await c.req.json()) });
+    return c.json({ id: Number(oid), ...orderOf(c.req.valid("json")) });
   });
 
   app.get("/domain/customers/:cid/summary", (c) => send(c, d.domainJoin(c.req.param("cid"))));

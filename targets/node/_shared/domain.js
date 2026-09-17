@@ -159,75 +159,27 @@ export function dashboard() {
   };
 }
 
-// ---- validation -----------------------------------------------------------
+// ---- the order body, after validation ---------------------------------------
+// Validating is the framework's own job and lives in each target: fastify declares a
+// schema.body and lets ajv run it, hono runs its rules through hono/validator, and
+// express, koa and h3 hold their own because none of the three has a validation layer
+// to use. What is left here is what happens once a body is known to be good, which is
+// the same work whichever framework proved it.
 
-export class ValidationError extends Error {
-  constructor(errors) { super("validation failed"); this.errors = errors; }
-}
-const req = (errs, obj, field, type) => {
-  const v = obj?.[field];
-  if (v === undefined || v === null) errs.push({ field, rule: "required" });
-  else if (type === "int" && !Number.isInteger(v)) errs.push({ field, rule: "int" });
-  else if (type === "string" && typeof v !== "string") errs.push({ field, rule: "string" });
-  else if (type === "array" && !Array.isArray(v)) errs.push({ field, rule: "array" });
-};
-
-export function validateOrder(body, firstError = false) {
-  const errs = [];
-  // The two rejection contracts run the same walk in the same order and differ only in
-  // whether it stops at the first error. That is what makes rejected_all minus
-  // rejected_first the cost of not short-circuiting, stated as a number.
-  const bail = () => firstError && errs.length > 0;
-  req(errs, body, "customer_id", "int");
-  if (!bail()) req(errs, body, "status", "string");
-  if (!bail()) req(errs, body, "lines", "array");
-  if (!bail() && Array.isArray(body?.lines)) {
-    if (body.lines.length === 0) errs.push({ field: "lines", rule: "min_length" });
-    for (let i = 0; i < body.lines.length && !bail(); i++) {
-      const l = body.lines[i];
-      if (!Number.isInteger(l?.product_id)) errs.push({ field: `lines[${i}].product_id`, rule: "int" });
-      if (!bail() && (!Number.isInteger(l?.qty) || l.qty < 1)) errs.push({ field: `lines[${i}].qty`, rule: "min" });
-    }
-  }
-  if (errs.length) throw new ValidationError(errs);
-  const lines = body.lines.map((l, i) => {
+/**
+ * The work after the validator says yes: look each product up, carry the unit price onto
+ * the line, and total it. Identical in every framework, which is why it is here and the
+ * validating is not.
+ */
+export function priceOrder(customer_id, status, lines) {
+  const priced = lines.map((l, i) => {
     const p = productById.get(l.product_id);
     const unit = p ? p.price_cents : 0;
     return { id: i + 1, product_id: l.product_id, qty: l.qty, unit_cents: unit,
              total_cents: unit * l.qty };
   });
-  return { customer_id: body.customer_id, status: body.status, lines,
-           total_cents: lines.reduce((s, l) => s + l.total_cents, 0) };
-}
-export function validateCustomer(body) {
-  const errs = [];
-  req(errs, body, "name", "string");
-  req(errs, body, "email", "string");
-  req(errs, body, "region", "string");
-  if (typeof body?.email === "string" && !body.email.includes("@"))
-    errs.push({ field: "email", rule: "format" });
-  if (errs.length) throw new ValidationError(errs);
-  return { name: body.name.trim(), email: body.email.toLowerCase(), region: body.region };
-}
-export function validateProduct(body) {
-  const errs = [];
-  req(errs, body, "name", "string");
-  req(errs, body, "category", "string");
-  req(errs, body, "price_cents", "int");
-  if (Number.isInteger(body?.price_cents) && body.price_cents < 0)
-    errs.push({ field: "price_cents", rule: "min" });
-  if (errs.length) throw new ValidationError(errs);
-  return { name: body.name, category: body.category, price_cents: body.price_cents };
-}
-export function validateLine(body) {
-  const errs = [];
-  req(errs, body, "product_id", "int");
-  req(errs, body, "qty", "int");
-  if (errs.length) throw new ValidationError(errs);
-  const p = productById.get(body.product_id);
-  const unit = p ? p.price_cents : 0;
-  return { id: 1, product_id: body.product_id, qty: body.qty, unit_cents: unit,
-           total_cents: unit * body.qty };
+  return { customer_id, status, lines: priced,
+           total_cents: priced.reduce((s, l) => s + l.total_cents, 0) };
 }
 export function patchCustomer(cid, body) {
   const c = customerById.get(int(cid));
@@ -258,8 +210,6 @@ export const etagOf = (size) => payloads[size].etag;
 export const CACHEABLE = "public, max-age=60";
 export const notFoundBody = () => ({ error: "not_found" });
 export const forbiddenBody = () => ({ error: "forbidden" });
-export const invalidBody = (errors) => ({ error: "validation_failed", errors });
-export const malformed = () => new ValidationError([{ field: "body", rule: "json" }]);
 export const createdLocation = () => "/domain/orders/" + NEXT_ORDER_ID;
 
 export const GZIP_LEVEL = 6;

@@ -2,6 +2,13 @@
 import express from "express";
 
 import * as d from "../../_shared/domain.js";
+import { checkOrder, orderOf, refused } from "../validation.js";
+
+// A write validates the same way body.validate_* does, because it is the same walk.
+const written = (req, res, then) => {
+  const errs = checkOrder(req.body, false);
+  return errs.length ? res.status(422).json(refused(errs)) : then(orderOf(req.body));
+};
 
 const parse = express.json({ limit: "4mb" });
 
@@ -12,14 +19,14 @@ export default function domain(app) {
   app.get("/domain/orders", (req, res) => res.json(d.domainFilter(req.query)));
 
   app.post("/domain/orders", parse, (req, res) =>
-    res.status(201).location(d.createdLocation()).json(d.validateOrder(req.body)));
+    written(req, res, (v) => res.status(201).location(d.createdLocation()).json(v)));
 
   app.get("/domain/orders/:oid", (req, res) => send(res, d.getOrder(req.params.oid)));
 
   app.put("/domain/orders/:oid", parse, (req, res) =>
     d.getOrder(req.params.oid) === d.NOT_FOUND
       ? res.status(404).json(d.notFoundBody())
-      : res.json({ id: Number(req.params.oid), ...d.validateOrder(req.body) }));
+      : written(req, res, (v) => res.json({ id: Number(req.params.oid), ...v })));
 
   app.get("/domain/customers/:cid/summary", (req, res) =>
     send(res, d.domainJoin(req.params.cid)));

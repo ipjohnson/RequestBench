@@ -2,6 +2,16 @@
 import { getQuery, getRouterParam, noContent, readBody } from "h3";
 
 import * as d from "../../_shared/domain.js";
+import { checkOrder, orderOf, refused } from "../validation.js";
+
+// A write validates the same way body.validate_* does, because it is the same walk.
+const written = async (e) => {
+  const body = await readBody(e);
+  const errs = checkOrder(body, false);
+  if (!errs.length) return { body };
+  e.res.status = 422;
+  return { errs: refused(errs) };
+};
 
 const send = (e, v, status = 200) => {
   if (v === d.NOT_FOUND) {
@@ -17,7 +27,8 @@ export default function domain(app) {
 
   app.post("/domain/orders", async (e) => {
     e.res.headers.set("location", d.createdLocation());
-    return send(e, d.validateOrder(await readBody(e)), 201);
+    const v = await written(e);
+    return v.errs ? v.errs : send(e, orderOf(v.body), 201);
   });
 
   app.get("/domain/orders/:oid", (e) => send(e, d.getOrder(getRouterParam(e, "oid"))));
@@ -25,7 +36,8 @@ export default function domain(app) {
   app.put("/domain/orders/:oid", async (e) => {
     const oid = getRouterParam(e, "oid");
     if (d.getOrder(oid) === d.NOT_FOUND) return send(e, d.NOT_FOUND);
-    return { id: Number(oid), ...d.validateOrder(await readBody(e)) };
+    const v = await written(e);
+    return v.errs ? v.errs : { id: Number(oid), ...orderOf(v.body) };
   });
 
   app.get("/domain/customers/:cid/summary", (e) =>

@@ -8,6 +8,8 @@ import { serve, getRequestListener } from "@hono/node-server";
 import { hostMeta } from "../_shared/host.js";
 import { pkgVersion } from "../_shared/version.js";
 import * as d from "../_shared/domain.js";
+import { HTTPException } from "hono/http-exception";
+import { notBound } from "./validation.js";
 
 import authorized from "./routes/authorized.js";
 import baseline from "./routes/baseline.js";
@@ -38,11 +40,12 @@ for (const register of [baseline, json, parameters, query, headers, middleware,
 app.notFound((c) => c.json(d.notFoundBody(), 404));
 
 app.onError((err, c) => {
-  if (err instanceof d.ValidationError) return c.json(d.invalidBody(err.errors), 422);
-  // Hono raises a SyntaxError from c.req.json() on a body it cannot parse, which is what
-  // errors.malformed asks for. The endpoint set answers 422 there, the same status as a
-  // body that parsed and failed validation.
-  if (err instanceof SyntaxError) return c.json(d.invalidBody(d.malformed().errors), 422);
+  // The validator hook answers a failed body itself, so nothing validation-shaped reaches
+  // here. A body Hono could not parse never got as far as the hook: the hook reads the JSON
+  // and raises Hono's own HTTPException for it, which carries the 400 and the wording. It
+  // names no field, because nothing validated anything.
+  if (err instanceof HTTPException) return c.json(notBound(err.message), err.status);
+  if (err instanceof SyntaxError) return c.json(notBound(err.message), 400);
   return c.json({ error: "internal", message: err.message }, 500);
 });
 

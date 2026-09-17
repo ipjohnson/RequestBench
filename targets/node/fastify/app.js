@@ -16,6 +16,7 @@ import { pkgVersion } from "../_shared/version.js";
 import { hostMeta } from "../_shared/host.js";
 import { VIEWS } from "../_shared/template.js";
 import * as d from "../_shared/domain.js";
+import { orderOf, validatesOrder } from "./validation.js";
 
 const meta = { framework: "fastify", version: pkgVersion("fastify"),
                runtime: "node " + process.versions.node, template: "handlebars" };
@@ -29,8 +30,10 @@ app.addContentTypeParser("application/json", (req, payload, done) => {
   let data = "";
   payload.on("data", (c) => (data += c));
   payload.on("end", () => {
+    // Fastify's own parse failure, so its error handler answers it rather than a shared
+    // envelope standing in for one.
     try { done(null, data.length ? JSON.parse(data) : undefined); }
-    catch { done(new d.ValidationError([{ field: "body", rule: "json" }])); }
+    catch (e) { done(Object.assign(e, { statusCode: 400, code: "FST_ERR_CTP_INVALID_JSON" })); }
   });
 });
 
@@ -118,9 +121,14 @@ app.register(async (scope) => {
 
 app.post("/body/bind/small",  (req) => d.bindEcho(req.body));
 app.post("/body/bind/medium", (req) => d.bindEcho(req.body));
-app.post("/body/validate/small",  (req) => d.validateOrder(req.body));
-app.post("/body/validate/medium", (req) => d.validateOrder(req.body));
-app.post("/body/validate/first-error", (req) => d.validateOrder(req.body, true));
+// schema.body is the wiring: Fastify compiles it once and ajv runs it before the handler,
+// so no handler calls a validator and a body that fails never reaches one.
+app.post("/body/validate/small",  validatesOrder, (req) => orderOf(req.body));
+app.post("/body/validate/medium", validatesOrder, (req) => orderOf(req.body));
+// Fastify runs ajv with allErrors: false, which reports the first failure and nothing after
+// it. That is the framework's own setting, so this row answers what Fastify answers and the
+// gap to body.rejected_all is what Fastify costs rather than the same walk written twice.
+app.post("/body/validate/first-error", validatesOrder, (req) => orderOf(req.body));
 
 // ---- domain --------------------------------------------------------------------------
 
@@ -128,13 +136,13 @@ app.get("/domain/orders", (req) => d.domainFilter(req.query));
 app.get("/domain/orders/:oid", (req, reply) => send(reply, d.getOrder(req.params.oid)));
 app.get("/domain/customers/:cid/summary", (req, reply) => send(reply, d.domainJoin(req.params.cid)));
 app.get("/domain/regions/:r/report", (req, reply) => send(reply, d.domainAggregate(req.params.r)));
-app.post("/domain/orders", (req, reply) =>
+app.post("/domain/orders", validatesOrder, (req, reply) =>
   reply.code(201).header("location", "/domain/orders/" + d.NEXT_ORDER_ID)
-       .send(d.validateOrder(req.body)));
-app.put("/domain/orders/:oid", (req, reply) =>
+       .send(orderOf(req.body)));
+app.put("/domain/orders/:oid", validatesOrder, (req, reply) =>
   d.getOrder(req.params.oid) === d.NOT_FOUND
     ? reply.code(404).send({ error: "not_found" })
-    : reply.send({ id: Number(req.params.oid), ...d.validateOrder(req.body) }));
+    : reply.send({ id: Number(req.params.oid), ...orderOf(req.body) }));
 app.patch("/domain/customers/:cid", (req, reply) =>
   send(reply, d.patchCustomer(req.params.cid, req.body)));
 app.delete("/domain/orders/:oid/lines/:lid", (req, reply) =>
@@ -150,9 +158,15 @@ app.get("/template/medium", (_, reply) => reply.view("items.hbs", d.payload("med
 
 // rb:snippet errors.unmatched
 app.setNotFoundHandler((_, reply) => reply.code(404).send({ error: "not_found" }));
+// Fastify's own error envelope for anything it raised itself, which is what a failed schema
+// and an unparseable body both are. Only a genuine bug falls through to the 500.
 app.setErrorHandler((err, _, reply) =>
-  err instanceof d.ValidationError
-    ? reply.code(422).send({ error: "validation_failed", errors: err.errors })
+  err.statusCode
+    ? reply.code(err.statusCode).send({
+        statusCode: err.statusCode, code: err.code,
+        error: err.statusCode >= 500 ? "Internal Server Error" : "Bad Request",
+        message: err.message,
+      })
     : reply.code(500).send({ error: "internal", message: err.message }));
 
 export { app };

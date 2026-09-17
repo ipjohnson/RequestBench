@@ -7,6 +7,7 @@ import { H3, toNodeHandler, serve } from "h3";
 import { hostMeta } from "../_shared/host.js";
 import { pkgVersion } from "../_shared/version.js";
 import * as d from "../_shared/domain.js";
+import { notBound } from "./validation.js";
 
 import authorized from "./routes/authorized.js";
 import baseline from "./routes/baseline.js";
@@ -36,16 +37,12 @@ const app = new H3({
     // h3 v2 wraps a thrown error in HTTPError and puts the original on .cause, so the
     // instanceof check has to look through it or every validation failure reads as a 500.
     const err = wrapped?.cause instanceof Error ? wrapped.cause : wrapped;
-    if (err instanceof d.ValidationError) {
-      e.res.status = 422;
-      return d.invalidBody(err.errors);
-    }
     // readBody rejects a body it cannot parse with a 400 HTTPError rather than a
-    // SyntaxError, and that is what errors.malformed asks for. The endpoint set answers
-    // 422 there, the same status as a body that parsed and failed validation.
+    // SyntaxError. That never reached the walk, so it names no field and keeps the 400 h3
+    // chose; a body that parsed and then failed the walk answers 422 where the walk is.
     if (wrapped?.status === 400) {
-      e.res.status = 422;
-      return d.invalidBody(d.malformed().errors);
+      e.res.status = 400;
+      return notBound(err.message);
     }
     if (wrapped?.status === 404) {
       e.res.status = 404;
