@@ -15,8 +15,10 @@ against.
 The blueprints carry no url_prefix. Scoping is what they are here for, and a prefix would
 take the route's own path out of the source, which is where harness/snippets.py finds it.
 """
+import pathlib
+
 import gunicorn.app.base
-from flask import Blueprint, Flask, Response, jsonify, request
+from flask import Blueprint, Flask, Response, jsonify, render_template, request
 from werkzeug.exceptions import BadRequest, HTTPException
 
 from _hosts import host
@@ -110,8 +112,12 @@ def validated(body, first_error=False):
 #: One process, and enough threads that the worker is not itself the queue.
 THREADS = 16
 
-app = Flask(__name__)
-META = host.meta("flask", adapter="gunicorn")
+# template_folder is absolute because _hosts/container.py loads this module by file
+# path under the name rb_target, so Flask cannot derive the root from the module name.
+app = Flask(__name__, template_folder=str(
+    pathlib.Path(__file__).resolve().parent / "templates"))
+META = host.meta("flask", adapter="gunicorn",
+                 template="jinja2 " + host.dist_version("jinja2"))
 
 
 def body_of():
@@ -376,16 +382,21 @@ def delete_line(oid, lid):
     return no_content()
 
 
-# ---- template: the engine named in /__meta -------------------------------------------
+# ---- template: Flask's own view facility ---------------------------------------------
+#
+# render_template runs the Jinja2 environment Flask builds and holds on the app, and Jinja2
+# is Flask's own engine rather than a choice made here. The template is loaded and compiled
+# on first render and cached by the loader after: a precomputed string would measure
+# nothing.
 
 @app.get("/template/small")
 def template_small():
-    return Response(host.render_items(d.payload("small")), mimetype="text/html")
+    return render_template("items.html", **d.payload("small"))
 
 
 @app.get("/template/medium")
 def template_medium():
-    return Response(host.render_items(d.payload("medium")), mimetype="text/html")
+    return render_template("items.html", **d.payload("medium"))
 
 
 # ---- failures ------------------------------------------------------------------------

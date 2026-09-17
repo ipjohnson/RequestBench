@@ -11,14 +11,17 @@ The method helpers below exist so a registration says which method it binds. A b
 /domain/orders is then two registrations that nothing can tell apart -- including
 harness/snippets.py, which refuses to guess which of them serves domain.filter.
 """
+import pathlib
+
 import uvicorn
 from starlette.applications import Starlette
 from starlette.exceptions import HTTPException
 from starlette.middleware import Middleware
 from starlette.middleware.gzip import GZipMiddleware
 from starlette.requests import Request
-from starlette.responses import HTMLResponse, JSONResponse, PlainTextResponse, Response
+from starlette.responses import JSONResponse, PlainTextResponse, Response
 from starlette.routing import Route
+from starlette.templating import Jinja2Templates
 
 from _hosts import host
 from _shared import domain as d
@@ -108,7 +111,8 @@ def validated(body, first_error=False):
     return d.price_order(body["customer_id"], body["status"], body["lines"])
 
 
-META = host.meta("starlette", adapter="uvicorn")
+META = host.meta("starlette", adapter="uvicorn",
+                 template="jinja2 " + host.dist_version("jinja2"))
 
 
 def get(path, endpoint, **kw):
@@ -240,9 +244,22 @@ def cached_route(size):
     return handler
 
 
+# Starlette's own view facility. Jinja2Templates is what it ships for server-side
+# rendering and TemplateResponse is what reaches it; FastAPI re-exports this same class.
+# Compiled on first render and cached by the environment: a precomputed string would
+# measure nothing.
+templates = Jinja2Templates(
+    directory=str(pathlib.Path(__file__).resolve().parent / "templates"))
+
+
 def template_route(size):
-    async def handler(_: Request):
-        return HTMLResponse(host.render_items(d.payload(size)))
+    # A copy of the payload, not the payload. Jinja2Templates inserts the request into the
+    # context it is handed, and d.payload returns the fixture object the json family
+    # serializes, so rendering once put a request key in every json.* body until this copied.
+    body = dict(d.payload(size))
+
+    async def handler(request: Request):
+        return templates.TemplateResponse(request, "items.html", body)
     return handler
 
 

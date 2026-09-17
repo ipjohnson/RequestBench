@@ -17,11 +17,14 @@ and the substitutes are what the numbers describe:
               compressed.identity_* -- which is the honest price of not taxing the other
               forty-two endpoints.
 """
+import pathlib
+
 import uvicorn
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
+from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, Field
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.gzip import GZipMiddleware
@@ -66,7 +69,8 @@ class OrderIn(BaseModel):
 # benchmark never asks for, and /docs is not part of the endpoint set.
 app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
 
-META = host.meta("fastapi", adapter="uvicorn")
+META = host.meta("fastapi", adapter="uvicorn",
+                 template="jinja2 " + host.dist_version("jinja2"))
 
 
 def small():
@@ -344,16 +348,31 @@ async def delete_line(oid: str, lid: str):
     d.get_order_line(oid, lid)
 
 
-# ---- template: the engine named in /__meta -------------------------------------------
+# ---- template: FastAPI's own view facility -------------------------------------------
+#
+# fastapi.templating.Jinja2Templates is what FastAPI ships for server-side rendering, and
+# TemplateResponse is what reaches it. The handler takes a Request because that is the
+# signature Jinja2Templates requires, not because it reads anything from it. Compiled on
+# first render and cached by the environment: a precomputed string would measure nothing.
+
+templates = Jinja2Templates(
+    directory=str(pathlib.Path(__file__).resolve().parent / "templates"))
+
+
+# A copy of the payload, not the payload. Jinja2Templates inserts the request into the
+# context it is handed, and d.payload returns the fixture object the json family
+# serializes, so rendering once put a request key in every json.* body until this copied.
+TEMPLATE_MODELS = {size: dict(d.payload(size)) for size in ("small", "medium")}
+
 
 @app.get("/template/small", response_class=HTMLResponse)
-async def template_small():
-    return host.render_items(d.payload("small"))
+async def template_small(request: Request):
+    return templates.TemplateResponse(request, "items.html", TEMPLATE_MODELS["small"])
 
 
 @app.get("/template/medium", response_class=HTMLResponse)
-async def template_medium():
-    return host.render_items(d.payload("medium"))
+async def template_medium(request: Request):
+    return templates.TemplateResponse(request, "items.html", TEMPLATE_MODELS["medium"])
 
 
 def serve():
