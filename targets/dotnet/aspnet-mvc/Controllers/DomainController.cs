@@ -9,7 +9,9 @@ namespace RequestBench.AspNetMvc.Controllers;
 public sealed class DomainController(DomainModel domain) : ControllerBase
 {
     [HttpGet("/domain/orders")]
-    public OrdersPage Filter() => domain.DomainFilter(Support.Query(Request));
+    public OrdersPage Filter([FromQuery] int page, [FromQuery] int size,
+                             [FromQuery] string status) =>
+        domain.DomainFilter(page, size, status);
 
     [HttpPost("/domain/orders")]
     public IActionResult Create([FromBody] OrderIn body)

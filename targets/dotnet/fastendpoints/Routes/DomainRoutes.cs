@@ -7,7 +7,8 @@ using Order = RequestBench.Domain.Order;
 namespace RequestBench.FastEndpointsTarget.Routes;
 
 /// <summary>domain: application-shaped handler work and the write methods.</summary>
-public sealed class DomainFilterEndpoint(DomainModel domain) : EndpointWithoutRequest<OrdersPage>
+public sealed class DomainFilterEndpoint(DomainModel domain)
+    : Endpoint<OrderFilterRequest, OrdersPage>
 {
     public override void Configure()
     {
@@ -15,8 +16,8 @@ public sealed class DomainFilterEndpoint(DomainModel domain) : EndpointWithoutRe
         AllowAnonymous();
     }
 
-    public override Task<OrdersPage> ExecuteAsync(CancellationToken ct) =>
-        Task.FromResult(domain.DomainFilter(Support.Query(HttpContext.Request)));
+    public override Task<OrdersPage> ExecuteAsync(OrderFilterRequest req, CancellationToken ct) =>
+        Task.FromResult(domain.DomainFilter(req.Page, req.Size, req.Status));
 }
 
 public sealed class DomainCreateEndpoint(DomainModel domain) : Endpoint<OrderRequest, ValidatedOrder>

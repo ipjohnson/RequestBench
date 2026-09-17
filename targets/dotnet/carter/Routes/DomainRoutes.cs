@@ -10,8 +10,8 @@ public sealed class DomainRoutes : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapGet("/domain/orders", (HttpRequest request, DomainModel d) =>
-            d.DomainFilter(Support.Query(request)));
+        app.MapGet("/domain/orders", (int page, int size, string status, DomainModel d) =>
+            d.DomainFilter(page, size, status));
 
         app.MapPost("/domain/orders", (OrderBody body, DomainModel d, IValidator<OrderBody> v,
                                       HttpResponse response) =>
