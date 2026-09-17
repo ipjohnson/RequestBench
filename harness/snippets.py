@@ -109,6 +109,18 @@ COMMENT = re.compile(r"^\s*(?://|/\*|\*|#(?!\[))")
 # lifetime with the same tick, which is neither. See char_literal().
 CHAR_QUOTE = ("go", "java", "dotnet", "rust")
 
+# How a file is punctuated, which is not always the language of the target holding it. A
+# .yaml or a .properties beside a Java target has no semicolons and no braces, so reading
+# it with Java's rules runs a mark from a key to the end of the file. Everything here is
+# indentation-structured and commented with #, which is what dedent_end already does.
+DATA = ".yaml", ".yml", ".json", ".toml", ".properties", ".ini", ".conf"
+
+
+def syntax_of(path, language):
+    """The punctuation to read this file with: its own where it has one, else the
+    target's."""
+    return "data" if path.endswith(DATA) else language
+
 
 def route_of(ep):
     """The path a router would be given: no query string, no fragment."""
@@ -166,7 +178,7 @@ def char_literal(line, i):
     return i + 2 < len(line) and line[i + 2] == "'"
 
 
-def strip_code(line, lang):
+def strip_code(line, syntax):
     """The line with string bodies and line comments blanked, for delimiter counting.
 
     Counting delimiters over raw source miscounts the moment a route contains a brace or a
@@ -185,7 +197,7 @@ def strip_code(line, lang):
                 quote = None
             i += 1
             continue
-        if c == "'" and lang in CHAR_QUOTE and not char_literal(line, i):
+        if c == "'" and syntax in CHAR_QUOTE and not char_literal(line, i):
             out.append(c)
             i += 1
             continue
@@ -208,14 +220,14 @@ def strip_code(line, lang):
 SEMICOLON = ("java", "dotnet")
 
 
-def ends_statement(line, lang):
-    if lang not in SEMICOLON:
+def ends_statement(line, syntax):
+    if syntax not in SEMICOLON:
         return True
-    text = strip_code(line, lang).rstrip()
+    text = strip_code(line, syntax).rstrip()
     return not text or text[-1] in ";{}:"
 
 
-def block_end(lines, start, lang):
+def block_end(lines, start, syntax):
     """The last line of the delimited block opening on `start`.
 
     Forward to balanced delimiters, per docs/bundles.html §7. A registration that fits on
@@ -225,20 +237,20 @@ def block_end(lines, start, lang):
     """
     depth, opened = 0, False
     for n in range(start, min(len(lines), start + 80)):
-        for c in strip_code(lines[n], lang):
+        for c in strip_code(lines[n], syntax):
             if c in OPEN:
                 depth += 1
                 opened = True
             elif c in CLOSE:
                 depth -= 1
-        if opened and depth <= 0 and ends_statement(lines[n], lang):
+        if opened and depth <= 0 and ends_statement(lines[n], syntax):
             return n
         # `var itemsTemplate string` opens nothing and is complete. Scanning on from it
         # would run to whatever the next line with a delimiter closed, which is how a
         # one-line declaration came back holding the two declarations under it. A C# class
         # header opens nothing either and is not complete, which is what the statement rule
         # separates.
-        if not opened and ends_statement(lines[n], lang):
+        if not opened and ends_statement(lines[n], syntax):
             return start
     return start
 
@@ -247,11 +259,11 @@ def indent_of(line):
     return len(line) - len(line.lstrip())
 
 
-def opens_block(line, lang):
+def opens_block(line, syntax):
     """Whether this line leaves a delimiter open. A route registration does; a switch case
     label does not, and the two need different end rules."""
     depth = 0
-    for c in strip_code(line, lang):
+    for c in strip_code(line, syntax):
         depth += 1 if c in OPEN else -1 if c in CLOSE else 0
     return depth > 0
 
@@ -272,7 +284,7 @@ def dedent_end(lines, start):
     return end
 
 
-def marked_end(lines, start, lang):
+def marked_end(lines, start, syntax):
     """The last line of a block a marker labels.
 
     A mark sits above either a registration, which the balanced rule ends correctly, or a
@@ -281,8 +293,8 @@ def marked_end(lines, start, lang):
     method signature is neither: it balances its parentheses and opens its block on the
     next line, so it needs the statement rule as well.
     """
-    if opens_block(lines[start], lang) or not ends_statement(lines[start], lang):
-        return block_end(lines, start, lang)
+    if opens_block(lines[start], syntax) or not ends_statement(lines[start], syntax):
+        return block_end(lines, start, syntax)
     return dedent_end(lines, start)
 
 
@@ -292,7 +304,7 @@ def annotation_run(lines, start, end):
                for s in (l.strip() for l in lines[start:end + 1]))
 
 
-def declaration_end(lines, start, lang):
+def declaration_end(lines, start, syntax):
     """Where the declaration on `start` ends.
 
     The same rule a mark gets, because it is the same question: warp writes
@@ -303,10 +315,10 @@ def declaration_end(lines, start, lang):
     balanced rule would end it on the closing paren of its parameter list, which is the
     seam where counting delimiters stops being enough.
     """
-    return dedent_end(lines, start) if lang == "python" else marked_end(lines, start, lang)
+    return dedent_end(lines, start) if syntax == "python" else marked_end(lines, start, syntax)
 
 
-def through_annotations(lines, start, end, lang):
+def through_annotations(lines, start, end, syntax):
     """Extend a block that turned out to be only annotations onto what it annotates.
 
     An annotation balances its own parentheses on its own line, so it is a complete block
@@ -323,11 +335,11 @@ def through_annotations(lines, start, end, lang):
         s = lines[n].strip()
         if not s or COMMENT.match(s) or ANNOTATION.match(s):
             continue
-        return max(end, declaration_end(lines, n, lang))
+        return max(end, declaration_end(lines, n, syntax))
     return end
 
 
-def enclosing(lines, start, lang):
+def enclosing(lines, start, syntax):
     """The chain of open blocks this line sits inside, outermost first.
 
     A marker above a registration captures a handler. A marker deeper inside a nested
@@ -347,7 +359,7 @@ def enclosing(lines, start, lang):
     """
     stack = []
     for n in range(start):
-        for c in strip_code(lines[n], lang):
+        for c in strip_code(lines[n], syntax):
             if c in OPEN:
                 stack.append(n)
             elif c in CLOSE and stack:
@@ -378,14 +390,14 @@ def annotated_start(lines, line):
     return n
 
 
-def method_on(lines, line, lang):
+def method_on(lines, line, syntax):
     """The HTTP method a route registration on this line names, if it names one.
 
     Read from the line itself rather than from the framework's API shape, so `app.post(`,
     `r.POST(`, `.delete(` and `@GetMapping` all answer the same way. Without it
     /domain/orders matches its GET and its POST and the endpoint gets the wrong one.
     """
-    text = strip_code(lines[line], lang)
+    text = strip_code(lines[line], syntax)
     head = text.split("(", 1)[0]
     for m in METHODS:
         if re.search(r"(?:^|[^A-Za-z])%s(?:$|[^A-Za-z])" % m, head, re.I):
@@ -415,7 +427,7 @@ def text_of(lines, start, end):
     return "\n".join(lines[start:end + 1])
 
 
-def comment_at(line, lang):
+def comment_at(line, syntax):
     """Where a line comment starts, or the length of the line. Quote-aware, so a `//`
     inside a route literal does not truncate it."""
     i, quote = 0, None
@@ -426,7 +438,7 @@ def comment_at(line, lang):
             if c == quote:
                 quote = None
             continue
-        if c == "'" and lang in CHAR_QUOTE and not char_literal(line, i):
+        if c == "'" and syntax in CHAR_QUOTE and not char_literal(line, i):
             i += 1
             continue
         if c in "\"'`":
@@ -442,7 +454,7 @@ def comment_at(line, lang):
     return len(line)
 
 
-def derive(lines, ep, lang):
+def derive(lines, ep, syntax):
     """Every place this endpoint's route is registered, as (start, end) line indexes."""
     rx = route_regex(route_of(ep))
     method = ep["method"].lower()
@@ -451,13 +463,13 @@ def derive(lines, ep, lang):
         m = rx.search(line)
         # A route literal also appears in the prose above a neighbouring route. Counting
         # that would make a correct file ambiguous and fail the whole target.
-        if not m or m.start() >= comment_at(line, lang):
+        if not m or m.start() >= comment_at(line, syntax):
             continue
-        found = method_on(lines, n, lang)
+        found = method_on(lines, n, syntax)
         if found and found != method:
             continue
         start = annotated_start(lines, n)
-        hits.append((start, through_annotations(lines, start, block_end(lines, n, lang), lang)))
+        hits.append((start, through_annotations(lines, start, block_end(lines, n, syntax), syntax)))
     return hits
 
 
@@ -486,7 +498,7 @@ def expand(selector, selects):
     return [selector] if selector in BY_ID else []
 
 
-def marks(lines, lang):
+def marks(lines, syntax):
     """Every rb: mark in the file, and one complaint per mark that names nothing.
 
       rb:<kind> <selector>[,<selector>...] [<key>=<value>...]
@@ -533,7 +545,7 @@ def marks(lines, lang):
             start += 1
         if start >= len(lines):
             continue
-        end = through_annotations(lines, start, marked_end(lines, start, lang), lang)
+        end = through_annotations(lines, start, marked_end(lines, start, syntax), syntax)
         closed = next((k for k in range(start, len(lines)) if MARK_END.match(lines[k])), None)
         opened = next((k for k in range(start, len(lines))
                        if mark_on(lines[k]) not in (None, "end")), None)
@@ -568,7 +580,7 @@ def resolve(language, target, at=None):
     claimed = {kind: {} for kind in KINDS}
     problems = []
     for path, (lines, fhash, role) in files.items():
-        found, bad = marks(lines, language)
+        found, bad = marks(lines, syntax_of(path, language))
         problems += ["%s:%s %s (%s:%d)" % (language, target, why, path, n + 1)
                      for why, n in bad]
         for mk in found:
@@ -615,7 +627,7 @@ def resolve(language, target, at=None):
             names_route = bool(route_regex(via).search(got["text"]))
             if not names_route and not got["context"]:
                 got["context"] = enclosing(files[got["path"]][0], got["start_line"] - 1,
-                                           language)
+                                           syntax_of(got["path"], language))
             if got["how"] == "derived" and not names_route:
                 problems.append("%s:%s %s expanded past its own route (%s:%d-%d)"
                                 % (language, target, eid, got["path"],
@@ -655,7 +667,7 @@ def derived(language, files, roles, ep):
     for path, (lines, fhash, role) in files.items():
         if role not in roles:
             continue
-        for start, end in derive(lines, ep, language):
+        for start, end in derive(lines, ep, syntax_of(path, language)):
             body = text_of(lines, start, end)
             # A snippet that writes its own route identifies itself and needs nothing
             # more. One that does not is a fragment of a dispatch, and the blocks it is
