@@ -33,6 +33,13 @@
       <groupId>io.micronaut</groupId>
       <artifactId>micronaut-http-server-netty</artifactId>
     </dependency>
+    <!-- Bean Validation, which is what @Valid on a controller parameter runs. Micronaut
+         generates the validator at compile time rather than reflecting at startup, so this
+         needs the processor below as well as the runtime. -->
+    <dependency>
+      <groupId>io.micronaut.validation</groupId>
+      <artifactId>micronaut-validation</artifactId>
+    </dependency>
     <dependency>
       <groupId>io.micronaut</groupId>
       <artifactId>micronaut-jackson-databind</artifactId>
@@ -69,6 +76,10 @@
             <path>
               <groupId>io.micronaut</groupId>
               <artifactId>micronaut-inject-java</artifactId>
+            </path>
+            <path>
+              <groupId>io.micronaut.validation</groupId>
+              <artifactId>micronaut-validation-processor</artifactId>
             </path>
           </annotationProcessorPaths>
         </configuration>

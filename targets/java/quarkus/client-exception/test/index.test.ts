@@ -1,48 +1,64 @@
-// java:quarkus's error contract, against the envelope it answers today.
+// java:quarkus's error contract, against the bodies it actually sends.
 //
-// The bodies are a worked example of that envelope rather than a restatement of the schema,
-// so a schema loosened to accept anything fails here.
+// The rejection endpoints answer the unreadable-body envelope, because Jackson fails on the
+// plan's type mismatch before Bean Validation runs. The shape the validator does produce is
+// checked too, from the exported schema, so it is not left undescribed.
 import { describe, expect, test } from "vitest";
 import { askIn, schemaAt, type Answer } from "@rb/schema";
 import pkg from "../src/index.js";
 
 const PAIRS = [["customer_id", "int"], ["status", "string"], ["lines", "array"]] as const;
+const EVERY = [
+  "authorized.denied", "body.rejected_all", "body.rejected_first",
+  "errors.malformed", "errors.not_found", "errors.unmatched",
+];
 
-const judge = (answer: Answer): boolean => {
-  const declared = pkg.schemas["body.rejected_all"]!(
-    askIn(pkg.target, "body.rejected_all", [422], PAIRS));
-  return schemaAt(declared, answer.status)?.safeParse(answer).success ?? false;
+// The endpoint's declaration and the answered status are separate: letting the caller
+// declare the status it is testing makes every status assertion pass for free.
+const judge = (
+  endpoint: string, answered: number, body: unknown,
+  declared: readonly number[] = [422],
+  pairs: readonly (readonly [string, string])[] = PAIRS,
+): boolean => {
+  const answer = { status: answered, body_class: "json", encoding: "", body } as Answer;
+  const resolved = pkg.schemas[endpoint]!(askIn(pkg.target, endpoint, declared, pairs));
+  return schemaAt(resolved, answered)?.safeParse(answer).success ?? false;
 };
+import { validationFailure } from "../src/index.js";
 
-const answered = (body: unknown): Answer =>
-  ({ status: 422, body_class: "json", encoding: "", body });
+const notBound = { error: "invalid_body", detail: "JSON parse error: Cannot deserialize" };
+const refused = {
+  error: "validation_failed",
+  errors: [{ field: "customerId", message: "must not be null" }],
+};
 
 describe(pkg.target, () => {
   test("declares a schema for every error endpoint", () => {
-    expect(Object.keys(pkg.schemas).sort()).toEqual([
-      "authorized.denied", "body.rejected_all", "body.rejected_first",
-      "errors.malformed", "errors.not_found", "errors.unmatched",
-    ]);
+    expect(Object.keys(pkg.schemas).sort()).toEqual(EVERY);
   });
 
-  test("accepts the shared validator's envelope, which is what it still answers", () => {
-    expect(judge(answered({
+  test("the plan's body never reaches the validator, so it is the 400 unreadable envelope", () => {
+    expect(judge("body.rejected_all", 400, notBound, [400])).toBe(true);
+    expect(judge("body.rejected_all", 422, notBound, [400])).toBe(false);
+  });
+
+  test("this repository's shared envelope is not what it answers", () => {
+    expect(judge("body.rejected_all", 400, {
       error: "validation_failed",
       errors: PAIRS.map(([field, rule]) => ({ field, rule })),
-    }))).toBe(true);
+    }, [400])).toBe(false);
   });
 
-  test("rejects an envelope it does not answer", () => {
-    expect(judge(answered({
-      type: "about:blank", title: "One or more validation errors occurred.", status: 422,
-      errors: { customer_id: ["int"], status: ["string"], lines: ["array"] },
-    }))).toBe(false);
+  test("an unreadable body has to carry a detail, not just a name", () => {
+    expect(judge("body.rejected_all", 400, { error: "invalid_body" }, [400])).toBe(false);
   });
 
-  test("rejects its own envelope missing a pair the endpoint declares", () => {
-    expect(judge(answered({
+  test("the shape Bean Validation does produce is described, field and message", () => {
+    expect(validationFailure.safeParse(refused).success).toBe(true);
+    // The rule vocabulary is Hibernate Validator's, not this repository's.
+    expect(validationFailure.safeParse({
       error: "validation_failed",
-      errors: [{ field: "customer_id", rule: "int" }],
-    }))).toBe(false);
+      errors: [{ field: "customerId", rule: "required" }],
+    }).success).toBe(false);
   });
 });

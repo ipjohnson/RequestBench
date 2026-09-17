@@ -32,7 +32,7 @@ public final class Reply {
     try {
       return req.content().as(Map.class);
     } catch (RuntimeException e) {
-      throw Errors.Validation.json();
+      throw new Errors.Malformed(e.getMessage());
     }
   }
 

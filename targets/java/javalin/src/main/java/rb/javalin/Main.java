@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import io.javalin.validation.ValidationException;
 import rb.domain.Domain;
 import rb.domain.Errors;
 import rb.domain.Json;
@@ -76,8 +77,20 @@ public final class Main {
     // rb:snippet errors.unmatched
     cfg.routes
        .exception(Errors.NotFound.class, (e, ctx) -> ctx.status(404).json(Domain.notFoundBody()))
-       .exception(Errors.Validation.class,
-                  (e, ctx) -> ctx.status(422).json(Domain.invalidBody(e.errors())))
+       // Javalin raises this itself when bodyValidator deserializes or a check fails. The
+       // envelope is Javalin's own: the failures keyed by the field it was validating, each
+       // carrying its message and the value it saw.
+       .exception(ValidationException.class, (e, ctx) -> ctx.status(400).json(
+           Map.of("error", "validation_failed",
+                  "errors", e.getErrors().entrySet().stream()
+                      .flatMap(entry -> entry.getValue().stream()
+                          .map(err -> Map.of("field", entry.getKey(),
+                                             "message", err.getMessage())))
+                      .toList())))
+       // A body Jackson could not read never reached a check, so it names no field.
+       .exception(Errors.Malformed.class, (e, ctx) -> ctx.status(400).json(
+           Map.of("error", "invalid_body",
+                  "detail", e.getMessage() == null ? "unreadable" : e.getMessage())))
        .exception(Exception.class, (e, ctx) -> ctx.status(500)
            .json(Map.of("error", "internal",
                         "message", e.getMessage() == null ? "internal" : e.getMessage())))

@@ -4,6 +4,7 @@ import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Body;
+import jakarta.validation.Valid;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Delete;
 import io.micronaut.http.annotation.Get;
@@ -12,6 +13,7 @@ import io.micronaut.http.annotation.Post;
 import io.micronaut.http.annotation.Put;
 import java.util.Map;
 import rb.domain.Domain;
+import rb.micronaut.OrderIn;
 import rb.domain.Model.Customer;
 import rb.domain.Model.JoinSummary;
 import rb.domain.Model.Order;
@@ -31,8 +33,8 @@ public class DomainRoutes {
   }
 
   @Post("/domain/orders")
-  HttpResponse<ValidatedOrder> create(@Body Map<String, Object> body) {
-    return HttpResponse.created(Domain.validateOrder(body))
+  HttpResponse<ValidatedOrder> create(@Valid @Body OrderIn body) {
+    return HttpResponse.created(body.order())
                        .header(HttpHeaders.LOCATION, Domain.createdLocation());
   }
 
@@ -42,9 +44,9 @@ public class DomainRoutes {
   }
 
   @Put("/domain/orders/{oid}")
-  ValidatedOrderWithId replace(String oid, @Body Map<String, Object> body) {
+  ValidatedOrderWithId replace(String oid, @Valid @Body OrderIn body) {
     int id = Domain.getOrder(oid).id();
-    ValidatedOrder v = Domain.validateOrder(body);
+    ValidatedOrder v = body.order();
     return new ValidatedOrderWithId(id, v.customerId(), v.status(), v.lines(), v.totalCents());
   }
 

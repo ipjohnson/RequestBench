@@ -4,10 +4,10 @@ import io.micronaut.context.annotation.Replaces;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
-import io.micronaut.http.codec.CodecException;
 import io.micronaut.http.server.exceptions.ExceptionHandler;
-import io.micronaut.json.JsonSyntaxException;
 import jakarta.inject.Singleton;
+import jakarta.validation.ConstraintViolationException;
+import java.util.List;
 import java.util.Map;
 import rb.domain.Domain;
 import rb.domain.Errors;
@@ -30,43 +30,33 @@ public final class Failures {
     }
   }
 
-  @Singleton
-  public static class InvalidHandler
-      implements ExceptionHandler<Errors.Validation, HttpResponse<?>> {
-    @Override
-    public HttpResponse<?> handle(HttpRequest request, Errors.Validation e) {
-      return HttpResponse.status(HttpStatus.UNPROCESSABLE_ENTITY)
-                         .body(Domain.invalidBody(e.errors()));
-    }
-  }
-
   /**
-   * Micronaut raises this when it cannot read the request body as JSON, which is what
-   * errors.malformed asks for. The endpoint set answers 422 there, the same status as a
-   * body that parsed and failed validation, and @Replaces is what puts this ahead of
-   * Micronaut's own handler, which answers 400 with its own shape.
+   * The generated validator's own failure, raised by Micronaut before the controller method
+   * is entered. The envelope is the violations as it reported them: the property path it
+   * walked and its own message, which is its vocabulary and not this repository's.
+   *
+   * @Replaces puts this ahead of Micronaut's own handler, which answers its own shape.
    */
   @Singleton
-  @Replaces(io.micronaut.http.server.exceptions.JsonExceptionHandler.class)
-  public static class MalformedHandler
-      implements ExceptionHandler<JsonSyntaxException, HttpResponse<?>> {
+  @Replaces(io.micronaut.validation.exceptions.ConstraintExceptionHandler.class)
+  public static class InvalidHandler
+      implements ExceptionHandler<ConstraintViolationException, HttpResponse<?>> {
     @Override
-    public HttpResponse<?> handle(HttpRequest request, JsonSyntaxException e) {
-      return HttpResponse.status(HttpStatus.UNPROCESSABLE_ENTITY)
-                         .body(Domain.invalidBody(Errors.Validation.json().errors()));
+    public HttpResponse<?> handle(HttpRequest request, ConstraintViolationException e) {
+      List<Map<String, String>> errors = e.getConstraintViolations().stream()
+          .map(v -> Map.of("field", v.getPropertyPath().toString(),
+                           "message", v.getMessage()))
+          .toList();
+      return HttpResponse.status(HttpStatus.BAD_REQUEST)
+                         .body(Map.of("error", "validation_failed", "errors", errors));
     }
   }
 
-  /** The same 422 for the Jackson-level failure, which arrives as a CodecException. */
-  @Singleton
-  @Replaces(io.micronaut.http.server.exceptions.JacksonExceptionHandler.class)
-  public static class CodecHandler implements ExceptionHandler<CodecException, HttpResponse<?>> {
-    @Override
-    public HttpResponse<?> handle(HttpRequest request, CodecException e) {
-      return HttpResponse.status(HttpStatus.UNPROCESSABLE_ENTITY)
-                         .body(Domain.invalidBody(Errors.Validation.json().errors()));
-    }
-  }
+  // There is deliberately no handler for a body Micronaut could not read. It answers that
+  // itself, and its own envelope is a message and nothing else; replacing it would put this
+  // repository's shape where the framework's belongs. A validation failure is different --
+  // Micronaut's default for that is a HAL-shaped body, and every target here renders the
+  // failures as a list, so that one is rendered above.
 
   @Singleton
   public static class InternalHandler implements ExceptionHandler<Throwable, HttpResponse<?>> {

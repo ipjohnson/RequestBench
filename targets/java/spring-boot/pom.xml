@@ -33,6 +33,12 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-web</artifactId>
     </dependency>
+    <!-- Bean Validation, which is what @Valid on a controller parameter runs. Not pulled in
+         by starter-web: validating is opt-in, and #35 is about opting in. -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-validation</artifactId>
+    </dependency>
     <!-- Host: lambda-rie. The adapter people actually deploy in front of Spring Boot,
          rather than a generic shim. Unused under the container host, where Spring serves
          its own socket. -->

@@ -29,14 +29,34 @@ public final class Reply {
   }
 
   /**
+   * The route-level failure handler. A ValidationHandler does not throw into the handler
+   * chain: it fails the routing context, and without this Vert.x answers its own plain-text
+   * "Bad Request" before any of this target's rendering runs.
+   */
+  public static void failure(RoutingContext ctx) {
+    Throwable t = ctx.failure();
+    if (t == null) {
+      json(ctx, ctx.statusCode() < 0 ? 500 : ctx.statusCode(),
+           java.util.Map.of("error", "internal", "message", "no failure recorded"));
+      return;
+    }
+    fail(ctx, t);
+  }
+
+  /**
    * Maps the domain's failures onto statuses. Handlers raise and never build a 404 or a 422
    * themselves, so the six Java targets cannot drift.
    */
   public static void fail(RoutingContext ctx, Throwable t) {
     if (t instanceof Errors.NotFound) {
       json(ctx, 404, Domain.notFoundBody());
-    } else if (t instanceof Errors.Validation v) {
-      json(ctx, 422, Domain.invalidBody(v.errors()));
+    } else if (Validation.isRefusal(t)) {
+      // The ValidationHandler refused the body. Vert.x's own status for that is 400.
+      json(ctx, 400, Validation.refusedBody(t).getMap());
+    } else if (t instanceof Errors.Malformed m) {
+      // Nothing validated it, so it names no field.
+      json(ctx, 400, java.util.Map.of("error", "invalid_body",
+          "detail", m.getMessage() == null ? "unreadable" : m.getMessage()));
     } else {
       Map<String, Object> b = new LinkedHashMap<>(2);
       b.put("error", "internal");

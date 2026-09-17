@@ -14,7 +14,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.zip.GZIPOutputStream;
 import java.io.ByteArrayOutputStream;
 import rb.domain.Errors.NotFound;
-import rb.domain.Errors.Validation;
 import rb.domain.Model.*;
 
 /**
@@ -373,123 +372,35 @@ public final class Domain {
     return body == null ? null : body.get(name);
   }
 
-  private static void required(List<FieldError> errs, Map<String, Object> body, String field, String type) {
-    Object v = field(body, field);
-    if (v == null) {
-      errs.add(new FieldError(field, "required"));
-      return;
-    }
-    switch (type) {
-      case "int" -> {
-        if (!isInt(v)) {
-          errs.add(new FieldError(field, "int"));
-        }
-      }
-      case "string" -> {
-        if (!(v instanceof String)) {
-          errs.add(new FieldError(field, "string"));
-        }
-      }
-      case "array" -> {
-        if (!(v instanceof List)) {
-          errs.add(new FieldError(field, "array"));
-        }
-      }
-      default -> throw new IllegalArgumentException(type);
-    }
-  }
-
   private static int unitCents(int productId) {
     Product p = productById.get(productId);
     return p == null ? 0 : p.priceCents();
   }
 
-  @SuppressWarnings("unchecked")
-  private static Object lineField(Object line, String name) {
-    return line instanceof Map<?, ?> m ? ((Map<String, Object>) m).get(name) : null;
-  }
+  // ---- the order body, after validation ------------------------------------------------
+  //
+  // Validating is the framework's own job and lives in each target: spring-boot and quarkus
+  // annotate a record for Bean Validation, micronaut does the same through
+  // micronaut-validation, javalin uses ctx.bodyValidator, vertx mounts a ValidationHandler,
+  // and helidon-se holds its own because it has no validation layer to use. What is left
+  // here is what happens once a body is known to be good, which is the same work whichever
+  // framework proved it.
 
-  public static ValidatedOrder validateOrder(Map<String, Object> body) {
-    List<FieldError> errs = new ArrayList<>();
-    required(errs, body, "customer_id", "int");
-    required(errs, body, "status", "string");
-    required(errs, body, "lines", "array");
-    List<?> rawLines = field(body, "lines") instanceof List<?> l ? l : null;
-    if (rawLines != null) {
-      if (rawLines.isEmpty()) {
-        errs.add(new FieldError("lines", "min_length"));
-      }
-      for (int i = 0; i < rawLines.size(); i++) {
-        Object pid = lineField(rawLines.get(i), "product_id");
-        Object qty = lineField(rawLines.get(i), "qty");
-        if (!isInt(pid)) {
-          errs.add(new FieldError("lines[" + i + "].product_id", "int"));
-        }
-        if (!isInt(qty) || intValue(qty) < 1) {
-          errs.add(new FieldError("lines[" + i + "].qty", "min"));
-        }
-      }
-    }
-    if (!errs.isEmpty()) {
-      throw new Validation(errs);
-    }
-    List<Line> lines = new ArrayList<>(rawLines.size());
+  /**
+   * The work after the validator says yes: look each product up, carry the unit price onto
+   * the line, and total it. Identical in every framework, which is why it is here and the
+   * validating is not.
+   */
+  public static ValidatedOrder priceOrder(int customerId, String status, List<LineInput> in) {
+    List<Line> lines = new ArrayList<>(in.size());
     int total = 0;
-    for (int i = 0; i < rawLines.size(); i++) {
-      int pid = intValue(lineField(rawLines.get(i), "product_id"));
-      int qty = intValue(lineField(rawLines.get(i), "qty"));
-      int unit = unitCents(pid);
-      lines.add(new Line(i + 1, pid, qty, unit, unit * qty));
-      total += unit * qty;
+    for (int i = 0; i < in.size(); i++) {
+      LineInput l = in.get(i);
+      int unit = unitCents(l.productId());
+      lines.add(new Line(i + 1, l.productId(), l.qty(), unit, unit * l.qty()));
+      total += unit * l.qty();
     }
-    return new ValidatedOrder(intValue(field(body, "customer_id")),
-                              (String) field(body, "status"), lines, total);
-  }
-
-  public static ValidatedCustomer validateCustomer(Map<String, Object> body) {
-    List<FieldError> errs = new ArrayList<>();
-    required(errs, body, "name", "string");
-    required(errs, body, "email", "string");
-    required(errs, body, "region", "string");
-    Object email = field(body, "email");
-    if (email instanceof String s && !s.contains("@")) {
-      errs.add(new FieldError("email", "format"));
-    }
-    if (!errs.isEmpty()) {
-      throw new Validation(errs);
-    }
-    return new ValidatedCustomer(((String) field(body, "name")).trim(),
-                                 ((String) email).toLowerCase(java.util.Locale.ROOT),
-                                 (String) field(body, "region"));
-  }
-
-  public static ValidatedProduct validateProduct(Map<String, Object> body) {
-    List<FieldError> errs = new ArrayList<>();
-    required(errs, body, "name", "string");
-    required(errs, body, "category", "string");
-    required(errs, body, "price_cents", "int");
-    Object price = field(body, "price_cents");
-    if (isInt(price) && intValue(price) < 0) {
-      errs.add(new FieldError("price_cents", "min"));
-    }
-    if (!errs.isEmpty()) {
-      throw new Validation(errs);
-    }
-    return new ValidatedProduct((String) field(body, "name"),
-                                (String) field(body, "category"), intValue(price));
-  }
-
-  public static Line validateLine(Map<String, Object> body) {
-    List<FieldError> errs = new ArrayList<>();
-    required(errs, body, "product_id", "int");
-    required(errs, body, "qty", "int");
-    if (!errs.isEmpty()) {
-      throw new Validation(errs);
-    }
-    int pid = intValue(field(body, "product_id"));
-    int qty = intValue(field(body, "qty"));
-    int unit = unitCents(pid);
-    return new Line(1, pid, qty, unit, unit * qty);
+    return new ValidatedOrder(customerId, status, lines, total);
   }
 
   public static Customer patchCustomer(String cid, Map<String, Object> body) {
@@ -586,13 +497,6 @@ public final class Domain {
     return Map.of("error", "forbidden");
   }
 
-  public static Map<String, Object> invalidBody(List<FieldError> errors) {
-    Map<String, Object> out = new LinkedHashMap<>();
-    out.put("error", "validation_failed");
-    out.put("errors", errors);
-    return out;
-  }
-
   // ---- query ---------------------------------------------------------------------------
   //
   // The framework parses the query string, which is the work the family measures; these
@@ -635,42 +539,6 @@ public final class Domain {
 
   public static BindResult bindEcho(Map<String, Object> body) {
     return new BindResult(leafCount(body), Json.bytes(body).length, body);
-  }
-
-  /**
-   * validateOrder reports every problem it finds; this stops at the first, which is what
-   * body.rejected_all minus body.rejected_first states as a number: the same walk in the
-   * same order, differing only in where it gives up.
-   */
-  public static ValidatedOrder validateOrderFirst(Map<String, Object> body) {
-    List<FieldError> errs = new ArrayList<>();
-    required(errs, body, "customer_id", "int");
-    if (errs.isEmpty()) {
-      required(errs, body, "status", "string");
-    }
-    if (errs.isEmpty()) {
-      required(errs, body, "lines", "array");
-    }
-    List<?> rawLines = field(body, "lines") instanceof List<?> l ? l : null;
-    if (errs.isEmpty() && rawLines != null) {
-      if (rawLines.isEmpty()) {
-        errs.add(new FieldError("lines", "min_length"));
-      }
-      for (int i = 0; i < rawLines.size() && errs.isEmpty(); i++) {
-        Object pid = lineField(rawLines.get(i), "product_id");
-        Object qty = lineField(rawLines.get(i), "qty");
-        if (!isInt(pid)) {
-          errs.add(new FieldError("lines[" + i + "].product_id", "int"));
-        }
-        if (errs.isEmpty() && (!isInt(qty) || intValue(qty) < 1)) {
-          errs.add(new FieldError("lines[" + i + "].qty", "min"));
-        }
-      }
-    }
-    if (!errs.isEmpty()) {
-      throw new Validation(errs);
-    }
-    return validateOrder(body);
   }
 
   // ---- domain ----------------------------------------------------------------------------

@@ -15,7 +15,7 @@ public final class Support {
     try {
       return ctx.bodyAsClass(Map.class);
     } catch (RuntimeException e) {
-      throw Errors.Validation.json();
+      throw new Errors.Malformed(e.getMessage());
     }
   }
 

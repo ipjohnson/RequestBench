@@ -113,7 +113,11 @@ public final class Model {
                             @JsonProperty("line_count") int lineCount,
                             int units, List<RecentOrder> recent) {}
 
-  public record FieldError(String field, String rule) {}
+  /**
+   * One order line as it arrived, before pricing. What a framework's own validator hands
+   * back once it has said the body is good, whatever shape it validated.
+   */
+  public record LineInput(int productId, int qty) {}
 
   public record ValidatedOrder(@JsonProperty("customer_id") int customerId, String status,
                                List<Line> lines,

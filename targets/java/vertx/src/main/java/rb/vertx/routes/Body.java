@@ -2,8 +2,11 @@ package rb.vertx.routes;
 
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
+import io.vertx.ext.web.validation.RequestParameters;
+import io.vertx.ext.web.validation.ValidationHandler;
 import rb.domain.Domain;
 import rb.vertx.Reply;
+import rb.vertx.Validation;
 
 /**
  * body: the parser and the validator, with size crossed against validation.
@@ -13,7 +16,8 @@ import rb.vertx.Reply;
  * send one.
  *
  * bind parses and binds without validating, so validate minus bind is the validator alone
- * rather than the validator plus the parse.
+ * rather than the validator plus the parse. Validating is a ValidationHandler mounted ahead
+ * of the business handler, so the handler only ever sees a body that passed.
  */
 public final class Body {
   private Body() {}
@@ -25,14 +29,23 @@ public final class Body {
     router.post("/body/bind/medium").handler(BodyHandler.create()).handler(ctx ->
         Reply.guarded(ctx, () -> Reply.json(ctx, 200, Domain.bindEcho(Reply.body(ctx)))));
 
-    router.post("/body/validate/small").handler(BodyHandler.create()).handler(ctx ->
-        Reply.guarded(ctx, () -> Reply.json(ctx, 200, Domain.validateOrder(Reply.body(ctx)))));
+    ValidationHandler order = Validation.orderHandler(router);
 
-    router.post("/body/validate/medium").handler(BodyHandler.create()).handler(ctx ->
-        Reply.guarded(ctx, () -> Reply.json(ctx, 200, Domain.validateOrder(Reply.body(ctx)))));
+    router.post("/body/validate/small").handler(BodyHandler.create()).handler(order)
+          .handler(Body::validated).failureHandler(Reply::failure);
 
-    router.post("/body/validate/first-error").handler(BodyHandler.create()).handler(ctx ->
-        Reply.guarded(ctx,
-            () -> Reply.json(ctx, 200, Domain.validateOrderFirst(Reply.body(ctx)))));
+    router.post("/body/validate/medium").handler(BodyHandler.create()).handler(order)
+          .handler(Body::validated).failureHandler(Reply::failure);
+
+    // The handler fails the context on the first thing that did not fit the schema, and
+    // offers no collect-all mode, so this row answers what Vert.x answers.
+    router.post("/body/validate/first-error").handler(BodyHandler.create()).handler(order)
+          .handler(Body::validated).failureHandler(Reply::failure);
+  }
+
+  private static void validated(io.vertx.ext.web.RoutingContext ctx) {
+    RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
+    Reply.guarded(ctx,
+        () -> Reply.json(ctx, 200, Validation.order(params.body().getJsonObject())));
   }
 }
