@@ -1,12 +1,14 @@
 package rb.quarkus.routes;
 
 import jakarta.ws.rs.Consumes;
+import jakarta.validation.Valid;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import java.util.Map;
 import rb.domain.Domain;
+import rb.quarkus.OrderIn;
 import rb.domain.Model.BindResult;
 import rb.domain.Model.ValidatedOrder;
 
@@ -41,21 +43,24 @@ public class BodyRoutes {
   // rb:snippet body.validate_small body.rejected_all errors.malformed
   @POST
   @Path("validate/small")
-  public ValidatedOrder validateSmall(Map<String, Object> body) {
-    return Domain.validateOrder(body);
+  public ValidatedOrder validateSmall(@Valid OrderIn body) {
+    return body.order();
   }
 
   // rb:snippet body.validate_medium
   @POST
   @Path("validate/medium")
-  public ValidatedOrder validateMedium(Map<String, Object> body) {
-    return Domain.validateOrder(body);
+  public ValidatedOrder validateMedium(@Valid OrderIn body) {
+    return body.order();
   }
 
+  // Hibernate Validator reports every constraint that failed and offers no fail-fast mode
+  // without configuring the ValidatorFactory for the whole application, which would change
+  // this endpoint's neighbour too. So this row answers what Quarkus answers.
   // rb:snippet body.rejected_first
   @POST
   @Path("validate/first-error")
-  public ValidatedOrder validateFirst(Map<String, Object> body) {
-    return Domain.validateOrderFirst(body);
+  public ValidatedOrder validateFirst(@Valid OrderIn body) {
+    return body.order();
   }
 }

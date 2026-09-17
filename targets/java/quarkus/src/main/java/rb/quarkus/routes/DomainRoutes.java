@@ -4,6 +4,7 @@ import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.PATCH;
+import jakarta.validation.Valid;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
@@ -16,6 +17,7 @@ import jakarta.ws.rs.core.UriInfo;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import rb.domain.Domain;
+import rb.quarkus.OrderIn;
 import rb.domain.Model.Customer;
 import rb.domain.Model.JoinSummary;
 import rb.domain.Model.Order;
@@ -40,8 +42,8 @@ public class DomainRoutes {
   // rb:snippet domain.create
   @POST
   @Path("orders")
-  public Response create(Map<String, Object> body) {
-    ValidatedOrder v = Domain.validateOrder(body);
+  public Response create(@Valid OrderIn body) {
+    ValidatedOrder v = body.order();
     return Response.status(201).header("location", Domain.createdLocation()).entity(v).build();
   }
 
@@ -55,9 +57,9 @@ public class DomainRoutes {
   // rb:snippet domain.replace
   @PUT
   @Path("orders/{oid}")
-  public ValidatedOrderWithId replace(@PathParam("oid") String oid, Map<String, Object> body) {
+  public ValidatedOrderWithId replace(@PathParam("oid") String oid, @Valid OrderIn body) {
     int id = Domain.getOrder(oid).id();
-    ValidatedOrder v = Domain.validateOrder(body);
+    ValidatedOrder v = body.order();
     return new ValidatedOrderWithId(id, v.customerId(), v.status(), v.lines(), v.totalCents());
   }
 

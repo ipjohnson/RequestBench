@@ -15,7 +15,7 @@ public final class DomainRoutes {
                    ctx -> ctx.json(Domain.domainFilter(Support.query(ctx))));
 
     cfg.routes.post("/domain/orders", ctx -> {
-      ValidatedOrder v = Domain.validateOrder(Support.body(ctx));
+      ValidatedOrder v = Body.validated(ctx).order();
       ctx.header("location", Domain.createdLocation()).status(201).json(v);
     });
 
@@ -24,7 +24,7 @@ public final class DomainRoutes {
 
     cfg.routes.put("/domain/orders/{oid}", ctx -> {
       int id = Domain.getOrder(ctx.pathParam("oid")).id();
-      ValidatedOrder v = Domain.validateOrder(Support.body(ctx));
+      ValidatedOrder v = Body.validated(ctx).order();
       ctx.json(new ValidatedOrderWithId(id, v.customerId(), v.status(), v.lines(),
                                         v.totalCents()));
     });

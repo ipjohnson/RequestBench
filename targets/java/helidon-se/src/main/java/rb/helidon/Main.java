@@ -44,8 +44,11 @@ public final class Main {
     // handler raise and never build a 404 or a 422 itself. The router's own miss is a 404
     // Helidon answers before any handler, so it gets the body from the catch-all below.
     r.error(Errors.NotFound.class, (req, res, ex) -> res.status(404).send(Domain.notFoundBody()));
-    r.error(Errors.Validation.class, (req, res, ex) ->
-        res.status(422).send(Domain.invalidBody(ex.errors())));
+    r.error(Validation.Refused.class, (req, res, ex) ->
+        res.status(422).send(Validation.refusedBody(ex.errors())));
+    // A body Jackson could not read never reached the walk, so it names no field.
+    r.error(Errors.Malformed.class, (req, res, ex) ->
+        res.status(400).send(Validation.notBoundBody(ex.getMessage())));
     r.error(Exception.class, (req, res, ex) -> {
       Map<String, String> b = new LinkedHashMap<>(2);
       b.put("error", "internal");

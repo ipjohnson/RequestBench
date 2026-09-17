@@ -1,9 +1,11 @@
 package rb.spring;
 
+import java.util.List;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.NoHandlerFoundException;
@@ -25,21 +27,31 @@ public class Failures {
     return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Domain.notFoundBody());
   }
 
-  @ExceptionHandler(Errors.Validation.class)
-  ResponseEntity<Object> invalid(Errors.Validation e) {
-    return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
-                         .body(Domain.invalidBody(e.errors()));
+  /**
+   * Spring raises this itself when a parameter marked @Valid fails a constraint, before the
+   * controller method is entered. The envelope is Spring's own: the field as the binding
+   * names it and the message Hibernate Validator produced, which is its vocabulary and not
+   * this repository's.
+   */
+  @ExceptionHandler(MethodArgumentNotValidException.class)
+  ResponseEntity<Object> invalid(MethodArgumentNotValidException e) {
+    List<Map<String, String>> errors = e.getBindingResult().getFieldErrors().stream()
+        .map(f -> Map.of("field", f.getField(),
+                         "message", f.getDefaultMessage() == null ? "" : f.getDefaultMessage()))
+        .toList();
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        .body(Map.of("error", "validation_failed", "errors", errors));
   }
 
   /**
-   * Spring raises this when Jackson cannot read the request body, which is what
-   * errors.malformed asks for. The endpoint set answers 422 there, the same status as a
-   * body that parsed and failed validation, so the two contracts meet here.
+   * Spring raises this when Jackson cannot read the request body at all. Nothing validated
+   * it, so it names no field, and Spring's own status for an unreadable body is 400.
    */
-  @ExceptionHandler(HttpMessageNotReadableException.class)
-  ResponseEntity<Object> malformed(HttpMessageNotReadableException e) {
-    return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
-                         .body(Domain.invalidBody(Errors.Validation.json().errors()));
+  @ExceptionHandler({HttpMessageNotReadableException.class, Errors.Malformed.class})
+  ResponseEntity<Object> malformed(Exception e) {
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        .body(Map.of("error", "invalid_body",
+                     "detail", e.getMessage() == null ? "unreadable" : e.getMessage()));
   }
 
   /**

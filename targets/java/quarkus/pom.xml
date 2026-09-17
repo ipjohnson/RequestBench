@@ -41,6 +41,12 @@
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-rest-jackson</artifactId>
     </dependency>
+    <!-- Hibernate Validator, which is what @Valid on a resource method parameter runs.
+         Quarkus does not pull it in with the REST extension: validating is opt-in. -->
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-hibernate-validator</artifactId>
+    </dependency>
   </dependencies>
 
   <build>

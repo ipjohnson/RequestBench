@@ -38,7 +38,7 @@ public final class Json {
     try {
       return MAPPER.readValue(raw, BODY);
     } catch (Exception e) {
-      throw rb.domain.Errors.Validation.json();
+      throw new rb.domain.Errors.Malformed(e.getMessage());
     }
   }
 
@@ -46,7 +46,7 @@ public final class Json {
     try {
       return MAPPER.readValue(raw, BODY);
     } catch (Exception e) {
-      throw rb.domain.Errors.Validation.json();
+      throw new rb.domain.Errors.Malformed(e.getMessage());
     }
   }
 }

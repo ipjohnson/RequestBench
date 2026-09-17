@@ -5,6 +5,7 @@ import rb.domain.Domain;
 import rb.domain.Model.ValidatedOrder;
 import rb.domain.Model.ValidatedOrderWithId;
 import rb.helidon.Reply;
+import rb.helidon.Validation;
 
 /** domain: application-shaped handler work and the write methods. */
 public final class DomainRoutes {
@@ -14,7 +15,7 @@ public final class DomainRoutes {
     r.get("/domain/orders", (req, res) -> res.send(Domain.domainFilter(Reply.query(req))));
 
     r.post("/domain/orders", (req, res) -> {
-      ValidatedOrder v = Domain.validateOrder(Reply.body(req));
+      ValidatedOrder v = Validation.validated(Reply.body(req), false);
       res.header("location", Domain.createdLocation());
       res.status(201).send(v);
     });
@@ -24,7 +25,7 @@ public final class DomainRoutes {
 
     r.put("/domain/orders/{oid}", (req, res) -> {
       int id = Domain.getOrder(Reply.param(req, "oid")).id();
-      ValidatedOrder v = Domain.validateOrder(Reply.body(req));
+      ValidatedOrder v = Validation.validated(Reply.body(req), false);
       res.send(new ValidatedOrderWithId(id, v.customerId(), v.status(), v.lines(),
                                         v.totalCents()));
     });

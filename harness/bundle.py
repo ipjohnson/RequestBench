@@ -141,6 +141,14 @@ def roots(language, target, at=None):
             lang + "/"]
 
 
+# What sits inside a target directory but is not part of the target. The client-exception
+# package is the conformance client's contract for this framework: TypeScript, never
+# compiled into the image, and already excluded from the Docker build context. Hashing it
+# would make a bundle_hash change when nothing the target runs had changed, and
+# harness/snippets.py would look for endpoint wiring in a schema.
+NOT_THE_TARGET = ("/client-exception/",)
+
+
 def files(language, target, at=None):
     """Every tracked file in the bundle, sorted.
 
@@ -154,6 +162,7 @@ def files(language, target, at=None):
                           if "/" not in p[len(root):])
         else:
             wanted.update(tracked(root, at))
+    wanted = {p for p in wanted if not any(part in p for part in NOT_THE_TARGET)}
     if not wanted:
         raise RuntimeError("%s:%s has no tracked files under %s"
                            % (language, target, ", ".join(roots(language, target, at))))

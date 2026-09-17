@@ -33,6 +33,18 @@
       <groupId>io.vertx</groupId>
       <artifactId>vertx-web</artifactId>
     </dependency>
+    <!-- Vert.x's validation facility: a handler mounted on the route, which validates the
+         body against a JSON schema and fails the context itself. Not in vertx-web, because
+         validating is opt-in and #35 is about opting in. Versions come from the stack
+         depchain above. -->
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-web-validation</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-json-schema</artifactId>
+    </dependency>
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-core</artifactId>
