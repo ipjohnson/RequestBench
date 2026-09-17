@@ -17,15 +17,6 @@ import (
 	d "github.com/ianjohnson/requestbench/targets/go/_shared"
 )
 
-// fasthttp hands query values back one at a time; the domain takes net/http's shape.
-func query(c fiber.Ctx) map[string][]string {
-	out := map[string][]string{}
-	for k, v := range c.Queries() {
-		out[k] = []string{v}
-	}
-	return out
-}
-
 func fail(c fiber.Ctx, err error) error {
 	if isNotFound(err) {
 		return c.Status(404).JSON(d.NotFoundBody())

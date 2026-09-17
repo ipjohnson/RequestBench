@@ -134,8 +134,20 @@ func main() {
 	r.GET("/parameters/:one", small)
 	r.GET("/parameters/:one/with-second/:two", small)
 
-	r.GET("/query/one", func(c *gin.Context) { c.JSON(200, d.CoerceOne(c.Request.URL.Query())) })
-	r.GET("/query/many", func(c *gin.Context) { c.JSON(200, d.CoerceMany(c.Request.URL.Query())) })
+	// Gin binds both arms, so the handler answers the struct it filled rather than reading
+	// the raw map. query.go holds the shapes and the tags it reads them with.
+	r.GET("/query/one", func(c *gin.Context) {
+		var q queryOne
+		if bindQuery(c, &q) {
+			c.JSON(200, q)
+		}
+	})
+	r.GET("/query/many", func(c *gin.Context) {
+		var q queryMany
+		if bindQuery(c, &q) {
+			c.JSON(200, q)
+		}
+	})
 
 	// The handler reads no header at all, so headers.many minus headers.few is the cost of
 	// materialising 27 nobody asked for.
@@ -231,7 +243,12 @@ func main() {
 
 	// ---- domain ---------------------------------------------------------------------
 
-	r.GET("/domain/orders", func(c *gin.Context) { c.JSON(200, d.DomainFilter(c.Request.URL.Query())) })
+	r.GET("/domain/orders", func(c *gin.Context) {
+		var f orderFilter
+		if bindQuery(c, &f) {
+			c.JSON(200, d.DomainFilter(f.Page, f.Size, f.Status))
+		}
+	})
 	r.GET("/domain/orders/:oid", func(c *gin.Context) {
 		v, err := d.GetOrder(c.Param("oid"))
 		ok(c, v, err, 200)

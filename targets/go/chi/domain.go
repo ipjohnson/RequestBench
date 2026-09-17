@@ -10,7 +10,8 @@ import (
 
 func registerDomain(r chi.Router) {
 	r.Get("/domain/orders", func(w http.ResponseWriter, req *http.Request) {
-		writeJSON(w, 200, d.DomainFilter(req.URL.Query()))
+		q := req.URL.Query()
+		writeJSON(w, 200, d.DomainFilter(qint(q, "page"), qint(q, "size"), qstr(q, "status")))
 	})
 
 	r.Post("/domain/orders", func(w http.ResponseWriter, req *http.Request) {
