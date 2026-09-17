@@ -18,6 +18,7 @@ namespace RequestBench.AspNetMvc.Controllers;
 // AllowMultiple, because a layer count is the number of times the attribute is
 // applied and the compiler refuses a repeat without it.
 [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
+// rb:wiring middleware.*
 public sealed class NoopFilterAttribute : Attribute, IAsyncActionFilter
 {
     public async Task OnActionExecutionAsync(ActionExecutingContext context,

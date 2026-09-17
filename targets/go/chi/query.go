@@ -18,10 +18,12 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+// rb:wiring query.*
 type queryOne struct {
 	Page int `json:"page"`
 }
 
+// rb:wiring query.*
 type queryMany struct {
 	Page     int    `json:"page"`
 	Size     int    `json:"size"`
@@ -33,6 +35,7 @@ type queryMany struct {
 	MaxPrice int    `json:"max_price"`
 }
 
+// rb:wiring query.*,domain.*
 func qstr(q map[string][]string, k string) string {
 	if v, ok := q[k]; ok && len(v) > 0 {
 		return v[0]

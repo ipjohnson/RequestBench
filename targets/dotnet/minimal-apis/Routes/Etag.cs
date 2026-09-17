@@ -17,6 +17,7 @@ namespace RequestBench.MinimalApis.Routes;
 /// </summary>
 public static class Etag
 {
+    // rb:wiring etag.*
     private static async ValueTask<object?> Revalidate(EndpointFilterInvocationContext context,
                                                        EndpointFilterDelegate next)
     {
@@ -27,6 +28,7 @@ public static class Etag
             : Results.Bytes(raw, "application/json");
     }
 
+    // rb:wiring etag.*
     private static Func<HttpResponse, DomainModel, PayloadBody> Serve(string size) =>
         (response, model) =>
         {
@@ -36,7 +38,7 @@ public static class Etag
 
     public static void Map(WebApplication app)
     {
-        // rb:snippet etag.small etag.large etag.match_large etag.stale_large
+        // rb:handler etag.*
         app.MapGet("/etag/small", Serve("small")).AddEndpointFilter(Revalidate);
 
         app.MapGet("/etag/large", Serve("large")).AddEndpointFilter(Revalidate);

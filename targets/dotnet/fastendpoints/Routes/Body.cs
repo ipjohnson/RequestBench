@@ -16,6 +16,7 @@ namespace RequestBench.FastEndpointsTarget.Routes;
 /// Validator&lt;TRequest&gt; is discovered and run against the bound request before the
 /// handler is entered, so no handler calls a validator.
 /// </summary>
+// rb:handler body.bind_small
 public sealed class BindSmallEndpoint : EndpointWithoutRequest<BindResult>
 {
     public override void Configure()
@@ -28,6 +29,7 @@ public sealed class BindSmallEndpoint : EndpointWithoutRequest<BindResult>
         DomainModel.BindEcho(await Support.Body(HttpContext.Request, ct));
 }
 
+// rb:handler body.bind_medium
 public sealed class BindMediumEndpoint : EndpointWithoutRequest<BindResult>
 {
     public override void Configure()
@@ -40,6 +42,7 @@ public sealed class BindMediumEndpoint : EndpointWithoutRequest<BindResult>
         DomainModel.BindEcho(await Support.Body(HttpContext.Request, ct));
 }
 
+// rb:handler body.validate_small,body.rejected_all,errors.malformed
 public sealed class ValidateSmallEndpoint(DomainModel domain) : Endpoint<OrderRequest, ValidatedOrder>
 {
     public override void Configure()
@@ -52,6 +55,7 @@ public sealed class ValidateSmallEndpoint(DomainModel domain) : Endpoint<OrderRe
         Task.FromResult(domain.PriceOrder(req.CustomerId!.Value, req.Status!, req.Input()));
 }
 
+// rb:handler body.validate_medium
 public sealed class ValidateMediumEndpoint(DomainModel domain) : Endpoint<OrderRequest, ValidatedOrder>
 {
     public override void Configure()
@@ -64,6 +68,7 @@ public sealed class ValidateMediumEndpoint(DomainModel domain) : Endpoint<OrderR
         Task.FromResult(domain.PriceOrder(req.CustomerId!.Value, req.Status!, req.Input()));
 }
 
+// rb:handler body.rejected_first
 public sealed class ValidateFirstEndpoint(DomainModel domain) : Endpoint<OrderRequest, ValidatedOrder>
 {
     // FluentValidation collects every rule that failed. FastEndpoints exposes no

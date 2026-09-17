@@ -25,6 +25,7 @@ import rb.domain.Model.PayloadBody;
 public class Authorized {
 
   @Bean
+  // rb:wiring authorized.*
   FilterRegistrationBean<Filter> requireToken() {
     Filter filter = (request, response, chain) -> {
       HttpServletRequest req = (HttpServletRequest) request;
@@ -42,7 +43,7 @@ public class Authorized {
     return bean;
   }
 
-  // rb:snippet authorized.allowed authorized.denied
+  // rb:handler authorized.*
   @GetMapping("/authorized/small")
   PayloadBody small() {
     return Domain.payload("small");

@@ -40,6 +40,7 @@ public final class Validation {
     }
   }
 
+  // rb:wiring body.*,errors.*
   public static Map<String, Object> refusedBody(List<FieldError> errors) {
     return Map.of("error", "validation_failed", "errors", errors);
   }
@@ -89,6 +90,7 @@ public final class Validation {
   }
 
   /** Every field that is wrong, or the first one when asked for that. */
+  // rb:wiring body.*,domain.*
   public static List<FieldError> check(Map<String, Object> body, boolean firstError) {
     List<FieldError> errs = new ArrayList<>();
     required(errs, body, "customer_id", "int");

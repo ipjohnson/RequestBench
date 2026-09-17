@@ -1,3 +1,4 @@
+// rb:wiring cache.*
 // cache: koa-cash, the response cache the Koa organisation ships.
 //
 // The store is an LRU sized from the fixture, and koa-cash's own hash() builds the key, so
@@ -16,12 +17,14 @@ import { LRUCache } from "lru-cache";
 
 import * as d from "../../_shared/domain.js";
 
+// rb:wiring cache.*
 const store = new LRUCache({ max: d.CACHE_MAX, ttl: d.CACHE_TTL_MS });
 const serials = new LRUCache({ max: d.CACHE_MAX, ttl: d.CACHE_TTL_MS });
 
 /** The headers each route is keyed on, beyond the url koa-cash hashes by default. */
 const varyBy = new Map();
 
+// rb:wiring cache.*
 const cash = koaCash({
   maxAge: d.CACHE_TTL_MS,
   hash: (ctx) => {
@@ -40,6 +43,7 @@ async function replayed(ctx) {
   return true;
 }
 
+// rb:wiring cache.*
 function built(ctx, body) {
   const serial = d.nextSerial();
   serials.set(ctx.cashKey, serial);
@@ -48,15 +52,16 @@ function built(ctx, body) {
 }
 
 export default function cache(router, { app }) {
+  // rb:wiring cache.*
   app.use(cash);
-  // rb:snippet cache.small cache.medium cache.large
+  // rb:handler cache.small,cache.medium,cache.large
   for (const size of ["small", "medium", "large"]) {
     router.get("/cache/" + size, async (ctx) => {
       if (await replayed(ctx)) return;
       built(ctx, d.payload(size));
     });
   }
-  // rb:snippet cache.vary_one cache.vary_many
+  // rb:handler cache.vary_one,cache.vary_many
   for (const which of ["one", "many"]) {
     const on = d.varyOn(which);
     varyBy.set("/cache/vary/" + which, on);

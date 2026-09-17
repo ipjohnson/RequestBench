@@ -8,6 +8,7 @@ import Router from "@koa/router";
 import { hostMeta } from "../_shared/host.js";
 import { pkgVersion } from "../_shared/version.js";
 import * as d from "../_shared/domain.js";
+// rb:wiring errors.*
 import { notBound } from "./validation.js";
 
 import authorized from "./routes/authorized.js";
@@ -43,7 +44,7 @@ for (const register of [baseline, json, parameters, query, headers, middleware,
 // unmatched route with an empty 404 and a throw with plain text, so one application
 // middleware gives both the shape every other target produces.
 //
-// rb:snippet errors.unmatched
+// rb:handler errors.unmatched
 app.use(async (ctx, next) => {
   try {
     await next();

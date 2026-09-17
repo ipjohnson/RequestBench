@@ -10,10 +10,11 @@ missing half: the target's own wiring, the shared domain module every target in 
 language calls, the dependency manifests the version was resolved from, and the
 Dockerfiles that pin the runtime. Any of them moves the target, so all of them are hashed.
 
-Two rollups. code_hash covers everything except prose, so correcting a README does not
-read as a target that changed. bundle_hash covers prose as well, so a corrected README
-does produce a new page. Keeping both is free once files are listed individually, and
-conflating them would make one of the two behaviours wrong.
+Two rollups. code_hash covers everything except prose and the conformance contract, so
+correcting a README or sharpening a test does not read as a target that changed.
+bundle_hash covers both, so either does produce a new page. Keeping them apart is free
+once files are listed individually, and conflating them would make one of the two
+behaviours wrong.
 
 The rules are versioned as bundle-v1, because changing any of them silently reissues
 every hash in the series:
@@ -41,7 +42,10 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 SPEC = ROOT / "spec"
 MATRIX = json.loads((SPEC / "matrix.json").read_text())
 
-BUNDLE_VERSION = "bundle-v1"
+# bundle-v2 brought the conformance client's contract into the file set at role test.
+# The rules below are versioned because changing any of them reissues every hash in the
+# series, and adding files to the set is one of them.
+BUNDLE_VERSION = "bundle-v2"
 
 
 # The two directories every target in a language shares: the domain module they all call,
@@ -58,6 +62,13 @@ MANIFEST_NAMES = {"package.json", "package-lock.json", "go.mod", "go.sum", "pom.
 # package version is.
 MANIFEST_SUFFIXES = (".csproj",)
 CONFIG_SUFFIXES = (".properties", ".yaml", ".yml", ".toml", ".ini", ".conf")
+
+# An API description a target routes from is not configuration: it defines what the target
+# serves, so it is code_hash's business and harness/snippets.py derives handlers out of it.
+# Matched by name rather than by suffix, because a .yaml in a target directory is far more
+# often a setting, and putting every one of them in reach of route derivation is the latent
+# ambiguity the client-exception exclusion was added to avoid.
+CONTRACT_NAMES = {"openapi.yaml", "openapi.yml", "openapi.json"}
 
 # Host entry points that sit inside a target's own directory rather than in the shared
 # host module: Go names the file, Java gives it a package.
@@ -141,12 +152,17 @@ def roots(language, target, at=None):
             lang + "/"]
 
 
-# What sits inside a target directory but is not part of the target. The client-exception
-# package is the conformance client's contract for this framework: TypeScript, never
-# compiled into the image, and already excluded from the Docker build context. Hashing it
-# would make a bundle_hash change when nothing the target runs had changed, and
-# harness/snippets.py would look for endpoint wiring in a schema.
-NOT_THE_TARGET = ("/client-exception/",)
+# The conformance client's contract for this framework: the error envelope it declares and
+# the test that holds it to it. TypeScript, never compiled into the image and already
+# excluded from the Docker build context, so it is not code the target runs. It is in the
+# bundle because changing it changes what this target is held to, and out of code_hash for
+# the same reason prose is. The per-kind roles in spec/marks.json are what keep
+# harness/snippets.py from looking for endpoint wiring in a schema.
+CONTRACT = "/client-exception/"
+
+# Roles a code_hash does not cover. A corrected README or a sharpened test does not read as
+# a target that changed, but it does produce a new page.
+NOT_CODE = ("prose", "test")
 
 
 def files(language, target, at=None):
@@ -162,7 +178,6 @@ def files(language, target, at=None):
                           if "/" not in p[len(root):])
         else:
             wanted.update(tracked(root, at))
-    wanted = {p for p in wanted if not any(part in p for part in NOT_THE_TARGET)}
     if not wanted:
         raise RuntimeError("%s:%s has no tracked files under %s"
                            % (language, target, ", ".join(roots(language, target, at))))
@@ -174,6 +189,12 @@ def files(language, target, at=None):
 
 def role(language, path):
     name = path.rsplit("/", 1)[-1]
+    # Before the name rules: the contract package has a package.json of its own, and a
+    # dependency bump in it is not a dependency bump in the target.
+    if CONTRACT in path:
+        return "test"
+    if name in CONTRACT_NAMES:
+        return "contract"
     if name.endswith(".md"):
         return "prose"
     if name in MANIFEST_NAMES or name.endswith(MANIFEST_SUFFIXES):
@@ -245,7 +266,7 @@ def manifest(language, target, at=None):
                         "hash": "sha256:" + hashlib.sha256(raw).hexdigest()})
     return {"bundle_version": BUNDLE_VERSION, "target": "%s:%s" % (language, target),
             "bundle_hash": rollup(entries),
-            "code_hash": rollup([e for e in entries if e["role"] != "prose"]),
+            "code_hash": rollup([e for e in entries if e["role"] not in NOT_CODE]),
             "commit": at or commit(), "files": entries}
 
 

@@ -44,10 +44,13 @@ public final class Main {
     // errors: Helidon routes a raised exception to a handler by type, which is what lets a
     // handler raise and never build a 404 or a 422 itself. The router's own miss is a 404
     // Helidon answers before any handler, so it gets the body from the catch-all below.
+    // rb:wiring errors.*
     r.error(Errors.NotFound.class, (req, res, ex) -> res.status(404).send(Domain.notFoundBody()));
+    // rb:wiring errors.*,body.*
     r.error(Validation.Refused.class, (req, res, ex) ->
         res.status(422).send(Validation.refusedBody(ex.errors())));
     // A body Jackson could not read never reached the walk, so it names no field.
+    // rb:wiring errors.*
     r.error(Errors.Malformed.class, (req, res, ex) ->
         res.status(400).send(Validation.notBoundBody(ex.getMessage())));
     r.error(Exception.class, (req, res, ex) -> {
@@ -74,7 +77,7 @@ public final class Main {
     // Registered last. Helidon matches in registration order, so a catch-all mounted
     // earlier would answer every route declared after it.
     //
-    // rb:snippet errors.unmatched
+    // rb:handler errors.unmatched
     r.any((req, res) -> res.status(404).send(Domain.notFoundBody()));
   }
 }

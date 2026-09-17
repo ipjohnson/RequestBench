@@ -42,16 +42,19 @@ describe(pkg.target, () => {
     expect(Object.keys(pkg.schemas).sort()).toEqual(EVERY);
   });
 
+  // rb:test body.rejected_all,errors.malformed
   test("a failed deserialization and a failed check are the same envelope at 400", () => {
     expect(judge("body.rejected_all", 400, deserialization, [400])).toBe(true);
     expect(judge("body.rejected_all", 400, checks, [400])).toBe(true);
     expect(judge("errors.malformed", 400, deserialization, [400])).toBe(true);
   });
 
+  // rb:test body.rejected_all
   test("422 is not what it answers", () => {
     expect(judge("body.rejected_all", 422, deserialization, [400])).toBe(false);
   });
 
+  // rb:test body.rejected_all
   test("this repository's field and rule pair is not Javalin's shape", () => {
     expect(judge("body.rejected_all", 400, {
       error: "validation_failed",

@@ -22,6 +22,7 @@ const VARY_MANY: &[&str] = &["x-rb-channel", "x-rb-region", "x-rb-tenant"];
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
+// rb:wiring errors.*,domain.*
 fn fail(e: d::Fail) -> HttpResponse {
     match e {
         d::Fail::NotFound => HttpResponse::NotFound().json(d::not_found_body()),
@@ -43,6 +44,7 @@ fn fail(e: d::Fail) -> HttpResponse {
 // least one. Those are checked here, in this target's own code, because actix has no
 // validation layer to put them in.
 
+// rb:wiring body.*,domain.*
 /// The order body as actix binds it. serde reports the first field that does not fit.
 #[derive(Debug, Deserialize)]
 struct OrderIn {
@@ -57,6 +59,7 @@ struct LineIn {
     qty: i64,
 }
 
+// rb:wiring body.*,domain.*
 /// The rules a deserialize cannot state. `first_error` stops at the first, which this
 /// target can still answer because the checks are its own.
 fn check(order: &OrderIn, first_error: bool) -> Vec<d::FieldError> {
@@ -75,6 +78,7 @@ fn check(order: &OrderIn, first_error: bool) -> Vec<d::FieldError> {
     errs
 }
 
+// rb:wiring body.*,domain.*
 /// The order, or this target's own answer when its own checks refuse the body.
 fn validated(order: &OrderIn, first_error: bool) -> Result<d::ValidatedOrder, HttpResponse> {
     let errs = check(order, first_error);
@@ -91,6 +95,7 @@ fn validated(order: &OrderIn, first_error: bool) -> Result<d::ValidatedOrder, Ht
 }
 
 
+// rb:wiring domain.*,errors.*
 fn ok<T: serde::Serialize>(v: Result<T, d::Fail>) -> HttpResponse {
     match v {
         Ok(v) => HttpResponse::Ok().json(v),
@@ -98,6 +103,7 @@ fn ok<T: serde::Serialize>(v: Result<T, d::Fail>) -> HttpResponse {
     }
 }
 
+// rb:wiring body.*,domain.*
 /// An unvalidated body, for the endpoints that only parse. The validate routes use the
 /// extractor; this is only for bind, which is measured against them.
 fn parse(body: &[u8]) -> Result<Value, HttpResponse> {
@@ -117,11 +123,13 @@ fn parse(body: &[u8]) -> Result<Value, HttpResponse> {
 // The fields are plain, so serde decides what a missing or unparseable one is: a
 // QueryPayloadError, which actix renders as its own 400. The endpoint set sends neither.
 
+// rb:wiring query.*
 #[derive(Serialize, Deserialize)]
 struct QueryOne {
     page: i64,
 }
 
+// rb:wiring query.*
 #[derive(Serialize, Deserialize)]
 struct QueryMany {
     page: i64,
@@ -134,6 +142,7 @@ struct QueryMany {
     max_price: i64,
 }
 
+// rb:wiring domain.*
 /// What domain.filter pages by. Not a response shape, so it is deserialize only.
 #[derive(Deserialize)]
 struct OrderFilter {
@@ -142,6 +151,7 @@ struct OrderFilter {
     status: String,
 }
 
+// rb:wiring authorized.*
 /// actix middleware, not a check inside the handler. An `if` in the handler would measure
 /// the language; the point of the authorized family is the framework's own plumbing.
 async fn require_token(
@@ -160,6 +170,7 @@ async fn require_token(
         .map_into_boxed_body())
 }
 
+// rb:wiring middleware.*
 /// One middleware layer: it calls the next and does nothing else.
 async fn noop(
     req: ServiceRequest,
@@ -194,14 +205,17 @@ async fn meta() -> impl Responder {
     HttpResponse::Ok().json(rb_host::meta("actix-web", "askama"))
 }
 
+// rb:wiring parameters.*,headers.*,middleware.*,authorized.*
 async fn small() -> impl Responder {
     HttpResponse::Ok().json(d::payload("small"))
 }
 
+// rb:wiring errors.*
 async fn not_found() -> impl Responder {
     HttpResponse::NotFound().json(d::not_found_body())
 }
 
+// rb:wiring json.*
 /// Static routes, not `/json/{size}`: the size set is fixed, so a capture would make the
 /// router pay parameter cost on the family every other target serves from a static route,
 /// and it would answer 200 with an empty body for a size that does not exist. The size is
@@ -210,6 +224,7 @@ fn payload_route(size: &'static str) -> actix_web::Route {
     web::get().to(move || async move { HttpResponse::Ok().json(d::payload(size)) })
 }
 
+// rb:wiring compressed.*
 fn compressed_route(size: &'static str) -> actix_web::Route {
     web::get().to(move || async move {
         HttpResponse::Ok()
@@ -258,6 +273,7 @@ async fn revalidate(
     Ok(ServiceResponse::new(request, rebuilt).map_into_left_body())
 }
 
+// rb:wiring etag.*
 fn etag_route(size: &'static str) -> actix_web::Route {
     web::get().to(move || async move {
         HttpResponse::Ok()
@@ -266,6 +282,7 @@ fn etag_route(size: &'static str) -> actix_web::Route {
     })
 }
 
+// rb:wiring cache.*
 /// cache: middleware that answers from the store before the handler is reached.
 ///
 /// actix-web ships no response cache, so the store is the shared LRU sized from the
@@ -318,6 +335,7 @@ async fn replay(
     Ok(ServiceResponse::new(request, rebuilt).map_into_left_body())
 }
 
+// rb:wiring cache.*
 fn cache_route(size: &'static str, on: &'static [&'static str]) -> actix_web::Route {
     web::get().to(move || async move {
         let mut b = HttpResponse::Ok();
@@ -329,6 +347,7 @@ fn cache_route(size: &'static str, on: &'static [&'static str]) -> actix_web::Ro
     })
 }
 
+// rb:wiring template.*
 fn template_route(size: &'static str) -> actix_web::Route {
     web::get().to(move || async move {
         HttpResponse::Ok()
@@ -337,6 +356,7 @@ fn template_route(size: &'static str) -> actix_web::Route {
     })
 }
 
+// rb:wiring body.*
 async fn bind(body: web::Bytes) -> HttpResponse {
     match parse(&body) {
         Ok(v) => HttpResponse::Ok().json(d::bind_echo(v)),
@@ -344,6 +364,7 @@ async fn bind(body: web::Bytes) -> HttpResponse {
     }
 }
 
+// rb:wiring body.*
 async fn validate_all(order: web::Json<OrderIn>) -> HttpResponse {
     match validated(&order, false) {
         Ok(v) => HttpResponse::Ok().json(v),
@@ -351,6 +372,7 @@ async fn validate_all(order: web::Json<OrderIn>) -> HttpResponse {
     }
 }
 
+// rb:wiring body.*
 async fn validate_first(order: web::Json<OrderIn>) -> HttpResponse {
     match validated(&order, true) {
         Ok(v) => HttpResponse::Ok().json(v),
@@ -358,22 +380,27 @@ async fn validate_first(order: web::Json<OrderIn>) -> HttpResponse {
     }
 }
 
+// rb:wiring domain.*
 async fn filter(f: web::Query<OrderFilter>) -> HttpResponse {
     HttpResponse::Ok().json(d::domain_filter(f.page, f.size, &f.status))
 }
 
+// rb:wiring domain.*,errors.*
 async fn lookup(p: web::Path<String>) -> HttpResponse {
     ok(d::get_order(&p))
 }
 
+// rb:wiring domain.*
 async fn join(p: web::Path<String>) -> HttpResponse {
     ok(d::domain_join(&p))
 }
 
+// rb:wiring domain.*
 async fn aggregate(p: web::Path<String>) -> HttpResponse {
     ok(d::domain_aggregate(&p))
 }
 
+// rb:wiring domain.*
 async fn create(order: web::Json<OrderIn>) -> HttpResponse {
     match validated(&order, false) {
         Ok(v) => HttpResponse::Created()
@@ -383,6 +410,7 @@ async fn create(order: web::Json<OrderIn>) -> HttpResponse {
     }
 }
 
+// rb:wiring domain.*
 async fn replace(p: web::Path<String>, order: web::Json<OrderIn>) -> HttpResponse {
     let existing = match d::get_order(&p) {
         Ok(o) => o,
@@ -397,6 +425,7 @@ async fn replace(p: web::Path<String>, order: web::Json<OrderIn>) -> HttpRespons
     }
 }
 
+// rb:wiring domain.*
 async fn patch(p: web::Path<String>, body: web::Bytes) -> HttpResponse {
     let v = match parse(&body) {
         Ok(v) => v,
@@ -405,6 +434,7 @@ async fn patch(p: web::Path<String>, body: web::Bytes) -> HttpResponse {
     ok(d::patch_customer(&p, &v))
 }
 
+// rb:wiring domain.*
 async fn delete_line(p: web::Path<(String, String)>) -> HttpResponse {
     match d::get_order_line(&p.0, &p.1) {
         Ok(_) => HttpResponse::NoContent().finish(),
@@ -412,6 +442,7 @@ async fn delete_line(p: web::Path<(String, String)>) -> HttpResponse {
     }
 }
 
+// rb:wiring template.*
 // ---- template ------------------------------------------------------------------
 //
 // actix-web ships no view layer and recommends no engine. Askama is the
@@ -427,6 +458,7 @@ struct Items {
     body: &'static d::PayloadBody,
 }
 
+// rb:wiring template.*
 fn items_html(size: &'static str) -> String {
     use askama::Template;
     Items { body: d::payload(size) }.render().unwrap_or_default()
@@ -464,8 +496,7 @@ async fn main() -> std::io::Result<()> {
             // Level pinned across every language; the default size threshold is left
             // alone, because whether a framework bothers to compress a body too small to
             // benefit is what compressed.gzip_small is in the set to show.
-            // rb:snippet compressed.identity_small compressed.identity_medium compressed.identity_large
-            // rb:snippet compressed.gzip_small compressed.gzip_medium compressed.gzip_large
+            // rb:handler compressed.*
             .service(
                 web::scope("/compressed")
                     .wrap(Compress::default())
@@ -474,7 +505,7 @@ async fn main() -> std::io::Result<()> {
                     .route("/large", compressed_route("large")),
             )
             .service(
-                // rb:snippet etag.small etag.large etag.match_large etag.stale_large
+                // rb:handler etag.*
                 web::scope("/etag")
                     .wrap(from_fn(revalidate))
                     .route("/small", etag_route("small"))
@@ -482,7 +513,7 @@ async fn main() -> std::io::Result<()> {
             )
             // The vary scopes come first: actix matches scopes in registration order, and
             // /cache would otherwise claim /cache/vary/one and answer its own 404.
-            // rb:snippet cache.vary_one cache.vary_many
+            // rb:handler cache.vary_one,cache.vary_many
             .service(
                 web::resource("/cache/vary/one")
                     .wrap(from_fn(|req, next| replay(VARY_ONE, req, next)))
@@ -494,7 +525,7 @@ async fn main() -> std::io::Result<()> {
                     .route(cache_route("small", VARY_MANY)),
             )
             .service(
-                // rb:snippet cache.small cache.medium cache.large
+                // rb:handler cache.small,cache.medium,cache.large
                 web::scope("/cache")
                     .wrap(from_fn(|req, next| replay(&[], req, next)))
                     .route("/small", cache_route("small", &[]))
@@ -516,7 +547,7 @@ async fn main() -> std::io::Result<()> {
             .route("/domain/regions/{region}/report", web::get().to(aggregate))
             .route("/domain/customers/{cid}", web::patch().to(patch))
             .route("/domain/orders/{oid}/lines/{lid}", web::delete().to(delete_line))
-            // rb:snippet errors.unmatched
+            // rb:handler errors.unmatched
             .default_service(web::to(not_found))
     })
     .bind(("0.0.0.0", port))?

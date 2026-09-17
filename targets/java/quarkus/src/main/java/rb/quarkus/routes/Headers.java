@@ -17,7 +17,7 @@ import rb.domain.Model.PayloadBody;
 @Produces(MediaType.APPLICATION_JSON)
 public class Headers {
 
-  // rb:snippet headers.few headers.many
+  // rb:handler headers.*
   @GET
   public PayloadBody headers() {
     return Domain.payload("small");

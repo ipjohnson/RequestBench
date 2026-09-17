@@ -12,11 +12,13 @@
 
 const page = { type: "integer" };
 
+// rb:wiring query.*
 /** query.one: one parameter, and nothing else survives the schema. */
 export const bindsOne = {
   schema: { querystring: { type: "object", properties: { page } } },
 };
 
+// rb:wiring query.*
 /** query.many: eight parameters, mixed types. */
 export const bindsMany = {
   schema: {
@@ -36,6 +38,7 @@ export const bindsMany = {
   },
 };
 
+// rb:wiring domain.*
 /** What domain.filter pages by. */
 export const bindsFilter = {
   schema: {

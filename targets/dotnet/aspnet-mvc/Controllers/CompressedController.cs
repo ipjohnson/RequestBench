@@ -16,6 +16,7 @@ namespace RequestBench.AspNetMvc.Controllers;
 [ApiController]
 public sealed class CompressedController(DomainModel domain) : ControllerBase
 {
+    // rb:wiring compressed.*
     private IActionResult Serve(string size)
     {
         Response.Headers["x-rb-serial"] = domain.NextSerial();

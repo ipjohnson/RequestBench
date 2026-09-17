@@ -4,10 +4,13 @@
 // Each layer awaits next() and does nothing else.
 import * as d from "../../_shared/domain.js";
 
+// rb:wiring middleware.*
 const noop = async (_ctx, next) => { await next(); };
 
+// rb:wiring middleware.*
 const layers = (n) => Array.from({ length: n }, () => noop);
 
+// rb:wiring middleware.*
 const small = (ctx) => { ctx.body = d.payload("small"); };
 
 export default function middleware(router) {

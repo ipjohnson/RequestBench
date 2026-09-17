@@ -21,14 +21,14 @@ import rb.domain.Model.QueryOne;
 @Produces(MediaType.APPLICATION_JSON)
 public class Query {
 
-  // rb:snippet query.one
+  // rb:handler query.one
   @GET
   @Path("one")
   public QueryOne one(@QueryParam("page") @DefaultValue("0") int page) {
     return new QueryOne(page);
   }
 
-  // rb:snippet query.many
+  // rb:handler query.many
   @GET
   @Path("many")
   public QueryMany many(@QueryParam("page") @DefaultValue("0") int page,

@@ -49,7 +49,7 @@ public final class Main {
     // errors: registered last. Vert.x matches routes in registration order, so a catch-all
     // mounted earlier would answer every route declared after it.
     //
-    // rb:snippet errors.unmatched
+    // rb:handler errors.unmatched
     router.route().last().handler(ctx -> Reply.json(ctx, 404, Domain.notFoundBody()));
 
     vertx.createHttpServer()

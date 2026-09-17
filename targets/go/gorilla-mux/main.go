@@ -38,6 +38,7 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 	_, _ = w.Write(buf)
 }
 
+// rb:wiring errors.*,domain.*
 func fail(w http.ResponseWriter, err error) {
 	if errors.Is(err, d.ErrNotFound) {
 		writeJSON(w, 404, d.NotFoundBody())
@@ -46,6 +47,7 @@ func fail(w http.ResponseWriter, err error) {
 	writeJSON(w, 500, map[string]string{"error": "internal", "message": err.Error()})
 }
 
+// rb:wiring domain.*
 func send(w http.ResponseWriter, v any, err error, status int) {
 	if err != nil {
 		fail(w, err)
@@ -56,6 +58,7 @@ func send(w http.ResponseWriter, v any, err error, status int) {
 
 // chain wraps one handler in the middlewares given, outermost first. mux.Use applies to a
 // whole router, so this is how a single route carries a layer here.
+// rb:wiring middleware.*,authorized.*,compressed.*
 func chain(h http.Handler, mw ...func(http.Handler) http.Handler) http.Handler {
 	for i := len(mw) - 1; i >= 0; i-- {
 		h = mw[i](h)
@@ -74,7 +77,7 @@ func main() {
 
 	r := mux.NewRouter()
 
-	// rb:snippet errors.unmatched
+	// rb:handler errors.unmatched
 	r.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		writeJSON(w, 404, d.NotFoundBody())
 	})

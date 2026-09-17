@@ -1,3 +1,4 @@
+// rb:wiring cache.*
 // cache: the handler skipped and a stored response replayed.
 //
 // Express ships no response cache and no store. The package the ecosystem reaches for,
@@ -12,12 +13,15 @@ import { LRUCache } from "lru-cache";
 
 import * as d from "../../_shared/domain.js";
 
+// rb:wiring cache.*
 const store = new LRUCache({ max: d.CACHE_MAX, ttl: d.CACHE_TTL_MS });
 
+// rb:wiring cache.*
 /** The path, plus the value of each header this route is keyed on. */
 const keyOf = (on) => (req) =>
   on.length === 0 ? req.path : req.path + "|" + on.map((h) => req.headers[h] ?? "").join("|");
 
+// rb:wiring cache.*
 function cached(on) {
   const key = keyOf(on);
   return (req, res, next) => {
@@ -46,13 +50,13 @@ function cached(on) {
 }
 
 export default function cache(app) {
-  // rb:snippet cache.small cache.medium cache.large
+  // rb:handler cache.small,cache.medium,cache.large
   for (const size of ["small", "medium", "large"]) {
     app.get("/cache/" + size, cached([]), (_, res) => {
       res.set("x-rb-serial", d.nextSerial()).json(d.payload(size));
     });
   }
-  // rb:snippet cache.vary_one cache.vary_many
+  // rb:handler cache.vary_one,cache.vary_many
   for (const which of ["one", "many"]) {
     const on = d.varyOn(which);
     app.get("/cache/vary/" + which, cached(on), (_, res) => {

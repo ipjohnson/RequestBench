@@ -15,8 +15,10 @@ import (
 // Level is pinned across every language. The size threshold is left at the library's own
 // default, because whether a framework bothers to compress a body too small to benefit is
 // what compressed.gzip_small is in the set to show.
+// rb:wiring compressed.*
 var gzip = middleware.GzipWithConfig(middleware.GzipConfig{Level: d.GzipLevel})
 
+// rb:wiring compressed.*
 func compressedRoute(size string) echo.HandlerFunc {
 	body := d.Payload(size)
 	return func(c echo.Context) error {
@@ -26,8 +28,7 @@ func compressedRoute(size string) echo.HandlerFunc {
 }
 
 func registerCompressed(e *echo.Echo) {
-	// rb:snippet compressed.identity_small compressed.identity_medium compressed.identity_large
-	// rb:snippet compressed.gzip_small compressed.gzip_medium compressed.gzip_large
+	// rb:handler compressed.*
 	for _, size := range []string{"small", "medium", "large"} {
 		e.GET("/compressed/"+size, compressedRoute(size), gzip)
 	}

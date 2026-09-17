@@ -57,6 +57,13 @@ jobs:
       # A snippet that cannot be located is a page with nothing to show, and an ambiguous
       # one would render a comment or a test as the implementation. Only the targets that
       # are rewired to the current spec are required: the rest do not serve these routes.
+      #
+      # The same command counts the assertions in spec/marks.json, which ask what is in a
+      # snippet rather than where it is. Those are measured against a committed allowance
+      # instead of being fatal, so this step fails on a regression and not on the backlog.
+      # It also checks the other half of the claim: every family declares a mechanism in
+      # spec/matrix.json, a family that names one produces the wiring it named, and the
+      # dependency it declares is in that target's manifest.
       - name: Every conforming target locates every endpoint
         run: python3 harness/snippets.py --check --required
 

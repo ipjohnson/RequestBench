@@ -68,6 +68,7 @@ class Refused(Exception):
         self.errors = errors
 
 
+# rb:wiring body.*,errors.*
 def refused_body(errors):
     return {"error": "validation_failed", "errors": errors}
 
@@ -76,6 +77,7 @@ def not_bound_body(detail):
     return {"error": "invalid_body", "detail": detail}
 
 
+# rb:wiring body.*
 def check_order(body, first_error=False):
     """Every field that is wrong, or the first one when asked for that."""
     m = body if isinstance(body, dict) else {}
@@ -106,6 +108,7 @@ def check_order(body, first_error=False):
     return errs
 
 
+# rb:wiring body.*,domain.*
 def validated(body, first_error=False):
     """The order, or Refused naming every field the walk would not accept."""
     errs = check_order(body, first_error)
@@ -152,6 +155,7 @@ async def body_of(request):
 
 # ---- middleware ----------------------------------------------------------------------
 
+# rb:wiring middleware.*
 class Noop:
     """One layer: it calls the next and does nothing else."""
 
@@ -162,10 +166,12 @@ class Noop:
         await self.app(scope, receive, send)
 
 
+# rb:wiring middleware.*
 def layers(n):
     return [Middleware(Noop) for _ in range(n)]
 
 
+# rb:wiring authorized.*
 class RequireToken:
     """Starlette middleware, not a check inside the handler. An ``if`` in the handler would
     measure the language; the point of the authorized family is the framework's plumbing.
@@ -199,10 +205,12 @@ async def meta(_: Request):
     return JSONResponse(META)
 
 
+# rb:wiring parameters.*,headers.*,middleware.*,authorized.*
 async def small(_: Request):
     return JSONResponse(d.payload("small"))
 
 
+# rb:wiring json.*
 def payload_route(size):
     """The three sizes are static routes, not /json/{size}. The size set is fixed, so a
     capture would make the router pay parameter cost on the family every other target
@@ -219,10 +227,12 @@ def payload_route(size):
 # the defect #37 describes -- and a value that will not parse is the zero value rather than
 # an error contract the family does not have.
 
+# rb:wiring query.*,domain.*
 def _qstr(q, k):
     return q.get(k) or ""
 
 
+# rb:wiring query.*,domain.*
 def _qint(q, k):
     try:
         return int(q.get(k))
@@ -248,6 +258,7 @@ async def query_many(request: Request):
     })
 
 
+# rb:wiring compressed.*
 def compressed_route(size):
     """Compression is the framework's, configured to the pinned level and the pinned floor.
     Whether a framework bothers to compress a body too small to benefit is what
@@ -269,10 +280,13 @@ def compressed_route(size):
 # capacity derived from the key count means what it says only if there is one store to
 # count against.
 
+# rb:wiring etag.*
 CONDITIONAL = [Middleware(ConditionalGet)]
+# rb:wiring cache.*
 STORE = TTLCache(maxsize=d.cache_spec()["capacity"], ttl=d.cache_spec()["ttl_s"])
 
 
+# rb:wiring etag.*
 def etag_route(size):
     async def handler(_: Request):
         return JSONResponse(d.payload(size), headers={
@@ -280,6 +294,7 @@ def etag_route(size):
     return handler
 
 
+# rb:wiring cache.*
 def cache_route(size, vary=()):
     headers = {"vary": ", ".join(vary)} if vary else {}
 
@@ -289,10 +304,12 @@ def cache_route(size, vary=()):
     return handler
 
 
+# rb:wiring cache.*
 def cache_scoped(path, vary=()):
     return [Middleware(ResponseCache, store=STORE, vary={path: vary})]
 
 
+# rb:wiring template.*
 # Starlette's own view facility. Jinja2Templates is what it ships for server-side
 # rendering and TemplateResponse is what reaches it; FastAPI re-exports this same class.
 # Compiled on first render and cached by the environment: a precomputed string would
@@ -301,6 +318,7 @@ templates = Jinja2Templates(
     directory=str(pathlib.Path(__file__).resolve().parent / "templates"))
 
 
+# rb:wiring template.*
 def template_route(size):
     # A copy of the payload, not the payload. Jinja2Templates inserts the request into the
     # context it is handed, and d.payload returns the fixture object the json family
@@ -372,6 +390,7 @@ async def delete_line(request: Request):
 # drift. The router's own miss arrives here as an HTTPException, which is what gives
 # errors.unmatched the same body as errors.not_found.
 
+# rb:wiring errors.*
 async def http_error(_: Request, exc: HTTPException):
     body = d.not_found_body() if exc.status_code == 404 else {"error": "internal"}
     return JSONResponse(body, status_code=exc.status_code)
@@ -381,16 +400,19 @@ async def not_found(_: Request, __: Exception):
     return JSONResponse(d.not_found_body(), status_code=404)
 
 
+# rb:wiring errors.*
 # The walk this target holds answers a refused body; a body that never parsed answers
 # separately, because nothing validated it and it names no field.
 async def refused(_: Request, exc: Refused):
     return JSONResponse(refused_body(exc.errors), status_code=422)
 
 
+# rb:wiring errors.*
 async def malformed(_: Request, exc: d.Malformed):
     return JSONResponse(not_bound_body(exc.detail), status_code=400)
 
 
+# rb:wiring compressed.*
 gzip_scoped = [Middleware(GZipMiddleware, minimum_size=d.GZIP_MIN_SIZE,
                           compresslevel=d.GZIP_LEVEL)]
 
@@ -416,14 +438,14 @@ routes = [
     get("/compressed/small", compressed_route("small"), middleware=gzip_scoped),
     get("/compressed/medium", compressed_route("medium"), middleware=gzip_scoped),
     get("/compressed/large", compressed_route("large"), middleware=gzip_scoped),
-    # rb:snippet etag.small etag.large etag.match_large etag.stale_large
+    # rb:handler etag.*
     get("/etag/small", etag_route("small"), middleware=CONDITIONAL),
     get("/etag/large", etag_route("large"), middleware=CONDITIONAL),
-    # rb:snippet cache.small cache.medium cache.large
+    # rb:handler cache.small,cache.medium,cache.large
     get("/cache/small", cache_route("small"), middleware=cache_scoped("/cache/small")),
     get("/cache/medium", cache_route("medium"), middleware=cache_scoped("/cache/medium")),
     get("/cache/large", cache_route("large"), middleware=cache_scoped("/cache/large")),
-    # rb:snippet cache.vary_one cache.vary_many
+    # rb:handler cache.vary_one,cache.vary_many
     get("/cache/vary/one", cache_route("small", d.vary_on("one")),
         middleware=cache_scoped("/cache/vary/one", d.vary_on("one"))),
     get("/cache/vary/many", cache_route("small", d.vary_on("many")),
@@ -445,7 +467,7 @@ routes = [
     delete("/domain/orders/{oid}/lines/{lid}", delete_line),
 ]
 
-# rb:snippet errors.unmatched
+# rb:handler errors.unmatched
 app = Starlette(routes=routes, exception_handlers={
     HTTPException: http_error,
     d.NotFound: not_found,

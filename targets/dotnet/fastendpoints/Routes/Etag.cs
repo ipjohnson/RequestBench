@@ -12,6 +12,7 @@ namespace RequestBench.FastEndpointsTarget.Routes;
 /// writes the response itself from inside its own delegate, so a filter around it is handed
 /// nothing to hash, and the branch is where the bytes actually are. Program.cs registers it.
 /// </summary>
+// rb:wiring etag.*
 public abstract class EtagEndpoint(DomainModel domain, string size) : EndpointWithoutRequest
 {
     public override Task<object?> ExecuteAsync(CancellationToken ct)
@@ -21,7 +22,7 @@ public abstract class EtagEndpoint(DomainModel domain, string size) : EndpointWi
     }
 }
 
-// rb:snippet etag.small etag.large etag.match_large etag.stale_large
+// rb:handler etag.*
 public sealed class EtagSmallEndpoint(DomainModel domain) : EtagEndpoint(domain, "small")
 {
     public override void Configure()

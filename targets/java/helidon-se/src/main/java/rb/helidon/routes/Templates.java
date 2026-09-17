@@ -26,8 +26,10 @@ public final class Templates {
 
   // Parsed on first render and cached by the resolver, rendered per request. A precomputed
   // string would measure nothing.
+  // rb:wiring template.*
   private static final TemplateEngine ENGINE = engine();
 
+  // rb:wiring template.*
   private static TemplateEngine engine() {
     ClassLoaderTemplateResolver resolver = new ClassLoaderTemplateResolver();
     resolver.setPrefix("templates/");
@@ -39,6 +41,7 @@ public final class Templates {
     return e;
   }
 
+  // rb:wiring template.*
   private static String render(String size) {
     PayloadBody body = Domain.payload(size);
     Context ctx = new Context();

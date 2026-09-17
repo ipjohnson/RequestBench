@@ -23,7 +23,7 @@ public class Baseline {
   // The content type is set on the response rather than declared with @Produces. JAX-RS
   // matches @Produces against the request's Accept header, and the gate sends
   // Accept: application/json on every request, so a text/plain-only method is a 406.
-  // rb:snippet baseline.plaintext
+  // rb:handler baseline.*
   @GET
   @Path("plaintext")
   public Response plaintext() {

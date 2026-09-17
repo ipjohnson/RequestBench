@@ -6,6 +6,7 @@ import io.micronaut.http.annotation.RequestFilter;
 
 /** middleware: layer 1 of 4 on /middleware/four. It runs and does nothing else. */
 @ServerFilter("/middleware/four")
+// rb:wiring middleware.*
 public class NoopFour00 {
 
   @RequestFilter

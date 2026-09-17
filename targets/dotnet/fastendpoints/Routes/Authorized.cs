@@ -10,6 +10,7 @@ namespace RequestBench.FastEndpointsTarget.Routes;
 /// language; the point of the family is the framework's own plumbing. A pre-processor
 /// refuses a request by writing the response and marking it handled.
 /// </summary>
+// rb:wiring authorized.*
 public sealed class RequireToken(DomainModel domain) : IPreProcessor<EmptyRequest>
 {
     public async Task PreProcessAsync(IPreProcessorContext<EmptyRequest> context,
@@ -26,6 +27,7 @@ public sealed class RequireToken(DomainModel domain) : IPreProcessor<EmptyReques
     }
 }
 
+// rb:handler authorized.allowed,authorized.denied
 public sealed class AuthorizedEndpoint(DomainModel domain) : EndpointWithoutRequest<PayloadBody>
 {
     public override void Configure()

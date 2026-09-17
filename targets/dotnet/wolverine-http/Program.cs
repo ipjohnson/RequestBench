@@ -33,6 +33,7 @@ builder.WebHost.UseUrls(HostInfo.Url());
 builder.Logging.ClearProviders();
 
 WebApplication app = builder.Build();
+// rb:wiring errors.*
 app.UseExceptionHandler(Failures.Handler);
 // Output caching sits in the pipeline rather than on an endpoint, so it is added once here
 // and opted into per route below.
@@ -50,7 +51,7 @@ app.MapWolverineEndpoints(opts =>
     // rather than reflected over per request.
     opts.UseFluentValidationProblemDetailMiddleware();
 });
-// rb:snippet errors.unmatched
+// rb:handler errors.unmatched
 app.MapFallback(() => Results.Problem(statusCode: 404));
 
 Console.Error.WriteLine($"container/wolverine-http listening on {HostInfo.Port()}");

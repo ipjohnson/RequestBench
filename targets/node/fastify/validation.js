@@ -14,6 +14,7 @@ import * as d from "../_shared/domain.js";
  * trick a typed binder does. ajv's default in Fastify is allErrors: false, so it reports the
  * first failure it finds; that is the framework's setting and it is left alone.
  */
+// rb:wiring body.*
 export const orderSchema = {
   type: "object",
   required: ["customer_id", "status", "lines"],
@@ -35,8 +36,10 @@ export const orderSchema = {
   },
 };
 
+// rb:wiring body.*
 /** What a route declares to get the schema run before its handler. */
 export const validatesOrder = { schema: { body: orderSchema } };
 
+// rb:wiring body.*,domain.*
 /** The order, once ajv has said the body is one. */
 export const orderOf = (body) => d.priceOrder(body.customer_id, body.status, body.lines);

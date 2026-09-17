@@ -15,8 +15,10 @@ import (
 // Fiber names levels rather than taking a number. LevelBestSpeed and LevelBestCompression
 // are the ends; Default is what zlib calls 6, which is the level every language is pinned
 // to.
+// rb:wiring compressed.*
 var gzip = compress.New(compress.Config{Level: compress.LevelDefault})
 
+// rb:wiring compressed.*
 func compressedRoute(size string) fiber.Handler {
 	body := d.Payload(size)
 	return func(c fiber.Ctx) error {
@@ -26,8 +28,7 @@ func compressedRoute(size string) fiber.Handler {
 }
 
 func registerCompressed(app *fiber.App) {
-	// rb:snippet compressed.identity_small compressed.identity_medium compressed.identity_large
-	// rb:snippet compressed.gzip_small compressed.gzip_medium compressed.gzip_large
+	// rb:handler compressed.*
 	for _, size := range []string{"small", "medium", "large"} {
 		route(app, fiber.MethodGet, "/compressed/"+size, gzip, compressedRoute(size))
 	}

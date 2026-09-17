@@ -14,10 +14,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// rb:wiring query.*
 type queryOne struct {
 	Page int `form:"page" json:"page"`
 }
 
+// rb:wiring query.*
 type queryMany struct {
 	Page     int    `form:"page"      json:"page"`
 	Size     int    `form:"size"      json:"size"`
@@ -29,6 +31,7 @@ type queryMany struct {
 	MaxPrice int    `form:"max_price" json:"max_price"`
 }
 
+// rb:wiring domain.*
 // What domain.filter pages by. Not a response shape, so it carries no json tags.
 type orderFilter struct {
 	Page   int    `form:"page"`
@@ -36,6 +39,7 @@ type orderFilter struct {
 	Status string `form:"status"`
 }
 
+// rb:wiring query.*,domain.*
 // bindQuery fills out from the query string, answering the failure itself if there is one.
 // The same 400 shape as a body Gin could not bind, because it is the same binder refusing.
 func bindQuery(c *gin.Context, out any) bool {

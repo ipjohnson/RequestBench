@@ -15,6 +15,7 @@ import rb.quarkus.Layers;
  */
 @Provider
 @Layers.Authorized
+// rb:wiring authorized.*
 public class RequireToken implements ContainerRequestFilter {
 
   @Override

@@ -25,6 +25,7 @@ public class Middleware {
    * per request however many patterns point at it, so the count comes from distinct
    * registrations rather than from repeating a pattern.
    */
+  // rb:wiring middleware.*
   private static FilterRegistrationBean<Filter> layer(String path, String name, int order) {
     // A fresh instance per layer. Tomcat registers a Filter object once and refuses the
     // second attempt, so twenty registrations sharing one instance failed the whole
@@ -40,11 +41,11 @@ public class Middleware {
   @Bean
   static org.springframework.beans.factory.config.BeanFactoryPostProcessor noopLayers() {
     return factory -> {
-      // rb:snippet middleware.four
+      // rb:wiring middleware.*
       for (int i = 0; i < 4; i++) {
         factory.registerSingleton("mwFour" + i, layer("/middleware/four", "mwFour" + i, i));
       }
-      // rb:snippet middleware.sixteen
+      // rb:wiring middleware.*
       for (int i = 0; i < 16; i++) {
         factory.registerSingleton("mwSixteen" + i,
                                  layer("/middleware/sixteen", "mwSixteen" + i, 100 + i));
@@ -57,11 +58,13 @@ public class Middleware {
     return Domain.payload("small");
   }
 
+  // rb:handler middleware.four
   @GetMapping("/middleware/four")
   PayloadBody four() {
     return Domain.payload("small");
   }
 
+  // rb:handler middleware.sixteen
   @GetMapping("/middleware/sixteen")
   PayloadBody sixteen() {
     return Domain.payload("small");

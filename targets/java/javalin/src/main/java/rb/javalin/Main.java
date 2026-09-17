@@ -75,12 +75,14 @@ public final class Main {
     // never reaches a handler, so its 404 comes from the error hook rather than the
     // exception one.
     //
-    // rb:snippet errors.unmatched
+    // rb:handler errors.unmatched
     cfg.routes
+       // rb:wiring errors.*
        .exception(Errors.NotFound.class, (e, ctx) -> ctx.status(404).json(Domain.notFoundBody()))
        // Javalin raises this itself when bodyValidator deserializes or a check fails. The
        // envelope is Javalin's own: the failures keyed by the field it was validating, each
        // carrying its message and the value it saw.
+       // rb:wiring errors.*,body.*
        .exception(ValidationException.class, (e, ctx) -> ctx.status(400).json(
            Map.of("error", "validation_failed",
                   "errors", e.getErrors().entrySet().stream()
@@ -89,6 +91,7 @@ public final class Main {
                                              "message", err.getMessage())))
                       .toList())))
        // A body Jackson could not read never reached a check, so it names no field.
+       // rb:wiring errors.*
        .exception(Errors.Malformed.class, (e, ctx) -> ctx.status(400).json(
            Map.of("error", "invalid_body",
                   "detail", e.getMessage() == null ? "unreadable" : e.getMessage())))

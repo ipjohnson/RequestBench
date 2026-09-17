@@ -42,15 +42,18 @@ describe(pkg.target, () => {
     expect(Object.keys(pkg.schemas).sort()).toEqual(EVERY);
   });
 
+  // rb:test body.rejected_all
   test("accepts the HAL envelope Micronaut writes", () => {
     expect(judge("body.rejected_all", 400, hal, [400])).toBe(true);
   });
 
+  // rb:test body.rejected_all
   test("a link set that grew is still the same envelope, which is why HAL is not pinned", () => {
     const more = { ...hal, _links: { ...hal._links, next: { href: "/x" } } };
     expect(judge("body.rejected_all", 400, more, [400])).toBe(true);
   });
 
+  // rb:test body.rejected_all
   test("but the message paths are required, so an empty HAL body is refused", () => {
     expect(judge("body.rejected_all", 400, { message: "Invalid JSON", _links: {} }, [400]))
       .toBe(false);
@@ -58,6 +61,7 @@ describe(pkg.target, () => {
       { message: "x", _embedded: { errors: [] }, _links: {} }, [400])).toBe(false);
   });
 
+  // rb:test body.rejected_all
   test("and the looseness is bounded: no other framework's envelope is accepted", () => {
     expect(judge("body.rejected_all", 400, { error: "invalid_body", detail: "x" }, [400]))
       .toBe(false);

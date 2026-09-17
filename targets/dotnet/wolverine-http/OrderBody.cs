@@ -15,6 +15,7 @@ namespace RequestBench.WolverineTarget.Routes;
 /// The properties are nullable so NotNull means present: an int is indistinguishable from
 /// an absent one, because both arrive as zero.
 /// </summary>
+// rb:wiring body.*,domain.*
 public sealed class OrderBody
 {
     public int? CustomerId { get; set; }
@@ -35,6 +36,7 @@ public sealed class LineBody
     public int? Qty { get; set; }
 }
 
+// rb:wiring body.*,domain.*
 public sealed class OrderBodyValidator : AbstractValidator<OrderBody>
 {
     public OrderBodyValidator()

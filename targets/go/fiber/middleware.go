@@ -6,8 +6,10 @@ package main
 
 import "github.com/gofiber/fiber/v3"
 
+// rb:wiring middleware.*
 func noop(c fiber.Ctx) error { return c.Next() }
 
+// rb:wiring middleware.*
 func layers(n int, last fiber.Handler) []fiber.Handler {
 	out := make([]fiber.Handler, n, n+1)
 	for i := range out {

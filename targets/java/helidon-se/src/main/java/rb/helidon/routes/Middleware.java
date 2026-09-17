@@ -12,6 +12,7 @@ import rb.domain.Domain;
 public final class Middleware {
   private Middleware() {}
 
+  // rb:wiring middleware.*
   private static void layered(HttpRouting.Builder r, String path, int n) {
     for (int i = 0; i < n; i++) {
       r.route(io.helidon.webserver.http.HttpRoute.builder()
@@ -25,10 +26,12 @@ public final class Middleware {
   public static void register(HttpRouting.Builder r) {
     r.get("/middleware/none", (req, res) -> res.send(Domain.payload("small")));
 
-    // rb:snippet middleware.four
+    // rb:handler middleware.four
+    // rb:wiring middleware.*
     layered(r, "/middleware/four", 4);
 
-    // rb:snippet middleware.sixteen
+    // rb:handler middleware.sixteen
+    // rb:wiring middleware.*
     layered(r, "/middleware/sixteen", 16);
   }
 }

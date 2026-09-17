@@ -9,4 +9,5 @@ import (
 	d "github.com/ianjohnson/requestbench/targets/go/_shared"
 )
 
+// rb:wiring errors.*
 func isNotFound(err error) bool { return errors.Is(err, d.ErrNotFound) }

@@ -17,6 +17,7 @@ import (
 	d "github.com/ianjohnson/requestbench/targets/go/_shared"
 )
 
+// rb:wiring errors.*,domain.*
 func fail(c fiber.Ctx, err error) error {
 	if isNotFound(err) {
 		return c.Status(404).JSON(d.NotFoundBody())
@@ -24,6 +25,7 @@ func fail(c fiber.Ctx, err error) error {
 	return c.Status(500).JSON(fiber.Map{"error": "internal", "message": err.Error()})
 }
 
+// rb:wiring domain.*
 func send(c fiber.Ctx, v any, err error, status int) error {
 	if err != nil {
 		return fail(c, err)
@@ -38,6 +40,7 @@ func send(c fiber.Ctx, v any, err error, status int) error {
 // layer goes before the handler it wraps, not after it. Written the other way round the
 // payload answered first and the middleware never ran, which the response body cannot show
 // -- authorized.denied answering 200 is what caught it.
+// rb:wiring middleware.*,authorized.*,compressed.*
 func route(app *fiber.App, method, path string, chain ...fiber.Handler) {
 	rest := make([]any, len(chain)-1)
 	for i, h := range chain[1:] {
@@ -87,7 +90,7 @@ func main() {
 	// errors: registered last. Fiber matches in registration order, so a catch-all mounted
 	// earlier would answer every route declared after it.
 	//
-	// rb:snippet errors.unmatched
+	// rb:handler errors.unmatched
 	app.Use(func(c fiber.Ctx) error { return c.Status(404).JSON(d.NotFoundBody()) })
 
 	port := os.Getenv("PORT")

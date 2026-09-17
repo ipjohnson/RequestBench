@@ -31,7 +31,7 @@ import rb.domain.Model.ValidatedOrderWithId;
 @Consumes(MediaType.APPLICATION_JSON)
 public class DomainRoutes {
 
-  // rb:snippet domain.filter
+  // rb:handler domain.filter
   @GET
   @Path("orders")
   public OrdersPage filter(@QueryParam("page") @DefaultValue("0") int page,
@@ -40,7 +40,7 @@ public class DomainRoutes {
     return Domain.domainFilter(page, size, status);
   }
 
-  // rb:snippet domain.create
+  // rb:handler domain.create
   @POST
   @Path("orders")
   public Response create(@Valid OrderIn body) {
@@ -48,14 +48,14 @@ public class DomainRoutes {
     return Response.status(201).header("location", Domain.createdLocation()).entity(v).build();
   }
 
-  // rb:snippet domain.lookup errors.not_found
+  // rb:handler domain.lookup,errors.not_found
   @GET
   @Path("orders/{oid}")
   public Order lookup(@PathParam("oid") String oid) {
     return Domain.getOrder(oid);
   }
 
-  // rb:snippet domain.replace
+  // rb:handler domain.replace
   @PUT
   @Path("orders/{oid}")
   public ValidatedOrderWithId replace(@PathParam("oid") String oid, @Valid OrderIn body) {
@@ -64,28 +64,28 @@ public class DomainRoutes {
     return new ValidatedOrderWithId(id, v.customerId(), v.status(), v.lines(), v.totalCents());
   }
 
-  // rb:snippet domain.join
+  // rb:handler domain.join
   @GET
   @Path("customers/{cid}/summary")
   public JoinSummary summary(@PathParam("cid") String cid) {
     return Domain.domainJoin(cid);
   }
 
-  // rb:snippet domain.aggregate
+  // rb:handler domain.aggregate
   @GET
   @Path("regions/{region}/report")
   public Report report(@PathParam("region") String region) {
     return Domain.domainAggregate(region);
   }
 
-  // rb:snippet domain.patch
+  // rb:handler domain.patch
   @PATCH
   @Path("customers/{cid}")
   public Customer patch(@PathParam("cid") String cid, Map<String, Object> body) {
     return Domain.patchCustomer(cid, body);
   }
 
-  // rb:snippet domain.delete
+  // rb:handler domain.delete
   @DELETE
   @Path("orders/{oid}/lines/{lid}")
   public Response delete(@PathParam("oid") String oid, @PathParam("lid") String lid) {

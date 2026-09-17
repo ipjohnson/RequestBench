@@ -21,6 +21,7 @@ use serde::Serialize;
 use serde::Deserialize;
 use serde_json::Value;
 
+// rb:wiring errors.*,domain.*
 /// Writes the domain's failures onto the response. Handlers call this and never build a
 /// 404 or a 422 themselves.
 fn fail(res: &mut Response, e: d::Fail) {
@@ -43,6 +44,7 @@ fn fail(res: &mut Response, e: d::Fail) {
 // least one. Those are checked here, in this target's own code, because salvo has no
 // validation layer to put them in.
 
+// rb:wiring body.*,domain.*
 /// The order body as salvo binds it. serde reports the first field that does not fit.
 #[derive(Debug, Deserialize)]
 struct OrderIn {
@@ -57,6 +59,7 @@ struct LineIn {
     qty: i64,
 }
 
+// rb:wiring body.*,domain.*
 /// The rules a deserialize cannot state. `first_error` stops at the first, which this
 /// target can still answer because the checks are its own.
 fn check(order: &OrderIn, first_error: bool) -> Vec<d::FieldError> {
@@ -75,6 +78,7 @@ fn check(order: &OrderIn, first_error: bool) -> Vec<d::FieldError> {
     errs
 }
 
+// rb:wiring body.*,domain.*
 /// Binds with salvo's extractor and runs this target's own checks, writing whichever
 /// refusal applies. `None` means the response has already been written.
 async fn bound(req: &mut Request, res: &mut Response, first_error: bool)
@@ -106,6 +110,7 @@ async fn bound(req: &mut Request, res: &mut Response, first_error: bool)
     Some(d::price_order(order.customer_id, &order.status, &lines))
 }
 
+// rb:wiring domain.*,errors.*
 fn ok<T: Serialize + Send>(res: &mut Response, v: Result<T, d::Fail>) {
     match v {
         Ok(v) => res.render(Json(v)),
@@ -113,6 +118,7 @@ fn ok<T: Serialize + Send>(res: &mut Response, v: Result<T, d::Fail>) {
     }
 }
 
+// rb:wiring body.*,domain.*
 /// An unvalidated body, for the endpoints that only parse. The validate routes use the
 /// extractor; this is only for bind, which is measured against them.
 async fn parse(req: &mut Request, res: &mut Response) -> Option<Value> {
@@ -149,11 +155,13 @@ async fn parse(req: &mut Request, res: &mut Response) -> Option<Value> {
 // status written for it is salvo's own, the same 400 a body that will not parse gets. The
 // endpoint set sends neither.
 
+// rb:wiring query.*
 #[derive(Serialize, Deserialize)]
 struct QueryOne {
     page: i64,
 }
 
+// rb:wiring query.*
 #[derive(Serialize, Deserialize)]
 struct QueryMany {
     page: i64,
@@ -166,6 +174,7 @@ struct QueryMany {
     max_price: i64,
 }
 
+// rb:wiring domain.*
 /// What domain.filter pages by. Not a response shape, so it is deserialize only.
 #[derive(Deserialize)]
 struct OrderFilter {
@@ -174,6 +183,7 @@ struct OrderFilter {
     status: String,
 }
 
+// rb:wiring query.*,domain.*
 /// Binds the query with salvo's parser, writing its refusal if there is one.
 fn bound_query<T: serde::de::DeserializeOwned>(req: &mut Request, res: &mut Response)
     -> Option<T> {
@@ -211,6 +221,7 @@ async fn meta(res: &mut Response) {
         "salvo", "askama", "salvo CachingHeaders", "salvo::cache, MokaStore")));
 }
 
+// rb:wiring parameters.*,headers.*,middleware.*,authorized.*
 #[handler]
 async fn small(res: &mut Response) {
     res.render(Json(d::payload("small")));
@@ -227,6 +238,7 @@ async fn not_found(res: &mut Response, ctrl: &mut FlowCtrl) {
     }
 }
 
+// rb:wiring authorized.*
 /// salvo middleware, not a check inside the handler. An `if` in the handler would measure
 /// the language; the point of the authorized family is the framework's own plumbing.
 #[handler]
@@ -239,6 +251,7 @@ async fn require_token(req: &mut Request, res: &mut Response, ctrl: &mut FlowCtr
     }
 }
 
+// rb:wiring middleware.*
 /// One middleware layer: it lets the chain continue and does nothing else.
 #[handler]
 async fn noop() {}
@@ -341,6 +354,7 @@ async fn delete_line(req: &mut Request, res: &mut Response) {
 
 // ---- routes -------------------------------------------------------------------
 
+// rb:wiring json.*
 macro_rules! payload_handler {
     ($name:ident, $size:literal) => {
         #[handler]
@@ -353,6 +367,7 @@ payload_handler!(json_small, "small");
 payload_handler!(json_medium, "medium");
 payload_handler!(json_large, "large");
 
+// rb:wiring compressed.*
 macro_rules! compressed_handler {
     ($name:ident, $size:literal) => {
         #[handler]
@@ -375,6 +390,7 @@ compressed_handler!(comp_large, "large");
 /// Hooped onto the router for these two routes rather than the service, because a digest
 /// over every response in the blend would contaminate the rows this family is measured
 /// against.
+// rb:wiring etag.*
 macro_rules! etag_handler {
     ($name:ident, $size:literal) => {
         #[handler]
@@ -414,6 +430,7 @@ impl CacheIssuer for KeyedBy {
     }
 }
 
+// rb:wiring cache.*
 fn response_cache(on: &'static [&'static str]) -> Cache<MokaStore<String>, KeyedBy> {
     let spec = d::cache_spec();
     Cache::new(
@@ -444,6 +461,7 @@ cache_handler!(cache_large, "large", &[]);
 cache_handler!(cache_vary_one, "small", VARY_ONE);
 cache_handler!(cache_vary_many, "small", VARY_MANY);
 
+// rb:wiring template.*
 macro_rules! template_handler {
     ($name:ident, $size:literal) => {
         #[handler]
@@ -455,6 +473,7 @@ macro_rules! template_handler {
 template_handler!(tpl_small, "small");
 template_handler!(tpl_medium, "medium");
 
+// rb:wiring template.*
 // ---- template ------------------------------------------------------------------
 //
 // salvo ships no view layer and recommends no engine. Askama is the compile-time
@@ -470,6 +489,7 @@ struct Items {
     body: &'static d::PayloadBody,
 }
 
+// rb:wiring template.*
 fn items_html(size: &'static str) -> String {
     use askama::Template;
     Items { body: d::payload(size) }.render().unwrap_or_default()
@@ -479,6 +499,7 @@ fn items_html(size: &'static str) -> String {
 async fn main() {
     let port = rb_host::boot("salvo");
 
+    // rb:wiring compressed.*
     // Level pinned across every language; the default size threshold is left alone,
     // because whether a framework bothers to compress a body too small to benefit is what
     // compressed.gzip_small is in the set to show.
@@ -512,8 +533,7 @@ async fn main() {
         .push(four.get(small))
         .push(sixteen.get(small))
         .push(Router::with_path("/authorized/small").hoop(require_token).get(small))
-        // rb:snippet compressed.identity_small compressed.identity_medium compressed.identity_large
-        // rb:snippet compressed.gzip_small compressed.gzip_medium compressed.gzip_large
+        // rb:handler compressed.*
         .push(
             Router::with_path("/compressed")
                 .hoop(compression)
@@ -521,14 +541,14 @@ async fn main() {
                 .push(Router::with_path("/medium").get(comp_medium))
                 .push(Router::with_path("/large").get(comp_large)),
         )
-        // rb:snippet etag.small etag.large etag.match_large etag.stale_large
+        // rb:handler etag.*
         .push(Router::with_path("/etag/small").hoop(CachingHeaders::new()).get(etag_small))
         .push(Router::with_path("/etag/large").hoop(CachingHeaders::new()).get(etag_large))
-        // rb:snippet cache.small cache.medium cache.large
+        // rb:handler cache.small,cache.medium,cache.large
         .push(Router::with_path("/cache/small").hoop(response_cache(&[])).get(cache_small))
         .push(Router::with_path("/cache/medium").hoop(response_cache(&[])).get(cache_medium))
         .push(Router::with_path("/cache/large").hoop(response_cache(&[])).get(cache_large))
-        // rb:snippet cache.vary_one cache.vary_many
+        // rb:handler cache.vary_one,cache.vary_many
         .push(
             Router::with_path("/cache/vary/one")
                 .hoop(response_cache(VARY_ONE))
@@ -555,7 +575,7 @@ async fn main() {
         .push(Router::with_path("/domain/customers/{cid}").patch(patch_customer))
         .push(Router::with_path("/domain/regions/{region}/report").get(aggregate));
 
-    // rb:snippet errors.unmatched
+    // rb:handler errors.unmatched
     let service = Service::new(router).catcher(Catcher::default().hoop(not_found));
     let acceptor = TcpListener::new(("0.0.0.0", port)).bind().await;
     Server::new(acceptor).serve(service).await;

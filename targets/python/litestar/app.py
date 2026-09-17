@@ -37,6 +37,7 @@ from _hosts import host
 from _shared import domain as d
 from _shared.asgi import ConditionalGet
 
+# rb:wiring cache.*
 #: Well past the roughly 600s a target is up for, so no key expires inside the run. The
 #: store Litestar ships is unbounded, which clears the capacity the fixture derives from
 #: the key count without having to be told it.
@@ -57,12 +58,14 @@ CACHE_TTL = d.cache_spec()["ttl_s"]
 # by file path, and this directory is named after the package it measures.
 
 
+# rb:wiring body.*,domain.*
 @dataclass
 class LineIn:
     product_id: int
     qty: Annotated[int, Meta(ge=1)]
 
 
+# rb:wiring body.*,domain.*
 @dataclass
 class OrderIn:
     customer_id: int
@@ -84,6 +87,7 @@ META = host.meta("litestar", adapter="uvicorn",
 
 # ---- middleware and guards -----------------------------------------------------------
 
+# rb:wiring middleware.*
 class Noop:
     """One layer: it calls the next and does nothing else."""
 
@@ -94,10 +98,12 @@ class Noop:
         await self.app(scope, receive, send)
 
 
+# rb:wiring middleware.*
 def layers(n):
     return [Noop for _ in range(n)]
 
 
+# rb:wiring authorized.*
 def require_token(connection: ASGIConnection, _: BaseRouteHandler) -> None:
     """A guard, which is Litestar's own authorization facility. An ``if`` in the handler
     would measure the language; the point of the authorized family is the plumbing."""
@@ -105,6 +111,7 @@ def require_token(connection: ASGIConnection, _: BaseRouteHandler) -> None:
         raise PermissionDeniedException()
 
 
+# rb:wiring compressed.*
 # Threshold and level are the pinned ones rather than Litestar's defaults. Whether a
 # framework bothers to compress a body too small to benefit is what compressed.gzip_small
 # is in the set to show, so the floor has to be the same floor everywhere or the row
@@ -127,6 +134,7 @@ gzip_scoped = [DefineMiddleware(
 # with cache=. cache_key_builder is what folds a vary row's header values into the key, and
 # because it is the handler's own it does not have to be one builder for every route.
 
+# rb:wiring etag.*
 conditional_scoped = [DefineMiddleware(ConditionalGet)]
 
 
@@ -250,7 +258,7 @@ async def compressed_large() -> Response:
     return Response(d.payload("large"), headers={"x-rb-serial": d.next_serial()})
 
 
-# rb:snippet etag.small etag.large etag.match_large etag.stale_large
+# rb:handler etag.*
 @get("/etag/small", middleware=conditional_scoped)
 async def etag_small() -> Response:
     return Response(d.payload("small"), headers={
@@ -263,7 +271,7 @@ async def etag_large() -> Response:
         "cache-control": d.CACHEABLE, "x-rb-serial": d.next_serial()})
 
 
-# rb:snippet cache.small cache.medium cache.large
+# rb:handler cache.small,cache.medium,cache.large
 @get("/cache/small", cache=CACHE_TTL)
 async def cache_small() -> Response:
     return Response(d.payload("small"), headers={"x-rb-serial": d.next_serial()})
@@ -279,7 +287,7 @@ async def cache_large() -> Response:
     return Response(d.payload("large"), headers={"x-rb-serial": d.next_serial()})
 
 
-# rb:snippet cache.vary_one cache.vary_many
+# rb:handler cache.vary_one,cache.vary_many
 @get("/cache/vary/one", cache=CACHE_TTL, cache_key_builder=keyed_on(d.vary_on("one")))
 async def cache_vary_one() -> Response:
     return Response(d.payload("small"), headers={
@@ -392,6 +400,7 @@ async def template_medium() -> Template:
 # drift. The router's own miss arrives here as a NotFoundException, which is what gives
 # errors.unmatched the same body as errors.not_found.
 
+# rb:wiring errors.*
 def not_found(_: Request, __: Exception) -> Response:
     return Response(d.not_found_body(), status_code=404)
 
@@ -400,6 +409,7 @@ def forbidden(_: Request, __: Exception) -> Response:
     return Response(d.forbidden_body(), status_code=403)
 
 
+# rb:wiring errors.*
 # Litestar raises ValidationException for a body msgspec could not decode and for one it
 # decoded and then refused alike, and answers 400 for both. Its own envelope carries the
 # status, its own wording and the detail msgspec gave it, so it is passed through rather
@@ -411,12 +421,13 @@ def client_error(_: Request, exc: ClientException) -> Response:
                     status_code=exc.status_code)
 
 
+# rb:wiring errors.*,body.*
 def invalid(_: Request, exc: ValidationException) -> Response:
     return Response({"status_code": 400, "detail": exc.detail,
                      "extra": exc.extra}, status_code=400)
 
 
-# rb:snippet errors.unmatched
+# rb:handler errors.unmatched
 app = Litestar(
     route_handlers=[
         plaintext, health, meta,
@@ -444,6 +455,7 @@ app = Litestar(
     },
     openapi_config=None,
     response_cache_config=ResponseCacheConfig(default_expiration=CACHE_TTL),
+    # rb:wiring template.*
     template_config=TemplateConfig(
         directory=pathlib.Path(__file__).resolve().parent / "templates",
         engine=JinjaTemplateEngine,

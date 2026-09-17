@@ -11,6 +11,7 @@ namespace RequestBench.WolverineTarget.Routes;
 /// language; the point of the family is the framework's own plumbing. A Before that returns
 /// a result stops the chain, which is how Wolverine refuses a request.
 /// </summary>
+// rb:wiring authorized.*
 public static class RequireToken
 {
     public static IResult? Before(HttpRequest request, DomainModel domain) =>

@@ -21,6 +21,7 @@ type structValidator struct{ v *validator.Validate }
 
 func (s *structValidator) Validate(out any) error { return s.v.Struct(out) }
 
+// rb:wiring body.*
 func newValidator() fiber.StructValidator {
 	v := validator.New(validator.WithRequiredStructEnabled())
 	v.RegisterTagNameFunc(jsonName)
@@ -54,12 +55,14 @@ type lineBody struct {
 	Qty       *int `json:"qty"        validate:"required,min=1"`
 }
 
+// rb:wiring body.*,domain.*
 type orderBody struct {
 	CustomerID *int       `json:"customer_id" validate:"required"`
 	Status     *string    `json:"status"      validate:"required"`
 	Lines      []lineBody `json:"lines"       validate:"required,min=1,dive"`
 }
 
+// rb:wiring body.*,domain.*
 func (o orderBody) order() *d.ValidatedOrder {
 	in := make([]d.LineInput, 0, len(o.Lines))
 	for _, l := range o.Lines {
@@ -74,6 +77,7 @@ func (o orderBody) order() *d.ValidatedOrder {
 // layers are distinct: a body the decoder could not turn into the struct never reaches the
 // StructValidator, so there is no field to report and it is a 400. A body that became the
 // struct and then failed a rule is a 422.
+// rb:wiring body.*,domain.*
 func bindOrder(c fiber.Ctx) (*orderBody, bool) {
 	var ob orderBody
 	if err := c.Bind().Body(&ob); err != nil {
@@ -91,6 +95,7 @@ func bindOrder(c fiber.Ctx) (*orderBody, bool) {
 }
 
 // An unvalidated body, for the endpoints that only parse.
+// rb:wiring body.*,domain.*
 func bindAny(c fiber.Ctx) (map[string]any, bool) {
 	var m map[string]any
 	if err := json.Unmarshal(c.Body(), &m); err != nil {

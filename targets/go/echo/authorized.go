@@ -9,6 +9,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// rb:wiring authorized.*
 func requireToken(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		if !d.TokenOK(c.Request().Header.Get("authorization")) {

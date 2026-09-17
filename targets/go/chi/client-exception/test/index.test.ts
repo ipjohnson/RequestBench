@@ -26,6 +26,7 @@ const refused = {
 };
 
 describe(pkg.target, () => {
+  // rb:test authorized.denied,body.rejected_all,body.rejected_first,errors.not_found,errors.unmatched,errors.malformed
   test("declares a schema for every error endpoint", () => {
     expect(Object.keys(pkg.schemas).sort()).toEqual([
       "authorized.denied", "body.rejected_all", "body.rejected_first",
@@ -33,10 +34,12 @@ describe(pkg.target, () => {
     ]);
   });
 
+  // rb:test body.rejected_all
   test("accepts the envelope its own walk produces", () => {
     expect(judge("body.rejected_all", [422], refused)).toBe(true);
   });
 
+  // rb:test body.rejected_all
   test("the endpoint's own pairs still apply, because this target reports them", () => {
     expect(judge("body.rejected_all", [422], {
       error: "validation_failed",
@@ -44,12 +47,14 @@ describe(pkg.target, () => {
     })).toBe(false);
   });
 
+  // rb:test body.rejected_all
   test("rejects the envelope a framework with a binder answers", () => {
     expect(judge("body.rejected_all", [422], {
       error: "validation_failed", fields: { customer_id: "required" },
     })).toBe(false);
   });
 
+  // rb:test errors.malformed
   test("a body that is not JSON never reaches the walk, so it is a 400 naming no field", () => {
     expect(judge("errors.malformed", [400], { error: "invalid_body", detail: "unexpected EOF" }))
       .toBe(true);

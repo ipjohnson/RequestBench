@@ -12,6 +12,7 @@ import (
 
 // The response is read once and served from the closure rather than looked up per request:
 // the map lookup is not what any of these endpoints is measuring.
+// rb:wiring json.*,parameters.*,headers.*,middleware.*,authorized.*
 func payload(size string) echo.HandlerFunc {
 	body := d.Payload(size)
 	return func(c echo.Context) error { return c.JSON(200, body) }

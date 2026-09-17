@@ -12,6 +12,7 @@ import rb.domain.Json;
 public final class Reply {
   private Reply() {}
 
+  // rb:wiring domain.*,parameters.*,json.*,headers.*,authorized.*,middleware.*
   public static void json(RoutingContext ctx, int status, Object value) {
     byte[] raw = Json.bytes(value);
     ctx.response()
@@ -45,6 +46,7 @@ public final class Reply {
    * Maps the domain's failures onto statuses. Handlers raise and never build a 404 or a 422
    * themselves, so the six Java targets cannot drift.
    */
+  // rb:wiring errors.*
   public static void fail(RoutingContext ctx, Throwable t) {
     if (t instanceof Errors.NotFound) {
       json(ctx, 404, Domain.notFoundBody());
@@ -73,6 +75,7 @@ public final class Reply {
   }
 
   /** The request body as a value, or the 422 every target answers when it is not JSON. */
+  // rb:wiring body.*,domain.*
   public static Map<String, Object> body(RoutingContext ctx) {
     return Json.body(ctx.body().asString());
   }

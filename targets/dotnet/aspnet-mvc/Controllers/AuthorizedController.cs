@@ -12,6 +12,7 @@ namespace RequestBench.AspNetMvc.Controllers;
 /// authorization filters are the fuller answer and would bring a policy evaluation the
 /// other forty-four endpoints would also pay for.
 /// </summary>
+// rb:wiring authorized.*
 public sealed class RequireTokenAttribute : Attribute, IAsyncActionFilter
 {
     public async Task OnActionExecutionAsync(ActionExecutingContext context,

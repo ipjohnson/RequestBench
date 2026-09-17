@@ -20,9 +20,14 @@ import type { Run, WireDoc } from "../lib/types.js";
 
 export type Source = { base: URL; remote: boolean };
 
+export type CodePart = { f: string; s: number; e: number; h: string; u: string | null; t: string };
+
+// The handler, the support parts the family is wired with, what it declares that wiring is,
+// and the contract tests that hold it. Written by snippetDoc; the short keys are because
+// this ships beside the run.
 export type CodeDoc = Record<
   string,
-  { f: string; s: number; e: number; h: string; u: string | null; t: string }
+  CodePart & { sup?: CodePart[]; tst?: CodePart[]; w?: { m?: string; d?: string; b?: string } }
 >;
 
 export function resolveSource(doc: Document = document, loc: Location = location): Source {

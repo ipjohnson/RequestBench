@@ -26,6 +26,7 @@ import rb.domain.Model.ValidatedOrder;
  * from an absent one, because both arrive as zero.
  */
 @Introspected
+// rb:wiring body.*,domain.*
 public record OrderIn(@JsonProperty("customer_id") @NotNull Integer customerId,
                       @NotNull String status,
                       @NotNull @Size(min = 1) List<@Valid LineIn> lines) {
@@ -35,6 +36,7 @@ public record OrderIn(@JsonProperty("customer_id") @NotNull Integer customerId,
                        @NotNull @Min(1) Integer qty) {}
 
   /** The order, once Bean Validation has said the body is one. */
+  // rb:wiring body.*,domain.*
   public ValidatedOrder order() {
     return Domain.priceOrder(customerId, status,
         lines.stream().map(l -> new LineInput(l.productId(), l.qty())).toList());

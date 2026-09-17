@@ -12,6 +12,7 @@ import rb.domain.Domain;
 public final class Middleware {
   private Middleware() {}
 
+  // rb:wiring middleware.*
   private static void layers(JavalinConfig cfg, String path, int n) {
     for (int i = 0; i < n; i++) {
       cfg.routes.before(path, ctx -> { });
@@ -22,10 +23,12 @@ public final class Middleware {
   public static void register(JavalinConfig cfg) {
     cfg.routes.get("/middleware/none", ctx -> ctx.json(Domain.payload("small")));
 
-    // rb:snippet middleware.four
+    // rb:handler middleware.four
+    // rb:wiring middleware.*
     layers(cfg, "/middleware/four", 4);
 
-    // rb:snippet middleware.sixteen
+    // rb:handler middleware.sixteen
+    // rb:wiring middleware.*
     layers(cfg, "/middleware/sixteen", 16);
   }
 }

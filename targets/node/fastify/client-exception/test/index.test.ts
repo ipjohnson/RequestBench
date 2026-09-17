@@ -27,6 +27,7 @@ const parseFailed = {
 };
 
 describe(pkg.target, () => {
+  // rb:test authorized.denied,body.rejected_all,body.rejected_first,errors.not_found,errors.unmatched,errors.malformed
   test("declares a schema for every error endpoint", () => {
     expect(Object.keys(pkg.schemas).sort()).toEqual([
       "authorized.denied", "body.rejected_all", "body.rejected_first",
@@ -34,17 +35,20 @@ describe(pkg.target, () => {
     ]);
   });
 
+  // rb:test body.rejected_all
   test("a schema failure is 400, because ajv treats a wrong type as one", () => {
     expect(judge("body.rejected_all", 400, schemaFailed)).toBe(true);
     expect(judge("body.rejected_all", 422, schemaFailed)).toBe(false);
   });
 
+  // rb:test body.rejected_all,errors.malformed
   test("the code is what separates the two layers, and it is not interchangeable", () => {
     expect(judge("errors.malformed", 400, parseFailed)).toBe(true);
     expect(judge("errors.malformed", 400, schemaFailed)).toBe(false);
     expect(judge("body.rejected_all", 400, parseFailed)).toBe(false);
   });
 
+  // rb:test body.rejected_all
   test("rejects this repository's shared envelope, which Fastify no longer answers", () => {
     expect(judge("body.rejected_all", 400, {
       error: "validation_failed",
@@ -52,6 +56,7 @@ describe(pkg.target, () => {
     })).toBe(false);
   });
 
+  // rb:test body.rejected_all
   test("rejects a Fastify envelope that grew a key", () => {
     expect(judge("body.rejected_all", 400, { ...schemaFailed, validation: [] })).toBe(false);
   });

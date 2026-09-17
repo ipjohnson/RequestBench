@@ -9,6 +9,7 @@ import { hostMeta } from "../_shared/host.js";
 import { pkgVersion } from "../_shared/version.js";
 import * as d from "../_shared/domain.js";
 import { HTTPException } from "hono/http-exception";
+// rb:wiring errors.*
 import { notBound } from "./validation.js";
 
 import authorized from "./routes/authorized.js";
@@ -39,9 +40,10 @@ for (const register of [baseline, json, parameters, query, headers, middleware,
 
 // errors: the router's own miss and every failure a handler raises. Hono takes both as
 // application hooks rather than as routes, which is why this family has no file.
-// rb:snippet errors.unmatched
+// rb:handler errors.unmatched
 app.notFound((c) => c.json(d.notFoundBody(), 404));
 
+// rb:wiring errors.*
 app.onError((err, c) => {
   // The validator hook answers a failed body itself, so nothing validation-shaped reaches
   // here. A body Hono could not parse never got as far as the hook: the hook reads the JSON

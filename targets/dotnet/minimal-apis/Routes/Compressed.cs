@@ -15,6 +15,7 @@ namespace RequestBench.MinimalApis.Routes;
 /// </summary>
 public static class Compressed
 {
+    // rb:wiring compressed.*
     private static async ValueTask<object?> Gzip(EndpointFilterInvocationContext context,
                                                  EndpointFilterDelegate next)
     {
@@ -32,6 +33,7 @@ public static class Compressed
         return Results.Bytes(DomainModel.Gzip(raw), "application/json");
     }
 
+    // rb:wiring compressed.*
     private static Func<HttpResponse, DomainModel, PayloadBody> Serve(string size) =>
         (response, model) =>
         {

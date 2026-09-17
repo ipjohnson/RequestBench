@@ -10,12 +10,14 @@ import (
 	"github.com/gorilla/mux"
 )
 
+// rb:wiring middleware.*
 func noop(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		next.ServeHTTP(w, req)
 	})
 }
 
+// rb:wiring middleware.*
 func layers(n int) []func(http.Handler) http.Handler {
 	out := make([]func(http.Handler) http.Handler, n)
 	for i := range out {

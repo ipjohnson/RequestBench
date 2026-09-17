@@ -5,7 +5,7 @@ import { cell } from "../lib/metrics.js";
 import { esc } from "../lib/html.js";
 import type { Chain } from "../lib/delta.js";
 import type { EndpointRung, Route, WireEndpoint } from "../lib/types.js";
-import type { Snippet } from "../lib/bundleview.js";
+import type { Mechanism, Snippet, SnippetPart } from "../lib/bundleview.js";
 
 type Props = {
   eid: string;
@@ -15,13 +15,22 @@ type Props = {
   /** Endpoints the same registration answers, so six panes do not each claim the block. */
   also: string[];
   link: string | null;
+  /** The parts that make the family work, each with its own permalink. */
+  support: { part: SnippetPart; link: string | null }[];
+  /** Endpoints the same wiring serves, for the same reason `also` exists. */
+  alsoWired: string[];
+  /** What spec/matrix.json says this family is wired with in this target. */
+  mechanism: Mechanism | undefined;
+  /** The contract tests that hold this target to the envelope it declares. */
+  tests: { part: SnippetPart; link: string | null }[];
   exchange: WireEndpoint | undefined;
   chain: Chain | null;
   factors: Record<string, string>;
   first: boolean;
 };
 
-const { eid, route, stats, snippet, also, link, exchange, chain, factors, first } = Astro.props;
+const { eid, route, stats, snippet, also, link, support, alsoWired, mechanism, tests,
+        exchange, chain, factors, first } = Astro.props;
 
 const d = stats ?? {};
 // p95 is in summaries written after harness/summarize.py started recording it. An older one
@@ -39,9 +48,14 @@ const fields: [string, string][] = [
     .map((k): [string, string] => [k, cell(d[k])]),
 ];
 const measured = Object.keys(d).length > 0;
-const loc = snippet
-  ? `${snippet.path}:${snippet.start_line}${snippet.end_line === snippet.start_line ? "" : `-${snippet.end_line}`}`
-  : "";
+const h = snippet?.handler;
+const loc = h ? `${h.path}:${h.start_line}${h.end_line === h.start_line ? "" : `-${h.end_line}`}` : "";
+const where = (p: SnippetPart): string =>
+  `${p.path}:${p.start_line}${p.end_line === p.start_line ? "" : `-${p.end_line}`}`;
+// The blocks a fragment is nested in, which snippets.py works out so the gate can tell a
+// handler from a condition. They are not part of the range, because that is what the
+// permalink points at, so they are shown beside it rather than in it.
+const context = (h?.context ?? []) as { line: number; text: string }[];
 const hdrs = (hs: readonly (readonly [string, string])[]): string =>
   hs
     .map(([k, v]) => `<div class='hrow'><span class='hk'>${esc(k)}</span><span class='hv'>${esc(v)}</span></div>`)
@@ -71,20 +85,84 @@ const hdrs = (hs: readonly (readonly [string, string])[]): string =>
 
   <h3 class="childcap">Implementation</h3>
   {
-    snippet ? (
+    h ? (
       <>
         <div class="sniphead">
           <span class="loc">{loc}</span>
-          <span class="how">{snippet.how}</span>
+          <span class="how">{h.how}</span>
           {link && <a href={link}>open on GitHub &rarr;</a>}
         </div>
         {also.length > 0 && (
           <p class="hint">The same registration answers {also.join(", ")}.</p>
         )}
-        <pre class="code">{snippet.text}</pre>
+        <pre class="code">{h.text}</pre>
       </>
     ) : (
       <p class="empty">No handler located for this endpoint.</p>
+    )
+  }
+
+  <h3 class="childcap">Wiring</h3>
+  <div class="wiring">
+    {
+      mechanism?.mechanism ? (
+        <p class="mech">
+          {mechanism.mechanism}
+          {mechanism.dep && <> &middot; <code>{mechanism.dep}</code></>}
+        </p>
+      ) : mechanism?.builtin ? (
+        <p class="mech">{mechanism.builtin}</p>
+      ) : (
+        <p class="empty">No mechanism declared for this family.</p>
+      )
+    }
+    {
+      context.length > 0 && (
+        <div class="ctx">
+          {context.map((c) => (
+            <div>
+              {c.line}: {c.text}
+            </div>
+          ))}
+        </div>
+      )
+    }
+    {
+      support.map(({ part, link: href }) => (
+        <>
+          <div class="sniphead">
+            <span class="loc">{where(part)}</span>
+            <span class="how">{part.how}</span>
+            {href && <a href={href}>open on GitHub &rarr;</a>}
+          </div>
+          <pre class="code">{part.text}</pre>
+        </>
+      ))
+    }
+    {
+      support.length > 0 && alsoWired.length > 0 && (
+        <p class="hint">The same wiring serves {alsoWired.join(", ")}.</p>
+      )
+    }
+  </div>
+
+  {
+    tests.length > 0 && (
+      <>
+        <h3 class="childcap">Contract test</h3>
+        <div class="wiring">
+          {tests.map(({ part, link: href }) => (
+            <>
+              <div class="sniphead">
+                <span class="loc">{where(part)}</span>
+                <span class="how">{part.how}</span>
+                {href && <a href={href}>open on GitHub &rarr;</a>}
+              </div>
+              <pre class="code">{part.text}</pre>
+            </>
+          ))}
+        </div>
+      </>
     )
   }
 

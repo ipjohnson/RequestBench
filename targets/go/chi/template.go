@@ -17,12 +17,15 @@ import (
 	d "github.com/ianjohnson/requestbench/targets/go/_shared"
 )
 
+// rb:wiring template.*
 //go:embed views/items.tmpl
 var itemsTemplate string
 
 // Parsed once, rendered per request. A precomputed string would measure nothing.
+// rb:wiring template.*
 var items = template.Must(template.New("items.tmpl").Parse(itemsTemplate))
 
+// rb:wiring template.*
 func templateRoute(size string) http.HandlerFunc {
 	body := d.Payload(size)
 	return func(w http.ResponseWriter, _ *http.Request) {

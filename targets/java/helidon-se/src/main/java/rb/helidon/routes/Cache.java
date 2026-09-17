@@ -21,8 +21,10 @@ import rb.domain.ResponseStore;
 public final class Cache {
   private Cache() {}
 
+  // rb:wiring cache.*
   private static final ResponseStore STORE = new ResponseStore();
 
+  // rb:wiring cache.*
   private static String keyOf(ServerRequest req, String path, List<String> on) {
     List<String> values = new ArrayList<>(on.size());
     for (String name : on) {
@@ -31,6 +33,7 @@ public final class Cache {
     return ResponseStore.key(path, values);
   }
 
+  // rb:wiring cache.*
   private static Handler cached(String path, String size, List<String> on) {
     return (req, res) -> {
       String key = keyOf(req, path, on);
@@ -52,11 +55,11 @@ public final class Cache {
   }
 
   public static void register(HttpRouting.Builder r) {
-    // rb:snippet cache.small cache.medium cache.large
+    // rb:handler cache.small,cache.medium,cache.large
     for (String size : new String[] {"small", "medium", "large"}) {
       r.get("/cache/" + size, cached("/cache/" + size, size, List.of()));
     }
-    // rb:snippet cache.vary_one cache.vary_many
+    // rb:handler cache.vary_one,cache.vary_many
     for (String which : new String[] {"one", "many"}) {
       String path = "/cache/vary/" + which;
       r.get(path, cached(path, "small", Domain.varyOn(which)));

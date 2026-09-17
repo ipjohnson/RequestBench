@@ -12,6 +12,7 @@ namespace RequestBench.AspNetMvc;
 /// ASP.NET API expects. The endpoint set pins the status and requires the body to say which
 /// fields failed; it does not pin the shape.
 /// </summary>
+// rb:wiring errors.*
 public static class Failures
 {
     /// <summary>The domain's field errors as ProblemDetails wants them: field to reasons.</summary>

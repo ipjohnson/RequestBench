@@ -21,6 +21,7 @@ import rb.domain.Model.PayloadBody;
 @Controller
 public class Templates {
 
+  // rb:wiring template.*
   private static Map<String, Object> model(String size) {
     PayloadBody body = Domain.payload(size);
     return Map.of("size", body.size(), "count", body.count(), "items", body.items());

@@ -39,11 +39,13 @@ describe(pkg.target, () => {
     expect(Object.keys(pkg.schemas).sort()).toEqual(EVERY);
   });
 
+  // rb:test body.rejected_all,errors.malformed
   test("both failures are the same envelope at 400", () => {
     expect(judge("body.rejected_all", 400, schemaFailure, [400])).toBe(true);
     expect(judge("errors.malformed", 400, parseFailure, [400])).toBe(true);
   });
 
+  // rb:test body.rejected_all
   test("there is no errors list: one detail is what the handler gives", () => {
     expect(judge("body.rejected_all", 400, {
       error: "validation_failed",
@@ -51,6 +53,7 @@ describe(pkg.target, () => {
     }, [400])).toBe(false);
   });
 
+  // rb:test body.rejected_all
   test("a detail is required, so a bare name is refused", () => {
     expect(judge("body.rejected_all", 400, { error: "validation_failed" }, [400])).toBe(false);
   });

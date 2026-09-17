@@ -5,6 +5,7 @@
 // content type is set on the response directly. EJS is the most used template engine on
 // npm by a wide margin, which is where a framework with no recommendation of its own
 // leaves the choice.
+// rb:wiring template.*
 import ejs from "ejs";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -15,8 +16,10 @@ import * as d from "../../_shared/domain.js";
 const VIEWS = join(dirname(dirname(fileURLToPath(import.meta.url))), "views");
 
 // Compiled once, rendered per request. A precomputed string would measure nothing.
+// rb:wiring template.*
 const items = ejs.compile(readFileSync(join(VIEWS, "items.ejs"), "utf8"));
 
+// rb:wiring template.*
 const render = (size) => {
   const body = d.payload(size);
   return (e) => {

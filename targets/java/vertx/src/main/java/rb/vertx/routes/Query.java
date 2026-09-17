@@ -30,6 +30,7 @@ import static io.vertx.json.schema.common.dsl.Schemas.stringSchema;
 public final class Query {
   private Query() {}
 
+  // rb:wiring query.*,domain.*
   private static ValidationHandler handler(SchemaRepository repository,
                                            String[] ints, String[] strings) {
     ValidationHandlerBuilder b = ValidationHandlerBuilder.create(repository);
@@ -48,6 +49,7 @@ public final class Query {
     return v == null || v.isNull() ? null : v;
   }
 
+  // rb:wiring query.*,domain.*
   static int qint(RoutingContext ctx, String name, int fallback) {
     RequestParameter v = value(ctx, name);
     return v == null ? fallback : v.getInteger();

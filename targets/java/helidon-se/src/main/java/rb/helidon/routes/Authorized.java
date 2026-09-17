@@ -14,6 +14,7 @@ public final class Authorized {
   private Authorized() {}
 
   public static void register(HttpRouting.Builder r) {
+    // rb:wiring authorized.*
     r.route(HttpRoute.builder().path("/authorized/small").handler((req, res) -> {
       if (!Domain.tokenOk(req.headers().value(io.helidon.http.HeaderNames.AUTHORIZATION)
                               .orElse(null))) {
@@ -23,7 +24,7 @@ public final class Authorized {
       res.next();
     }).build());
 
-    // rb:snippet authorized.allowed authorized.denied
+    // rb:handler authorized.*
     r.get("/authorized/small", (req, res) -> res.send(Domain.payload("small")));
   }
 }

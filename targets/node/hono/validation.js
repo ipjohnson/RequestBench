@@ -22,6 +22,7 @@ const req = (errs, obj, field, type) => {
   else if (type === "array" && !Array.isArray(v)) errs.push({ field, rule: "array" });
 };
 
+// rb:wiring body.*
 export function checkOrder(body, firstError = false) {
   const errs = [];
   const bail = () => firstError && errs.length > 0;
@@ -39,15 +40,18 @@ export function checkOrder(body, firstError = false) {
   return errs;
 }
 
+// rb:wiring body.*
 /** This target's own envelope for a body its walk refused. */
 export const refused = (errors) => ({ error: "validation_failed", errors });
 
 /** This target's own envelope for a body the parser could not read at all. */
 export const notBound = (message) => ({ error: "invalid_body", detail: message });
 
+// rb:wiring body.*,domain.*
 /** The order, once the walk has said the body is one. */
 export const orderOf = (body) => d.priceOrder(body.customer_id, body.status, body.lines);
 
+// rb:wiring body.*,domain.*
 /** The hook a route mounts to have Hono run the check before the handler. */
 export const validatesOrder = (firstError = false) =>
   validator("json", (value, c) => {

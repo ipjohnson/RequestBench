@@ -21,6 +21,7 @@ public abstract class TemplateEndpoint(DomainModel domain, string size) : Endpoi
             new Dictionary<string, object?> { ["Body"] = domain.Payload(size) }));
 }
 
+// rb:handler template.small
 public sealed class TemplateSmallEndpoint(DomainModel domain) : TemplateEndpoint(domain, "small")
 {
     public override void Configure()
@@ -30,6 +31,7 @@ public sealed class TemplateSmallEndpoint(DomainModel domain) : TemplateEndpoint
     }
 }
 
+// rb:handler template.medium
 public sealed class TemplateMediumEndpoint(DomainModel domain) : TemplateEndpoint(domain, "medium")
 {
     public override void Configure()

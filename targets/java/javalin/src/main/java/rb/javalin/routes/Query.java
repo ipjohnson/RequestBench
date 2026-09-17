@@ -16,10 +16,12 @@ import rb.domain.Model.QueryOne;
 public final class Query {
   private Query() {}
 
+  // rb:wiring query.*,domain.*
   static int qint(Context ctx, String name, int fallback) {
     return ctx.queryParamAsClass(name, Integer.class).getOrDefault(fallback);
   }
 
+  // rb:wiring query.*,domain.*
   static String qstr(Context ctx, String name) {
     return ctx.queryParamAsClass(name, String.class).getOrDefault("");
   }

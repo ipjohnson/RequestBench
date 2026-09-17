@@ -21,6 +21,7 @@ import rb.domain.Json;
 public final class Etag {
   private Etag() {}
 
+  // rb:wiring etag.*
   private static Handler revalidating(String size) {
     return (req, res) -> {
       byte[] raw = Json.bytes(Domain.payload(size));
@@ -38,7 +39,7 @@ public final class Etag {
   }
 
   public static void register(HttpRouting.Builder r) {
-    // rb:snippet etag.small etag.large etag.match_large etag.stale_large
+    // rb:handler etag.*
     for (String size : new String[] {"small", "large"}) {
       r.get("/etag/" + size, revalidating(size));
     }

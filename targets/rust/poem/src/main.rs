@@ -24,12 +24,14 @@ use rb_domain as d;
 const VARY_ONE: &[&str] = &["x-rb-tenant"];
 const VARY_MANY: &[&str] = &["x-rb-channel", "x-rb-region", "x-rb-tenant"];
 
+// rb:wiring cache.*
 /// One store for the target, sized from the fixture.
 static CACHE: std::sync::LazyLock<d::ResponseStore> =
     std::sync::LazyLock::new(d::ResponseStore::new);
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
+// rb:wiring errors.*,domain.*
 /// The domain's failures as poem errors, so a handler returns `Result` and never builds a
 /// 404 or a 422 itself.
 #[derive(Debug)]
@@ -64,6 +66,7 @@ impl From<d::Fail> for Failed {
 
 type R<T> = Result<T, Failed>;
 
+// rb:wiring errors.*,body.*
 /// An answer this target decided on itself, carried back through poem's error channel so
 /// the framework renders the status and body this target chose rather than one of its own.
 #[derive(Debug)]
@@ -92,6 +95,7 @@ fn not_found_rejection(_: d::Fail) -> Rejected {
     Rejected(StatusCode::NOT_FOUND, d::not_found_body())
 }
 
+// rb:wiring body.*,domain.*
 fn parse(body: &[u8]) -> Result<Value, Rejected> {
     serde_json::from_slice(body).map_err(|e: serde_json::Error| {
         Rejected(
@@ -112,6 +116,7 @@ fn parse(body: &[u8]) -> Result<Value, Rejected> {
 // least one. Those are checked here, in this target's own code, because poem has no
 // validation layer to put them in.
 
+// rb:wiring body.*,domain.*
 /// The order body as poem binds it. serde reports the first field that does not fit.
 #[derive(Debug, Deserialize)]
 struct OrderIn {
@@ -126,6 +131,7 @@ struct LineIn {
     qty: i64,
 }
 
+// rb:wiring body.*,domain.*
 /// The rules a deserialize cannot state. `first_error` stops at the first, which this
 /// target can still answer because the checks are its own.
 fn check(order: &OrderIn, first_error: bool) -> Vec<d::FieldError> {
@@ -144,6 +150,7 @@ fn check(order: &OrderIn, first_error: bool) -> Vec<d::FieldError> {
     errs
 }
 
+// rb:wiring body.*,domain.*
 /// The order, or this target's own answer when its own checks refuse the body.
 fn validated(order: &OrderIn, first_error: bool) -> Result<d::ValidatedOrder, Rejected> {
     let errs = check(order, first_error);
@@ -171,11 +178,13 @@ fn validated(order: &OrderIn, first_error: bool) -> Result<d::ValidatedOrder, Re
 // The fields are plain, so serde decides what a missing or unparseable one is: a
 // ParseQueryError, which poem renders as its own 400. The endpoint set sends neither.
 
+// rb:wiring query.*
 #[derive(Serialize, Deserialize)]
 struct QueryOne {
     page: i64,
 }
 
+// rb:wiring query.*
 #[derive(Serialize, Deserialize)]
 struct QueryMany {
     page: i64,
@@ -188,6 +197,7 @@ struct QueryMany {
     max_price: i64,
 }
 
+// rb:wiring domain.*
 /// What domain.filter pages by. Not a response shape, so it is deserialize only.
 #[derive(Deserialize)]
 struct OrderFilter {
@@ -196,18 +206,21 @@ struct OrderFilter {
     status: String,
 }
 
+// rb:wiring errors.*
 /// Every route poem does not match. Its own 404 carries no body, and every other target
 /// answers the same JSON, so the shape is supplied rather than left to the framework.
 async fn not_found() -> Response {
     Json(d::not_found_body()).with_status(StatusCode::NOT_FOUND).into_response()
 }
 
+// rb:wiring middleware.*
 /// Boxed so the count is a fold rather than sixteen written-out calls. Each layer is a
 /// real poem middleware that calls the next and does nothing else.
 fn layered(n: usize, ep: poem::endpoint::BoxEndpoint<'static>) -> poem::endpoint::BoxEndpoint<'static> {
     (0..n).fold(ep, |acc, _| acc.around(|ep, req| async move { ep.call(req).await }).boxed())
 }
 
+// rb:wiring template.*
 // ---- template ------------------------------------------------------------------
 //
 // poem ships no view layer and recommends no engine. Askama is the compile-time
@@ -223,6 +236,7 @@ struct Items {
     body: &'static d::PayloadBody,
 }
 
+// rb:wiring template.*
 fn items_html(size: &'static str) -> String {
     use askama::Template;
     Items { body: d::payload(size) }.render().unwrap_or_default()
@@ -232,11 +246,14 @@ fn items_html(size: &'static str) -> String {
 async fn main() -> Result<(), std::io::Error> {
     let port = rb_host::boot("poem");
 
+    // rb:wiring parameters.*,headers.*,middleware.*,authorized.*
     let small = || get(make(|_| async { Json(d::payload("small")) }));
 
+    // rb:wiring json.*
     let payload_route =
         |size: &'static str| get(make(move |_| async move { Json(d::payload(size)) }));
 
+    // rb:wiring compressed.*
     // Level pinned across every language; the default size threshold is left alone,
     // because whether a framework bothers to compress a body too small to benefit is what
     // compressed.gzip_small is in the set to show.
@@ -249,6 +266,7 @@ async fn main() -> Result<(), std::io::Error> {
         .with(Compression::new())
     };
 
+    // rb:wiring etag.*
     // etag: middleware on the route, which is poem's own scoping.
     //
     // Poem ships no conditional handling, so the digest is the shared one and /__meta says
@@ -280,6 +298,7 @@ async fn main() -> Result<(), std::io::Error> {
         }))
     };
 
+    // rb:wiring cache.*
     // cache: the store consulted before the payload is built.
     //
     // Poem ships no response cache, so the store is the shared LRU sized from the fixture.
@@ -325,6 +344,7 @@ async fn main() -> Result<(), std::io::Error> {
         }))
     };
 
+    // rb:wiring template.*
     let template_route = |size: &'static str| {
         get(make(move |_| async move {
             items_html(size)
@@ -371,14 +391,14 @@ async fn main() -> Result<(), std::io::Error> {
         .at("/compressed/small", compressed_route("small"))
         .at("/compressed/medium", compressed_route("medium"))
         .at("/compressed/large", compressed_route("large"))
-        // rb:snippet etag.small etag.large etag.match_large etag.stale_large
+        // rb:handler etag.*
         .at("/etag/small", etag_route("small"))
         .at("/etag/large", etag_route("large"))
-        // rb:snippet cache.small cache.medium cache.large
+        // rb:handler cache.small,cache.medium,cache.large
         .at("/cache/small", cache_route("small", &[]))
         .at("/cache/medium", cache_route("medium", &[]))
         .at("/cache/large", cache_route("large", &[]))
-        // rb:snippet cache.vary_one cache.vary_many
+        // rb:handler cache.vary_one,cache.vary_many
         .at("/cache/vary/one", cache_route("small", VARY_ONE))
         .at("/cache/vary/many", cache_route("small", VARY_MANY))
         .at("/template/small", template_route("small"))
@@ -398,7 +418,7 @@ async fn main() -> Result<(), std::io::Error> {
         .at("/domain/orders/:oid/lines/:lid", poem::delete(delete_line))
         // NotFoundError only. catch_all_error swallows every error a handler returns as
         // well, which turned all three validation rejections into 404s.
-        // rb:snippet errors.unmatched
+        // rb:handler errors.unmatched
         .catch_error(|_: poem::error::NotFoundError| async { not_found().await });
 
     Server::new(TcpListener::bind(("0.0.0.0", port))).run(app).await

@@ -16,8 +16,10 @@ import (
 
 // Level is pinned across every language. chi compresses whatever it is given, with no size
 // floor of its own, which is one of the things compressed.gzip_small is in the set to show.
+// rb:wiring compressed.*
 var gzip = chimw.Compress(d.GzipLevel, "application/json")
 
+// rb:wiring compressed.*
 func compressedRoute(size string) http.HandlerFunc {
 	body := d.Payload(size)
 	return func(w http.ResponseWriter, _ *http.Request) {
@@ -27,8 +29,7 @@ func compressedRoute(size string) http.HandlerFunc {
 }
 
 func registerCompressed(r chi.Router) {
-	// rb:snippet compressed.identity_small compressed.identity_medium compressed.identity_large
-	// rb:snippet compressed.gzip_small compressed.gzip_medium compressed.gzip_large
+	// rb:handler compressed.*
 	for _, size := range []string{"small", "medium", "large"} {
 		r.With(gzip).Get("/compressed/"+size, compressedRoute(size))
 	}

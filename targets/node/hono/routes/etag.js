@@ -1,3 +1,4 @@
+// rb:wiring etag.*
 // etag: Hono's own etag middleware.
 //
 // hono/etag hashes the body the handler returned and answers the conditional itself, so
@@ -8,8 +9,9 @@ import { etag as etagMiddleware } from "hono/etag";
 import * as d from "../../_shared/domain.js";
 
 export default function etag(app) {
+  // rb:wiring etag.*
   app.use("/etag/*", etagMiddleware());
-  // rb:snippet etag.small etag.large etag.match_large etag.stale_large
+  // rb:handler etag.*
   for (const size of ["small", "large"]) {
     app.get("/etag/" + size, (c) => {
       c.header("cache-control", d.CACHEABLE);

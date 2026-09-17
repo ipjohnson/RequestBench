@@ -34,17 +34,20 @@ describe(pkg.target, () => {
     expect(Object.keys(pkg.schemas).sort()).toEqual(EVERY);
   });
 
+  // rb:test body.rejected_all
   test("msgspec names one field however many are wrong, and answers 400", () => {
     expect(judge("body.rejected_all", 400, refused)).toBe(true);
     expect(judge("body.rejected_all", 422, refused)).toBe(false);
   });
 
+  // rb:test body.rejected_all,errors.malformed
   test("a body it could not read carries no extra, and that is a different envelope", () => {
     expect(judge("errors.malformed", 400, truncated)).toBe(true);
     expect(judge("errors.malformed", 400, refused)).toBe(false);
     expect(judge("body.rejected_all", 400, truncated)).toBe(false);
   });
 
+  // rb:test body.rejected_all
   test("rejects this repository's shared envelope, which Litestar no longer answers", () => {
     expect(judge("body.rejected_all", 400, {
       error: "validation_failed",

@@ -26,14 +26,17 @@ describe(pkg.target, () => {
     expect(Object.keys(pkg.schemas).sort()).toEqual(EVERY);
   });
 
+  // rb:test body.rejected_all
   test("the extractor's own rejection is what the rejection endpoints answer", () => {
     expect(judge("body.rejected_all", 400, "text", "parse error: invalid type: string \"not-an-int\", expected i64 at line 1 column 27")).toBe(true);
   });
 
+  // rb:test errors.malformed
   test("a body that is not JSON at all answers 400", () => {
     expect(judge("errors.malformed", 400, "text", "parse error: EOF while parsing a list at line 1 column 29")).toBe(true);
   });
 
+  // rb:test body.rejected_all
   test("this repository's shared envelope is not what it answers", () => {
     expect(judge("body.rejected_all", 400, "json", {
       error: "validation_failed",
@@ -41,6 +44,7 @@ describe(pkg.target, () => {
     })).toBe(false);
   });
 
+  // rb:test body.rejected_all
   test("the kind of body matters, not only the status", () => {
     expect(judge("body.rejected_all", 400, "text" === "text" ? "json" : "text", "parse error: invalid type: string \"not-an-int\", expected i64 at line 1 column 27"))
       .toBe(false);

@@ -8,6 +8,7 @@
 // A missing parameter and one that will not parse both coerce to the same value they always
 // did, which is what a target with no binder can do without inventing an error contract the
 // family does not have.
+// rb:wiring query.*
 const int = (v) => { const n = Number(v); return Number.isInteger(n) ? n : 0; };
 const str = (v) => v ?? null;
 
@@ -21,6 +22,7 @@ export const coerceMany = (q) => ({
 
 /** What domain.filter pages by. */
 export const coerceFilter = (q) => ({ page: int(q.page), size: int(q.size), status: str(q.status) });
+// rb:end
 
 export default function query(app) {
   app.get("/query/one", (req, res) => res.json(coerceOne(req.query)));

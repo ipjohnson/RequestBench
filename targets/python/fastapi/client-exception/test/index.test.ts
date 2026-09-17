@@ -49,19 +49,23 @@ describe(pkg.target, () => {
     expect(Object.keys(pkg.schemas).sort()).toEqual(EVERY);
   });
 
+  // rb:test body.rejected_all
   test("all three findings are reported, and 422 is the answer for a wrong type", () => {
     expect(judge("body.rejected_all", 422, typeError)).toBe(true);
     expect(judge("body.rejected_all", 400, typeError)).toBe(false);
   });
 
+  // rb:test errors.malformed
   test("a body that would not parse is the same envelope at the same status", () => {
     expect(judge("errors.malformed", 422, jsonError)).toBe(true);
   });
 
+  // rb:test errors.malformed
   test("but the type is pinned there, so a validation finding is not accepted for it", () => {
     expect(judge("errors.malformed", 422, typeError)).toBe(false);
   });
 
+  // rb:test body.rejected_all
   test("rejects this repository's shared envelope, which FastAPI no longer answers", () => {
     expect(judge("body.rejected_all", 422, {
       error: "validation_failed",
@@ -69,6 +73,7 @@ describe(pkg.target, () => {
     })).toBe(false);
   });
 
+  // rb:test body.rejected_all
   test("rejects a finding that grew a key", () => {
     expect(judge("body.rejected_all", 422,
       { detail: [{ ...typeError.detail[0], extra: 1 }] })).toBe(false);

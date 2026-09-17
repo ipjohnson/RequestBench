@@ -17,7 +17,7 @@ import rb.quarkus.Layers;
 @Produces(MediaType.APPLICATION_JSON)
 public class Authorized {
 
-  // rb:snippet authorized.allowed authorized.denied
+  // rb:handler authorized.*
   @GET
   @Path("small")
   @Layers.Authorized

@@ -38,6 +38,7 @@ public final class Validation {
   private Validation() {}
 
   /** One ValidationHandler, built once and mounted on each route that needs it. */
+  // rb:wiring body.*,domain.*
   public static ValidationHandler orderHandler(Router router) {
     SchemaRepository repository = repository();
     return ValidationHandlerBuilder
@@ -63,6 +64,7 @@ public final class Validation {
   }
 
   /** The order, from the body the handler already validated. */
+  // rb:wiring body.*,domain.*
   public static ValidatedOrder order(JsonObject body) {
     JsonArray rows = body.getJsonArray("lines");
     List<LineInput> in = new ArrayList<>(rows.size());
@@ -80,6 +82,7 @@ public final class Validation {
    * underneath it. Vert.x reports one: the handler fails the context on the first thing that
    * did not fit, so there is no collect-all mode to ask for.
    */
+  // rb:wiring body.*,errors.*
   public static JsonObject refusedBody(Throwable t) {
     String detail = t.getMessage() == null ? "body did not match the schema" : t.getMessage();
     return new JsonObject()

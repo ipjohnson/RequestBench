@@ -34,6 +34,7 @@ func (c *capture) Write(p []byte) (int, error) {
 	return c.buf.Write(p)
 }
 
+// rb:wiring etag.*
 // revalidates hashes the body the handler wrote and answers the conditional. Shallow,
 // which is the point: the handler runs and the body is built before anything is compared,
 // so the 304 saves the write and nothing else.
@@ -63,6 +64,7 @@ func revalidates(next echo.HandlerFunc) echo.HandlerFunc {
 	}
 }
 
+// rb:wiring cache.*
 // replays answers from the store when it holds the key, and stores what the handler wrote
 // when it does not.
 func replays(store *d.Store, on []string) echo.MiddlewareFunc {
@@ -116,7 +118,7 @@ func served(size string, extra map[string]string) echo.HandlerFunc {
 }
 
 func registerEtag(e *echo.Echo) {
-	// rb:snippet etag.small etag.large etag.match_large etag.stale_large
+	// rb:handler etag.*
 	for _, size := range []string{"small", "large"} {
 		e.GET("/etag/"+size, served(size, nil), revalidates)
 	}
@@ -126,11 +128,11 @@ func registerCache(e *echo.Echo) {
 	// One store for the target rather than one per route, so the capacity the fixture
 	// derives from the key count means what it says.
 	store := d.NewStore()
-	// rb:snippet cache.small cache.medium cache.large
+	// rb:handler cache.small,cache.medium,cache.large
 	for _, size := range []string{"small", "medium", "large"} {
 		e.GET("/cache/"+size, served(size, nil), replays(store, nil))
 	}
-	// rb:snippet cache.vary_one cache.vary_many
+	// rb:handler cache.vary_one,cache.vary_many
 	for _, which := range []string{"one", "many"} {
 		on := d.VaryOn(which)
 		e.GET("/cache/vary/"+which,

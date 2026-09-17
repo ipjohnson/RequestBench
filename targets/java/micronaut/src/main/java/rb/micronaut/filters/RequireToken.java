@@ -19,6 +19,7 @@ import rb.domain.Domain;
  * route.
  */
 @ServerFilter("/authorized/small")
+// rb:wiring authorized.*
 public class RequireToken {
 
   // @Nullable because returning nothing is how a filter says carry on, and Micronaut

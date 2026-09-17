@@ -1,3 +1,4 @@
+// rb:wiring cache.*
 // cache: Hono's own cache middleware.
 //
 // hono/cache builds the key, folds in the headers named by vary, checks cache-control and
@@ -8,14 +9,17 @@
 // wait: true because the middleware otherwise defers the write to executionCtx.waitUntil,
 // which no Node host provides.
 import { cache as cacheMiddleware } from "hono/cache";
+// rb:wiring cache.*
 import { LRUCache } from "lru-cache";
 
 import * as d from "../../_shared/domain.js";
 
+// rb:wiring cache.*
 // One store for the target, so the capacity the fixture derives from the key count means
 // what it says. Keyed by the URL hono/cache builds, which already carries the vary values.
 const store = new LRUCache({ max: d.CACHE_MAX, ttl: d.CACHE_TTL_MS });
 
+// rb:wiring cache.*
 globalThis.caches ??= {
   open: async () => ({
     match: async (key) => {
@@ -41,14 +45,14 @@ export default function cache(app) {
     app.use("/cache/vary/" + which,
       cacheMiddleware({ cacheName: name, wait: true, vary: d.varyOn(which) }));
   }
-  // rb:snippet cache.small cache.medium cache.large
+  // rb:handler cache.small,cache.medium,cache.large
   for (const size of ["small", "medium", "large"]) {
     app.get("/cache/" + size, (c) => {
       c.header("x-rb-serial", d.nextSerial());
       return c.json(d.payload(size));
     });
   }
-  // rb:snippet cache.vary_one cache.vary_many
+  // rb:handler cache.vary_one,cache.vary_many
   for (const which of ["one", "many"]) {
     const on = d.varyOn(which);
     app.get("/cache/vary/" + which, (c) => {

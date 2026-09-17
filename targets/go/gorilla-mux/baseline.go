@@ -24,6 +24,7 @@ var muxVersion = func() string {
 	return ""
 }()
 
+// rb:wiring baseline.*
 func writeText(w http.ResponseWriter, s string) {
 	w.Header().Set("content-type", "text/plain; charset=utf-8")
 	w.Header().Set("content-length", itoa(len(s)))

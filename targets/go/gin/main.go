@@ -17,15 +17,18 @@ import (
 	"strconv"
 	"strings"
 
+	// rb:wiring compressed.*
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 	hosts "github.com/ianjohnson/requestbench/targets/go/_hosts"
 	d "github.com/ianjohnson/requestbench/targets/go/_shared"
 )
 
+// rb:wiring template.*
 //go:embed views/items.tmpl
 var itemsTemplate string
 
+// rb:wiring errors.*,domain.*
 func fail(c *gin.Context, err error) {
 	if errors.Is(err, d.ErrNotFound) {
 		c.JSON(404, gin.H{"error": "not_found"})
@@ -34,6 +37,7 @@ func fail(c *gin.Context, err error) {
 	c.JSON(500, gin.H{"error": "internal", "message": err.Error()})
 }
 
+// rb:wiring domain.*
 func ok(c *gin.Context, v any, err error, status int) {
 	if err != nil {
 		fail(c, err)
@@ -42,6 +46,7 @@ func ok(c *gin.Context, v any, err error, status int) {
 	c.JSON(status, v)
 }
 
+// rb:wiring authorized.*
 // requireToken is Gin middleware, not a check inside the handler. An if in the handler
 // would measure the language; the point of the authorized family is the framework's own
 // plumbing.
@@ -53,9 +58,11 @@ func requireToken(c *gin.Context) {
 	c.Next()
 }
 
+// rb:wiring middleware.*
 // noop is one middleware layer: it calls the next and does nothing else.
 func noop(c *gin.Context) { c.Next() }
 
+// rb:wiring middleware.*
 func layers(n int) []gin.HandlerFunc {
 	out := make([]gin.HandlerFunc, n)
 	for i := range out {
@@ -64,6 +71,7 @@ func layers(n int) []gin.HandlerFunc {
 	return out
 }
 
+// rb:wiring etag.*
 // revalidates hashes the body the handler wrote and answers the conditional. Gin ships no
 // ETag and neither does net/http under it, so the digest is the shared one and /__meta says
 // so; what is Gin's own is the middleware being on this group's routes and nowhere else.
@@ -107,6 +115,7 @@ func (b *bodyCapture) Write(p []byte) (int, error) {
 }
 func (b *bodyCapture) WriteString(s string) (int, error) { return b.Write([]byte(s)) }
 
+// rb:wiring cache.*
 // replays answers from the store before the handler is reached, and stores what the handler
 // wrote when it is not there. Gin ships no response cache, so the store is the shared LRU
 // sized from the fixture and the wiring is one Gin handler in front of the route.
@@ -158,17 +167,19 @@ func main() {
 		}
 		c.AbortWithStatusJSON(500, gin.H{"error": "internal", "message": msg})
 	}))
-	// rb:snippet errors.unmatched
+	// rb:handler errors.unmatched
 	r.NoRoute(func(c *gin.Context) { c.JSON(404, gin.H{"error": "not_found"}) })
 
 	sizes := []string{"small", "medium", "large"}
 	// The response is read once and served from the closure rather than looked up per
 	// request: the map lookup is not what any of these endpoints is measuring, and every
 	// other target reaches its payload the same way.
+	// rb:wiring json.*,parameters.*,headers.*,middleware.*,authorized.*
 	payload := func(size string) gin.HandlerFunc {
 		body := d.Payload(size)
 		return func(c *gin.Context) { c.JSON(200, body) }
 	}
+	// rb:wiring parameters.*,headers.*,middleware.*,authorized.*
 	small := payload("small")
 
 	// ---- baseline, json, parameters, query, headers ---------------------------------
@@ -180,11 +191,11 @@ func main() {
 			"sha1 (gin ships no conditional handling)", "gin middleware over a shared LRU"))
 	})
 
+	// rb:handler json.*
 	// Static routes, not /json/:size. The size set is fixed, so a capture would make Gin
 	// pay radix parameter cost on the family every other target serves from a static
 	// route, and json.small is the denominator most of the set is read against. It would
 	// also answer 200 with an empty payload for a size that does not exist.
-	// rb:snippet json.small json.medium json.large
 	for _, size := range sizes {
 		r.GET("/json/"+size, payload(size))
 	}
@@ -224,11 +235,10 @@ func main() {
 
 	// ---- compressed: gin-contrib/gzip on this group only ----------------------------
 
+	// rb:handler compressed.*
 	// Level is pinned across every language. The default size threshold is left alone:
 	// whether a framework bothers to compress a body too small to benefit is what
 	// compressed.gzip_small is in the set to show, so forcing it would erase the answer.
-	// rb:snippet compressed.identity_small compressed.identity_medium compressed.identity_large
-	// rb:snippet compressed.gzip_small compressed.gzip_medium compressed.gzip_large
 	comp := r.Group("/compressed", gzip.Gzip(d.GzipLevel))
 	for _, size := range sizes {
 		body := d.Payload(size)
@@ -237,11 +247,11 @@ func main() {
 			c.JSON(200, body)
 		})
 	}
-	// rb:snippet-end
+	// rb:end
 
 	// ---- etag: the conditional on this group's routes and nowhere else --------------
 
-	// rb:snippet etag.small etag.large etag.match_large etag.stale_large
+	// rb:handler etag.*
 	conditional := r.Group("/etag", revalidates())
 	for _, size := range []string{"small", "large"} {
 		body := d.Payload(size)
@@ -250,14 +260,15 @@ func main() {
 			c.JSON(200, body)
 		})
 	}
-	// rb:snippet-end
+	// rb:end
 
 	// ---- cache: one store, a handler in front of each route -------------------------
 
+	// rb:wiring cache.*
 	// One store for the target rather than one per route, so the capacity the fixture
 	// derives from the key count means what it says.
 	store := d.NewStore()
-	// rb:snippet cache.small cache.medium cache.large
+	// rb:handler cache.small,cache.medium,cache.large
 	for _, size := range sizes {
 		body := d.Payload(size)
 		r.GET("/cache/"+size, replays(store, nil), func(c *gin.Context) {
@@ -265,8 +276,8 @@ func main() {
 			c.JSON(200, body)
 		})
 	}
-	// rb:snippet-end
-	// rb:snippet cache.vary_one cache.vary_many
+	// rb:end
+	// rb:handler cache.vary_one,cache.vary_many
 	for _, which := range []string{"one", "many"} {
 		on := d.VaryOn(which)
 		body := d.Payload("small")
@@ -276,15 +287,16 @@ func main() {
 			c.JSON(200, body)
 		})
 	}
-	// rb:snippet-end
+	// rb:end
 
 	// ---- template -------------------------------------------------------------------
 
+	// rb:wiring template.*
 	// Gin's view facility: the template lives on the engine and c.HTML reaches it by name,
 	// so no handler calls a render function. Parsed once, rendered per request.
 	r.SetHTMLTemplate(template.Must(template.New("items.tmpl").Parse(itemsTemplate)))
 
-	// rb:snippet template.small template.medium
+	// rb:handler template.*
 	for _, size := range []string{"small", "medium"} {
 		body := d.Payload(size)
 		r.GET("/template/"+size, func(c *gin.Context) { c.HTML(200, "items.tmpl", body) })
@@ -292,6 +304,7 @@ func main() {
 
 	// ---- body: bind, validate, and the two rejection contracts ----------------------
 
+	// rb:wiring body.*,domain.*
 	withBody := func(fn func(*gin.Context, map[string]any)) gin.HandlerFunc {
 		return func(c *gin.Context) {
 			if m, ok := bindAny(c); ok {
@@ -301,6 +314,7 @@ func main() {
 	}
 	// validate and the two rejection contracts go through Gin's binder, which parses and
 	// validates in one call, so they take the context rather than a parsed map.
+	// rb:wiring body.*,domain.*
 	validated := func(fn func(*gin.Context, *orderBody)) gin.HandlerFunc {
 		return func(c *gin.Context) {
 			if ob, ok := bindOrder(c); ok {
@@ -310,7 +324,7 @@ func main() {
 	}
 	// bind parses and binds without validating, so validate minus bind is the validator
 	// alone rather than the validator plus the parse.
-	// rb:snippet body.bind_small body.bind_medium
+	// rb:handler body.bind_small,body.bind_medium
 	for _, size := range []string{"small", "medium"} {
 		r.POST("/body/bind/"+size, withBody(func(c *gin.Context, m map[string]any) {
 			c.JSON(200, d.BindEcho(m))

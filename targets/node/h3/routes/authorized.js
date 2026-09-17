@@ -6,6 +6,7 @@ import { defineHandler } from "h3";
 
 import * as d from "../../_shared/domain.js";
 
+// rb:wiring authorized.*
 const requireToken = (e, next) => {
   if (d.tokenOk(e.req.headers.get("authorization"))) return next();
   e.res.status = 403;

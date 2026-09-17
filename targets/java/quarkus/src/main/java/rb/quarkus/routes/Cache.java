@@ -26,8 +26,10 @@ import rb.domain.ResponseStore;
 @Produces(MediaType.APPLICATION_JSON)
 public class Cache {
 
+  // rb:wiring cache.*
   private static final ResponseStore STORE = new ResponseStore();
 
+  // rb:wiring cache.*
   private static Response serve(String size, String key, List<String> vary) {
     ResponseStore.Stored hit = STORE.get(key);
     if (hit != null) {
@@ -47,28 +49,28 @@ public class Cache {
     return b.build();
   }
 
-  // rb:snippet cache.small
+  // rb:handler cache.small
   @GET
   @Path("small")
   public Response small() {
     return serve("small", "/cache/small", List.of());
   }
 
-  // rb:snippet cache.medium
+  // rb:handler cache.medium
   @GET
   @Path("medium")
   public Response medium() {
     return serve("medium", "/cache/medium", List.of());
   }
 
-  // rb:snippet cache.large
+  // rb:handler cache.large
   @GET
   @Path("large")
   public Response large() {
     return serve("large", "/cache/large", List.of());
   }
 
-  // rb:snippet cache.vary_one
+  // rb:handler cache.vary_one
   @GET
   @Path("vary/one")
   public Response varyOne(@HeaderParam("x-rb-tenant") String tenant) {
@@ -76,7 +78,7 @@ public class Cache {
                  Domain.varyOn("one"));
   }
 
-  // rb:snippet cache.vary_many
+  // rb:handler cache.vary_many
   @GET
   @Path("vary/many")
   public Response varyMany(@HeaderParam("x-rb-channel") String channel,

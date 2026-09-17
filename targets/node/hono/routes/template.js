@@ -4,11 +4,13 @@
 // `html` from hono/html is a template-literal tag that escapes every interpolation, and
 // c.html sends what it returns. Hono ships it in core and documents it, alongside JSX, as
 // how to render HTML.
+// rb:wiring template.*
 import { html } from "hono/html";
 
 import * as d from "../../_shared/domain.js";
 
 // Rendered per request. A precomputed string would measure nothing.
+// rb:wiring template.*
 const items = (b) => html`<!doctype html>
 <html>
   <head><title>items</title></head>

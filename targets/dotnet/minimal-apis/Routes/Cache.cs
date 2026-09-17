@@ -15,6 +15,7 @@ namespace RequestBench.MinimalApis.Routes;
 /// </summary>
 public static class Cache
 {
+    // rb:wiring cache.*
     private static Func<HttpResponse, DomainModel, PayloadBody> Serve(
         string size, string[]? vary = null) =>
         (response, model) =>
@@ -29,13 +30,13 @@ public static class Cache
 
     public static void Map(WebApplication app, DomainModel model)
     {
-        // rb:snippet cache.small cache.medium cache.large
+        // rb:handler cache.small,cache.medium,cache.large
         foreach (string size in new[] { "small", "medium", "large" })
         {
             app.MapGet("/cache/" + size, Serve(size)).CacheOutput(Caching.ByPath);
         }
 
-        // rb:snippet cache.vary_one cache.vary_many
+        // rb:handler cache.vary_one,cache.vary_many
         foreach (string which in new[] { "one", "many" })
         {
             string[] on = model.VaryOn(which);

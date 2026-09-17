@@ -18,10 +18,12 @@ use rb_domain as d;
 const VARY_ONE: &[&str] = &["x-rb-tenant"];
 const VARY_MANY: &[&str] = &["x-rb-channel", "x-rb-region", "x-rb-tenant"];
 
+// rb:wiring cache.*
 /// One store for the target, sized from the fixture.
 static CACHE: std::sync::LazyLock<d::ResponseStore> =
     std::sync::LazyLock::new(d::ResponseStore::new);
 
+// rb:wiring cache.*
 /// The stored response for one key, built and stored on the first ask.
 fn replayed(path: &str, size: &str, on: &[&str], values: Vec<String>) -> Response {
     let key = d::cache_key(path, &values);
@@ -58,10 +60,12 @@ use warp::{Filter, Reply};
 
 type Route = warp::filters::BoxedFilter<(Response,)>;
 
+// rb:wiring json.*,parameters.*,query.*,headers.*,middleware.*,authorized.*,template.*
 fn json<T: Serialize>(v: &T) -> Response {
     warp::reply::json(v).into_response()
 }
 
+// rb:wiring errors.*,domain.*
 /// Maps the domain's failures onto statuses, so no arm builds a 404 or a 422 itself.
 fn fail(e: d::Fail) -> Response {
     match e {
@@ -87,6 +91,7 @@ fn fail(e: d::Fail) -> Response {
 // least one. Those are checked here, in this target's own code, because warp has no
 // validation layer to put them in.
 
+// rb:wiring body.*,domain.*
 /// The order body as warp's filter binds it. serde reports the first field that does not fit.
 #[derive(Debug, Deserialize)]
 struct OrderIn {
@@ -101,6 +106,7 @@ struct LineIn {
     qty: i64,
 }
 
+// rb:wiring body.*,domain.*
 /// The rules a deserialize cannot state. `first_error` stops at the first, which this
 /// target can still answer because the checks are its own.
 fn check(order: &OrderIn, first_error: bool) -> Vec<d::FieldError> {
@@ -119,6 +125,7 @@ fn check(order: &OrderIn, first_error: bool) -> Vec<d::FieldError> {
     errs
 }
 
+// rb:wiring body.*,domain.*
 /// The order as a response, or this target's own answer when its checks refuse the body.
 fn validated(order: &OrderIn, first_error: bool) -> Result<d::ValidatedOrder, Response> {
     let errs = check(order, first_error);
@@ -139,6 +146,7 @@ fn validated(order: &OrderIn, first_error: bool) -> Result<d::ValidatedOrder, Re
     Ok(d::price_order(order.customer_id, &order.status, &lines))
 }
 
+// rb:wiring domain.*,errors.*
 fn ok<T: Serialize>(v: Result<T, d::Fail>) -> Response {
     match v {
         Ok(v) => json(&v),
@@ -146,6 +154,7 @@ fn ok<T: Serialize>(v: Result<T, d::Fail>) -> Response {
     }
 }
 
+// rb:wiring body.*,domain.*
 /// An unvalidated body, for the endpoints that only parse. The validate routes use the
 /// filter; this is only for bind, which is measured against them.
 fn parse(b: &Bytes) -> Result<Value, Response> {
@@ -171,11 +180,13 @@ fn parse(b: &Bytes) -> Result<Value, Response> {
 // InvalidQuery rejection, which warp renders as its own 400. The endpoint set sends
 // neither.
 
+// rb:wiring query.*
 #[derive(Serialize, Deserialize)]
 struct QueryOne {
     page: i64,
 }
 
+// rb:wiring query.*
 #[derive(Serialize, Deserialize)]
 struct QueryMany {
     page: i64,
@@ -188,6 +199,7 @@ struct QueryMany {
     max_price: i64,
 }
 
+// rb:wiring domain.*
 /// What domain.filter pages by. Not a response shape, so it is deserialize only.
 #[derive(Deserialize)]
 struct OrderFilter {
@@ -196,12 +208,14 @@ struct OrderFilter {
     status: String,
 }
 
+// rb:wiring middleware.*
 /// One layer: a filter that runs in the chain and extracts nothing. Boxing between them is
 /// what keeps sixteen from becoming a type rustc spends minutes on.
 fn layered(n: usize, f: Route) -> Route {
     (0..n).fold(f, |acc, _| warp::any().and(acc).boxed())
 }
 
+// rb:wiring json.*
 fn payload_route(size: &'static str) -> Route {
     warp::path!("json" / String)
         .and(warp::get())
@@ -211,6 +225,7 @@ fn payload_route(size: &'static str) -> Route {
         .boxed()
 }
 
+// rb:wiring compressed.*
 /// The compressed family's reply, shared by the branch that compresses and the branch that
 /// does not. Only the wrapper differs between them.
 fn compressed_reply(size: String) -> Result<warp::reply::Response, warp::Rejection> {
@@ -225,6 +240,7 @@ fn compressed_reply(size: String) -> Result<warp::reply::Response, warp::Rejecti
     }
 }
 
+// rb:wiring template.*
 // ---- template ------------------------------------------------------------------
 //
 // warp ships no view layer and recommends no engine. Askama is the compile-time
@@ -240,6 +256,7 @@ struct Items {
     body: &'static d::PayloadBody,
 }
 
+// rb:wiring template.*
 fn items_html(size: &'static str) -> String {
     use askama::Template;
     Items { body: d::payload(size) }.render().unwrap_or_default()
@@ -249,9 +266,10 @@ fn items_html(size: &'static str) -> String {
 async fn main() {
     let port = rb_host::boot("warp");
 
+    // rb:wiring parameters.*,query.*,headers.*,middleware.*,authorized.*
     let small = || json(d::payload("small"));
 
-    // rb:snippet baseline.plaintext
+    // rb:handler baseline.*
     let base = warp::path!("plaintext")
         .and(warp::get())
         .map(|| {
@@ -271,10 +289,10 @@ async fn main() {
         .unify()
         .boxed();
 
+    // rb:handler json.*
     // Static routes, not /json/<size>: the size set is fixed, so a capture would answer
     // 200 with an empty body for a size that does not exist. warp matches a segment, so
     // the arm checks the literal and rejects anything else on to the next filter.
-    // rb:snippet json.small json.medium json.large
     let sizes = payload_route("small")
         .or(payload_route("medium"))
         .unify()
@@ -282,7 +300,7 @@ async fn main() {
         .unify()
         .boxed();
 
-    // rb:snippet parameters.static parameters.one parameters.two
+    // rb:handler parameters.*
     let params = warp::path!("parameters" / "static" / "segment" / "literal")
         .and(warp::get())
         .map(small)
@@ -294,7 +312,7 @@ async fn main() {
         .unify()
         .boxed();
 
-    // rb:snippet query.one query.many headers.few headers.many
+    // rb:handler query.*,headers.*
     let queries = warp::path!("query" / "one")
         .and(warp::get())
         .and(warp::query::<QueryOne>())
@@ -310,7 +328,7 @@ async fn main() {
         .unify()
         .boxed();
 
-    // rb:snippet middleware.none middleware.four middleware.sixteen
+    // rb:handler middleware.*
     let mw = warp::path!("middleware" / "none")
         .and(warp::get())
         .map(small)
@@ -321,9 +339,9 @@ async fn main() {
         .unify()
         .boxed();
 
+    // rb:handler authorized.*
     // A filter, not an `if` in the handler: the point of the authorized family is the
     // framework's own plumbing.
-    // rb:snippet authorized.allowed authorized.denied
     let auth = warp::path!("authorized" / "small")
         .and(warp::get())
         .and(warp::header::optional::<String>("authorization"))
@@ -340,6 +358,7 @@ async fn main() {
         })
         .boxed();
 
+    // rb:handler compressed.*
     // Level is warp's own default, which is the same 6 every other target pins. The size
     // threshold is left alone, because whether a framework bothers to compress a body too
     // small to benefit is what compressed.gzip_small is in the set to show.
@@ -349,9 +368,6 @@ async fn main() {
     // measured nothing it was supposed to. The negotiation is a filter instead, which is
     // how warp composes anything else: the gzip branch requires the header and rejects
     // without it, and the rejection falls through to the branch that does not compress.
-    // rb:snippet compressed.identity_small compressed.identity_medium
-    // rb:snippet compressed.identity_large compressed.gzip_small compressed.gzip_medium
-    // rb:snippet compressed.gzip_large
     let compressed_payload = warp::path!("compressed" / String).and(warp::get());
 
     let wants_gzip = warp::header::optional::<String>("accept-encoding").and_then(
@@ -375,6 +391,7 @@ async fn main() {
         .map(Reply::into_response)
         .boxed();
 
+    // rb:handler etag.*
     // etag: the digest and the comparison, inside the filter.
     //
     // warp ships no conditional handling, so the digest is the shared one and /__meta says
@@ -384,7 +401,6 @@ async fn main() {
     //
     // Shallow, which is the point: the body is serialized and hashed before anything is
     // compared, so the 304 saves the write and nothing else.
-    // rb:snippet etag.small etag.large etag.match_large etag.stale_large
     let etag = warp::path!("etag" / String)
         .and(warp::get())
         .and(warp::header::optional::<String>("if-none-match"))
@@ -409,12 +425,12 @@ async fn main() {
         })
         .boxed();
 
+    // rb:handler cache.small,cache.medium,cache.large
     // cache: the store consulted before the payload is built.
     //
     // warp ships no response cache, so the store is the shared LRU sized from the fixture.
     // One store for the target rather than one per route, so the capacity the fixture
     // derives from the key count means what it says.
-    // rb:snippet cache.small cache.medium cache.large
     let cache_by_path = warp::path!("cache" / String)
         .and(warp::get())
         .and_then(|s: String| async move {
@@ -425,7 +441,7 @@ async fn main() {
         })
         .boxed();
 
-    // rb:snippet cache.vary_one cache.vary_many
+    // rb:handler cache.vary_one,cache.vary_many
     let cache_vary = warp::path!("cache" / "vary" / String)
         .and(warp::get())
         .and(warp::header::headers_cloned())
@@ -450,7 +466,7 @@ async fn main() {
         })
         .boxed();
 
-    // rb:snippet template.small template.medium
+    // rb:handler template.*
     let template = warp::path!("template" / String)
         .and(warp::get())
         .and_then(|s: String| async move {
@@ -468,10 +484,9 @@ async fn main() {
         })
         .boxed();
 
+    // rb:handler body.*,errors.malformed
     // bind parses and binds without validating, so validate minus bind is the validator
     // alone rather than the validator plus the parse.
-    // rb:snippet body.bind_small body.bind_medium body.validate_small body.validate_medium
-    // rb:snippet body.rejected_all body.rejected_first errors.malformed
     let bodies = warp::path!("body" / "bind" / String)
         .and(warp::post())
         .and(warp::body::bytes())
@@ -497,8 +512,7 @@ async fn main() {
         .unify()
         .boxed();
 
-    // rb:snippet domain.filter domain.create domain.lookup domain.replace domain.delete
-    // rb:snippet domain.join domain.patch domain.aggregate errors.not_found
+    // rb:handler domain.*,errors.not_found
     let domain = warp::path!("domain" / "orders")
         .and(warp::get())
         .and(warp::query::<OrderFilter>())
@@ -581,7 +595,7 @@ async fn main() {
         // framework's own hook, and it is the only place that can tell a body the json
         // filter refused from a path nothing matched. An `any()` fallthrough cannot -- both
         // arrive as "no route took this" -- which is why a refused body used to answer 404.
-        // rb:snippet errors.unmatched
+        // rb:handler errors.unmatched
         .recover(|rejection: warp::Rejection| async move {
             if let Some(e) = rejection.find::<warp::filters::body::BodyDeserializeError>() {
                 // warp does not separate a body that is not JSON from one of the wrong

@@ -14,6 +14,7 @@ import rb.domain.Errors;
 public final class Mappers {
 
   @Provider
+  // rb:wiring errors.*
   public static class NotFound implements ExceptionMapper<Errors.NotFound> {
     @Override
     public Response toResponse(Errors.NotFound e) {
@@ -27,6 +28,7 @@ public final class Mappers {
    * walked and its own message, which is its vocabulary and not this repository's.
    */
   @Provider
+  // rb:wiring errors.*,body.*
   public static class Invalid implements ExceptionMapper<ConstraintViolationException> {
     @Override
     public Response toResponse(ConstraintViolationException e) {
@@ -43,6 +45,7 @@ public final class Mappers {
 
   /** A body Jackson could not read. Nothing validated it, so it names no field. */
   @Provider
+  // rb:wiring errors.*
   public static class NotBound implements ExceptionMapper<Errors.Malformed> {
     @Override
     public Response toResponse(Errors.Malformed e) {
@@ -64,7 +67,7 @@ public final class Mappers {
    * even though they produce the same body.
    */
   @Provider
-  // rb:snippet errors.unmatched
+  // rb:handler errors.unmatched
   public static class Unmatched implements ExceptionMapper<jakarta.ws.rs.NotFoundException> {
     @Override
     public Response toResponse(jakarta.ws.rs.NotFoundException e) {

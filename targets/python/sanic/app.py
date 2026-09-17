@@ -62,6 +62,7 @@ class Refused(Exception):
         self.errors = errors
 
 
+# rb:wiring body.*,errors.*
 def refused_body(errors):
     return {"error": "validation_failed", "errors": errors}
 
@@ -70,6 +71,7 @@ def not_bound_body(detail):
     return {"error": "invalid_body", "detail": detail}
 
 
+# rb:wiring body.*
 def check_order(body, first_error=False):
     """Every field that is wrong, or the first one when asked for that."""
     m = body if isinstance(body, dict) else {}
@@ -100,6 +102,7 @@ def check_order(body, first_error=False):
     return errs
 
 
+# rb:wiring body.*,domain.*
 def validated(body, first_error=False):
     """The order, or Refused naming every field the walk would not accept."""
     errs = check_order(body, first_error)
@@ -128,6 +131,7 @@ META = host.meta("sanic", adapter="sanic",
                        + host.dist_version("cachetools"))
 
 
+# rb:wiring body.*,domain.*
 def body_of(request):
     """The request body as a value, or Malformed. Not a validation failure: nothing
     validated it, so it names no field."""
@@ -137,6 +141,7 @@ def body_of(request):
         raise d.Malformed(str(e)) from None
 
 
+# rb:wiring parameters.*,headers.*,middleware.*,authorized.*,json.*
 def small(_):
     return response.json(d.payload("small"))
 
@@ -197,10 +202,12 @@ async def parameters_two(request, one, two):
 # describes -- and a value that will not parse is the zero value rather than an error
 # contract the family does not have. request.args.get answers the first value.
 
+# rb:wiring query.*,domain.*
 def _qstr(q, k):
     return q.get(k) or ""
 
 
+# rb:wiring query.*,domain.*
 def _qint(q, k):
     try:
         return int(q.get(k))
@@ -241,6 +248,7 @@ async def noop(_):
     """One layer: it returns nothing, so Sanic carries on to the next."""
 
 
+# rb:wiring middleware.*
 def layered(name, n):
     bp = Blueprint(name)
     for _ in range(n):
@@ -259,10 +267,12 @@ middleware_sixteen.get("/middleware/sixteen")(small)
 
 # ---- authorized: blueprint middleware, not an if in the handler ----------------------
 
+# rb:wiring authorized.*
 authorized = Blueprint("authorized")
 
 
 @authorized.on_request
+# rb:wiring authorized.*
 async def require_token(request):
     """Returning a response from request middleware short-circuits the handler, which is
     Sanic's own way to refuse a request before it reaches one."""
@@ -275,10 +285,12 @@ authorized.get("/authorized/small")(small)
 
 # ---- compressed: a response middleware on its own blueprint --------------------------
 
+# rb:wiring compressed.*
 compressed = Blueprint("compressed")
 
 
 @compressed.on_response
+# rb:wiring compressed.*
 async def compress(request, res):
     """Sanic ships no compression, so the codec is the pinned one every language shares.
     The threshold is pinned too: whether a framework bothers to compress a body too small
@@ -293,6 +305,7 @@ async def compress(request, res):
     res.headers["vary"] = "Accept-Encoding"
 
 
+# rb:wiring compressed.*
 def compressed_route(size):
     async def handler(_):
         return response.json(d.payload(size),
@@ -300,8 +313,7 @@ def compressed_route(size):
     return handler
 
 
-# rb:snippet compressed.identity_small compressed.identity_medium compressed.identity_large
-# rb:snippet compressed.gzip_small compressed.gzip_medium compressed.gzip_large
+# rb:handler compressed.*
 for _size in ("small", "medium", "large"):
     compressed.get("/compressed/" + _size, name="compressed_" + _size)(
         compressed_route(_size))
@@ -314,6 +326,7 @@ for _size in ("small", "medium", "large"):
 # own is the scoping -- blueprint middleware, the same way the compressed rows get theirs.
 # Shallow, which is the point: the handler has already built the body by the time this runs.
 
+# rb:wiring etag.*
 conditional = Blueprint("conditional")
 
 
@@ -331,13 +344,14 @@ async def revalidate(request, res):
         res.headers.pop("content-length", None)
 
 
+# rb:wiring etag.*
 def etag_route(size):
     async def handler(_):
         return response.json(d.payload(size), headers={"x-rb-serial": d.next_serial()})
     return handler
 
 
-# rb:snippet etag.small etag.large etag.match_large etag.stale_large
+# rb:handler etag.*
 for _size in ("small", "large"):
     conditional.get("/etag/" + _size, name="etag_" + _size)(etag_route(_size))
 
@@ -350,12 +364,14 @@ for _size in ("small", "large"):
 # blueprint, so the capacity derived from the key count means what it says.
 
 cached = Blueprint("cached")
+# rb:wiring cache.*
 store = TTLCache(maxsize=d.cache_spec()["capacity"], ttl=d.cache_spec()["ttl_s"])
 #: Path to the header names that path is keyed on. Middleware configuration rather than
 #: something a handler decides, which is why it is a table and not an argument.
 VARY = {"/cache/vary/" + which: d.vary_on(which) for which in ("one", "many")}
 
 
+# rb:wiring cache.*
 def cache_key(request):
     return "|".join([request.path,
                      *(request.headers.get(n, "") for n in VARY.get(request.path, ()))])
@@ -379,6 +395,7 @@ async def keep(request, res):
         store[key] = (res.body, res.content_type, dict(res.headers))
 
 
+# rb:wiring cache.*
 def cache_route(size, vary=()):
     headers = {"vary": ", ".join(vary)} if vary else {}
 
@@ -388,10 +405,10 @@ def cache_route(size, vary=()):
     return handler
 
 
-# rb:snippet cache.small cache.medium cache.large
+# rb:handler cache.small,cache.medium,cache.large
 for _size in ("small", "medium", "large"):
     cached.get("/cache/" + _size, name="cache_" + _size)(cache_route(_size))
-# rb:snippet cache.vary_one cache.vary_many
+# rb:handler cache.vary_one,cache.vary_many
 for _which in ("one", "many"):
     _on = d.vary_on(_which)
     cached.get("/cache/vary/" + _which, name="cache_vary_" + _which)(
@@ -483,6 +500,7 @@ async def delete_line(_, oid, lid):
 # handler returns the context and never calls a render function. Jinja is the only engine
 # Sanic Extensions supports, so it is the framework's choice rather than one made here.
 
+# rb:wiring template.*
 # A copy of the payload, not the payload. The renderer inserts the request into the
 # context it is handed, and d.payload returns the fixture object the json family
 # serializes, so rendering once put a request key in every json.* body until this copied.
@@ -507,12 +525,13 @@ async def template_medium(_):
 # drift. The router's own miss arrives here as Sanic's NotFound, which is what gives
 # errors.unmatched the same body as errors.not_found.
 
-# rb:snippet errors.unmatched
+# rb:handler errors.unmatched
 @app.exception(RouteMiss, d.NotFound)
 async def not_found(_, __):
     return response.json(d.not_found_body(), status=404)
 
 
+# rb:wiring errors.*
 # The walk this target holds answers a refused body; a body that never parsed answers
 # separately, because nothing validated it and it names no field.
 @app.exception(Refused)
@@ -520,6 +539,7 @@ async def refused(_, exc):
     return response.json(refused_body(exc.errors), status=422)
 
 
+# rb:wiring errors.*
 @app.exception(d.Malformed)
 async def malformed(_, exc):
     return response.json(not_bound_body(exc.detail), status=400)

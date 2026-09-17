@@ -10,9 +10,13 @@
 // own paths instead of riding on /json with an accept-encoding header.
 import Fastify from "fastify";
 import abstractCache from "abstract-cache";
+// rb:wiring cache.*
 import caching from "@fastify/caching";
+// rb:wiring compressed.*
 import compress from "@fastify/compress";
+// rb:wiring etag.*
 import etag from "@fastify/etag";
+// rb:wiring template.*
 import view from "@fastify/view";
 import ejs from "ejs";
 import { fileURLToPath } from "node:url";
@@ -29,10 +33,12 @@ const meta = { framework: "fastify", version: pkgVersion("fastify"),
                cache: "@fastify/caching " + pkgVersion("@fastify/caching")
                       + " store, fastify hooks" };
 
+// rb:wiring template.*
 const VIEWS = join(dirname(fileURLToPath(import.meta.url)), "views");
 
 const app = Fastify({ logger: false, disableRequestLogging: true });
 
+// rb:wiring errors.*
 // Same reason as the baseline: when a function host has already parsed the body, Fastify
 // must not try to read the stream again. Its own parser still runs under `container`.
 app.addContentTypeParser("application/json", (req, payload, done) => {
@@ -47,8 +53,10 @@ app.addContentTypeParser("application/json", (req, payload, done) => {
   });
 });
 
+// rb:wiring domain.*,errors.*
 const send = (reply, v, status = 200) =>
   v === d.NOT_FOUND ? reply.code(404).send({ error: "not_found" }) : reply.code(status).send(v);
+// rb:wiring parameters.*,headers.*,middleware.*,authorized.*
 const small = () => d.payload("small");
 
 // ---- baseline, json, parameters, query, headers, middleware --------------------------
@@ -74,16 +82,19 @@ app.get("/query/many", bindsMany, (req) => req.query);
 // materialising 27 nobody asked for.
 app.get("/headers", small);
 
+// rb:wiring middleware.*
 // Fastify's middleware is its hooks, and a route-level hook array is how you scope them to
 // one route. Each layer calls done() and does nothing else.
 const noop = (_req, _reply, done) => done();
 const layers = (n) => Array.from({ length: n }, () => noop);
+// rb:end
 app.get("/middleware/none", small);
 app.get("/middleware/four", { onRequest: layers(4) }, small);
 app.get("/middleware/sixteen", { onRequest: layers(16) }, small);
 
 // ---- authorized: a route-scoped onRequest hook, not an if in the handler --------------
 
+// rb:wiring authorized.*
 const requireToken = (req, reply, done) => {
   if (d.tokenOk(req.headers.authorization)) return done();
   reply.code(403).send({ error: "forbidden" });
@@ -92,8 +103,7 @@ app.get("/authorized/small", { onRequest: requireToken }, small);
 
 // ---- compressed: @fastify/compress, registered in its own encapsulated scope ----------
 
-// rb:snippet compressed.identity_small compressed.identity_medium compressed.identity_large
-// rb:snippet compressed.gzip_small compressed.gzip_medium compressed.gzip_large
+// rb:handler compressed.*
 app.register(async (scope) => {
   // Threshold is left at the plugin's own default. Whether a framework bothers to compress
   // a body too small to benefit is one of the things compressed.small is there to show, so
@@ -108,11 +118,11 @@ app.register(async (scope) => {
 
 // ---- etag: @fastify/etag, registered in its own encapsulated scope --------------------
 
+// rb:handler etag.*
 // The plugin hashes the payload Fastify is about to serialize and answers the conditional
 // itself, so nothing here compares anything. Encapsulation is what scopes it: registered on
 // the root instance it would hash every response in the blend and contaminate the baseline
 // these rows subtract. fnv1a is the plugin's own default, which is why /__meta names it.
-// rb:snippet etag.small etag.large etag.match_large etag.stale_large
 app.register(async (scope) => {
   await scope.register(etag);
   for (const size of ["small", "large"])
@@ -123,6 +133,7 @@ app.register(async (scope) => {
 
 // ---- cache: the handler skipped and a stored response replayed ------------------------
 
+// rb:wiring cache.*
 // Fastify ships no response cache. @fastify/caching is the plugin it ships for caching, and
 // what it contributes is the store: an abstract-cache client, sized here from the fixture
 // so the capacity derived from the key count means what it says. The replay is two of
@@ -136,6 +147,7 @@ const store = abstractCache({
   driver: { options: { maxItems: d.CACHE_MAX, segment: "rb" } },
 });
 
+// rb:wiring cache.*
 const replay = (on) => {
   const keyOf = (req) =>
     on.length === 0 ? req.url : req.url + "|" + on.map((h) => req.headers[h] ?? "").join("|");
@@ -159,11 +171,11 @@ const replay = (on) => {
 
 app.register(async (scope) => {
   await scope.register(caching, { privacy: caching.privacy.PUBLIC, expiresIn: 60 });
-  // rb:snippet cache.small cache.medium cache.large
+  // rb:handler cache.small,cache.medium,cache.large
   for (const size of ["small", "medium", "large"])
     scope.get("/cache/" + size, replay([]),
       (_, reply) => reply.header("x-rb-serial", d.nextSerial()).send(d.payload(size)));
-  // rb:snippet cache.vary_one cache.vary_many
+  // rb:handler cache.vary_one,cache.vary_many
   for (const which of ["one", "many"]) {
     const on = d.varyOn(which);
     scope.get("/cache/vary/" + which, replay(on), (_, reply) =>
@@ -208,16 +220,18 @@ app.delete("/domain/orders/:oid/lines/:lid", (req, reply) =>
 
 // ---- template: the engine named in /__meta, through Fastify's own view plugin ---------
 
+// rb:wiring template.*
 // EJS is the engine @fastify/view's own README leads with. Compiled on first render and
 // cached by the plugin, rendered per request: a precomputed string would measure nothing.
 app.register(view, { engine: { ejs }, root: VIEWS });
 app.get("/template/small",  (_, reply) => reply.view("items.ejs", d.payload("small")));
 app.get("/template/medium", (_, reply) => reply.view("items.ejs", d.payload("medium")));
 
-// rb:snippet errors.unmatched
+// rb:handler errors.unmatched
 app.setNotFoundHandler((_, reply) => reply.code(404).send({ error: "not_found" }));
 // Fastify's own error envelope for anything it raised itself, which is what a failed schema
 // and an unparseable body both are. Only a genuine bug falls through to the 500.
+// rb:wiring errors.*
 app.setErrorHandler((err, _, reply) =>
   err.statusCode
     ? reply.code(err.statusCode).send({

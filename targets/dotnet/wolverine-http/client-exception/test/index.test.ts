@@ -30,15 +30,18 @@ describe(pkg.target, () => {
     expect(Object.keys(pkg.schemas).sort()).toEqual(EVERY);
   });
 
+  // rb:test body.rejected_all
   test("the rejection endpoints answer the unreadable-body envelope at 400", () => {
     expect(judge("body.rejected_all", 400, notBound)).toBe(true);
     expect(judge("body.rejected_all", 422, notBound)).toBe(false);
   });
 
+  // rb:test errors.malformed
   test("a body that is not JSON at all is the same envelope", () => {
     expect(judge("errors.malformed", 400, notBound)).toBe(true);
   });
 
+  // rb:test body.rejected_all
   test("this repository's shared envelope is not what it answers", () => {
     expect(judge("body.rejected_all", 400, {
       error: "validation_failed",
@@ -50,6 +53,7 @@ describe(pkg.target, () => {
     expect(validationFailure.safeParse(refused).success).toBe(true);
   });
 
+  // rb:test body.rejected_all
   test("the title is Wolverine's own wording and is pinned", () => {
     expect(judge("body.rejected_all", 400, {
       type: "https://httpstatuses.com/400", title: "Bad Request", status: 400,
@@ -57,6 +61,7 @@ describe(pkg.target, () => {
     })).toBe(false);
   });
 
+  // rb:test body.rejected_all
   test("a bare ProblemDetails is not what it answers", () => {
     expect(judge("body.rejected_all", 400, {
       type: "about:blank", title: "Bad Request", status: 400,

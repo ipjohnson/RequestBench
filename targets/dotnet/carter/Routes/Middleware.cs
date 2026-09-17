@@ -12,9 +12,11 @@ namespace RequestBench.CarterTarget.Routes;
 /// </summary>
 public sealed class Middleware : ICarterModule
 {
+    // rb:wiring middleware.*
     private static ValueTask<object?> Noop(EndpointFilterInvocationContext context,
                                            EndpointFilterDelegate next) => next(context);
 
+    // rb:wiring middleware.*
     private static RouteHandlerBuilder Layers(RouteHandlerBuilder route, int n)
     {
         for (int i = 0; i < n; i++)

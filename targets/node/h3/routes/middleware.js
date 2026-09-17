@@ -6,10 +6,13 @@ import { defineHandler } from "h3";
 
 import * as d from "../../_shared/domain.js";
 
+// rb:wiring middleware.*
 const noop = (_e, next) => next();
 
+// rb:wiring middleware.*
 const layers = (n) => Array.from({ length: n }, () => noop);
 
+// rb:wiring middleware.*
 const small = () => d.payload("small");
 
 export default function middleware(app) {

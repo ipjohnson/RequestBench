@@ -23,8 +23,10 @@ import rb.domain.Domain;
 @RestController
 public class Cache {
 
+  // rb:wiring cache.*
   public static final String STORE = "rb-responses";
 
+  // rb:wiring cache.*
   private static ResponseEntity<Object> serve(String size, String vary) {
     ResponseEntity.BodyBuilder b = ResponseEntity.ok()
         .header("x-rb-serial", Domain.nextSerial());
@@ -34,7 +36,7 @@ public class Cache {
     return b.body(Domain.payload(size));
   }
 
-  // rb:snippet cache.small cache.medium cache.large
+  // rb:handler cache.small,cache.medium,cache.large
   @GetMapping("/cache/small")
   @Cacheable(cacheNames = STORE, key = "'/cache/small'")
   ResponseEntity<Object> small() {
@@ -53,7 +55,7 @@ public class Cache {
     return serve("large", null);
   }
 
-  // rb:snippet cache.vary_one cache.vary_many
+  // rb:handler cache.vary_one,cache.vary_many
   @GetMapping("/cache/vary/one")
   @Cacheable(cacheNames = STORE, key = "'/cache/vary/one|' + #tenant")
   ResponseEntity<Object> varyOne(

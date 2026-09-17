@@ -27,8 +27,10 @@ import rb.domain.ResponseStore;
 @Controller
 public class Cache {
 
+  // rb:wiring cache.*
   private static final ResponseStore STORE = new ResponseStore();
 
+  // rb:wiring cache.*
   private static HttpResponse<?> serve(String size, String key, List<String> vary) {
     ResponseStore.Stored hit = STORE.get(key);
     if (hit != null) {
@@ -59,7 +61,7 @@ public class Cache {
     }
   }
 
-  // rb:snippet cache.small cache.medium cache.large
+  // rb:handler cache.small,cache.medium,cache.large
   @Get("/cache/small")
   HttpResponse<?> small() {
     return serve("small", "/cache/small", List.of());
@@ -75,7 +77,7 @@ public class Cache {
     return serve("large", "/cache/large", List.of());
   }
 
-  // rb:snippet cache.vary_one cache.vary_many
+  // rb:handler cache.vary_one,cache.vary_many
   @Get("/cache/vary/one")
   HttpResponse<?> varyOne(@Header(name = "x-rb-tenant", defaultValue = "") String tenant) {
     return serve("small", ResponseStore.key("/cache/vary/one", List.of(tenant)),

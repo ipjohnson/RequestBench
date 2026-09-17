@@ -1,3 +1,4 @@
+// rb:wiring etag.*
 // etag: h3's own cache utility answers the conditional.
 //
 // handleCacheHeaders writes the validator and the cache-control, compares it against
@@ -10,10 +11,11 @@ import { createHash } from "node:crypto";
 
 import * as d from "../../_shared/domain.js";
 
+// rb:wiring etag.*
 const MAX_AGE = 60;
 
 export default function etag(app) {
-  // rb:snippet etag.small etag.large etag.match_large etag.stale_large
+  // rb:handler etag.*
   for (const size of ["small", "large"]) {
     app.get("/etag/" + size, defineHandler((e) => {
       const body = JSON.stringify(d.payload(size));

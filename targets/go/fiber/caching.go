@@ -17,6 +17,7 @@ import (
 	d "github.com/ianjohnson/requestbench/targets/go/_shared"
 )
 
+// rb:wiring cache.*,etag.*
 // served is payload() plus the freshness counter both families carry.
 func served(size string, extra map[string]string) fiber.Handler {
 	body := d.Payload(size)
@@ -31,8 +32,9 @@ func served(size string, extra map[string]string) fiber.Handler {
 
 func registerEtag(app *fiber.App) {
 	// Strong, over the exact response bytes, which is the middleware's own default.
+	// rb:wiring etag.*
 	conditional := etag.New()
-	// rb:snippet etag.small etag.large etag.match_large etag.stale_large
+	// rb:handler etag.*
 	for _, size := range []string{"small", "large"} {
 		route(app, fiber.MethodGet, "/etag/"+size, conditional,
 			served(size, map[string]string{"cache-control": d.Cacheable}))
@@ -47,14 +49,15 @@ func registerCache(app *fiber.App) {
 	// run of the handler produced them. KeyHeaders is the vary: empty on the rows keyed by
 	// path alone, since the middleware's default partitions on three Accept headers the
 	// plan never sends and those would key on the empty string forever.
+	// rb:wiring cache.*
 	byPath := cache.New(cache.Config{
 		Expiration: ttl, StoreResponseHeaders: true, KeyHeaders: []string{},
 	})
-	// rb:snippet cache.small cache.medium cache.large
+	// rb:handler cache.small,cache.medium,cache.large
 	for _, size := range []string{"small", "medium", "large"} {
 		route(app, fiber.MethodGet, "/cache/"+size, byPath, served(size, nil))
 	}
-	// rb:snippet cache.vary_one cache.vary_many
+	// rb:handler cache.vary_one,cache.vary_many
 	for _, which := range []string{"one", "many"} {
 		on := d.VaryOn(which)
 		keyed := cache.New(cache.Config{

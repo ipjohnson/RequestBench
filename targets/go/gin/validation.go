@@ -40,12 +40,14 @@ type lineBody struct {
 	Qty       *int `json:"qty"        binding:"required,min=1"`
 }
 
+// rb:wiring body.*,domain.*
 type orderBody struct {
 	CustomerID *int       `json:"customer_id" binding:"required"`
 	Status     *string    `json:"status"      binding:"required"`
 	Lines      []lineBody `json:"lines"       binding:"required,min=1,dive"`
 }
 
+// rb:wiring body.*,domain.*
 func (o orderBody) order() *d.ValidatedOrder {
 	in := make([]d.LineInput, 0, len(o.Lines))
 	for _, l := range o.Lines {
@@ -70,6 +72,7 @@ func refused(errs validator.ValidationErrors) map[string]string {
 // would hide the thing being measured. A body the decoder could not turn into the struct
 // never reaches the validator at all, so there is no field to report and it is a 400. A body
 // that became the struct and then failed a rule is a 422.
+// rb:wiring body.*,domain.*
 func bindOrder(c *gin.Context) (*orderBody, bool) {
 	var ob orderBody
 	if err := c.ShouldBindJSON(&ob); err != nil {
@@ -86,6 +89,7 @@ func bindOrder(c *gin.Context) (*orderBody, bool) {
 
 // An unvalidated body, for the endpoints that only parse. The same 400 as above, because it
 // is the same decoder failing in the same way.
+// rb:wiring body.*,domain.*
 func bindAny(c *gin.Context) (map[string]any, bool) {
 	var m map[string]any
 	if err := json.NewDecoder(c.Request.Body).Decode(&m); err != nil {

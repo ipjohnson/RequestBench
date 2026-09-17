@@ -22,6 +22,7 @@ import rb.domain.ResponseStore;
 public final class Cache {
   private Cache() {}
 
+  // rb:wiring cache.*
   private static final ResponseStore STORE = new ResponseStore();
 
   private static String keyOf(RoutingContext ctx, List<String> on) {
@@ -33,6 +34,7 @@ public final class Cache {
     return ResponseStore.key(ctx.request().path(), values);
   }
 
+  // rb:wiring cache.*
   private static void replayed(RoutingContext ctx, ResponseStore.Stored hit) {
     hit.headers().forEach((name, values) -> values.forEach(v -> ctx.response().putHeader(name, v)));
     ctx.response()
@@ -42,6 +44,7 @@ public final class Cache {
        .end(Buffer.buffer(hit.body()));
   }
 
+  // rb:wiring cache.*
   private static void register(Router router, String path, String size, List<String> on) {
     router.route(path).handler(ctx -> {
       String key = keyOf(ctx, on);
@@ -63,11 +66,11 @@ public final class Cache {
   }
 
   public static void register(Router router) {
-    // rb:snippet cache.small cache.medium cache.large
+    // rb:handler cache.small,cache.medium,cache.large
     for (String size : new String[] {"small", "medium", "large"}) {
       register(router, "/cache/" + size, size, List.of());
     }
-    // rb:snippet cache.vary_one cache.vary_many
+    // rb:handler cache.vary_one,cache.vary_many
     for (String which : new String[] {"one", "many"}) {
       register(router, "/cache/vary/" + which, "small", Domain.varyOn(which));
     }

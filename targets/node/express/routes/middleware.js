@@ -4,10 +4,13 @@
 // calls next() and does nothing else.
 import * as d from "../../_shared/domain.js";
 
+// rb:wiring middleware.*
 const noop = (_req, _res, next) => next();
 
+// rb:wiring middleware.*
 const layers = (n) => Array.from({ length: n }, () => noop);
 
+// rb:wiring middleware.*
 const small = (_, res) => res.json(d.payload("small"));
 
 export default function middleware(app) {

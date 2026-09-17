@@ -28,6 +28,7 @@ const refused = {
 };
 
 describe(pkg.target, () => {
+  // rb:test authorized.denied,body.rejected_all,body.rejected_first,errors.not_found,errors.unmatched,errors.malformed
   test("declares a schema for every error endpoint", () => {
     expect(Object.keys(pkg.schemas).sort()).toEqual([
       "authorized.denied", "body.rejected_all", "body.rejected_first",
@@ -35,20 +36,24 @@ describe(pkg.target, () => {
     ]);
   });
 
+  // rb:test body.rejected_all
   test("accepts the envelope its own walk produces, with every field named", () => {
     expect(judge("body.rejected_all", 422, refused)).toBe(true);
   });
 
+  // rb:test body.rejected_first
   test("the first-error row reports one field, and that is still this envelope", () => {
     const one = { error: "validation_failed", errors: [refused.errors[0]] };
     expect(judge("body.rejected_first", 422, one, [["customer_id", "int"]])).toBe(true);
   });
 
+  // rb:test body.rejected_all
   test("the endpoint's own pairs still apply, because this target reports them", () => {
     const short = { error: "validation_failed", errors: [refused.errors[0]] };
     expect(judge("body.rejected_all", 422, short)).toBe(false);
   });
 
+  // rb:test body.rejected_all
   test("rejects the envelope Fastify answers", () => {
     expect(judge("body.rejected_all", 422, {
       statusCode: 400, code: "FST_ERR_VALIDATION", error: "Bad Request",
@@ -56,6 +61,7 @@ describe(pkg.target, () => {
     })).toBe(false);
   });
 
+  // rb:test errors.malformed
   test("a body that is not JSON never reaches the walk, so it is 400 naming no field", () => {
     expect(judge("errors.malformed", 400, {
       error: "invalid_body", detail: "Unexpected end of JSON input",

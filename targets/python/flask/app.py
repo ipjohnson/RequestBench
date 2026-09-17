@@ -64,6 +64,7 @@ class Refused(Exception):
         self.errors = errors
 
 
+# rb:wiring body.*,errors.*
 def refused_body(errors):
     return {"error": "validation_failed", "errors": errors}
 
@@ -72,6 +73,7 @@ def not_bound_body(detail):
     return {"error": "invalid_body", "detail": detail}
 
 
+# rb:wiring body.*
 def check_order(body, first_error=False):
     """Every field that is wrong, or the first one when asked for that."""
     m = body if isinstance(body, dict) else {}
@@ -102,6 +104,7 @@ def check_order(body, first_error=False):
     return errs
 
 
+# rb:wiring body.*,domain.*
 def validated(body, first_error=False):
     """The order, or Refused naming every field the walk would not accept."""
     errs = check_order(body, first_error)
@@ -113,6 +116,7 @@ def validated(body, first_error=False):
 #: One process, and enough threads that the worker is not itself the queue.
 THREADS = 16
 
+# rb:wiring template.*
 # template_folder is absolute because _hosts/container.py loads this module by file
 # path under the name rb_target, so Flask cannot derive the root from the module name.
 app = Flask(__name__, template_folder=str(
@@ -124,6 +128,7 @@ META = host.meta("flask", adapter="gunicorn",
                        + " SimpleCache")
 
 
+# rb:wiring body.*,domain.*
 def body_of():
     """The request body as a value, or Malformed. Not a validation failure: nothing
     validated it, so it names no field."""
@@ -133,6 +138,7 @@ def body_of():
         raise d.Malformed(str(e)) from None
 
 
+# rb:wiring parameters.*,headers.*,middleware.*,authorized.*,json.*
 def small():
     return jsonify(d.payload("small"))
 
@@ -228,10 +234,12 @@ def headers():
 
 # ---- middleware: one blueprint per layer count ---------------------------------------
 
+# rb:wiring middleware.*
 def noop():
     """One layer: it returns nothing, so Flask carries on to the next."""
 
 
+# rb:wiring middleware.*
 def layered(name, n):
     bp = Blueprint(name, __name__)
     for _ in range(n):
@@ -250,10 +258,12 @@ middleware_sixteen.get("/middleware/sixteen")(small)
 
 # ---- authorized: a blueprint hook, not an if in the handler --------------------------
 
+# rb:wiring authorized.*
 authorized = Blueprint("authorized", __name__)
 
 
 @authorized.before_request
+# rb:wiring authorized.*
 def require_token():
     """Returning a response from before_request short-circuits the view, which is Flask's
     own way to refuse a request before it reaches one."""
@@ -266,10 +276,12 @@ authorized.get("/authorized/small")(small)
 
 # ---- compressed: a response hook on its own blueprint --------------------------------
 
+# rb:wiring compressed.*
 compressed = Blueprint("compressed", __name__)
 
 
 @compressed.after_request
+# rb:wiring compressed.*
 def compress(response):
     """Flask ships no compression, so the codec is the pinned one every language shares. The
     threshold is pinned too: whether a framework bothers to compress a body too small to
@@ -285,14 +297,14 @@ def compress(response):
     return response
 
 
+# rb:wiring compressed.*
 def compressed_route(size):
     def handler():
         return jsonify(d.payload(size)), 200, {"x-rb-serial": d.next_serial()}
     return handler
 
 
-# rb:snippet compressed.identity_small compressed.identity_medium compressed.identity_large
-# rb:snippet compressed.gzip_small compressed.gzip_medium compressed.gzip_large
+# rb:handler compressed.*
 for _size in ("small", "medium", "large"):
     compressed.get("/compressed/" + _size,
                    endpoint="compressed_" + _size)(compressed_route(_size))
@@ -305,10 +317,12 @@ for _size in ("small", "medium", "large"):
 # here compares anything. A blueprint is Flask's own way to scope a response hook, the same
 # way the compressed family gets its codec without taxing the other rows.
 
+# rb:wiring etag.*
 conditional = Blueprint("conditional", __name__)
 
 
 @conditional.after_request
+# rb:wiring etag.*
 def revalidate(response):
     response.add_etag()
     response.cache_control.public = True
@@ -316,13 +330,14 @@ def revalidate(response):
     return response.make_conditional(request)
 
 
+# rb:wiring etag.*
 def etag_route(size):
     def handler():
         return jsonify(d.payload(size)), 200, {"x-rb-serial": d.next_serial()}
     return handler
 
 
-# rb:snippet etag.small etag.large etag.match_large etag.stale_large
+# rb:handler etag.*
 for _size in ("small", "large"):
     conditional.get("/etag/" + _size, endpoint="etag_" + _size)(etag_route(_size))
 
@@ -334,6 +349,7 @@ for _size in ("small", "large"):
 # the target, capped from the fixture: the capacity derived from the key count means what
 # it says only if there is one store to count against.
 
+# rb:wiring cache.*
 cache = Cache(config={
     "CACHE_TYPE": "SimpleCache",
     "CACHE_THRESHOLD": d.cache_spec()["capacity"],
@@ -348,6 +364,7 @@ def keyed_on(names):
     return build
 
 
+# rb:wiring cache.*
 def cache_route(size, vary=()):
     def handler():
         headers = {"x-rb-serial": d.next_serial()}
@@ -357,11 +374,11 @@ def cache_route(size, vary=()):
     return handler
 
 
-# rb:snippet cache.small cache.medium cache.large
+# rb:handler cache.small,cache.medium,cache.large
 for _size in ("small", "medium", "large"):
     app.get("/cache/" + _size, endpoint="cache_" + _size)(
         cache.cached(timeout=d.cache_spec()["ttl_s"])(cache_route(_size)))
-# rb:snippet cache.vary_one cache.vary_many
+# rb:handler cache.vary_one,cache.vary_many
 for _which in ("one", "many"):
     _on = d.vary_on(_which)
     app.get("/cache/vary/" + _which, endpoint="cache_vary_" + _which)(
@@ -469,18 +486,21 @@ def template_medium():
 # drift. The router's own miss arrives here as a werkzeug HTTPException, which is what gives
 # errors.unmatched the same body as errors.not_found.
 
-# rb:snippet errors.unmatched
+# rb:handler errors.unmatched
+# rb:wiring errors.*
 @app.errorhandler(HTTPException)
 def http_error(exc):
     body = d.not_found_body() if exc.code == 404 else {"error": "internal"}
     return jsonify(body), exc.code
 
 
+# rb:wiring errors.*
 @app.errorhandler(d.NotFound)
 def not_found(_):
     return jsonify(d.not_found_body()), 404
 
 
+# rb:wiring errors.*
 # The walk this target holds answers a refused body; a body that never parsed answers
 # separately, because nothing validated it and it names no field.
 @app.errorhandler(Refused)
@@ -488,6 +508,7 @@ def refused(exc):
     return jsonify(refused_body(exc.errors)), 422
 
 
+# rb:wiring errors.*
 @app.errorhandler(d.Malformed)
 def malformed(exc):
     return jsonify(not_bound_body(exc.detail)), 400

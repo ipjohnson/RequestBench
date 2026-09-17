@@ -4,6 +4,7 @@
 // the point of the family is the framework's own plumbing.
 import * as d from "../../_shared/domain.js";
 
+// rb:wiring authorized.*
 const requireToken = async (c, next) => {
   if (!d.tokenOk(c.req.header("authorization"))) return c.json(d.forbiddenBody(), 403);
   await next();

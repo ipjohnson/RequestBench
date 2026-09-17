@@ -37,11 +37,13 @@ describe(pkg.target, () => {
     expect(Object.keys(pkg.schemas).sort()).toEqual(EVERY);
   });
 
+  // rb:test body.rejected_all
   test("the plan's body never reaches the validator, so it is the 400 unreadable envelope", () => {
     expect(judge("body.rejected_all", 400, notBound, [400])).toBe(true);
     expect(judge("body.rejected_all", 422, notBound, [400])).toBe(false);
   });
 
+  // rb:test body.rejected_all
   test("this repository's shared envelope is not what it answers", () => {
     expect(judge("body.rejected_all", 400, {
       error: "validation_failed",
@@ -49,6 +51,7 @@ describe(pkg.target, () => {
     }, [400])).toBe(false);
   });
 
+  // rb:test body.rejected_all
   test("an unreadable body has to carry a detail, not just a name", () => {
     expect(judge("body.rejected_all", 400, { error: "invalid_body" }, [400])).toBe(false);
   });

@@ -15,6 +15,7 @@ import (
 	d "github.com/ianjohnson/requestbench/targets/go/_shared"
 )
 
+// rb:wiring cache.*,etag.*
 // served is payload() plus the freshness counter both families carry.
 func served(size string, extra map[string]string) http.HandlerFunc {
 	body := d.Payload(size)
@@ -28,7 +29,7 @@ func served(size string, extra map[string]string) http.HandlerFunc {
 }
 
 func registerEtag(r *mux.Router) {
-	// rb:snippet etag.small etag.large etag.match_large etag.stale_large
+	// rb:handler etag.*
 	for _, size := range []string{"small", "large"} {
 		r.Handle("/etag/"+size, chain(served(size, nil), d.ConditionalGet)).Methods("GET")
 	}
@@ -37,12 +38,13 @@ func registerEtag(r *mux.Router) {
 func registerCache(r *mux.Router) {
 	// One store for the target rather than one per route, so the capacity the fixture
 	// derives from the key count means what it says.
+	// rb:wiring cache.*
 	store := d.NewStore()
-	// rb:snippet cache.small cache.medium cache.large
+	// rb:handler cache.small,cache.medium,cache.large
 	for _, size := range []string{"small", "medium", "large"} {
 		r.Handle("/cache/"+size, chain(served(size, nil), d.Replay(store, nil))).Methods("GET")
 	}
-	// rb:snippet cache.vary_one cache.vary_many
+	// rb:handler cache.vary_one,cache.vary_many
 	for _, which := range []string{"one", "many"} {
 		on := d.VaryOn(which)
 		handler := served("small", map[string]string{"vary": strings.Join(on, ", ")})

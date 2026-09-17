@@ -13,6 +13,7 @@ namespace RequestBench.CarterTarget.Routes;
 /// </summary>
 public sealed class Cache : ICarterModule
 {
+    // rb:wiring cache.*
     private static Func<HttpContext, DomainModel, PayloadBody> Serve(
         string size, string? which = null) =>
         (context, model) =>
@@ -27,13 +28,13 @@ public sealed class Cache : ICarterModule
 
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        // rb:snippet cache.small cache.medium cache.large
+        // rb:handler cache.small,cache.medium,cache.large
         foreach (string size in new[] { "small", "medium", "large" })
         {
             app.MapGet("/cache/" + size, Serve(size)).CacheOutput(Caching.ByPath);
         }
 
-        // rb:snippet cache.vary_one cache.vary_many
+        // rb:handler cache.vary_one,cache.vary_many
         foreach (string which in new[] { "one", "many" })
         {
             app.MapGet("/cache/vary/" + which, Serve("small", which))

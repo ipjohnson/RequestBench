@@ -21,6 +21,7 @@ use tower_http::compression::{predicate::SizeAbove, CompressionLayer};
 
 // ---- shared response shapes ---------------------------------------------------
 
+// rb:wiring errors.*,domain.*
 /// Maps the domain's failures onto statuses. Handlers return `Result` and never build a
 /// 404 or a 422 themselves, so the three targets that share this file cannot drift.
 fn fail(e: d::Fail) -> Response {
@@ -46,6 +47,7 @@ fn fail(e: d::Fail) -> Response {
 // least one. Those are checked here, in this target's own code, because axum has no
 // validation layer to put them in.
 
+// rb:wiring body.*,domain.*
 /// The order body as axum binds it. `Option` is what makes a missing field a rejection
 /// rather than a zero, and serde reports the first field that does not fit.
 #[derive(Debug, Deserialize)]
@@ -61,6 +63,7 @@ struct LineIn {
     qty: i64,
 }
 
+// rb:wiring body.*,domain.*
 /// The rules a deserialize cannot state. Every one that fails is reported; `first_error`
 /// stops at the first, which is what body.rejected_first asks for and what this target can
 /// still answer because the checks are its own.
@@ -80,11 +83,13 @@ fn check(order: &OrderIn, first_error: bool) -> Vec<d::FieldError> {
     errs
 }
 
+// rb:wiring body.*,errors.*
 /// This target's envelope for a body its own checks refused.
 fn refused(errs: &[d::FieldError]) -> Value {
     serde_json::json!({ "error": "validation_failed", "errors": errs })
 }
 
+// rb:wiring body.*,domain.*
 /// The order, or the response this target answers when its own checks refuse the body.
 fn validated(order: &OrderIn, first_error: bool) -> Result<d::ValidatedOrder, Response> {
     let errs = check(order, first_error);
@@ -100,6 +105,7 @@ fn validated(order: &OrderIn, first_error: bool) -> Result<d::ValidatedOrder, Re
 }
 
 
+// rb:wiring domain.*,errors.*
 fn ok<T: serde::Serialize>(v: Result<T, d::Fail>) -> Response {
     match v {
         Ok(v) => Json(v).into_response(),
@@ -107,6 +113,7 @@ fn ok<T: serde::Serialize>(v: Result<T, d::Fail>) -> Response {
     }
 }
 
+// rb:wiring body.*,domain.*
 /// The request body as a value, or the 422 every target answers when it is not JSON.
 /// An unvalidated body, for the endpoints that only parse. Still the extractor's job on
 /// the validate routes; this is only for bind, which is measured against them.
@@ -129,11 +136,13 @@ fn parse(body: &[u8]) -> Result<Value, Response> {
 // The fields are plain, so serde decides what a missing or unparseable one is: a
 // QueryRejection, which axum renders as its own 400. The endpoint set sends neither.
 
+// rb:wiring query.*
 #[derive(Serialize, Deserialize)]
 struct QueryOne {
     page: i64,
 }
 
+// rb:wiring query.*
 #[derive(Serialize, Deserialize)]
 struct QueryMany {
     page: i64,
@@ -146,6 +155,7 @@ struct QueryMany {
     max_price: i64,
 }
 
+// rb:wiring domain.*
 /// What domain.filter pages by. Not a response shape, so it is deserialize only.
 #[derive(Deserialize)]
 struct OrderFilter {
@@ -156,6 +166,7 @@ struct OrderFilter {
 
 // ---- middleware ---------------------------------------------------------------
 
+// rb:wiring authorized.*
 /// axum middleware, not a check inside the handler. An `if` in the handler would measure
 /// the language; the point of the authorized family is the framework's own plumbing.
 async fn require_token(req: Request, next: Next) -> Response {
@@ -167,11 +178,13 @@ async fn require_token(req: Request, next: Next) -> Response {
     }
 }
 
+// rb:wiring middleware.*
 /// One middleware layer: it calls the next and does nothing else.
 async fn noop(req: Request, next: Next) -> Response {
     next.run(req).await
 }
 
+// rb:wiring middleware.*
 /// `MethodRouter::layer` returns a `MethodRouter`, so the count is a fold rather than
 /// sixteen written-out calls.
 fn layered(n: usize, h: MethodRouter) -> MethodRouter {
@@ -198,14 +211,17 @@ async fn meta() -> Json<Value> {
     Json(rb_host::meta("axum", "askama"))
 }
 
+// rb:wiring parameters.*,headers.*,middleware.*,authorized.*
 async fn small() -> Json<&'static d::PayloadBody> {
     Json(d::payload("small"))
 }
 
+// rb:wiring errors.*
 async fn not_found() -> Response {
     (StatusCode::NOT_FOUND, Json(d::not_found_body())).into_response()
 }
 
+// rb:wiring json.*
 /// The three sizes are static routes, not `/json/{size}`. The size set is fixed, so a
 /// capture would make the router pay parameter cost on the family every other target
 /// serves from a static route, and it would answer 200 with an empty body for a size that
@@ -214,6 +230,7 @@ fn payload_route(size: &'static str) -> MethodRouter {
     get(move || async move { Json(d::payload(size)) })
 }
 
+// rb:wiring compressed.*
 /// Compression is the framework's, configured to the pinned level. The size threshold is
 /// left at the library's default: whether a framework bothers to compress a body too small
 /// to benefit is what `compressed.gzip_small` is in the set to show, so forcing it would
@@ -263,6 +280,7 @@ async fn revalidate(request: Request, next: Next) -> Response {
     Response::from_parts(parts, axum::body::Body::from(raw))
 }
 
+// rb:wiring etag.*
 fn etag_route(size: &'static str) -> MethodRouter {
     get(move || async move {
         (
@@ -273,6 +291,7 @@ fn etag_route(size: &'static str) -> MethodRouter {
     .layer(from_fn(revalidate))
 }
 
+// rb:wiring cache.*
 /// cache: a tower layer that answers from the store before the handler is reached.
 ///
 /// axum ships no response cache, so the store is the shared LRU sized from the fixture.
@@ -324,6 +343,7 @@ async fn replay(on: &'static [&'static str], request: Request, next: Next) -> Re
     Response::from_parts(parts, axum::body::Body::from(raw))
 }
 
+// rb:wiring cache.*
 fn cache_route(size: &'static str, on: &'static [&'static str]) -> MethodRouter {
     get(move || async move {
         let mut headers = HeaderMap::new();
@@ -339,6 +359,7 @@ fn cache_route(size: &'static str, on: &'static [&'static str]) -> MethodRouter 
     .layer(from_fn(move |request, next| replay(on, request, next)))
 }
 
+// rb:wiring template.*
 fn template_route(size: &'static str) -> MethodRouter {
     get(move || async move {
         (
@@ -348,6 +369,7 @@ fn template_route(size: &'static str) -> MethodRouter {
     })
 }
 
+// rb:wiring template.*
 // ---- template ------------------------------------------------------------------
 //
 // axum ships no view layer. Askama is what axum's own examples/templates uses.
@@ -361,6 +383,7 @@ struct Items {
     body: &'static d::PayloadBody,
 }
 
+// rb:wiring template.*
 fn items_html(size: &'static str) -> String {
     use askama::Template;
     Items { body: d::payload(size) }.render().unwrap_or_default()
@@ -394,14 +417,14 @@ async fn main() {
         .route("/compressed/small", compressed_route("small"))
         .route("/compressed/medium", compressed_route("medium"))
         .route("/compressed/large", compressed_route("large"))
-        // rb:snippet etag.small etag.large etag.match_large etag.stale_large
+        // rb:handler etag.*
         .route("/etag/small", etag_route("small"))
         .route("/etag/large", etag_route("large"))
-        // rb:snippet cache.small cache.medium cache.large
+        // rb:handler cache.small,cache.medium,cache.large
         .route("/cache/small", cache_route("small", &[]))
         .route("/cache/medium", cache_route("medium", &[]))
         .route("/cache/large", cache_route("large", &[]))
-        // rb:snippet cache.vary_one cache.vary_many
+        // rb:handler cache.vary_one,cache.vary_many
         .route("/cache/vary/one", cache_route("small", VARY_ONE))
         .route("/cache/vary/many", cache_route("small", VARY_MANY))
         .route("/template/small", template_route("small"))
@@ -425,13 +448,14 @@ async fn main() {
         .route("/domain/regions/{region}/report", get(aggregate))
         .route("/domain/customers/{cid}", patch(patch_customer))
         .route("/domain/orders/{oid}/lines/{lid}", delete(delete_line))
-        // rb:snippet errors.unmatched
+        // rb:handler errors.unmatched
         .fallback(not_found);
 
     let listener = tokio::net::TcpListener::bind(("0.0.0.0", port)).await.expect("bind");
     axum::serve(listener, app).await.expect("serve");
 }
 
+// rb:wiring body.*
 async fn bind(body: axum::body::Bytes) -> Response {
     match parse(&body) {
         Ok(v) => Json(d::bind_echo(v)).into_response(),
@@ -439,6 +463,7 @@ async fn bind(body: axum::body::Bytes) -> Response {
     }
 }
 
+// rb:wiring body.*
 async fn validate_all(Json(order): Json<OrderIn>) -> Response {
     match validated(&order, false) {
         Ok(v) => Json(v).into_response(),
@@ -446,6 +471,7 @@ async fn validate_all(Json(order): Json<OrderIn>) -> Response {
     }
 }
 
+// rb:wiring body.*
 async fn validate_first(Json(order): Json<OrderIn>) -> Response {
     match validated(&order, true) {
         Ok(v) => Json(v).into_response(),
@@ -453,18 +479,22 @@ async fn validate_first(Json(order): Json<OrderIn>) -> Response {
     }
 }
 
+// rb:wiring domain.*,errors.*
 async fn lookup_order(Path(oid): Path<String>) -> Response {
     ok(d::get_order(&oid))
 }
 
+// rb:wiring domain.*
 async fn join(Path(cid): Path<String>) -> Response {
     ok(d::domain_join(&cid))
 }
 
+// rb:wiring domain.*
 async fn aggregate(Path(region): Path<String>) -> Response {
     ok(d::domain_aggregate(&region))
 }
 
+// rb:wiring domain.*
 async fn create_order(Json(order): Json<OrderIn>) -> Response {
     match validated(&order, false) {
         Ok(v) => (
@@ -477,6 +507,7 @@ async fn create_order(Json(order): Json<OrderIn>) -> Response {
     }
 }
 
+// rb:wiring domain.*
 async fn replace_order(Path(oid): Path<String>, Json(order): Json<OrderIn>) -> Response {
     let existing = match d::get_order(&oid) {
         Ok(o) => o,
@@ -491,6 +522,7 @@ async fn replace_order(Path(oid): Path<String>, Json(order): Json<OrderIn>) -> R
     }
 }
 
+// rb:wiring domain.*
 async fn patch_customer(Path(cid): Path<String>, body: axum::body::Bytes) -> Response {
     let v = match parse(&body) {
         Ok(v) => v,
@@ -499,6 +531,7 @@ async fn patch_customer(Path(cid): Path<String>, body: axum::body::Bytes) -> Res
     ok(d::patch_customer(&cid, &v))
 }
 
+// rb:wiring domain.*
 async fn delete_line(Path((oid, lid)): Path<(String, String)>) -> Response {
     match d::get_order_line(&oid, &lid) {
         Ok(_) => StatusCode::NO_CONTENT.into_response(),

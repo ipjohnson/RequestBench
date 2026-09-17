@@ -10,6 +10,7 @@ import (
 	d "github.com/ianjohnson/requestbench/targets/go/_shared"
 )
 
+// rb:wiring body.*
 func bind(c fiber.Ctx) error {
 	m, ok := bindAny(c)
 	if !ok {
@@ -18,6 +19,7 @@ func bind(c fiber.Ctx) error {
 	return c.Status(200).JSON(d.BindEcho(m))
 }
 
+// rb:wiring body.*
 func validated(c fiber.Ctx) error {
 	ob, ok := bindOrder(c)
 	if !ok {
