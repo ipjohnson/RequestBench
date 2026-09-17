@@ -1,13 +1,29 @@
 // template: server-side rendering of the same model the json family serializes.
 //
-// The engine is handlebars, shared with every other Node target and named on /__meta.
-// Express's own view layer would need a second engine adapter to reach the same compiled
-// template, and the engine is pinned for the same reason the gzip level is.
-import { renderItems } from "../../_shared/template.js";
+// Express's own view layer: an engine registered with app.set("view engine"), a views
+// directory, and res.render naming the template. The handler never calls a render
+// function. Pug is what express-generator scaffolds and what Express's own "Using template
+// engines" guide uses, so it is what a reader of the Express docs ends up running.
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
+
 import * as d from "../../_shared/domain.js";
 
-export default function template(app) {
-  app.get("/template/small", (_, res) => res.type("html").send(renderItems(d.payload("small"))));
+const VIEWS = join(dirname(dirname(fileURLToPath(import.meta.url))), "views");
 
-  app.get("/template/medium", (_, res) => res.type("html").send(renderItems(d.payload("medium"))));
+export default function template(app) {
+  // Compiled on first render and cached by Express in production, rendered per request. A
+  // precomputed string would measure nothing.
+  app.set("views", VIEWS);
+  app.set("view engine", "pug");
+
+  // A copy of the payload, not the payload. res.render writes _locals into the object it
+  // is handed, and d.payload returns the fixture object the json family serializes, so
+  // rendering once put a _locals key in every json.* body until this copied.
+  const small = { ...d.payload("small") };
+  const medium = { ...d.payload("medium") };
+
+  app.get("/template/small", (_, res) => res.render("items", small));
+
+  app.get("/template/medium", (_, res) => res.render("items", medium));
 }

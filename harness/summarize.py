@@ -172,7 +172,9 @@ def main():
                  # And which template engine, which the Node targets report instead of a
                  # serializer. Reading only `serializer` left the column empty for every
                  # Node and Go row and discarded the one field that explains the template
-                 # family, where handlebars and html/template are not the same product.
+                 # family, where ejs and pug are not the same product. Since #36 two
+                 # targets in one language can differ here, so the column carries the
+                 # comparison rather than merely labelling it.
                  "template": m.get("template", ""),
                  # The bundle this target was: code_hash excludes prose, so a corrected
                  # README does not read as a target that changed.

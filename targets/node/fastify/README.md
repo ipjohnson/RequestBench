@@ -46,7 +46,7 @@ the query string.
 
 ## Dependencies in the bundle
 
-`fastify`, `@fastify/compress` for the compressed family, `@fastify/view` with
-`handlebars` for the template family. The template engine is reported on `/__meta` and
-shows up in the `template` column, which is why that family is not comparable across
-languages.
+`fastify`, `@fastify/compress` for the compressed family, `@fastify/view` with `ejs` for
+the template family. The template engine is reported on `/__meta` and shows up in the
+`template` column, which is why that family is comparable only against another target
+declaring the same engine.

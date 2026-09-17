@@ -11,15 +11,18 @@
 import Fastify from "fastify";
 import compress from "@fastify/compress";
 import view from "@fastify/view";
-import handlebars from "handlebars";
+import ejs from "ejs";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
 import { pkgVersion } from "../_shared/version.js";
 import { hostMeta } from "../_shared/host.js";
-import { VIEWS } from "../_shared/template.js";
 import * as d from "../_shared/domain.js";
 import { orderOf, validatesOrder } from "./validation.js";
 
 const meta = { framework: "fastify", version: pkgVersion("fastify"),
-               runtime: "node " + process.versions.node, template: "handlebars" };
+               runtime: "node " + process.versions.node, template: "ejs" };
+
+const VIEWS = join(dirname(fileURLToPath(import.meta.url)), "views");
 
 const app = Fastify({ logger: false, disableRequestLogging: true });
 
@@ -152,9 +155,11 @@ app.delete("/domain/orders/:oid/lines/:lid", (req, reply) =>
 
 // ---- template: the engine named in /__meta, through Fastify's own view plugin ---------
 
-app.register(view, { engine: { handlebars }, root: VIEWS });
-app.get("/template/small",  (_, reply) => reply.view("items.hbs", d.payload("small")));
-app.get("/template/medium", (_, reply) => reply.view("items.hbs", d.payload("medium")));
+// EJS is the engine @fastify/view's own README leads with. Compiled on first render and
+// cached by the plugin, rendered per request: a precomputed string would measure nothing.
+app.register(view, { engine: { ejs }, root: VIEWS });
+app.get("/template/small",  (_, reply) => reply.view("items.ejs", d.payload("small")));
+app.get("/template/medium", (_, reply) => reply.view("items.ejs", d.payload("medium")));
 
 // rb:snippet errors.unmatched
 app.setNotFoundHandler((_, reply) => reply.code(404).send({ error: "not_found" }));

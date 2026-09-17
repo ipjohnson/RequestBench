@@ -1,0 +1,24 @@
+<!doctype html>
+<html>
+  <head><title>items</title></head>
+  <body>
+    <h1><%= size %></h1>
+    <table>
+      <thead>
+        <tr><th>id</th><th>name</th><th>category</th><th>price</th><th>stock</th></tr>
+      </thead>
+      <tbody>
+        <% for (const it of items) { %>
+        <tr>
+          <td><%= it.id %></td>
+          <td><%= it.name %></td>
+          <td><%= it.category %></td>
+          <td><%= it.price_cents %></td>
+          <td><%= it.in_stock ? "yes" : "no" %></td>
+        </tr>
+        <% } %>
+      </tbody>
+    </table>
+    <p><%= count %> rows</p>
+  </body>
+</html>

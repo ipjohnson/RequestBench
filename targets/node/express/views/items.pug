@@ -1,0 +1,26 @@
+//- The doctype is a literal line rather than Pug's own `doctype html`, which emits
+//- <!DOCTYPE html> in upper case. Every other target in the set writes the doctype it
+//- wants, and conformance compares the rendered bytes.
+| <!doctype html>
+html
+  head
+    title items
+  body
+    h1= size
+    table
+      thead
+        tr
+          th id
+          th name
+          th category
+          th price
+          th stock
+      tbody
+        each it in items
+          tr
+            td= it.id
+            td= it.name
+            td= it.category
+            td= it.price_cents
+            td= it.in_stock ? "yes" : "no"
+    p #{count} rows

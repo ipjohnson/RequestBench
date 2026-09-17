@@ -25,7 +25,7 @@ import query from "./routes/query.js";
 import template from "./routes/template.js";
 
 export const meta = { framework: "hono", version: pkgVersion("hono"),
-                      runtime: "node " + process.versions.node, template: "handlebars" };
+                      runtime: "node " + process.versions.node, template: "hono/html" };
 
 const app = new Hono();
 
