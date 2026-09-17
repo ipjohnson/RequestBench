@@ -15,6 +15,7 @@ public final class Baseline {
 
     r.get("/__meta", (req, res) -> res.send(
         Hosts.meta("helidon-se", Hosts.version("helidon"),
-                   "thymeleaf " + Hosts.version("thymeleaf"))));
+                   "thymeleaf " + Hosts.version("thymeleaf"),
+                   "sha1 (helidon ships no conditional handling)", "a shared LRU")));
   }
 }

@@ -2,7 +2,7 @@
   "version": "blend-v2",
   "sampling": "uniform",
   "error_bodies": "An endpoint whose expect is 400 or above carries an error body, and its shape is the framework's rather than this repository's. A 2xx body is the controlled variable and is pinned exactly; an error envelope is a framework's own contract -- ProblemDetails, a FluentValidation list, a bare object -- and forcing twenty-eight of them into one shape hides a real difference and charges every target a handler to hide it. 'accepts' widens the status where more than one is correct, and 'field_errors' is what the shared validator reports for the body the plan sends. Both are the default a framework is held to when it says nothing, not a requirement. Each framework declares what it actually answers -- the envelope, and where they differ the status and its own wording for a rule -- in targets/<language>/<framework>/client-exception, and the conformance client gates it on that. A framework whose own facility answers 400 here is working correctly, and translating it back to 422 in a handler would measure the translation.",
-  "note": "Every endpoint is drawn with equal probability. There is no share field: the request stream carries no opinion about traffic, and every opinion lives in a weight vector in spec/blends.json applied when an aggregate is composed. Generators never fill params or headers themselves; they replay spec/plan.json, which harness/plan.py derives from this file and the fixture. 'base' names the endpoint to subtract and 'varies' the single factor that differs from it, which is what lets the site render a delta column. The two are written together or not at all, and 'varies' has to name an entry in 'factors', whose prose is what the delta column prints instead of two endpoint ids. Following 'base' terminates rather than looping, and harness/plan.py rejects a spec where that stops being true. There is no single root: a chain ends wherever subtracting one more factor would start mixing two, so a POST chain does not bottom out on json.small. 'correlate' names a strategy that keeps related ids consistent.",
+  "note": "Every endpoint is drawn with equal probability. There is no share field: the request stream carries no opinion about traffic, and every opinion lives in a weight vector in spec/blends.json applied when an aggregate is composed. Generators never fill params or headers themselves; they replay spec/plan.json, which harness/plan.py derives from this file and the fixture. The one exception is 'two_phase_capture', a value no committed file can hold because it is whatever the target computed. 'base' names the endpoint to subtract and 'varies' the single factor that differs from it, which is what lets the site render a delta column. The two are written together or not at all, and 'varies' has to name an entry in 'factors', whose prose is what the delta column prints instead of two endpoint ids. Following 'base' terminates rather than looping, and harness/plan.py rejects a spec where that stops being true. There is no single root: a chain ends wherever subtracting one more factor would start mixing two, so a POST chain does not bottom out on json.small. 'correlate' names a strategy that keeps related ids consistent.",
   "fixture": {
     "products": {
       "min": 1,
@@ -40,45 +40,63 @@
       "cancelled"
     ]
   },
+  "comparability": "Every family says what its rows can be read across. 'frameworks' is the whole set, and a family that says it is the only kind of row a ranking may carry: spec/blends.json derives the rankable vector from this field rather than enumerating one, so a family added here cannot be left out of a weight vector by forgetting. Anything else names the narrower thing the row is comparable across, and that word is the reason the row is excluded, recorded where the endpoint is defined instead of in a blend.",
   "families": {
     "baseline": {
-      "exercises": "dispatch floor, no serialization"
+      "exercises": "dispatch floor, no serialization",
+      "comparable": "frameworks"
     },
     "json": {
-      "exercises": "serializer and response buffering across three size regimes"
+      "exercises": "serializer and response buffering across three size regimes",
+      "comparable": "frameworks"
     },
     "parameters": {
-      "exercises": "router captures with segment depth held constant"
+      "exercises": "router captures with segment depth held constant",
+      "comparable": "frameworks"
     },
     "authorized": {
-      "exercises": "the framework's authorization mechanism, crypto excluded"
+      "exercises": "the framework's authorization mechanism, crypto excluded",
+      "comparable": "frameworks"
     },
     "compressed": {
-      "exercises": "outbound gzip: the cost of the wiring declining, the cost of it working, and the small-body threshold"
+      "exercises": "outbound gzip: the cost of the wiring declining, the cost of it working, and the small-body threshold",
+      "comparable": "frameworks"
     },
-    "cached": {
-      "exercises": "validator headers and the conditional request"
+    "etag": {
+      "exercises": "the framework's own conditional-request machinery: the validator it computes over the body, and the 304 it answers",
+      "comparable": "frameworks"
+    },
+    "cache": {
+      "exercises": "the framework's response cache: the handler skipped and a stored response replayed, keyed by path and by request headers",
+      "comparable": "stores"
     },
     "body": {
-      "exercises": "parser and validator, with size crossed against validation"
+      "exercises": "parser and validator, with size crossed against validation",
+      "comparable": "frameworks"
     },
     "query": {
-      "exercises": "query string parsing and coercion, isolated from any use of the values"
+      "exercises": "query string parsing and coercion, isolated from any use of the values",
+      "comparable": "frameworks"
     },
     "headers": {
-      "exercises": "eager against lazy construction of the request header map"
+      "exercises": "eager against lazy construction of the request header map",
+      "comparable": "frameworks"
     },
     "middleware": {
-      "exercises": "per-layer dispatch cost at 0, 4 and 16 no-op layers"
+      "exercises": "per-layer dispatch cost at 0, 4 and 16 no-op layers",
+      "comparable": "frameworks"
     },
     "domain": {
-      "exercises": "application-shaped handler work and the write methods"
+      "exercises": "application-shaped handler work and the write methods",
+      "comparable": "frameworks"
     },
     "errors": {
-      "exercises": "router miss, handler 404 and parser failure"
+      "exercises": "router miss, handler 404 and parser failure",
+      "comparable": "frameworks"
     },
     "template": {
-      "exercises": "server-side rendering of the same model the json family serializes; not comparable across languages"
+      "exercises": "server-side rendering of the same model the json family serializes",
+      "comparable": "engines"
     }
   },
   "factors": {
@@ -104,10 +122,19 @@
       "reads": "the compression middleware actually compressing"
     },
     "validators": {
-      "reads": "ETag and Cache-Control written onto the response"
+      "reads": "the framework hashing the body and writing the ETag it computed onto the response"
     },
     "conditional": {
       "reads": "a conditional request answered 304, with no body"
+    },
+    "stale_validator": {
+      "reads": "a conditional request whose validator does not match, answered in full"
+    },
+    "response_cache": {
+      "reads": "the handler skipped and a stored response replayed"
+    },
+    "cache_key": {
+      "reads": "the stored response keyed by request headers as well as by path"
     },
     "validation": {
       "reads": "the bound body checked against a schema"
@@ -153,7 +180,10 @@
       "cache-control": "no-cache"
     },
     "revalidate_large": {
-      "if-none-match": "{payloads.large.etag}"
+      "if-none-match": "{capture.etag_large}"
+    },
+    "stale_large": {
+      "if-none-match": "{validators.stale}"
     },
     "twenty_seven": {
       "x-rb-h01": "v01",
@@ -183,6 +213,23 @@
       "x-rb-h25": "v25",
       "x-rb-h26": "v26",
       "x-rb-h27": "v27"
+    }
+  },
+  "two_phase_capture": "A header value that cannot exist until a target has answered once. The etag family lets each framework's own machinery compute the validator, so the tag is not the same string on every target and spec/plan.json cannot pre-resolve an if-none-match the way it resolves a bearer token. Every driver sends these once before it sends anything else, reads the named response header, and substitutes the value wherever {capture.<name>} appears in a header set. Resolved once per target per process, not per request: the tag is constant for as long as the body is.",
+  "captures": {
+    "etag_large": {
+      "method": "GET",
+      "path": "/etag/large",
+      "header": "etag"
+    }
+  },
+  "varying_headers": "Header sets whose values differ between one instance of an endpoint and the next. A response cache keyed on a header it never sees vary is keyed on nothing, so the vary rows send a pinned set of values and the store has to hold a key per combination. harness/plan.py takes the product in the order written here and hands the driver one merged header set per combination; instance i of the endpoint sends combination i modulo the count. The values live in the fixture with the capacity derived from them, because the count of distinct keys is what every target has to size its store against.",
+  "header_axes": {
+    "vary_one": {
+      "from": "cache.vary.one"
+    },
+    "vary_many": {
+      "from": "cache.vary.many"
     }
   },
   "endpoints": [
@@ -284,17 +331,6 @@
       "varies": "compression_wiring"
     },
     {
-      "id": "compressed.identity_medium",
-      "family": "compressed",
-      "method": "GET",
-      "path": "/compressed/medium",
-      "expect": 200,
-      "payload": "medium",
-      "headers": "identity_nocache",
-      "base": "json.medium",
-      "varies": "compression_wiring"
-    },
-    {
       "id": "compressed.identity_large",
       "family": "compressed",
       "method": "GET",
@@ -317,17 +353,6 @@
       "varies": "compression"
     },
     {
-      "id": "compressed.gzip_medium",
-      "family": "compressed",
-      "method": "GET",
-      "path": "/compressed/medium",
-      "expect": 200,
-      "payload": "medium",
-      "headers": "gzip_nocache",
-      "base": "compressed.identity_medium",
-      "varies": "compression"
-    },
-    {
       "id": "compressed.gzip_large",
       "family": "compressed",
       "method": "GET",
@@ -339,44 +364,97 @@
       "varies": "compression"
     },
     {
-      "id": "cached.small",
-      "family": "cached",
+      "id": "etag.small",
+      "family": "etag",
       "method": "GET",
-      "path": "/cached/small",
+      "path": "/etag/small",
       "expect": 200,
       "payload": "small",
       "base": "json.small",
       "varies": "validators"
     },
     {
-      "id": "cached.medium",
-      "family": "cached",
+      "id": "etag.large",
+      "family": "etag",
       "method": "GET",
-      "path": "/cached/medium",
-      "expect": 200,
-      "payload": "medium",
-      "base": "json.medium",
-      "varies": "validators"
-    },
-    {
-      "id": "cached.large",
-      "family": "cached",
-      "method": "GET",
-      "path": "/cached/large",
+      "path": "/etag/large",
       "expect": 200,
       "payload": "large",
       "base": "json.large",
       "varies": "validators"
     },
     {
-      "id": "cached.revalidate",
-      "family": "cached",
+      "id": "etag.match_large",
+      "family": "etag",
       "method": "GET",
-      "path": "/cached/large",
+      "path": "/etag/large",
       "expect": 304,
       "headers": "revalidate_large",
-      "base": "cached.large",
+      "base": "etag.large",
       "varies": "conditional"
+    },
+    {
+      "id": "etag.stale_large",
+      "family": "etag",
+      "method": "GET",
+      "path": "/etag/large",
+      "expect": 200,
+      "payload": "large",
+      "headers": "stale_large",
+      "base": "etag.large",
+      "varies": "stale_validator"
+    },
+    {
+      "id": "cache.small",
+      "family": "cache",
+      "method": "GET",
+      "path": "/cache/small",
+      "expect": 200,
+      "payload": "small",
+      "base": "json.small",
+      "varies": "response_cache"
+    },
+    {
+      "id": "cache.medium",
+      "family": "cache",
+      "method": "GET",
+      "path": "/cache/medium",
+      "expect": 200,
+      "payload": "medium",
+      "base": "json.medium",
+      "varies": "response_cache"
+    },
+    {
+      "id": "cache.large",
+      "family": "cache",
+      "method": "GET",
+      "path": "/cache/large",
+      "expect": 200,
+      "payload": "large",
+      "base": "json.large",
+      "varies": "response_cache"
+    },
+    {
+      "id": "cache.vary_one",
+      "family": "cache",
+      "method": "GET",
+      "path": "/cache/vary/one",
+      "expect": 200,
+      "payload": "small",
+      "header_axes": "vary_one",
+      "base": "cache.small",
+      "varies": "cache_key"
+    },
+    {
+      "id": "cache.vary_many",
+      "family": "cache",
+      "method": "GET",
+      "path": "/cache/vary/many",
+      "expect": 200,
+      "payload": "small",
+      "header_axes": "vary_many",
+      "base": "cache.vary_one",
+      "varies": "cache_key"
     },
     {
       "id": "body.bind_small",

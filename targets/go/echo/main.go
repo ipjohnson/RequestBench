@@ -17,9 +17,9 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/labstack/echo/v4"
 	hosts "github.com/ianjohnson/requestbench/targets/go/_hosts"
 	d "github.com/ianjohnson/requestbench/targets/go/_shared"
+	"github.com/labstack/echo/v4"
 )
 
 func fail(c echo.Context, err error) error {
@@ -79,7 +79,8 @@ func main() {
 	registerMiddleware(e)
 	registerAuthorized(e)
 	registerCompressed(e)
-	registerCached(e)
+	registerEtag(e)
+	registerCache(e)
 	registerBody(e)
 	registerDomain(e)
 	registerTemplate(e)

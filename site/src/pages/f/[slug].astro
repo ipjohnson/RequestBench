@@ -25,7 +25,7 @@ const name = t.framework || t.target;
 const facts = [
   `${name} ${t.version || "?"}`,
   t.target_runtime ?? "",
-  ...(["adapter", "serializer", "template"] as const)
+  ...(["adapter", "serializer", "template", "etag", "cache"] as const)
     .filter((k) => t[k])
     .map((k) => `${k} ${t[k]}`),
 ].filter(Boolean);

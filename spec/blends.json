@@ -1,7 +1,7 @@
 {
   "version": "blends-v1",
   "published": "uniform",
-  "note": "Weight vectors over spec/endpoints.json. The request stream is drawn uniformly, so every opinion about traffic lives here and nowhere else. A vector need not sum to anything: weights are relative and normalised when the blend is composed. Weights are applied by scaling each endpoint's histogram before merging, and percentiles are read from the merged histogram; a blend is never an average of per-endpoint percentiles. Adding a blend needs no re-measurement, only a re-run of harness/summarize.py over samples already on disk.",
+  "note": "Weight vectors over spec/endpoints.json. A blend either writes its vector out or derives one: 'derive' takes the 'comparable' field off each family in spec/endpoints.json and zeroes every endpoint whose family does not say the named thing, so the reason a row is excluded lives where the endpoint is defined and adding a family cannot quietly add it to a ranking. The request stream is drawn uniformly, so every opinion about traffic lives here and nowhere else. A vector need not sum to anything: weights are relative and normalised when the blend is composed. Weights are applied by scaling each endpoint's histogram before merging, and percentiles are read from the merged histogram; a blend is never an average of per-endpoint percentiles. Adding a blend needs no re-measurement, only a re-run of harness/summarize.py over samples already on disk.",
   "default_weight": 1,
   "blends": {
     "uniform": {
@@ -11,19 +11,20 @@
     },
     "rankable": {
       "title": "Rankable",
-      "why": "Uniform with the one family that cannot be compared across languages removed. Template output is partly an engine benchmark, so a cross-language ranking that includes it is measuring Thymeleaf against html/template.",
-      "weights": { "template.small": 0, "template.medium": 0 }
+      "why": "Uniform with every family that is not comparable across frameworks removed. Template output is partly an engine benchmark, so a ranking that includes it measures Thymeleaf against html/template; a response cache is partly a store benchmark, and several targets run a package chosen for them rather than one the framework ships.",
+      "derive": { "comparable": "frameworks" }
     },
     "core": {
       "title": "Core",
       "why": "What blend-v1 covered: dispatch, serialization, routing, body handling, query parsing, application work and errors, with every feature family zeroed. The old series has no successor that carries its numbers, but this one carries its shape.",
       "weights": {
         "authorized.allowed": 0, "authorized.denied": 0,
-        "compressed.identity_small": 0, "compressed.identity_medium": 0,
-        "compressed.identity_large": 0,
-        "compressed.gzip_small": 0, "compressed.gzip_medium": 0,
-        "compressed.gzip_large": 0,
-        "cached.small": 0, "cached.medium": 0, "cached.large": 0, "cached.revalidate": 0,
+        "compressed.identity_small": 0, "compressed.identity_large": 0,
+        "compressed.gzip_small": 0, "compressed.gzip_large": 0,
+        "etag.small": 0, "etag.large": 0,
+        "etag.match_large": 0, "etag.stale_large": 0,
+        "cache.small": 0, "cache.medium": 0, "cache.large": 0,
+        "cache.vary_one": 0, "cache.vary_many": 0,
         "headers.few": 0, "headers.many": 0,
         "middleware.none": 0, "middleware.four": 0, "middleware.sixteen": 0,
         "template.small": 0, "template.medium": 0

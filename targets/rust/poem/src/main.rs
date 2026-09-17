@@ -17,6 +17,16 @@ use poem::{
     Body, Endpoint, EndpointExt, IntoResponse, Request, Response, Route, Server,
 };
 use rb_domain as d;
+
+/// The header names the vary rows are keyed on, as the fixture pins them. Written out here
+/// rather than read from it, because the closures below take a &'static and the values are
+/// the same constants harness/make_fixture.py asserts the key count from.
+const VARY_ONE: &[&str] = &["x-rb-tenant"];
+const VARY_MANY: &[&str] = &["x-rb-channel", "x-rb-region", "x-rb-tenant"];
+
+/// One store for the target, sized from the fixture.
+static CACHE: std::sync::LazyLock<d::ResponseStore> =
+    std::sync::LazyLock::new(d::ResponseStore::new);
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -239,28 +249,79 @@ async fn main() -> Result<(), std::io::Error> {
         .with(Compression::new())
     };
 
-    // The ETag is pinned in the fixture, so what this measures is emitting the header and
-    // comparing it rather than hashing a body. The comparison requires a non-empty header:
-    // matching a missing if-none-match against an empty ETag answers 304 to a client that
-    // never asked a conditional question.
-    let cached_route = |size: &'static str| {
+    // etag: middleware on the route, which is poem's own scoping.
+    //
+    // Poem ships no conditional handling, so the digest is the shared one and /__meta says
+    // so. An Endpoint::with on the whole app would hash every response in the blend and
+    // contaminate the rows this family is measured against.
+    //
+    // Shallow, which is the point: the handler runs and the body is built before anything
+    // is compared, so the 304 saves the write and nothing else.
+    let etag_route = |size: &'static str| {
         get(make(move |req: Request| async move {
-            let etag = d::etag_of(size);
-            let inm = req
+            let asked = req
                 .headers()
                 .get(header::IF_NONE_MATCH)
                 .and_then(|v| v.to_str().ok())
-                .unwrap_or("");
-            let fresh = !inm.is_empty() && inm == etag;
-            let base = if fresh {
+                .map(str::to_string);
+            let raw = serde_json::to_vec(d::payload(size)).unwrap_or_default();
+            let etag = d::content_etag(&raw);
+            let base = if asked.as_deref() == Some(etag.as_str()) {
                 Response::builder().status(StatusCode::NOT_MODIFIED).body(Body::empty())
             } else {
-                Json(d::payload(size)).into_response()
+                Response::builder()
+                    .content_type("application/json")
+                    .body(Body::from(raw))
             };
             base.with_header(header::ETAG, etag)
                 .with_header(header::CACHE_CONTROL, d::CACHEABLE)
                 .with_header("x-rb-serial", d::next_serial())
                 .into_response()
+        }))
+    };
+
+    // cache: the store consulted before the payload is built.
+    //
+    // Poem ships no response cache, so the store is the shared LRU sized from the fixture.
+    // One store for the target rather than one per route, so the capacity the fixture
+    // derives from the key count means what it says.
+    let cache_route = |size: &'static str, on: &'static [&'static str]| {
+        get(make(move |req: Request| async move {
+            let values: Vec<String> = on
+                .iter()
+                .map(|name| {
+                    req.headers()
+                        .get(*name)
+                        .and_then(|v| v.to_str().ok())
+                        .unwrap_or("")
+                        .to_string()
+                })
+                .collect();
+            let key = d::cache_key(req.uri().path(), &values);
+            let hit = match CACHE.get(&key) {
+                Some(hit) => hit,
+                None => {
+                    let mut headers =
+                        vec![("x-rb-serial".to_string(), d::next_serial())];
+                    if !on.is_empty() {
+                        headers.push(("vary".to_string(), on.join(", ")));
+                    }
+                    let fresh = d::StoredResponse {
+                        status: 200,
+                        headers,
+                        body: serde_json::to_vec(d::payload(size)).unwrap_or_default(),
+                    };
+                    CACHE.put(key, fresh.clone());
+                    fresh
+                }
+            };
+            let mut builder = Response::builder()
+                .status(StatusCode::from_u16(hit.status).unwrap_or(StatusCode::OK))
+                .content_type("application/json");
+            for (name, value) in hit.headers {
+                builder = builder.header(name, value);
+            }
+            builder.body(Body::from(hit.body)).into_response()
         }))
     };
 
@@ -310,9 +371,16 @@ async fn main() -> Result<(), std::io::Error> {
         .at("/compressed/small", compressed_route("small"))
         .at("/compressed/medium", compressed_route("medium"))
         .at("/compressed/large", compressed_route("large"))
-        .at("/cached/small", cached_route("small"))
-        .at("/cached/medium", cached_route("medium"))
-        .at("/cached/large", cached_route("large"))
+        // rb:snippet etag.small etag.large etag.match_large etag.stale_large
+        .at("/etag/small", etag_route("small"))
+        .at("/etag/large", etag_route("large"))
+        // rb:snippet cache.small cache.medium cache.large
+        .at("/cache/small", cache_route("small", &[]))
+        .at("/cache/medium", cache_route("medium", &[]))
+        .at("/cache/large", cache_route("large", &[]))
+        // rb:snippet cache.vary_one cache.vary_many
+        .at("/cache/vary/one", cache_route("small", VARY_ONE))
+        .at("/cache/vary/many", cache_route("small", VARY_MANY))
         .at("/template/small", template_route("small"))
         .at("/template/medium", template_route("medium"))
         // bind parses and binds without validating, so validate minus bind is the

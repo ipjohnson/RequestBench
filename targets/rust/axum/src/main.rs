@@ -188,6 +188,12 @@ async fn health() -> impl IntoResponse {
     ([(header::CONTENT_TYPE, "text/plain; charset=utf-8")], "ok")
 }
 
+/// The header names the vary rows are keyed on, as the fixture pins them. Written out here
+/// rather than read from it, because a tower layer takes a &'static and the values are the
+/// same constants harness/make_fixture.py asserts the key count from.
+const VARY_ONE: &[&str] = &["x-rb-tenant"];
+const VARY_MANY: &[&str] = &["x-rb-channel", "x-rb-region", "x-rb-tenant"];
+
 async fn meta() -> Json<Value> {
     Json(rb_host::meta("axum", "askama"))
 }
@@ -227,25 +233,110 @@ fn compressed_route(size: &'static str) -> MethodRouter {
     )
 }
 
-/// Sets the validators and answers the conditional. The ETag is pinned in the fixture, so
-/// what this measures is emitting the header and comparing it rather than hashing a body.
+/// etag: a tower layer on these routes and nowhere else.
 ///
-/// The comparison requires a non-empty header: matching a missing `if-none-match` against
-/// an empty ETag answers 304 to a client that never asked a conditional question.
-fn cached_route(size: &'static str) -> MethodRouter {
-    get(move |headers: HeaderMap| async move {
-        let etag = d::etag_of(size);
-        let hdrs = [
-            (header::ETAG, etag.to_string()),
-            (header::CACHE_CONTROL, d::CACHEABLE.to_string()),
-            (header::HeaderName::from_static("x-rb-serial"), d::next_serial()),
-        ];
-        let inm = headers.get(header::IF_NONE_MATCH).and_then(|v| v.to_str().ok()).unwrap_or("");
-        if !inm.is_empty() && inm == etag {
-            return (StatusCode::NOT_MODIFIED, hdrs).into_response();
-        }
-        (hdrs, Json(d::payload(size))).into_response()
+/// Neither axum nor tower-http computes a validator for a dynamic response, so the digest
+/// is the shared one and `/__meta` says so. What is axum's own is the layer and where it is
+/// attached: a `Router::layer` on the whole router would hash every response in the blend
+/// and contaminate the rows this family is measured against.
+///
+/// Shallow, which is the point: the handler runs and the body is built before anything is
+/// compared, so the 304 saves the write and nothing else.
+async fn revalidate(request: Request, next: Next) -> Response {
+    let asked = request
+        .headers()
+        .get(header::IF_NONE_MATCH)
+        .and_then(|v| v.to_str().ok())
+        .map(str::to_string);
+    let response = next.run(request).await;
+    let (mut parts, body) = response.into_parts();
+    let raw = axum::body::to_bytes(body, usize::MAX).await.unwrap_or_default();
+    let etag = d::content_etag(&raw);
+    parts.headers.insert(header::ETAG, etag.parse().unwrap());
+    parts.headers.insert(header::CACHE_CONTROL, d::CACHEABLE.parse().unwrap());
+    if asked.as_deref() == Some(etag.as_str()) {
+        parts.status = StatusCode::NOT_MODIFIED;
+        parts.headers.remove(header::CONTENT_TYPE);
+        parts.headers.remove(header::CONTENT_LENGTH);
+        return Response::from_parts(parts, axum::body::Body::empty());
+    }
+    Response::from_parts(parts, axum::body::Body::from(raw))
+}
+
+fn etag_route(size: &'static str) -> MethodRouter {
+    get(move || async move {
+        (
+            [(header::HeaderName::from_static("x-rb-serial"), d::next_serial())],
+            Json(d::payload(size)),
+        )
     })
+    .layer(from_fn(revalidate))
+}
+
+/// cache: a tower layer that answers from the store before the handler is reached.
+///
+/// axum ships no response cache, so the store is the shared LRU sized from the fixture.
+/// One store for the target rather than one per route, so the capacity the fixture derives
+/// from the key count means what it says.
+static CACHE: std::sync::LazyLock<d::ResponseStore> =
+    std::sync::LazyLock::new(d::ResponseStore::new);
+
+async fn replay(on: &'static [&'static str], request: Request, next: Next) -> Response {
+    let values: Vec<String> = on
+        .iter()
+        .map(|name| {
+            request
+                .headers()
+                .get(*name)
+                .and_then(|v| v.to_str().ok())
+                .unwrap_or("")
+                .to_string()
+        })
+        .collect();
+    let key = d::cache_key(request.uri().path(), &values);
+    if let Some(hit) = CACHE.get(&key) {
+        let mut response = Response::new(axum::body::Body::from(hit.body));
+        *response.status_mut() = StatusCode::from_u16(hit.status).unwrap_or(StatusCode::OK);
+        for (name, value) in &hit.headers {
+            if let (Ok(n), Ok(v)) = (name.parse::<header::HeaderName>(), value.parse()) {
+                response.headers_mut().insert(n, v);
+            }
+        }
+        return response;
+    }
+    let response = next.run(request).await;
+    let (parts, body) = response.into_parts();
+    let raw = axum::body::to_bytes(body, usize::MAX).await.unwrap_or_default();
+    if parts.status == StatusCode::OK {
+        CACHE.put(
+            key,
+            d::StoredResponse {
+                status: 200,
+                headers: parts
+                    .headers
+                    .iter()
+                    .map(|(n, v)| (n.as_str().to_string(), v.to_str().unwrap_or("").to_string()))
+                    .collect(),
+                body: raw.to_vec(),
+            },
+        );
+    }
+    Response::from_parts(parts, axum::body::Body::from(raw))
+}
+
+fn cache_route(size: &'static str, on: &'static [&'static str]) -> MethodRouter {
+    get(move || async move {
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            header::HeaderName::from_static("x-rb-serial"),
+            d::next_serial().parse().unwrap(),
+        );
+        if !on.is_empty() {
+            headers.insert(header::VARY, on.join(", ").parse().unwrap());
+        }
+        (headers, Json(d::payload(size))).into_response()
+    })
+    .layer(from_fn(move |request, next| replay(on, request, next)))
 }
 
 fn template_route(size: &'static str) -> MethodRouter {
@@ -303,9 +394,16 @@ async fn main() {
         .route("/compressed/small", compressed_route("small"))
         .route("/compressed/medium", compressed_route("medium"))
         .route("/compressed/large", compressed_route("large"))
-        .route("/cached/small", cached_route("small"))
-        .route("/cached/medium", cached_route("medium"))
-        .route("/cached/large", cached_route("large"))
+        // rb:snippet etag.small etag.large etag.match_large etag.stale_large
+        .route("/etag/small", etag_route("small"))
+        .route("/etag/large", etag_route("large"))
+        // rb:snippet cache.small cache.medium cache.large
+        .route("/cache/small", cache_route("small", &[]))
+        .route("/cache/medium", cache_route("medium", &[]))
+        .route("/cache/large", cache_route("large", &[]))
+        // rb:snippet cache.vary_one cache.vary_many
+        .route("/cache/vary/one", cache_route("small", VARY_ONE))
+        .route("/cache/vary/many", cache_route("small", VARY_MANY))
         .route("/template/small", template_route("small"))
         .route("/template/medium", template_route("medium"))
         // bind parses and binds without validating, so validate minus bind is the

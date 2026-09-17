@@ -8,12 +8,14 @@
 package main
 
 import (
+	"bytes"
 	_ "embed"
 	"errors"
 	"html/template"
 	"log"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
@@ -62,24 +64,80 @@ func layers(n int) []gin.HandlerFunc {
 	return out
 }
 
-// validatorsFor sets the cache headers and answers the conditional for one size. The ETag
-// is pinned in the fixture, so what this measures is emitting the header and comparing it
-// rather than hashing the body; hash cost belongs in Suite B's static-content suite.
+// revalidates hashes the body the handler wrote and answers the conditional. Gin ships no
+// ETag and neither does net/http under it, so the digest is the shared one and /__meta says
+// so; what is Gin's own is the middleware being on this group's routes and nowhere else.
 //
-// The size is closed over rather than read back out of the path, and the comparison
-// requires a non-empty header. Matching a missing if-none-match against an empty ETag
-// answers 304 to a client that never asked a conditional question.
-func validatorsFor(size string) gin.HandlerFunc {
-	etag := d.ETagOf(size)
+// Shallow, which is the point: the handler runs and the body is written into the buffer
+// before anything is compared, so the 304 saves the write and nothing else.
+func revalidates() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.Header("etag", etag)
-		c.Header("cache-control", d.Cacheable)
-		c.Header("x-rb-serial", d.NextSerial())
-		if inm := c.GetHeader("if-none-match"); inm != "" && inm == etag {
-			c.AbortWithStatus(304)
+		buffer := &bodyCapture{ResponseWriter: c.Writer}
+		c.Writer = buffer
+		c.Next()
+		body := buffer.buf.Bytes()
+		etag := d.ContentETag(body)
+		header := buffer.ResponseWriter.Header()
+		header.Set("etag", etag)
+		header.Set("cache-control", d.Cacheable)
+		if c.GetHeader("if-none-match") == etag {
+			header.Del("content-type")
+			buffer.ResponseWriter.WriteHeader(304)
 			return
 		}
+		buffer.ResponseWriter.WriteHeader(buffer.status)
+		_, _ = buffer.ResponseWriter.Write(body)
+	}
+}
+
+// bodyCapture holds the response until the middleware above has hashed it. Gin writes
+// through its own ResponseWriter, so swapping it is how a middleware gets at the bytes.
+type bodyCapture struct {
+	gin.ResponseWriter
+	buf    bytes.Buffer
+	status int
+}
+
+func (b *bodyCapture) WriteHeader(status int) { b.status = status }
+func (b *bodyCapture) Write(p []byte) (int, error) {
+	if b.status == 0 {
+		b.status = 200
+	}
+	return b.buf.Write(p)
+}
+func (b *bodyCapture) WriteString(s string) (int, error) { return b.Write([]byte(s)) }
+
+// replays answers from the store before the handler is reached, and stores what the handler
+// wrote when it is not there. Gin ships no response cache, so the store is the shared LRU
+// sized from the fixture and the wiring is one Gin handler in front of the route.
+func replays(store *d.Store, on []string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		values := make([]string, len(on))
+		for i, name := range on {
+			values[i] = c.GetHeader(name)
+		}
+		key := d.CacheKey(c.Request.URL.Path, values)
+		if hit, ok := store.Get(key); ok {
+			for name, vs := range hit.Header {
+				for _, v := range vs {
+					c.Writer.Header().Add(name, v)
+				}
+			}
+			c.Writer.WriteHeader(hit.Status)
+			_, _ = c.Writer.Write(hit.Body)
+			c.Abort()
+			return
+		}
+		buffer := &bodyCapture{ResponseWriter: c.Writer}
+		c.Writer = buffer
 		c.Next()
+		body := buffer.buf.Bytes()
+		header := buffer.ResponseWriter.Header()
+		if buffer.status == 200 {
+			store.Set(key, d.Stored{Status: 200, Header: header.Clone(), Body: body})
+		}
+		buffer.ResponseWriter.WriteHeader(buffer.status)
+		_, _ = buffer.ResponseWriter.Write(body)
 	}
 }
 
@@ -118,7 +176,8 @@ func main() {
 	r.GET("/plaintext", func(c *gin.Context) { c.String(200, "Hello, World!") })
 	r.GET("/health", func(c *gin.Context) { c.String(200, "ok") })
 	r.GET("/__meta", func(c *gin.Context) {
-		c.JSON(200, hosts.Meta("gin", gin.Version, "html/template"))
+		c.JSON(200, hosts.Meta("gin", gin.Version, "html/template",
+			"sha1 (gin ships no conditional handling)", "gin middleware over a shared LRU"))
 	})
 
 	// Static routes, not /json/:size. The size set is fixed, so a capture would make Gin
@@ -180,12 +239,42 @@ func main() {
 	}
 	// rb:snippet-end
 
-	// ---- cached: validator headers and the conditional, scoped the same way ---------
+	// ---- etag: the conditional on this group's routes and nowhere else --------------
 
-	// rb:snippet cached.small cached.medium cached.large cached.revalidate
-	cached := r.Group("/cached")
+	// rb:snippet etag.small etag.large etag.match_large etag.stale_large
+	conditional := r.Group("/etag", revalidates())
+	for _, size := range []string{"small", "large"} {
+		body := d.Payload(size)
+		conditional.GET("/"+size, func(c *gin.Context) {
+			c.Header("x-rb-serial", d.NextSerial())
+			c.JSON(200, body)
+		})
+	}
+	// rb:snippet-end
+
+	// ---- cache: one store, a handler in front of each route -------------------------
+
+	// One store for the target rather than one per route, so the capacity the fixture
+	// derives from the key count means what it says.
+	store := d.NewStore()
+	// rb:snippet cache.small cache.medium cache.large
 	for _, size := range sizes {
-		cached.GET("/"+size, validatorsFor(size), payload(size))
+		body := d.Payload(size)
+		r.GET("/cache/"+size, replays(store, nil), func(c *gin.Context) {
+			c.Header("x-rb-serial", d.NextSerial())
+			c.JSON(200, body)
+		})
+	}
+	// rb:snippet-end
+	// rb:snippet cache.vary_one cache.vary_many
+	for _, which := range []string{"one", "many"} {
+		on := d.VaryOn(which)
+		body := d.Payload("small")
+		r.GET("/cache/vary/"+which, replays(store, on), func(c *gin.Context) {
+			c.Header("vary", strings.Join(on, ", "))
+			c.Header("x-rb-serial", d.NextSerial())
+			c.JSON(200, body)
+		})
 	}
 	// rb:snippet-end
 

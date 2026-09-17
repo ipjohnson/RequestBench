@@ -61,7 +61,8 @@ def build():
         })
     return {"seed": SEED, "products": products, "reviews": reviews,
             "customers": customers, "orders": orders,
-            "payloads": payloads(), "auth": auth()}
+            "payloads": payloads(), "auth": auth(),
+            "validators": validators(), "cache": cache()}
 
 
 # ---- response payloads ----------------------------------------------------------------
@@ -71,7 +72,8 @@ def build():
 
 def emit(obj):
     """The pinned serialization. Keys ascend, no spaces. Every target must emit exactly
-    these bytes, which is what lets one ETag be correct for all forty-three of them.
+    these bytes, which is what makes the payload the controlled variable every feature
+    family subtracts against.
     Alphabetical order is chosen so `sort_keys=True` in this file already is that order:
     a JS target reproduces it by parse-then-stringify, and a struct-based target
     reproduces it by declaring its fields in the same order."""
@@ -96,12 +98,63 @@ def payloads():
         out[name] = {
             "body": body,
             "bytes": len(wire),
-            # Strong ETag over the exact response bytes. Pinned here rather than computed
-            # per target so `cached.revalidate` can carry a pre-resolved If-None-Match.
-            "etag": '"%s"' % hashlib.sha256(wire.encode()).hexdigest()[:16],
             "html": render(body),
         }
     return out
+
+
+# ---- the etag and cache families -------------------------------------------------------
+# The ETag itself is no longer here. Each framework's own conditional machinery computes
+# the validator, so the value differs by target and a driver reads it off a first response
+# instead of looking it up; see 'two_phase_capture' in spec/endpoints.json. What is still
+# pinned is the tag that must never match, because a stale arm needs a syntactically valid
+# validator that no digest can produce, and that one is the same sixteen zeros everywhere.
+
+STALE_ETAG = '"%s"' % ("0" * 16)
+
+# The values the vary rows send. Pinned rather than drawn, because the count of distinct
+# keys they produce is what every target sizes its response cache against: a store smaller
+# than this evicts inside the measured window and the family reports eviction policy.
+#
+# The names are this repository's own rather than a realistic Accept-Language, because a
+# header a framework treats specially makes the row measure that treatment instead of the
+# key. Django is the one that showed it: cache_page drops Accept-Language from the key
+# whenever USE_I18N is on, on the grounds that the locale suffix already covers it, so a
+# vary row keyed on it answered one stored response for every value sent.
+VARY = {
+    "one": {"x-rb-tenant": ["alpha", "beta"]},
+    "many": {"x-rb-tenant": ["alpha", "beta"],
+             "x-rb-channel": ["web", "app"],
+             "x-rb-region": ["eu", "us"]},
+}
+# Three rows keyed by path alone, then one key per combination on each vary row.
+PATH_KEYS = 3
+# Well past the roughly 600s a target is up for under ladder-v2: 90s of warmup, two 240s
+# rungs and the settles between them. An expiry inside the run puts re-misses in the
+# measured window, which is the likelier footgun of the two.
+TTL_S = 3600
+
+
+def combinations(axes):
+    n = 1
+    for values in axes.values():
+        n *= len(values)
+    return n
+
+
+def cache():
+    keys = PATH_KEYS + sum(combinations(a) for a in VARY.values())
+    assert keys == 13, "the vary set produces %d distinct keys, spec says 13" % keys
+    # Room above the key count rather than a fit: a cap equal to it evicts on the first
+    # collision a store resolves in its own order, and which key is lost would then be an
+    # implementation detail deciding a measurement.
+    capacity = 20
+    assert capacity > keys, "capacity %d does not hold %d keys" % (capacity, keys)
+    return {"capacity": capacity, "keys": keys, "ttl_s": TTL_S, "vary": VARY}
+
+
+def validators():
+    return {"stale": STALE_ETAG}
 
 
 def render(body):
@@ -136,3 +189,5 @@ if __name__ == "__main__":
     print("  products %d  customers %d  orders %d  lines %d"
           % (len(data["products"]), len(data["customers"]), len(data["orders"]),
              sum(len(o["lines"]) for o in data["orders"])))
+    print("  response cache: %d distinct keys, capacity %d, ttl %ds"
+          % (data["cache"]["keys"], data["cache"]["capacity"], data["cache"]["ttl_s"]))

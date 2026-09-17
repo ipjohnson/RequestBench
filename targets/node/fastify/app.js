@@ -9,7 +9,10 @@
 // compressed rows are measured against, which is the whole reason those rows have their
 // own paths instead of riding on /json with an accept-encoding header.
 import Fastify from "fastify";
+import abstractCache from "abstract-cache";
+import caching from "@fastify/caching";
 import compress from "@fastify/compress";
+import etag from "@fastify/etag";
 import view from "@fastify/view";
 import ejs from "ejs";
 import { fileURLToPath } from "node:url";
@@ -21,7 +24,10 @@ import { orderOf, validatesOrder } from "./validation.js";
 import { bindsFilter, bindsMany, bindsOne } from "./query.js";
 
 const meta = { framework: "fastify", version: pkgVersion("fastify"),
-               runtime: "node " + process.versions.node, template: "ejs" };
+               runtime: "node " + process.versions.node, template: "ejs",
+               etag: "@fastify/etag fnv1a",
+               cache: "@fastify/caching " + pkgVersion("@fastify/caching")
+                      + " store, fastify hooks" };
 
 const VIEWS = join(dirname(fileURLToPath(import.meta.url)), "views");
 
@@ -100,27 +106,70 @@ app.register(async (scope) => {
       reply.header("x-rb-serial", d.nextSerial()).send(d.payload(size)));
 });
 
-// ---- cached: validator headers and the conditional, scoped the same way ---------------
+// ---- etag: @fastify/etag, registered in its own encapsulated scope --------------------
 
-// The ETag is pinned in the fixture, so this measures emitting the header and comparing it
-// rather than hashing the body. @fastify/etag would compute its own and could not produce
-// the pinned value, which is why the hook is written out.
+// The plugin hashes the payload Fastify is about to serialize and answers the conditional
+// itself, so nothing here compares anything. Encapsulation is what scopes it: registered on
+// the root instance it would hash every response in the blend and contaminate the baseline
+// these rows subtract. fnv1a is the plugin's own default, which is why /__meta names it.
+// rb:snippet etag.small etag.large etag.match_large etag.stale_large
+app.register(async (scope) => {
+  await scope.register(etag);
+  for (const size of ["small", "large"])
+    scope.get("/etag/" + size, (_, reply) =>
+      reply.header("cache-control", d.CACHEABLE).header("x-rb-serial", d.nextSerial())
+           .send(d.payload(size)));
+});
+
+// ---- cache: the handler skipped and a stored response replayed ------------------------
+
+// Fastify ships no response cache. @fastify/caching is the plugin it ships for caching, and
+// what it contributes is the store: an abstract-cache client, sized here from the fixture
+// so the capacity derived from the key count means what it says. The replay is two of
+// Fastify's own hooks around it, onRequest to answer and onSend to store, which is the
+// framework's own mechanism rather than a lookup inside a handler.
 //
-// The size is closed over per route rather than sliced back out of req.url, which carries
-// the query string: /cached/large?x=1 looked up a payload named "large?x=1" and threw.
-const validators = (size) => {
-  const etag = d.etagOf(size);
-  return (req, reply, done) => {
-    reply.header("etag", etag).header("cache-control", "public, max-age=60")
-         .header("x-rb-serial", d.nextSerial());
-    if (req.headers["if-none-match"] === etag) return reply.code(304).send();
-    done();
+// One consequence worth naming: a hit still enters onRequest, so what is skipped is the
+// handler and the serializer rather than the whole dispatch.
+const store = abstractCache({
+  useAwait: true,
+  driver: { options: { maxItems: d.CACHE_MAX, segment: "rb" } },
+});
+
+const replay = (on) => {
+  const keyOf = (req) =>
+    on.length === 0 ? req.url : req.url + "|" + on.map((h) => req.headers[h] ?? "").join("|");
+  return {
+    onRequest: async (req, reply) => {
+      const hit = await store.get(keyOf(req));
+      if (!hit) return;
+      for (const [k, v] of Object.entries(hit.item.headers)) reply.header(k, v);
+      return reply.code(hit.item.status).send(hit.item.body);
+    },
+    onSend: async (req, reply, payload) => {
+      if (reply.statusCode === 200 && !(await store.has(keyOf(req)))) {
+        await store.set(keyOf(req), {
+          status: 200, headers: reply.getHeaders(), body: payload,
+        }, d.CACHE_TTL_MS);
+      }
+      return payload;
+    },
   };
 };
-// rb:snippet cached.small cached.medium cached.large cached.revalidate
+
 app.register(async (scope) => {
+  await scope.register(caching, { privacy: caching.privacy.PUBLIC, expiresIn: 60 });
+  // rb:snippet cache.small cache.medium cache.large
   for (const size of ["small", "medium", "large"])
-    scope.get("/cached/" + size, { onRequest: validators(size) }, () => d.payload(size));
+    scope.get("/cache/" + size, replay([]),
+      (_, reply) => reply.header("x-rb-serial", d.nextSerial()).send(d.payload(size)));
+  // rb:snippet cache.vary_one cache.vary_many
+  for (const which of ["one", "many"]) {
+    const on = d.varyOn(which);
+    scope.get("/cache/vary/" + which, replay(on), (_, reply) =>
+      reply.header("vary", on.join(", ")).header("x-rb-serial", d.nextSerial())
+           .send(d.payload("small")));
+  }
 });
 
 // ---- body: bind, validate, and the two rejection contracts ---------------------------

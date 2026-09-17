@@ -21,18 +21,39 @@ export type PlanEndpoint = {
   readonly field_errors?: readonly (readonly [string, string])[];
   readonly body?: string;
   readonly headers?: Readonly<Record<string, string>>;
+  /**
+   * One merged header set per combination the vary rows send, instead of one for every
+   * instance. Instance i sends combination i modulo the count, which is what gives the
+   * target's response cache a key per combination to hold.
+   */
+  readonly header_variants?: readonly Readonly<Record<string, string>>[];
+};
+
+/**
+ * A header value that cannot be pre-resolved, because it is whatever the target computed.
+ *
+ * The etag family lets each framework's own machinery produce the validator, so no two
+ * targets need agree on the string and the plan carries a {capture.<name>} placeholder
+ * where a committed value would otherwise sit.
+ */
+export type Capture = {
+  readonly method: string;
+  readonly path: string;
+  readonly header: string;
 };
 
 export type Plan = {
   readonly version: string;
   readonly instances: number;
+  readonly captures?: Readonly<Record<string, Capture>>;
   readonly endpoints: readonly PlanEndpoint[];
 };
 
 /** What a non-error request must answer, pinned exactly. */
 export type ExpectedRequest = {
   readonly status: number;
-  readonly body_class: string;
+  /** null where the field is deliberately not pinned; see the `unpinned` block. */
+  readonly body_class: string | null;
   /** null where the field is deliberately not pinned; see the `unpinned` block. */
   readonly encoding: string | null;
   readonly body: unknown;

@@ -43,7 +43,7 @@ difference and charge every target a handler to hide it.
 
 ## Layout
 
-    spec/endpoints.json   45 endpoints in 13 families, drawn uniformly
+    spec/endpoints.json   48 endpoints in 14 families, drawn uniformly
     spec/blends.json      weight vectors, applied when an aggregate is composed
     spec/ladder.json      two rungs, 1000 and 5000 rps, 240s each
     spec/matrix.json      languages, frameworks, the runtime each is pinned to
@@ -98,7 +98,7 @@ variables narrow it: `LANGUAGES` and `FRAMEWORKS` choose what runs, `FAMILIES` a
 
 Narrowing the endpoint set is not the blend with rows hidden. A runtime optimises for the
 paths it executes, so nine endpoints running alone are hotter than the same nine inside the
-full forty-five, and the numbers are not comparable to a full run. Such a run records
+full forty-eight, and the numbers are not comparable to a full run. Such a run records
 itself as its own profile and the summary carries it, so nothing reads the two together.
 
 The site is built from the same workspace. Summaries live on the orphan `results` branch, so
@@ -154,7 +154,7 @@ Micronaut, Helidon SE, Vert.x and Javalin. Rust has axum, actix-web, Rocket, Poe
 and warp, Python has FastAPI, Starlette, Litestar, Sanic, Flask and Django over ASGI, and
 .NET has minimal APIs, MVC controllers, FastEndpoints, Carter and Wolverine.HTTP.
 
-All thirty-three answer the forty-five endpoints of `blend-v2`, and all thirty-three are
+All thirty-three answer the forty-eight endpoints of `blend-v2`, and all thirty-three are
 checked against `spec/expected.json` rather than against each other. The expectation is
 derived from `node:fastify`, `go:gin`, `rust:axum` and `python:fastapi` — four languages on
 four HTTP stacks — and only values all four produce are written; a disagreement is reported
@@ -184,7 +184,7 @@ The .NET targets take the shared domain through the service collection:
 that every target injects. The domain itself depends on nothing but
 `Microsoft.Extensions.DependencyInjection.Abstractions` — it is behaviour, not a web
 application, and a reference to ASP.NET there would let one leak in. ServiceStack is not in
-the .NET list: its free tier stops at ten operations against an endpoint set of forty-five,
+the .NET list: its free tier stops at ten operations against an endpoint set of forty-eight,
 and `spec/matrix.json` records why.
 
 Python is the first language here where the framework is not the server. Five of the six

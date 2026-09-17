@@ -9,10 +9,12 @@
 use flate2::{write::GzEncoder, Compression};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::collections::HashMap;
+use sha1::{Digest, Sha1};
+use std::collections::{HashMap, VecDeque};
 use std::io::Write;
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::OnceLock;
+use std::sync::{Mutex, OnceLock};
+use std::time::{Duration, Instant};
 
 // ---- fixture ----------------------------------------------------------------
 
@@ -53,8 +55,8 @@ pub struct Order {
     pub lines: Vec<Line>,
 }
 
-/// The response `json.*`, `compressed.*`, `cached.*` and `template.*` all serve. It is the
-/// controlled variable: three fixed bodies that every feature family reuses unchanged, so
+/// The response `json.*`, `compressed.*`, `etag.*`, `cache.*` and `template.*` all serve. It
+/// is the controlled variable: three fixed bodies that every feature family reuses, so
 /// subtracting a base endpoint from its arm leaves the feature and nothing else.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct PayloadBody {
@@ -66,7 +68,19 @@ pub struct PayloadBody {
 #[derive(Clone, Debug, Deserialize)]
 struct PayloadDoc {
     body: PayloadBody,
-    etag: String,
+}
+
+/// What every target sizes its response cache against: the distinct keys the plan sends, a
+/// capacity with room above them, an expiry past the end of a run, and the header values
+/// the vary rows carry. Derived and asserted in `harness/make_fixture.py` rather than chosen
+/// per target, because a store smaller than the key count evicts inside the measured window
+/// and the family would report eviction policy instead of the feature.
+#[derive(Clone, Debug, Default, Deserialize)]
+pub struct CacheDoc {
+    pub capacity: usize,
+    pub keys: usize,
+    pub ttl_s: u64,
+    pub vary: HashMap<String, HashMap<String, Vec<String>>>,
 }
 
 #[derive(Clone, Debug, Default, Deserialize)]
@@ -81,6 +95,7 @@ struct Fixture {
     orders: Vec<Order>,
     payloads: HashMap<String, PayloadDoc>,
     auth: AuthDoc,
+    cache: CacheDoc,
 }
 
 pub struct Data {
@@ -95,6 +110,7 @@ pub struct Data {
     orders_by_id: HashMap<i64, usize>,
     payloads: HashMap<String, PayloadDoc>,
     auth: AuthDoc,
+    cache: CacheDoc,
 }
 
 static DATA: OnceLock<Data> = OnceLock::new();
@@ -119,6 +135,7 @@ pub fn load(path: &str) -> Result<(), String> {
         orders_by_id,
         payloads: f.payloads,
         auth: f.auth,
+        cache: f.cache,
     })
     .map_err(|_| "fixture loaded twice".to_string())
 }
@@ -172,10 +189,116 @@ pub fn payload(size: &str) -> &'static PayloadBody {
     &data().payloads[size].body
 }
 
-/// Pinned in the fixture, so what a target spends is emitting the header and comparing it
-/// rather than hashing a body.
-pub fn etag_of(size: &str) -> &'static str {
-    &data().payloads[size].etag
+// ---- the etag and cache families ---------------------------------------------
+//
+// No ETag value here. Salvo ships a conditional middleware and uses it; the other five
+// frameworks ship none, so they compute the validator over the body they are about to send
+// with the digest below and declare it in `/__meta`. What is shared is the digest and the
+// store, for the same reason `gzip` is: five copies would drift on an algorithm and the
+// drift would read as a framework result.
+
+/// The validator, over the exact response bytes: sha1, quoted and strong, which is what
+/// Werkzeug and the Node ecosystem both reach for.
+pub fn content_etag(body: &[u8]) -> String {
+    let mut hasher = Sha1::new();
+    hasher.update(body);
+    format!("\"{:x}\"", hasher.finalize())
+}
+
+/// What the fixture pins about the response cache every target holds.
+pub fn cache_spec() -> &'static CacheDoc {
+    &data().cache
+}
+
+/// The header names one vary row is keyed on, sorted, so the key a target builds does not
+/// depend on a map's iteration order.
+pub fn vary_on(which: &str) -> Vec<String> {
+    let mut names: Vec<String> = data().cache.vary[which].keys().cloned().collect();
+    names.sort();
+    names
+}
+
+/// One response held in a [`ResponseStore`]: everything needed to write it again.
+#[derive(Clone, Debug)]
+pub struct StoredResponse {
+    pub status: u16,
+    pub headers: Vec<(String, String)>,
+    pub body: Vec<u8>,
+}
+
+/// The response cache a target holds when its framework ships none.
+///
+/// An LRU with a per-entry expiry, sized from the fixture. Capped rather than unbounded
+/// because the point of the capacity is that nothing evicts inside a run, and a cap the key
+/// count fits under says that out loud where an unbounded map would only happen to be true.
+pub struct ResponseStore {
+    inner: Mutex<StoreInner>,
+    ttl: Duration,
+    capacity: usize,
+}
+
+struct StoreInner {
+    entries: HashMap<String, (StoredResponse, Instant)>,
+    /// Least recently used first, so the front is what a full store drops.
+    order: VecDeque<String>,
+}
+
+impl ResponseStore {
+    pub fn new() -> Self {
+        let spec = cache_spec();
+        Self {
+            inner: Mutex::new(StoreInner {
+                entries: HashMap::with_capacity(spec.capacity),
+                order: VecDeque::with_capacity(spec.capacity),
+            }),
+            ttl: Duration::from_secs(spec.ttl_s),
+            capacity: spec.capacity,
+        }
+    }
+
+    pub fn get(&self, key: &str) -> Option<StoredResponse> {
+        let mut inner = self.inner.lock().ok()?;
+        let expired = match inner.entries.get(key) {
+            Some((_, stored_at)) => stored_at.elapsed() > self.ttl,
+            None => return None,
+        };
+        if expired {
+            inner.entries.remove(key);
+            inner.order.retain(|k| k != key);
+            return None;
+        }
+        inner.order.retain(|k| k != key);
+        inner.order.push_back(key.to_string());
+        inner.entries.get(key).map(|(v, _)| v.clone())
+    }
+
+    pub fn put(&self, key: String, value: StoredResponse) {
+        let Ok(mut inner) = self.inner.lock() else { return };
+        inner.order.retain(|k| *k != key);
+        inner.order.push_back(key.clone());
+        inner.entries.insert(key, (value, Instant::now()));
+        while inner.order.len() > self.capacity {
+            if let Some(oldest) = inner.order.pop_front() {
+                inner.entries.remove(&oldest);
+            }
+        }
+    }
+}
+
+impl Default for ResponseStore {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+/// The path plus the value of each header this route is keyed on.
+pub fn cache_key(path: &str, values: &[String]) -> String {
+    let mut key = String::from(path);
+    for v in values {
+        key.push('|');
+        key.push_str(v);
+    }
+    key
 }
 
 /// Pinned across every language. Compression cost is dominated by codec and level, not by

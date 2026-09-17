@@ -40,6 +40,7 @@ public final class Domain {
   private static Map<String, List<Customer>> customersByRegion = Map.of();
   private static Map<String, PayloadDoc> payloads = Map.of();
   private static AuthDoc auth = new AuthDoc("", "");
+  private static CacheDoc cache = new CacheDoc(0, 0, 0, Map.of());
   private static final AtomicLong serial = new AtomicLong();
 
   /**
@@ -53,7 +54,7 @@ public final class Domain {
   @com.fasterxml.jackson.annotation.JsonIgnoreProperties(ignoreUnknown = true)
   private record Fixture(List<Product> products, List<Customer> customers,
                          List<Order> orders, Map<String, List<Review>> reviews,
-                         Map<String, PayloadDoc> payloads, AuthDoc auth) {}
+                         Map<String, PayloadDoc> payloads, AuthDoc auth, CacheDoc cache) {}
 
   public static void load(String path) throws IOException {
     Fixture f = Json.MAPPER.readValue(Files.readAllBytes(Path.of(path)), Fixture.class);
@@ -91,6 +92,7 @@ public final class Domain {
 
     payloads = f.payloads();
     auth = f.auth();
+    cache = f.cache();
   }
 
   /** Node parses with Number(); a non-numeric id is simply not found. */
@@ -431,12 +433,52 @@ public final class Domain {
     return payloads.get(size).body();
   }
 
+  // ---- the etag and cache families ------------------------------------------------
+  //
+  // No ETag value here. Each framework's own conditional machinery computes the validator
+  // from the body it is about to send where it has one, and where it does not the target
+  // holds the digest below. Either way /__meta says which ran.
+
   /**
-   * Pinned in the fixture, so what a target spends is emitting the header and comparing it
-   * rather than hashing a body.
+   * The validator, over the exact response bytes: sha1, quoted and strong, which is what
+   * Werkzeug and the Node ecosystem both reach for. Spelled once so the targets whose
+   * framework computes nothing cannot drift on an algorithm and have it read as a
+   * framework result, the same reason gzip below is here.
    */
-  public static String etagOf(String size) {
-    return payloads.get(size).etag();
+  public static String contentETag(byte[] body) {
+    return '"' + contentETagValue(body) + '"';
+  }
+
+  /**
+   * The same digest without the quotes, for a framework that takes the value and writes the
+   * quoting itself. JAX-RS's EntityTag is the one that does.
+   */
+  public static String contentETagValue(byte[] body) {
+    try {
+      byte[] sum = java.security.MessageDigest.getInstance("SHA-1").digest(body);
+      StringBuilder out = new StringBuilder(sum.length * 2);
+      for (byte b : sum) {
+        out.append(Character.forDigit((b >> 4) & 0xF, 16)).append(Character.forDigit(b & 0xF, 16));
+      }
+      return out.toString();
+    } catch (java.security.NoSuchAlgorithmException e) {
+      throw new IllegalStateException("sha-1 is required by every JRE", e);
+    }
+  }
+
+  /** What the fixture pins about the response cache every target holds. */
+  public static CacheDoc cache() {
+    return cache;
+  }
+
+  /**
+   * The header names one vary row is keyed on, in the fixture's order. Sorted, so the key
+   * a target builds does not depend on a map's iteration order.
+   */
+  public static List<String> varyOn(String which) {
+    List<String> names = new ArrayList<>(cache.vary().get(which).keySet());
+    java.util.Collections.sort(names);
+    return names;
   }
 
   /**

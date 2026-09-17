@@ -32,6 +32,8 @@ func meta() fiber.Map {
 		"runtime":   runtime.Version(),
 		"adapter":   "",
 		"template":  "html/template",
+		"etag":      "fiber/middleware/etag strong sha1",
+		"cache":     "fiber/middleware/cache in-memory",
 	}
 }
 

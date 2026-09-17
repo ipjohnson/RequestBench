@@ -10,12 +10,12 @@
 // drift.
 import { comparable, firstDifference, type Comparable } from "./compare.js";
 import {
-  advanced, checkHeaders, decoded, framing, headerBytes, isFreshnessChecked, serialOf,
-  type Encoding, type Header,
+  advanced, cacheKeyOf, canProveFreshness, checkHeaders, decoded, framing, headerBytes,
+  isFreshnessChecked, isReplayChecked, repeated, serialOf, type Encoding, type Header,
 } from "./checks.js";
 import { askFor, isError, keysOf, statusesOf, type Plan, type PlanEndpoint } from "./spec.js";
 import { errorProblem } from "./exceptions.js";
-import { Replay, answerOf, requestHeaders } from "./replay.js";
+import { Replay, answerOf } from "./replay.js";
 
 export type Exemplar = {
   endpoint: string; family: string;
@@ -79,13 +79,28 @@ export async function gate(
 
   const meta = await run.meta();
 
-  for await (const { ep, visits } of run.endpoints()) {
+  for await (const { ep, visits, why: unsendable } of run.endpoints()) {
     const body = ep.body;
-    const headers = requestHeaders(ep);
     // What the endpoint declares. On an error endpoint this is the default the framework's
     // package starts from rather than what the gate enforces; see `accepts` below.
     const allowed = new Set(statusesOf(ep));
+    // Two opposite readings of one counter. On every other family a stored response is a
+    // fault and the serial has to advance; on the cache family a stored response is the
+    // feature and the serial has to repeat, per key, for as long as the entry lives.
     const fresh = isFreshnessChecked(ep.id) && !opts.skipHeaders;
+    const replayed = isReplayChecked(ep.id) && !opts.skipHeaders;
+    /** The serial each distinct cache key answered with the first time it was asked. */
+    const stored = new Map<string, number>();
+    /**
+     * Whether a replayed response has had its headers checked yet.
+     *
+     * The check below runs once per endpoint, on the first response that arrived, and on a
+     * cache row that response is the one the handler built. What a store writes back is a
+     * different response, and the two can disagree: Sanic writes the content type from the
+     * response object rather than from the header map, so a replay built from the headers
+     * alone went out as application/octet-stream and a cold store hid it.
+     */
+    let replayChecked = opts.skipHeaders ?? false;
     // An error envelope is the framework's own contract, so this endpoint's body is judged
     // against the schema the framework declared and never compared against the reference.
     // Two frameworks answering ProblemDetails and an ErrorResponse are not in disagreement,
@@ -114,9 +129,22 @@ export async function gate(
       // Only a response that actually arrived with the right status may define the
       // endpoint's comparison; otherwise a single early hiccup gets recorded as the
       // reference body and every later comparison reports drift that is not real.
-      if (fresh && accepts(status)) {
+      if (fresh && accepts(status) && canProveFreshness(status)) {
         stale ??= advanced(hdrs, lastSerial);
         lastSerial = serialOf(hdrs, lastSerial);
+      }
+      if (replayed && accepts(status)) {
+        const key = cacheKeyOf(visit.path, visit.sent);
+        const first = stored.get(key);
+        stale ??= repeated(hdrs, first ?? null);
+        const got = serialOf(hdrs, null);
+        if (first === undefined && got !== null) stored.set(key, got);
+        else if (!replayChecked) {
+          replayChecked = true;
+          for (const msg of checkHeaders(status, hdrs, raw, encoding)) {
+            headerProblems.push([ep.id, `replayed: ${msg}`]);
+          }
+        }
       }
       // Every instance, not just the first of each path: a framework that answers a
       // different envelope once it has warmed up is exactly what this is here to catch, and
@@ -136,7 +164,7 @@ export async function gate(
             endpoint: ep.id, family: ep.family,
             request: {
               method: ep.method, path,
-              headers: Object.entries(headers).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)),
+              headers: Object.entries(visit.sent).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)),
               body: body ? body.slice(0, 2048) : null,
               body_bytes: body ? Buffer.byteLength(body, "utf8") : 0,
             },
@@ -150,8 +178,19 @@ export async function gate(
       }
     }
 
+    // Every distinct key the plan sent has to have its own stored response. A store that
+    // ignores a vary header answers one of them for several keys, which passes the
+    // per-key comparison above -- the requests sharing a key here shared one there too --
+    // and shows up only as fewer distinct serials than keys asked.
+    if (replayed && stale === null) {
+      const distinct = new Set(stored.values()).size;
+      if (stored.size > 0 && distinct !== stored.size) {
+        stale = `${stored.size} distinct cache key(s) sent, ${distinct} stored response(s) `
+          + "answered (the store is not keyed on everything the row varies)";
+      }
+    }
     const instances = visits.length;
-    const ok = [...seen.keys()].every(accepts) && seen.size === 1
+    const ok = unsendable === null && [...seen.keys()].every(accepts) && seen.size === 1
       && stale === null && envelope === null;
     let note: string | null = null;
     if (opts.reference && !carriesError) {
@@ -164,7 +203,8 @@ export async function gate(
     }
     const result: EndpointResult = {
       id: ep.id, method: ep.method, instances, ok, seen,
-      why: ok ? null : (bad ?? stale ?? envelope ?? `mixed statuses ${dictRepr(seen)}`),
+      why: ok ? null
+        : (unsendable ?? bad ?? stale ?? envelope ?? `mixed statuses ${dictRepr(seen)}`),
       drift: note,
     };
     results.push(result);

@@ -15,6 +15,7 @@ take the route's own path out of the source, which is where harness/snippets.py 
 """
 import pathlib
 
+from cachetools import TTLCache
 from sanic import Blueprint, Sanic, response
 from sanic.exceptions import NotFound as RouteMiss
 from sanic.exceptions import SanicException
@@ -121,7 +122,10 @@ app.config.TEMPLATING_PATH_TO_TEMPLATES = str(
     pathlib.Path(__file__).resolve().parent / "templates")
 
 META = host.meta("sanic", adapter="sanic",
-                 template="jinja2 " + host.dist_version("jinja2"))
+                 template="jinja2 " + host.dist_version("jinja2"),
+                 etag="sha1 (sanic ships no conditional handling)",
+                 cache="sanic blueprint middleware over cachetools "
+                       + host.dist_version("cachetools"))
 
 
 def body_of(request):
@@ -303,29 +307,95 @@ for _size in ("small", "medium", "large"):
         compressed_route(_size))
 
 
-# ---- cached: validator headers and the conditional -----------------------------------
+# ---- etag: a response middleware on its own blueprint --------------------------------
+#
+# Sanic ships no conditional-request handling: nothing in it computes a validator or reads
+# if-none-match. So the digest is the shared one, declared in /__meta, and what is Sanic's
+# own is the scoping -- blueprint middleware, the same way the compressed rows get theirs.
+# Shallow, which is the point: the handler has already built the body by the time this runs.
 
-def cached_route(size):
-    """The ETag is pinned in the fixture, so this measures emitting the header and
-    comparing it rather than hashing the body.
+conditional = Blueprint("conditional")
 
-    The comparison requires a non-empty header: matching a missing if-none-match against an
-    empty ETag answers 304 to a client that never asked a conditional question.
-    """
-    etag = d.etag_of(size)
 
-    async def handler(request):
-        validators = {"etag": etag, "cache-control": d.CACHEABLE,
-                      "x-rb-serial": d.next_serial()}
-        if request.headers.get("if-none-match") == etag:
-            return response.empty(status=304, headers=validators)
-        return response.json(d.payload(size), headers=validators)
+@conditional.on_response
+async def revalidate(request, res):
+    etag = d.content_etag(res.body)
+    res.headers["etag"] = etag
+    res.headers["cache-control"] = d.CACHEABLE
+    if request.headers.get("if-none-match") == etag:
+        res.status = 304
+        res.body = b""
+        # A 304 carries neither, and Sanic writes the content-type from the response type
+        # rather than from the header map, so only one of the two is always there to drop.
+        res.headers.pop("content-type", None)
+        res.headers.pop("content-length", None)
+
+
+def etag_route(size):
+    async def handler(_):
+        return response.json(d.payload(size), headers={"x-rb-serial": d.next_serial()})
     return handler
 
 
-# rb:snippet cached.small cached.medium cached.large cached.revalidate
+# rb:snippet etag.small etag.large etag.match_large etag.stale_large
+for _size in ("small", "large"):
+    conditional.get("/etag/" + _size, name="etag_" + _size)(etag_route(_size))
+
+
+# ---- cache: a request and a response middleware on one blueprint ----------------------
+#
+# Sanic ships no response cache either, so the store is an LRU sized from the fixture and
+# the wiring is a pair of blueprint middlewares around it: one answers from the store before
+# the handler is reached, the other stores what the handler produced. One store for the
+# blueprint, so the capacity derived from the key count means what it says.
+
+cached = Blueprint("cached")
+store = TTLCache(maxsize=d.cache_spec()["capacity"], ttl=d.cache_spec()["ttl_s"])
+#: Path to the header names that path is keyed on. Middleware configuration rather than
+#: something a handler decides, which is why it is a table and not an argument.
+VARY = {"/cache/vary/" + which: d.vary_on(which) for which in ("one", "many")}
+
+
+def cache_key(request):
+    return "|".join([request.path,
+                     *(request.headers.get(n, "") for n in VARY.get(request.path, ()))])
+
+
+@cached.on_request
+async def replay(request):
+    hit = store.get(cache_key(request))
+    if hit is not None:
+        body, content_type, headers = hit
+        return response.raw(body, status=200, content_type=content_type, headers=headers)
+
+
+@cached.on_response
+async def keep(request, res):
+    key = cache_key(request)
+    if res.status == 200 and key not in store:
+        # The content type is stored beside the headers rather than inside them: Sanic
+        # writes it from the response object, so res.headers does not carry it and a
+        # replay built from them alone goes out as application/octet-stream.
+        store[key] = (res.body, res.content_type, dict(res.headers))
+
+
+def cache_route(size, vary=()):
+    headers = {"vary": ", ".join(vary)} if vary else {}
+
+    async def handler(_):
+        return response.json(d.payload(size),
+                             headers={**headers, "x-rb-serial": d.next_serial()})
+    return handler
+
+
+# rb:snippet cache.small cache.medium cache.large
 for _size in ("small", "medium", "large"):
-    app.get("/cached/" + _size, name="cached_" + _size)(cached_route(_size))
+    cached.get("/cache/" + _size, name="cache_" + _size)(cache_route(_size))
+# rb:snippet cache.vary_one cache.vary_many
+for _which in ("one", "many"):
+    _on = d.vary_on(_which)
+    cached.get("/cache/vary/" + _which, name="cache_vary_" + _which)(
+        cache_route("small", _on))
 
 
 # ---- body ----------------------------------------------------------------------------
@@ -455,7 +525,8 @@ async def malformed(_, exc):
     return response.json(not_bound_body(exc.detail), status=400)
 
 
-for _bp in (middleware_none, middleware_four, middleware_sixteen, authorized, compressed):
+for _bp in (middleware_none, middleware_four, middleware_sixteen, authorized, compressed,
+            conditional, cached):
     app.blueprint(_bp)
 
 

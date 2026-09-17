@@ -49,25 +49,96 @@ const LAMBDA_PATH = "/2015-03-31/functions/function/invocations";
 // stays normal -- the exact shape of the bogus 61s and 1186s runs.
 const agent = new http.Agent({ keepAlive: true, maxSockets: 1, noDelay: true });
 
-// The endpoint's own headers plus whatever the body requires. Four families are defined by
-// what the request carries rather than where it points, so dropping these would leave them
-// measuring the wrong thing rather than failing.
-function reqHeaders(ep) {
-  const h = { ...(ep.headers ?? {}) };
-  if (ep.body) {
-    h["content-type"] = "application/json";
-    h["content-length"] = Buffer.byteLength(ep.body);
-  }
-  return Object.keys(h).length ? h : undefined;
+// ---- the two-phase capture ----------------------------------------------------------
+// A matching If-None-Match is whatever this target's own ETag machinery computed, so the
+// plan carries a {capture.<name>} placeholder where every other header carries a literal.
+// Resolved once, before the warmup, and substituted into the header sets built below.
+const PLACEHOLDER = /\{capture\.([a-z_]+)\}/g;
+
+function send(opts, payload) {
+  return new Promise((resolve, reject) => {
+    const req = http.request(opts, (res) => {
+      const chunks = [];
+      res.on("data", (c) => chunks.push(c));
+      res.on("end", () => resolve({ headers: res.headers, body: Buffer.concat(chunks) }));
+    });
+    req.on("error", reject);
+    req.end(payload);
+  });
 }
 
+async function resolveCaptures() {
+  const out = {};
+  for (const [name, cap] of Object.entries(plan.captures ?? {})) {
+    let headers;
+    if (encoding === "http") {
+      ({ headers } = await send({ host, port, path: cap.path, method: cap.method, agent }));
+    } else {
+      // The RIE serves only the invocations endpoint, so the capture goes through the same
+      // envelope every other request does and its headers come back inside the result.
+      const event = asEvent(cap.method, cap.path, undefined);
+      const r = await send({ host, port, path: LAMBDA_PATH, method: "POST", agent,
+                             headers: { "content-type": "application/json",
+                                        "content-length": Buffer.byteLength(event) } }, event);
+      headers = {};
+      for (const [k, v] of Object.entries(JSON.parse(r.body.toString()).headers ?? {})) {
+        headers[k.toLowerCase()] = String(v);
+      }
+    }
+    const value = headers[cap.header.toLowerCase()];
+    if (value === undefined) {
+      throw new Error(`capture ${name}: ${cap.method} ${cap.path} answered no ${cap.header} `
+        + "header, so the conditional arm cannot be sent");
+    }
+    out[name] = value;
+  }
+  return out;
+}
+
+function asEvent(method, path, body) {
+  const qi = path.indexOf("?");
+  const rawPath = qi === -1 ? path : path.slice(0, qi);
+  const query = qi === -1 ? {}
+    : Object.fromEntries(new URLSearchParams(path.slice(qi + 1)));
+  return JSON.stringify({
+    version: "2.0", rawPath, rawQueryString: qi === -1 ? "" : path.slice(qi + 1),
+    queryStringParameters: query,
+    headers: { "content-type": "application/json", host: "rb.invalid" },
+    requestContext: { http: { method, path: rawPath } },
+    body: body ?? undefined, isBase64Encoded: false,
+  });
+}
+
+// The endpoint's own headers plus whatever the body requires, one set per vary combination.
+// Five families are defined by what the request carries rather than where it points, so
+// dropping these would leave them measuring the wrong thing rather than failing.
+function headerSets(ep, captured) {
+  // Only the plan's own values are filled: content-length below is a number, and the body
+  // headers carry no placeholder to fill in anyway.
+  const fill = (h) => Object.fromEntries(Object.entries(h).map(([k, v]) =>
+    [k, v.replace(PLACEHOLDER, (_, name) => captured[name])]));
+  const body = ep.body
+    ? { "content-type": "application/json", "content-length": Buffer.byteLength(ep.body) }
+    : {};
+  return (ep.header_variants ?? [{}]).map((v) => {
+    const h = { ...fill({ ...(ep.headers ?? {}), ...v }), ...body };
+    return Object.keys(h).length ? h : undefined;
+  });
+}
+
+const captured = await resolveCaptures();
+const headersOf = eps.map((ep) => headerSets(ep, captured));
+
 function build(i) {
-  const ep = eps[epIdx[i % epIdx.length]];
-  const path = ep.paths[inIdx[i % inIdx.length] % ep.paths.length];
+  const idx = epIdx[i % epIdx.length];
+  const ep = eps[idx];
+  const instance = inIdx[i % inIdx.length] % ep.paths.length;
+  const path = ep.paths[instance];
+  const sets = headersOf[idx];
+  const headers = sets[instance % sets.length];
   if (encoding === "http") {
     return {
-      opts: { host, port, path, method: ep.method, agent,
-              headers: reqHeaders(ep) },
+      opts: { host, port, path, method: ep.method, agent, headers },
       payload: ep.body, ep, unwrap: false,
     };
   }
@@ -78,7 +149,7 @@ function build(i) {
   const event = JSON.stringify({
     version: "2.0", rawPath, rawQueryString: qi === -1 ? "" : path.slice(qi + 1),
     queryStringParameters: query,
-    headers: { ...(ep.headers ?? {}), "content-type": "application/json", host: "rb.invalid" },
+    headers: { ...headers, "content-type": "application/json", host: "rb.invalid" },
     requestContext: { http: { method: ep.method, path: rawPath } },
     body: ep.body ?? undefined, isBase64Encoded: false,
   });

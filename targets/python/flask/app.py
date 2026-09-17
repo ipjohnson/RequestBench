@@ -19,6 +19,7 @@ import pathlib
 
 import gunicorn.app.base
 from flask import Blueprint, Flask, Response, jsonify, render_template, request
+from flask_caching import Cache
 from werkzeug.exceptions import BadRequest, HTTPException
 
 from _hosts import host
@@ -117,7 +118,10 @@ THREADS = 16
 app = Flask(__name__, template_folder=str(
     pathlib.Path(__file__).resolve().parent / "templates"))
 META = host.meta("flask", adapter="gunicorn",
-                 template="jinja2 " + host.dist_version("jinja2"))
+                 template="jinja2 " + host.dist_version("jinja2"),
+                 etag="werkzeug strong sha1",
+                 cache="Flask-Caching " + host.dist_version("flask-caching")
+                       + " SimpleCache")
 
 
 def body_of():
@@ -294,29 +298,75 @@ for _size in ("small", "medium", "large"):
                    endpoint="compressed_" + _size)(compressed_route(_size))
 
 
-# ---- cached: validator headers and the conditional -----------------------------------
+# ---- etag: a response hook on its own blueprint, over Werkzeug's own machinery --------
+#
+# add_etag hashes the body Werkzeug is about to send and make_conditional compares it and
+# rewrites the response to a 304. Both are on the Response Flask already returns, so nothing
+# here compares anything. A blueprint is Flask's own way to scope a response hook, the same
+# way the compressed family gets its codec without taxing the other rows.
 
-def cached_route(size):
-    """The ETag is pinned in the fixture, so this measures emitting the header and comparing
-    it rather than hashing the body.
+conditional = Blueprint("conditional", __name__)
 
-    The comparison requires a non-empty header: matching a missing if-none-match against an
-    empty ETag answers 304 to a client that never asked a conditional question.
-    """
-    etag = d.etag_of(size)
 
+@conditional.after_request
+def revalidate(response):
+    response.add_etag()
+    response.cache_control.public = True
+    response.cache_control.max_age = 60
+    return response.make_conditional(request)
+
+
+def etag_route(size):
     def handler():
-        validators = {"etag": etag, "cache-control": d.CACHEABLE,
-                      "x-rb-serial": d.next_serial()}
-        if request.headers.get("if-none-match") == etag:
-            return "", 304, validators
-        return jsonify(d.payload(size)), 200, validators
+        return jsonify(d.payload(size)), 200, {"x-rb-serial": d.next_serial()}
     return handler
 
 
-# rb:snippet cached.small cached.medium cached.large cached.revalidate
+# rb:snippet etag.small etag.large etag.match_large etag.stale_large
+for _size in ("small", "large"):
+    conditional.get("/etag/" + _size, endpoint="etag_" + _size)(etag_route(_size))
+
+
+# ---- cache: Flask-Caching, which is the response cache the ecosystem reaches for ------
+#
+# @cache.cached() stores the whole response and replays it without entering the view, and
+# its own key_prefix is what folds a vary row's header values into the key. One store for
+# the target, capped from the fixture: the capacity derived from the key count means what
+# it says only if there is one store to count against.
+
+cache = Cache(config={
+    "CACHE_TYPE": "SimpleCache",
+    "CACHE_THRESHOLD": d.cache_spec()["capacity"],
+    "CACHE_DEFAULT_TIMEOUT": d.cache_spec()["ttl_s"],
+})
+
+
+def keyed_on(names):
+    """The key one vary row is cached under: its path, and the headers it varies by."""
+    def build():
+        return "|".join([request.path, *(request.headers.get(n, "") for n in names)])
+    return build
+
+
+def cache_route(size, vary=()):
+    def handler():
+        headers = {"x-rb-serial": d.next_serial()}
+        if vary:
+            headers["vary"] = ", ".join(vary)
+        return jsonify(d.payload(size)), 200, headers
+    return handler
+
+
+# rb:snippet cache.small cache.medium cache.large
 for _size in ("small", "medium", "large"):
-    app.get("/cached/" + _size, endpoint="cached_" + _size)(cached_route(_size))
+    app.get("/cache/" + _size, endpoint="cache_" + _size)(
+        cache.cached(timeout=d.cache_spec()["ttl_s"])(cache_route(_size)))
+# rb:snippet cache.vary_one cache.vary_many
+for _which in ("one", "many"):
+    _on = d.vary_on(_which)
+    app.get("/cache/vary/" + _which, endpoint="cache_vary_" + _which)(
+        cache.cached(timeout=d.cache_spec()["ttl_s"], make_cache_key=keyed_on(_on))(
+            cache_route("small", _on)))
 
 
 # ---- body ----------------------------------------------------------------------------
@@ -443,8 +493,11 @@ def malformed(exc):
     return jsonify(not_bound_body(exc.detail)), 400
 
 
-for _bp in (middleware_none, middleware_four, middleware_sixteen, authorized, compressed):
+for _bp in (middleware_none, middleware_four, middleware_sixteen, authorized, compressed,
+            conditional):
     app.register_blueprint(_bp)
+
+cache.init_app(app)
 
 
 class Gunicorn(gunicorn.app.base.BaseApplication):

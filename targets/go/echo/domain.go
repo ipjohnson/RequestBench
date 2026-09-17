@@ -2,8 +2,8 @@
 package main
 
 import (
-	"github.com/labstack/echo/v4"
 	d "github.com/ianjohnson/requestbench/targets/go/_shared"
+	"github.com/labstack/echo/v4"
 )
 
 func registerDomain(e *echo.Echo) {

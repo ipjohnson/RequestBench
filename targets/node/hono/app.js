@@ -14,9 +14,10 @@ import { notBound } from "./validation.js";
 import authorized from "./routes/authorized.js";
 import baseline from "./routes/baseline.js";
 import body from "./routes/body.js";
-import cached from "./routes/cached.js";
+import cache from "./routes/cache.js";
 import compressed from "./routes/compressed.js";
 import domain from "./routes/domain.js";
+import etag from "./routes/etag.js";
 import headers from "./routes/headers.js";
 import json from "./routes/json.js";
 import middleware from "./routes/middleware.js";
@@ -25,12 +26,14 @@ import query from "./routes/query.js";
 import template from "./routes/template.js";
 
 export const meta = { framework: "hono", version: pkgVersion("hono"),
-                      runtime: "node " + process.versions.node, template: "hono/html" };
+                      runtime: "node " + process.versions.node, template: "hono/html",
+                      etag: "hono/etag sha1-hex",
+                      cache: "hono/cache over lru-cache " + pkgVersion("lru-cache") };
 
 const app = new Hono();
 
 for (const register of [baseline, json, parameters, query, headers, middleware,
-                        authorized, compressed, cached, body, domain, template]) {
+                        authorized, compressed, etag, cache, body, domain, template]) {
   register(app, { meta: () => ({ ...meta, ...hostMeta() }) });
 }
 

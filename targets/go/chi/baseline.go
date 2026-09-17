@@ -22,6 +22,8 @@ func registerBaseline(r chi.Router) {
 	r.Get("/health", func(w http.ResponseWriter, _ *http.Request) { writeText(w, "ok") })
 
 	r.Get("/__meta", func(w http.ResponseWriter, _ *http.Request) {
-		writeJSON(w, 200, hosts.Meta("chi", chiVersion, "html/template"))
+		writeJSON(w, 200, hosts.Meta("chi", chiVersion, "html/template",
+			"sha1 (net/http ships no conditional handling)",
+			"net/http middleware over a shared LRU"))
 	})
 }

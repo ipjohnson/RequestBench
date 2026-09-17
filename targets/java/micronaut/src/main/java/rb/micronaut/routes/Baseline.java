@@ -25,6 +25,7 @@ public class Baseline {
 
   @Get("/__meta")
   Map<String, String> meta() {
-    return Hosts.meta("micronaut", Hosts.version("micronaut"), "thymeleaf");
+    return Hosts.meta("micronaut", Hosts.version("micronaut"), "thymeleaf",
+                      "sha1 (micronaut ships no conditional handling)", "a shared LRU");
   }
 }

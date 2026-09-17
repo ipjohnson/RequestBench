@@ -17,6 +17,9 @@ serde_json = "1"
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "net"] }
 askama = "0.16"
 flate2 = "1"
+# The digest for the etag family. Salvo's own caching middleware brings one; the other five
+# frameworks ship none, so the targets hash with this and declare it in /__meta.
+sha1 = "0.10"
 
 # Measurement, not development. Without this every target is compared while carrying
 # debug assertions and no inlining across crates, which measures the profile rather than

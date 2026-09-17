@@ -16,6 +16,7 @@ public final class Baseline {
         .putHeader("content-type", "text/plain").end("ok"));
 
     router.get("/__meta").handler(ctx ->
-        Reply.json(ctx, 200, Hosts.meta("vertx", Hosts.version("vertx"), "handlebars")));
+        Reply.json(ctx, 200, Hosts.meta("vertx", Hosts.version("vertx"), "handlebars",
+            "sha1 (vertx ships no conditional handling)", "a shared LRU")));
   }
 }

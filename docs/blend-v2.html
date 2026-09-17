@@ -171,12 +171,12 @@ footer { margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--rule);
 
 <p class="eyebrow">RequestBench · design</p>
 <h1>Blend v2 Endpoints</h1>
-<p class="lede">The endpoint set as it should be: forty-five endpoints whose names say what they test, built by adding one feature at a time to a fixed JSON response, sampled evenly, and weighted only when someone asks for an aggregate.</p>
+<p class="lede">The endpoint set as it should be: forty-eight endpoints whose names say what they test, built by adding one feature at a time to a fixed JSON response, sampled evenly, and weighted only when someone asks for an aggregate.</p>
 
 <dl class="meta">
   <div><dt>Date</dt><dd>14 September 2026</dd></div>
   <div><dt>Replaces</dt><dd><code>blend-v1</code>, 40 endpoints, 8 families</dd></div>
-  <div><dt>Proposes</dt><dd><code>blend-v2</code>, 45 endpoints, 13 families</dd></div>
+  <div><dt>Proposes</dt><dd><code>blend-v2</code>, 48 endpoints, 14 families</dd></div>
   <div><dt>Sampling</dt><dd>Uniform. 30,667 requests per endpoint per run.</dd></div>
   <div><dt>Status</dt><dd>Proposed. Nothing implemented.</dd></div>
 </dl>
@@ -198,8 +198,8 @@ footer { margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--rule);
   <span class="hd">Base</span><span class="hd">Add one factor</span><span class="hd">Endpoint</span>
   <span class="f">/json/small</span><span class="plus">+ bearer token</span><span class="out">/authorized/small</span>
   <span class="f">/json/medium</span><span class="plus">+ gzip -6</span><span class="out">/compressed/medium</span>
-  <span class="f">/json/large</span><span class="plus">+ ETag</span><span class="out">/cached/large</span>
-  <span class="f">/cached/large</span><span class="plus">+ If-None-Match</span><span class="out">304, no body</span>
+  <span class="f">/json/large</span><span class="plus">+ ETag</span><span class="out">/etag/large</span>
+  <span class="f">/etag/large</span><span class="plus">+ If-None-Match</span><span class="out">304, no body</span>
   <span class="f">/json/small</span><span class="plus">+ two captures</span><span class="out">/parameters/{one}/…</span>
   <span class="f">/json/small</span><span class="plus">+ 16 no-op layers</span><span class="out">/middleware/sixteen</span>
   <span class="f">/body/bind/small</span><span class="plus">+ validation</span><span class="out">/body/validate/small</span>
@@ -236,7 +236,7 @@ footer { margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--rule);
 
 <p>The records are distinct rather than fifty fixture products cycled. Cycling compresses 26:1 and would make gzip look free; distinct records land at 7:1, which is ordinary for JSON. The small payload is the one that earns its slot twice over: gzip −6 turns 125 bytes into 125 bytes, so <code>compressed.gzip_small</code> minus <code>compressed.identity_small</code> is the cost a framework pays to achieve nothing, which is exactly the threshold behaviour worth exposing.</p>
 
-<p>Request bodies use small and medium only. A 131&nbsp;KB request body at rung 5 would move 1.5&nbsp;GB/s across loopback and measure the kernel. Response bodies do use large: <code>json.large</code>, <code>compressed.identity_large</code> and <code>cached.large</code> together move about 110&nbsp;MB/s at rung 5, which loopback carries comfortably and which is the first thing to check if rung 5 ever looks strange.</p>
+<p>Request bodies use small and medium only. A 131&nbsp;KB request body at rung 5 would move 1.5&nbsp;GB/s across loopback and measure the kernel. Response bodies do use large: <code>json.large</code>, <code>compressed.identity_large</code>, <code>etag.large</code> and <code>cache.large</code> together move about 110&nbsp;MB/s at rung 5, which loopback carries comfortably and which is the first thing to check if rung 5 ever looks strange.</p>
 </section>
 
 <section>
@@ -312,40 +312,57 @@ footer { margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--rule);
 </div>
 
 <div class="grp">
-  <div class="grphead"><h3>compressed</h3><span class="cnt">6 endpoints</span>
-    <p class="job">Outbound gzip at a pinned level, crossed with whether the client asked for it. Three routes, two request shapes each: <code>accept-encoding: gzip</code> against <code>accept-encoding: identity</code>, both with <code>cache-control: no-cache</code>.</p></div>
+  <div class="grphead"><h3>compressed</h3><span class="cnt">4 endpoints</span>
+    <p class="job">Outbound gzip at a pinned level, crossed with whether the client asked for it. Two routes, two request shapes each: <code>accept-encoding: gzip</code> against <code>accept-encoding: identity</code>, both with <code>cache-control: no-cache</code>. The medium pair came out when the caching families arrived, which leaves the family the small-body threshold and the large-body cost, the two rows it is in the set for.</p></div>
   <div class="scroll"><table>
   <thead><tr><th>Id</th><th>Method</th><th>Path / request</th><th class="n">Expect</th><th>Base</th></tr></thead>
   <tbody>
   <tr><td class="m">compressed.identity_small</td><td class="m">GET</td><td class="w">/compressed/small<br><code>accept-encoding: identity</code></td><td class="n">200</td><td class="base">json.small</td></tr>
-  <tr><td class="m">compressed.identity_medium</td><td class="m">GET</td><td class="w">/compressed/medium<br><code>accept-encoding: identity</code></td><td class="n">200</td><td class="base">json.medium</td></tr>
   <tr><td class="m">compressed.identity_large</td><td class="m">GET</td><td class="w">/compressed/large<br><code>accept-encoding: identity</code></td><td class="n">200</td><td class="base">json.large</td></tr>
   <tr><td class="m">compressed.gzip_small</td><td class="m">GET</td><td class="w">/compressed/small<br><code>accept-encoding: gzip</code></td><td class="n">200</td><td class="base">compressed.identity_small</td></tr>
-  <tr><td class="m">compressed.gzip_medium</td><td class="m">GET</td><td class="w">/compressed/medium<br><code>accept-encoding: gzip</code></td><td class="n">200</td><td class="base">compressed.identity_medium</td></tr>
   <tr><td class="m">compressed.gzip_large</td><td class="m">GET</td><td class="w">/compressed/large<br><code>accept-encoding: gzip</code></td><td class="n">200</td><td class="base">compressed.identity_large</td></tr>
   </tbody></table></div>
   <dl class="holds">
     <div><dt>Held constant</dt><dd>Route, payload, codec, compression level. The wiring is registered on the route in both arms.</dd></div>
-    <div><dt>Varies</dt><dd>Whether the client opted in, crossed with size.</dd></div>
+    <div><dt>Varies</dt><dd>Whether the client opted in, crossed with the two sizes that answer something.</dd></div>
     <div><dt>The delta reads</dt><dd>Three ways, which is the reason for the pair. <code>identity</code> minus <code>json</code> is what the wiring costs when it declines, the "did they ask?" check on its own. <code>gzip</code> minus <code>identity</code> is the codec and the buffer-whole-against-stream decision, with that check already subtracted out. A framework whose threshold skips a body too small to benefit reads as a near-zero second delta rather than having to be inferred.</dd></div>
   </dl>
 </div>
 
 <div class="grp">
-  <div class="grphead"><h3>cached</h3><span class="cnt">4 endpoints</span>
-    <p class="job">Validator headers and the conditional request. Same payloads, plus an <code>ETag</code> and a <code>cache-control</code>.</p></div>
+  <div class="grphead"><h3>etag</h3><span class="cnt">4 endpoints</span>
+    <p class="job">The framework's own conditional-request machinery: the validator it computes over the body, and the 304 it answers. Small carries the plain 200 for the threshold; the three arms sit on large, which is the only size where the gap is visible.</p></div>
   <div class="scroll"><table>
   <thead><tr><th>Id</th><th>Method</th><th>Path / request</th><th class="n">Expect</th><th>Base</th></tr></thead>
   <tbody>
-  <tr><td class="m">cached.small</td><td class="m">GET</td><td class="w">/cached/small</td><td class="n">200</td><td class="base">json.small</td></tr>
-  <tr><td class="m">cached.medium</td><td class="m">GET</td><td class="w">/cached/medium</td><td class="n">200</td><td class="base">json.medium</td></tr>
-  <tr><td class="m">cached.large</td><td class="m">GET</td><td class="w">/cached/large</td><td class="n">200</td><td class="base">json.large</td></tr>
-  <tr><td class="m">cached.revalidate</td><td class="m">GET</td><td class="w">/cached/large<br><span class="base">if-none-match: "&lt;pinned&gt;"</span></td><td class="n">304</td><td class="base">cached.large</td></tr>
+  <tr><td class="m">etag.small</td><td class="m">GET</td><td class="w">/etag/small</td><td class="n">200</td><td class="base">json.small</td></tr>
+  <tr><td class="m">etag.large</td><td class="m">GET</td><td class="w">/etag/large</td><td class="n">200</td><td class="base">json.large</td></tr>
+  <tr><td class="m">etag.match_large</td><td class="m">GET</td><td class="w">/etag/large<br><span class="base">if-none-match: &lt;captured&gt;</span></td><td class="n">304</td><td class="base">etag.large</td></tr>
+  <tr><td class="m">etag.stale_large</td><td class="m">GET</td><td class="w">/etag/large<br><span class="base">if-none-match: "0000000000000000"</span></td><td class="n">200</td><td class="base">etag.large</td></tr>
   </tbody></table></div>
   <dl class="holds">
-    <div><dt>Held constant</dt><dd>Payload, and the ETag value itself, which is pinned in the fixture.</dd></div>
-    <div><dt>Varies</dt><dd>Validator headers present; then whether the client already has it.</dd></div>
-    <div><dt>The delta reads</dt><dd>What a revalidation saves. A 304 that costs nearly what the 200 costs means the framework re-read the body to answer it.</dd></div>
+    <div><dt>Held constant</dt><dd>Payload, and that the validator is computed per request from the body about to be sent. The value is not: it is whatever the framework's digest produces, declared in <code>/__meta</code>.</dd></div>
+    <div><dt>Varies</dt><dd>The validator written at all; then whether the client already has it; then whether the one it has still matches.</dd></div>
+    <div><dt>The delta reads</dt><dd>What a revalidation saves, under a shallow ETag where it should save almost nothing. The handler still runs and the body is still hashed before the comparison, so at large a 304 costing nearly what the 200 costs is the finding rather than the fault. The stale arm is the compare-and-miss branch, which costs the hash and the comparison and then sends the body anyway.</dd></div>
+  </dl>
+</div>
+
+<div class="grp">
+  <div class="grphead"><h3>cache</h3><span class="cnt">5 endpoints</span>
+    <p class="job">The framework's response cache: the handler skipped and a stored response replayed. Three sizes keyed by path, then the same small body keyed by one request header and by three. Not comparable across frameworks, so no ranking blend carries it.</p></div>
+  <div class="scroll"><table>
+  <thead><tr><th>Id</th><th>Method</th><th>Path / request</th><th class="n">Expect</th><th>Base</th></tr></thead>
+  <tbody>
+  <tr><td class="m">cache.small</td><td class="m">GET</td><td class="w">/cache/small</td><td class="n">200</td><td class="base">json.small</td></tr>
+  <tr><td class="m">cache.medium</td><td class="m">GET</td><td class="w">/cache/medium</td><td class="n">200</td><td class="base">json.medium</td></tr>
+  <tr><td class="m">cache.large</td><td class="m">GET</td><td class="w">/cache/large</td><td class="n">200</td><td class="base">json.large</td></tr>
+  <tr><td class="m">cache.vary_one</td><td class="m">GET</td><td class="w">/cache/vary/one<br><span class="base">x-rb-tenant: alpha | beta</span></td><td class="n">200</td><td class="base">cache.small</td></tr>
+  <tr><td class="m">cache.vary_many</td><td class="m">GET</td><td class="w">/cache/vary/many<br><span class="base">x-rb-tenant, x-rb-channel, x-rb-region</span></td><td class="n">200</td><td class="base">cache.vary_one</td></tr>
+  </tbody></table></div>
+  <dl class="holds">
+    <div><dt>Held constant</dt><dd>Payload, and that every key is warm. Thirteen distinct keys across the five rows, a store capped at twenty, and an expiry past the end of the run: a miss row would need a cache-busting parameter, and that measures eviction policy rather than the feature.</dd></div>
+    <div><dt>Varies</dt><dd>The response stored at all; then what the key is built from.</dd></div>
+    <div><dt>The delta reads</dt><dd>Against the <code>json</code> row of the same size, what is saved by not running the handler, which is the whole serialization at large and almost nothing at small. Between the vary rows it is what each extra header costs to fold into the key. Read against the store named in <code>/__meta</code>, not across targets: where a framework ships no response cache the target runs a package chosen for it.</dd></div>
   </dl>
 </div>
 
@@ -493,15 +510,16 @@ footer { margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--rule);
 <tbody>
 <tr><td class="m">Opting out</td><td><code>accept-encoding: identity</code>, sent explicitly rather than omitting the header</td><td>RFC 9110 &sect;12.5.3 makes an absent <code>Accept-Encoding</code> mean every coding is acceptable, so omitting it licenses a server to compress anyway and the arm stops being the same request on every target.</td></tr>
 <tr><td class="m">Codec and level</td><td>gzip, level 6, every language</td><td>Compression cost is dominated by codec and level, not by framework. An unpinned codec makes <code>compressed.*</code> a zlib benchmark.</td></tr>
-<tr><td class="m">ETag value</td><td>Literal in the fixture, <code>sha256(body)[:16]</code>, strong and quoted</td><td>A pre-resolved <code>if-none-match</code> cannot be built unless every target emits the same ETag. It also means the hashing is not measured, only the header emission and the comparison, which is the framework's actual contribution for a static body. Hash cost belongs in Suite B's static-content suite.</td></tr>
+<tr><td class="m">ETag implementation</td><td>Each framework's own conditional facility, scoped to the <code>etag.*</code> routes, computing the validator over the body it is about to send on every request. Where the facility compares but does not hash, the target hashes with the digest that ecosystem's own middleware uses and declares it in <code>/__meta</code>.</td><td>Superseded by <a href="https://github.com/ipjohnson/RequestBench/issues/38">#38</a>. This row used to pin the value as a fixture literal, <code>sha256(body)[:16]</code>, so that <code>spec/plan.json</code> could carry a pre-resolved <code>if-none-match</code>. That reasoning is sound and it is what produced the defect: no framework's conditional machinery ran anywhere in the fleet, because none of them can be made to emit a pinned tag, and twenty-seven of twenty-eight targets compared two strings in a handler instead. A bare string compare is not what a shallow ETag costs. The value moves to whatever the target computed and the plan carries a <code>{capture.etag_large}</code> placeholder every driver resolves against the target in front of it; the row is read against the declared digest, the way a template row is read against its engine.</td></tr>
+<tr><td class="m">Response cache store</td><td>Warm in steady state, never missing. Thirteen distinct keys across the five <code>cache.*</code> rows, a store capped at twenty, and an expiry of an hour. The vary values are pinned in the fixture and the key count is derived from them and asserted, the way the payload byte counts already are. The header names are this repository’s own: a header a framework treats specially makes the row measure that treatment rather than the key, which Django’s <code>cache_page</code> showed by dropping <code>Accept-Language</code> whenever <code>USE_I18N</code> is on.</td><td>Added by <a href="https://github.com/ipjohnson/RequestBench/issues/38">#38</a>. Forcing misses would need a cache-busting parameter, which produces exactly the unbounded growth and eviction that would have the family measuring eviction policy instead of the feature. So it measures hits, against the corresponding <code>json.*</code> row as the base. The two ways to get that wrong are a store too small, where a key evicts inside the measured window, and an expiry shorter than the roughly 600s a target is up for under <code>ladder-v2</code>. Capacity is derived rather than chosen per target so the first cannot happen quietly, and the gate catches both: a re-miss moves <code>x-rb-serial</code> where a replay would repeat it.</td></tr>
 <tr><td class="m">Bearer token</td><td>Opaque 32-hex constant in the fixture; the denial arm differs in the last character</td><td>Crypto cost is not framework cost, and Suite B already pins a JWT arm. A wrong token of equal length makes the comparison walk the whole string rather than fail on length.</td></tr>
-<tr><td class="m">Freshness counter</td><td><code>x-rb-serial</code>, monotonic per process, on every <code>compressed.*</code> and <code>cached.*</code> response</td><td>Proves the handler ran and the response was not served from a cache anywhere in the path. It lives in a header, not the body, so the body fingerprint is untouched. <code>conform.py</code> asserts it advances across the instances, which turns it into a gate rather than something to eyeball.</td></tr>
+<tr><td class="m">Freshness counter</td><td><code>x-rb-serial</code>, monotonic per process, on every <code>compressed.*</code>, <code>etag.*</code> and <code>cache.*</code> response. It has to advance on the first two and repeat, per cache key, on the third.</td><td>Proves the handler ran and the response was not served from a cache anywhere in the path. It lives in a header, not the body, so the body fingerprint is untouched. <code>client/src/checks.ts</code> asserts it across the instances, which turns it into a gate rather than something to eyeball. The <code>cache</code> family inverts the reading rather than needing a second mechanism: a stored response repeats a counter it did not increment, which is exactly what forbids one everywhere else and exactly what proves one here. A serial that moved between two requests for the same key means nothing was replayed, and fewer distinct serials than the plan sent distinct keys means the store is not keyed on everything the row varies. A 304 is exempt: what the framework's conditional machinery copies onto it is the framework's choice, and Django's <code>ConditionalGetMiddleware</code> carries only the headers RFC 9110 &sect;15.4.5 names. The status is the proof for that arm, since a target that ignored the conditional request answers 200.</td></tr>
 <tr><td class="m">Bind and echo response</td><td><code>{"fields":&lt;leaf count&gt;,"bytes":&lt;n&gt;,"echo":&lt;parsed body&gt;}</code></td><td>Without a field derived from the parsed structure, a target can pipe request bytes to the response and never parse. Key order will not do it: <code>conform.py:95</code> sorts keys before hashing, so a reordering is invisible to the fingerprint. The leaf count is a traversal, identical in every language, living in the shared domain.</td></tr>
 <tr><td class="m">Validator implementation</td><td>Each framework's own validation facility, scoped to the <code>body.*</code> and write routes. A framework with no such facility validates in its own handler and holds its own copy.</td><td>Superseded by <a href="https://github.com/ipjohnson/RequestBench/issues/35">#35</a>. This row used to require one hand-written validator per language, which made <code>body.validate_*</code> measure that function rather than the framework, and forced thirteen frameworks to bypass the facility they ship. The cost is that the rows are no longer one compiled function within a language, which is the difference being measured rather than noise to remove.</td></tr>
 <tr><td class="m">Query binding</td><td>Each framework's own query binder, scoped to <code>query.*</code> and <code>domain.filter</code>. A framework that ships no binder coerces in its own handler and holds its own copy.</td><td>Added by <a href="https://github.com/ipjohnson/RequestBench/issues/37">#37</a>. Every target used to hand the framework's parsed map to one shared coercer per language, which made <code>query.*</code> measure that function rather than the framework and bypassed the binder most of them ship. The cost is that a target with a binder now refuses a value it cannot parse where one without coerces it to zero. The endpoint set sends neither a missing parameter nor an unparseable one, so the pinned 200 bodies are unchanged and the split shows up only when a framework is probed directly.</td></tr>
 <tr><td class="m">Domain handler work</td><td>Filter evaluates the predicate over the live list per request; join walks the lines; aggregate folds every matching order. No precomputation, no memoization.</td><td>Conformance compares bytes, and a precomputed page produces the same bytes as a computed one. This is the family where two conforming implementations can do wildly different amounts of work.</td></tr>
 <tr><td class="m">Template and model</td><td>Each framework's own view facility, scoped to the <code>template.*</code> routes, rendering with the engine that framework ships or its own documentation reaches for first. One model, the expected output generated into the fixture: whitespace free, content pinned. Each target holds its own template and declares its engine in <code>/__meta</code>.</td><td>Superseded by <a href="https://github.com/ipjohnson/RequestBench/issues/36">#36</a>. This row used to pin one engine per language, which is what had twenty-six of twenty-eight targets calling a shared render function and fourteen of them bypassing a view layer they ship. The cost is that <code>template.small</code> is no longer one compiled template within a language, so the row is read against the declared engine rather than across it. Content stays pinned, which is what lets two engines answer the same endpoint, and the declaration is still what stops a target emitting the HTML from a string concat and calling it rendering.</td></tr>
-<tr><td class="m">Feature wiring</td><td>The framework's own facility, scoped to the feature's routes. Where a framework only offers a global hook, it uses it and declares so in <code>spec/matrix.json</code>.</td><td>An <code>if</code> in the handler measures the language, not the framework — the whole point of <code>authorized</code> and <code>cached</code> is the framework's plumbing. The declaration follows how the function-host exclusions are already recorded.</td></tr>
+<tr><td class="m">Feature wiring</td><td>The framework's own facility, scoped to the feature's routes. Where a framework only offers a global hook, it uses it and declares so in <code>spec/matrix.json</code>. Where it ships nothing at all, the target uses the package that ecosystem actually reaches for, and the row says what it is comparable across.</td><td>An <code>if</code> in the handler measures the language, not the framework — the whole point of <code>authorized</code> and <code>etag</code> is the framework's plumbing. The declaration follows how the function-host exclusions are already recorded. Not implementing a feature is not licence to hand-roll the fast path either: a string compare where a shallow ETag belongs, or a map lookup where a response cache belongs, is a cheaper thing than the one being measured.</td></tr>
 </tbody>
 </table>
 </div>
@@ -536,7 +554,7 @@ footer { margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--rule);
 </table>
 </div>
 
-<p>The 10,000-request floor in <code>spec/ladder.json</code> stops being a design constraint to check and becomes an automatic property: 1.38M requests over 45 endpoints is 30,667 each, clearing it 3.1× without anyone arranging it.</p>
+<p>The floor in <code>spec/ladder.json</code> stops being a design constraint to check and becomes an automatic property: whatever a rung delivers, divided by the endpoint count, is what every endpoint gets, and it follows the set rather than the set following it. Under <code>ladder-v2</code> that is 240,000 requests over 48 endpoints, or 5,000 each. The declared minimum is 4,000, so about a dozen more rows can arrive before the file stops being true. <a href="https://github.com/ipjohnson/RequestBench/issues/38">#38</a> lowered it from 10,000, which the set had already been under for some time; lengthening the rung instead would have moved every published latency, because a longer rung is a different measurement.</p>
 
 <p>Composition simplifies too. With every <code>n</code> equal, scaling a histogram by <code>w / n</code> is scaling it by <code>w</code>, and merging the raw histograms untouched <em>is</em> the uniform blend. There is no longer a sampling field and a weighting field to keep consistent — there is one weight vector, applied at the end, and the raw data underneath it has no opinion in it at all.</p>
 
@@ -559,11 +577,11 @@ p50 … p99       = <b>percentiles of the merged histogram</b>
 <table>
 <thead><tr><th>Blend</th><th>Weight vector</th><th>Answers</th></tr></thead>
 <tbody>
-<tr><td class="m">uniform</td><td>1 on all 42</td><td>The published headline. The average endpoint, with no traffic opinion and no reweighting error.</td></tr>
+<tr><td class="m">uniform</td><td>1 on all 48</td><td>The published headline. The average endpoint, with no traffic opinion and no reweighting error.</td></tr>
 <tr><td class="m">core</td><td>Feature families zeroed: <code>baseline</code>, <code>json</code>, <code>parameters</code>, <code>body</code>, <code>query</code>, <code>domain</code>, <code>errors</code></td><td>What <code>blend-v1</code> covered, so the old series has a successor that means roughly the same thing.</td></tr>
-<tr><td class="m">features</td><td>Only <code>authorized</code>, <code>compressed</code>, <code>cached</code>, <code>headers</code>, <code>middleware</code>, <code>template</code></td><td>Frameworks that are quick at dispatch and slow at everything a real service turns on.</td></tr>
+<tr><td class="m">features</td><td>Only <code>authorized</code>, <code>compressed</code>, <code>etag</code>, <code>cache</code>, <code>headers</code>, <code>middleware</code>, <code>template</code></td><td>Frameworks that are quick at dispatch and slow at everything a real service turns on.</td></tr>
 <tr><td class="m">read-only</td><td>GETs only; <code>body</code>, the <code>domain</code> writes and <code>errors.malformed</code> zeroed</td><td>A service behind a cache, where reads dominate and the write path barely runs.</td></tr>
-<tr><td class="m">rankable</td><td><code>template</code> zeroed, everything else 1</td><td>Templates are partly an engine benchmark and cannot be compared across languages. This is <code>uniform</code> with that one row removed.</td></tr>
+<tr><td class="m">rankable</td><td>Derived, not written out: every family whose <code>comparable</code> is not <code>frameworks</code> zeroed</td><td>Templates are partly an engine benchmark and a response cache is partly a store benchmark, so neither belongs in a cross-framework ranking. This is <code>uniform</code> with those rows removed, and it is the one vector nobody edits: <a href="https://github.com/ipjohnson/RequestBench/issues/38">#38</a> moved the reason onto the family in <code>spec/endpoints.json</code>, so a family added without saying what it is comparable across fails <code>make plan</code> rather than quietly joining a ranking.</td></tr>
 </tbody>
 </table>
 </div>
@@ -574,7 +592,7 @@ p50 … p99       = <b>percentiles of the merged histogram</b>
 
 <p>At 30,667 requests an endpoint's p99 rests on 307 observations, which is sound, and its p99.9 rests on 31, which is not. <code>docs/plan.html</code> already draws this line — "fine for a median, shaky for p99, and useless for p99.9" — and uniform sampling moves every endpoint to the same side of it. So per-endpoint rows publish p50, p90 and p99 and stop.</p>
 
-<p>The blend is a different population. Merged across 45 endpoints it holds 1.38M samples, so its p99.9 rests on 1,380 observations. That one is real and worth keeping: rung 5 exists to watch saturation, and saturation shows up in the tail before it shows up anywhere else. Dropping p99.9 would blind the rung that the ladder climbs to reach.</p>
+<p>The blend is a different population. Merged across the whole set it holds 1.38M samples, so its p99.9 rests on 1,380 observations. That one is real and worth keeping: rung 5 exists to watch saturation, and saturation shows up in the tail before it shows up anywhere else. Dropping p99.9 would blind the rung that the ladder climbs to reach.</p>
 
 <h3>What to ship so the browser can compose</h3>
 
@@ -641,7 +659,7 @@ p50 … p99       = <b>percentiles of the merged histogram</b>
 <tr><td class="m">ep.malformed</td><td><span class="v keep">renamed</span></td><td class="m">errors.malformed</td><td>Now unparseable bytes rather than a schema violation, which <code>body.rejected_all</code> covers.</td></tr>
 <tr class="cut"><td class="m">ep.boom</td><td><span class="v cut">cut</span></td><td class="m">—</td><td>Measured stack-trace capture policy. Suite B has it as an arm where the comparison holds.</td></tr>
 <tr><td class="m">ep.forbidden</td><td><span class="v keep">recast</span></td><td class="m">authorized.denied</td><td>A 403 with a mechanism behind it instead of a constant-cost status write.</td></tr>
-<tr><td class="m">—</td><td><span class="v new">new</span></td><td class="m">21 endpoints</td><td><code>json.medium</code>, <code>json.large</code>, <code>parameters.static</code>, <code>authorized.*</code>, <code>compressed.*</code>, <code>cached.*</code>, <code>body.bind_*</code>, <code>body.rejected_first</code>, <code>query.*</code>, <code>headers.*</code>, <code>middleware.*</code></td></tr>
+<tr><td class="m">—</td><td><span class="v new">new</span></td><td class="m">21 endpoints</td><td><code>json.medium</code>, <code>json.large</code>, <code>parameters.static</code>, <code>authorized.*</code>, <code>compressed.*</code>, <code>etag.*</code>, <code>cache.*</code>, <code>body.bind_*</code>, <code>body.rejected_first</code>, <code>query.*</code>, <code>headers.*</code>, <code>middleware.*</code></td></tr>
 <tr><td class="m">—</td><td><span class="v new">new</span></td><td class="m">template.* (2)</td><td>Sampled evenly, carried by no ranking blend. Suite B's template arms can stay or retire into these; they answer the same question with the arms minutes apart instead of microseconds.</td></tr>
 </tbody>
 </table>
@@ -692,7 +710,7 @@ p50 … p99       = <b>percentiles of the merged histogram</b>
 <li><h3>Uniform sampling and named blends</h3><p><code>blends.json</code>, a uniform draw, and the composed aggregate in <code>summarize.py</code>. Worth doing early and out of order: it removes more code than it adds, touches nothing the target authors touch, and applies to <code>blend-v1</code> as it stands.</p></li>
 <li><h3>One target end to end</h3><p><code>node:fastify</code>, the language's anchor. Its responses become the fingerprint every other Node target is gated against, so it establishes the contract the rest then have to meet with their own facilities.</p></li>
 <li><h3>Then one framework per language</h3><p>Fastify, Gin, Spring Boot. These are where the feature wirings are least alike, so they will find whatever the spec left ambiguous.</p></li>
-<li><h3>Then the remaining fifteen</h3><p>Mechanical once three languages have a worked example, and the point at which conformance across forty-five endpoints starts earning its keep again.</p></li>
+<li><h3>Then the remaining fifteen</h3><p>Mechanical once three languages have a worked example, and the point at which conformance across the whole endpoint set starts earning its keep again.</p></li>
 <li><h3>Endpoint pages, the delta column, the blend selector</h3><p><code>base</code>, <code>varies</code> and the named blends are already in the spec by then, so the site can state "costs 41&nbsp;µs over <code>json.medium</code>" as generated text rather than leaving the reader to subtract, and can offer five aggregates rather than one.</p></li>
 <li><h3>The arbitrary composer</h3><p>Quantile summaries into the summary file, then the endpoint selector in the browser. Independent of all of the above and cheap enough that it need not wait for any of it.</p></li>
 </ol>

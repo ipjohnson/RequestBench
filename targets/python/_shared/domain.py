@@ -11,6 +11,7 @@ handlers for them, which is the facility Fastify's ``setErrorHandler`` is, so a 
 never builds a 404 or a 422 itself and the six targets cannot drift.
 """
 import gzip as _gzip
+import hashlib
 import itertools
 import json
 import os
@@ -22,7 +23,7 @@ _DATA = None
 
 class _Data:
     __slots__ = ("orders", "customers", "next_order_id", "products_by_id",
-                 "customers_by_id", "orders_by_id", "payloads", "token")
+                 "customers_by_id", "orders_by_id", "payloads", "token", "cache")
 
     def __init__(self, f):
         self.orders = f["orders"]
@@ -35,6 +36,7 @@ class _Data:
         self.orders_by_id = {o["id"]: o for o in self.orders}
         self.payloads = f["payloads"]
         self.token = f["auth"]["token"]
+        self.cache = f["cache"]
 
 
 def fixture_path():
@@ -107,10 +109,36 @@ def payload(size):
     return data().payloads[size]["body"]
 
 
-def etag_of(size):
-    """Pinned in the fixture, so what a target spends is emitting the header and comparing
-    it rather than hashing a body."""
-    return data().payloads[size]["etag"]
+# ---- the etag and cache families -----------------------------------------------------
+#
+# No ETag value here. Each framework's own conditional machinery computes the validator
+# from the body it is about to send, so it differs by target and each one declares its
+# digest in /__meta. A driver reads the tag off a first response rather than looking it up.
+#
+# What is shared is the store's shape. The key count is derived in the fixture from the
+# vary values the plan sends, because a store smaller than that evicts inside the measured
+# window and the family would report eviction policy instead of the feature.
+
+def content_etag(raw):
+    """The validator a target computes for itself, where its framework computes none.
+
+    Three of the six frameworks answer a conditional request through their own machinery
+    and use their own digest; this is the one the other three hold. Spelled once so they
+    cannot drift on an algorithm and have the difference read as a framework result, the
+    same reason ``gzip`` above is here. sha1 over the exact response bytes, quoted and
+    strong, which is what Werkzeug and the Node ecosystem both reach for.
+    """
+    return '"%s"' % hashlib.sha1(raw).hexdigest()
+
+
+def cache_spec():
+    """capacity, keys, ttl_s and the vary values, as the fixture pins them."""
+    return data().cache
+
+
+def vary_on(which):
+    """The header names one vary row is keyed on, in the fixture's order."""
+    return list(data().cache["vary"][which])
 
 
 #: Pinned across every language. Compression cost is dominated by codec and level, not by

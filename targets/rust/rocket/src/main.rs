@@ -350,37 +350,125 @@ impl<'r> FromRequest<'r> for IfNoneMatch {
     }
 }
 
-/// The ETag is pinned in the fixture, so what this measures is emitting the header and
-/// comparing it rather than hashing a body. The comparison requires a non-empty header:
-/// matching a missing if-none-match against an empty ETag answers 304 to a client that
-/// never asked a conditional question.
-fn cached(size: &'static str, inm: Option<&str>) -> Raw {
-    let etag = d::etag_of(size);
+/// The header names the vary rows are keyed on, as the fixture pins them. Written out here
+/// rather than read from it, because a route's guard is resolved at compile time and the
+/// values are the same constants harness/make_fixture.py asserts the key count from.
+const VARY_ONE: &[&str] = &["x-rb-tenant"];
+const VARY_MANY: &[&str] = &["x-rb-channel", "x-rb-region", "x-rb-tenant"];
+
+#[rocket::async_trait]
+impl<'r, const N: usize> FromRequest<'r> for VaryValue<N> {
+    type Error = ();
+    async fn from_request(req: &'r Request<'_>) -> request::Outcome<Self, ()> {
+        let names = if N == 1 { VARY_ONE } else { VARY_MANY };
+        let mut values: [String; N] = std::array::from_fn(|_| String::new());
+        for (i, name) in names.iter().enumerate() {
+            values[i] = req.headers().get_one(name).unwrap_or("").to_string();
+        }
+        Outcome::Success(VaryValue(values))
+    }
+}
+
+/// etag: the digest and the comparison, in a route.
+///
+/// Rocket ships no conditional handling, so the digest is the shared one and `/__meta` says
+/// so. Its fairings are the closest thing it has to middleware and they attach to the whole
+/// application rather than to a route, so a fairing here would hash every response in the
+/// blend and contaminate the rows this family is measured against. The request guard is
+/// what keeps the header out of the route body.
+///
+/// Shallow, which is the point: the body is serialized and hashed before anything is
+/// compared, so the 304 saves the write and nothing else.
+fn revalidated(size: &'static str, asked: Option<&str>) -> Raw {
+    let raw = json_raw(d::payload(size));
+    let etag = d::content_etag(&raw);
+    let fresh = asked == Some(etag.as_str());
     let headers = vec![
-        ("etag", etag.to_string()),
+        ("etag", etag),
         ("cache-control", d::CACHEABLE.to_string()),
         ("x-rb-serial", d::next_serial()),
     ];
-    let fresh = inm.is_some_and(|v| !v.is_empty() && v == etag);
     Raw {
         status: if fresh { Status::NotModified } else { Status::Ok },
         content_type: if fresh { None } else { Some(ContentType::JSON) },
-        body: if fresh { Vec::new() } else { json_raw(d::payload(size)) },
+        body: if fresh { Vec::new() } else { raw },
         headers,
     }
 }
 
-#[get("/cached/small")]
-fn cached_small(h: IfNoneMatch) -> Raw {
-    cached("small", h.0.as_deref())
+// rb:snippet etag.small
+#[get("/etag/small")]
+fn etag_small(h: IfNoneMatch) -> Raw {
+    revalidated("small", h.0.as_deref())
 }
-#[get("/cached/medium")]
-fn cached_medium(h: IfNoneMatch) -> Raw {
-    cached("medium", h.0.as_deref())
+// rb:snippet etag.large etag.match_large etag.stale_large
+#[get("/etag/large")]
+fn etag_large(h: IfNoneMatch) -> Raw {
+    revalidated("large", h.0.as_deref())
 }
-#[get("/cached/large")]
-fn cached_large(h: IfNoneMatch) -> Raw {
-    cached("large", h.0.as_deref())
+
+/// cache: the store consulted before the payload is built.
+///
+/// Rocket ships no response cache, so the store is the shared LRU sized from the fixture.
+/// One store for the target rather than one per route, so the capacity the fixture derives
+/// from the key count means what it says. The header values a row varies on arrive through
+/// request guards for the same reason the conditional's does.
+static CACHE: std::sync::LazyLock<d::ResponseStore> =
+    std::sync::LazyLock::new(d::ResponseStore::new);
+
+fn replayed(size: &'static str, path: &str, on: &[&str], values: Vec<String>) -> Raw {
+    let key = d::cache_key(path, &values);
+    let hit = CACHE.get(&key).unwrap_or_else(|| {
+        let mut headers = vec![("x-rb-serial".to_string(), d::next_serial())];
+        if !on.is_empty() {
+            headers.push(("vary".to_string(), on.join(", ")));
+        }
+        let fresh = d::StoredResponse {
+            status: 200,
+            headers,
+            body: json_raw(d::payload(size)),
+        };
+        CACHE.put(key, fresh.clone());
+        fresh
+    });
+    Raw {
+        status: Status::Ok,
+        content_type: Some(ContentType::JSON),
+        body: hit.body,
+        headers: hit
+            .headers
+            .into_iter()
+            .map(|(n, v)| (Box::leak(n.into_boxed_str()) as &'static str, v))
+            .collect(),
+    }
+}
+
+/// One header value a vary row is keyed on. A guard rather than a parameter, because that
+/// is how Rocket gets a header to a route without the route reading one.
+struct VaryValue<const N: usize>([String; N]);
+
+// rb:snippet cache.small cache.medium cache.large
+#[get("/cache/small")]
+fn cache_small() -> Raw {
+    replayed("small", "/cache/small", &[], Vec::new())
+}
+#[get("/cache/medium")]
+fn cache_medium() -> Raw {
+    replayed("medium", "/cache/medium", &[], Vec::new())
+}
+#[get("/cache/large")]
+fn cache_large() -> Raw {
+    replayed("large", "/cache/large", &[], Vec::new())
+}
+
+// rb:snippet cache.vary_one cache.vary_many
+#[get("/cache/vary/one")]
+fn cache_vary_one(v: VaryValue<1>) -> Raw {
+    replayed("small", "/cache/vary/one", VARY_ONE, v.0.to_vec())
+}
+#[get("/cache/vary/many")]
+fn cache_vary_many(v: VaryValue<3>) -> Raw {
+    replayed("small", "/cache/vary/many", VARY_MANY, v.0.to_vec())
 }
 
 // template: server-side rendering of the same model the json family serializes.
@@ -550,7 +638,9 @@ async fn main() -> Result<(), rocket::Error> {
                 query_one, query_many, headers,
                 mw_none, mw_four, mw_sixteen, authorized,
                 comp_small, comp_medium, comp_large,
-                cached_small, cached_medium, cached_large,
+                etag_small, etag_large,
+                cache_small, cache_medium, cache_large,
+                cache_vary_one, cache_vary_many,
                 tpl_small, tpl_medium,
                 bind_small, bind_medium, validate_small, validate_medium, validate_first,
                 filter, lookup, join, aggregate, create, replace, patch_customer, delete_line,

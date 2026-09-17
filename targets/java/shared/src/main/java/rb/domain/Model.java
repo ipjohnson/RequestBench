@@ -83,17 +83,29 @@ public final class Model {
   // ---- validation ---------------------------------------------------------
 
   /**
-   * The response json.*, compressed.*, cached.* and template.* all serve. It is the
+   * The response json.*, compressed.*, etag.*, cache.* and template.* all serve. It is the
    * controlled variable: three fixed bodies that every feature family reuses unchanged, so
    * subtracting a base endpoint from its arm leaves the feature and nothing else.
    */
   public record PayloadBody(int count, List<Product> items, String size) {}
 
-  // The fixture carries bytes and html alongside these two, for the generator and for the
+  // The fixture carries bytes and html alongside the body, for the generator and for the
   // template comparison. A target needs neither, and Jackson refuses an undeclared field
   // unless it is told not to.
   @JsonIgnoreProperties(ignoreUnknown = true)
-  public record PayloadDoc(PayloadBody body, String etag) {}
+  public record PayloadDoc(PayloadBody body) {}
+
+  /**
+   * What every target sizes its response cache against: the distinct keys the plan sends, a
+   * capacity with room above them, an expiry past the end of a run, and the header values
+   * the vary rows carry. Derived and asserted in harness/make_fixture.py rather than chosen
+   * per target, because a store smaller than the key count evicts inside the measured
+   * window and the family would report eviction policy instead of the feature.
+   */
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  public record CacheDoc(int capacity, int keys,
+                         @JsonProperty("ttl_s") int ttlSeconds,
+                         Map<String, Map<String, List<String>>> vary) {}
 
   @JsonIgnoreProperties(ignoreUnknown = true)
   public record AuthDoc(String token, @JsonProperty("wrong_token") String wrongToken) {}

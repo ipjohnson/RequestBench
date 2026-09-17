@@ -62,13 +62,20 @@ func mod(path string) string {
 // tmpl is the engine the target renders the template family with. Each target passes its
 // own, because each reaches an engine through its own framework's view facility and two
 // targets in one language need not agree on which.
-func Meta(framework, version, tmpl string) map[string]string {
+//
+// etag and cache say the same thing about the two caching families: which digest computed
+// the validator, and what stored the response. Both are the framework's own facility where
+// it ships one, so the rows are read against the declaration rather than across targets
+// that are not doing the same thing.
+func Meta(framework, version, tmpl, etag, cache string) map[string]string {
 	return map[string]string{
 		"framework": framework,
 		"version":   version,
 		"runtime":   runtime.Version(),
 		"adapter":   strings.Join(adapters, " + "),
 		"template":  tmpl,
+		"etag":      etag,
+		"cache":     cache,
 	}
 }
 

@@ -9,13 +9,13 @@ import (
 )
 
 func registerDomain(r *mux.Router) {
- // rb:snippet domain.filter
+	// rb:snippet domain.filter
 	r.HandleFunc("/domain/orders", func(w http.ResponseWriter, req *http.Request) {
 		q := req.URL.Query()
 		writeJSON(w, 200, d.DomainFilter(qint(q, "page"), qint(q, "size"), qstr(q, "status")))
 	}).Methods("GET")
 
- // rb:snippet domain.create
+	// rb:snippet domain.create
 	r.HandleFunc("/domain/orders", func(w http.ResponseWriter, req *http.Request) {
 		m, ok := body(w, req)
 		if !ok {
@@ -30,13 +30,13 @@ func registerDomain(r *mux.Router) {
 		writeJSON(w, 201, v)
 	}).Methods("POST")
 
- // rb:snippet domain.lookup errors.not_found
+	// rb:snippet domain.lookup errors.not_found
 	r.HandleFunc("/domain/orders/{oid}", func(w http.ResponseWriter, req *http.Request) {
 		v, err := d.GetOrder(mux.Vars(req)["oid"])
 		send(w, v, err, 200)
 	}).Methods("GET")
 
- // rb:snippet domain.replace
+	// rb:snippet domain.replace
 	r.HandleFunc("/domain/orders/{oid}", func(w http.ResponseWriter, req *http.Request) {
 		o, err := d.GetOrder(mux.Vars(req)["oid"])
 		if err != nil {
