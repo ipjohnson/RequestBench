@@ -4,7 +4,10 @@
 // spec/matrix.json without a client-exception package is a compile error and not a silent
 // fall-through to something more forgiving. There is no default: a framework that has not
 // said what it answers is not gated on a guess.
-import { shapeOf, type Answer, type Ask, type ExceptionPackage, type z } from "@rb/schema";
+import {
+  declaredStatuses, schemaAt, shapeOf,
+  type Answer, type Ask, type ExceptionPackage, type Resolved,
+} from "@rb/schema";
 import dotnetAspnetMvc from "@rb/client-exception-dotnet-aspnet-mvc";
 import dotnetCarter from "@rb/client-exception-dotnet-carter";
 import dotnetFastendpoints from "@rb/client-exception-dotnet-fastendpoints";
@@ -80,8 +83,8 @@ const BY_TARGET = new Map(PACKAGES.map((p) => [p.target, p]));
 /** Every target's declared error contract, for the scenario pages and for the tests. */
 export const declaredExceptions = (): readonly ExceptionPackage[] => PACKAGES;
 
-/** The schema one target declared for one error endpoint, or null if it declared none. */
-export function schemaFor(ask: Ask): z.ZodType<unknown> | null {
+/** What one target declared for one error endpoint: one schema, or one per status. */
+export function schemaFor(ask: Ask): Resolved | null {
   const declared = BY_TARGET.get(ask.target)?.schemas[ask.endpoint];
   return declared ? declared(ask) : null;
 }
@@ -93,18 +96,39 @@ export function schemaFor(ask: Ask): z.ZodType<unknown> | null {
  * pass. The gate cannot report drift on an error body -- two frameworks disagreeing there
  * is the point -- so a declared schema is the only thing standing between a changed
  * envelope and nobody noticing.
+ *
+ * A framework that declared one envelope per status is judged by the branch for the status
+ * that arrived. Answering a status it never declared fails and says so, because which layer
+ * a body failed at is the thing the status is carrying.
  */
 export function errorProblem(ask: Ask, answer: Answer): string | null {
-  const schema = schemaFor(ask);
+  const declared = schemaFor(ask);
+  if (!declared) {
+    const answered = [...shapeOf(answer.body)].sort().join(", ") || "an empty body";
+    return `${ask.target} declares no error contract for ${ask.endpoint} (answered ${answered})`;
+  }
+  return problemAgainst(declared, ask, answer);
+}
+
+/**
+ * Why this answer does not satisfy one declaration, or null.
+ *
+ * Split out from errorProblem so the branch selection can be tested before any framework
+ * declares more than one status. Once #35 moves the frameworks whose binder and validator
+ * fail at different layers, this is the path that decides which envelope they are held to.
+ */
+export function problemAgainst(declared: Resolved, ask: Ask, answer: Answer): string | null {
+  const answered = [...shapeOf(answer.body)].sort().join(", ") || "an empty body";
+  const schema = schemaAt(declared, answer.status);
   if (!schema) {
-    return `${ask.target} declares no error contract for ${ask.endpoint} ` +
-      `(answered ${[...shapeOf(answer.body)].sort().join(", ") || "an empty body"})`;
+    const known = declaredStatuses(declared).join(", ");
+    return `answered ${answer.status}, which ${ask.target} does not declare for `
+      + `${ask.endpoint} (it declares ${known}; answered ${answered})`;
   }
   const parsed = schema.safeParse(answer);
   if (parsed.success) return null;
   const issue = parsed.error.issues[0];
-  if (!issue) return "does not match the declared envelope";
+  if (!issue) return `does not match the declared envelope (answered ${answered})`;
   const where = issue.path.length > 0 ? `${issue.path.join(".")}: ` : "";
-  const shape = [...shapeOf(answer.body)].sort().join(", ");
-  return `${where}${issue.message} (answered ${shape || "an empty body"})`;
+  return `${where}${issue.message} (answered ${answered})`;
 }

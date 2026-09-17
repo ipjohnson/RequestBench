@@ -1,7 +1,7 @@
 // dotnet:wolverine-http's error contract. The interesting one is errors.malformed, where
 // the JSON reader's own failure is surfaced rather than replaced.
 import { describe, expect, test } from "vitest";
-import { askIn, type Answer } from "@rb/schema";
+import { askIn, schemaAt, type Answer } from "@rb/schema";
 import pkg from "../src/index.js";
 
 const PAIRS = [["customer_id", "int"], ["status", "string"], ["lines", "array"]] as const;
@@ -9,10 +9,11 @@ const PAIRS = [["customer_id", "int"], ["status", "string"], ["lines", "array"]]
 const judge = (
   endpoint: string, statuses: readonly number[],
   pairs: readonly (readonly [string, string])[], body: unknown,
-): boolean =>
-  pkg.schemas[endpoint]!(askIn(pkg.target, endpoint, statuses, pairs))
-    .safeParse({ status: statuses[0], body_class: "json", encoding: "", body } as Answer)
-    .success;
+): boolean => {
+  const answer = { status: statuses[0]!, body_class: "json", encoding: "", body } as Answer;
+  const declared = pkg.schemas[endpoint]!(askIn(pkg.target, endpoint, statuses, pairs));
+  return schemaAt(declared, answer.status)?.safeParse(answer).success ?? false;
+};
 
 describe(pkg.target, () => {
   test("declares a schema for every error endpoint", () => {

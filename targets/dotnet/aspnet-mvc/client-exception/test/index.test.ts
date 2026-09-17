@@ -3,7 +3,7 @@
 // The bodies are worked examples rather than a restatement of the schema, so a schema
 // loosened to accept anything fails here.
 import { describe, expect, test } from "vitest";
-import { askIn, type Answer } from "@rb/schema";
+import { askIn, schemaAt, type Answer } from "@rb/schema";
 import pkg from "../src/index.js";
 
 const PAIRS = [["customer_id", "int"], ["status", "string"], ["lines", "array"]] as const;
@@ -11,10 +11,11 @@ const PAIRS = [["customer_id", "int"], ["status", "string"], ["lines", "array"]]
 const judge = (
   endpoint: string, statuses: readonly number[],
   pairs: readonly (readonly [string, string])[], body: unknown,
-): boolean =>
-  pkg.schemas[endpoint]!(askIn(pkg.target, endpoint, statuses, pairs))
-    .safeParse({ status: statuses[0], body_class: "json", encoding: "", body } as Answer)
-    .success;
+): boolean => {
+  const answer = { status: statuses[0]!, body_class: "json", encoding: "", body } as Answer;
+  const declared = pkg.schemas[endpoint]!(askIn(pkg.target, endpoint, statuses, pairs));
+  return schemaAt(declared, answer.status)?.safeParse(answer).success ?? false;
+};
 
 const problem = {
   type: "https://tools.ietf.org/html/rfc9110#section-15.5.21",
