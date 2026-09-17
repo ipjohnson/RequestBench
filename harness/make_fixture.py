@@ -106,7 +106,7 @@ def payloads():
 
 def render(body):
     """The expected template output. One row per record, no whitespace between elements.
-    conform.py collapses whitespace before hashing text/html, so an engine may format as
+    the client collapses whitespace before comparing text/html, so an engine may format as
     it likes; the elements, their order and their values are what is pinned."""
     rows = "".join(
         "<tr><td>%d</td><td>%s</td><td>%s</td><td>%d</td><td>%s</td></tr>"

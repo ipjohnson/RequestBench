@@ -92,15 +92,21 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
-        with: { node-version: "24", cache: npm, cache-dependency-path: targets/node/package-lock.json }
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            targets/node/package-lock.json
       - uses: actions/setup-python@v7
         with: { python-version: "3.13" }
       - run: npm ci --omit=dev --no-audit --no-fund
         working-directory: targets/node
-      - name: Install the test dependencies
-        run: pip install -r harness/requirements.txt
+      # The client is the only thing that talks HTTP to a target, for both authorities.
+      - name: Build the conformance client
+        run: npm ci --no-audit --no-fund && npm run build
       - name: Every node target answers spec/expected.json
-        run: python3 -m pytest tests --rb-mode local --rb-targets node:fastify,node:express,node:hono,node:koa,node:h3 -q
+        run: python3 harness/run.py --targets node:fastify,node:express,node:hono,node:koa,node:h3 --mode local --expect
 
   go:
     name: go targets conform
@@ -113,10 +119,13 @@ jobs:
         with: { python-version: "3.13" }
       - run: go build ./...
         working-directory: targets/go
-      - name: Install the test dependencies
-        run: pip install -r harness/requirements.txt
+      - uses: actions/setup-node@v7
+        with: { node-version: "24", cache: npm, cache-dependency-path: package-lock.json }
+      # The client is the only thing that talks HTTP to a target, for both authorities.
+      - name: Build the conformance client
+        run: npm ci --no-audit --no-fund && npm run build
       - name: Every go target answers spec/expected.json
-        run: python3 -m pytest tests --rb-mode local --rb-targets go:gin,go:echo,go:chi,go:gorilla-mux,go:fiber -q
+        run: python3 harness/run.py --targets go:gin,go:echo,go:chi,go:gorilla-mux,go:fiber --mode local --expect
 
   java:
     name: java targets conform
@@ -132,10 +141,13 @@ jobs:
       - name: Build every java target
         run: mvn -B -q -DskipTests package
         working-directory: targets/java
-      - name: Install the test dependencies
-        run: pip install -r harness/requirements.txt
+      - uses: actions/setup-node@v7
+        with: { node-version: "24", cache: npm, cache-dependency-path: package-lock.json }
+      # The client is the only thing that talks HTTP to a target, for both authorities.
+      - name: Build the conformance client
+        run: npm ci --no-audit --no-fund && npm run build
       - name: Every java target answers spec/expected.json
-        run: python3 -m pytest tests --rb-mode local --rb-targets java:spring-boot,java:quarkus,java:micronaut,java:helidon-se,java:vertx,java:javalin -q
+        run: python3 harness/run.py --targets java:spring-boot,java:quarkus,java:micronaut,java:helidon-se,java:vertx,java:javalin --mode local --expect
 
   python:
     name: python targets conform
@@ -152,10 +164,13 @@ jobs:
       # which is what makes that one install enough.
       - run: pip install -r requirements.txt
         working-directory: targets/python
-      - name: Install the test dependencies
-        run: pip install -r harness/requirements.txt
+      - uses: actions/setup-node@v7
+        with: { node-version: "24", cache: npm, cache-dependency-path: package-lock.json }
+      # The client is the only thing that talks HTTP to a target, for both authorities.
+      - name: Build the conformance client
+        run: npm ci --no-audit --no-fund && npm run build
       - name: Every python target answers spec/expected.json
-        run: python3 -m pytest tests --rb-mode local --rb-targets python:fastapi,python:starlette,python:litestar,python:sanic,python:flask,python:django-asgi -q
+        run: python3 harness/run.py --targets python:fastapi,python:starlette,python:litestar,python:sanic,python:flask,python:django-asgi --mode local --expect
 
   dotnet:
     name: dotnet targets conform
@@ -171,10 +186,13 @@ jobs:
       - name: Build every dotnet target
         run: dotnet build -c Release --nologo
         working-directory: targets/dotnet
-      - name: Install the test dependencies
-        run: pip install -r harness/requirements.txt
+      - uses: actions/setup-node@v7
+        with: { node-version: "24", cache: npm, cache-dependency-path: package-lock.json }
+      # The client is the only thing that talks HTTP to a target, for both authorities.
+      - name: Build the conformance client
+        run: npm ci --no-audit --no-fund && npm run build
       - name: Every dotnet target answers spec/expected.json
-        run: python3 -m pytest tests --rb-mode local --rb-targets dotnet:minimal-apis,dotnet:aspnet-mvc,dotnet:fastendpoints,dotnet:carter,dotnet:wolverine-http -q
+        run: python3 harness/run.py --targets dotnet:minimal-apis,dotnet:aspnet-mvc,dotnet:fastendpoints,dotnet:carter,dotnet:wolverine-http --mode local --expect
 
   rust:
     name: rust targets conform
@@ -192,10 +210,13 @@ jobs:
       - name: Build every rust target
         run: cargo build --locked --bins
         working-directory: targets/rust
-      - name: Install the test dependencies
-        run: pip install -r harness/requirements.txt
+      - uses: actions/setup-node@v7
+        with: { node-version: "24", cache: npm, cache-dependency-path: package-lock.json }
+      # The client is the only thing that talks HTTP to a target, for both authorities.
+      - name: Build the conformance client
+        run: npm ci --no-audit --no-fund && npm run build
       - name: Every rust target answers spec/expected.json
-        run: python3 -m pytest tests --rb-mode local --rb-targets rust:axum,rust:actix-web,rust:rocket,rust:poem,rust:salvo,rust:warp -q
+        run: python3 harness/run.py --targets rust:axum,rust:actix-web,rust:rocket,rust:poem,rust:salvo,rust:warp --mode local --expect
 
   images:
     name: container images build

@@ -10,14 +10,12 @@
 // drift.
 import { comparable, firstDifference, type Comparable } from "./compare.js";
 import {
-  advanced, bodyClass, checkHeaders, contentEncoding, decoded, framing, headerBytes,
-  isFreshnessChecked, serialOf, type Encoding, type Header,
+  advanced, checkHeaders, decoded, framing, headerBytes, isFreshnessChecked, serialOf,
+  type Encoding, type Header,
 } from "./checks.js";
 import { askFor, isError, keysOf, statusesOf, type Plan, type PlanEndpoint } from "./spec.js";
 import { errorProblem } from "./exceptions.js";
-import { Transport, type Reply } from "./http.js";
-
-const EMPTY = Buffer.alloc(0);
+import { Replay, answerOf, requestHeaders } from "./replay.js";
 
 export type Exemplar = {
   endpoint: string; family: string;
@@ -56,16 +54,6 @@ export type GateOptions = {
   readonly onEndpoint?: (r: EndpointResult) => void;
 };
 
-const requestHeaders = (ep: PlanEndpoint): Record<string, string> => {
-  // The same request gen/blend.mjs sends: the endpoint's own headers, plus a content-type
-  // when there is a body. The gate used to add an accept the generator never sends, which
-  // meant a content-negotiating target could be gated on one response and measured on
-  // another.
-  const headers: Record<string, string> = { ...(ep.headers ?? {}) };
-  if (ep.body) headers["content-type"] = "application/json";
-  return headers;
-};
-
 /**
  * Replay the plan against one running target and say whether it conforms.
  *
@@ -77,7 +65,10 @@ export async function gate(
   plan: Plan, hostport: string, target: string, opts: GateOptions = {},
 ): Promise<GateResult> {
   const encoding = opts.encoding ?? "http";
-  const conn = new Transport(hostport, encoding);
+  const run = new Replay(plan, hostport, {
+    ...(opts.instances === undefined ? {} : { instances: opts.instances }),
+    encoding,
+  });
   const responses: Record<string, Comparable> = {};
   const headerProblems: [string, string][] = [];
   const exemplars: Exemplar[] = [];
@@ -86,16 +77,9 @@ export async function gate(
   const seenOnce = new Set<string>();
   let sent = 0, compared = 0;
 
-  let meta: Record<string, unknown> = {};
-  try {
-    const r = await conn.send("GET", "/__meta", undefined, {});
-    meta = JSON.parse(r.body.toString("utf8")) as Record<string, unknown>;
-  } catch {
-    conn.reset();
-  }
+  const meta = await run.meta();
 
-  for (const ep of plan.endpoints) {
-    const paths = opts.instances ? ep.paths.slice(0, opts.instances) : ep.paths;
+  for await (const { ep, visits } of run.endpoints()) {
     const body = ep.body;
     const headers = requestHeaders(ep);
     // What the endpoint declares. On an error endpoint this is the default the framework's
@@ -119,18 +103,9 @@ export async function gate(
     let bad: string | null = null, stale: string | null = null, lastSerial: number | null = null;
     let envelope: string | null = null;
 
-    for (const path of paths) {
-      let reply: Reply | null = null;
-      try {
-        reply = await conn.send(ep.method, path, body, headers);
-      } catch (e) {
-        conn.reset();
-        bad ??= `transport:${(e as Error).name}`;
-      }
-      const status = reply?.status ?? 0;
-      const raw = reply?.body ?? EMPTY;
-      const ctype = reply?.contentType;
-      const hdrs: readonly Header[] = reply?.headers ?? [];
+    for (const visit of visits) {
+      const { path, status, raw, headers: hdrs } = visit;
+      if (visit.transportError !== null) bad ??= visit.transportError;
       sent++;
       seen.set(status, (seen.get(status) ?? 0) + 1);
       if (!accepts(status) && bad === null) {
@@ -147,14 +122,11 @@ export async function gate(
       // different envelope once it has warmed up is exactly what this is here to catch, and
       // parsing a three-key error body costs nothing next to the request that fetched it.
       if (carriesError && accepts(status)) {
-        envelope ??= errorProblem(askFor(target, ep, path), {
-          status, body_class: bodyClass(ctype), encoding: contentEncoding(hdrs),
-          body: comparable(decoded(raw, hdrs), ctype),
-        });
+        envelope ??= errorProblem(askFor(target, ep, path), answerOf(visit));
       }
       if (accepts(status)) {
         const key = `${ep.id} ${path}`;
-        if (!(key in responses)) responses[key] = comparable(decoded(raw, hdrs), ctype);
+        if (!(key in responses)) responses[key] = comparable(decoded(raw, hdrs), visit.contentType);
         if (!seenOnce.has(ep.id)) {
           seenOnce.add(ep.id);
           if (!opts.skipHeaders) {
@@ -178,6 +150,7 @@ export async function gate(
       }
     }
 
+    const instances = visits.length;
     const ok = [...seen.keys()].every(accepts) && seen.size === 1
       && stale === null && envelope === null;
     let note: string | null = null;
@@ -190,7 +163,7 @@ export async function gate(
       }
     }
     const result: EndpointResult = {
-      id: ep.id, method: ep.method, instances: paths.length, ok, seen,
+      id: ep.id, method: ep.method, instances, ok, seen,
       why: ok ? null : (bad ?? stale ?? envelope ?? `mixed statuses ${dictRepr(seen)}`),
       drift: note,
     };
@@ -198,7 +171,7 @@ export async function gate(
     opts.onEndpoint?.(result);
   }
 
-  conn.close();
+  run.close();
   return { endpoints: results, responses, headerProblems, exemplars, drift, sent, compared, meta };
 }
 
