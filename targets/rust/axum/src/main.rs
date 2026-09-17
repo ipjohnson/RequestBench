@@ -7,7 +7,7 @@
 //! own paths instead of riding on /json with an accept-encoding header.
 
 use axum::{
-    extract::{Path, RawQuery, Request},
+    extract::{Path, Query, Request},
     http::{header, HeaderMap, StatusCode},
     middleware::{from_fn, Next},
     response::{IntoResponse, Response},
@@ -15,7 +15,7 @@ use axum::{
     Json, Router,
 };
 use rb_domain as d;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tower_http::compression::{predicate::SizeAbove, CompressionLayer};
 
@@ -119,8 +119,39 @@ fn parse(body: &[u8]) -> Result<Value, Response> {
     })
 }
 
-fn query(raw: Option<String>) -> d::Query {
-    d::parse_query(raw.as_deref().unwrap_or(""))
+// ---- query: axum's typed Query extractor --------------------------------------
+//
+// `Query<T>` is the framework's binding half, the same shape as `Json<T>` on the body:
+// axum deserializes the query string into the struct before the handler runs and rejects
+// what will not fit without the handler seeing it. The struct it fills is the struct the
+// handler answers, so nothing copies one shape into another.
+//
+// The fields are plain, so serde decides what a missing or unparseable one is: a
+// QueryRejection, which axum renders as its own 400. The endpoint set sends neither.
+
+#[derive(Serialize, Deserialize)]
+struct QueryOne {
+    page: i64,
+}
+
+#[derive(Serialize, Deserialize)]
+struct QueryMany {
+    page: i64,
+    size: i64,
+    status: String,
+    category: String,
+    sort: String,
+    q: String,
+    min_price: i64,
+    max_price: i64,
+}
+
+/// What domain.filter pages by. Not a response shape, so it is deserialize only.
+#[derive(Deserialize)]
+struct OrderFilter {
+    page: i64,
+    size: i64,
+    status: String,
 }
 
 // ---- middleware ---------------------------------------------------------------
@@ -242,14 +273,8 @@ async fn main() {
         .route("/parameters/static/segment/literal", get(small))
         .route("/parameters/{one}", get(small))
         .route("/parameters/{one}/with-second/{two}", get(small))
-        .route(
-            "/query/one",
-            get(|RawQuery(q): RawQuery| async move { Json(d::coerce_one(&query(q))) }),
-        )
-        .route(
-            "/query/many",
-            get(|RawQuery(q): RawQuery| async move { Json(d::coerce_many(&query(q))) }),
-        )
+        .route("/query/one", get(|Query(q): Query<QueryOne>| async move { Json(q) }))
+        .route("/query/many", get(|Query(q): Query<QueryMany>| async move { Json(q) }))
         // The handler reads no header at all, so headers.many minus headers.few is the
         // cost of materialising 27 nobody asked for.
         .route("/headers", get(small))
@@ -274,8 +299,10 @@ async fn main() {
         .route("/body/validate/first-error", post(validate_first))
         .route(
             "/domain/orders",
-            get(|RawQuery(q): RawQuery| async move { Json(d::domain_filter(&query(q))) })
-                .post(create_order),
+            get(|Query(f): Query<OrderFilter>| async move {
+                Json(d::domain_filter(f.page, f.size, &f.status))
+            })
+            .post(create_order),
         )
         .route("/domain/orders/{oid}", get(lookup_order).put(replace_order))
         .route("/domain/customers/{cid}/summary", get(join))

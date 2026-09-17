@@ -217,72 +217,6 @@ pub fn created_location() -> String {
     s
 }
 
-// ---- query families ----------------------------------------------------------
-//
-// The query arms have to echo the coerced values or the parse can be skipped and the
-// endpoint measures nothing.
-
-/// Query string parsed into first-value-wins pairs, which is what every other language's
-/// `map[string][]string` lookup does with `[0]`.
-pub type Query = Vec<(String, String)>;
-
-fn qstr(q: &Query, k: &str) -> String {
-    q.iter().find(|(n, _)| n == k).map(|(_, v)| v.clone()).unwrap_or_default()
-}
-
-fn qint(q: &Query, k: &str) -> i64 {
-    q.iter()
-        .find(|(n, _)| n == k)
-        .and_then(|(_, v)| v.parse::<i64>().ok())
-        .unwrap_or(0)
-}
-
-/// Split a raw query string. Percent-decoding is left to the framework where it offers it;
-/// the spec's query values are plain and every target sees the same bytes.
-pub fn parse_query(raw: &str) -> Query {
-    raw.split('&')
-        .filter(|p| !p.is_empty())
-        .map(|p| match p.split_once('=') {
-            Some((k, v)) => (k.to_string(), v.to_string()),
-            None => (p.to_string(), String::new()),
-        })
-        .collect()
-}
-
-#[derive(Serialize)]
-pub struct QueryOne {
-    pub page: i64,
-}
-
-#[derive(Serialize)]
-pub struct QueryMany {
-    pub page: i64,
-    pub size: i64,
-    pub status: String,
-    pub category: String,
-    pub sort: String,
-    pub q: String,
-    pub min_price: i64,
-    pub max_price: i64,
-}
-
-pub fn coerce_one(q: &Query) -> QueryOne {
-    QueryOne { page: qint(q, "page") }
-}
-
-pub fn coerce_many(q: &Query) -> QueryMany {
-    QueryMany {
-        page: qint(q, "page"),
-        size: qint(q, "size"),
-        status: qstr(q, "status"),
-        category: qstr(q, "category"),
-        sort: qstr(q, "sort"),
-        q: qstr(q, "q"),
-        min_price: qint(q, "min_price"),
-        max_price: qint(q, "max_price"),
-    }
-}
-
 // ---- body --------------------------------------------------------------------
 
 #[derive(Serialize)]
@@ -435,15 +369,16 @@ pub fn get_order_line(oid: &str, lid: &str) -> Result<&'static Line, Fail> {
     o.lines.iter().find(|l| l.id == n).ok_or(Fail::NotFound)
 }
 
-pub fn domain_filter(q: &Query) -> OrdersPage {
+/// The page, the size and the status arrive already bound, because binding them is the
+/// framework's own job and lives in the target.
+pub fn domain_filter(page: i64, size: i64, status: &str) -> OrdersPage {
     let d = data();
-    let page = qint(q, "page").max(0);
-    let size = match qint(q, "size") {
+    let page = page.max(0);
+    let size = match size {
         0 => 25,
         n => n,
     }
     .clamp(1, 100);
-    let status = qstr(q, "status");
     let rows: Vec<&'static Order> = d.orders.iter().filter(|o| o.status == status).collect();
     let start = ((page * size) as usize).min(rows.len());
     let end = (start + size as usize).min(rows.len());

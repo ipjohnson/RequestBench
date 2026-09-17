@@ -12,12 +12,12 @@ use poem::{
     listener::TcpListener,
     middleware::Compression,
     post,
-    web::{Json, Path},
+    web::{Json, Path, Query},
     endpoint::make,
     Body, Endpoint, EndpointExt, IntoResponse, Request, Response, Route, Server,
 };
 use rb_domain as d;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 /// The domain's failures as poem errors, so a handler returns `Result` and never builds a
@@ -151,8 +151,39 @@ fn validated(order: &OrderIn, first_error: bool) -> Result<d::ValidatedOrder, Re
     Ok(d::price_order(order.customer_id, &order.status, &lines))
 }
 
-fn query(req: &Request) -> d::Query {
-    d::parse_query(req.uri().query().unwrap_or(""))
+// ---- query: poem's typed Query extractor --------------------------------------
+//
+// `Query<T>` is the framework's binding half, the same shape as `Json<T>` on the body:
+// poem deserializes the query string into the struct before the handler runs and rejects
+// what will not fit without the handler seeing it. The struct it fills is the struct the
+// handler answers.
+//
+// The fields are plain, so serde decides what a missing or unparseable one is: a
+// ParseQueryError, which poem renders as its own 400. The endpoint set sends neither.
+
+#[derive(Serialize, Deserialize)]
+struct QueryOne {
+    page: i64,
+}
+
+#[derive(Serialize, Deserialize)]
+struct QueryMany {
+    page: i64,
+    size: i64,
+    status: String,
+    category: String,
+    sort: String,
+    q: String,
+    min_price: i64,
+    max_price: i64,
+}
+
+/// What domain.filter pages by. Not a response shape, so it is deserialize only.
+#[derive(Deserialize)]
+struct OrderFilter {
+    page: i64,
+    size: i64,
+    status: String,
 }
 
 /// Every route poem does not match. Its own 404 carries no body, and every other target
@@ -235,8 +266,8 @@ async fn main() -> Result<(), std::io::Error> {
         .at("/parameters/static/segment/literal", small())
         .at("/parameters/:one", small())
         .at("/parameters/:one/with-second/:two", small())
-        .at("/query/one", get(make(|req: Request| async move { Json(d::coerce_one(&query(&req))) })))
-        .at("/query/many", get(make(|req: Request| async move { Json(d::coerce_many(&query(&req))) })))
+        .at("/query/one", get(query_one))
+        .at("/query/many", get(query_many))
         // The handler reads no header at all, so headers.many minus headers.few is the
         // cost of materialising 27 nobody asked for.
         .at("/headers", small())
@@ -301,8 +332,18 @@ async fn validate_first(Json(order): Json<OrderIn>) -> Result<Json<d::ValidatedO
 }
 
 #[poem::handler]
-async fn filter(req: &Request) -> Json<d::OrdersPage> {
-    Json(d::domain_filter(&query(req)))
+async fn query_one(Query(q): Query<QueryOne>) -> Json<QueryOne> {
+    Json(q)
+}
+
+#[poem::handler]
+async fn query_many(Query(q): Query<QueryMany>) -> Json<QueryMany> {
+    Json(q)
+}
+
+#[poem::handler]
+async fn filter(Query(f): Query<OrderFilter>) -> Json<d::OrdersPage> {
+    Json(d::domain_filter(f.page, f.size, &f.status))
 }
 
 #[poem::handler]

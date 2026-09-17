@@ -27,7 +27,7 @@ describe(pkg.target, () => {
   });
 
   test("the extractor's own rejection is what the rejection endpoints answer", () => {
-    expect(judge("body.rejected_all", 422, "json", { error: "invalid_body", detail: "the body did not fit the target type" })).toBe(true);
+    expect(judge("body.rejected_all", 422, "json", { error: "unprocessable", detail: "the request did not fit the target type" })).toBe(true);
   });
 
   test("a body that is not JSON at all answers 400", () => {
@@ -42,7 +42,7 @@ describe(pkg.target, () => {
   });
 
   test("the kind of body matters, not only the status", () => {
-    expect(judge("body.rejected_all", 422, "json" === "text" ? "json" : "text", { error: "invalid_body", detail: "the body did not fit the target type" }))
+    expect(judge("body.rejected_all", 422, "json" === "text" ? "json" : "text", { error: "unprocessable", detail: "the request did not fit the target type" }))
       .toBe(false);
   });
 

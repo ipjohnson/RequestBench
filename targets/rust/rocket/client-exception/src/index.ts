@@ -8,6 +8,10 @@
 // would not fit the type, 400 for one that would not parse -- and its default for both is
 // an HTML page, so this target registers catchers to answer with a body of its own.
 //
+// A catcher is registered per status, not per guard. The query family binds with a
+// FromForm guard, whose refusal is the same 422, so the 422 catcher cannot say which guard
+// refused and its envelope names neither.
+//
 // The rules serde cannot state -- a list of at least one line, a qty of at least one --
 // are this target's own, because rocket has no validation layer to put them in. They
 // answer
@@ -29,12 +33,21 @@ const refused = z.object({
   errors: z.array(z.object({ field: z.string(), rule: z.string() }).strict()).min(1),
 }).strict();
 
-/** What the extractor refused, in this target's own envelope. */
-const notBound = z.object({
+/**
+ * What a guard refused, in this target's own envelope. A catcher is registered per status
+ * rather than per guard, so the 422 one cannot tell a body the Json guard would not fit
+ * from a query the FromForm guard would not, and its envelope names neither.
+ */
+const notFitted = z.object({
+  error: z.literal("unprocessable"),
+  detail: z.string().min(1),
+}).strict();
+
+/** The 400 catcher, which only a body that would not parse at all reaches. */
+const notBoundMalformed = z.object({
   error: z.literal("invalid_body"),
   detail: z.string().min(1),
 }).strict();
-const notBoundMalformed = notBound;
 
 export default {
   target: "rust:rocket",
@@ -52,11 +65,11 @@ export default {
     // The plan sends a type mismatch here, so the extractor answers and this target's own
     // checks never run. They are what answers a body of the right shape and wrong values.
     "body.rejected_all": (ask: Ask) =>
-      errorEnvelope(ask, notBound, {
+      errorEnvelope(ask, notFitted, {
         statuses: [422], fieldErrors: [], bodyClass: "json",
       }),
     "body.rejected_first": (ask: Ask) =>
-      errorEnvelope(ask, notBound, {
+      errorEnvelope(ask, notFitted, {
         statuses: [422], fieldErrors: [], bodyClass: "json",
       }),
     "errors.malformed": (ask: Ask) =>

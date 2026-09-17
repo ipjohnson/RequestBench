@@ -122,10 +122,40 @@ fn parse(b: &Bytes) -> Result<Value, Response> {
     })
 }
 
-/// The raw query string. `warp::query::raw` rejects when there is none, and every other
-/// language's lookup simply finds nothing, so the empty case is supplied.
-fn raw_query() -> impl Filter<Extract = (String,), Error = std::convert::Infallible> + Clone {
-    warp::query::raw().or(warp::any().map(String::new)).unify()
+// ---- query: warp's typed query filter -----------------------------------------
+//
+// `warp::query::<T>()` is the framework's binding half, the same shape as
+// `warp::body::json::<T>()` on the body: it is a filter in the chain that deserializes the
+// query string into the struct and rejects what will not fit before the handler runs. The
+// struct it fills is the struct the handler answers.
+//
+// The fields are plain, so serde decides what a missing or unparseable one is: an
+// InvalidQuery rejection, which warp renders as its own 400. The endpoint set sends
+// neither.
+
+#[derive(Serialize, Deserialize)]
+struct QueryOne {
+    page: i64,
+}
+
+#[derive(Serialize, Deserialize)]
+struct QueryMany {
+    page: i64,
+    size: i64,
+    status: String,
+    category: String,
+    sort: String,
+    q: String,
+    min_price: i64,
+    max_price: i64,
+}
+
+/// What domain.filter pages by. Not a response shape, so it is deserialize only.
+#[derive(Deserialize)]
+struct OrderFilter {
+    page: i64,
+    size: i64,
+    status: String,
 }
 
 /// One layer: a filter that runs in the chain and extracts nothing. Boxing between them is
@@ -209,12 +239,12 @@ async fn main() {
     // rb:snippet query.one query.many headers.few headers.many
     let queries = warp::path!("query" / "one")
         .and(warp::get())
-        .and(raw_query())
-        .map(|q: String| json(&d::coerce_one(&d::parse_query(&q))))
+        .and(warp::query::<QueryOne>())
+        .map(|q: QueryOne| json(&q))
         .or(warp::path!("query" / "many")
             .and(warp::get())
-            .and(raw_query())
-            .map(|q: String| json(&d::coerce_many(&d::parse_query(&q)))))
+            .and(warp::query::<QueryMany>())
+            .map(|q: QueryMany| json(&q)))
         .unify()
         // The handler reads no header at all, so headers.many minus headers.few is the
         // cost of materialising 27 nobody asked for.
@@ -365,8 +395,8 @@ async fn main() {
     // rb:snippet domain.join domain.patch domain.aggregate errors.not_found
     let domain = warp::path!("domain" / "orders")
         .and(warp::get())
-        .and(raw_query())
-        .map(|q: String| json(&d::domain_filter(&d::parse_query(&q))))
+        .and(warp::query::<OrderFilter>())
+        .map(|f: OrderFilter| json(&d::domain_filter(f.page, f.size, &f.status)))
         .or(warp::path!("domain" / "orders")
             .and(warp::post())
             .and(warp::body::json())
@@ -457,6 +487,18 @@ async fn main() {
                     )
                     .into_response(),
                 );
+            }
+            if let Some(e) = rejection.find::<warp::reject::InvalidQuery>() {
+                // The query filter refused. Same shape as the body above: warp raises its
+                // own rejection and 400 is its status for one, and without this arm it
+                // would arrive here indistinguishable from a path nothing matched.
+                return Ok(warp::reply::with_status(
+                    warp::reply::json(&serde_json::json!({
+                        "error": "invalid_query", "detail": e.to_string()
+                    })),
+                    StatusCode::BAD_REQUEST,
+                )
+                .into_response());
             }
             Ok(warp::reply::with_status(
                 warp::reply::json(&d::not_found_body()),

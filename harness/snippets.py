@@ -51,6 +51,12 @@ CAPTURE = r"(?::[\w]+|\{[\w.*:]*\}|<[\w:]+>|\*[\w]*)"
 # inside "/domain/customers/{cid}/summary".
 QUOTE = "[\"'`]"
 
+# A framework may spell its query parameters in the same literal as the path: Rocket writes
+# #[get("/query/one?<q..>")] for what the spec writes as /query/one?page={page}. The route
+# is still the part before the ?, so the tail is matched and ignored rather than being
+# allowed to break the delimiter.
+QUERY_SPEC = "(?:\\?[^\"'`]*)?"
+
 METHODS = ("get", "post", "put", "patch", "delete")
 
 MARKER = re.compile(r"rb:snippet\s+([\w.,\s]+?)\s*(?:\*/|$)")
@@ -93,7 +99,7 @@ def route_regex(route):
     # the request carried, so its patterns are written without one; everything else writes
     # it. The quotes still delimit, so this widens the shape a literal can take and not
     # where in a line it may sit.
-    return re.compile(QUOTE + "/?" + "/".join(segments) + QUOTE)
+    return re.compile(QUOTE + "/?" + "/".join(segments) + QUERY_SPEC + QUOTE)
 
 
 def attribute(line, i):
