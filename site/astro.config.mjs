@@ -1,15 +1,19 @@
 // @ts-check
 import { defineConfig } from "astro/config";
 
+import { relativeAssets } from "./src/integrations/relative-assets.js";
 import { resultsData } from "./src/integrations/results-data.js";
 
 // `format: "file"` keeps the URLs build.py produced: index.html at the root and one
-// f/<language>-<target>.html per target, rather than a directory with an index in it. Links
-// between the two are written relative, so the site works under a project path on Pages and
-// out of any directory it is copied to.
+// f/<language>-<target>.html per target, rather than a directory with an index in it.
+//
+// Every link out of a page is relative: the ones between pages because they are written that
+// way, and the ones to assets because src/integrations/relative-assets.ts rewrites them. So
+// the site works under a project path on Pages, at an origin root, and out of any directory it
+// is copied to, with no base path configured anywhere.
 export default defineConfig({
   outDir: process.env.RB_OUT || "./dist",
-  integrations: [resultsData()],
+  integrations: [resultsData(), relativeAssets()],
   build: { format: "file", assets: "assets" },
   devToolbar: { enabled: false },
   vite: {
