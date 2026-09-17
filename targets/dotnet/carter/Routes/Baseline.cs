@@ -12,6 +12,6 @@ public sealed class Baseline : ICarterModule
 
         app.MapGet("/health", () => Results.Text("ok"));
 
-        app.MapGet("/__meta", () => HostInfo.Meta("carter", HostInfo.Version(typeof(ICarterModule))));
+        app.MapGet("/__meta", () => HostInfo.Meta("carter", HostInfo.Version(typeof(ICarterModule)), HostInfo.Razor));
     }
 }

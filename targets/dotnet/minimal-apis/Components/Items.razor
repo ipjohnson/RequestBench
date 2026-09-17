@@ -1,0 +1,31 @@
+@using RequestBench.Domain
+<!doctype html>
+<html>
+  <head><title>items</title></head>
+  <body>
+    <h1>@Body.Size</h1>
+    <table>
+      <thead>
+        <tr><th>id</th><th>name</th><th>category</th><th>price</th><th>stock</th></tr>
+      </thead>
+      <tbody>
+        @foreach (Product it in Body.Items)
+        {
+        <tr>
+          <td>@it.Id</td>
+          <td>@it.Name</td>
+          <td>@it.Category</td>
+          <td>@it.PriceCents</td>
+          <td>@(it.InStock ? "yes" : "no")</td>
+        </tr>
+        }
+      </tbody>
+    </table>
+    <p>@Body.Count rows</p>
+  </body>
+</html>
+
+@code {
+    [Parameter]
+    public PayloadBody Body { get; set; } = default!;
+}

@@ -42,5 +42,5 @@ public sealed class MetaEndpoint : EndpointWithoutRequest<IReadOnlyDictionary<st
     }
 
     public override Task<IReadOnlyDictionary<string, string>> ExecuteAsync(CancellationToken ct) =>
-        Task.FromResult(HostInfo.Meta("fastendpoints", HostInfo.Version(typeof(IEndpoint))));
+        Task.FromResult(HostInfo.Meta("fastendpoints", HostInfo.Version(typeof(IEndpoint)), HostInfo.Razor));
 }

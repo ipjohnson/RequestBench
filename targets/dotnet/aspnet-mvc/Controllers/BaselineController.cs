@@ -17,5 +17,5 @@ public sealed class BaselineController : ControllerBase
 
     [HttpGet("/__meta")]
     public IReadOnlyDictionary<string, string> Meta() =>
-        HostInfo.Meta("aspnet-mvc", HostInfo.Version(typeof(ControllerBase)));
+        HostInfo.Meta("aspnet-mvc", HostInfo.Version(typeof(ControllerBase)), HostInfo.Razor);
 }

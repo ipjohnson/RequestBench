@@ -14,6 +14,12 @@
           "FluentValidation": "12.1.1"
         }
       },
+      "Microsoft.AspNetCore.App.Internal.Assets": {
+        "type": "Direct",
+        "requested": "[10.0.12, )",
+        "resolved": "10.0.12",
+        "contentHash": "+sIBo9AMBZH46qHWHQdfzcGMt+RuBaPYrUMOAM9VjA7MQ9QtIez3lq1C3E05+Yroa94KKt3DSWaxmCI4H28a9Q=="
+      },
       "FastEndpoints.Attributes": {
         "type": "Transitive",
         "resolved": "8.3.0",
@@ -52,8 +58,7 @@
       "requestbench.hosts": {
         "type": "Project",
         "dependencies": {
-          "RequestBench.Domain": "[1.0.0, )",
-          "Scriban": "[7.4.0, )"
+          "RequestBench.Domain": "[1.0.0, )"
         }
       },
       "FluentValidation": {
@@ -61,12 +66,6 @@
         "requested": "[12.1.1, )",
         "resolved": "12.1.1",
         "contentHash": "EPpkIe1yh1a0OXyC100oOA8WMbZvqUu5plwhvYcb7oSELfyUZzfxV48BLhvs3kKo4NwG7MGLNgy1RJiYtT8Dpw=="
-      },
-      "Scriban": {
-        "type": "CentralTransitive",
-        "requested": "[7.4.0, )",
-        "resolved": "7.4.0",
-        "contentHash": "h5QYOAKw7F4ajVNxeScBsq0c7en6YWyKDSC4ZnZIlrkeJrl0ekHk1PlpqP5C4peqkt6NoXl9dlwK3pI4oDC5oA=="
       }
     }
   }

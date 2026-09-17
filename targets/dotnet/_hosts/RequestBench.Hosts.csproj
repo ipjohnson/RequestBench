@@ -5,6 +5,5 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../_shared/RequestBench.Domain.csproj" />
-    <PackageReference Include="Scriban" />
   </ItemGroup>
 </Project>

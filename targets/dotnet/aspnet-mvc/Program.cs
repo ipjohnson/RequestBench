@@ -10,7 +10,7 @@ using RequestBench.Hosts;
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddRequestBenchDomain();
-builder.Services.AddControllers()
+builder.Services.AddControllersWithViews()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.PropertyNamingPolicy = Json.Options.PropertyNamingPolicy;

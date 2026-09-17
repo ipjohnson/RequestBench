@@ -15,5 +15,5 @@ public static class BaselineEndpoints
 
     [WolverineGet("/__meta")]
     public static IReadOnlyDictionary<string, string> Meta() =>
-        HostInfo.Meta("wolverine-http", HostInfo.Version(typeof(WolverineGetAttribute)));
+        HostInfo.Meta("wolverine-http", HostInfo.Version(typeof(WolverineGetAttribute)), HostInfo.Razor);
 }

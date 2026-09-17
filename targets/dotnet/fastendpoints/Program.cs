@@ -12,6 +12,9 @@ using RequestBench.Hosts;
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddRequestBenchDomain();
+// The template family renders a Razor component, which is what ASP.NET Core ships for
+// server-side HTML. Nothing else here needs it.
+builder.Services.AddRazorComponents();
 builder.Services.AddFastEndpoints();
 builder.WebHost.UseUrls(HostInfo.Url());
 builder.Logging.ClearProviders();
