@@ -1,0 +1,131 @@
+{
+  "version": "marks-v1",
+  "note": "What a snippet has to contain to be worth publishing, and how much of the corpus is allowed to fail that today. harness/snippets.py locates every endpoint in every target and the coverage gate is green, but a located snippet is not a captured one: 403 of them are a bare annotation and several hundred more are a registration naming a handler that lives somewhere else. Those are counted here rather than gated red, because a gate that went red on them would block every branch that is fixing them. An allowance only ever goes down: harness/snippets.py --ratchet rewrites this file from what the tree actually does, and --check fails on anything above it.",
+  "assertions": {
+    "not_only_annotations": {
+      "label": "annotation-only",
+      "what": "a snippet may not be nothing but annotations, attributes and comments",
+      "why": "@Get(\"/json/small\") names the route, passes both coverage checks, and says nothing about what answers the request",
+      "except": []
+    },
+    "reaches_domain": {
+      "label": "not reaching the domain",
+      "what": "a handler and its support together must name something the shared domain gave the file",
+      "why": "a registration that names a handler defined elsewhere is complete, correct, and shows a reader nothing. The shared domain is where the behaviour is, so a snippet that never gets there has not captured the endpoint",
+      "except": [
+        "baseline.plaintext"
+      ]
+    }
+  },
+  "allowance": {
+    "dotnet:aspnet-mvc": {
+      "not_only_annotations": 44,
+      "reaches_domain": 44
+    },
+    "dotnet:carter": {
+      "reaches_domain": 5
+    },
+    "dotnet:fastendpoints": {
+      "reaches_domain": 43
+    },
+    "dotnet:minimal-apis": {
+      "reaches_domain": 5
+    },
+    "dotnet:wolverine-http": {
+      "not_only_annotations": 44,
+      "reaches_domain": 44
+    },
+    "go:chi": {
+      "reaches_domain": 34
+    },
+    "go:echo": {
+      "reaches_domain": 32
+    },
+    "go:fiber": {
+      "reaches_domain": 34
+    },
+    "go:gin": {
+      "reaches_domain": 25
+    },
+    "go:gorilla-mux": {
+      "reaches_domain": 34
+    },
+    "java:helidon-se": {
+      "reaches_domain": 9
+    },
+    "java:javalin": {
+      "reaches_domain": 9
+    },
+    "java:micronaut": {
+      "not_only_annotations": 45,
+      "reaches_domain": 44
+    },
+    "java:quarkus": {
+      "not_only_annotations": 44,
+      "reaches_domain": 43
+    },
+    "java:spring-boot": {
+      "not_only_annotations": 43,
+      "reaches_domain": 44
+    },
+    "java:vertx": {
+      "reaches_domain": 19
+    },
+    "node:express": {
+      "reaches_domain": 15
+    },
+    "node:fastify": {
+      "reaches_domain": 18
+    },
+    "node:h3": {
+      "reaches_domain": 15
+    },
+    "node:hono": {
+      "reaches_domain": 13
+    },
+    "node:koa": {
+      "reaches_domain": 13
+    },
+    "python:django-asgi": {
+      "reaches_domain": 43
+    },
+    "python:fastapi": {
+      "not_only_annotations": 34,
+      "reaches_domain": 43
+    },
+    "python:flask": {
+      "not_only_annotations": 30,
+      "reaches_domain": 44
+    },
+    "python:litestar": {
+      "not_only_annotations": 44,
+      "reaches_domain": 43
+    },
+    "python:sanic": {
+      "not_only_annotations": 30,
+      "reaches_domain": 43
+    },
+    "python:starlette": {
+      "reaches_domain": 43
+    },
+    "rust:actix-web": {
+      "reaches_domain": 44
+    },
+    "rust:axum": {
+      "reaches_domain": 42
+    },
+    "rust:poem": {
+      "reaches_domain": 42
+    },
+    "rust:rocket": {
+      "not_only_annotations": 45,
+      "reaches_domain": 44
+    },
+    "rust:salvo": {
+      "reaches_domain": 44
+    },
+    "rust:warp": {
+      "reaches_domain": 21
+    }
+  }
+}
