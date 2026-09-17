@@ -13,6 +13,16 @@
           "WolverineFx": "6.38.0"
         }
       },
+      "WolverineFx.Http.FluentValidation": {
+        "type": "Direct",
+        "requested": "[6.38.0, )",
+        "resolved": "6.38.0",
+        "contentHash": "mF8AbQ3yutpWEvMPRpm6t2+MONnKv1tU28wRyBUcBYFvZ5+NI1YpyitDLo0HDjwkHgL6Iih7Wk1JQSlRlYkglA==",
+        "dependencies": {
+          "WolverineFx.FluentValidation": "6.38.0",
+          "WolverineFx.Http": "6.38.0"
+        }
+      },
       "WolverineFx.RuntimeCompilation": {
         "type": "Direct",
         "requested": "[6.38.0, )",
@@ -287,6 +297,15 @@
           "NewId": "4.0.1"
         }
       },
+      "WolverineFx.FluentValidation": {
+        "type": "Transitive",
+        "resolved": "6.38.0",
+        "contentHash": "rVmvRLhIPdssyQ9z2Exnrj6YAsx+vdz9lC1PR/VESD9YMiaBLc53eyL5+13SCL+Yd+17vQeVHp1NzkgQLQlhiQ==",
+        "dependencies": {
+          "FluentValidation": "12.0.0",
+          "WolverineFx": "6.38.0"
+        }
+      },
       "requestbench.domain": {
         "type": "Project"
       },
@@ -296,6 +315,12 @@
           "RequestBench.Domain": "[1.0.0, )",
           "Scriban": "[7.4.0, )"
         }
+      },
+      "FluentValidation": {
+        "type": "CentralTransitive",
+        "requested": "[12.1.1, )",
+        "resolved": "12.0.0",
+        "contentHash": "8NVLxtMUXynRHJIX3Hn1ACovaqZIJASufXIIFkD0EUbcd5PmMsL1xUD5h548gCezJ5BzlITaR9CAMrGe29aWpA=="
       },
       "Scriban": {
         "type": "CentralTransitive",

@@ -12,7 +12,9 @@ namespace RequestBench.FastEndpointsTarget.Routes;
 /// The read is still the framework's, and a body it cannot read raises the shared 422.
 ///
 /// bind parses and binds without validating, so validate minus bind is the validator alone
-/// rather than the validator plus the parse.
+/// rather than the validator plus the parse. Validating is FastEndpoints' own: a
+/// Validator&lt;TRequest&gt; is discovered and run against the bound request before the
+/// handler is entered, so no handler calls a validator.
 /// </summary>
 public sealed class BindSmallEndpoint : EndpointWithoutRequest<BindResult>
 {
@@ -38,7 +40,7 @@ public sealed class BindMediumEndpoint : EndpointWithoutRequest<BindResult>
         DomainModel.BindEcho(await Support.Body(HttpContext.Request, ct));
 }
 
-public sealed class ValidateSmallEndpoint(DomainModel domain) : EndpointWithoutRequest<ValidatedOrder>
+public sealed class ValidateSmallEndpoint(DomainModel domain) : Endpoint<OrderRequest, ValidatedOrder>
 {
     public override void Configure()
     {
@@ -46,11 +48,11 @@ public sealed class ValidateSmallEndpoint(DomainModel domain) : EndpointWithoutR
         AllowAnonymous();
     }
 
-    public override async Task<ValidatedOrder> ExecuteAsync(CancellationToken ct) =>
-        domain.ValidateOrder(await Support.Body(HttpContext.Request, ct));
+    public override Task<ValidatedOrder> ExecuteAsync(OrderRequest req, CancellationToken ct) =>
+        Task.FromResult(domain.PriceOrder(req.CustomerId!.Value, req.Status!, req.Input()));
 }
 
-public sealed class ValidateMediumEndpoint(DomainModel domain) : EndpointWithoutRequest<ValidatedOrder>
+public sealed class ValidateMediumEndpoint(DomainModel domain) : Endpoint<OrderRequest, ValidatedOrder>
 {
     public override void Configure()
     {
@@ -58,18 +60,21 @@ public sealed class ValidateMediumEndpoint(DomainModel domain) : EndpointWithout
         AllowAnonymous();
     }
 
-    public override async Task<ValidatedOrder> ExecuteAsync(CancellationToken ct) =>
-        domain.ValidateOrder(await Support.Body(HttpContext.Request, ct));
+    public override Task<ValidatedOrder> ExecuteAsync(OrderRequest req, CancellationToken ct) =>
+        Task.FromResult(domain.PriceOrder(req.CustomerId!.Value, req.Status!, req.Input()));
 }
 
-public sealed class ValidateFirstEndpoint(DomainModel domain) : EndpointWithoutRequest<ValidatedOrder>
+public sealed class ValidateFirstEndpoint(DomainModel domain) : Endpoint<OrderRequest, ValidatedOrder>
 {
+    // FluentValidation collects every rule that failed. FastEndpoints exposes no
+    // fail-fast mode short of throwing from the first rule, so this row answers what
+    // the framework answers.
     public override void Configure()
     {
         Post("/body/validate/first-error");
         AllowAnonymous();
     }
 
-    public override async Task<ValidatedOrder> ExecuteAsync(CancellationToken ct) =>
-        domain.ValidateOrder(await Support.Body(HttpContext.Request, ct), firstError: true);
+    public override Task<ValidatedOrder> ExecuteAsync(OrderRequest req, CancellationToken ct) =>
+        Task.FromResult(domain.PriceOrder(req.CustomerId!.Value, req.Status!, req.Input()));
 }

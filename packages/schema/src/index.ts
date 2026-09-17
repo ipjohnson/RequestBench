@@ -224,8 +224,16 @@ export function problemDetails(extra: z.ZodRawShape = {}): z.ZodType<unknown> {
     .strict();
 }
 
-/** The validation map both ProblemDetails and the FluentValidation lists carry. */
-export const fieldErrorMap = z.record(z.string(), z.array(z.string()).min(1));
+/**
+ * The validation map both ProblemDetails and the FluentValidation lists carry.
+ *
+ * At least one entry, and at least one message in each. A response that says validation
+ * failed and then names nothing is not an answer any framework legitimately gives, and
+ * accepting it would let a target pass this check by sending an empty object.
+ */
+export const fieldErrorMap = z
+  .record(z.string(), z.array(z.string()).min(1))
+  .refine((m) => Object.keys(m).length > 0, { message: "names no field" });
 
 // ---- one answer per status ------------------------------------------------------------
 

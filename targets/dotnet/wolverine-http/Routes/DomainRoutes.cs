@@ -20,10 +20,11 @@ public static class DomainEndpoints
         domain.DomainFilter(Support.Query(request));
 
     [WolverinePost("/domain/orders")]
-    public static IResult Create(JsonElement body, [FromServices] DomainModel domain,
+    public static IResult Create(OrderBody body, [FromServices] DomainModel domain,
                                  [FromServices] IHttpContextAccessor accessor)
     {
-        ValidatedOrder order = domain.ValidateOrder(body);
+        ValidatedOrder order =
+            domain.PriceOrder(body.CustomerId!.Value, body.Status!, body.Input());
         accessor.HttpContext!.Response.Headers.Location = domain.CreatedLocation();
         return Results.Json(order, Json.Options, statusCode: 201);
     }
@@ -32,11 +33,12 @@ public static class DomainEndpoints
     public static Order Lookup(string oid, DomainModel domain) => domain.GetOrder(oid);
 
     [WolverinePut("/domain/orders/{oid}")]
-    public static ValidatedOrder Replace(string oid, JsonElement body,
+    public static ValidatedOrder Replace(string oid, OrderBody body,
                                          [FromServices] DomainModel domain)
     {
         Order existing = domain.GetOrder(oid);
-        return domain.ValidateOrder(body) with { Id = existing.Id };
+        return domain.PriceOrder(body.CustomerId!.Value, body.Status!, body.Input())
+            with { Id = existing.Id };
     }
 
     [WolverineGet("/domain/customers/{cid}/summary")]

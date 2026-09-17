@@ -1,8 +1,11 @@
 namespace RequestBench.Domain;
 
 /// <summary>
-/// The two failures a handler signals and never turns into a status itself, so the six
-/// targets cannot drift on what a 404 or a 422 looks like.
+/// The one failure a handler signals and never turns into a status itself, so the five
+/// targets cannot drift on what a 404 looks like.
+///
+/// There is no validation signal here. A body a framework's own validator refused is that
+/// framework's answer, raised and rendered where the framework raises it.
 /// </summary>
 public sealed class NotFoundException : Exception
 {
@@ -11,15 +14,8 @@ public sealed class NotFoundException : Exception
     private NotFoundException() : base("not_found") { }
 }
 
-public sealed class ValidationException(IReadOnlyList<FieldError> errors) : Exception("validation failed")
-{
-    public IReadOnlyList<FieldError> Errors { get; } = errors;
-
-    /// <summary>
-    /// The 422 every target answers when the request body is not JSON at all. It is the
-    /// same exception the validator raises so errors.malformed and body.rejected_* share a
-    /// shape.
-    /// </summary>
-    public static ValidationException Malformed() =>
-        new([new FieldError("body", "json")]);
-}
+/// <summary>
+/// A request body that is not JSON at all. Not a validation failure: nothing validated it,
+/// so it names no field, and each target answers it in its own envelope.
+/// </summary>
+public sealed class MalformedException(string detail) : Exception(detail);

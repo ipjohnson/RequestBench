@@ -1,4 +1,5 @@
 using System.Text.Json;
+using FluentValidation;
 using Carter;
 using RequestBench.Domain;
 
@@ -12,19 +13,30 @@ public sealed class DomainRoutes : ICarterModule
         app.MapGet("/domain/orders", (HttpRequest request, DomainModel d) =>
             d.DomainFilter(Support.Query(request)));
 
-        app.MapPost("/domain/orders", (JsonElement body, DomainModel d, HttpResponse response) =>
+        app.MapPost("/domain/orders", (OrderBody body, DomainModel d, IValidator<OrderBody> v,
+                                      HttpResponse response) =>
         {
-            ValidatedOrder order = d.ValidateOrder(body);
+            if (Body.Refused(v, body) is IResult refused)
+            {
+                return refused;
+            }
+            ValidatedOrder order = d.PriceOrder(body.CustomerId!.Value, body.Status!, body.Input());
             response.Headers.Location = d.CreatedLocation();
             return Results.Json(order, statusCode: 201);
         });
 
         app.MapGet("/domain/orders/{oid}", (string oid, DomainModel d) => d.GetOrder(oid));
 
-        app.MapPut("/domain/orders/{oid}", (string oid, JsonElement body, DomainModel d) =>
+        app.MapPut("/domain/orders/{oid}", (string oid, OrderBody body, DomainModel d,
+                                           IValidator<OrderBody> v) =>
         {
             Order existing = d.GetOrder(oid);
-            return d.ValidateOrder(body) with { Id = existing.Id };
+            if (Body.Refused(v, body) is IResult refused)
+            {
+                return refused;
+            }
+            return Results.Ok(d.PriceOrder(body.CustomerId!.Value, body.Status!, body.Input())
+                with { Id = existing.Id });
         });
 
         app.MapGet("/domain/customers/{cid}/summary", (string cid, DomainModel d) => d.DomainJoin(cid));

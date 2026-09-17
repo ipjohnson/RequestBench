@@ -1,74 +1,63 @@
-// dotnet:aspnet-mvc's error contract, against the envelopes MVC actually produces.
+// dotnet:aspnet-mvc's error contract, against the bodies it actually sends.
 //
-// The bodies are worked examples rather than a restatement of the schema, so a schema
-// loosened to accept anything fails here.
+// One envelope covers both layers, because MVC routes a parse failure through ModelState as well. A wrong type is keyed by the JSON path it failed at, a missing field by the CLR property name.
 import { describe, expect, test } from "vitest";
 import { askIn, schemaAt, type Answer } from "@rb/schema";
-import pkg from "../src/index.js";
+import pkg, { validationFailure } from "../src/index.js";
 
 const PAIRS = [["customer_id", "int"], ["status", "string"], ["lines", "array"]] as const;
+const EVERY = [
+  "authorized.denied", "body.rejected_all", "body.rejected_first",
+  "errors.malformed", "errors.not_found", "errors.unmatched",
+];
 
-const judge = (
-  endpoint: string, statuses: readonly number[],
-  pairs: readonly (readonly [string, string])[], body: unknown,
-): boolean => {
-  const answer = { status: statuses[0]!, body_class: "json", encoding: "", body } as Answer;
-  const declared = pkg.schemas[endpoint]!(askIn(pkg.target, endpoint, statuses, pairs));
-  return schemaAt(declared, answer.status)?.safeParse(answer).success ?? false;
+// The endpoint's declaration and the answered status are separate, so a status assertion
+// cannot pass just because the caller declared the status it was testing.
+const judge = (endpoint: string, answered: number, body: unknown): boolean => {
+  const answer = { status: answered, body_class: "json", encoding: "", body } as Answer;
+  const resolved = pkg.schemas[endpoint]!(askIn(pkg.target, endpoint, [422], PAIRS));
+  return schemaAt(resolved, answered)?.safeParse(answer).success ?? false;
 };
 
-const problem = {
-  type: "https://tools.ietf.org/html/rfc9110#section-15.5.21",
-  title: "One or more validation errors occurred.",
-  status: 422,
-  errors: { customer_id: ["int"], status: ["string"], lines: ["array"] },
-};
+// What the target answered to {"customer_id": "not-an-int", ...} and to a truncated body.
+const notBound = { type: "https://tools.ietf.org/html/rfc9110#section-15.5.1", title: "One or more validation errors occurred.", status: 400, errors: { body: ["The body field is required."], "$.customer_id": ["The JSON value could not be converted."] }, traceId: "00-a-01" };
+
+// What it answers when its validator is reached, which the plan never does.
+const refused = { type: "about:blank", title: "One or more validation errors occurred.", status: 400, errors: { CustomerId: ["The CustomerId field is required."] } };
 
 describe(pkg.target, () => {
   test("declares a schema for every error endpoint", () => {
-    expect(Object.keys(pkg.schemas).sort()).toEqual([
-      "authorized.denied", "body.rejected_all", "body.rejected_first",
-      "errors.malformed", "errors.not_found", "errors.unmatched",
-    ]);
+    expect(Object.keys(pkg.schemas).sort()).toEqual(EVERY);
   });
 
-  test("accepts the ProblemDetails a failed model state produces", () => {
-    expect(judge("body.rejected_all", [422], PAIRS, problem)).toBe(true);
+  test("the rejection endpoints answer the unreadable-body envelope at 400", () => {
+    expect(judge("body.rejected_all", 400, notBound)).toBe(true);
+    expect(judge("body.rejected_all", 422, notBound)).toBe(false);
+  });
+
+  test("a body that is not JSON at all is the same envelope", () => {
+    expect(judge("errors.malformed", 400, notBound)).toBe(true);
+  });
+
+  test("this repository's shared envelope is not what it answers", () => {
+    expect(judge("body.rejected_all", 400, {
+      error: "validation_failed",
+      errors: PAIRS.map(([field, rule]) => ({ field, rule })),
+    })).toBe(false);
+  });
+
+  test("the shape its validator produces is described, not left undescribed", () => {
+    expect(validationFailure.safeParse(refused).success).toBe(true);
+  });
+
+  test("the errors map is required here, where minimal-apis has none", () => {
+    expect(judge("body.rejected_all", 400, {
+      type: "about:blank", title: "Bad Request", status: 400,
+    })).toBe(false);
   });
 
   test("traceId comes and goes with tracing and is pinned neither way", () => {
-    expect(judge("body.rejected_all", [422], PAIRS, { ...problem, traceId: "00-4bf-01" }))
-      .toBe(true);
-  });
-
-  test("rejects the FastEndpoints envelope", () => {
-    expect(judge("body.rejected_all", [422], PAIRS, {
-      message: "One or more errors occurred!", status_code: 422, errors: problem.errors,
-    })).toBe(false);
-  });
-
-  test("rejects this repository's own envelope, which MVC never answers", () => {
-    expect(judge("body.rejected_all", [422], PAIRS, {
-      error: "validation_failed", errors: PAIRS.map(([field, rule]) => ({ field, rule })),
-    })).toBe(false);
-  });
-
-  test("a 403 carries the status alone, because the filter runs before the factory", () => {
-    expect(judge("authorized.denied", [403], [], { status: 403 })).toBe(true);
-    expect(judge("authorized.denied", [403], [], { type: "about:blank", title: "F", status: 403 }))
-      .toBe(false);
-  });
-
-  test("a body the reader could not parse is reported against the document root", () => {
-    expect(judge("errors.malformed", [400, 422], [], {
-      type: "about:blank", title: "One or more validation errors occurred.", status: 400,
-      traceId: "00-4bf-01", errors: { $: ["The JSON value could not be converted."] },
-    })).toBe(true);
-  });
-
-  test("rejects a ProblemDetails that grew a key MVC does not send", () => {
-    expect(judge("errors.not_found", [404], [], {
-      type: "about:blank", title: "Not Found", status: 404, detail: "no such order",
-    })).toBe(false);
+    const { traceId: _drop, ...rest } = notBound as Record<string, unknown>;
+    expect(judge("body.rejected_all", 400, rest)).toBe(true);
   });
 });

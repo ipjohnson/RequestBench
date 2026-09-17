@@ -12,9 +12,9 @@ public sealed class DomainController(DomainModel domain) : ControllerBase
     public OrdersPage Filter() => domain.DomainFilter(Support.Query(Request));
 
     [HttpPost("/domain/orders")]
-    public IActionResult Create([FromBody] JsonElement body)
+    public IActionResult Create([FromBody] OrderIn body)
     {
-        ValidatedOrder order = domain.ValidateOrder(body);
+        ValidatedOrder order = domain.PriceOrder(body.CustomerId!.Value, body.Status!, body.Input());
         Response.Headers.Location = domain.CreatedLocation();
         return StatusCode(201, order);
     }
@@ -23,10 +23,11 @@ public sealed class DomainController(DomainModel domain) : ControllerBase
     public Order Lookup(string oid) => domain.GetOrder(oid);
 
     [HttpPut("/domain/orders/{oid}")]
-    public ValidatedOrder Replace(string oid, [FromBody] JsonElement body)
+    public ValidatedOrder Replace(string oid, [FromBody] OrderIn body)
     {
         Order existing = domain.GetOrder(oid);
-        return domain.ValidateOrder(body) with { Id = existing.Id };
+        return domain.PriceOrder(body.CustomerId!.Value, body.Status!, body.Input())
+            with { Id = existing.Id };
     }
 
     [HttpGet("/domain/customers/{cid}/summary")]

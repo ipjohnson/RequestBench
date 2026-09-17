@@ -19,7 +19,7 @@ public sealed class DomainFilterEndpoint(DomainModel domain) : EndpointWithoutRe
         Task.FromResult(domain.DomainFilter(Support.Query(HttpContext.Request)));
 }
 
-public sealed class DomainCreateEndpoint(DomainModel domain) : EndpointWithoutRequest<ValidatedOrder>
+public sealed class DomainCreateEndpoint(DomainModel domain) : Endpoint<OrderRequest, ValidatedOrder>
 {
     public override void Configure()
     {
@@ -27,12 +27,12 @@ public sealed class DomainCreateEndpoint(DomainModel domain) : EndpointWithoutRe
         AllowAnonymous();
     }
 
-    public override async Task<ValidatedOrder> ExecuteAsync(CancellationToken ct)
+    public override Task<ValidatedOrder> ExecuteAsync(OrderRequest req, CancellationToken ct)
     {
-        ValidatedOrder order = domain.ValidateOrder(await Support.Body(HttpContext.Request, ct));
+        ValidatedOrder order = domain.PriceOrder(req.CustomerId!.Value, req.Status!, req.Input());
         HttpContext.Response.Headers.Location = domain.CreatedLocation();
         HttpContext.Response.StatusCode = 201;
-        return order;
+        return Task.FromResult(order);
     }
 }
 
@@ -48,7 +48,7 @@ public sealed class DomainLookupEndpoint(DomainModel domain) : EndpointWithoutRe
         Task.FromResult(domain.GetOrder(Route<string>("oid")!));
 }
 
-public sealed class DomainReplaceEndpoint(DomainModel domain) : EndpointWithoutRequest<ValidatedOrder>
+public sealed class DomainReplaceEndpoint(DomainModel domain) : Endpoint<OrderRequest, ValidatedOrder>
 {
     public override void Configure()
     {
@@ -56,11 +56,11 @@ public sealed class DomainReplaceEndpoint(DomainModel domain) : EndpointWithoutR
         AllowAnonymous();
     }
 
-    public override async Task<ValidatedOrder> ExecuteAsync(CancellationToken ct)
+    public override Task<ValidatedOrder> ExecuteAsync(OrderRequest req, CancellationToken ct)
     {
         Order existing = domain.GetOrder(Route<string>("oid")!);
-        ValidatedOrder order = domain.ValidateOrder(await Support.Body(HttpContext.Request, ct));
-        return order with { Id = existing.Id };
+        ValidatedOrder order = domain.PriceOrder(req.CustomerId!.Value, req.Status!, req.Input());
+        return Task.FromResult(order with { Id = existing.Id });
     }
 }
 

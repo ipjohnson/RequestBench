@@ -20,6 +20,13 @@
          which the warmup absorbs and which never touches a measured request. A production
          deployment would pre-generate and set TypeLoadMode.Static. -->
     <PackageVersion Include="WolverineFx.RuntimeCompilation" Version="6.38.0" />
+    <!-- Wolverine's own validation integration: middleware that runs a FluentValidation
+         validator on the request before the endpoint, so no endpoint calls one. -->
+    <PackageVersion Include="WolverineFx.Http.FluentValidation" Version="6.38.0" />
+    <!-- Carter 10 ships no validation of its own, so it takes FluentValidation directly.
+         Already resolved transitively by Carter and FastEndpoints; pinned here so all three
+         run the same version and a difference between them is the framework. -->
+    <PackageVersion Include="FluentValidation" Version="12.1.1" />
     <!-- One template engine for all six, pinned for the same reason the gzip level is. -->
     <PackageVersion Include="Scriban" Version="7.4.0" />
   </ItemGroup>

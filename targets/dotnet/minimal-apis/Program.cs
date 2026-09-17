@@ -14,6 +14,11 @@ WebApplicationBuilder builder = WebApplication.CreateSlimBuilder(args);
 // has nothing to call. The fixture is read here, before the host is built, so a target that
 // cannot read it fails at startup rather than on the first request.
 builder.Services.AddRequestBenchDomain();
+// Minimal APIs' own validation, new in .NET 10: this makes the framework check the
+// DataAnnotations on a parameter's type before the handler runs and answer a
+// ValidationProblem itself when they fail. Without it the attributes are inert and no
+// handler would be calling a validator either.
+builder.Services.AddValidation();
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
     options.SerializerOptions.PropertyNamingPolicy = Json.Options.PropertyNamingPolicy;
