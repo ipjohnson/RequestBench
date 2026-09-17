@@ -1,10 +1,17 @@
 // rust:warp's error contract.
 //
-// What it answers today comes from the shared validator in _shared/domain rather than from
-// its own facility, which is the defect #35 describes. The envelope is written here because
-// it is this framework's answer: when its own validation goes in, this file is rewritten --
-// including the statuses, if its binder and its validator fail at different layers -- and
-// nothing outside this directory changes.
+// warp::body::json::<OrderIn>() is warp's binding half: it deserializes into the struct
+// as part of the filter chain and rejects before the handler runs.
+//
+// A rejected filter is not an error in warp, it is a route declining, so the rejection
+// reaches .recover along with every unmatched path -- and telling a refused body from a
+// path nothing matched is exactly what .recover can do and an any() fallthrough cannot.
+// BodyDeserializeError covers both layers and answers 400 for either.
+//
+// The rules serde cannot state -- a list of at least one line, a qty of at least one --
+// are this target's own, because warp has no validation layer to put them in. They answer
+// 422 with a field and a rule, and because they are its own they can stop at the first,
+// which is why body.rejected_first is still a different answer here.
 import {
   errorEnvelope, z,
   type Ask, type ExceptionPackage,
@@ -15,26 +22,48 @@ const envelope = (body: z.ZodType<unknown>) => (ask: Ask) => errorEnvelope(ask, 
 /** A refusal that names no field: denied, not found, no route. */
 const bare = z.object({ error: z.string().min(1) }).strict();
 
-/** A rejected body, with one entry per field the validator refused. */
-const validation = z
-  .object({
-    error: z.string().min(1),
-    errors: z.array(z.object({ field: z.string(), rule: z.string() }).strict()).min(1),
-  })
-  .strict();
+/** What this target's own checks refused, one entry per rule. */
+const refused = z.object({
+  error: z.literal("validation_failed"),
+  errors: z.array(z.object({ field: z.string(), rule: z.string() }).strict()).min(1),
+}).strict();
+
+/** What the extractor refused, in this target's own envelope. */
+const notBound = z.object({
+  error: z.literal("invalid_body"),
+  detail: z.string().min(1),
+}).strict();
+const notBoundMalformed = notBound;
 
 export default {
   target: "rust:warp",
   because:
-    "Validates by calling the shared validator in _shared/domain rather than its own " +
-    "facility, so it answers this repository's envelope instead of the framework's, and " +
-    "one status for every kind of bad body. See issue #35.",
+    "warp::body::json::<OrderIn>() is warp's binding half: it deserializes into the " +
+    "struct as part of the filter chain and rejects before the handler runs. A rejected " +
+    "filter is not an error in warp, it is a route declining, so the rejection reaches " +
+    ".recover along with every unmatched path -- and telling a refused body from a path " +
+    "nothing matched is exactly what .recover can do and an any() fallthrough cannot. " +
+    "BodyDeserializeError covers both layers and answers 400 for either.",
   schemas: {
     "authorized.denied": envelope(bare),
     "errors.not_found": envelope(bare),
     "errors.unmatched": envelope(bare),
-    "body.rejected_all": envelope(validation),
-    "body.rejected_first": envelope(validation),
-    "errors.malformed": envelope(validation),
+    // The plan sends a type mismatch here, so the extractor answers and this target's own
+    // checks never run. They are what answers a body of the right shape and wrong values.
+    "body.rejected_all": (ask: Ask) =>
+      errorEnvelope(ask, notBound, {
+        statuses: [400], fieldErrors: [], bodyClass: "json",
+      }),
+    "body.rejected_first": (ask: Ask) =>
+      errorEnvelope(ask, notBound, {
+        statuses: [400], fieldErrors: [], bodyClass: "json",
+      }),
+    "errors.malformed": (ask: Ask) =>
+      errorEnvelope(ask, notBoundMalformed, {
+        statuses: [400], fieldErrors: [], bodyClass: "json",
+      }),
   },
 } satisfies ExceptionPackage;
+
+/** Exported so the package's own test can check the shape its own checks do produce. */
+export const ownChecks = refused;

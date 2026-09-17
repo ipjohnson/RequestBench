@@ -13,14 +13,77 @@ use actix_web::{
     web, App, HttpRequest, HttpResponse, HttpServer, Responder,
 };
 use rb_domain as d;
+use serde::Deserialize;
 use serde_json::Value;
 
 fn fail(e: d::Fail) -> HttpResponse {
     match e {
         d::Fail::NotFound => HttpResponse::NotFound().json(d::not_found_body()),
-        d::Fail::Invalid(errs) => HttpResponse::UnprocessableEntity().json(d::invalid_body(&errs)),
     }
 }
+
+// ---- validation: actix's typed Json extractor, and this target's own rules -----
+//
+// `web::Json<OrderIn>` is the framework's binding half: actix deserializes into the
+// struct before the handler runs and rejects a body that will not fit without the handler
+// seeing it. These routes used to take `web::Bytes` and call serde_json::from_slice,
+// which made the extractor a no-op and the binding this repository's rather than actix's.
+//
+// actix does not separate a body that is not JSON from one that is JSON of the wrong
+// shape: both are a JsonPayloadError and both answer 400. axum draws that line and
+// answers 422 for the second, which is one of the differences #35 exists to show.
+//
+// What serde cannot express is the rest: a list needs at least one entry and a qty at
+// least one. Those are checked here, in this target's own code, because actix has no
+// validation layer to put them in.
+
+/// The order body as actix binds it. serde reports the first field that does not fit.
+#[derive(Debug, Deserialize)]
+struct OrderIn {
+    customer_id: i64,
+    status: String,
+    lines: Vec<LineIn>,
+}
+
+#[derive(Debug, Deserialize)]
+struct LineIn {
+    product_id: i64,
+    qty: i64,
+}
+
+/// The rules a deserialize cannot state. `first_error` stops at the first, which this
+/// target can still answer because the checks are its own.
+fn check(order: &OrderIn, first_error: bool) -> Vec<d::FieldError> {
+    let mut errs: Vec<d::FieldError> = Vec::new();
+    if order.lines.is_empty() {
+        errs.push(d::FieldError::new("lines", "min_length"));
+    }
+    for (i, l) in order.lines.iter().enumerate() {
+        if first_error && !errs.is_empty() {
+            break;
+        }
+        if l.qty < 1 {
+            errs.push(d::FieldError::new(format!("lines[{i}].qty"), "min"));
+        }
+    }
+    errs
+}
+
+/// The order, or this target's own answer when its own checks refuse the body.
+fn validated(order: &OrderIn, first_error: bool) -> Result<d::ValidatedOrder, HttpResponse> {
+    let errs = check(order, first_error);
+    if !errs.is_empty() {
+        return Err(HttpResponse::UnprocessableEntity()
+            .json(serde_json::json!({ "error": "validation_failed", "errors": errs })));
+    }
+    let lines: Vec<d::LineInput> = order
+        .lines
+        .iter()
+        .map(|l| d::LineInput { product_id: l.product_id, qty: l.qty })
+        .collect();
+    Ok(d::price_order(order.customer_id, &order.status, &lines))
+}
+
 
 fn ok<T: serde::Serialize>(v: Result<T, d::Fail>) -> HttpResponse {
     match v {
@@ -29,8 +92,13 @@ fn ok<T: serde::Serialize>(v: Result<T, d::Fail>) -> HttpResponse {
     }
 }
 
-fn parse(body: &[u8]) -> Result<Value, d::Fail> {
-    serde_json::from_slice(body).map_err(|_| d::malformed_body())
+/// An unvalidated body, for the endpoints that only parse. The validate routes use the
+/// extractor; this is only for bind, which is measured against them.
+fn parse(body: &[u8]) -> Result<Value, HttpResponse> {
+    serde_json::from_slice(body).map_err(|e| {
+        HttpResponse::BadRequest()
+            .json(serde_json::json!({ "error": "invalid_body", "detail": e.to_string() }))
+    })
 }
 
 fn query(req: &HttpRequest) -> d::Query {
@@ -145,16 +213,22 @@ fn template_route(size: &'static str) -> actix_web::Route {
 async fn bind(body: web::Bytes) -> HttpResponse {
     match parse(&body) {
         Ok(v) => HttpResponse::Ok().json(d::bind_echo(v)),
-        Err(e) => fail(e),
+        Err(r) => r,
     }
 }
 
-async fn validate_all(body: web::Bytes) -> HttpResponse {
-    ok(parse(&body).and_then(|v| d::validate_order(&v, false)))
+async fn validate_all(order: web::Json<OrderIn>) -> HttpResponse {
+    match validated(&order, false) {
+        Ok(v) => HttpResponse::Ok().json(v),
+        Err(r) => r,
+    }
 }
 
-async fn validate_first(body: web::Bytes) -> HttpResponse {
-    ok(parse(&body).and_then(|v| d::validate_order(&v, true)))
+async fn validate_first(order: web::Json<OrderIn>) -> HttpResponse {
+    match validated(&order, true) {
+        Ok(v) => HttpResponse::Ok().json(v),
+        Err(r) => r,
+    }
 }
 
 async fn filter(req: HttpRequest) -> HttpResponse {
@@ -173,31 +247,35 @@ async fn aggregate(p: web::Path<String>) -> HttpResponse {
     ok(d::domain_aggregate(&p))
 }
 
-async fn create(body: web::Bytes) -> HttpResponse {
-    match parse(&body).and_then(|v| d::validate_order(&v, false)) {
+async fn create(order: web::Json<OrderIn>) -> HttpResponse {
+    match validated(&order, false) {
         Ok(v) => HttpResponse::Created()
             .insert_header((header::LOCATION, d::created_location()))
             .json(v),
-        Err(e) => fail(e),
+        Err(r) => r,
     }
 }
 
-async fn replace(p: web::Path<String>, body: web::Bytes) -> HttpResponse {
+async fn replace(p: web::Path<String>, order: web::Json<OrderIn>) -> HttpResponse {
     let existing = match d::get_order(&p) {
         Ok(o) => o,
         Err(e) => return fail(e),
     };
-    match parse(&body).and_then(|v| d::validate_order(&v, false)) {
+    match validated(&order, false) {
         Ok(mut v) => {
             v.id = Some(existing.id);
             HttpResponse::Ok().json(v)
         }
-        Err(e) => fail(e),
+        Err(r) => r,
     }
 }
 
 async fn patch(p: web::Path<String>, body: web::Bytes) -> HttpResponse {
-    ok(parse(&body).and_then(|v| d::patch_customer(&p, &v)))
+    let v = match parse(&body) {
+        Ok(v) => v,
+        Err(r) => return r,
+    };
+    ok(d::patch_customer(&p, &v))
 }
 
 async fn delete_line(p: web::Path<(String, String)>) -> HttpResponse {

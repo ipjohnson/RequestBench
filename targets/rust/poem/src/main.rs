@@ -17,6 +17,7 @@ use poem::{
     Body, Endpoint, EndpointExt, IntoResponse, Request, Response, Route, Server,
 };
 use rb_domain as d;
+use serde::Deserialize;
 use serde_json::Value;
 
 /// The domain's failures as poem errors, so a handler returns `Result` and never builds a
@@ -35,13 +36,11 @@ impl ResponseError for Failed {
     fn status(&self) -> StatusCode {
         match self.0 {
             d::Fail::NotFound => StatusCode::NOT_FOUND,
-            d::Fail::Invalid(_) => StatusCode::UNPROCESSABLE_ENTITY,
         }
     }
     fn as_response(&self) -> Response {
         let body = match &self.0 {
             d::Fail::NotFound => d::not_found_body(),
-            d::Fail::Invalid(errs) => d::invalid_body(errs),
         };
         Json(body).with_status(self.status()).into_response()
     }
@@ -55,8 +54,101 @@ impl From<d::Fail> for Failed {
 
 type R<T> = Result<T, Failed>;
 
-fn parse(body: &[u8]) -> R<Value> {
-    serde_json::from_slice(body).map_err(|_| Failed(d::malformed_body()))
+/// An answer this target decided on itself, carried back through poem's error channel so
+/// the framework renders the status and body this target chose rather than one of its own.
+#[derive(Debug)]
+struct Rejected(StatusCode, Value);
+
+impl std::fmt::Display for Rejected {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "rejected")
+    }
+}
+impl std::error::Error for Rejected {}
+
+impl ResponseError for Rejected {
+    fn status(&self) -> StatusCode {
+        self.0
+    }
+    fn as_response(&self) -> Response {
+        Json(self.1.clone()).with_status(self.0).into_response()
+    }
+}
+
+/// An unvalidated body, for the endpoints that only parse. The validate routes use the
+/// extractor; this is only for bind, which is measured against them.
+/// The one domain failure, as this target's rejection carrier.
+fn not_found_rejection(_: d::Fail) -> Rejected {
+    Rejected(StatusCode::NOT_FOUND, d::not_found_body())
+}
+
+fn parse(body: &[u8]) -> Result<Value, Rejected> {
+    serde_json::from_slice(body).map_err(|e: serde_json::Error| {
+        Rejected(
+            StatusCode::BAD_REQUEST,
+            serde_json::json!({ "error": "invalid_body", "detail": e.to_string() }),
+        )
+    })
+}
+
+// ---- validation: poem's typed Json extractor, and this target's own rules ------
+//
+// `Json<OrderIn>` is the framework's binding half: poem deserializes into the struct
+// before the handler runs and rejects a body that will not fit without the handler seeing
+// it. These routes used to take `Vec<u8>` and call serde_json::from_slice, which made the
+// extractor a no-op and the binding this repository's rather than poem's.
+//
+// What serde cannot express is the rest: a list needs at least one entry and a qty at
+// least one. Those are checked here, in this target's own code, because poem has no
+// validation layer to put them in.
+
+/// The order body as poem binds it. serde reports the first field that does not fit.
+#[derive(Debug, Deserialize)]
+struct OrderIn {
+    customer_id: i64,
+    status: String,
+    lines: Vec<LineIn>,
+}
+
+#[derive(Debug, Deserialize)]
+struct LineIn {
+    product_id: i64,
+    qty: i64,
+}
+
+/// The rules a deserialize cannot state. `first_error` stops at the first, which this
+/// target can still answer because the checks are its own.
+fn check(order: &OrderIn, first_error: bool) -> Vec<d::FieldError> {
+    let mut errs: Vec<d::FieldError> = Vec::new();
+    if order.lines.is_empty() {
+        errs.push(d::FieldError::new("lines", "min_length"));
+    }
+    for (i, l) in order.lines.iter().enumerate() {
+        if first_error && !errs.is_empty() {
+            break;
+        }
+        if l.qty < 1 {
+            errs.push(d::FieldError::new(format!("lines[{i}].qty"), "min"));
+        }
+    }
+    errs
+}
+
+/// The order, or this target's own answer when its own checks refuse the body.
+fn validated(order: &OrderIn, first_error: bool) -> Result<d::ValidatedOrder, Rejected> {
+    let errs = check(order, first_error);
+    if !errs.is_empty() {
+        return Err(Rejected(
+            StatusCode::UNPROCESSABLE_ENTITY,
+            serde_json::json!({ "error": "validation_failed", "errors": errs }),
+        ));
+    }
+    let lines: Vec<d::LineInput> = order
+        .lines
+        .iter()
+        .map(|l| d::LineInput { product_id: l.product_id, qty: l.qty })
+        .collect();
+    Ok(d::price_order(order.customer_id, &order.status, &lines))
 }
 
 fn query(req: &Request) -> d::Query {
@@ -194,18 +286,18 @@ async fn main() -> Result<(), std::io::Error> {
 }
 
 #[poem::handler]
-async fn bind(body: Vec<u8>) -> R<Json<d::BindResult>> {
+async fn bind(body: Vec<u8>) -> Result<Json<d::BindResult>, Rejected> {
     Ok(Json(d::bind_echo(parse(&body)?)))
 }
 
 #[poem::handler]
-async fn validate_all(body: Vec<u8>) -> R<Json<d::ValidatedOrder>> {
-    Ok(Json(d::validate_order(&parse(&body)?, false)?))
+async fn validate_all(Json(order): Json<OrderIn>) -> Result<Json<d::ValidatedOrder>, Rejected> {
+    Ok(Json(validated(&order, false)?))
 }
 
 #[poem::handler]
-async fn validate_first(body: Vec<u8>) -> R<Json<d::ValidatedOrder>> {
-    Ok(Json(d::validate_order(&parse(&body)?, true)?))
+async fn validate_first(Json(order): Json<OrderIn>) -> Result<Json<d::ValidatedOrder>, Rejected> {
+    Ok(Json(validated(&order, true)?))
 }
 
 #[poem::handler]
@@ -229,8 +321,8 @@ async fn aggregate(Path(region): Path<String>) -> R<Json<d::Report>> {
 }
 
 #[poem::handler]
-async fn create(body: Vec<u8>) -> R<Response> {
-    let v = d::validate_order(&parse(&body)?, false)?;
+async fn create(Json(order): Json<OrderIn>) -> Result<Response, Rejected> {
+    let v = validated(&order, false)?;
     Ok(Json(v)
         .with_status(StatusCode::CREATED)
         .with_header(header::LOCATION, d::created_location())
@@ -238,16 +330,23 @@ async fn create(body: Vec<u8>) -> R<Response> {
 }
 
 #[poem::handler]
-async fn replace(Path(oid): Path<String>, body: Vec<u8>) -> R<Json<d::ValidatedOrder>> {
-    let existing = d::get_order(&oid)?;
-    let mut v = d::validate_order(&parse(&body)?, false)?;
+async fn replace(
+    Path(oid): Path<String>,
+    Json(order): Json<OrderIn>,
+) -> Result<Json<d::ValidatedOrder>, Rejected> {
+    let existing = d::get_order(&oid).map_err(|e| not_found_rejection(e))?;
+    let mut v = validated(&order, false)?;
     v.id = Some(existing.id);
     Ok(Json(v))
 }
 
 #[poem::handler]
-async fn patch_customer(Path(cid): Path<String>, body: Vec<u8>) -> R<Json<d::Customer>> {
-    Ok(Json(d::patch_customer(&cid, &parse(&body)?)?))
+async fn patch_customer(
+    Path(cid): Path<String>,
+    body: Vec<u8>,
+) -> Result<Json<d::Customer>, Rejected> {
+    let v = parse(&body)?;
+    Ok(Json(d::patch_customer(&cid, &v).map_err(|e| not_found_rejection(e))?))
 }
 
 #[poem::handler]

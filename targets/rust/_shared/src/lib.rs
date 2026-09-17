@@ -8,7 +8,7 @@
 
 use flate2::{write::GzEncoder, Compression};
 use serde::{Deserialize, Serialize};
-use serde_json::{Map, Value};
+use serde_json::Value;
 use std::collections::HashMap;
 use std::io::Write;
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -134,6 +134,8 @@ pub fn fixture_path() -> String {
 
 // ---- errors -----------------------------------------------------------------
 
+/// One field a target's own validator refused. The shape is shared because it is a pair of
+/// strings; what goes in it, and the envelope around it, is each target's own.
 #[derive(Debug, Clone, Serialize)]
 pub struct FieldError {
     pub field: String,
@@ -141,22 +143,16 @@ pub struct FieldError {
 }
 
 impl FieldError {
-    fn new(field: impl Into<String>, rule: &str) -> Self {
+    pub fn new(field: impl Into<String>, rule: &str) -> Self {
         Self { field: field.into(), rule: rule.to_string() }
     }
 }
 
-/// Every failure a handler has to turn into a status. `NotFound` is the sentinel every
-/// lookup returns; `Invalid` carries the 422 body.
+/// The one failure a handler has to turn into a status. A body a framework's own extractor
+/// or validator refused is that framework's answer, raised and rendered where it happens.
 #[derive(Debug, Clone)]
 pub enum Fail {
     NotFound,
-    Invalid(Vec<FieldError>),
-}
-
-/// The 422 body, as every target sends it.
-pub fn invalid_body(errors: &[FieldError]) -> Value {
-    serde_json::json!({ "error": "validation_failed", "errors": errors })
 }
 
 pub fn not_found_body() -> Value {
@@ -328,97 +324,38 @@ pub struct ValidatedOrder {
 
 /// Integral in the way Go's `f == float64(int64(f))` is: a JSON number with nothing after
 /// the point. `true` and `"3"` are not numbers and do not pass.
-fn is_int(v: Option<&Value>) -> bool {
-    match v {
-        Some(Value::Number(n)) => n.as_f64().is_some_and(|f| f == (f as i64) as f64),
-        _ => false,
-    }
+// ---- the order body, after validation ---------------------------------------
+// Validating is the framework's own job and lives in each target: every one of the six
+// binds with its framework's typed extractor rather than reading raw bytes, and holds its
+// own checks for the rules a deserialize cannot express. What is left here is what happens
+// once a body is known to be good, which is the same work whichever framework proved it.
+
+/// One order line as it arrived, before pricing.
+#[derive(Debug, Clone, Copy)]
+pub struct LineInput {
+    pub product_id: i64,
+    pub qty: i64,
 }
 
-fn req_field(errs: &mut Vec<FieldError>, m: &Map<String, Value>, field: &str, typ: &str) {
-    match m.get(field) {
-        None | Some(Value::Null) => errs.push(FieldError::new(field, "required")),
-        Some(v) => match typ {
-            "int" if !is_int(Some(v)) => errs.push(FieldError::new(field, "int")),
-            "string" if !v.is_string() => errs.push(FieldError::new(field, "string")),
-            "array" if !v.is_array() => errs.push(FieldError::new(field, "array")),
-            _ => {}
-        },
-    }
-}
-
-/// `validate_order` reports every problem it finds; `first_error` stops at the first,
-/// which is what `body.rejected_all` minus `body.rejected_first` states as a number: the
-/// same walk in the same order, differing only in where it gives up.
-pub fn validate_order(body: &Value, first_error: bool) -> Result<ValidatedOrder, Fail> {
-    let empty = Map::new();
-    let m = body.as_object().unwrap_or(&empty);
-    let mut errs: Vec<FieldError> = Vec::new();
-    macro_rules! bail {
-        () => {
-            first_error && !errs.is_empty()
-        };
-    }
-
-    req_field(&mut errs, m, "customer_id", "int");
-    if !bail!() {
-        req_field(&mut errs, m, "status", "string");
-    }
-    if !bail!() {
-        req_field(&mut errs, m, "lines", "array");
-    }
-
-    let raw = m.get("lines").and_then(Value::as_array);
-    if let Some(rows) = raw {
-        if !bail!() {
-            if rows.is_empty() {
-                errs.push(FieldError::new("lines", "min_length"));
-            }
-            for (i, e) in rows.iter().enumerate() {
-                if bail!() {
-                    break;
-                }
-                let l = e.as_object();
-                let get = |k: &str| l.and_then(|o| o.get(k));
-                if !is_int(get("product_id")) {
-                    errs.push(FieldError::new(format!("lines[{i}].product_id"), "int"));
-                }
-                let qty = get("qty").and_then(Value::as_f64);
-                if !bail!() && !qty.is_some_and(|q| is_int(get("qty")) && q >= 1.0) {
-                    errs.push(FieldError::new(format!("lines[{i}].qty"), "min"));
-                }
-            }
-        }
-    }
-    if !errs.is_empty() {
-        return Err(Fail::Invalid(errs));
-    }
-
-    let rows = raw.map(Vec::as_slice).unwrap_or(&[]);
+/// The work after the validator says yes: look each product up, carry the unit price onto
+/// the line, and total it. Identical in every framework, which is why it is here and the
+/// validating is not.
+pub fn price_order(customer_id: i64, status: &str, in_lines: &[LineInput]) -> ValidatedOrder {
     let d = data();
-    let mut lines = Vec::with_capacity(rows.len());
+    let mut lines = Vec::with_capacity(in_lines.len());
     let mut total = 0;
-    for (i, e) in rows.iter().enumerate() {
-        let o = e.as_object().expect("validated above");
-        let pid = o["product_id"].as_f64().expect("validated above") as i64;
-        let qty = o["qty"].as_f64().expect("validated above") as i64;
-        let unit = d.products_by_id.get(&pid).map_or(0, |p| p.price_cents);
-        lines.push(Line { id: i as i64 + 1, product_id: pid, qty, unit_cents: unit, total_cents: unit * qty });
-        total += unit * qty;
+    for (i, l) in in_lines.iter().enumerate() {
+        let unit = d.products_by_id.get(&l.product_id).map_or(0, |p| p.price_cents);
+        lines.push(Line {
+            id: i as i64 + 1,
+            product_id: l.product_id,
+            qty: l.qty,
+            unit_cents: unit,
+            total_cents: unit * l.qty,
+        });
+        total += unit * l.qty;
     }
-    Ok(ValidatedOrder {
-        id: None,
-        customer_id: m["customer_id"].as_f64().expect("validated above") as i64,
-        status: m["status"].as_str().expect("validated above").to_string(),
-        lines,
-        total_cents: total,
-    })
-}
-
-/// The 422 every target answers when the request body is not JSON at all. It is a value
-/// rather than a parse error so `errors.malformed` and `body.rejected_*` share a shape.
-pub fn malformed_body() -> Fail {
-    Fail::Invalid(vec![FieldError::new("body", "json")])
+    ValidatedOrder { id: None, customer_id, status: status.to_string(), lines, total_cents: total }
 }
 
 pub fn patch_customer(cid: &str, body: &Value) -> Result<Customer, Fail> {
