@@ -13,6 +13,7 @@ public final class Baseline {
     cfg.routes.get("/health", ctx -> ctx.contentType("text/plain").result("ok"));
 
     cfg.routes.get("/__meta", ctx -> ctx.json(
-        Hosts.meta("javalin", Hosts.version("javalin"), "mustache.java")));
+        Hosts.meta("javalin", Hosts.version("javalin"), "mustache.java",
+                   "sha1 (javalin ships no conditional handling)", "a shared LRU")));
   }
 }

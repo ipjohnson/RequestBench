@@ -2,6 +2,11 @@ package rb.spring;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
+import org.springframework.context.annotation.Bean;
+import rb.spring.routes.Cache;
 import rb.domain.Domain;
 import rb.hosts.Hosts;
 
@@ -13,7 +18,21 @@ import rb.hosts.Hosts;
  * nobody reads, and a family is the unit a rewiring or a rerun is scoped to.
  */
 @SpringBootApplication
+@EnableCaching
 public class Main {
+
+  /**
+   * The store the cache family writes into: a Caffeine-free in-memory manager sized from
+   * the fixture, with an expiry past the end of a run. Spring's own ConcurrentMapCache has
+   * neither a cap nor an expiry, so the sizing the fixture derives from the key count is
+   * enforced here rather than assumed.
+   */
+  @Bean
+  CacheManager cacheManager() {
+    ConcurrentMapCacheManager manager = new ConcurrentMapCacheManager(Cache.STORE);
+    manager.setAllowNullValues(false);
+    return manager;
+  }
 
   public static void main(String[] args) throws Exception {
     Domain.load(Hosts.fixture());

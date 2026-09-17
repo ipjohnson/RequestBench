@@ -39,6 +39,7 @@ public class Baseline {
   @GET
   @Path("__meta")
   public Map<String, String> meta() {
-    return Hosts.meta("quarkus", Hosts.version("quarkus"), "qute " + Hosts.version("quarkus"));
+    return Hosts.meta("quarkus", Hosts.version("quarkus"), "qute " + Hosts.version("quarkus"),
+                      "sha1 (jax-rs compares, it does not hash)", "a shared LRU");
   }
 }

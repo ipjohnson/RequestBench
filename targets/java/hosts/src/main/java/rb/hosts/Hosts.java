@@ -104,15 +104,23 @@ public final class Hosts {
    * `template` is the engine this target renders the template family with. Each target
    * passes its own, because each reaches an engine through its own framework's view
    * facility and the six here do not agree on which.
+   *
+   * `etag` and `cache` say the same thing about the two caching families: which digest
+   * computed the validator, and what stored the response. Both are the framework's own
+   * facility where it ships one, so the rows are read against the declaration rather than
+   * across targets that are not doing the same thing.
    */
-  public static Map<String, String> meta(String framework, String version, String template) {
-    Map<String, String> m = new LinkedHashMap<>(5);
+  public static Map<String, String> meta(String framework, String version, String template,
+                                         String etag, String cache) {
+    Map<String, String> m = new LinkedHashMap<>(7);
     m.put("framework", framework);
     m.put("version", version);
     m.put("runtime", runtime());
     m.put("adapter", String.join(" + ", ADAPTERS));
     m.put("serializer", serializer);
     m.put("template", template);
+    m.put("etag", etag);
+    m.put("cache", cache);
     return m;
   }
 
