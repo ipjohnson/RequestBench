@@ -47,11 +47,13 @@ export type ExpectationOptions = {
  */
 export function difference(want: ExpectedRequest, got: Answer): string | null {
   if (got.status !== want.status) return `expected ${want.status}, got ${got.status}`;
-  if (got.body_class !== want.body_class) {
+  // A null expectation is a field spec/expected.json deliberately does not pin; its
+  // "unpinned" block says which, and what each contributor answered there. body_class is
+  // one on a status that carries no body, where RFC 9110 15.4.5 leaves the headers around
+  // the absent body to the sender and the frameworks disagree.
+  if (want.body_class !== null && got.body_class !== want.body_class) {
     return `expected a ${want.body_class} body, got ${got.body_class}`;
   }
-  // A null expectation is a field spec/expected.json deliberately does not pin; its
-  // "unpinned" block says which, and what each contributor answered there.
   if (want.encoding !== null && got.encoding !== want.encoding) {
     return `expected content-encoding ${want.encoding || "identity"}, `
       + `got ${got.encoding || "identity"}`;

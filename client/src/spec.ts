@@ -52,7 +52,8 @@ export type Plan = {
 /** What a non-error request must answer, pinned exactly. */
 export type ExpectedRequest = {
   readonly status: number;
-  readonly body_class: string;
+  /** null where the field is deliberately not pinned; see the `unpinned` block. */
+  readonly body_class: string | null;
   /** null where the field is deliberately not pinned; see the `unpinned` block. */
   readonly encoding: string | null;
   readonly body: unknown;

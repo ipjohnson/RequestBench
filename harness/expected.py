@@ -61,41 +61,11 @@ def is_error(ep):
     return max(ep.get("accepts") or [ep["expect"]]) >= 400
 
 
-def strings_of(node):
-    """Every string in a subtree, keys and values alike."""
-    if isinstance(node, dict):
-        out = set(node)
-        for v in node.values():
-            out |= strings_of(v)
-        return out
-    if isinstance(node, list):
-        out = set()
-        for v in node:
-            out |= strings_of(v)
-        return out
-    return {node} if isinstance(node, str) else set()
-
-
-def pair_found(node, field, rule):
-    """Whether a field error is reported somewhere in this body, in either shape anyone
-    uses for one.
-
-    Two shapes, because those are the two anyone writes. An object carrying both as
-    values is this repository's own {"field": ..., "rule": ...}; a key equal to the field
-    whose subtree names the rule is what ProblemDetails and the FluentValidation-shaped
-    lists produce. Anything else fails, which is the right outcome: a third shape is worth
-    looking at rather than pattern-matching blind.
-    """
-    if isinstance(node, dict):
-        if field in node and rule in strings_of(node[field]):
-            return True
-        values = {v for v in node.values() if isinstance(v, str)}
-        if field in values and rule in values:
-            return True
-        return any(pair_found(v, field, rule) for v in node.values())
-    if isinstance(node, list):
-        return any(pair_found(v, field, rule) for v in node)
-    return False
+# What an error body has to say is no longer judged here. Each framework declares the
+# envelope it answers in targets/<language>/<framework>/client-exception, and the client
+# gates on that; this file used to look for the shared validator's own rule vocabulary,
+# which stopped being anyone's after #35 gave every framework its own validator. What is
+# still recorded per target is the shape, below.
 
 
 def shape_of(node, path=""):
@@ -131,17 +101,6 @@ def envelope(answer):
         "body_class": answer["body_class"],
         "shape": sorted(shape_of(answer["body"])),
     }
-
-
-def content_problems(ep, answer):
-    """Why an error body is not acceptable, however the framework shaped it."""
-    if answer["body_class"] != "json":
-        return ["body is %s, not json" % answer["body_class"]]
-    if not answer["body"]:
-        return ["body is empty"]
-    missing = [(f, r) for f, r in ep.get("field_errors", [])
-               if not pair_found(answer["body"], f, r)]
-    return ["does not report %s=%s" % (f, r) for f, r in missing]
 
 
 def decoded(raw, headers):
@@ -336,7 +295,7 @@ def agree(captures, everyone=None):
     """
     everyone = everyone or captures
     expected, disagreements, partial, unpinned = {}, [], [], {}
-    per_target, bad_content = {n: {} for n in sorted(everyone)}, []
+    per_target = {n: {} for n in sorted(everyone)}
     names = sorted(captures)
     for ep in PLAN["endpoints"]:
         for key in keys_of(ep):
@@ -350,12 +309,8 @@ def agree(captures, everyone=None):
             if is_error(ep):
                 for name in sorted(everyone):
                     answer = everyone[name].get(key)
-                    if answer is None:
-                        continue
-                    problems = content_problems(ep, answer)
-                    if problems:
-                        bad_content.append((key, name, problems))
-                    per_target[name][key] = envelope(answer)
+                    if answer is not None:
+                        per_target[name][key] = envelope(answer)
                 continue
             first = answers[names[0]]
             odd = [n for n in names[1:] if answers[n] != first]
@@ -368,17 +323,30 @@ def agree(captures, everyone=None):
             # it is recorded as unpinned, with what each target answered, and the field
             # goes unchecked for that request. Every other field still has to agree, and a
             # disagreement anywhere else still blocks the file.
-            if all(differs_only_on_encoding(first, answers[n]) for n in odd):
+            if all(differs_only_on("encoding", first, answers[n]) for n in odd):
                 unpinned[key] = {n: answers[n]["encoding"] or "identity" for n in names}
                 expected[key] = {**first, "encoding": None}
                 continue
+            # A 304 carries no body, and RFC 9110 15.4.5 leaves what else it carries to the
+            # sender: @fastify/etag keeps the content-type its route declared and Django's
+            # ConditionalGetMiddleware drops it. Neither is wrong, and which one a framework
+            # does is a property worth recording rather than a difference worth failing on.
+            if NO_BODY_STATUS.issuperset({a["status"] for a in answers.values()}) \
+                    and all(differs_only_on("body_class", first, answers[n]) for n in odd):
+                unpinned[key] = {n: answers[n]["body_class"] for n in names}
+                expected[key] = {**first, "body_class": None}
+                continue
             disagreements.append((key, odd, answers))
-    return expected, disagreements, partial, unpinned, per_target, bad_content
+    return expected, disagreements, partial, unpinned, per_target
 
 
-def differs_only_on_encoding(a, b):
-    return {k: v for k, v in a.items() if k != "encoding"} == \
-           {k: v for k, v in b.items() if k != "encoding"}
+#: Statuses that carry no body, where the headers around it are the sender's choice.
+NO_BODY_STATUS = {204, 304}
+
+
+def differs_only_on(field, a, b):
+    return {k: v for k, v in a.items() if k != field} == \
+           {k: v for k, v in b.items() if k != field}
 
 
 def document(expected, contributors, unpinned, per_target):
@@ -518,7 +486,7 @@ def main():
         reached = sum(1 for v in captures[entry].values() if v["status"])
         print("\r  %-24s %d/%d requests answered" % (entry, reached, len(captures[entry])))
 
-    expected, disagreements, partial, unpinned, per_target, bad_content = agree(
+    expected, disagreements, partial, unpinned, per_target = agree(
         {n: captures[n] for n in named}, captures)
     print("\n%d/%d requests agreed by all %d targets"
           % (len(expected), sum(len(keys_of(e)) for e in PLAN["endpoints"]), len(named)))
@@ -528,11 +496,6 @@ def main():
     if errors_recorded:
         print("  %d error response(s) recorded per target; their envelopes are not shared"
               % errors_recorded)
-    if bad_content:
-        print("\n%d error body/bodies do not say what failed:" % len(bad_content))
-        for key, name, problems in bad_content[:12]:
-            print("  %-40s %-22s %s" % (key, name, "; ".join(problems)))
-        return 1
     if disagreements:
         report_disagreements(disagreements)
         return 1
@@ -540,7 +503,7 @@ def main():
     if unpinned:
         print("\n%d request(s) with one field left unpinned:" % len(unpinned))
         for key, who in sorted(unpinned.items()):
-            print("  %-40s content-encoding: %s" % (
+            print("  %-40s %s" % (
                 key, ", ".join("%s=%s" % (n, v) for n, v in sorted(who.items()))))
     doc = document(expected, named, unpinned, per_target)
     if a.check:
