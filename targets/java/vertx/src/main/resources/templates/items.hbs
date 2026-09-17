@@ -1,0 +1,24 @@
+<!doctype html>
+<html>
+  <head><title>items</title></head>
+  <body>
+    <h1>{{size}}</h1>
+    <table>
+      <thead>
+        <tr><th>id</th><th>name</th><th>category</th><th>price</th><th>stock</th></tr>
+      </thead>
+      <tbody>
+        {{#each items}}
+        <tr>
+          <td>{{id}}</td>
+          <td>{{name}}</td>
+          <td>{{category}}</td>
+          <td>{{priceCents}}</td>
+          <td>{{#if inStock}}yes{{else}}no{{/if}}</td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+    <p>{{count}} rows</p>
+  </body>
+</html>

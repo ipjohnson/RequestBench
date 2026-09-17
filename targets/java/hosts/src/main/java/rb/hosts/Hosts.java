@@ -98,17 +98,21 @@ public final class Hosts {
     serializer = name;
   }
 
-  /** What a target answers on /__meta. */
-  public static Map<String, String> meta(String framework, String version) {
+  /**
+   * What a target answers on /__meta.
+   *
+   * `template` is the engine this target renders the template family with. Each target
+   * passes its own, because each reaches an engine through its own framework's view
+   * facility and the six here do not agree on which.
+   */
+  public static Map<String, String> meta(String framework, String version, String template) {
     Map<String, String> m = new LinkedHashMap<>(5);
     m.put("framework", framework);
     m.put("version", version);
     m.put("runtime", runtime());
     m.put("adapter", String.join(" + ", ADAPTERS));
     m.put("serializer", serializer);
-    // The engine the template family renders with, which every Java target shares for the
-    // same reason the gzip level is pinned.
-    m.put("template", "jmustache " + version("jmustache"));
+    m.put("template", template);
     return m;
   }
 

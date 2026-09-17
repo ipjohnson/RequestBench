@@ -26,6 +26,6 @@ public class Baseline {
 
   @GetMapping("/__meta")
   Map<String, String> meta() {
-    return Hosts.meta("spring-boot", Hosts.version("spring-boot"));
+    return Hosts.meta("spring-boot", Hosts.version("spring-boot"), "thymeleaf");
   }
 }

@@ -42,7 +42,7 @@ public final class Main {
     Cached.register(router);
     Body.register(router);
     DomainRoutes.register(router);
-    Templates.register(router);
+    Templates.register(vertx, router);
 
     // errors: registered last. Vert.x matches routes in registration order, so a catch-all
     // mounted earlier would answer every route declared after it.

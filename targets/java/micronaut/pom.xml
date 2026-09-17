@@ -44,6 +44,12 @@
       <groupId>io.micronaut</groupId>
       <artifactId>micronaut-jackson-databind</artifactId>
     </dependency>
+    <!-- Micronaut's own view facility. Thymeleaf is the engine Micronaut Views lists
+         first, and the integration brings the engine with it. -->
+    <dependency>
+      <groupId>io.micronaut.views</groupId>
+      <artifactId>micronaut-views-thymeleaf</artifactId>
+    </dependency>
     <dependency>
       <groupId>io.micronaut</groupId>
       <artifactId>micronaut-runtime</artifactId>

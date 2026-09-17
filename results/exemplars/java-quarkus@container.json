@@ -1569,18 +1569,22 @@
     "status": 200,
     "headers": [
      [
+      "Vary",
+      "Accept"
+     ],
+     [
       "content-length",
-      "448"
+      "449"
      ],
      [
       "Content-Type",
-      "text/html"
+      "text/html;charset=UTF-8"
      ]
     ],
-    "header_bytes": 46,
+    "header_bytes": 74,
     "framing": "content-length",
-    "body_bytes": 448,
-    "body": "<!doctype html>\n<html>\n  <head><title>items</title></head>\n  <body>\n    <h1>small</h1>\n    <table>\n      <thead>\n        <tr><th>id</th><th>name</th><th>category</th><th>price</th><th>stock</th></tr>\n      </thead>\n      <tbody>\n        <tr>\n          <td>1</td>\n          <td>slate-lamp-6647</td>\n          <td>tools</td>\n          <td>18928</td>\n          <td>yes</td>\n        </tr>\n      </tbody>\n    </table>\n    <p>1 rows</p>\n  </body>\n</html>",
+    "body_bytes": 449,
+    "body": "<!doctype html>\n<html>\n  <head><title>items</title></head>\n  <body>\n    <h1>small</h1>\n    <table>\n      <thead>\n        <tr><th>id</th><th>name</th><th>category</th><th>price</th><th>stock</th></tr>\n      </thead>\n      <tbody>\n        <tr>\n          <td>1</td>\n          <td>slate-lamp-6647</td>\n          <td>tools</td>\n          <td>18928</td>\n          <td>yes</td>\n        </tr>\n      </tbody>\n    </table>\n    <p>1 rows</p>\n  </body>\n</html>\n",
     "truncated": false
    }
   },
@@ -1598,17 +1602,21 @@
     "status": 200,
     "headers": [
      [
+      "Vary",
+      "Accept"
+     ],
+     [
       "content-length",
-      "14320"
+      "14321"
      ],
      [
       "Content-Type",
-      "text/html"
+      "text/html;charset=UTF-8"
      ]
     ],
-    "header_bytes": 48,
+    "header_bytes": 76,
     "framing": "content-length",
-    "body_bytes": 14320,
+    "body_bytes": 14321,
     "body": "<!doctype html>\n<html>\n  <head><title>items</title></head>\n  <body>\n    <h1>medium</h1>\n    <table>\n      <thead>\n        <tr><th>id</th><th>name</th><th>category</th><th>price</th><th>stock</th></tr>\n      </thead>\n      <tbody>\n        <tr>\n          <td>1</td>\n          <td>slate-lamp-6647</td>\n          <td>tools</td>\n          <td>18928</td>\n          <td>yes</td>\n        </tr>\n        <tr>\n          <td>2</td>\n          <td>brass-hinge-5716</td>\n          <td>garden</td>\n          <td>17577</td>\n          <td>yes</td>\n        </tr>\n        <tr>\n          <td>3</td>\n          <td>linen-ring-6971</td>\n          <td>kitchen</td>\n          <td>5540</td>\n          <td>yes</td>\n        </tr>\n        <tr>\n          <td>4</td>\n          <td>copper-bolt-9217</td>\n          <td>outdoor</td>\n          <td>11562</td>\n          <td>yes</td>\n        </tr>\n        <tr>\n          <td>5</td>\n          <td>linen-lamp-8288</td>\n          <td>office</td>\n          <td>1413</td>\n          <td>yes</td>\n        </tr>\n        <tr>\n          <td>6</td>\n          <td>copper-pan-9308</td>\n          <td>tools</td>\n          <td>10795</td>\n          <td>yes</td>\n        </tr>\n        <tr>\n          <td>7</td>\n          <td>slate-seed-3051</td>\n          <td>garden</td>\n          <td>9667</td>\n          <td>no</td>\n        </tr>\n        <tr>\n          <td>8</td>\n          <td>oak-lamp-8662</td>\n          <td>kitchen</td>\n          <td>18032</td>\n          <td>no</td>\n        </tr>\n        <tr>\n          <td>9</td>\n          <td>amber-hinge-8405</td>\n          <td>outdoor</td>\n          <td>9566</td>\n          <td>yes</td>\n        </tr>\n        <tr>\n          <td>10</td>\n          <td>linen-lamp-9676</td>\n          <td>office</td>\n          <td>4288</td>\n          <td>yes</td>\n        </tr>\n        <tr>\n          <td>11</td>\n          <td>brass-trowel-2042</td>\n          <td>tools</td>\n          <td>17701</td>\n          <td>no</td>\n        </tr>\n        <tr>\n          <td>12</td>\n          <td>linen-lamp-5542</td>\n          <td>garden</t",
     "truncated": true
    }

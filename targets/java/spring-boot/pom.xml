@@ -39,6 +39,13 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-validation</artifactId>
     </dependency>
+    <!-- The template family's view layer. Thymeleaf is what Spring's own "Serving Web
+         Content with Spring MVC" guide adds, so it is what a reader of the Spring docs
+         ends up rendering with. -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-thymeleaf</artifactId>
+    </dependency>
     <!-- Host: lambda-rie. The adapter people actually deploy in front of Spring Boot,
          rather than a generic shim. Unused under the container host, where Spring serves
          its own socket. -->

@@ -43,7 +43,7 @@
     <!-- Frameworks. The deps job moves these, patch and minor only. -->
     <netty.version>4.2.18.Final</netty.version>
     <javalin.version>7.2.3</javalin.version>
-    <jmustache.version>1.16</jmustache.version>
+    <thymeleaf.version>3.1.5.RELEASE</thymeleaf.version>
     <vertx.version>5.1.8</vertx.version>
     <helidon.version>4.5.4</helidon.version>
     <spring-boot.version>4.1.1</spring-boot.version>
@@ -87,13 +87,14 @@
         <artifactId>javalin</artifactId>
         <version>${javalin.version}</version>
       </dependency>
-      <!-- The template family's engine, shared by every Java target for the same reason
-           the gzip level is pinned. jmustache is one jar with no transitive dependencies,
-           so it does not drag a tree into six classpaths. -->
+      <!-- helidon-se has no view layer and Helidon recommends no engine, so it renders
+           with Thymeleaf directly: the most used server-side template engine in Java, and
+           the one spring-boot and micronaut reach through their own view layers. Every
+           other target's engine arrives with the framework integration that uses it. -->
       <dependency>
-        <groupId>com.samskivert</groupId>
-        <artifactId>jmustache</artifactId>
-        <version>${jmustache.version}</version>
+        <groupId>org.thymeleaf</groupId>
+        <artifactId>thymeleaf</artifactId>
+        <version>${thymeleaf.version}</version>
       </dependency>
       <dependency>
         <groupId>com.google.cloud.functions</groupId>
