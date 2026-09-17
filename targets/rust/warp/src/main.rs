@@ -11,6 +11,44 @@
 
 use bytes::Bytes;
 use rb_domain as d;
+
+/// The header names the vary rows are keyed on, as the fixture pins them. Written out here
+/// rather than read from it, because a filter takes a &'static and the values are the same
+/// constants harness/make_fixture.py asserts the key count from.
+const VARY_ONE: &[&str] = &["x-rb-tenant"];
+const VARY_MANY: &[&str] = &["x-rb-channel", "x-rb-region", "x-rb-tenant"];
+
+/// One store for the target, sized from the fixture.
+static CACHE: std::sync::LazyLock<d::ResponseStore> =
+    std::sync::LazyLock::new(d::ResponseStore::new);
+
+/// The stored response for one key, built and stored on the first ask.
+fn replayed(path: &str, size: &str, on: &[&str], values: Vec<String>) -> Response {
+    let key = d::cache_key(path, &values);
+    let hit = CACHE.get(&key).unwrap_or_else(|| {
+        let mut headers = vec![("x-rb-serial".to_string(), d::next_serial())];
+        if !on.is_empty() {
+            headers.push(("vary".to_string(), on.join(", ")));
+        }
+        let fresh = d::StoredResponse {
+            status: 200,
+            headers,
+            body: serde_json::to_vec(d::payload(size)).unwrap_or_default(),
+        };
+        CACHE.put(key, fresh.clone());
+        fresh
+    });
+    let mut res =
+        warp::reply::with_header(hit.body, header::CONTENT_TYPE, "application/json")
+            .into_response();
+    let h = res.headers_mut();
+    for (name, value) in hit.headers {
+        if let (Ok(n), Ok(v)) = (name.parse::<header::HeaderName>(), value.parse()) {
+            h.insert(n, v);
+        }
+    }
+    res
+}
 use serde::Serialize;
 use serde::Deserialize;
 use serde_json::Value;
@@ -337,30 +375,78 @@ async fn main() {
         .map(Reply::into_response)
         .boxed();
 
-    // The ETag is pinned in the fixture, so what this measures is emitting the header and
-    // comparing it rather than hashing a body. The comparison requires a non-empty header.
-    // rb:snippet cached.small cached.medium cached.large cached.revalidate
-    let cached = warp::path!("cached" / String)
+    // etag: the digest and the comparison, inside the filter.
+    //
+    // warp ships no conditional handling, so the digest is the shared one and /__meta says
+    // so. A filter is warp's unit of composition and there is nothing that can rewrite a
+    // reply after one has produced it, so the conditional is part of the filter chain that
+    // answers rather than a wrapper around it.
+    //
+    // Shallow, which is the point: the body is serialized and hashed before anything is
+    // compared, so the 304 saves the write and nothing else.
+    // rb:snippet etag.small etag.large etag.match_large etag.stale_large
+    let etag = warp::path!("etag" / String)
         .and(warp::get())
         .and(warp::header::optional::<String>("if-none-match"))
-        .and_then(|s: String, inm: Option<String>| async move {
-            if !matches!(s.as_str(), "small" | "medium" | "large") {
+        .and_then(|s: String, asked: Option<String>| async move {
+            if !matches!(s.as_str(), "small" | "large") {
                 return Err(warp::reject::not_found());
             }
-            let etag = d::etag_of(&s);
-            let fresh = inm.as_deref().is_some_and(|v| !v.is_empty() && v == etag);
-            let body = if fresh {
+            let raw = serde_json::to_vec(d::payload(&s)).unwrap_or_default();
+            let tag = d::content_etag(&raw);
+            let mut res = if asked.as_deref() == Some(tag.as_str()) {
                 warp::reply::with_status(warp::reply::reply(), StatusCode::NOT_MODIFIED)
                     .into_response()
             } else {
-                json(d::payload(&s))
+                warp::reply::with_header(raw, header::CONTENT_TYPE, "application/json")
+                    .into_response()
             };
-            let mut res = body;
             let h = res.headers_mut();
-            h.insert(header::ETAG, etag.parse().expect("etag"));
+            h.insert(header::ETAG, tag.parse().expect("etag"));
             h.insert(header::CACHE_CONTROL, d::CACHEABLE.parse().expect("cache-control"));
             h.insert("x-rb-serial", d::next_serial().parse().expect("serial"));
             Ok::<_, warp::Rejection>(res)
+        })
+        .boxed();
+
+    // cache: the store consulted before the payload is built.
+    //
+    // warp ships no response cache, so the store is the shared LRU sized from the fixture.
+    // One store for the target rather than one per route, so the capacity the fixture
+    // derives from the key count means what it says.
+    // rb:snippet cache.small cache.medium cache.large
+    let cache_by_path = warp::path!("cache" / String)
+        .and(warp::get())
+        .and_then(|s: String| async move {
+            if !matches!(s.as_str(), "small" | "medium" | "large") {
+                return Err(warp::reject::not_found());
+            }
+            Ok::<_, warp::Rejection>(replayed(&format!("/cache/{s}"), &s, &[], Vec::new()))
+        })
+        .boxed();
+
+    // rb:snippet cache.vary_one cache.vary_many
+    let cache_vary = warp::path!("cache" / "vary" / String)
+        .and(warp::get())
+        .and(warp::header::headers_cloned())
+        .and_then(|which: String, headers: header::HeaderMap| async move {
+            let on: &[&str] = match which.as_str() {
+                "one" => VARY_ONE,
+                "many" => VARY_MANY,
+                _ => return Err(warp::reject::not_found()),
+            };
+            let values = on
+                .iter()
+                .map(|name| {
+                    headers.get(*name).and_then(|v| v.to_str().ok()).unwrap_or("").to_string()
+                })
+                .collect();
+            Ok::<_, warp::Rejection>(replayed(
+                &format!("/cache/vary/{which}"),
+                "small",
+                on,
+                values,
+            ))
         })
         .boxed();
 
@@ -485,7 +571,9 @@ async fn main() {
         .or(mw).unify()
         .or(auth).unify()
         .or(compressed).unify()
-        .or(cached).unify()
+        .or(etag).unify()
+        .or(cache_vary).unify()
+        .or(cache_by_path).unify()
         .or(template).unify()
         .or(bodies).unify()
         .or(domain).unify()

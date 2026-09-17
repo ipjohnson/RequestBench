@@ -22,13 +22,25 @@ pub fn crate_version(name: &str) -> &'static str {
 /// requests. `template` is the engine this target renders the template family with. Each
 /// target passes its own, because each reaches an engine through its own framework's view
 /// facility, and the one framework here with a view layer does not share the others'.
+///
+/// `etag` and `cache` say the same thing about the two caching families: which digest
+/// computed the validator, and what stored the response. Only salvo has either as a
+/// framework facility, so only salvo passes its own; the rest take the defaults below,
+/// which name what they hold instead.
 pub fn meta(framework: &str, template: &str) -> Value {
+    meta_with(framework, template,
+              "sha1 (the framework ships no conditional handling)", "a shared LRU")
+}
+
+pub fn meta_with(framework: &str, template: &str, etag: &str, cache: &str) -> Value {
     json!({
         "framework": framework,
         "version": crate_version(framework),
         "runtime": RUSTC,
         "adapter": "",
         "template": template,
+        "etag": etag,
+        "cache": cache,
     })
 }
 

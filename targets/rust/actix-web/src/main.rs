@@ -6,13 +6,19 @@
 //! the compressed family is measured against.
 
 use actix_web::{
-    body::MessageBody,
+    body::{BoxBody, EitherBody, MessageBody},
     dev::{ServiceRequest, ServiceResponse},
     http::{header, StatusCode},
-    middleware::{Compress, Next},
-    web, App, HttpRequest, HttpResponse, HttpServer, Responder,
+    middleware::{from_fn, Compress, Next},
+    web, App, HttpResponse, HttpServer, Responder,
 };
 use rb_domain as d;
+
+/// The header names the vary rows are keyed on, as the fixture pins them. Written out here
+/// rather than read from it, because middleware takes a &'static and the values are the
+/// same constants harness/make_fixture.py asserts the key count from.
+const VARY_ONE: &[&str] = &["x-rb-tenant"];
+const VARY_MANY: &[&str] = &["x-rb-channel", "x-rb-region", "x-rb-tenant"];
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -212,24 +218,114 @@ fn compressed_route(size: &'static str) -> actix_web::Route {
     })
 }
 
-/// Sets the validators and answers the conditional. The comparison requires a non-empty
-/// header: matching a missing `if-none-match` against an empty ETag answers 304 to a
-/// client that never asked a conditional question.
-fn cached_route(size: &'static str) -> actix_web::Route {
-    web::get().to(move |req: HttpRequest| async move {
-        let etag = d::etag_of(size);
-        let inm =
-            req.headers().get(header::IF_NONE_MATCH).and_then(|v| v.to_str().ok()).unwrap_or("");
-        let fresh = !inm.is_empty() && inm == etag;
-        let mut b = if fresh {
-            HttpResponse::build(StatusCode::NOT_MODIFIED)
-        } else {
-            HttpResponse::Ok()
-        };
-        b.insert_header((header::ETAG, etag))
-            .insert_header((header::CACHE_CONTROL, d::CACHEABLE))
-            .insert_header(("x-rb-serial", d::next_serial()));
-        if fresh { b.finish() } else { b.json(d::payload(size)) }
+/// etag: middleware on a scope, which is how actix-web scopes anything.
+///
+/// Nothing in actix-web computes a validator for a dynamic response, so the digest is the
+/// shared one and `/__meta` says so. A `wrap` on the App would hash every response in the
+/// blend and contaminate the rows this family is measured against; a `wrap` on the scope
+/// reaches these two routes and no others, the same way the compressed family gets its
+/// codec.
+///
+/// Shallow, which is the point: the handler runs and the body is built before anything is
+/// compared, so the 304 saves the write and nothing else.
+async fn revalidate(
+    req: ServiceRequest,
+    next: Next<impl MessageBody + 'static>,
+) -> Result<ServiceResponse<EitherBody<BoxBody>>, actix_web::Error> {
+    let asked = req
+        .headers()
+        .get(header::IF_NONE_MATCH)
+        .and_then(|v| v.to_str().ok())
+        .map(str::to_string);
+    let response = next.call(req).await?;
+    let (request, response) = response.into_parts();
+    let (mut response, body) = response.into_parts();
+    let raw = actix_web::body::to_bytes(body).await.unwrap_or_default();
+    let etag = d::content_etag(&raw);
+    response.headers_mut().insert(header::ETAG, etag.parse().unwrap());
+    response.headers_mut().insert(header::CACHE_CONTROL, d::CACHEABLE.parse().unwrap());
+    if asked.as_deref() == Some(etag.as_str()) {
+        let mut not_modified = HttpResponse::build(StatusCode::NOT_MODIFIED);
+        for (name, value) in response.headers() {
+            not_modified.insert_header((name.clone(), value.clone()));
+        }
+        return Ok(ServiceResponse::new(
+            request,
+            not_modified.finish().map_into_left_body(),
+        ));
+    }
+    let rebuilt = response.set_body(BoxBody::new(raw));
+    Ok(ServiceResponse::new(request, rebuilt).map_into_left_body())
+}
+
+fn etag_route(size: &'static str) -> actix_web::Route {
+    web::get().to(move || async move {
+        HttpResponse::Ok()
+            .insert_header(("x-rb-serial", d::next_serial()))
+            .json(d::payload(size))
+    })
+}
+
+/// cache: middleware that answers from the store before the handler is reached.
+///
+/// actix-web ships no response cache, so the store is the shared LRU sized from the
+/// fixture. One store for the target rather than one per route, so the capacity the fixture
+/// derives from the key count means what it says.
+static CACHE: std::sync::LazyLock<d::ResponseStore> =
+    std::sync::LazyLock::new(d::ResponseStore::new);
+
+async fn replay(
+    on: &'static [&'static str],
+    req: ServiceRequest,
+    next: Next<impl MessageBody + 'static>,
+) -> Result<ServiceResponse<EitherBody<BoxBody>>, actix_web::Error> {
+    let values: Vec<String> = on
+        .iter()
+        .map(|name| {
+            req.headers().get(*name).and_then(|v| v.to_str().ok()).unwrap_or("").to_string()
+        })
+        .collect();
+    let key = d::cache_key(req.path(), &values);
+    if let Some(hit) = CACHE.get(&key) {
+        let mut b = HttpResponse::build(
+            StatusCode::from_u16(hit.status).unwrap_or(StatusCode::OK),
+        );
+        for (name, value) in &hit.headers {
+            b.insert_header((name.clone(), value.clone()));
+        }
+        let (request, _) = req.into_parts();
+        return Ok(ServiceResponse::new(request, b.body(hit.body).map_into_left_body()));
+    }
+    let response = next.call(req).await?;
+    let (request, response) = response.into_parts();
+    let (response, body) = response.into_parts();
+    let raw = actix_web::body::to_bytes(body).await.unwrap_or_default();
+    if response.status() == StatusCode::OK {
+        CACHE.put(
+            key,
+            d::StoredResponse {
+                status: 200,
+                headers: response
+                    .headers()
+                    .iter()
+                    .map(|(n, v)| (n.as_str().to_string(), v.to_str().unwrap_or("").to_string()))
+                    .collect(),
+                body: raw.to_vec(),
+            },
+        );
+    }
+    let rebuilt = response.set_body(BoxBody::new(raw));
+    Ok(ServiceResponse::new(request, rebuilt).map_into_left_body())
+}
+
+fn cache_route(size: &'static str, on: &'static [&'static str]) -> actix_web::Route {
+    web::get().to(move || async move {
+        let mut b = HttpResponse::Ok();
+        b.insert_header(("x-rb-serial", d::next_serial()));
+        if !on.is_empty() {
+            b.insert_header((header::VARY, on.join(", ")));
+        }
+        b.json(d::payload(size))
     })
 }
 
@@ -377,9 +473,34 @@ async fn main() -> std::io::Result<()> {
                     .route("/medium", compressed_route("medium"))
                     .route("/large", compressed_route("large")),
             )
-            .route("/cached/small", cached_route("small"))
-            .route("/cached/medium", cached_route("medium"))
-            .route("/cached/large", cached_route("large"))
+            .service(
+                // rb:snippet etag.small etag.large etag.match_large etag.stale_large
+                web::scope("/etag")
+                    .wrap(from_fn(revalidate))
+                    .route("/small", etag_route("small"))
+                    .route("/large", etag_route("large")),
+            )
+            // The vary scopes come first: actix matches scopes in registration order, and
+            // /cache would otherwise claim /cache/vary/one and answer its own 404.
+            // rb:snippet cache.vary_one cache.vary_many
+            .service(
+                web::resource("/cache/vary/one")
+                    .wrap(from_fn(|req, next| replay(VARY_ONE, req, next)))
+                    .route(cache_route("small", VARY_ONE)),
+            )
+            .service(
+                web::resource("/cache/vary/many")
+                    .wrap(from_fn(|req, next| replay(VARY_MANY, req, next)))
+                    .route(cache_route("small", VARY_MANY)),
+            )
+            .service(
+                // rb:snippet cache.small cache.medium cache.large
+                web::scope("/cache")
+                    .wrap(from_fn(|req, next| replay(&[], req, next)))
+                    .route("/small", cache_route("small", &[]))
+                    .route("/medium", cache_route("medium", &[]))
+                    .route("/large", cache_route("large", &[])),
+            )
             .route("/template/small", template_route("small"))
             .route("/template/medium", template_route("medium"))
             .route("/body/bind/small", web::post().to(bind))

@@ -6,6 +6,13 @@
 //! compressed family is measured against.
 
 use rb_domain as d;
+
+/// The header names the vary rows are keyed on, as the fixture pins them. Written out here
+/// rather than read from it, because an issuer takes a &'static and the values are the same
+/// constants harness/make_fixture.py asserts the key count from.
+const VARY_ONE: &[&str] = &["x-rb-tenant"];
+const VARY_MANY: &[&str] = &["x-rb-channel", "x-rb-region", "x-rb-tenant"];
+use salvo::cache::{Cache, CacheIssuer, MokaStore};
 use salvo::compression::{Compression, CompressionLevel};
 use salvo::catcher::Catcher;
 use salvo::http::{header, StatusCode};
@@ -200,7 +207,8 @@ async fn health(res: &mut Response) {
 
 #[handler]
 async fn meta(res: &mut Response) {
-    res.render(Json(rb_host::meta("salvo", "askama")));
+    res.render(Json(rb_host::meta_with(
+        "salvo", "askama", "salvo CachingHeaders", "salvo::cache, MokaStore")));
 }
 
 #[handler]
@@ -358,30 +366,83 @@ compressed_handler!(comp_small, "small");
 compressed_handler!(comp_medium, "medium");
 compressed_handler!(comp_large, "large");
 
-/// Sets the validators and answers the conditional. The comparison requires a non-empty
-/// header: matching a missing `if-none-match` against an empty ETag answers 304 to a
-/// client that never asked a conditional question.
-macro_rules! cached_handler {
+/// etag: salvo's own CachingHeaders middleware.
+///
+/// It hashes the body the handler rendered, writes the validator, and answers If-None-Match
+/// with a 304 itself, so nothing here compares anything. Salvo is the one Rust target that
+/// has this: the other five hold a digest of their own and say so in `/__meta`.
+///
+/// Hooped onto the router for these two routes rather than the service, because a digest
+/// over every response in the blend would contaminate the rows this family is measured
+/// against.
+macro_rules! etag_handler {
     ($name:ident, $size:literal) => {
         #[handler]
-        async fn $name(req: &mut Request, res: &mut Response) {
-            let etag = d::etag_of($size);
-            res.add_header(header::ETAG, etag, true).ok();
+        async fn $name(res: &mut Response) {
             res.add_header(header::CACHE_CONTROL, d::CACHEABLE, true).ok();
             res.add_header("x-rb-serial", d::next_serial(), true).ok();
-            let inm =
-                req.headers().get(header::IF_NONE_MATCH).and_then(|v| v.to_str().ok()).unwrap_or("");
-            if !inm.is_empty() && inm == etag {
-                res.status_code(StatusCode::NOT_MODIFIED);
-                return;
-            }
             res.render(Json(d::payload($size)));
         }
     };
 }
-cached_handler!(cached_small, "small");
-cached_handler!(cached_medium, "medium");
-cached_handler!(cached_large, "large");
+etag_handler!(etag_small, "small");
+etag_handler!(etag_large, "large");
+
+/// cache: salvo's own Cache middleware over the shared store.
+///
+/// The middleware stores the status, the headers and the body and replays them before the
+/// handler is reached, which is why x-rb-serial repeats across a run. What it takes from
+/// this target is where the key comes from: a CacheIssuer is salvo's own extension point
+/// for that, and the vary rows fold their header values in through it.
+///
+/// One store for the target, sized from the fixture, so the capacity derived from the key
+/// count means what it says.
+struct KeyedBy(&'static [&'static str]);
+
+impl CacheIssuer for KeyedBy {
+    type Key = String;
+
+    async fn issue(&self, req: &mut Request, _depot: &Depot) -> Option<Self::Key> {
+        let values: Vec<String> = self
+            .0
+            .iter()
+            .map(|name| {
+                req.headers().get(*name).and_then(|v| v.to_str().ok()).unwrap_or("").to_string()
+            })
+            .collect();
+        Some(d::cache_key(req.uri().path(), &values))
+    }
+}
+
+fn response_cache(on: &'static [&'static str]) -> Cache<MokaStore<String>, KeyedBy> {
+    let spec = d::cache_spec();
+    Cache::new(
+        MokaStore::builder()
+            .max_capacity(spec.capacity as u64)
+            .time_to_live(std::time::Duration::from_secs(spec.ttl_s))
+            .build(),
+        KeyedBy(on),
+    )
+}
+
+macro_rules! cache_handler {
+    ($name:ident, $size:literal, $vary:expr) => {
+        #[handler]
+        async fn $name(res: &mut Response) {
+            let on: &[&str] = $vary;
+            if !on.is_empty() {
+                res.add_header(header::VARY, on.join(", "), true).ok();
+            }
+            res.add_header("x-rb-serial", d::next_serial(), true).ok();
+            res.render(Json(d::payload($size)));
+        }
+    };
+}
+cache_handler!(cache_small, "small", &[]);
+cache_handler!(cache_medium, "medium", &[]);
+cache_handler!(cache_large, "large", &[]);
+cache_handler!(cache_vary_one, "small", VARY_ONE);
+cache_handler!(cache_vary_many, "small", VARY_MANY);
 
 macro_rules! template_handler {
     ($name:ident, $size:literal) => {
@@ -460,9 +521,24 @@ async fn main() {
                 .push(Router::with_path("/medium").get(comp_medium))
                 .push(Router::with_path("/large").get(comp_large)),
         )
-        .push(Router::with_path("/cached/small").get(cached_small))
-        .push(Router::with_path("/cached/medium").get(cached_medium))
-        .push(Router::with_path("/cached/large").get(cached_large))
+        // rb:snippet etag.small etag.large etag.match_large etag.stale_large
+        .push(Router::with_path("/etag/small").hoop(CachingHeaders::new()).get(etag_small))
+        .push(Router::with_path("/etag/large").hoop(CachingHeaders::new()).get(etag_large))
+        // rb:snippet cache.small cache.medium cache.large
+        .push(Router::with_path("/cache/small").hoop(response_cache(&[])).get(cache_small))
+        .push(Router::with_path("/cache/medium").hoop(response_cache(&[])).get(cache_medium))
+        .push(Router::with_path("/cache/large").hoop(response_cache(&[])).get(cache_large))
+        // rb:snippet cache.vary_one cache.vary_many
+        .push(
+            Router::with_path("/cache/vary/one")
+                .hoop(response_cache(VARY_ONE))
+                .get(cache_vary_one),
+        )
+        .push(
+            Router::with_path("/cache/vary/many")
+                .hoop(response_cache(VARY_MANY))
+                .get(cache_vary_many),
+        )
         .push(Router::with_path("/template/small").get(tpl_small))
         .push(Router::with_path("/template/medium").get(tpl_medium))
         // bind parses and binds without validating, so validate minus bind is the
