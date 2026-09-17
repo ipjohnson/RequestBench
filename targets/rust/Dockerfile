@@ -26,9 +26,15 @@ COPY targets/rust/warp ./warp
 RUN cargo build --release --locked --bin rb-${TARGET} -p rb-${TARGET} \
  && cp target/release/rb-${TARGET} /server
 
+# rocket_dyn_templates reads its templates from disk at runtime, so rocket's have to be in
+# the image. The other five compile theirs in with askama and never read the directory;
+# carrying it anyway keeps one COPY for all six.
+RUN mkdir -p /views && cp -r ${TARGET}/templates/. /views/
+
 FROM debian:trixie-slim
 COPY --from=build /server /server
+COPY --from=build /views /app/templates
 COPY spec/fixture.json /app/spec/fixture.json
-ENV RB_FIXTURE=/app/spec/fixture.json PORT=8080
+ENV RB_FIXTURE=/app/spec/fixture.json PORT=8080 ROCKET_TEMPLATE_DIR=/app/templates
 EXPOSE 8080
 ENTRYPOINT ["/server"]

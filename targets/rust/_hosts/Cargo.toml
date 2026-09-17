@@ -7,5 +7,4 @@ build = "build.rs"
 
 [dependencies]
 serde_json = { workspace = true }
-minijinja = { workspace = true }
 rb-domain = { workspace = true }

@@ -15,7 +15,7 @@ rb-host = { path = "_hosts" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "net"] }
-minijinja = "2"
+askama = "0.16"
 flate2 = "1"
 
 # Measurement, not development. Without this every target is compared while carrying
