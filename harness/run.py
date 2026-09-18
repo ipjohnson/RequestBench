@@ -25,7 +25,11 @@ BLEND = json.loads((SPEC / "endpoints.json").read_text())["version"]
 # versions while the rates behind them change, so a summary that does not say which
 # ladder produced it cannot be read against an older one.
 LADDER_V = LADDER["version"]
-SEQUENCE = json.loads((SPEC / "sequence.json").read_text())["version"]
+SEQUENCE_SPEC = json.loads((SPEC / "sequence.json").read_text())
+SEQUENCE = SEQUENCE_SPEC["version"]
+# Families a function host handles in front of the function. The sequence never draws them,
+# and the gate on those hosts does not ask for them either.
+SERIAL_SKIPS = SEQUENCE_SPEC.get("skipped_families", [])
 # What a run draws before anything boots. spec/endpoints.json declares them and the plan
 # carries the declarations, which is where every driver reads them.
 RUN_VALUES = json.loads((SPEC / "plan.json").read_text())["run_values"]
@@ -656,9 +660,12 @@ def client(port, target, *args):
     argv = ["node", str(CLIENT), "127.0.0.1:%d" % port, "--target", target, *args]
     # The client has to speak the host's encoding. A Lambda host serves only the
     # invocations endpoint, so plain HTTP reaches nothing and every target fails.
-    encoding = ENCODING_FOR_HOST.get(os.environ.get("RB_HOST", "container"), "http")
+    host = os.environ.get("RB_HOST", "container")
+    encoding = ENCODING_FOR_HOST.get(host, "http")
     if encoding != "http":
         argv += ["--encoding", encoding]
+    if SUITE_FOR_HOST.get(host) == "serial" and SERIAL_SKIPS:
+        argv += ["--skip-families", ",".join(SERIAL_SKIPS)]
     return subprocess.run(argv, capture_output=True, text=True, cwd=ROOT)
 
 
@@ -904,6 +911,8 @@ def main():
     rows[0]["suite"] = SEQUENCE if suite == "serial" else BLEND
     if suite == "serial":
         rows[0]["generator"] = "serial.mjs/node"
+        rows[0]["endpoints_live"] = sum(1 for e in ENDPOINTS
+                                        if e["id"] in ids and e["family"] not in SERIAL_SKIPS)
     # What the latencies time. On a Lambda host they are the Runtime API's Duration, which
     # leaves the invoke path out, and everywhere else the round trip the driver saw. They
     # are different measurements, so nothing may read one against the other.

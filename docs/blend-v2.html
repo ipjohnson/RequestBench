@@ -313,7 +313,7 @@ footer { margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--rule);
 
 <div class="grp">
   <div class="grphead"><h3>compressed</h3><span class="cnt">4 endpoints</span>
-    <p class="job">Outbound gzip at each framework's fastest level, crossed with whether the client asked for it. Two routes, two request shapes each: <code>accept-encoding: gzip</code> against <code>accept-encoding: identity</code>, both with <code>cache-control: no-cache</code>. The medium pair came out when the caching families arrived, which leaves the family the small-body threshold and the large-body cost, the two rows it is in the set for.</p></div>
+    <p class="job">Outbound gzip at each framework's fastest level, crossed with whether the client asked for it. Two routes, two request shapes each: <code>accept-encoding: gzip</code> against <code>accept-encoding: identity</code>, both with <code>cache-control: no-cache</code>. The medium pair came out when the caching families arrived, which leaves the family the small-body threshold and the large-body cost, the two rows it is in the set for. It is measured on the container host only. On a function host, compression is expected from the platform in front of the function, not from the framework.</p></div>
   <div class="scroll"><table>
   <thead><tr><th>Id</th><th>Method</th><th>Path / request</th><th class="n">Expect</th><th>Base</th></tr></thead>
   <tbody>

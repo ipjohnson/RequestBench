@@ -157,7 +157,7 @@
         "python",
         "dotnet"
       ],
-      "note": "Cloud Run functions. Gen2 functions are Cloud Run underneath, so the same code deployed as a Cloud Run container skips the Functions Framework entirely and runs on the container contract measured here.",
+      "note": "Cloud Run functions. Gen2 functions are Cloud Run underneath, so the same code deployed as a Cloud Run container skips the Functions Framework entirely and runs on the container contract measured here. The compressed family is not measured here, because on a function platform compression is expected from the host in front of the function, not from the framework.",
       "compare_to": "container"
     },
     "lambda-rie": {
@@ -170,7 +170,7 @@
         "dotnet",
         "rust"
       ],
-      "note": "A genuinely different invocation model: no HTTP in the process, one invocation at a time, so it runs the serial suite rather than a rate ladder."
+      "note": "A genuinely different invocation model: no HTTP in the process, one invocation at a time, so it runs the serial suite rather than a rate ladder. The compressed family is not measured here, because on a function platform compression is expected from the host in front of the function, not from the framework."
     },
     "azure-func": {
       "runs": "Azure Functions Core Tools",
