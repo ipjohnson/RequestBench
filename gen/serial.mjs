@@ -113,12 +113,14 @@ function asEvent(method, path, body) {
 // Five families are defined by what the request carries rather than where it points, so
 // dropping these would leave them measuring the wrong thing rather than failing.
 function headerSets(ep, captured) {
-  // Only the plan's own values are filled: content-length below is a number, and the body
-  // headers carry no placeholder to fill in anyway.
+  // Only the plan's own values are filled. The body headers carry no placeholder.
   const fill = (h) => Object.fromEntries(Object.entries(h).map(([k, v]) =>
     [k, v.replace(PLACEHOLDER, (_, name) => captured[name])]));
+  // content-length is a string because the Lambda encoding copies these headers into the
+  // event, and aws-lambda-go refuses the whole event when a header value is a number.
   const body = ep.body
-    ? { "content-type": "application/json", "content-length": Buffer.byteLength(ep.body) }
+    ? { "content-type": "application/json",
+        "content-length": String(Buffer.byteLength(ep.body)) }
     : {};
   return (ep.header_variants ?? [{}]).map((v) => {
     const h = { ...fill({ ...(ep.headers ?? {}), ...v }), ...body };
