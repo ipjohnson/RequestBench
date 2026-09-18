@@ -217,6 +217,7 @@ a.epfamname[aria-current="true"] { background: var(--tealsoft); border-left-colo
 .ident-table td a { color: var(--tealtext); }
 @media (max-width: 720px) {
   .ident-table, .ident-table thead, .ident-table tbody, .ident-table tr { display: block; }
+  .ident-table { min-width: 0; }
   .ident-table thead { display: none; }
   .ident-table td { display: block; padding: 2px 0; white-space: normal; overflow-wrap: anywhere; }
 }
