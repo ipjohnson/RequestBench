@@ -261,10 +261,10 @@ func router() *gin.Engine {
 	// ---- compressed: gin-contrib/gzip on this group only ----------------------------
 
 	// rb:handler compressed.*
-	// Level is pinned across every language. The default size threshold is left alone:
-	// whether a framework bothers to compress a body too small to benefit is what
-	// compressed.gzip_small is in the set to show, so forcing it would erase the answer.
-	comp := r.Group("/compressed", gzip.Gzip(d.GzipLevel))
+	// The default size threshold is left alone: whether a framework bothers to compress a
+	// body too small to benefit is what compressed.gzip_small is in the set to show, so
+	// forcing it would erase the answer.
+	comp := r.Group("/compressed", gzip.Gzip(gzip.BestSpeed))
 	for _, size := range sizes {
 		body := d.Payload(size)
 		comp.GET("/"+size, func(c *gin.Context) {

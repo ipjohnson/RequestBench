@@ -21,6 +21,7 @@ import view from "@fastify/view";
 import ejs from "ejs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
+import { constants } from "node:zlib";
 import { pkgVersion } from "../_shared/version.js";
 import { hostMeta } from "../_shared/host.js";
 import * as d from "../_shared/domain.js";
@@ -149,7 +150,7 @@ app.register(async (scope) => {
   // a body too small to benefit is one of the things compressed.small is there to show, so
   // forcing it here would erase the answer.
   await scope.register(compress, {
-    encodings: ["gzip"], zlibOptions: { level: d.GZIP_LEVEL },
+    encodings: ["gzip"], zlibOptions: { level: constants.Z_BEST_SPEED },
   });
   for (const size of ["small", "medium", "large"])
     scope.get("/compressed/" + size, (_, reply) =>

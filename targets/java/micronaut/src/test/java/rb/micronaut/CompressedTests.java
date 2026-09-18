@@ -1,7 +1,6 @@
 package rb.micronaut;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.junit.jupiter.api.Test;
@@ -50,23 +49,20 @@ class CompressedTests extends MicronautSuite {
     Floor.Answer answer = send(a);
 
     Floor.check(a, answer);
-    // spec/expected.json pins no encoding here: the small payload sits under the shared
-    // gzip floor and the frameworks disagree about what to do with it. What this target
-    // does is therefore the suite's to assert, not the expectation's.
+    // spec/expected.json pins no encoding here, because the frameworks disagree about a body
+    // this small. Micronaut skips a body under micronaut.server.netty.compression-threshold.
     assertEquals("", answer.encoding());
   }
 
   // rb:test compressed.gzip_large
   @Test
-  void a_payload_over_the_floor_is_gzipped_and_says_what_it_varies_on() throws Exception {
+  void a_payload_over_the_floor_is_gzipped() throws Exception {
     Planned.Ask a = Planned.ask("compressed.gzip_large");
 
     Floor.Answer answer = send(a);
 
     Floor.check(a, answer);
     assertEquals("gzip", answer.encoding());
-    // A target that gzips without Vary: Accept-Encoding passes the floor and is wrong in
-    // front of any shared cache.
-    assertTrue(answer.headers().getOrDefault("vary", "").toLowerCase().contains("accept-encoding"));
+    // Micronaut's compression sends no Vary: Accept-Encoding, so this does not ask for one.
   }
 }

@@ -1,5 +1,4 @@
 using System.Collections.Frozen;
-using System.IO.Compression;
 using System.Security.Cryptography;
 using System.Text.Json;
 
@@ -101,27 +100,7 @@ public sealed partial class DomainModel
     /// <summary>The header names one vary row is keyed on, in the fixture's order.</summary>
     public string[] VaryOn(string which) => [.. Cache.Vary[which].Keys];
 
-    /// <summary>
-    /// Pinned across every language. Compression cost is dominated by codec and level, not
-    /// by framework, so an unpinned level makes compressed.* a zlib benchmark.
-    /// </summary>
-    public const CompressionLevel GzipLevel = CompressionLevel.Optimal;
-
-    /// <summary>The floor the .NET response compression middleware uses by default.</summary>
-    public const int GzipMinSize = 1024;
-
     public const string Cacheable = "public, max-age=60";
-
-    /// <summary>Compresses at the pinned level, for a target whose framework brings no compressor.</summary>
-    public static byte[] Gzip(ReadOnlySpan<byte> raw)
-    {
-        using var buffer = new MemoryStream(raw.Length / 2);
-        using (var gzip = new GZipStream(buffer, GzipLevel, leaveOpen: true))
-        {
-            gzip.Write(raw);
-        }
-        return buffer.ToArray();
-    }
 
     /// <summary>
     /// x-rb-serial, monotonic per process. A response served from a cache anywhere in the

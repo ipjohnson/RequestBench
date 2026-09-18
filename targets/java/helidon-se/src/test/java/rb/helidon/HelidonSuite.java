@@ -6,9 +6,11 @@ import io.helidon.http.Method;
 import io.helidon.webclient.http1.Http1Client;
 import io.helidon.webclient.http1.Http1ClientRequest;
 import io.helidon.webclient.http1.Http1ClientResponse;
+import io.helidon.webserver.WebServerConfig;
 import io.helidon.webserver.http.HttpRouting;
 import io.helidon.webserver.testing.junit5.ServerTest;
 import io.helidon.webserver.testing.junit5.SetUpRoute;
+import io.helidon.webserver.testing.junit5.SetUpServer;
 import java.net.URI;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
@@ -26,14 +28,19 @@ import rb.domain.Domain;
  * that one the unit test; this suite follows the example it leads with.
  *
  * <p>@SetUpRoute hands the routing builder to the same Main.routes the target serves from,
- * which is Helidon's documented shape and needs nothing from the target. The fixture is loaded
- * there too rather than in a @BeforeAll: the extension starts the server, and so builds the
+ * which is Helidon's documented shape and needs nothing from the target. @SetUpServer does the
+ * same with Main.server, where the compression is turned on. The fixture is loaded in
+ * @SetUpRoute rather than in a @BeforeAll: the extension starts the server, and so builds the
  * routes, before any @BeforeAll runs, and main() is where the target loads it.
  *
  * <p>The client costs two things a reader would not guess. uri() takes a path and nothing
  * after it, so a query string has to be taken apart and handed to queryParam one parameter at a
- * time, and entity() throws on a 204 or a 304 rather than answering empty. What it does not do
- * is decode: a gzip body arrives as the bytes the route wrote.
+ * time, and entity() throws on a 204 or a 304 rather than answering empty.
+ *
+ * <p>The client also finds the gzip encoding this target depends on, and with it decodes a gzip
+ * body while leaving Content-Encoding in place. The suite rebuilds the injected client from its
+ * own configuration with content encoding discovery off, which is Helidon's own switch for it,
+ * so a gzip body arrives as the bytes the server sent.
  */
 @ServerTest
 abstract class HelidonSuite {
@@ -42,7 +49,15 @@ abstract class HelidonSuite {
   final Http1Client client;
 
   HelidonSuite(Http1Client client) {
-    this.client = client;
+    this.client = Http1Client.builder()
+        .from(client.prototype())
+        .contentEncoding(encoding -> encoding.contentEncodingsDiscoverServices(false))
+        .build();
+  }
+
+  @SetUpServer
+  static void server(WebServerConfig.Builder builder) {
+    Main.server(builder);
   }
 
   @SetUpRoute

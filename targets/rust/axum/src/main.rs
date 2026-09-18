@@ -302,10 +302,9 @@ fn payload_route(size: &'static str) -> MethodRouter {
 }
 
 // rb:wiring compressed.*
-/// Compression is the framework's, configured to the pinned level. The size threshold is
-/// left at the library's default: whether a framework bothers to compress a body too small
-/// to benefit is what `compressed.gzip_small` is in the set to show, so forcing it would
-/// erase the answer.
+/// Compression is the framework's. The size threshold is left at the library's default:
+/// whether a framework bothers to compress a body too small to benefit is what
+/// `compressed.gzip_small` is in the set to show, so forcing it would erase the answer.
 fn compressed_route(size: &'static str) -> MethodRouter {
     get(move || async move {
         (
@@ -316,7 +315,7 @@ fn compressed_route(size: &'static str) -> MethodRouter {
     .layer(
         CompressionLayer::new()
             .gzip(true)
-            .quality(tower_http::CompressionLevel::Precise(d::GZIP_LEVEL as i32))
+            .quality(tower_http::CompressionLevel::Fastest)
             .compress_when(SizeAbove::new(32)),
     )
 }

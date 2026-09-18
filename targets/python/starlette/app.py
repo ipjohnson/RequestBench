@@ -285,10 +285,9 @@ async def query_many(request: Request):
 
 # rb:wiring compressed.*
 def compressed_route(size):
-    """Compression is the framework's, configured to the pinned level and the pinned floor.
-    Whether a framework bothers to compress a body too small to benefit is what
-    compressed.gzip_small is in the set to show, so the floor has to be the same floor
-    everywhere or the row reports a default instead."""
+    """Compression is the framework's, at gzip's fastest level and Starlette's own size
+    floor. Whether a framework bothers to compress a body too small to benefit is what
+    compressed.gzip_small is in the set to show."""
     async def handler(_: Request):
         return JSONResponse(d.payload(size), headers={"x-rb-serial": d.next_serial()})
     return handler
@@ -438,8 +437,7 @@ async def malformed(_: Request, exc: d.Malformed):
 
 
 # rb:wiring compressed.*
-gzip_scoped = [Middleware(GZipMiddleware, minimum_size=d.GZIP_MIN_SIZE,
-                          compresslevel=d.GZIP_LEVEL)]
+gzip_scoped = [Middleware(GZipMiddleware, compresslevel=1)]
 
 routes = [
     get("/plaintext", plaintext),

@@ -5,8 +5,7 @@
 // family is measured against.
 //
 // It is the one compressor here with no level setting: Hono compresses through the
-// platform's CompressionStream, which takes none. The comparison is unaffected because the
-// gate decompresses before it compares, but the time is not the pinned level's.
+// platform's CompressionStream, which takes none. Node's runs at zlib's default level, 6.
 // rb:wiring compressed.*
 import { compress } from "hono/compress";
 

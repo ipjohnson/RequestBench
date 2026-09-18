@@ -593,9 +593,10 @@ fn config(cfg: &mut web::ServiceConfig) {
                 .wrap(actix_web::middleware::from_fn(require_token))
                 .route(web::get().to(small)),
         )
-        // Level pinned across every language; the default size threshold is left
-        // alone, because whether a framework bothers to compress a body too small to
-        // benefit is what compressed.gzip_small is in the set to show.
+        // Compress takes no level. actix-web gzips at flate2's fast level, which is level
+        // 1. The default size threshold is left alone, because whether a framework bothers
+        // to compress a body too small to benefit is what compressed.gzip_small is in the
+        // set to show.
         // rb:handler compressed.*
         .service(
             web::scope("/compressed")

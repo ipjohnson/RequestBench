@@ -157,7 +157,7 @@
         "python",
         "dotnet"
       ],
-      "note": "Cloud Run functions. Gen2 functions are Cloud Run underneath, so the same code deployed as a Cloud Run container skips the Functions Framework entirely and runs on the container contract measured here.",
+      "note": "Cloud Run functions. Gen2 functions are Cloud Run underneath, so the same code deployed as a Cloud Run container skips the Functions Framework entirely and runs on the container contract measured here. The compressed family is not measured here, because on a function platform compression is expected from the host in front of the function, not from the framework.",
       "compare_to": "container"
     },
     "lambda-rie": {
@@ -170,7 +170,7 @@
         "dotnet",
         "rust"
       ],
-      "note": "A genuinely different invocation model: no HTTP in the process, one invocation at a time, so it runs the serial suite rather than a rate ladder."
+      "note": "A genuinely different invocation model: no HTTP in the process, one invocation at a time, so it runs the serial suite rather than a rate ladder. The compressed family is not measured here, because on a function platform compression is expected from the host in front of the function, not from the framework."
     },
     "azure-func": {
       "runs": "Azure Functions Core Tools",
@@ -272,7 +272,8 @@
         "mechanism": "an action filter attribute on the one action; authorization filters would bring a policy evaluation the other forty-four endpoints would also pay for"
       },
       "compressed": {
-        "mechanism": "a Serve helper on the controller holding the pinned codec and floor; the response compression middleware sits on the application and would contaminate the other forty-two endpoints"
+        "mechanism": "ASP.NET Core's response compression middleware on the whole application, at the gzip provider's default level, Fastest, with no minimum size; every request pays its accept-encoding check, and the Serve helper returns the payload as any other action does",
+        "mentions": "UseResponseCompression"
       },
       "etag": {
         "mechanism": "a result filter attribute on this controller alone over the shared digest, which is how MVC scopes behaviour to an action"
@@ -316,7 +317,8 @@
         "builtin": "An endpoint filter written inline on the route, which the handler block already shows."
       },
       "compressed": {
-        "mechanism": "an endpoint filter on these three routes alone, holding the pinned codec and floor; the response compression middleware sits on the application and would contaminate the other forty-two endpoints"
+        "mechanism": "ASP.NET Core's response compression middleware on the whole application, at the gzip provider's default level, Fastest, with no minimum size; every request pays its accept-encoding check, and a Serve factory sets x-rb-serial and returns the payload as any other route does",
+        "mentions": "UseResponseCompression"
       },
       "etag": {
         "mechanism": "an endpoint filter on these two routes over the shared digest, on the same IEndpointRouteBuilder minimal APIs use"
@@ -362,7 +364,8 @@
         "mechanism": "a pre-processor on the one endpoint, which refuses by writing the response and marking it handled"
       },
       "compressed": {
-        "builtin": "The pinned codec and floor are applied in ExecuteAsync, which the handler block already shows. The response compression middleware sits on the application and would contaminate the other forty-two endpoints."
+        "mechanism": "ASP.NET Core's response compression middleware on the whole application, at the gzip provider's default level, Fastest, with no minimum size; every request pays its accept-encoding check, and the endpoints return the payload as any other endpoint does",
+        "mentions": "UseResponseCompression"
       },
       "etag": {
         "mechanism": "a pipeline branch on /etag over the shared digest: FastEndpoints writes the response from inside its own delegate, so a filter around it is handed nothing to hash"
@@ -406,7 +409,8 @@
         "builtin": "An endpoint filter written inline on the route, which the handler block already shows. The authorization middleware would bring a policy evaluation the other forty-four endpoints would also pay for."
       },
       "compressed": {
-        "mechanism": "an endpoint filter on these three routes alone, holding the pinned codec and floor; the response compression middleware sits on the application and would contaminate the other forty-two endpoints"
+        "mechanism": "ASP.NET Core's response compression middleware on the whole application, at the gzip provider's default level, Fastest, with no minimum size; every request pays its accept-encoding check, and a Serve factory sets x-rb-serial and returns the payload as any other route does",
+        "mentions": "UseResponseCompression"
       },
       "etag": {
         "mechanism": "an endpoint filter on these two routes over the shared digest: nothing in ASP.NET Core computes a validator for a dynamic response"
@@ -450,7 +454,8 @@
         "mechanism": "a Before method found by convention, which refuses by returning a result rather than letting the endpoint run"
       },
       "compressed": {
-        "mechanism": "a Serve helper holding the pinned codec and floor; the response compression middleware sits on the application and would contaminate the other forty-two endpoints"
+        "mechanism": "ASP.NET Core's response compression middleware on the whole application, at the gzip provider's default level, Fastest, with no minimum size; every request pays its accept-encoding check, and the Serve helper returns the payload as any other endpoint does",
+        "mentions": "UseResponseCompression"
       },
       "etag": {
         "mechanism": "a pipeline branch on /etag over the shared digest: Wolverine compiles its endpoints into their own delegates and writes from inside them"
@@ -732,7 +737,9 @@
         "mechanism": "a route ahead of the endpoint's own on the same path, answering 403 rather than calling next"
       },
       "compressed": {
-        "mechanism": "the pinned codec behind a 1024-byte floor in the route itself; Helidon's content encoding is on the WebServer and would contaminate the other forty-two endpoints"
+        "mechanism": "the WebServer's content encoding with helidon-http-encoding-gzip, on the whole server; the gzip encoding has no level setting, so it runs at the JDK default of 6, with no size floor",
+        "dep": "helidon-http-encoding-gzip",
+        "mentions": "GzipEncoding"
       },
       "etag": {
         "mechanism": "one handler per route over the shared digest: Helidon's filters run before a handler and cannot change a response once send() has been called"
@@ -778,7 +785,7 @@
         "mechanism": "a before handler bound to this path, answering 403 rather than letting the route run"
       },
       "compressed": {
-        "mechanism": "an after handler bound to /compressed/*, holding the pinned codec and a 1024-byte floor; Javalin configures compression on the whole server and would contaminate the other forty-two endpoints"
+        "mechanism": "Javalin's CompressionStrategy on the whole server, gzip only at level 1, the fastest, over its default 1,500-byte floor"
       },
       "etag": {
         "mechanism": "a Javalin after-handler scoped to the route pattern, running with the body still in the context rather than on the wire"
@@ -822,7 +829,7 @@
         "mechanism": "an @Filter bound to the one path, resolved from its annotation at compile time"
       },
       "compressed": {
-        "mechanism": "a serve helper holding the pinned codec and a 1024-byte floor; Micronaut's netty compression setting is on the whole server and would contaminate the other forty-two endpoints"
+        "mechanism": "the Netty server's own compression on the whole server, at compression-level 1, the fastest, over its default 1 KB threshold"
       },
       "etag": {
         "mechanism": "a @ServerFilter scoped to the route pattern, which serializes the body the controller returned and hashes those bytes"
@@ -870,7 +877,7 @@
         "mechanism": "a JAX-RS ContainerRequestFilter bound to the one method by a @NameBinding annotation"
       },
       "compressed": {
-        "mechanism": "a serve helper holding the pinned codec and a 1024-byte floor; Quarkus enables compression on the whole HTTP server and would contaminate the other forty-two endpoints"
+        "mechanism": "quarkus.http.enable-compression on the whole HTTP server, at compression-level 1, the fastest, with no size floor"
       },
       "etag": {
         "mechanism": "JAX-RS's own Request.evaluatePreconditions, which compares the validator and builds the 304 itself; the digest is the target's because JAX-RS has none"
@@ -918,7 +925,7 @@
         "mechanism": "a servlet Filter bound to this path through a FilterRegistrationBean, not an if in the handler"
       },
       "compressed": {
-        "mechanism": "a serve helper holding the pinned codec and the connector's own 2048-byte floor; server.compression is on the whole connector and would contaminate the other forty-two endpoints"
+        "mechanism": "server.compression on the whole Tomcat connector; neither Spring Boot nor Tomcat has a level setting, so it gzips at the JDK default of 6, and its 2 KB floor applies only when Tomcat knows the length first, which it does not for Spring's JSON"
       },
       "etag": {
         "mechanism": "Spring's own ShallowEtagHeaderFilter, registered against /etag/* so the buffering does not reach the other forty-six endpoints"
@@ -968,7 +975,7 @@
         "mechanism": "a handler ahead of the endpoint's own on the same route, answering 403 rather than calling next"
       },
       "compressed": {
-        "mechanism": "a handler ahead of the endpoint's own on these three routes, holding the pinned codec and a 1024-byte floor; Vert.x enables compression on the HttpServer and would contaminate the other forty-two endpoints"
+        "mechanism": "HttpServerOptions compression on the whole HttpServer, at setCompressionLevel(1), the fastest, with no size floor"
       },
       "etag": {
         "mechanism": "one handler per route over the shared digest: addHeadersEndHandler sees the headers and not the body, so there is nothing to intercept afterwards"
@@ -1115,7 +1122,7 @@
         "mechanism": "a middleware list on defineHandler, run before the handler"
       },
       "compressed": {
-        "mechanism": "route-scoped middleware around the pinned codec: h3 ships no compression, so the gzip every language shares is what runs"
+        "mechanism": "route-scoped middleware that gzips with node:zlib at its fastest level: h3 ships no compression"
       },
       "etag": {
         "mechanism": "h3's own handleCacheHeaders, which writes the validator and answers the conditional but takes the tag as an argument: h3 ships no digest, so that half is this target's"
@@ -1161,7 +1168,7 @@
         "mechanism": "route-scoped middleware, awaited before the handler"
       },
       "compressed": {
-        "mechanism": "hono/compress mounted on /compressed/* alone; the one compressor here with no level setting, because it goes through the platform's CompressionStream"
+        "mechanism": "hono/compress mounted on /compressed/* alone; it goes through the platform's CompressionStream, which has no level setting, so it runs at zlib's default of 6"
       },
       "etag": {
         "mechanism": "hono/etag, scoped to the route prefix; it hashes the body the handler returned and answers the conditional itself"
@@ -1255,7 +1262,7 @@
         "mechanism": "a view decorator answering 403 before the view it wraps runs"
       },
       "compressed": {
-        "mechanism": "gzip_page, which is Django's GZipMiddleware as a decorator, so the other forty-two endpoints never look at accept-encoding"
+        "mechanism": "gzip_page, which is Django's GZipMiddleware as a decorator, so the other endpoints never look at accept-encoding; Django compresses at level 6 and has no setting for it"
       },
       "etag": {
         "mechanism": "Django's own ConditionalGetMiddleware, scoped to the view with decorator_from_middleware"
@@ -1305,7 +1312,7 @@
         "mechanism": "a route dependency through Depends, run before the handler"
       },
       "compressed": {
-        "mechanism": "GZipMiddleware on a mounted sub-application, so the other forty-two endpoints never see the check; threshold and level are the pinned ones rather than Starlette's defaults"
+        "mechanism": "GZipMiddleware on a mounted sub-application, so the other endpoints never see the check; at the fastest level, over Starlette's own floor"
       },
       "etag": {
         "mechanism": "the shared conditional middleware on a mounted sub-application: neither FastAPI nor Starlette under it answers if-none-match for a dynamic response"
@@ -1353,7 +1360,7 @@
         "mechanism": "a before_request hook on its own blueprint: returning a response from it short-circuits the view"
       },
       "compressed": {
-        "mechanism": "an after_request hook on its own blueprint holding the pinned codec and floor; Flask ships no compression"
+        "mechanism": "an after_request hook on its own blueprint that gzips at the fastest level behind a 500-byte floor of its own; Flask ships no compression"
       },
       "etag": {
         "mechanism": "a response hook on its own blueprint over Werkzeug's own add_etag and make_conditional"
@@ -1401,7 +1408,7 @@
         "mechanism": "a guard on the route, which Litestar runs before the handler"
       },
       "compressed": {
-        "mechanism": "a DefineMiddleware compression layer named on these three routes, at the pinned level and floor"
+        "mechanism": "a DefineMiddleware compression layer named on these three routes, at the fastest level over Litestar's own floor"
       },
       "etag": {
         "mechanism": "the shared conditional middleware on the handler: Litestar's ETag datastructure emits a value the handler already knows and answers nothing"
@@ -1449,7 +1456,7 @@
         "mechanism": "on_request middleware on its own blueprint: returning a response from it short-circuits the handler"
       },
       "compressed": {
-        "mechanism": "an on_response middleware on its own blueprint holding the pinned codec and floor; Sanic ships no compression"
+        "mechanism": "an on_response middleware on its own blueprint that gzips at the fastest level behind a 500-byte floor of its own; Sanic ships no compression"
       },
       "etag": {
         "mechanism": "a response middleware on its own blueprint over the shared digest, the same scoping the compressed family uses"
@@ -1495,7 +1502,7 @@
         "mechanism": "an ASGI middleware class on the route, answering 403 before the app below it runs"
       },
       "compressed": {
-        "mechanism": "GZipMiddleware scoped to these three routes, at the pinned level and floor rather than Starlette's defaults"
+        "mechanism": "GZipMiddleware scoped to these three routes, at the fastest level over Starlette's own floor"
       },
       "etag": {
         "mechanism": "the shared conditional middleware in Route's own middleware list, which is Starlette's scoping"
@@ -1545,7 +1552,7 @@
         "mechanism": "from_fn middleware wrapped around the one resource, run before the handler"
       },
       "compressed": {
-        "mechanism": "actix's own Compress middleware wrapped around these three resources alone"
+        "mechanism": "actix's own Compress middleware wrapped around these three resources alone; it takes no level and gzips at flate2's fastest"
       },
       "etag": {
         "mechanism": "middleware on a scope, which is how actix-web scopes anything; a wrap on the App would hash every response in the blend"
@@ -1597,7 +1604,7 @@
         "mechanism": "from_fn middleware layered on the one route, run before the handler"
       },
       "compressed": {
-        "mechanism": "tower-http's CompressionLayer on these three routes alone, with a SizeAbove predicate at the pinned floor",
+        "mechanism": "tower-http's CompressionLayer at its fastest level on these three routes alone, with a SizeAbove predicate at tower-http's default of 32 bytes",
         "dep": "tower-http",
         "mentions": "Compression"
       },
@@ -1701,7 +1708,7 @@
         "mechanism": "a request guard, which Rocket resolves before the handler runs; a fairing would be global"
       },
       "compressed": {
-        "mechanism": "the pinned codec in this target's own helper; Rocket 0.5 ships no compression and a third-party fairing would be global"
+        "mechanism": "gzip in this target's own handler, with flate2 at its fastest level; Rocket 0.5 ships no compression and a third-party fairing would be global"
       },
       "etag": {
         "mechanism": "the digest and the comparison in a route: Rocket's fairings attach to the whole application, so one here would hash every response in the blend"
@@ -1751,7 +1758,7 @@
         "mechanism": "a hoop on the one route, run before the handler and refusing by setting the response"
       },
       "compressed": {
-        "mechanism": "salvo's own Compression hoop at the pinned level, hooped onto these three routes alone"
+        "mechanism": "salvo's own Compression hoop at its fastest level, hooped onto these three routes alone"
       },
       "etag": {
         "mechanism": "salvo's own CachingHeaders middleware, hooped onto these routes: the one Rust target that ships the machinery"
@@ -1803,7 +1810,7 @@
         "mechanism": "a header filter ahead of the reply, rejecting before the handler closure runs"
       },
       "compressed": {
-        "mechanism": "the pinned codec in this target's own reply helper, chosen by an accept-encoding filter; warp ships no compression"
+        "mechanism": "warp's own compression::gzip() filter on a branch an accept-encoding filter chooses; gzip() takes no level, so it runs at flate2's default of 6"
       },
       "etag": {
         "builtin": "The digest and the comparison are inside the filter that answers, which the handler block already shows. warp has nothing that can rewrite a reply after one has been produced, so there is nowhere else for them to be."
@@ -2069,7 +2076,7 @@
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, over the xunit `dotnet new xunit` writes",
         "dep": "Microsoft.AspNetCore.Mvc.Testing",
         "transport": "in-memory",
-        "reaches": "the codec, because these routes compress inside the request pipeline rather than leaving it to the server underneath, which an in-memory transport would not reach. Where that stops being true the declaration moves to \"loopback\": WebApplicationFactory.UseKestrel(0) with StartServer() puts a real server on a loopback port in the same process, so a socket costs one line here and not a second process"
+        "reaches": "the codec, because ASP.NET Core's response compression middleware runs inside the request pipeline rather than in the server underneath, so an in-memory transport reaches it. Where that stops being true the declaration moves to \"loopback\": WebApplicationFactory.UseKestrel(0) with StartServer() puts a real server on a loopback port in the same process, so a socket costs one line here and not a second process"
       },
       "etag": {
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, over the xunit `dotnet new xunit` writes",
@@ -2155,7 +2162,7 @@
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, over the xunit `dotnet new xunit` writes",
         "dep": "Microsoft.AspNetCore.Mvc.Testing",
         "transport": "in-memory",
-        "reaches": "the codec, because these routes compress inside the request pipeline rather than leaving it to the server underneath, which an in-memory transport would not reach. Where that stops being true the declaration moves to \"loopback\": WebApplicationFactory.UseKestrel(0) with StartServer() puts a real server on a loopback port in the same process, so a socket costs one line here and not a second process"
+        "reaches": "the codec, because ASP.NET Core's response compression middleware runs inside the request pipeline rather than in the server underneath, so an in-memory transport reaches it. Where that stops being true the declaration moves to \"loopback\": WebApplicationFactory.UseKestrel(0) with StartServer() puts a real server on a loopback port in the same process, so a socket costs one line here and not a second process"
       },
       "etag": {
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, over the xunit `dotnet new xunit` writes",
@@ -2241,7 +2248,7 @@
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, reached for directly because Carter ships no test package of its own",
         "dep": "Microsoft.AspNetCore.Mvc.Testing",
         "transport": "in-memory",
-        "reaches": "the codec, because these routes compress inside the request pipeline rather than leaving it to the server underneath, which an in-memory transport would not reach. Where that stops being true the declaration moves to \"loopback\": WebApplicationFactory.UseKestrel(0) with StartServer() puts a real server on a loopback port in the same process, so a socket costs one line here and not a second process"
+        "reaches": "the codec, because ASP.NET Core's response compression middleware runs inside the request pipeline rather than in the server underneath, so an in-memory transport reaches it. Where that stops being true the declaration moves to \"loopback\": WebApplicationFactory.UseKestrel(0) with StartServer() puts a real server on a loopback port in the same process, so a socket costs one line here and not a second process"
       },
       "etag": {
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, reached for directly because Carter ships no test package of its own",
@@ -2327,7 +2334,7 @@
         "facility": "AppFixture<Program> from FastEndpoints.Testing, the framework's own package, which brings xunit.v3 with it",
         "dep": "FastEndpoints.Testing",
         "transport": "in-memory",
-        "reaches": "the codec, because these routes compress inside the request pipeline rather than leaving it to the server underneath, which an in-memory transport would not reach. Where that stops being true the declaration moves to \"loopback\": WebApplicationFactory.UseKestrel(0) with StartServer() puts a real server on a loopback port in the same process, so a socket costs one line here and not a second process"
+        "reaches": "the codec, because ASP.NET Core's response compression middleware runs inside the request pipeline rather than in the server underneath, so an in-memory transport reaches it. Where that stops being true the declaration moves to \"loopback\": WebApplicationFactory.UseKestrel(0) with StartServer() puts a real server on a loopback port in the same process, so a socket costs one line here and not a second process"
       },
       "etag": {
         "facility": "AppFixture<Program> from FastEndpoints.Testing, the framework's own package, which brings xunit.v3 with it",
@@ -2413,7 +2420,7 @@
         "facility": "AlbaHost.For<Program>, which Wolverine's documentation names for HTTP tests",
         "dep": "Alba",
         "transport": "in-memory",
-        "reaches": "the codec, because these routes compress inside the request pipeline rather than leaving it to the server underneath, which an in-memory transport would not reach. Where that stops being true the declaration moves to \"loopback\": WebApplicationFactory.UseKestrel(0) with StartServer() puts a real server on a loopback port in the same process, so a socket costs one line here and not a second process"
+        "reaches": "the codec, because ASP.NET Core's response compression middleware runs inside the request pipeline rather than in the server underneath, so an in-memory transport reaches it. Where that stops being true the declaration moves to \"loopback\": WebApplicationFactory.UseKestrel(0) with StartServer() puts a real server on a loopback port in the same process, so a socket costs one line here and not a second process"
       },
       "etag": {
         "facility": "AlbaHost.For<Program>, which Wolverine's documentation names for HTTP tests",
@@ -3386,10 +3393,10 @@
         "reaches": "the refusal as well as the pass, which is the half a target that let everything through would still answer correctly"
       },
       "compressed": {
-        "facility": "@SpringBootTest with MockMvc, as Spring Boot's reference starts, from the per-technology test starters Spring Initializr writes for Boot 4.1",
+        "facility": "@SpringBootTest on a random port with a RestTestClient over a JdkClientHttpRequestFactory whose compression is off; MockMvc never reaches the Tomcat connector",
         "dep": "spring-boot-starter-webmvc-test",
-        "transport": "in-memory",
-        "reaches": "the codec, because this target compresses in its own handler rather than with the server's compression setting, which would reach every endpoint"
+        "transport": "loopback",
+        "reaches": "Tomcat's compression on the connector, which is where this target compresses"
       },
       "etag": {
         "facility": "@SpringBootTest with MockMvc, as Spring Boot's reference starts, from the per-technology test starters Spring Initializr writes for Boot 4.1",
@@ -3475,7 +3482,7 @@
         "facility": "@QuarkusTest with REST Assured, as code.quarkus.io writes; it starts the application's HTTP server in the test JVM",
         "dep": "rest-assured",
         "transport": "loopback",
-        "reaches": "the codec, because this target compresses in its own handler rather than with the server's compression setting, which would reach every endpoint"
+        "reaches": "the HTTP server's compression, which @QuarkusTest starts with the application"
       },
       "etag": {
         "facility": "@QuarkusTest with REST Assured, as code.quarkus.io writes; it starts the application's HTTP server in the test JVM",
@@ -3561,7 +3568,7 @@
         "facility": "@MicronautTest with an injected @Client HttpClient, as Micronaut Launch writes; it starts the embedded server on a random port",
         "dep": "micronaut-test-junit5",
         "transport": "loopback",
-        "reaches": "the codec, because this target compresses in its own handler rather than with the server's compression setting, which would reach every endpoint"
+        "reaches": "the Netty server's compression, which @MicronautTest starts on its random port"
       },
       "etag": {
         "facility": "@MicronautTest with an injected @Client HttpClient, as Micronaut Launch writes; it starts the embedded server on a random port",
@@ -3644,10 +3651,10 @@
         "reaches": "the refusal as well as the pass, which is the half a target that let everything through would still answer correctly"
       },
       "compressed": {
-        "facility": "@ServerTest with the injected Http1Client, which Helidon's SE testing documentation leads with and says opens ports",
+        "facility": "@ServerTest with the injected Http1Client, which Helidon's SE testing documentation leads with and says opens ports; the suite turns the client's content encoding discovery off, because with the gzip module present it decodes gzip and keeps Content-Encoding",
         "dep": "helidon-webserver-testing-junit5",
         "transport": "loopback",
-        "reaches": "the codec, because this target compresses in its own handler rather than with the server's compression setting, which would reach every endpoint"
+        "reaches": "the WebServer's content encoding, which @SetUpServer turns on through the same Main.server the target calls"
       },
       "etag": {
         "facility": "@ServerTest with the injected Http1Client, which Helidon's SE testing documentation leads with and says opens ports",
@@ -3706,85 +3713,85 @@
     },
     "java:vertx": {
       "baseline": {
-        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with WebClient, as vertx-junit5's documentation does",
+        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router and Main.options(), driven with WebClient, as vertx-junit5's documentation does",
         "dep": "vertx-junit5",
         "transport": "loopback",
         "reaches": "the literal and the content type, which is the whole of what this endpoint is"
       },
       "json": {
-        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with WebClient, as vertx-junit5's documentation does",
+        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router and Main.options(), driven with WebClient, as vertx-junit5's documentation does",
         "dep": "vertx-junit5",
         "transport": "loopback",
         "reaches": "the serializer at three sizes, which is all this family has to show"
       },
       "parameters": {
-        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with WebClient, as vertx-junit5's documentation does",
+        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router and Main.options(), driven with WebClient, as vertx-junit5's documentation does",
         "dep": "vertx-junit5",
         "transport": "loopback",
         "reaches": "the echo of each capture, which the plan reader fills with the values it sent, so one bound as a string fails; the static route answering the plain payload holds that it still wins over {one}/segment/literal"
       },
       "authorized": {
-        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with WebClient, as vertx-junit5's documentation does",
+        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router and Main.options(), driven with WebClient, as vertx-junit5's documentation does",
         "dep": "vertx-junit5",
         "transport": "loopback",
         "reaches": "the refusal as well as the pass, which is the half a target that let everything through would still answer correctly"
       },
       "compressed": {
-        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with WebClient, as vertx-junit5's documentation does",
+        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router and Main.options(), driven with WebClient, as vertx-junit5's documentation does",
         "dep": "vertx-junit5",
         "transport": "loopback",
-        "reaches": "the codec, because this target compresses in its own handler rather than with the server's compression setting, which would reach every endpoint"
+        "reaches": "the HttpServer's compression, from the Main.options() the suite's server is built with"
       },
       "etag": {
-        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with WebClient, as vertx-junit5's documentation does",
+        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router and Main.options(), driven with WebClient, as vertx-junit5's documentation does",
         "dep": "vertx-junit5",
         "transport": "loopback",
         "reaches": "the validator and the conditional answer. The 304 is the only request in the corpus that cannot be sent until the target has answered a different one, because the validator is the target's to produce"
       },
       "cache": {
-        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with WebClient, as vertx-junit5's documentation does",
+        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router and Main.options(), driven with WebClient, as vertx-junit5's documentation does",
         "dep": "vertx-junit5",
         "transport": "loopback",
         "reaches": "the response cache and what it is keyed on. A store keyed on fewer headers than it declares answers one tenant with another tenant's body"
       },
       "body": {
-        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with WebClient, as vertx-junit5's documentation does",
+        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router and Main.options(), driven with WebClient, as vertx-junit5's documentation does",
         "dep": "vertx-junit5",
         "transport": "loopback",
         "reaches": "the binding and the validation facility, including the two refusals, which are judged as the envelope this target recorded rather than against a pinned body"
       },
       "query": {
-        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with WebClient, as vertx-junit5's documentation does",
+        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router and Main.options(), driven with WebClient, as vertx-junit5's documentation does",
         "dep": "vertx-junit5",
         "transport": "loopback",
         "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the test drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
-        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with WebClient, as vertx-junit5's documentation does",
+        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router and Main.options(), driven with WebClient, as vertx-junit5's documentation does",
         "dep": "vertx-junit5",
         "transport": "loopback",
         "reaches": "the echo of the three bound headers, which the plan reader fills with the values it sent, so one bound under the wrong name or as the wrong type fails; /headers holds only that the request was accepted with all of them attached"
       },
       "middleware": {
-        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with WebClient, as vertx-junit5's documentation does",
+        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router and Main.options(), driven with WebClient, as vertx-junit5's documentation does",
         "dep": "vertx-junit5",
         "transport": "loopback",
         "reaches": "every layer, because the host boots the application rather than calling the handler, which is the way this family is failed without noticing"
       },
       "domain": {
-        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with WebClient, as vertx-junit5's documentation does",
+        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router and Main.options(), driven with WebClient, as vertx-junit5's documentation does",
         "dep": "vertx-junit5",
         "transport": "loopback",
         "reaches": "the shared model through all eight operations, including the four that write, where a 201 and a 204 with no body are answers a framework can get subtly wrong while returning the right status"
       },
       "errors": {
-        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with WebClient, as vertx-junit5's documentation does",
+        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router and Main.options(), driven with WebClient, as vertx-junit5's documentation does",
         "dep": "vertx-junit5",
         "transport": "loopback",
         "reaches": "whatever this target does with a route it does not have, which is the framework rather than a handler"
       },
       "template": {
-        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with WebClient, as vertx-junit5's documentation does",
+        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router and Main.options(), driven with WebClient, as vertx-junit5's documentation does",
         "dep": "vertx-junit5",
         "transport": "loopback",
         "reaches": "the engine's output, normalised the way the conformance client normalises it: the spec pins the content and leaves the whitespace free"
@@ -3819,7 +3826,7 @@
         "facility": "JavalinTest.test() from javalin-testtools, which starts the application on a random port per test; its client reads bodies as strings, so gzip requests go to the origin by hand",
         "dep": "javalin-testtools",
         "transport": "loopback",
-        "reaches": "the codec, because this target compresses in its own handler rather than with the server's compression setting, which would reach every endpoint"
+        "reaches": "Javalin's compression, which JavalinTest.test() starts from the application's own configuration"
       },
       "etag": {
         "facility": "JavalinTest.test() from javalin-testtools, which starts the application on a random port per test; its client reads bodies as strings, so gzip requests go to the origin by hand",

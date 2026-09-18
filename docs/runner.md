@@ -15,7 +15,9 @@ to its target list and its suite, both out of `spec/matrix.json`.
     python3 harness/hosts.py --host lambda-rie     # what that job would measure
 
 The container host gets the rate ladder. A function host runs one invocation at a time and
-has no knee to find, so it gets the pinned serial sequence instead.
+has no knee to find, so it gets the pinned serial sequence instead. The sequence leaves out
+the compressed family. On a function platform, compression is expected from the host in front
+of the function, not from the framework, so the gate on those hosts does not ask for it either.
 
 Runs join the `measure-<ref>` concurrency group with `cancel-in-progress: false`, so a
 second run queues behind the first rather than sharing a machine with it.

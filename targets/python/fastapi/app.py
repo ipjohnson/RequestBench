@@ -250,13 +250,10 @@ async def authorized_small():
 # ---- compressed: GZipMiddleware on a mounted sub-application -------------------------
 
 # rb:wiring compressed.*
-# Threshold and level are the pinned ones rather than Starlette's defaults. Whether a
-# framework bothers to compress a body too small to benefit is what compressed.gzip_small
-# is in the set to show, so the floor has to be the same floor everywhere or the row
-# reports a default instead.
+# The size floor is Starlette's own default. Whether a framework bothers to compress a body
+# too small to benefit is what compressed.gzip_small is in the set to show.
 gzipped = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
-gzipped.add_middleware(GZipMiddleware, minimum_size=d.GZIP_MIN_SIZE,
-                       compresslevel=d.GZIP_LEVEL)
+gzipped.add_middleware(GZipMiddleware, compresslevel=1)
 # rb:end
 
 

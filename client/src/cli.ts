@@ -5,6 +5,7 @@
 //   rb-client 127.0.0.1:8080 --target node:fastify [--reference ref.json] [--compare ref.json]
 //   rb-client 127.0.0.1:8080 --target node:fastify --mode expect
 //   rb-client 127.0.0.1:8080 --target node:fastify --values '{"one":4821}'
+//   rb-client 127.0.0.1:8080 --target java:micronaut --skip-families compressed
 //
 // Two authorities, one replay. The gate checks a target against another target measured in
 // the same run; expect checks it against spec/expected.json and never against another target.
@@ -13,7 +14,7 @@ import { dirname } from "node:path";
 import { parseArgs } from "node:util";
 import { gate, dictRepr, type EndpointResult } from "./gate.js";
 import { check, type EndpointVerdict } from "./expectation.js";
-import { loadExpected, loadPlan, type Plan } from "./spec.js";
+import { loadExpected, loadPlan, withoutFamilies, type Plan } from "./spec.js";
 import type { Comparable } from "./compare.js";
 import type { Encoding } from "./checks.js";
 import { draw, parseValues, type Values } from "./values.js";
@@ -44,6 +45,15 @@ function asValues(v: string, plan: Plan): Values {
     return parseValues(v, plan.run_values ?? {});
   } catch (e) {
     throw new UsageError(`argument --values: ${(e as Error).message}`);
+  }
+}
+
+/** The plan less the families the host handles itself, as harness/run.py names them. */
+function asSkipped(v: string, plan: Plan): Plan {
+  try {
+    return withoutFamilies(plan, v.split(",").map((f) => f.trim()).filter(Boolean));
+  } catch (e) {
+    throw new UsageError(`argument --skip-families: ${(e as Error).message}`);
   }
 }
 
@@ -104,6 +114,7 @@ async function main(): Promise<number> {
       exemplars: { type: "string" },
       encoding: { type: "string", default: "http" },
       "skip-headers": { type: "boolean", default: false },
+      "skip-families": { type: "string", default: "" },
       values: { type: "string" },
     },
   });
@@ -119,7 +130,7 @@ async function main(): Promise<number> {
   const target = values.target;
   if (!target) throw new UsageError("the following arguments are required: --target");
 
-  const plan = loadPlan();
+  const plan = asSkipped(values["skip-families"], loadPlan());
   // A run passes the values it drew, so every target in it is sent the same ones. Anything
   // else draws its own, which is all a target checked on its own needs.
   const drawn = values.values === undefined

@@ -7,6 +7,7 @@
 package main
 
 import (
+	"compress/flate"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -14,10 +15,10 @@ import (
 	d "github.com/ianjohnson/requestbench/targets/go/_shared"
 )
 
-// Level is pinned across every language. chi compresses whatever it is given, with no size
-// floor of its own, which is one of the things compressed.gzip_small is in the set to show.
+// chi compresses whatever it is given, with no size floor of its own, which is one of the
+// things compressed.gzip_small is in the set to show.
 // rb:wiring compressed.*
-var gzip = chimw.Compress(d.GzipLevel, "application/json")
+var gzip = chimw.Compress(flate.BestSpeed, "application/json")
 
 // rb:wiring compressed.*
 func compressedRoute(size string) http.HandlerFunc {

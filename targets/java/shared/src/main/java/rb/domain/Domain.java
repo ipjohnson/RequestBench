@@ -11,8 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.zip.GZIPOutputStream;
-import java.io.ByteArrayOutputStream;
 import rb.domain.Errors.NotFound;
 import rb.domain.Model.*;
 
@@ -490,28 +488,7 @@ public final class Domain {
     return names;
   }
 
-  /**
-   * Pinned across every language. Compression cost is dominated by codec and level, not by
-   * framework, so an unpinned level makes compressed.* a zlib benchmark.
-   */
-  public static final int GZIP_LEVEL = 6;
-
   public static final String CACHEABLE = "public, max-age=60";
-
-  /** Compresses at the pinned level, for targets whose framework brings no compressor. */
-  public static byte[] gzip(byte[] raw) {
-    ByteArrayOutputStream out = new ByteArrayOutputStream(raw.length / 2);
-    try (GZIPOutputStream gz = new GZIPOutputStream(out) {
-      {
-        def.setLevel(GZIP_LEVEL);
-      }
-    }) {
-      gz.write(raw);
-    } catch (IOException e) {
-      return raw;
-    }
-    return out.toByteArray();
-  }
 
   /**
    * x-rb-serial, monotonic per process. A response served from a cache anywhere in the

@@ -48,6 +48,7 @@ const plan = JSON.parse(readFileSync(join(ROOT, "spec", "plan.json"), "utf8"));
 const seq = JSON.parse(readFileSync(join(ROOT, "spec", "sequence.json"), "utf8"));
 const epIdx = new Uint16Array(Buffer.from(seq.endpoint_index, "base64").buffer.slice(0));
 const inIdx = new Uint16Array(Buffer.from(seq.instance_index, "base64").buffer.slice(0));
+const skipped = new Set(seq.skipped_families ?? []);
 
 // ---- values drawn once per run --------------------------------------------------------
 // A value a handler binds and echoes is drawn once per run, so that no target can know it in
@@ -296,11 +297,12 @@ const out = {
     round_trip: spread(trip),
     billed_ms: Object.fromEntries([...billed].sort((a, b) => a[0] - b[0])),
   } : {}),
-  endpoints: eps.map((ep, i) => ({
+  // A family the sequence never draws is left out, rather than reported as never answered.
+  endpoints: eps.flatMap((ep, i) => (skipped.has(ep.family) ? [] : [{
     id: ep.id, family: ep.family, count: counts[i], errors: errors[i], mismatch: mismatch[i],
     p50_us: percentile(hist[i], counts[i], 50), p99_us: percentile(hist[i], counts[i], 99),
     hist_b64: Buffer.from(hist[i].buffer).toString("base64"),
-  })),
+  }])),
 };
 if (argv.out) writeFileSync(argv.out, JSON.stringify(out));
 console.log(JSON.stringify({ ...out, endpoints: out.endpoints.map(({ hist_b64, ...e }) => e) }, null, 1));

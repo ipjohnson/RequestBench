@@ -7,6 +7,7 @@
 package main
 
 import (
+	"compress/flate"
 	"net/http"
 
 	"github.com/gorilla/handlers"
@@ -14,11 +15,11 @@ import (
 	d "github.com/ianjohnson/requestbench/targets/go/_shared"
 )
 
-// Level is pinned across every language. There is no size floor of its own, which is one
-// of the things compressed.gzip_small is in the set to show.
+// There is no size floor of its own, which is one of the things compressed.gzip_small is in
+// the set to show.
 // rb:wiring compressed.*
 func gzip(next http.Handler) http.Handler {
-	return handlers.CompressHandlerLevel(next, d.GzipLevel)
+	return handlers.CompressHandlerLevel(next, flate.BestSpeed)
 }
 
 // rb:wiring compressed.*

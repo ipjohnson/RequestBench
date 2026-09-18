@@ -20,7 +20,7 @@ tokio = { workspace = true }
 salvo = { version = "0.87", features = ["compression", "caching-headers", "cache"] }
 
 # The suite in src/suite. The standard library has no gzip decoder and the floor has to undo
-# gzip before it compares, so the suite takes the one the shared domain already encodes with.
+# gzip before it compares, so the suite takes flate2.
 # The framework again with its test feature on, which is where its TestClient lives. A
 # dev-dependency's features reach a test build and no other.
 [dev-dependencies]

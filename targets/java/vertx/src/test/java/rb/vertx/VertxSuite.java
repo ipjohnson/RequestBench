@@ -26,7 +26,8 @@ import rb.domain.Domain;
  * router was built inline in main(), so the only way in was to start the target on its
  * container port; Main.router(vertx) now builds it, and main() calls the same method. The
  * starter's shape is to deploy a verticle, and this target has none, so the suite starts a
- * server around the router instead, on a random port, which is not in-process either.
+ * server around the router instead, on a random port, which is not in-process either. The
+ * server takes Main.options() too, because the compression is configured there.
  *
  * <p>The suite first drove it with the core HttpClient and lost a body now and then:
  * middleware.sixteen once read a 200 with a JSON content type and nothing in it, in CI and never
@@ -34,7 +35,7 @@ import rb.domain.Domain;
  * and a small response can arrive and end before a chain of futures has got round to asking
  * for it. WebClient reads the whole body before it returns the response, so nothing is ever
  * listening late. Like the core client it neither decompresses nor sends Accept-Encoding
- * unless told to, so the body is the bytes the route wrote and the request carries only what
+ * unless told to, so the body is the bytes the server sent and the request carries only what
  * the plan sends. main() is where this target loads its fixture, so the suite loads it.
  */
 @ExtendWith(VertxExtension.class)
@@ -47,7 +48,7 @@ abstract class VertxSuite {
   @BeforeAll
   static void serveTheRouter(Vertx vertx) throws Exception {
     Domain.load(Planned.ROOT.resolve("spec").resolve("fixture.json").toString());
-    server = vertx.createHttpServer().requestHandler(Main.router(vertx)).listen(0)
+    server = vertx.createHttpServer(Main.options()).requestHandler(Main.router(vertx)).listen(0)
         .toCompletionStage().toCompletableFuture().get();
     client = WebClient.create(vertx);
   }

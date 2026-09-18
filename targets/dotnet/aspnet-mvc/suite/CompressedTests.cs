@@ -43,17 +43,17 @@ public sealed class CompressedTests(TargetApp app) : IClassFixture<TargetApp>
 
     // rb:test compressed.gzip_small
     [Fact]
-    public async Task A_payload_under_the_shared_floor_is_sent_uncompressed_even_so()
+    public async Task A_payload_under_the_shared_floor_is_gzipped_anyway()
     {
         Ask ask = Plan.For("compressed.gzip_small");
 
         using HttpResponseMessage response = await app.Send(ask);
 
         await Floor.AssertAsync(response, ask);
-        // spec/expected.json pins no encoding here: the small payload sits under the shared
-        // gzip floor and the frameworks disagree about what to do with it. What this target
-        // does is therefore the suite's to assert, not the expectation's.
-        Assert.Empty(response.Content.Headers.ContentEncoding);
+        // spec/expected.json pins no encoding here, because the frameworks disagree about a
+        // body this small. What this target does is the suite's to assert. ASP.NET Core's
+        // middleware has no minimum size, so it compresses this too.
+        Assert.Equal("gzip", Assert.Single(response.Content.Headers.ContentEncoding));
     }
 
     // rb:test compressed.gzip_large
@@ -66,8 +66,7 @@ public sealed class CompressedTests(TargetApp app) : IClassFixture<TargetApp>
 
         await Floor.AssertAsync(response, ask);
         Assert.Equal("gzip", Assert.Single(response.Content.Headers.ContentEncoding));
-        // Nothing in ASP.NET Core adds Vary for a response compressed by hand, so a target
-        // that forgot it would pass the floor and be wrong in front of any shared cache.
+        // Without Vary a shared cache could hand this body to a client that did not ask for gzip.
         Assert.Equal("Accept-Encoding", Assert.Single(response.Headers.Vary));
     }
 }

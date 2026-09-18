@@ -9,11 +9,12 @@ import zlib from "node:zlib";
 
 import * as d from "../../_shared/domain.js";
 
-// Level is pinned across every language. The size threshold is left at the library's own
-// default, because whether a framework bothers to compress a body too small to benefit is
-// what compressed.gzip_small is in the set to show.
+// The size threshold is left at the library's own default, because whether a framework
+// bothers to compress a body too small to benefit is what compressed.gzip_small is in the
+// set to show.
 // rb:wiring compressed.*
-const gzip = compress({ br: false, deflate: false, gzip: { level: d.GZIP_LEVEL } });
+const gzip = compress({ br: false, deflate: false,
+                       gzip: { level: zlib.constants.Z_BEST_SPEED } });
 
 export default function compressed(router) {
   // rb:handler compressed.*

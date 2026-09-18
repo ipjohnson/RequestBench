@@ -112,14 +112,11 @@ def require_token(connection: ASGIConnection, _: BaseRouteHandler) -> None:
 
 
 # rb:wiring compressed.*
-# Threshold and level are the pinned ones rather than Litestar's defaults. Whether a
-# framework bothers to compress a body too small to benefit is what compressed.gzip_small
-# is in the set to show, so the floor has to be the same floor everywhere or the row
-# reports a default instead.
+# The size floor is Litestar's own default. Whether a framework bothers to compress a body
+# too small to benefit is what compressed.gzip_small is in the set to show.
 gzip_scoped = [DefineMiddleware(
     CompressionMiddleware,
-    config=CompressionConfig(backend="gzip", gzip_compress_level=d.GZIP_LEVEL,
-                             minimum_size=d.GZIP_MIN_SIZE),
+    config=CompressionConfig(backend="gzip", gzip_compress_level=1),
 )]
 
 

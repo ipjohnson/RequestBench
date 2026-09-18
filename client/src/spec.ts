@@ -99,6 +99,19 @@ const read = <T,>(name: string): T => JSON.parse(readFileSync(join(SPEC, name), 
 
 export const loadPlan = (): Plan => read<Plan>("plan.json");
 
+/**
+ * The plan without the families a host handles in front of the target, which a target there
+ * is not asked for. A name the plan does not have is refused, so a typo cannot quietly leave
+ * the check covering everything.
+ */
+export function withoutFamilies(plan: Plan, families: readonly string[]): Plan {
+  const known = new Set(plan.endpoints.map((ep) => ep.family));
+  const unknown = families.filter((f) => !known.has(f));
+  if (unknown.length > 0) throw new Error(`no such family in the plan: ${unknown.join(", ")}`);
+  if (families.length === 0) return plan;
+  return { ...plan, endpoints: plan.endpoints.filter((ep) => !families.includes(ep.family)) };
+}
+
 const digest = (name: string): string =>
   "sha256:" + createHash("sha256").update(readFileSync(join(SPEC, name))).digest("hex");
 

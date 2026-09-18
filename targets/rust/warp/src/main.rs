@@ -412,9 +412,9 @@ fn routes() -> impl warp::Filter<Extract = (impl warp::Reply,), Error = std::con
         .boxed();
 
     // rb:handler compressed.*
-    // Level is warp's own default, which is the same 6 every other target pins. The size
-    // threshold is left alone, because whether a framework bothers to compress a body too
-    // small to benefit is what compressed.gzip_small is in the set to show.
+    // warp::compression::gzip() takes no level, so this is flate2's default, level 6. The
+    // size threshold is left alone, because whether a framework bothers to compress a body
+    // too small to benefit is what compressed.gzip_small is in the set to show.
     //
     // warp::compression::gzip() compresses whatever it wraps and never reads
     // accept-encoding, so asking for identity got gzip back and compressed.identity_*

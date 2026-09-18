@@ -366,8 +366,7 @@ def require_token(view):
 def compressed_view(size):
     """gzip_page is GZipMiddleware as a decorator, so compression is scoped to these three
     routes and the other forty-two never look at accept-encoding. Django compresses at
-    level 6, which is the level every language here is pinned to, and skips a body under
-    200 bytes -- below the small payload either way."""
+    level 6, which it has no setting for, and skips a body under 200 bytes."""
     @require_GET
     @gzip_page
     async def view(_):

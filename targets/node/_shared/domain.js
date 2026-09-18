@@ -1,7 +1,6 @@
 // Domain logic shared by every Node target. Frameworks differ only in how they wire
 // routes to these functions, so the measured delta is framework overhead and nothing else.
 import { readFileSync } from "node:fs";
-import { gzipSync } from "node:zlib";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
@@ -230,9 +229,6 @@ export const CACHEABLE = "public, max-age=60";
 export const notFoundBody = () => ({ error: "not_found" });
 export const forbiddenBody = () => ({ error: "forbidden" });
 export const createdLocation = () => "/domain/orders/" + NEXT_ORDER_ID;
-
-export const GZIP_LEVEL = 6;
-export const gzip = (buf) => gzipSync(buf, { level: GZIP_LEVEL });
 
 // x-rb-serial, monotonic per process. A response served from a cache anywhere in the path,
 // or precomputed at boot, repeats a number it did not increment. Identical bytes are the
