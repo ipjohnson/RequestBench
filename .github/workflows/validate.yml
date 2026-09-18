@@ -260,6 +260,17 @@ jobs:
       - name: Every Node target's own suite passes
         run: make suites LANGUAGES=node
 
+  suites-java:
+    name: java target suites pass
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with: { distribution: temurin, java-version: "25", cache: maven }
+      # One reactor build: each module's suite is its own src/test, run by surefire.
+      - name: Every Java target's own suite passes
+        run: make suites LANGUAGES=java
+
   rust:
     name: rust targets conform
     runs-on: ubuntu-latest

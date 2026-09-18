@@ -46,6 +46,24 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-thymeleaf</artifactId>
     </dependency>
+    <!-- The suite in src/test. Boot 4 split spring-boot-starter-test into a test starter per
+         technology, and these are the three Spring Initializr writes for a 4.1 project with
+         web, validation and Thymeleaf. Test scope, so none of it reaches server.jar. -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-webmvc-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-validation-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-thymeleaf-test</artifactId>
+      <scope>test</scope>
+    </dependency>
     <!-- Host: lambda-rie. The adapter people actually deploy in front of Spring Boot,
          rather than a generic shim. Unused under the container host, where Spring serves
          its own socket. -->

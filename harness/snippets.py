@@ -851,6 +851,27 @@ def suite_text(language, target, at=None):
     return "\n".join(out)
 
 
+def test_dependency(language, target, dep, at=None):
+    """Whether the suite declares this dependency somewhere it cannot reach the target.
+
+    A suite with a project of its own names it there. A Maven module's suite has no project of
+    its own: it is src/test in the module, and <scope>test</scope> in the module's pom is what
+    keeps a dependency out of the jar, so a test-scoped declaration there counts and a
+    compile-scoped one does not.
+    """
+    if dep in suite_text(language, target, at):
+        return True
+    for entry in bundle.manifest(language, target, at)["files"]:
+        if entry["role"] != "manifest" or not entry["path"].endswith("/pom.xml"):
+            continue
+        pom = bundle.blob(entry["path"], at).decode("utf-8")
+        for block in re.findall(r"<dependency>(.*?)</dependency>", pom, re.S):
+            if (re.search(r"<artifactId>%s</artifactId>" % re.escape(dep), block)
+                    and re.search(r"<scope>test</scope>", block)):
+                return True
+    return False
+
+
 def manifest_text(language, target, at=None):
     """Every dependency manifest in the bundle, concatenated. A declared dependency that is
     not in one of these is a declaration describing a target that no longer exists."""
@@ -1031,7 +1052,7 @@ def facilities(language, target, found, at=None):
         if "facility" not in decl or "transport" not in decl:
             out.append("%s:%s declares a suite for %s with no facility or no transport"
                        % (language, target, family))
-        elif decl.get("dep") and decl["dep"] not in suite_text(language, target, at):
+        elif decl.get("dep") and not test_dependency(language, target, decl["dep"], at):
             out.append("%s:%s declares %s for the %s suite and no suite manifest names it"
                        % (language, target, decl["dep"], family))
     return out

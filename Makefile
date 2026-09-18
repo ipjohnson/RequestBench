@@ -1,6 +1,6 @@
 comma := ,
 
-.PHONY: fixture plan spec expected test suites suites-dotnet suites-python suites-node machine bundle snippets build client site site-dev java rust dotnet python python-lock lint validate conform expect exemplars run vars report clean help
+.PHONY: fixture plan spec expected test suites suites-dotnet suites-python suites-node suites-java machine bundle snippets build client site site-dev java rust dotnet python python-lock lint validate conform expect exemplars run vars report clean help
 # Everything is on by default: no TARGETS means every implemented target this host
 # supports. The rest narrow it. LANGUAGES/FRAMEWORKS pick what runs, FAMILIES/ENDPOINTS
 # pick what it is asked for, and a narrowed endpoint set is recorded as its own profile
@@ -99,7 +99,7 @@ test: client ## boot every target and check every endpoint against spec/expected
 # suite that is wrong. These run no load and are never part of a measurement.
 # One language's suites at a time, so a machine with one toolchain can still run its own.
 # Every half runs whatever the one before it did, so a failure never hides another result.
-SUITE_LANGUAGES = $(if $(LANGUAGES),$(subst $(comma), ,$(LANGUAGES)),dotnet python node)
+SUITE_LANGUAGES = $(if $(LANGUAGES),$(subst $(comma), ,$(LANGUAGES)),dotnet python node java)
 # The interpreter harness/run.py would use: the virtualenv `make python` creates, or the one
 # on the path, which is how CI runs it after installing the lock into it.
 PYTHON ?= $(if $(wildcard targets/python/.venv/bin/python),$(CURDIR)/targets/python/.venv/bin/python,python3)
@@ -146,6 +146,15 @@ suites-node:
 	  (cd targets/node/$$t/suite && npm ci --no-audit --no-fund --silent && npx mocha '*.test.js') || status=1; \
 	done; \
 	exit $$status
+
+# The Java suites are src/test in each module, which is where Maven looks, so one reactor
+# build runs all six. Without a local Maven it runs in the image targets/java/Dockerfile
+# builds with, the same way `make test` needs no toolchain beyond Docker.
+MVN = $(if $(shell command -v mvn),mvn,docker run --rm -v $(CURDIR):/repo -v rb-m2:/root/.m2 \
+        -w /repo/targets/java maven:3.9-eclipse-temurin-25 mvn)
+
+suites-java:
+	@cd targets/java && $(MVN) -B -q test
 
 expected: ## re-derive spec/expected.json from the targets named in EXPECT_FROM
 	python3 harness/expected.py --targets $(EXPECT_FROM) --mode $(MODE) --write

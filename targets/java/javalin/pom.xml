@@ -13,6 +13,23 @@
   <name>RequestBench target: Javalin</name>
 
   <dependencies>
+    <!-- The suite in src/test. javalin-testtools is Javalin's own, and JavalinTest.test() is
+         what its documentation tests a route with. It brings no test runner: Javalin's testing
+         tutorial is still written for Javalin 6 and its example uses JUnit 4, so there is
+         nothing current to follow, and this is the JUnit Jupiter the rest of the reactor
+         already resolves. Test scope, so none of it reaches server.jar. -->
+    <dependency>
+      <groupId>io.javalin</groupId>
+      <artifactId>javalin-testtools</artifactId>
+      <version>${javalin.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <version>6.1.3</version>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>dev.requestbench</groupId>
       <artifactId>rb-hosts</artifactId>

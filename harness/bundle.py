@@ -170,7 +170,12 @@ CONTRACT = "/client-exception/"
 # out of the routes says the same thing twice, and CONTRACT_NAMES would put it in reach of
 # derivation, where the route it repeats is a second registration and every endpoint in the
 # target becomes ambiguous.
-SUITE = ("/suite/", "/client/")
+#
+# Where a language's build tool puts tests is not this repository's to choose. Maven compiles
+# src/test/java beside the module it tests, and @SpringBootTest, @QuarkusTest and
+# @MicronautTest all expect to run inside that module, so a Java target's suite lives there
+# rather than in a suite/ of its own.
+SUITE = ("/suite/", "/client/", "/src/test/")
 
 # Roles a code_hash does not cover. A corrected README or a sharpened test does not read as
 # a target that changed, but it does produce a new page.
