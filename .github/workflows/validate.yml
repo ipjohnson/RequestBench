@@ -201,6 +201,24 @@ jobs:
       - name: Every dotnet target answers spec/expected.json
         run: python3 harness/run.py --targets dotnet:minimal-apis,dotnet:aspnet-mvc,dotnet:fastendpoints,dotnet:carter,dotnet:wolverine-http --mode local --expect
 
+  suites:
+    name: target suites pass
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v5
+        with: { global-json-file: targets/dotnet/global.json }
+      # Its own job, and never part of measure.yml. The six-hour cap there covers
+      # measurement, and a test suite is not a measurement of the machine.
+      #
+      # This does not replace the conformance jobs above and cannot. They are the authority
+      # on whether a target answers spec/expected.json; a suite is what its own framework's
+      # recommended test facility can say about it, which is a different question and a
+      # weaker one. A suite that passes while the job above fails that target is the suite
+      # that is wrong.
+      - name: Every .NET target's own suite passes
+        run: make suites
+
   rust:
     name: rust targets conform
     runs-on: ubuntu-latest

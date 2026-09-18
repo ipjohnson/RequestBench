@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- FastEndpoints.Testing is the target's own test package, and the only one of the five
+       frameworks here that ships one. Taking it is not free: it is built on xunit.v3, so this
+       suite runs a different xunit major than the four beside it, which `dotnet new xunit`
+       writes at 2.9.3. xunit.v3 is a Microsoft Testing Platform runner, which makes the
+       project an executable rather than something VSTest hosts, so it needs neither
+       Microsoft.NET.Test.Sdk nor xunit.runner.visualstudio and `dotnet test` on the .NET 10
+       SDK refuses it outright. `make suites` runs this one with `dotnet run`. -->
+  <PropertyGroup>
+    <RootNamespace>RequestBench.FastEndpointsTarget.Suite</RootNamespace>
+    <AssemblyName>RequestBench.FastEndpoints.Suite</AssemblyName>
+    <IsPackable>false</IsPackable>
+    <!-- xunit.v3 test projects are executables. Microsoft.NET.Test.Sdk sets this when VSTest
+         hosts a suite; nothing does here, so it is set by hand. -->
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="FastEndpoints.Testing" />
+    <PackageReference Include="xunit.v3" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../RequestBench.FastEndpoints.csproj" />
+  </ItemGroup>
+</Project>

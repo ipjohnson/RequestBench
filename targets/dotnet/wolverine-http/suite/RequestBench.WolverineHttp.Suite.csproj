@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Alba, which Wolverine's own documentation names for HTTP tests, over the same xunit
+       `dotnet new xunit` writes. -->
+  <PropertyGroup>
+    <RootNamespace>RequestBench.WolverineTarget.Suite</RootNamespace>
+    <AssemblyName>RequestBench.WolverineHttp.Suite</AssemblyName>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Alba" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../RequestBench.WolverineHttp.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+</Project>

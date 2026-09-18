@@ -32,7 +32,7 @@ type Props = {
   alsoWired: string[];
   /** What spec/matrix.json says this family is wired with in this target. */
   mechanism: Mechanism | undefined;
-  /** The contract tests that hold this target to the envelope it declares. */
+  /** What holds this target to its contract: its own suite, and its envelope package. */
   tests: { part: SnippetPart; link: string | null }[];
   exchange: WireEndpoint | undefined;
   factors: Record<string, string>;
@@ -70,6 +70,19 @@ const where = (p: SnippetPart): string =>
 // handler from a condition. They are not part of the range, because that is what the
 // permalink points at, so they are shown beside it rather than in it.
 const context = (h?.context ?? []) as { line: number; text: string }[];
+// Two kinds of test share the role and are not the same claim. A target's own suite boots
+// the target and holds it to spec/expected.json; a client-exception package describes the
+// error envelope the framework declares and is run by the conformance client against nothing
+// at all. One heading over both would say the wrong thing about whichever came second.
+const contract = tests.filter(({ part }) => part.path.includes("/client-exception/"));
+// A suite's helpers are marked for the family or the target they serve rather than for this
+// endpoint, and they are shown here because writing them was part of what testing this
+// endpoint cost. The endpoint's own test goes first so the page leads with what it asserts.
+const scoped = (part: SnippetPart): string => (part as { scope?: string }).scope ?? "endpoint";
+const suiteParts = tests.filter(({ part }) => !part.path.includes("/client-exception/"));
+const suite = suiteParts.filter(({ part }) => scoped(part) === "endpoint");
+const helpers = suiteParts.filter(({ part }) => scoped(part) !== "endpoint");
+const helperLines = helpers.reduce((n, { part }) => n + part.end_line - part.start_line + 1, 0);
 const hdrs = (hs: readonly (readonly [string, string])[]): string =>
   hs
     .map(([k, v]) => `<div class='hrow'><span class='hk'>${esc(k)}</span><span class='hv'>${esc(v)}</span></div>`)
@@ -169,23 +182,30 @@ const hdrs = (hs: readonly (readonly [string, string])[]): string =>
   </div>
 
   {
-    tests.length > 0 && (
-      <>
-        <h3 class="childcap">Contract test</h3>
-        <div class="wiring">
-          {tests.map(({ part, link: href }) => (
-            <>
-              <div class="sniphead">
-                <span class="loc">{where(part)}</span>
-                <span class="how">{part.how}</span>
-                {href && <a href={href}>open on GitHub &rarr;</a>}
-              </div>
-              <pre class="code">{part.text}</pre>
-            </>
-          ))}
-        </div>
-      </>
-    )
+    [["Test", suite, helpers], ["Contract test", contract, []]].map(([caption, parts, needed]) =>
+      (parts as typeof tests).length + (needed as typeof tests).length > 0 && (
+        <>
+          <h3 class="childcap">{caption as string}</h3>
+          <div class="wiring">
+            {[...(parts as typeof tests), ...(needed as typeof tests)].map(({ part, link: href }, i) => (
+              <>
+                {i === (parts as typeof tests).length && (
+                  <p class="hint">
+                    What that test needed: {helperLines.toLocaleString()} lines written once for
+                    this target's suite and shown on every page they serve.
+                  </p>
+                )}
+                <div class="sniphead">
+                  <span class="loc">{where(part)}</span>
+                  <span class="how">{part.how}</span>
+                  {href && <a href={href}>open on GitHub &rarr;</a>}
+                </div>
+                <pre class="code">{part.text}</pre>
+              </>
+            ))}
+          </div>
+        </>
+      ))
   }
 
   <h3 class="childcap">On the wire</h3>

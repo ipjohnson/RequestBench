@@ -28,4 +28,23 @@
          run the same version and a difference between them is the framework. -->
     <PackageVersion Include="FluentValidation" Version="12.1.1" />
   </ItemGroup>
+  <ItemGroup>
+    <!-- What the suites take, and nothing a target runs. `dotnet new xunit` on the pinned
+         SDK writes these three versions, so they are what the language recommends rather
+         than what this repository would have picked. -->
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageVersion Include="xunit" Version="2.9.3" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.4" />
+    <!-- FastEndpoints.Testing 8.3.0 depends on xunit.v3, so the one target that takes its
+         framework's own test package takes a different xunit major than `dotnet new xunit`
+         writes. That is the cost of the package rather than a choice made here, and it is
+         recorded rather than smoothed over by putting all five on one runner. -->
+    <PackageVersion Include="xunit.v3" Version="4.0.1" />
+    <!-- The test host each target's own documentation reaches for first. Three of the five
+         share WebApplicationFactory; fastendpoints and wolverine-http ship their own, and
+         that difference is the thing the suites are here to show. -->
+    <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.12" />
+    <PackageVersion Include="FastEndpoints.Testing" Version="8.3.0" />
+    <PackageVersion Include="Alba" Version="8.5.3" />
+  </ItemGroup>
 </Project>

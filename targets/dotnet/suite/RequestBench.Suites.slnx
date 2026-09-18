@@ -1,0 +1,16 @@
+<Solution>
+  <!-- Every .NET suite, so one `dotnet test` runs them the way the java reactor does. A list
+       of projects and nothing else: no code is shared between them, because a helper one
+       framework's suite leans on is part of what testing that framework cost, and it is
+       marked and shown beside the tests it serves. Separate from RequestBench.slnx on
+       purpose: that one is what measurement builds, and a measured build should not restore
+       a test host.
+
+       fastendpoints is not here. FastEndpoints.Testing is built on xunit.v3, which is a
+       Microsoft Testing Platform runner, and `dotnet test` on the .NET 10 SDK refuses a
+       solution that mixes one with VSTest. It is run on its own by `make suites`. -->
+  <Project Path="../minimal-apis/suite/RequestBench.MinimalApis.Suite.csproj" />
+  <Project Path="../aspnet-mvc/suite/RequestBench.AspNetMvc.Suite.csproj" />
+  <Project Path="../carter/suite/RequestBench.Carter.Suite.csproj" />
+  <Project Path="../wolverine-http/suite/RequestBench.WolverineHttp.Suite.csproj" />
+</Solution>

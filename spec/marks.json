@@ -1,6 +1,6 @@
 {
   "version": "marks-v1",
-  "note": "What an endpoint-keyed mark may claim, and what has to be true of what it captured. A mark is `rb:<kind> <selector>[,<selector>...] [<key>=<value>...]`, closed by `rb:end` where the block rule would stop short of what the author meant. A selector is family.endpoint for one, family.* for all of a family, or * for the target. harness/snippets.py reads this file and never learns a kind's name, so adding one is an object under `kinds` and a display section. The assertions are counted against the allowance rather than gated red: they fail on most of the corpus today and a red gate would block every branch that is fixing them. An allowance only ever goes down. --ratchet rewrites it from what the tree does, --check fails on anything above it.",
+  "note": "What an endpoint-keyed mark may claim, and what has to be true of what it captured. A mark is `rb:<kind> <selector>[,<selector>...] [<key>=<value>...]`, closed by `rb:end` where the block rule would stop short of what the author meant. A selector is family.endpoint for one, family.* for all of a family, or * for the target. harness/snippets.py reads this file and never learns a kind's name, so adding one is an object under `kinds` and a display section. A kind is required \"every\" (a conformance target has to locate one for each endpoint), \"declared\" (spec/matrix.json says per family whether there is anything to show), \"ratchet\" (absence is counted against the allowance, never gated) or \"never\". The assertions are counted against the allowance rather than gated red: they fail on most of the corpus today and a red gate would block every branch that is fixing them. An allowance only ever goes down. --ratchet rewrites it from what the tree does, --check fails on anything above it.",
   "kinds": {
     "handler": {
       "what": "the lines that answer the request",
@@ -39,14 +39,16 @@
     "test": {
       "what": "the assertion that holds this target to the contract it declares",
       "selects": "endpoint",
-      "required": "never",
+      "required": "ratchet",
       "cardinality": "many",
       "into": "test",
       "derive": false,
       "roles": [
         "test"
       ],
-      "assert": []
+      "assert": [
+        "reads_expectation"
+      ]
     }
   },
   "assertions": {
@@ -74,7 +76,106 @@
       "what": "the support parts for a family must mention the dependency spec/matrix.json declares for it",
       "why": "a mark that drifted onto neighbouring lines stops mentioning it, and a present mark is otherwise indistinguishable from a correct one",
       "except": []
+    },
+    "no_test": {
+      "label": "endpoint with no test",
+      "scope": "coverage",
+      "what": "every endpoint has to be held by at least one test in its target's own suite, marked for it by name. A helper marked for its family or for the whole target is shown on the endpoint's page as part of what testing it cost, and is not a test of it",
+      "why": "required: \"every\" is the right shape and cannot be used. harness/snippets.py drops a record that lacks a kind marked every, so setting it empties the snippet map for all forty-eight endpoints on all thirty-three targets and the site renders nothing at all. required: \"ratchet\" counts the endpoints with no test instead and holds the count against the allowance, which only ever goes down. The filter stays keyed to handler alone",
+      "except": []
+    },
+    "reads_expectation": {
+      "label": "test that does not read the expectation",
+      "scope": "test",
+      "what": "a test marked for an endpoint by name has to name it, which is the key spec/expected.json is read by. A helper marked for a family or the target cannot name every endpoint it serves and is not asked to",
+      "why": "spec/expected.json is the only authority on what a correct answer is, and a status or a body written into a test as a literal is how 1,584 assertions drift away from it. Naming the endpoint is what a lookup looks like in every language, and it catches the second thing mentions_dep catches: a mark that drifted onto neighbouring lines stops naming its endpoint, and a drifted mark is otherwise indistinguishable from a correct one",
+      "except": []
     }
   },
-  "allowance": {}
+  "allowance": {
+    "go:chi": {
+      "no_test": 42
+    },
+    "go:echo": {
+      "no_test": 42
+    },
+    "go:fiber": {
+      "no_test": 42
+    },
+    "go:gin": {
+      "no_test": 42
+    },
+    "go:gorilla-mux": {
+      "no_test": 42
+    },
+    "java:helidon-se": {
+      "no_test": 45
+    },
+    "java:javalin": {
+      "no_test": 46
+    },
+    "java:micronaut": {
+      "no_test": 47
+    },
+    "java:quarkus": {
+      "no_test": 47
+    },
+    "java:spring-boot": {
+      "no_test": 47
+    },
+    "java:vertx": {
+      "no_test": 46
+    },
+    "node:express": {
+      "no_test": 42
+    },
+    "node:fastify": {
+      "no_test": 42
+    },
+    "node:h3": {
+      "no_test": 42
+    },
+    "node:hono": {
+      "no_test": 42
+    },
+    "node:koa": {
+      "no_test": 42
+    },
+    "python:django-asgi": {
+      "no_test": 46
+    },
+    "python:fastapi": {
+      "no_test": 46
+    },
+    "python:flask": {
+      "no_test": 45
+    },
+    "python:litestar": {
+      "no_test": 46
+    },
+    "python:sanic": {
+      "no_test": 45
+    },
+    "python:starlette": {
+      "no_test": 45
+    },
+    "rust:actix-web": {
+      "no_test": 46
+    },
+    "rust:axum": {
+      "no_test": 46
+    },
+    "rust:poem": {
+      "no_test": 46
+    },
+    "rust:rocket": {
+      "no_test": 46
+    },
+    "rust:salvo": {
+      "no_test": 46
+    },
+    "rust:warp": {
+      "no_test": 46
+    }
+  }
 }

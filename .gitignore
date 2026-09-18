@@ -21,13 +21,10 @@ results/captures/
 # Written by the maven shade plugin beside each target it shades.
 targets/java/*/dependency-reduced-pom.xml
 
-# The dotnet build output.
-targets/dotnet/*/bin/
-targets/dotnet/*/obj/
-targets/dotnet/_shared/bin/
-targets/dotnet/_shared/obj/
-targets/dotnet/_hosts/bin/
-targets/dotnet/_hosts/obj/
+# The dotnet build output. Recursive rather than one line per project directory, because
+# a suite builds one level further down than the target it tests.
+targets/dotnet/**/bin/
+targets/dotnet/**/obj/
 
 # The TypeScript workspace
 node_modules/

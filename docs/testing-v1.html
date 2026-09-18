@@ -1,0 +1,265 @@
+<title>Target Suites</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root {
+  --ground: #F4F5F2; --surface: #FCFCFB; --surface2: #EDEFEA;
+  --ink: #121917; --ink2: #58655F; --ink3: #66716A;
+  --rule: #DCE0DB; --rule2: #C3C9C2;
+  --teal: #00836E; --tealtext: #00705E; --tealsoft: #DCEBE6;
+  --amber: #A6670C; --ambersoft: #F6ECDB;
+  --crimson: #A03E5C; --crimsonsoft: #F3E3E8;
+  --onfill: #FFFFFF;
+  --f-display: "Newsreader", Georgia, serif;
+  --f-body: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --ground: #121513; --surface: #1A1E1B; --surface2: #232823;
+  --ink: #E8ECE7; --ink2: #9AA59E; --ink3: #949E98;
+  --rule: #2A302C; --rule2: #3A423C;
+  --teal: #35AD97; --tealtext: #35AD97; --tealsoft: #17302B;
+  --amber: #DDA03C; --ambersoft: #2C2314;
+  --crimson: #C05A78; --crimsonsoft: #2E1A20;
+  --onfill: #101614;
+} }
+:root[data-theme="dark"] {
+  --ground: #121513; --surface: #1A1E1B; --surface2: #232823;
+  --ink: #E8ECE7; --ink2: #9AA59E; --ink3: #949E98;
+  --rule: #2A302C; --rule2: #3A423C;
+  --teal: #35AD97; --tealtext: #35AD97; --tealsoft: #17302B;
+  --amber: #DDA03C; --ambersoft: #2C2314;
+  --crimson: #C05A78; --crimsonsoft: #2E1A20;
+  --onfill: #101614;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--ground); color: var(--ink);
+       font-family: var(--f-body); font-size: 15px; line-height: 1.6;
+       -webkit-font-smoothing: antialiased; }
+.page { max-width: 880px; margin: 0 auto;
+        padding-inline: clamp(16px, 4vw, 40px); padding-block: clamp(28px, 5vw, 56px) 72px; }
+a { color: var(--tealtext); }
+code, .mono { font-family: var(--f-mono); font-size: .92em; }
+code { background: var(--surface2); padding: 1px 4px; border-radius: 2px; }
+
+.eyebrow { font-family: var(--f-mono); font-size: 11px; letter-spacing: .13em;
+           text-transform: uppercase; color: var(--ink3);
+           display: flex; gap: 12px; align-items: center; margin: 0 0 14px; }
+.eyebrow::after { content: ""; flex: 1; height: 1px; background: var(--rule2); }
+h1 { font-family: var(--f-display); font-weight: 600; letter-spacing: -.02em;
+     font-size: clamp(30px, 5vw, 44px); line-height: 1.05; margin: 0 0 16px;
+     text-wrap: balance; }
+.lede { font-family: var(--f-display); font-size: clamp(16px, 2vw, 19px);
+        color: var(--ink2); max-width: 62ch; margin: 0; }
+h2 { font-family: var(--f-display); font-weight: 600; font-size: 25px;
+     letter-spacing: -.01em; margin: 0 0 4px; text-wrap: balance; }
+h3 { font-family: var(--f-body); font-weight: 600; font-size: 16px; margin: 0 0 6px; }
+section > h3 { margin-top: 34px; padding-top: 12px; border-top: 1px solid var(--rule);
+               font-family: var(--f-display); font-size: 19px; }
+p { margin: 0 0 14px; max-width: 68ch; }
+p:last-child { margin-bottom: 0; }
+
+section { margin-top: 52px; }
+.sectionhead { border-top: 2px solid var(--ink); padding-top: 14px; margin-bottom: 24px; }
+.sectionhead .num { font-family: var(--f-mono); font-size: 11px; letter-spacing: .12em;
+                    color: var(--ink3); text-transform: uppercase; display: block; margin-bottom: 8px; }
+.sectionhead p { color: var(--ink2); margin: 6px 0 0; }
+
+.meta { display: flex; flex-wrap: wrap; gap: 8px 28px; margin-top: 26px;
+        padding-top: 18px; border-top: 1px solid var(--rule); }
+.meta div { display: flex; flex-direction: column; gap: 2px; }
+.meta dt { font-family: var(--f-mono); font-size: 10px; letter-spacing: .1em;
+           text-transform: uppercase; color: var(--ink3); }
+.meta dd { margin: 0; font-size: 14px; }
+
+.scroll { overflow-x: auto; border: 1px solid var(--rule); border-radius: 3px;
+          margin: 18px 0; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th, td { padding: 7px 11px; text-align: left; border-bottom: 1px solid var(--rule);
+         vertical-align: top; }
+th { font-family: var(--f-mono); font-size: 10px; letter-spacing: .09em;
+     text-transform: uppercase; color: var(--ink3); font-weight: 500;
+     background: var(--surface2); white-space: nowrap; }
+tbody tr:last-child td { border-bottom: none; }
+td.m { font-family: var(--f-mono); font-size: 12.5px; white-space: nowrap; }
+td.w { font-family: var(--f-mono); font-size: 12.5px; }
+td.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap;
+       font-family: var(--f-mono); font-size: 12.5px; }
+.role { font-family: var(--f-mono); font-size: 10px; letter-spacing: .07em;
+        text-transform: uppercase; padding: 1px 6px; border-radius: 2px; white-space: nowrap;
+        background: var(--surface2); color: var(--ink3); }
+.role.code { background: var(--tealsoft); color: var(--tealtext); }
+.role.prose { background: var(--ambersoft); color: var(--amber); }
+
+pre { font-family: var(--f-mono); font-size: 12.5px; line-height: 1.55;
+      background: var(--surface); border: 1px solid var(--rule); border-radius: 3px;
+      padding: 16px 18px; overflow-x: auto; margin: 18px 0; color: var(--ink2); }
+pre b { color: var(--tealtext); font-weight: 500; }
+pre i { color: var(--ink3); font-style: normal; }
+
+/* the anatomy of a rendered page: a label rail beside what it holds */
+.anat { display: grid; grid-template-columns: 170px 1fr; gap: 1px;
+        background: var(--rule); border: 1px solid var(--rule);
+        border-radius: 3px; margin: 18px 0; overflow: hidden; }
+.anat > * { background: var(--surface); padding: 11px 14px; }
+.anat dt { font-family: var(--f-mono); font-size: 11px; color: var(--tealtext);
+           background: var(--surface2); }
+.anat dd { margin: 0; font-size: 14px; color: var(--ink2); }
+.anat dd b { color: var(--ink); font-weight: 600; }
+@media (max-width: 560px) {
+  .anat { grid-template-columns: 1fr; }
+  .anat dt { border-top: 2px solid var(--rule2); }
+}
+
+ol.steps { list-style: none; counter-reset: s; padding: 0; margin: 18px 0 0; }
+ol.steps li { counter-increment: s; position: relative; padding-left: 38px;
+              margin-bottom: 16px; }
+ol.steps li::before { content: counter(s); position: absolute; left: 0; top: 1px;
+  font-family: var(--f-mono); font-size: 11px; width: 24px; height: 24px;
+  display: grid; place-items: center; border: 1px solid var(--rule2);
+  border-radius: 99px; color: var(--ink3); }
+ol.steps h3 { margin-bottom: 2px; }
+ol.steps p { font-size: 14.5px; color: var(--ink2); margin: 0; }
+
+.note { background: var(--ambersoft); border: 1px solid var(--amber);
+        border-radius: 3px; padding: 16px 18px; margin: 18px 0; }
+.note h3 { color: var(--amber); }
+.note p { font-size: 14.5px; }
+
+footer { margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--rule);
+         font-size: 13px; color: var(--ink3); }
+@media (max-width: 560px) { .meta { gap: 14px 20px; } }
+</style>
+
+<div class="page">
+
+<p class="eyebrow">RequestBench &middot; design</p>
+<h1>Target Suites</h1>
+<p class="lede">What it costs to hold a target to the contract it declares, measured by writing the test that framework&rsquo;s own documentation asks for and not a better one.</p>
+
+<dl class="meta">
+  <div><dt>Date</dt><dd>17 September 2026</dd></div>
+  <div><dt>Adds</dt><dd>a suite beside each target, at role <code>test</code>; <code>rb:test</code> becomes a required kind</dd></div>
+  <div><dt>Built</dt><dd>5 of 33 targets, every family, 240 tests</dd></div>
+  <div><dt>Status</dt><dd>&sect;1 to &sect;5 ship. The client projects of &sect;6 are not started, and the other five languages are not either.</dd></div>
+</dl>
+
+<section>
+<div class="sectionhead">
+  <span class="num">&sect;1 &middot; What the charts do not say</span>
+  <h2>Every number is attributable and none of them is about testing</h2>
+  <p>For most people choosing a framework, testing is a larger part of the week than a tail latency is.</p>
+</div>
+<p>Every target is wired and measured, and <code>harness/snippets.py</code> points a reader at the lines that produced any published number. Nothing pointed at what it costs to hold those lines to the contract they declare. No target had a test.</p>
+<p>The kind was already there and had nothing to mark. <code>spec/marks.json</code> declared <code>rb:test</code>, <code>harness/bundle.py</code> gave <code>/client-exception/</code> the role <code>test</code>, and <code>EndpointPane.astro</code> rendered it. The only role-<code>test</code> files in the tree were the thirty-three <code>client-exception</code> packages: TypeScript, read by the conformance client, and about one thing, which is the error envelope a framework declares.</p>
+</section>
+
+<section>
+<div class="sectionhead">
+  <span class="num">&sect;2 &middot; The ordering</span>
+  <h2>A suite that passes while <code>make test</code> fails is the suite that is wrong</h2>
+  <p>Written down before the first suite existed, because thirty-three suites is the problem <code>5c3e00f</code> deleted, multiplied.</p>
+</div>
+<p><code>spec/expected.json</code> stays the only authority on what a correct answer is, and the conformance client stays the only thing that judges a target against it. A suite is a second, weaker question: what this framework&rsquo;s own recommended test facility can say about the target. It never overrides the first.</p>
+<p><code>5c3e00f</code> deleted <code>tests/</code> for exactly this. It did not know <code>client-exception</code> packages existed, so the moment a framework validated natively the suite would have failed it however correct its own contract said it was.</p>
+<p>It follows that a suite is not generated from <code>spec/expected.json</code>. A generated test shows how the generator writes tests, which is the one thing nobody wants to read. The arrange and the act are authored per framework; the floor assertion is a lookup, and it is a port of <code>difference()</code> in <code>client/src/expectation.ts</code> in its order and with its rules, because a suite that is stricter than the client fails a target the client passes and one that is looser passes a target <code>make test</code> rejects.</p>
+<h3>No code is shared between two frameworks&rsquo; suites</h3>
+<p>The first version put the lookup, the floor and the request builder in one library every .NET suite referenced. That hid the thing being measured. A test for <code>json.small</code> read as three lines on every target, and the four hundred lines it could not run without lived somewhere no page showed, which is the claim that testing is cheap made by leaving the cost out.</p>
+<p>It also rested on something no real project has. Five frameworks answering the same payloads at the same paths from one committed file is an oddity of this repository, and a helper built around it measures the oddity. So each suite carries its own copy of what it needs, in its own namespace, and holds only what that target uses: the three <code>WebApplicationFactory</code> suites have no transport-free overloads, and Alba&rsquo;s has no <code>HttpResponseMessage</code> ones. Sharing inside one framework&rsquo;s suite is ordinary and stays. Sharing across frameworks does not.</p>
+<p>Every helper is marked <code>rb:test</code> for what it serves, so the page shows it beside the test that needed it: <code>*</code> for the lookup, the request builder and the fixture, and <code>authorized.*,body.*,errors.*</code> for the envelope floor, which only the six error endpoints reach. <code>json.small</code>&rsquo;s page on minimal-apis carries its nine-line test and 442 lines of helpers; <code>errors.unmatched</code>&rsquo;s carries 558. The classes are longer than the eighty lines <code>block_end</code> scans before giving up, so each one closes with <code>rb:end</code>, which is the documented escape for a block the rule would stop short of.</p>
+<p>A helper is shown and not counted. <code>harness/snippets.py</code> records on each part whether its mark named an endpoint or a family or the target, and only the first kind is that endpoint&rsquo;s test: without that, one mark on a fixture would cover forty-eight endpoints that have no test of their own, and <code>reads_expectation</code> would fail every one of them, because a helper cannot name every endpoint it serves. A mark naming several endpoints by name is still a test of each; the <code>client-exception</code> packages have fourteen of those and they check each endpoint they name.</p>
+<div class="note">
+  <h3>The floor, in the client&rsquo;s order</h3>
+  <p>Status, then the kind of body, then the content encoding, then the body. A target answering the right values as <code>text/plain</code> is not answering correctly, so the kind of body is checked before the body. A <code>null</code> in the expectation is a field it deliberately does not pin and is not checked; <code>compressed.gzip_small</code> is the one this family meets.</p>
+</div>
+</section>
+
+<section>
+<div class="sectionhead">
+  <span class="num">&sect;3 &middot; The instruction</span>
+  <h2>Generate it the way the framework says to, and do not improve on it</h2>
+  <p>Where the recommended path gives a running test in one command, that is the result. Where it gives nothing, that is also the result, and it is the more interesting one.</p>
+</div>
+<p>The versions are not chosen here. <code>dotnet new xunit</code> on the pinned SDK writes xunit 2.9.3, <code>Microsoft.NET.Test.Sdk</code> 17.14.1 and <code>xunit.runner.visualstudio</code> 3.1.4, and those are what <code>Directory.Packages.props</code> pins. A nicer assertion library would measure the library.</p>
+<p>A suite lives in <code>suite/</code> inside the target it tests, so the test for an endpoint renders beside the handler for it. <code>harness/bundle.py</code> gives that directory role <code>test</code>, which puts it in the bundle and out of <code>code_hash</code>, exactly as prose already is: a sharpened test produces a new page and does not read as a target that changed. The <code>.dockerignore</code> excludes it for the same reason it excludes <code>client-exception/</code>, and <code>Directory.Build.props</code> excludes it from the target&rsquo;s own compile, which would otherwise put xunit in the measured binary.</p>
+</section>
+
+<section>
+<div class="sectionhead">
+  <span class="num">&sect;4 &middot; Five targets, four test hosts</span>
+  <h2>What the first language found</h2>
+  <p>Forty-eight endpoints each, which is every endpoint the corpus has. <code>compressed</code> and <code>middleware</code> were written first, because they are the two families where a test can pass and prove nothing.</p>
+</div>
+<div class="scroll"><table>
+<thead><tr><th>Target</th><th>Facility</th><th>What it cost</th></tr></thead>
+<tbody>
+<tr><td class="m">minimal-apis</td><td class="w">WebApplicationFactory</td><td>One line in <code>Program.cs</code>: top-level statements compile to an internal <code>Program</code> the factory cannot name.</td></tr>
+<tr><td class="m">aspnet-mvc</td><td class="w">WebApplicationFactory</td><td>The same host, for a framework that shares nothing else with minimal APIs. Its documented alternative, calling the action directly, would never run the filter <code>compressed</code> is wired with.</td></tr>
+<tr><td class="m">carter</td><td class="w">WebApplicationFactory</td><td>No first-party test package. Not a gap: Carter routes onto minimal APIs, so the cost of testing it is the cost of testing the thing underneath it.</td></tr>
+<tr><td class="m">fastendpoints</td><td class="w">FastEndpoints.Testing</td><td>The only framework here shipping its own. It is built on xunit.v3, a Microsoft Testing Platform runner, so this target runs a different xunit major than the four beside it, is an executable rather than something VSTest hosts, and is refused outright by <code>dotnet test</code> on the .NET 10 SDK when it shares a solution with them. It runs on its own under <code>dotnet run</code>.</td></tr>
+<tr><td class="m">wolverine-http</td><td class="w">Alba</td><td>Named by Wolverine&rsquo;s own documentation. It runs a scenario against the application&rsquo;s <code>HttpContext</code> rather than handing back an <code>HttpResponseMessage</code>, and TestServer&rsquo;s response body is forward-only, so it is read once and never rewound.</td></tr>
+</tbody>
+</table></div>
+<h3>What <code>compressed</code> was supposed to catch, and did not</h3>
+<p>Compression is sometimes a framework middleware and sometimes a server setting, and an in-memory test sees only the first kind. All five .NET targets are the first kind: each compresses inside the request pipeline, on these three routes alone, so that the other forty-two do not pay a <q>did the client ask?</q> check. An in-memory transport reaches the codec on all five, and the <code>transport</code> field in <code>spec/matrix.json</code> says <code>testserver</code> five times. The field earns its keep in the language where that stops being true, which is not this one.</p>
+<p>None of this starts a process or binds a port. All five suites resolve <code>IServer</code> to <code>Microsoft.AspNetCore.TestHost.TestServer</code>, including the two that do not use <code>WebApplicationFactory</code> directly: FastEndpoints&rsquo; <code>AppFixture</code> wraps it, and Alba hands back a <code>TestHost.ResponseBodyReaderStream</code>. The <q><code>listening on 8080</code></q> line each target prints is its own <code>Console.Error</code> statement, which runs whether or not anything is listening. <code>UseUrls</code> is ignored.</p>
+<p>The socket case is also one process. <code>WebApplicationFactory.UseKestrel(0)</code> followed by <code>StartServer()</code> replaces the in-memory transport with a real <code>KestrelServerImpl</code> on a loopback port, in the test&rsquo;s own process, and <code>CreateClient()</code> then talks HTTP to it. Measured on minimal-apis: <code>server=KestrelServerImpl base=http://127.0.0.1:58707/</code>, same pid, same gzipped 19,141 bytes as the in-memory run. So <code>transport</code> has three values and not two, and the family that needs a real port in .NET costs a line rather than a second process. The suites stay on <code>testserver</code> because that is what the documentation leads with and because the negative test above proves it reaches the codec.</p>
+<p>The trap that did fire is the client, not the host. Most test clients decode transparently, and one that did would make every gzip assertion pass against an identity response. Four of the five suites use the plain client for that reason, and the gzip is undone by the floor assertion where the comparison needs it rather than by the transport. Alba does not have the problem at all, because it hands back the response the endpoint wrote.</p>
+<p><code>compressed.gzip_small</code> is the endpoint the expectation does not pin. The payload sits under the shared 1,024-byte floor, the contributing frameworks disagree, and <code>unpinned</code> records the disagreement rather than choosing a winner. The floor assertion skips the field and each suite asserts what its own target does, which for all five .NET targets is identity.</p>
+<h3>Where the request comes from</h3>
+<p>A suite writes its own arrange and its own act, because the difference between two frameworks there is the thing being captured. The values in the request are not the suite&rsquo;s to choose. <code>spec/plan.json</code> is where an order id, a query string and a request body come from, and a test that typed one out would be asserting against a request the measurement never sends. Instance zero always, because an endpoint sends up to 512 of them and a failure that picked a different one each run would not reproduce.</p>
+<p>One endpoint cannot be sent at all until the target has answered a different one. <code>etag.match_large</code> carries an <code>if-none-match</code> the target itself has to issue, so its test asks for <code>/etag/large</code>, takes the validator off the response and sends the conditional request with it. That is the endpoint&rsquo;s own shape rather than something the suite decided to do, and <code>spec/plan.json</code> says so in its <code>captures</code> block.</p>
+<h3>What an error endpoint is judged against</h3>
+<p>Not <code>spec/expected.json</code>&rsquo;s <code>errors</code> block, which is what caught this on the first full run. That block says what the plan intends, and a framework is allowed to declare otherwise: the <code>client-exception</code> package beside each target is where it does, and minimal-apis uses it to say that a body <code>AddValidation</code> could not read is a bare 400 and not the 422 the plan asks for. Those packages are TypeScript read by the conformance client, so reconciling the two is the client&rsquo;s job and not a suite&rsquo;s.</p>
+<p>A suite reads the envelope this target recorded instead: the status, the kind of body, and the shape, which is the envelope with the values taken out. The shape rather than the body, because ASP.NET&rsquo;s <code>ProblemDetails</code> carries a <code>traceId</code> that changes per connection and an exact body could never match twice. <code>Shape.Of</code> is a port of <code>shape_of()</code> in <code>harness/expected.py</code>, which is what wrote those shapes.</p>
+<h3>What <code>middleware</code> can hold</h3>
+<p>The layers are no-ops, so nothing they do is visible in a response and no assertion over one can tell four apart from sixteen. What a test can hold is the thing that goes wrong in practice: a test that calls the handler rather than the app passes while the layers never ran. FastEndpoints and Wolverine make that unusually easy, because an endpoint is a class anyone can new up and an endpoint method is a static function. Going through the test host is what puts the layers back in the path, and that is the whole of what these three tests assert.</p>
+<h3>Proven to bite, not just to pass</h3>
+<p>A suite that passes says nothing until something has been broken under it. Four breakages, each reverted:</p>
+<div class="scroll"><table>
+<thead><tr><th>Broken</th><th>Caught by</th></tr></thead>
+<tbody>
+<tr><td class="w">the shared payload, small answering medium</td><td>17 tests across 9 families, on all five targets</td></tr>
+<tr><td class="w">the JSON naming policy, snake_case to camelCase</td><td>35 tests across 12 families</td></tr>
+<tr><td class="w"><code>MapFallback</code> answering 410</td><td><code>errors.unmatched</code>: expected 404, got 410</td></tr>
+<tr><td class="w">the plaintext literal, one changed letter</td><td><code>baseline.plaintext</code>: 'Hello, world!' vs 'Hello, World!'</td></tr>
+</tbody>
+</table></div>
+<p>Every family is covered by at least one of the four.</p>
+</section>
+
+<section>
+<div class="sectionhead">
+  <span class="num">&sect;5 &middot; The marks change</span>
+  <h2>A required kind that cannot use <code>required: "every"</code></h2>
+  <p>Two of the three planned assertions did not survive contact with the corpus. What replaced them is below.</p>
+</div>
+<p><code>harness/snippets.py</code> drops every record that lacks a kind marked <code>every</code>, so setting it on <code>test</code> would empty the snippet map for all forty-eight endpoints on all thirty-three targets and the site would render nothing at all. <code>required: "ratchet"</code> is the third value: absence is counted against the committed allowance, which only ever goes down, and the filter stays keyed to <code>handler</code> alone. The allowance today is 1,247 endpoints with no test out of 1,584, and 337 held by one. The five .NET targets are off it entirely; twenty-eight remain.</p>
+<h3><code>reads_expectation</code></h3>
+<p>A test snippet has to name the endpoint it is marked for, which is the key <code>spec/expected.json</code> is read by. This is what stops 1,584 hand-written assertions drifting away from the file that decides what a correct answer is, and it catches the second thing <code>mentions_dep</code> catches: a mark that drifted onto neighbouring lines stops naming its endpoint, and a drifted mark is otherwise indistinguishable from a correct one.</p>
+<h3><code>asserts_status</code>, which is not here</h3>
+<p>It contradicts <code>reads_expectation</code>. The status lives in <code>spec/expected.json</code>; a test that writes it out as a literal is the drift the other assertion exists to stop. Reaching the expectation is asserting the status, and a second check that demanded the literal would fail every correct test.</p>
+<h3>The facility declaration, which is a requirement rather than an assertion</h3>
+<p>The plan was a <code>names_facility</code> assertion over the snippet, on the reasoning that produced <code>mentions_dep</code>. It cannot work: the facility is named in the fixture class, not in the test method, so a per-snippet check fails every correct test in the corpus. The check is a requirement instead, mirroring the <code>declared</code> rule for wiring. A family with a marked test has to declare a facility and a transport in <code>spec/matrix.json</code> under <code>suites</code>, and the dependency it names has to be in that target&rsquo;s own suite project rather than in the target&rsquo;s manifest, because a test host in a target&rsquo;s manifest would be a test host in the measured binary.</p>
+<p>It is declared per family and not per target, because whether a test runs in the process or over a socket is not a fact about a framework: <code>MockMvc</code> and <code>@SpringBootTest(webEnvironment = RANDOM_PORT)</code> are both Spring, and a target that reaches for a socket on <code>compressed</code> and nothing else is the case a per-target flag would hide.</p>
+<p>The <code>client-exception</code> packages owe nothing here. They describe the envelope a framework declares and run against no booted target, so there is no facility and no transport to name. They still count for coverage, because holding a target to the contract it declares is what the kind is for.</p>
+<h3>Two sections on the page</h3>
+<p><code>EndpointPane.astro</code> said <q>Contract test</q>, which was right for the <code>client-exception</code> packages and wrong once the same section also carried the endpoint&rsquo;s own test. They are not the same claim, so they are not one heading: a suite boots the target and holds it to <code>spec/expected.json</code>, and an envelope package describes what the framework declares and boots nothing.</p>
+</section>
+
+<section>
+<div class="sectionhead">
+  <span class="num">&sect;6 &middot; What is not here</span>
+  <h2>The order the rest goes in</h2>
+</div>
+<ol class="steps">
+  <li><h3>The other five languages</h3><p>Java next, because its test facilities are the most opinionated and least alike, and because <code>compressed</code> there is where the per-family <code>transport</code> field stops saying <code>testserver</code> five times.</p></li>
+  <li><h3>The client projects</h3><p>Not started. The framework-shaped question is whether a framework describes its own routes well enough that a client can be generated from the description rather than written, and it needs the OpenAPI question settled per target first.</p>
+  <p>One thing is already known and is why <code>SUITE</code> in <code>harness/bundle.py</code> catches <code>/client/</code> before the name rules. A file called <code>openapi.json</code> is role <code>contract</code>, which <code>handler</code> reads and which is <code>cardinality: one</code>. A document written out of a target&rsquo;s routes therefore registers every one of them a second time, and dropping one into a target that also routes in code turns all forty-eight of its endpoints into the &sect;7 ambiguity error. <code>openapi.yaml</code> does not trip it only because <code>route_regex</code> wants a quote on both sides of the path and a YAML key has none, which is luck and not a design.</p></li>
+</ol>
+</section>
+
+<footer>RequestBench &middot; <code>docs/testing-v1.html</code> &middot; companion to <a href="bundles.html">Target Bundles</a> &sect;7</footer>
+
+</div>

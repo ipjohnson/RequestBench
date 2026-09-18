@@ -37,3 +37,8 @@ app.MapFallback(() => Results.Problem(statusCode: 404));
 
 Console.Error.WriteLine($"container/aspnet-mvc listening on {HostInfo.Port()}");
 app.Run();
+
+// Top-level statements compile to an internal Program, which WebApplicationFactory<Program> in suite/
+// cannot name. Declaring it public is what the ASP.NET Core integration-testing
+// documentation asks a target to do, and it is the whole of what testing costs this target.
+public partial class Program;

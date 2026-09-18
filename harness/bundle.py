@@ -160,6 +160,18 @@ def roots(language, target, at=None):
 # harness/snippets.py from looking for endpoint wiring in a schema.
 CONTRACT = "/client-exception/"
 
+# A target's own test suite, and the client generated from its API description. Both are
+# held to the target rather than run by it, so they are role test for the same reason the
+# contract package is: in the bundle, because a sharpened test changes what the target is
+# held to, and out of code_hash, because it is not the code that answered the request.
+#
+# The client's API description has to be caught here rather than by name. A file called
+# openapi.json says what a target serves only when the target routes from it; one written
+# out of the routes says the same thing twice, and CONTRACT_NAMES would put it in reach of
+# derivation, where the route it repeats is a second registration and every endpoint in the
+# target becomes ambiguous.
+SUITE = ("/suite/", "/client/")
+
 # Roles a code_hash does not cover. A corrected README or a sharpened test does not read as
 # a target that changed, but it does produce a new page.
 NOT_CODE = ("prose", "test")
@@ -191,7 +203,7 @@ def role(language, path):
     name = path.rsplit("/", 1)[-1]
     # Before the name rules: the contract package has a package.json of its own, and a
     # dependency bump in it is not a dependency bump in the target.
-    if CONTRACT in path:
+    if CONTRACT in path or any(d in path for d in SUITE):
         return "test"
     if name in CONTRACT_NAMES:
         return "contract"
