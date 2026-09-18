@@ -18,7 +18,7 @@ on:
         default: '["container","gcp-func","lambda-rie"]'
         type: string
       seconds:
-        description: Blend only. Override rung duration. Empty means the full 60s rungs.
+        description: Blend only. Override rung duration. Empty means the durations in spec/ladder.json.
         default: ""
         type: string
       count:
@@ -60,10 +60,16 @@ jobs:
         with:
           node-version: "24"
           cache: npm
-          cache-dependency-path: targets/node/package-lock.json
+          cache-dependency-path: |
+            package-lock.json
+            targets/node/package-lock.json
 
       - run: npm ci --omit=dev --no-audit --no-fund
         working-directory: targets/node
+
+      # harness/run.py gates every target through the client before it measures it.
+      - name: Build the conformance client
+        run: npm ci --no-audit --no-fund && npm run build
 
       - name: Resolve every target this host supports
         id: resolve

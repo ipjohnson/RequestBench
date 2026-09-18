@@ -6,6 +6,7 @@ results/
 site/
 **/__pycache__/
 **/*.pyc
+node_modules/
 targets/node/node_modules/
 targets/python/.venv/
 # Each framework's error contract sits beside it but is read by the client, never by the
