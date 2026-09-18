@@ -93,21 +93,6 @@
     }
   },
   "allowance": {
-    "go:chi": {
-      "no_test": 42
-    },
-    "go:echo": {
-      "no_test": 42
-    },
-    "go:fiber": {
-      "no_test": 42
-    },
-    "go:gin": {
-      "no_test": 42
-    },
-    "go:gorilla-mux": {
-      "no_test": 42
-    },
     "rust:actix-web": {
       "no_test": 46
     },

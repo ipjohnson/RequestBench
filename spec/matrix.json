@@ -3692,85 +3692,85 @@
     },
     "java:vertx": {
       "baseline": {
-        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with Vert.x's own HttpClient",
+        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with WebClient, as vertx-junit5's documentation does",
         "dep": "vertx-junit5",
         "transport": "loopback",
         "reaches": "the literal and the content type, which is the whole of what this endpoint is"
       },
       "json": {
-        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with Vert.x's own HttpClient",
+        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with WebClient, as vertx-junit5's documentation does",
         "dep": "vertx-junit5",
         "transport": "loopback",
         "reaches": "the serializer at three sizes, which is all this family has to show"
       },
       "parameters": {
-        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with Vert.x's own HttpClient",
+        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with WebClient, as vertx-junit5's documentation does",
         "dep": "vertx-junit5",
         "transport": "loopback",
         "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
       },
       "authorized": {
-        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with Vert.x's own HttpClient",
+        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with WebClient, as vertx-junit5's documentation does",
         "dep": "vertx-junit5",
         "transport": "loopback",
         "reaches": "the refusal as well as the pass, which is the half a target that let everything through would still answer correctly"
       },
       "compressed": {
-        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with Vert.x's own HttpClient",
+        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with WebClient, as vertx-junit5's documentation does",
         "dep": "vertx-junit5",
         "transport": "loopback",
         "reaches": "the codec, because this target compresses in its own handler rather than with the server's compression setting, which would reach every endpoint"
       },
       "etag": {
-        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with Vert.x's own HttpClient",
+        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with WebClient, as vertx-junit5's documentation does",
         "dep": "vertx-junit5",
         "transport": "loopback",
         "reaches": "the validator and the conditional answer. The 304 is the only request in the corpus that cannot be sent until the target has answered a different one, because the validator is the target's to produce"
       },
       "cache": {
-        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with Vert.x's own HttpClient",
+        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with WebClient, as vertx-junit5's documentation does",
         "dep": "vertx-junit5",
         "transport": "loopback",
         "reaches": "the response cache and what it is keyed on. A store keyed on fewer headers than it declares answers one tenant with another tenant's body"
       },
       "body": {
-        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with Vert.x's own HttpClient",
+        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with WebClient, as vertx-junit5's documentation does",
         "dep": "vertx-junit5",
         "transport": "loopback",
         "reaches": "the binding and the validation facility, including the two refusals, which are judged as the envelope this target recorded rather than against a pinned body"
       },
       "query": {
-        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with Vert.x's own HttpClient",
+        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with WebClient, as vertx-junit5's documentation does",
         "dep": "vertx-junit5",
         "transport": "loopback",
         "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
       },
       "headers": {
-        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with Vert.x's own HttpClient",
+        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with WebClient, as vertx-junit5's documentation does",
         "dep": "vertx-junit5",
         "transport": "loopback",
         "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
       },
       "middleware": {
-        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with Vert.x's own HttpClient",
+        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with WebClient, as vertx-junit5's documentation does",
         "dep": "vertx-junit5",
         "transport": "loopback",
         "reaches": "every layer, because the host boots the application rather than calling the handler, which is the way this family is failed without noticing"
       },
       "domain": {
-        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with Vert.x's own HttpClient",
+        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with WebClient, as vertx-junit5's documentation does",
         "dep": "vertx-junit5",
         "transport": "loopback",
         "reaches": "the shared model through all eight operations, including the four that write, where a 201 and a 204 with no body are answers a framework can get subtly wrong while returning the right status"
       },
       "errors": {
-        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with Vert.x's own HttpClient",
+        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with WebClient, as vertx-junit5's documentation does",
         "dep": "vertx-junit5",
         "transport": "loopback",
         "reaches": "whatever this target does with a route it does not have, which is the framework rather than a handler"
       },
       "template": {
-        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with Vert.x's own HttpClient",
+        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with WebClient, as vertx-junit5's documentation does",
         "dep": "vertx-junit5",
         "transport": "loopback",
         "reaches": "the engine's output, normalised the way the conformance client normalises it: the spec pins the content and leaves the whitespace free"
@@ -3859,6 +3859,366 @@
         "facility": "JavalinTest.test() from javalin-testtools, which starts the application on a random port per test; its client reads bodies as strings, so gzip requests go to the origin by hand",
         "dep": "javalin-testtools",
         "transport": "loopback",
+        "reaches": "the engine's output, normalised the way the conformance client normalises it: the spec pins the content and leaves the whitespace free"
+      }
+    },
+    "go:gin": {
+      "baseline": {
+        "facility": "net/http/httptest against the engine's ServeHTTP, as Gin's testing documentation does; run by go test",
+        "transport": "in-memory",
+        "reaches": "the literal and the content type, which is the whole of what this endpoint is"
+      },
+      "json": {
+        "facility": "net/http/httptest against the engine's ServeHTTP, as Gin's testing documentation does; run by go test",
+        "transport": "in-memory",
+        "reaches": "the serializer at three sizes, which is all this family has to show"
+      },
+      "parameters": {
+        "facility": "net/http/httptest against the engine's ServeHTTP, as Gin's testing documentation does; run by go test",
+        "transport": "in-memory",
+        "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
+      },
+      "authorized": {
+        "facility": "net/http/httptest against the engine's ServeHTTP, as Gin's testing documentation does; run by go test",
+        "transport": "in-memory",
+        "reaches": "the refusal as well as the pass, which is the half a target that let everything through would still answer correctly"
+      },
+      "compressed": {
+        "facility": "net/http/httptest against the engine's ServeHTTP, as Gin's testing documentation does; run by go test",
+        "transport": "in-memory",
+        "reaches": "the codec, because this target compresses with middleware on its own routes rather than in a server in front of it"
+      },
+      "etag": {
+        "facility": "net/http/httptest against the engine's ServeHTTP, as Gin's testing documentation does; run by go test",
+        "transport": "in-memory",
+        "reaches": "the validator and the conditional answer. The 304 is the only request in the corpus that cannot be sent until the target has answered a different one, because the validator is the target's to produce"
+      },
+      "cache": {
+        "facility": "net/http/httptest against the engine's ServeHTTP, as Gin's testing documentation does; run by go test",
+        "transport": "in-memory",
+        "reaches": "the response cache and what it is keyed on. A store keyed on fewer headers than it declares answers one tenant with another tenant's body"
+      },
+      "body": {
+        "facility": "net/http/httptest against the engine's ServeHTTP, as Gin's testing documentation does; run by go test",
+        "transport": "in-memory",
+        "reaches": "the binding and the validation facility, including the two refusals, which are judged as the envelope this target recorded rather than against a pinned body"
+      },
+      "query": {
+        "facility": "net/http/httptest against the engine's ServeHTTP, as Gin's testing documentation does; run by go test",
+        "transport": "in-memory",
+        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+      },
+      "headers": {
+        "facility": "net/http/httptest against the engine's ServeHTTP, as Gin's testing documentation does; run by go test",
+        "transport": "in-memory",
+        "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
+      },
+      "middleware": {
+        "facility": "net/http/httptest against the engine's ServeHTTP, as Gin's testing documentation does; run by go test",
+        "transport": "in-memory",
+        "reaches": "every layer, because the host boots the application rather than calling the handler, which is the way this family is failed without noticing"
+      },
+      "domain": {
+        "facility": "net/http/httptest against the engine's ServeHTTP, as Gin's testing documentation does; run by go test",
+        "transport": "in-memory",
+        "reaches": "the shared model through all eight operations, including the four that write, where a 201 and a 204 with no body are answers a framework can get subtly wrong while returning the right status"
+      },
+      "errors": {
+        "facility": "net/http/httptest against the engine's ServeHTTP, as Gin's testing documentation does; run by go test",
+        "transport": "in-memory",
+        "reaches": "whatever this target does with a route it does not have, which is the framework rather than a handler"
+      },
+      "template": {
+        "facility": "net/http/httptest against the engine's ServeHTTP, as Gin's testing documentation does; run by go test",
+        "transport": "in-memory",
+        "reaches": "the engine's output, normalised the way the conformance client normalises it: the spec pins the content and leaves the whitespace free"
+      }
+    },
+    "go:echo": {
+      "baseline": {
+        "facility": "net/http/httptest against the Echo instance's ServeHTTP; Echo's guide calls handlers directly instead, which would skip every route-scoped middleware; run by go test",
+        "transport": "in-memory",
+        "reaches": "the literal and the content type, which is the whole of what this endpoint is"
+      },
+      "json": {
+        "facility": "net/http/httptest against the Echo instance's ServeHTTP; Echo's guide calls handlers directly instead, which would skip every route-scoped middleware; run by go test",
+        "transport": "in-memory",
+        "reaches": "the serializer at three sizes, which is all this family has to show"
+      },
+      "parameters": {
+        "facility": "net/http/httptest against the Echo instance's ServeHTTP; Echo's guide calls handlers directly instead, which would skip every route-scoped middleware; run by go test",
+        "transport": "in-memory",
+        "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
+      },
+      "authorized": {
+        "facility": "net/http/httptest against the Echo instance's ServeHTTP; Echo's guide calls handlers directly instead, which would skip every route-scoped middleware; run by go test",
+        "transport": "in-memory",
+        "reaches": "the refusal as well as the pass, which is the half a target that let everything through would still answer correctly"
+      },
+      "compressed": {
+        "facility": "net/http/httptest against the Echo instance's ServeHTTP; Echo's guide calls handlers directly instead, which would skip every route-scoped middleware; run by go test",
+        "transport": "in-memory",
+        "reaches": "the codec, because this target compresses with middleware on its own routes rather than in a server in front of it"
+      },
+      "etag": {
+        "facility": "net/http/httptest against the Echo instance's ServeHTTP; Echo's guide calls handlers directly instead, which would skip every route-scoped middleware; run by go test",
+        "transport": "in-memory",
+        "reaches": "the validator and the conditional answer. The 304 is the only request in the corpus that cannot be sent until the target has answered a different one, because the validator is the target's to produce"
+      },
+      "cache": {
+        "facility": "net/http/httptest against the Echo instance's ServeHTTP; Echo's guide calls handlers directly instead, which would skip every route-scoped middleware; run by go test",
+        "transport": "in-memory",
+        "reaches": "the response cache and what it is keyed on. A store keyed on fewer headers than it declares answers one tenant with another tenant's body"
+      },
+      "body": {
+        "facility": "net/http/httptest against the Echo instance's ServeHTTP; Echo's guide calls handlers directly instead, which would skip every route-scoped middleware; run by go test",
+        "transport": "in-memory",
+        "reaches": "the binding and the validation facility, including the two refusals, which are judged as the envelope this target recorded rather than against a pinned body"
+      },
+      "query": {
+        "facility": "net/http/httptest against the Echo instance's ServeHTTP; Echo's guide calls handlers directly instead, which would skip every route-scoped middleware; run by go test",
+        "transport": "in-memory",
+        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+      },
+      "headers": {
+        "facility": "net/http/httptest against the Echo instance's ServeHTTP; Echo's guide calls handlers directly instead, which would skip every route-scoped middleware; run by go test",
+        "transport": "in-memory",
+        "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
+      },
+      "middleware": {
+        "facility": "net/http/httptest against the Echo instance's ServeHTTP; Echo's guide calls handlers directly instead, which would skip every route-scoped middleware; run by go test",
+        "transport": "in-memory",
+        "reaches": "every layer, because the host boots the application rather than calling the handler, which is the way this family is failed without noticing"
+      },
+      "domain": {
+        "facility": "net/http/httptest against the Echo instance's ServeHTTP; Echo's guide calls handlers directly instead, which would skip every route-scoped middleware; run by go test",
+        "transport": "in-memory",
+        "reaches": "the shared model through all eight operations, including the four that write, where a 201 and a 204 with no body are answers a framework can get subtly wrong while returning the right status"
+      },
+      "errors": {
+        "facility": "net/http/httptest against the Echo instance's ServeHTTP; Echo's guide calls handlers directly instead, which would skip every route-scoped middleware; run by go test",
+        "transport": "in-memory",
+        "reaches": "whatever this target does with a route it does not have, which is the framework rather than a handler"
+      },
+      "template": {
+        "facility": "net/http/httptest against the Echo instance's ServeHTTP; Echo's guide calls handlers directly instead, which would skip every route-scoped middleware; run by go test",
+        "transport": "in-memory",
+        "reaches": "the engine's output, normalised the way the conformance client normalises it: the spec pins the content and leaves the whitespace free"
+      }
+    },
+    "go:chi": {
+      "baseline": {
+        "facility": "net/http/httptest against the router's ServeHTTP; chi has no testing guide and a chi router is an http.Handler; run by go test",
+        "transport": "in-memory",
+        "reaches": "the literal and the content type, which is the whole of what this endpoint is"
+      },
+      "json": {
+        "facility": "net/http/httptest against the router's ServeHTTP; chi has no testing guide and a chi router is an http.Handler; run by go test",
+        "transport": "in-memory",
+        "reaches": "the serializer at three sizes, which is all this family has to show"
+      },
+      "parameters": {
+        "facility": "net/http/httptest against the router's ServeHTTP; chi has no testing guide and a chi router is an http.Handler; run by go test",
+        "transport": "in-memory",
+        "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
+      },
+      "authorized": {
+        "facility": "net/http/httptest against the router's ServeHTTP; chi has no testing guide and a chi router is an http.Handler; run by go test",
+        "transport": "in-memory",
+        "reaches": "the refusal as well as the pass, which is the half a target that let everything through would still answer correctly"
+      },
+      "compressed": {
+        "facility": "net/http/httptest against the router's ServeHTTP; chi has no testing guide and a chi router is an http.Handler; run by go test",
+        "transport": "in-memory",
+        "reaches": "the codec, because this target compresses with middleware on its own routes rather than in a server in front of it"
+      },
+      "etag": {
+        "facility": "net/http/httptest against the router's ServeHTTP; chi has no testing guide and a chi router is an http.Handler; run by go test",
+        "transport": "in-memory",
+        "reaches": "the validator and the conditional answer. The 304 is the only request in the corpus that cannot be sent until the target has answered a different one, because the validator is the target's to produce"
+      },
+      "cache": {
+        "facility": "net/http/httptest against the router's ServeHTTP; chi has no testing guide and a chi router is an http.Handler; run by go test",
+        "transport": "in-memory",
+        "reaches": "the response cache and what it is keyed on. A store keyed on fewer headers than it declares answers one tenant with another tenant's body"
+      },
+      "body": {
+        "facility": "net/http/httptest against the router's ServeHTTP; chi has no testing guide and a chi router is an http.Handler; run by go test",
+        "transport": "in-memory",
+        "reaches": "the binding and the validation facility, including the two refusals, which are judged as the envelope this target recorded rather than against a pinned body"
+      },
+      "query": {
+        "facility": "net/http/httptest against the router's ServeHTTP; chi has no testing guide and a chi router is an http.Handler; run by go test",
+        "transport": "in-memory",
+        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+      },
+      "headers": {
+        "facility": "net/http/httptest against the router's ServeHTTP; chi has no testing guide and a chi router is an http.Handler; run by go test",
+        "transport": "in-memory",
+        "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
+      },
+      "middleware": {
+        "facility": "net/http/httptest against the router's ServeHTTP; chi has no testing guide and a chi router is an http.Handler; run by go test",
+        "transport": "in-memory",
+        "reaches": "every layer, because the host boots the application rather than calling the handler, which is the way this family is failed without noticing"
+      },
+      "domain": {
+        "facility": "net/http/httptest against the router's ServeHTTP; chi has no testing guide and a chi router is an http.Handler; run by go test",
+        "transport": "in-memory",
+        "reaches": "the shared model through all eight operations, including the four that write, where a 201 and a 204 with no body are answers a framework can get subtly wrong while returning the right status"
+      },
+      "errors": {
+        "facility": "net/http/httptest against the router's ServeHTTP; chi has no testing guide and a chi router is an http.Handler; run by go test",
+        "transport": "in-memory",
+        "reaches": "whatever this target does with a route it does not have, which is the framework rather than a handler"
+      },
+      "template": {
+        "facility": "net/http/httptest against the router's ServeHTTP; chi has no testing guide and a chi router is an http.Handler; run by go test",
+        "transport": "in-memory",
+        "reaches": "the engine's output, normalised the way the conformance client normalises it: the spec pins the content and leaves the whitespace free"
+      }
+    },
+    "go:gorilla-mux": {
+      "baseline": {
+        "facility": "net/http/httptest against the router's ServeHTTP, as gorilla/mux's README tests a route; run by go test",
+        "transport": "in-memory",
+        "reaches": "the literal and the content type, which is the whole of what this endpoint is"
+      },
+      "json": {
+        "facility": "net/http/httptest against the router's ServeHTTP, as gorilla/mux's README tests a route; run by go test",
+        "transport": "in-memory",
+        "reaches": "the serializer at three sizes, which is all this family has to show"
+      },
+      "parameters": {
+        "facility": "net/http/httptest against the router's ServeHTTP, as gorilla/mux's README tests a route; run by go test",
+        "transport": "in-memory",
+        "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
+      },
+      "authorized": {
+        "facility": "net/http/httptest against the router's ServeHTTP, as gorilla/mux's README tests a route; run by go test",
+        "transport": "in-memory",
+        "reaches": "the refusal as well as the pass, which is the half a target that let everything through would still answer correctly"
+      },
+      "compressed": {
+        "facility": "net/http/httptest against the router's ServeHTTP, as gorilla/mux's README tests a route; run by go test",
+        "transport": "in-memory",
+        "reaches": "the codec, because this target compresses with middleware on its own routes rather than in a server in front of it"
+      },
+      "etag": {
+        "facility": "net/http/httptest against the router's ServeHTTP, as gorilla/mux's README tests a route; run by go test",
+        "transport": "in-memory",
+        "reaches": "the validator and the conditional answer. The 304 is the only request in the corpus that cannot be sent until the target has answered a different one, because the validator is the target's to produce"
+      },
+      "cache": {
+        "facility": "net/http/httptest against the router's ServeHTTP, as gorilla/mux's README tests a route; run by go test",
+        "transport": "in-memory",
+        "reaches": "the response cache and what it is keyed on. A store keyed on fewer headers than it declares answers one tenant with another tenant's body"
+      },
+      "body": {
+        "facility": "net/http/httptest against the router's ServeHTTP, as gorilla/mux's README tests a route; run by go test",
+        "transport": "in-memory",
+        "reaches": "the binding and the validation facility, including the two refusals, which are judged as the envelope this target recorded rather than against a pinned body"
+      },
+      "query": {
+        "facility": "net/http/httptest against the router's ServeHTTP, as gorilla/mux's README tests a route; run by go test",
+        "transport": "in-memory",
+        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+      },
+      "headers": {
+        "facility": "net/http/httptest against the router's ServeHTTP, as gorilla/mux's README tests a route; run by go test",
+        "transport": "in-memory",
+        "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
+      },
+      "middleware": {
+        "facility": "net/http/httptest against the router's ServeHTTP, as gorilla/mux's README tests a route; run by go test",
+        "transport": "in-memory",
+        "reaches": "every layer, because the host boots the application rather than calling the handler, which is the way this family is failed without noticing"
+      },
+      "domain": {
+        "facility": "net/http/httptest against the router's ServeHTTP, as gorilla/mux's README tests a route; run by go test",
+        "transport": "in-memory",
+        "reaches": "the shared model through all eight operations, including the four that write, where a 201 and a 204 with no body are answers a framework can get subtly wrong while returning the right status"
+      },
+      "errors": {
+        "facility": "net/http/httptest against the router's ServeHTTP, as gorilla/mux's README tests a route; run by go test",
+        "transport": "in-memory",
+        "reaches": "whatever this target does with a route it does not have, which is the framework rather than a handler"
+      },
+      "template": {
+        "facility": "net/http/httptest against the router's ServeHTTP, as gorilla/mux's README tests a route; run by go test",
+        "transport": "in-memory",
+        "reaches": "the engine's output, normalised the way the conformance client normalises it: the spec pins the content and leaves the whitespace free"
+      }
+    },
+    "go:fiber": {
+      "baseline": {
+        "facility": "app.Test(), Fiber's own, because fasthttp is not an http.Handler and httptest cannot reach it; run by go test",
+        "transport": "in-memory",
+        "reaches": "the literal and the content type, which is the whole of what this endpoint is"
+      },
+      "json": {
+        "facility": "app.Test(), Fiber's own, because fasthttp is not an http.Handler and httptest cannot reach it; run by go test",
+        "transport": "in-memory",
+        "reaches": "the serializer at three sizes, which is all this family has to show"
+      },
+      "parameters": {
+        "facility": "app.Test(), Fiber's own, because fasthttp is not an http.Handler and httptest cannot reach it; run by go test",
+        "transport": "in-memory",
+        "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
+      },
+      "authorized": {
+        "facility": "app.Test(), Fiber's own, because fasthttp is not an http.Handler and httptest cannot reach it; run by go test",
+        "transport": "in-memory",
+        "reaches": "the refusal as well as the pass, which is the half a target that let everything through would still answer correctly"
+      },
+      "compressed": {
+        "facility": "app.Test(), Fiber's own, because fasthttp is not an http.Handler and httptest cannot reach it; run by go test",
+        "transport": "in-memory",
+        "reaches": "the codec, because this target compresses with middleware on its own routes rather than in a server in front of it"
+      },
+      "etag": {
+        "facility": "app.Test(), Fiber's own, because fasthttp is not an http.Handler and httptest cannot reach it; run by go test",
+        "transport": "in-memory",
+        "reaches": "the validator and the conditional answer. The 304 is the only request in the corpus that cannot be sent until the target has answered a different one, because the validator is the target's to produce"
+      },
+      "cache": {
+        "facility": "app.Test(), Fiber's own, because fasthttp is not an http.Handler and httptest cannot reach it; run by go test",
+        "transport": "in-memory",
+        "reaches": "the response cache and what it is keyed on. A store keyed on fewer headers than it declares answers one tenant with another tenant's body"
+      },
+      "body": {
+        "facility": "app.Test(), Fiber's own, because fasthttp is not an http.Handler and httptest cannot reach it; run by go test",
+        "transport": "in-memory",
+        "reaches": "the binding and the validation facility, including the two refusals, which are judged as the envelope this target recorded rather than against a pinned body"
+      },
+      "query": {
+        "facility": "app.Test(), Fiber's own, because fasthttp is not an http.Handler and httptest cannot reach it; run by go test",
+        "transport": "in-memory",
+        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+      },
+      "headers": {
+        "facility": "app.Test(), Fiber's own, because fasthttp is not an http.Handler and httptest cannot reach it; run by go test",
+        "transport": "in-memory",
+        "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
+      },
+      "middleware": {
+        "facility": "app.Test(), Fiber's own, because fasthttp is not an http.Handler and httptest cannot reach it; run by go test",
+        "transport": "in-memory",
+        "reaches": "every layer, because the host boots the application rather than calling the handler, which is the way this family is failed without noticing"
+      },
+      "domain": {
+        "facility": "app.Test(), Fiber's own, because fasthttp is not an http.Handler and httptest cannot reach it; run by go test",
+        "transport": "in-memory",
+        "reaches": "the shared model through all eight operations, including the four that write, where a 201 and a 204 with no body are answers a framework can get subtly wrong while returning the right status"
+      },
+      "errors": {
+        "facility": "app.Test(), Fiber's own, because fasthttp is not an http.Handler and httptest cannot reach it; run by go test",
+        "transport": "in-memory",
+        "reaches": "whatever this target does with a route it does not have, which is the framework rather than a handler"
+      },
+      "template": {
+        "facility": "app.Test(), Fiber's own, because fasthttp is not an http.Handler and httptest cannot reach it; run by go test",
+        "transport": "in-memory",
         "reaches": "the engine's output, normalised the way the conformance client normalises it: the spec pins the content and leaves the whitespace free"
       }
     }

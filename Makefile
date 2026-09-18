@@ -1,6 +1,6 @@
 comma := ,
 
-.PHONY: fixture plan spec expected test suites suites-dotnet suites-python suites-node suites-java machine bundle snippets build client site site-dev java rust dotnet python python-lock lint validate conform expect exemplars run vars report clean help
+.PHONY: fixture plan spec expected test suites suites-dotnet suites-python suites-node suites-java suites-go machine bundle snippets build client site site-dev java rust dotnet python python-lock lint validate conform expect exemplars run vars report clean help
 # Everything is on by default: no TARGETS means every implemented target this host
 # supports. The rest narrow it. LANGUAGES/FRAMEWORKS pick what runs, FAMILIES/ENDPOINTS
 # pick what it is asked for, and a narrowed endpoint set is recorded as its own profile
@@ -99,7 +99,7 @@ test: client ## boot every target and check every endpoint against spec/expected
 # suite that is wrong. These run no load and are never part of a measurement.
 # One language's suites at a time, so a machine with one toolchain can still run its own.
 # Every half runs whatever the one before it did, so a failure never hides another result.
-SUITE_LANGUAGES = $(if $(LANGUAGES),$(subst $(comma), ,$(LANGUAGES)),dotnet python node java)
+SUITE_LANGUAGES = $(if $(LANGUAGES),$(subst $(comma), ,$(LANGUAGES)),dotnet python node java go)
 # The interpreter harness/run.py would use: the virtualenv `make python` creates, or the one
 # on the path, which is how CI runs it after installing the lock into it.
 PYTHON ?= $(if $(wildcard targets/python/.venv/bin/python),$(CURDIR)/targets/python/.venv/bin/python,python3)
@@ -155,6 +155,14 @@ MVN = $(if $(shell command -v mvn),mvn,docker run --rm -v $(CURDIR):/repo -v rb-
 
 suites-java:
 	@cd targets/java && $(MVN) -B -q test
+
+# A Go test is a _test.go file in the package it tests, so one `go test` over the module runs
+# all five. Without a local Go it runs in the image targets/go/Dockerfile builds with.
+GO_TEST = $(if $(shell command -v go),go,docker run --rm -v $(CURDIR):/repo -v rb-gomod:/go/pkg/mod \
+            -w /repo/targets/go golang:1.26-alpine go)
+
+suites-go:
+	@cd targets/go && $(GO_TEST) test -count=1 ./gin ./echo ./chi ./gorilla-mux ./fiber
 
 expected: ## re-derive spec/expected.json from the targets named in EXPECT_FROM
 	python3 harness/expected.py --targets $(EXPECT_FROM) --mode $(MODE) --write
