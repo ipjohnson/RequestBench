@@ -3,7 +3,7 @@
 // The framework pages and the explorer's column used to compute it separately and could drift.
 // These are the properties that make the number trustworthy, over the one implementation left.
 import { describe, expect, test } from "vitest";
-import { chainOf, deltaFor, floorFor, MAX_CHAIN } from "../src/lib/delta.js";
+import { chainOf, chainWith, comparedOf, deltaFor, floorFor, MAX_CHAIN, SIZE } from "../src/lib/delta.js";
 import type { Route, Target } from "../src/lib/types.js";
 
 /** json.small roots the GET chain; each arm varies one factor from the one under it. */
@@ -73,5 +73,45 @@ describe("deltaFor", () => {
   test("achieved_rps is a rung statistic, so an endpoint has no delta on it", () => {
     const t = target({ "json.small": 100, "json.medium": 160 });
     expect(deltaFor(t, "json.medium", "1", routes, "achieved_rps")).toBeNull();
+  });
+});
+
+describe("chainWith", () => {
+  const bytes: Record<string, number> = { "json.small": 125, "json.medium": 126, "compressed.medium": 40 };
+  const sizeOf = (eid: string): number | null => bytes[eid] ?? null;
+
+  test("a byte count is exact, so a one-byte difference is measurable", () => {
+    const chain = chainWith(chainOf("json.medium", routes), sizeOf, () => 0);
+    expect(chain?.total).toBe(1);
+    expect(chain?.measurable).toBe(true);
+  });
+
+  test("the steps sum to the total over any number, not only a percentile", () => {
+    const chain = chainWith(chainOf("compressed.medium", routes), sizeOf, () => 0);
+    expect(chain?.total).toBe(-85);
+    expect(chain?.steps.reduce((s, x) => s + x.d, 0)).toBe(chain?.total);
+  });
+});
+
+describe("comparedOf", () => {
+  const spec: Record<string, Route> = {
+    "json.small": { m: "GET", p: "/json/small" },
+    "json.large": { m: "GET", p: "/json/large", b: "json.small", v: SIZE },
+    "compressed.identity_large": { m: "GET", p: "/compressed/large", b: "json.large", v: "compression_wiring" },
+    "compressed.gzip_large": { m: "GET", p: "/compressed/large", b: "compressed.identity_large", v: "compression" },
+  };
+
+  test("stops at the base with the same body, so the difference is only the compression", () => {
+    const links = comparedOf("compressed.gzip_large", spec);
+    expect(links.map((l) => l.factor)).toEqual(["compression", "compression_wiring"]);
+    expect(links[links.length - 1]?.base).toBe("json.large");
+  });
+
+  test("an endpoint that is there for its size still reads against the smaller one", () => {
+    expect(comparedOf("json.large", spec).map((l) => l.base)).toEqual(["json.small"]);
+  });
+
+  test("a root has nothing to compare", () => {
+    expect(comparedOf("json.small", spec)).toEqual([]);
   });
 });

@@ -66,6 +66,59 @@ export function startTree(): void {
   const host = document.querySelector<HTMLElement>(".eprates")?.dataset["host"];
   if (rung && from.get("host") === host && rateBtns.some((b) => b.dataset["rung"] === rung)) setRate(rung);
 
+  // The comparison with the base is a way of reading the page, like the rate, so opening it on
+  // one pane opens it on every pane and at every rate. It stays open while the reader walks
+  // the tree rather than closing on each endpoint.
+  const baseBtns = [...document.querySelectorAll<HTMLButtonElement>(".basetoggle")];
+  const baseCells = [...document.querySelectorAll<HTMLElement>(".fb")];
+  const setBase = (open: boolean): void => {
+    for (const b of baseBtns) b.setAttribute("aria-expanded", String(open));
+    for (const e of baseCells) e.hidden = !open;
+  };
+  for (const b of baseBtns)
+    b.addEventListener("click", () => setBase(b.getAttribute("aria-expanded") !== "true"));
+
+  // What a base number differs by, and why. One popup for the page, filled from the number's
+  // template and placed by script rather than by CSS, so it can shift to stay on screen from
+  // whichever column it opens.
+  const pop = document.createElement("div");
+  pop.className = "basepop";
+  pop.id = "basepop";
+  pop.setAttribute("role", "tooltip");
+  pop.hidden = true;
+  document.body.append(pop);
+  const openPop = (cell: HTMLElement): void => {
+    const tpl = cell.querySelector("template");
+    if (!tpl) return;
+    pop.replaceChildren(tpl.content.cloneNode(true));
+    pop.hidden = false;
+    const r = cell.getBoundingClientRect();
+    const left = Math.max(8, Math.min(r.left, document.documentElement.clientWidth - pop.offsetWidth - 8));
+    const below = r.bottom + 6 + pop.offsetHeight <= innerHeight;
+    pop.style.left = `${left + scrollX}px`;
+    pop.style.top = `${(below ? r.bottom + 6 : r.top - 6 - pop.offsetHeight) + scrollY}px`;
+    cell.setAttribute("aria-describedby", pop.id);
+  };
+  const closePop = (cell: HTMLElement): void => {
+    pop.hidden = true;
+    cell.removeAttribute("aria-describedby");
+  };
+  for (const cell of baseCells.filter((c) => c.querySelector("template"))) {
+    // A mouse opens it by hovering. A key or a touch opens it by focusing the number, and a
+    // touch's pointer leaves as soon as the finger lifts, so only the mouse's leaving closes it.
+    cell.addEventListener("pointerenter", (ev) => {
+      if (ev.pointerType === "mouse") openPop(cell);
+    });
+    cell.addEventListener("pointerleave", (ev) => {
+      if (ev.pointerType === "mouse") closePop(cell);
+    });
+    cell.addEventListener("focus", () => openPop(cell));
+    cell.addEventListener("blur", () => closePop(cell));
+  }
+  addEventListener("keydown", (ev) => {
+    if (ev.key === "Escape") pop.hidden = true;
+  });
+
   const show = (id: string): boolean => {
     let hit = false;
     for (const p of panes) {

@@ -14,7 +14,7 @@ output, two hydrated islands.
       load.ts         reading the two input directories
       catalog.ts      what results exist and where each document is
       delta.ts        the base chain: one implementation, used by both kinds of page
-      views.ts        the delta cell and the chain table, likewise
+      views.ts        the delta cell, likewise, and the base's row on a pane
       site.ts         everything the build reads, read once
       bundleview.ts   the harness/siteview.py seam
     src/client/       the browser. Bundled and type-checked

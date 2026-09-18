@@ -10,7 +10,7 @@ import EndpointPane from "../../components/EndpointPane.astro";
 import FamilyPane from "../../components/FamilyPane.astro";
 import "../../styles/framework.css";
 import { permalink, type SnippetPart } from "../../lib/bundleview.js";
-import { deltaFor } from "../../lib/delta.js";
+import { chainWith, comparedOf, deltaFor, epValue, floorFor } from "../../lib/delta.js";
 import { usedSpan } from "../../lib/bins.js";
 import { site, type FrameworkPage } from "../../lib/site.js";
 
@@ -55,6 +55,19 @@ const famOf = new Map<string, string>(
 const host = run.exec_host || "container";
 const exemplars =
   (wire[`${t.language}-${t.target}@${host}`] ?? wire[`${t.language}-${t.target}`])?.endpoints ?? {};
+// Every percentile the performance table can show, so each can be read against the base's.
+const PCTS = ["p50_us", "p90_us", "p95_us", "p99_us", "p999_us"];
+const chainsAt = (eid: string, rn: string) => {
+  const links = comparedOf(eid, routes);
+  return Object.fromEntries(PCTS.map((m) => [m, chainWith(links, (e) => epValue(t, e, rn, m), floorFor)]));
+};
+const sizeOf = (eid: string): number | null => exemplars[eid]?.sbz ?? null;
+/** The endpoint a pane compares with, when this run measured it: a root has none. */
+const againstOf = (eid: string): string | null => {
+  const links = comparedOf(eid, routes);
+  const base = links[links.length - 1]?.base;
+  return base && own[base] ? base : null;
+};
 
 // One registration often answers a whole family. Naming the rest on the pane is what the old
 // deduplicated list was protecting: without it the same block appears under six endpoints with
@@ -273,30 +286,37 @@ const linkFor = (eid: string): string | null => {
             </ul>
           </nav>
           <div class="eppanes">
-            {order.map((eid) => (
-              <EndpointPane
-                eid={eid}
-                route={routes[eid]}
-                rungs={rates.map((r) => ({
-                  rn: r.rn,
-                  stats: own[eid]?.rungs?.[r.rn],
-                  chain: deltaFor(t, eid, r.rn, routes, "p50_us"),
-                  span: r.span,
-                  shown: r.shown,
-                }))}
-                grid={grid}
-                snippet={snips[eid]}
-                also={alsoFor(eid)}
-                link={linkFor(eid)}
-                support={linked(snips[eid]?.support ?? [])}
-                tests={linked(snips[eid]?.test ?? [])}
-                alsoWired={alsoWired(eid)}
-                mechanism={view?.mechanisms[eid.split(".")[0] ?? ""]}
-                exchange={exemplars[eid]}
-                factors={factors}
-                first={eid === order[0]}
-              />
-            ))}
+            {order.map((eid) => {
+              const against = againstOf(eid);
+              return (
+                <EndpointPane
+                  eid={eid}
+                  route={routes[eid]}
+                  rungs={rates.map((r) => ({
+                    rn: r.rn,
+                    stats: own[eid]?.rungs?.[r.rn],
+                    base: against ? own[against]?.rungs?.[r.rn] : undefined,
+                    chains: chainsAt(eid, r.rn),
+                    span: r.span,
+                    shown: r.shown,
+                  }))}
+                  grid={grid}
+                  snippet={snips[eid]}
+                  also={alsoFor(eid)}
+                  link={linkFor(eid)}
+                  support={linked(snips[eid]?.support ?? [])}
+                  tests={linked(snips[eid]?.test ?? [])}
+                  alsoWired={alsoWired(eid)}
+                  mechanism={view?.mechanisms[eid.split(".")[0] ?? ""]}
+                  exchange={exemplars[eid]}
+                  against={against}
+                  baseExchange={against ? exemplars[against] : undefined}
+                  size={chainWith(comparedOf(eid, routes), sizeOf, () => 0)}
+                  factors={factors}
+                  first={eid === order[0]}
+                />
+              );
+            })}
             {[...families].map(([fam, eids]) => (
               <FamilyPane fam={fam} size={eids.length} routes={routes} rungs={famRungs(fam, eids)} />
             ))}

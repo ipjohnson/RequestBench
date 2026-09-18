@@ -63,9 +63,53 @@ a.epfamname[aria-current="true"] { background: var(--tealsoft); border-left-colo
 .eppane .epname { font-family: var(--f-mono); font-size: 17px; margin: 0; }
 /* .fields draws its hairlines by showing a rule-coloured background through a 1px gap,
    so an unfilled track at the end of a wrapped row reads as an empty grey cell. Outlines
-   overlap in the gap instead, which leaves the unfilled area the surface colour. */
-.eppane .fields { margin-bottom: 4px; background: var(--surface); border: none; }
+   overlap in the gap instead, which leaves the unfilled area the surface colour.
+
+   The narrower track keeps the endpoint's six columns on one row at the page's own widths
+   rather than wrapping samples onto a row by itself. */
+.eppane .fields { margin-bottom: 4px; background: var(--surface); border: none;
+                  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
 .eppane .frow { outline: 1px solid var(--rule); }
+.eppane .fv { white-space: nowrap; }
+
+/* The base's numbers, one under each of the endpoint's own. Each is inside its own cell
+   rather than in a row of its own, so it stays under its number when the cells wrap; the
+   rule it carries spans the cell and lines up with its neighbours' into a row. They are the
+   values' size so the two rows read as columns, and the dotted line marks the ones with a
+   popup. */
+.perfhead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px;
+            margin: 20px 0 8px; }
+.perfhead h3.childcap { margin: 0; }
+.basetoggle { appearance: none; background: none; border: 0; cursor: pointer; font: inherit;
+              font-family: var(--f-mono); font-size: 11.5px; color: var(--ink3); padding: 2px 0; }
+.basetoggle::before { content: "\25B8"; display: inline-block; width: 1.3em; }
+.basetoggle[aria-expanded="true"]::before { content: "\25BE"; }
+.basetoggle:hover, .basetoggle[aria-expanded="true"] { color: var(--ink); }
+.basetoggle:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+.eppane .fb { margin: 6px -12px 0; padding: 6px 12px 0; border-top: 1px solid var(--rule);
+              font-family: var(--f-mono); font-size: 14px; font-variant-numeric: tabular-nums;
+              color: var(--ink2); white-space: nowrap; }
+.eppane .fb[tabindex] { text-decoration: underline dotted var(--ink3);
+                        text-underline-offset: 4px; }
+.eppane .fb[tabindex]:hover { color: var(--ink); }
+.eppane .fb[tabindex]:focus-visible { outline: 2px solid var(--teal); outline-offset: -2px; }
+
+/* The popup, which endpoint-tree.ts fills from a base number's template and places under it. */
+.basepop { position: absolute; z-index: 20; width: max-content;
+           max-width: min(340px, calc(100vw - 16px)); padding: 10px 12px;
+           background: var(--surface); border: 1px solid var(--rule2); border-radius: 4px;
+           box-shadow: 0 6px 18px rgb(0 0 0 / .14); pointer-events: none;
+           font-size: 12.5px; line-height: 1.45; color: var(--ink2); }
+.basepop p { margin: 0; }
+.basepop .bphead { color: var(--ink); }
+.basepop b { font-family: var(--f-mono); font-weight: 500; }
+.basepop .up { color: var(--amber); }
+.basepop .down { color: var(--tealtext); }
+.basepop .flat, .basepop .bpnote { color: var(--ink3); }
+.basepop .bpstep { margin-top: 7px; padding-top: 7px; border-top: 1px solid var(--rule); }
+.basepop .bpf { display: flex; justify-content: space-between; gap: 16px;
+                font-family: var(--f-mono); font-size: 12px; color: var(--ink);
+                font-variant-numeric: tabular-nums; }
 .eppane pre.code { max-height: 460px; overflow: auto; }
 .famtable td:first-child { font-family: var(--f-mono); font-size: 12.5px; }
 

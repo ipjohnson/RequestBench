@@ -48,6 +48,7 @@ export type Step = {
 
 export type Chain = {
   steps: Step[];
+  /** What the total is against: the root of the base chain, or where comparedOf stopped. */
   root: string;
   arm_v: number;
   base_v: number;
@@ -55,11 +56,14 @@ export type Chain = {
   measurable: boolean;
 };
 
+/** One base edge: `arm` is `base` with `factor` varied. */
+export type Link = { arm: string; base: string; factor: string };
+
 type Routes = Readonly<Record<string, Route | undefined>>;
 
 /** The ids from this endpoint down to the root of its base chain. */
-export function chainOf(eid: string, routes: Routes): { arm: string; base: string; factor: string }[] {
-  const steps: { arm: string; base: string; factor: string }[] = [];
+export function chainOf(eid: string, routes: Routes): Link[] {
+  const steps: Link[] = [];
   let cur = eid;
   while (steps.length < MAX_CHAIN) {
     const r = routes[cur];
@@ -68,6 +72,22 @@ export function chainOf(eid: string, routes: Routes): { arm: string; base: strin
     cur = r.b;
   }
   return steps;
+}
+
+/** The factor spec/endpoints.json varies to make json.large of json.small. */
+export const SIZE = "size";
+
+/**
+ * The links a comparison on an endpoint's own pane crosses: its own, then each one below it
+ * that keeps the response body the same. Walking on to the root picks up what a larger body
+ * costs, so compressed.gzip_large read against json.small is as much the 131 KB body as the
+ * gzip, and against json.large it is only the compression. An endpoint whose own link is the
+ * size, json.large, still reads against the smaller one, because size is what it is there for.
+ */
+export function comparedOf(eid: string, routes: Routes): Link[] {
+  const links = chainOf(eid, routes);
+  const cut = links.findIndex((l, i) => i > 0 && l.factor === SIZE);
+  return cut < 0 ? links : links.slice(0, cut);
 }
 
 /**
@@ -94,13 +114,26 @@ export function deltaFor(
   routes: Routes,
   metric = "p50_us",
 ): Chain | null {
+  return chainWith(chainOf(eid, routes), (e) => epValue(t, e, rn, metric), floorFor);
+}
+
+/**
+ * The chain across `links` on any number every endpoint has one of. `floor` is the smallest
+ * difference that number can resolve: the histogram's for a percentile, and zero for a byte
+ * count, which is exact.
+ */
+export function chainWith(
+  links: readonly Link[],
+  valueOf: (eid: string) => number | null,
+  floor: (a: number, b: number) => number,
+): Chain | null {
   const steps: Step[] = [];
-  for (const s of chainOf(eid, routes)) {
-    const arm = epValue(t, s.arm, rn, metric);
-    const base = epValue(t, s.base, rn, metric);
+  for (const s of links) {
+    const arm = valueOf(s.arm);
+    const base = valueOf(s.base);
     if (arm === null || base === null) return null;
     const d = arm - base;
-    steps.push({ ...s, arm_v: arm, base_v: base, d, measurable: Math.abs(d) >= floorFor(arm, base) });
+    steps.push({ ...s, arm_v: arm, base_v: base, d, measurable: Math.abs(d) >= floor(arm, base) });
   }
   const last = steps[steps.length - 1];
   const first = steps[0];
@@ -112,6 +145,6 @@ export function deltaFor(
     arm_v: first.arm_v,
     base_v: last.base_v,
     total,
-    measurable: Math.abs(total) >= floorFor(first.arm_v, last.base_v),
+    measurable: Math.abs(total) >= floor(first.arm_v, last.base_v),
   };
 }
