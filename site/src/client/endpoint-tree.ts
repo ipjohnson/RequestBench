@@ -48,8 +48,8 @@ export function startTree(): void {
   if (tabs[0]) pick(tabs.find((t) => t.getAttribute("aria-selected") === "true") ?? tabs[0]);
 
   // The rate switches the whole panel at once: the grid, the percentile table on every pane
-  // and the histogram under it. Letting it move only the grid would leave 5,000 rps shapes
-  // beside 1,000 rps numbers, which is the one reading of this page that would be wrong.
+  // and the histogram under it. Letting it move only the grid would leave one rate's shapes
+  // beside another rate's numbers, which is the one reading of this page that would be wrong.
   const rateBtns = [...document.querySelectorAll<HTMLButtonElement>(".eprate-pick")];
   // The blocks that belong to a rate, not everything carrying the attribute: the buttons
   // are keyed by rung too, and a bare [data-rung] hides the one being switched away from.
