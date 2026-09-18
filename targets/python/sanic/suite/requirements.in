@@ -1,0 +1,7 @@
+# What this suite installs on top of the targets' own lock, which the constraint below
+# holds it to: a test dependency may not resolve a different version of anything a target
+# already runs. pip-tools' layered-requirements pattern.
+-c ../../requirements.txt
+
+pytest~=9.1
+sanic-testing~=24.6
