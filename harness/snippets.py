@@ -935,8 +935,7 @@ RECORD_ASSERT = {
         "\n".join(p["text"] for p in [rec["handler"], *rec["support"]]), names),
     # Coverage rather than a claim about a snippet, riding the allowance because that is the
     # machinery a count that only goes down already has. See required: "ratchet". A helper
-    # marked for the family or the target is shown on this endpoint's page as part of what
-    # testing it cost, and is not a test of it.
+    # marked for the family or the target is not a test of this endpoint.
     "no_test": lambda rec, names: not own_tests(rec),
     # Silent where there is no test at all: that is what no_test counts, and reporting both
     # would ratchet the same endpoint down twice. A helper cannot name every endpoint it

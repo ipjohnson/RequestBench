@@ -113,14 +113,15 @@ a.epfamname[aria-current="true"] { background: var(--tealsoft); border-left-colo
 .eppane pre.code { max-height: 460px; overflow: auto; }
 .famtable td:first-child { font-family: var(--f-mono); font-size: 12.5px; }
 
-/* The wiring section: what the family declares it is wired with, then one head and block
-   per support part. They come from other files than the handler, so each carries its own
-   location and its own link. */
-.wiring p.mech { margin: 0 0 10px; font-size: 13px; color: var(--ink2); }
-.wiring p.mech code { font-family: var(--f-mono); font-size: 12px; color: var(--ink); }
-.wiring pre.code + .sniphead { margin-top: 14px; }
-.wiring .ctx { font-family: var(--f-mono); font-size: 11.5px; color: var(--ink3);
-               margin: 0 0 10px; white-space: pre; overflow-x: auto; }
+/* One head and block per part: the handler, then what the family declares it is wired with
+   and each support part, or the endpoint's tests. A part can come from another file than the
+   handler, so each carries its own location and its own link. The handler's context lines
+   sit directly above its code, because they are the blocks it is nested in. */
+.parts p.mech { margin: 0 0 10px; font-size: 13px; color: var(--ink2); }
+.parts p.mech code { font-family: var(--f-mono); font-size: 12px; color: var(--ink); }
+.parts pre.code + .sniphead, .parts pre.code + p.mech { margin-top: 14px; }
+.parts .ctx { font-family: var(--f-mono); font-size: 11.5px; color: var(--ink3);
+              margin: 0 0 6px; white-space: pre; overflow-x: auto; }
 
 /* Info and Distribution: two readings of one endpoint list, so the tabs sit on the rule
    the views hang from rather than floating above them. */
@@ -148,6 +149,11 @@ a.epfamname[aria-current="true"] { background: var(--tealsoft); border-left-colo
 .eprate-pick[aria-pressed="true"] { background: var(--tealsoft); color: var(--ink);
                                     font-weight: 500; }
 .eprate-pick:focus-visible { outline: 2px solid var(--teal); outline-offset: -2px; }
+/* A rate the target did not complete. It stays hoverable and focusable so its title can say
+   why. Hovering it does not highlight it. */
+.eprate-pick[aria-disabled="true"] { opacity: .45; cursor: not-allowed; }
+.eprate-pick[aria-disabled="true"]:not([aria-pressed="true"]):hover { background: none;
+                                                                      color: var(--ink2); }
 
 /* The endpoint's own histogram, under the table the percentiles are in. */
 .ephist { margin: 14px 0 0; }

@@ -51,6 +51,9 @@ export function startTree(): void {
   // and the histogram under it. Letting it move only the grid would leave 5,000 rps shapes
   // beside 1,000 rps numbers, which is the one reading of this page that would be wrong.
   const rateBtns = [...document.querySelectorAll<HTMLButtonElement>(".eprate-pick")];
+  // A rate the target did not complete has no latencies to show. Its button stays hoverable
+  // so its title can say why, and neither a click nor a link's rung switches to it.
+  const pickable = rateBtns.filter((b) => b.getAttribute("aria-disabled") !== "true");
   // The blocks that belong to a rate, not everything carrying the attribute: the buttons
   // are keyed by rung too, and a bare [data-rung] hides the one being switched away from.
   const atRate = [...document.querySelectorAll<HTMLElement>(".dist[data-rung], .eprate[data-rung]")];
@@ -58,13 +61,13 @@ export function startTree(): void {
     for (const b of rateBtns) b.setAttribute("aria-pressed", String(b.dataset["rung"] === rn));
     for (const e of atRate) e.hidden = e.dataset["rung"] !== rn;
   };
-  for (const b of rateBtns) b.addEventListener("click", () => setRate(b.dataset["rung"] ?? ""));
+  for (const b of pickable) b.addEventListener("click", () => setRate(b.dataset["rung"] ?? ""));
   // Opened from a row, the page starts on the rate the row was read at. A rung is an index into
   // one run's ladder, so it names this page's rate only when the row was on this page's host.
   const from = new URLSearchParams(location.search);
   const rung = from.get("rung");
   const host = document.querySelector<HTMLElement>(".eprates")?.dataset["host"];
-  if (rung && from.get("host") === host && rateBtns.some((b) => b.dataset["rung"] === rung)) setRate(rung);
+  if (rung && from.get("host") === host && pickable.some((b) => b.dataset["rung"] === rung)) setRate(rung);
 
   // The comparison with the base is a way of reading the page, like the rate, so opening it on
   // one pane opens it on every pane and at every rate. It stays open while the reader walks

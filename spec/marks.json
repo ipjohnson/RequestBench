@@ -80,7 +80,7 @@
     "no_test": {
       "label": "endpoint with no test",
       "scope": "coverage",
-      "what": "every endpoint has to be held by at least one test in its target's own suite, marked for it by name. A helper marked for its family or for the whole target is shown on the endpoint's page as part of what testing it cost, and is not a test of it",
+      "what": "every endpoint has to be held by at least one test in its target's own suite, marked for it by name. A helper marked for its family or for the whole target is not a test of it",
       "why": "required: \"every\" is the right shape and cannot be used. harness/snippets.py drops a record that lacks a kind marked every, so setting it empties the snippet map for all forty-eight endpoints on all thirty-three targets and the site renders nothing at all. required: \"ratchet\" counts the endpoints with no test instead and holds the count against the allowance, which only ever goes down. The filter stays keyed to handler alone",
       "except": []
     },

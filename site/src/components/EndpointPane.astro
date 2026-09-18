@@ -1,5 +1,6 @@
 ---
-// One endpoint's pane: what it answers, what it cost, how it is wired, what it sent.
+// One endpoint's pane: what it answers, what it cost, the code behind it, what it sent and
+// the test that holds it.
 import EndpointHistogram from "./EndpointHistogram.astro";
 import { baseCell } from "../lib/views.js";
 import { cell, type Unit } from "../lib/metrics.js";
@@ -97,23 +98,18 @@ const where = (p: SnippetPart): string =>
 // handler from a condition. They are not part of the range, because that is what the
 // permalink points at, so they are shown beside it rather than in it.
 const context = (h?.context ?? []) as { line: number; text: string }[];
-// The gate requires a mechanism or a builtin for every family, so a family with neither is
-// missing its declaration at the run's commit. That is missing data rather than a fact about
-// the framework, so the pane says nothing about it.
-const wiring = Boolean(mechanism?.mechanism || mechanism?.builtin) || context.length > 0 || support.length > 0;
+// Only the tests marked for this endpoint by name. A helper marked for the family or the
+// target is this benchmark's setup, such as the floor that checks every response's content
+// encoding, and most projects would not write it.
+const ownTests = tests.filter(
+  ({ part }) => ((part as { scope?: string }).scope ?? "endpoint") === "endpoint",
+);
 // Two kinds of test share the role and are not the same claim. A target's own suite boots
 // the target and holds it to spec/expected.json; a client-exception package describes the
 // error envelope the framework declares and is run by the conformance client against nothing
 // at all. One heading over both would say the wrong thing about whichever came second.
-const contract = tests.filter(({ part }) => part.path.includes("/client-exception/"));
-// A suite's helpers are marked for the family or the target they serve rather than for this
-// endpoint, and they are shown here because writing them was part of what testing this
-// endpoint cost. The endpoint's own test goes first so the page leads with what it asserts.
-const scoped = (part: SnippetPart): string => (part as { scope?: string }).scope ?? "endpoint";
-const suiteParts = tests.filter(({ part }) => !part.path.includes("/client-exception/"));
-const suite = suiteParts.filter(({ part }) => scoped(part) === "endpoint");
-const helpers = suiteParts.filter(({ part }) => scoped(part) !== "endpoint");
-const helperLines = helpers.reduce((n, { part }) => n + part.end_line - part.start_line + 1, 0);
+const contract = ownTests.filter(({ part }) => part.path.includes("/client-exception/"));
+const suite = ownTests.filter(({ part }) => !part.path.includes("/client-exception/"));
 const hdrs = (hs: readonly (readonly [string, string])[]): string =>
   hs
     .map(([k, v]) => `<div class='hrow'><span class='hk'>${esc(k)}</span><span class='hv'>${esc(v)}</span></div>`)
@@ -164,36 +160,17 @@ const hdrs = (hs: readonly (readonly [string, string])[]): string =>
   }
 
   <h3 class="childcap">Implementation</h3>
-  {
-    h ? (
-      <>
-        <div class="sniphead">
-          <span class="loc">{loc}</span>
-          <span class="how">{h.how}</span>
-          {link && <a href={link}>open on GitHub &rarr;</a>}
-        </div>
-        {also.length > 0 && (
-          <p class="hint">The same registration answers {also.join(", ")}.</p>
-        )}
-        <pre class="code">{h.text}</pre>
-      </>
-    ) : (
-      <p class="empty">No handler located for this endpoint.</p>
-    )
-  }
-
-  {
-    wiring && (
-      <>
-        <h3 class="childcap">Wiring</h3>
-        <div class="wiring">
-          {mechanism?.mechanism ? (
-            <p class="mech">
-              {mechanism.mechanism}
-              {mechanism.dep && <> &middot; <code>{mechanism.dep}</code></>}
-            </p>
-          ) : (
-            mechanism?.builtin && <p class="mech">{mechanism.builtin}</p>
+  <div class="parts">
+    {
+      h ? (
+        <>
+          <div class="sniphead">
+            <span class="loc">{loc}</span>
+            <span class="how">{h.how}</span>
+            {link && <a href={link}>open on GitHub &rarr;</a>}
+          </div>
+          {also.length > 0 && (
+            <p class="hint">The same registration answers {also.join(", ")}.</p>
           )}
           {context.length > 0 && (
             <div class="ctx">
@@ -204,50 +181,40 @@ const hdrs = (hs: readonly (readonly [string, string])[]): string =>
               ))}
             </div>
           )}
-          {support.map(({ part, link: href }) => (
-            <>
-              <div class="sniphead">
-                <span class="loc">{where(part)}</span>
-                <span class="how">{part.how}</span>
-                {href && <a href={href}>open on GitHub &rarr;</a>}
-              </div>
-              <pre class="code">{part.text}</pre>
-            </>
-          ))}
-          {support.length > 0 && alsoWired.length > 0 && (
-            <p class="hint">The same wiring serves {alsoWired.join(", ")}.</p>
-          )}
-        </div>
-      </>
-    )
-  }
-
-  {
-    [["Test", suite, helpers], ["Contract test", contract, []]].map(([caption, parts, needed]) =>
-      (parts as typeof tests).length + (needed as typeof tests).length > 0 && (
+          <pre class="code">{h.text}</pre>
+        </>
+      ) : (
+        <p class="empty">No handler located for this endpoint.</p>
+      )
+    }
+    {
+      mechanism?.mechanism ? (
+        <p class="mech">
+          {mechanism.mechanism}
+          {mechanism.dep && <> &middot; <code>{mechanism.dep}</code></>}
+        </p>
+      ) : (
+        mechanism?.builtin && <p class="mech">{mechanism.builtin}</p>
+      )
+    }
+    {
+      support.map(({ part, link: href }) => (
         <>
-          <h3 class="childcap">{caption as string}</h3>
-          <div class="wiring">
-            {[...(parts as typeof tests), ...(needed as typeof tests)].map(({ part, link: href }, i) => (
-              <>
-                {i === (parts as typeof tests).length && (
-                  <p class="hint">
-                    What that test needed: {helperLines.toLocaleString()} lines written once for
-                    this target's suite and shown on every page they serve.
-                  </p>
-                )}
-                <div class="sniphead">
-                  <span class="loc">{where(part)}</span>
-                  <span class="how">{part.how}</span>
-                  {href && <a href={href}>open on GitHub &rarr;</a>}
-                </div>
-                <pre class="code">{part.text}</pre>
-              </>
-            ))}
+          <div class="sniphead">
+            <span class="loc">{where(part)}</span>
+            <span class="how">{part.how}</span>
+            {href && <a href={href}>open on GitHub &rarr;</a>}
           </div>
+          <pre class="code">{part.text}</pre>
         </>
       ))
-  }
+    }
+    {
+      support.length > 0 && alsoWired.length > 0 && (
+        <p class="hint">The same wiring serves {alsoWired.join(", ")}.</p>
+      )
+    }
+  </div>
 
   <h3 class="childcap">On the wire</h3>
   {
@@ -279,6 +246,29 @@ const hdrs = (hs: readonly (readonly [string, string])[]): string =>
         No captured exchange for this target. Exemplars are written by <code>make exemplars</code>{" "}
         and only for the targets it has been run against.
       </p>
+    )
+  }
+
+  {
+    ([["Test", suite], ["Contract test", contract]] as const).map(
+      ([caption, parts]) =>
+        parts.length > 0 && (
+          <>
+            <h3 class="childcap">{caption}</h3>
+            <div class="parts">
+              {parts.map(({ part, link: href }) => (
+                <>
+                  <div class="sniphead">
+                    <span class="loc">{where(part)}</span>
+                    <span class="how">{part.how}</span>
+                    {href && <a href={href}>open on GitHub &rarr;</a>}
+                  </div>
+                  <pre class="code">{part.text}</pre>
+                </>
+              ))}
+            </div>
+          </>
+        ),
     )
   }
 </section>
