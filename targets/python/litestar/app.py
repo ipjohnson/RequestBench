@@ -205,15 +205,16 @@ async def parameters_two(one: FromPath[int], two: FromPath[int]) -> dict:
 # ValidationException, which is Litestar's own 400.
 @get("/query/one")
 async def query_one(page: int = 0) -> dict:
-    return {"page": page}
+    return d.with_echo("small", {"page": page})
 
 
 @get("/query/many")
 async def query_many(page: int = 0, size: int = 0, status: str = "", category: str = "",
                      sort: str = "", q: str = "", min_price: int = 0,
                      max_price: int = 0) -> dict:
-    return {"page": page, "size": size, "status": status, "category": category,
-            "sort": sort, "q": q, "min_price": min_price, "max_price": max_price}
+    return d.with_echo("small", {"page": page, "size": size, "status": status,
+                                 "category": category, "sort": sort, "q": q,
+                                 "min_price": min_price, "max_price": max_price})
 
 
 # The handler reads no header at all. headers.many sends 30 request headers and headers.few

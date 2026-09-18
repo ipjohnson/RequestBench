@@ -217,13 +217,13 @@ def _qint(q, k):
 
 @app.get("/query/one")
 async def query_one(request):
-    return response.json({"page": _qint(request.args, "page")})
+    return response.json(d.with_echo("small", {"page": _qint(request.args, "page")}))
 
 
 @app.get("/query/many")
 async def query_many(request):
     q = request.args
-    return response.json({
+    return response.json(d.with_echo("small", {
         "page": _qint(q, "page"),
         "size": _qint(q, "size"),
         "status": _qstr(q, "status"),
@@ -232,7 +232,7 @@ async def query_many(request):
         "q": _qstr(q, "q"),
         "min_price": _qint(q, "min_price"),
         "max_price": _qint(q, "max_price"),
-    })
+    }))
 
 
 # The handler reads no header at all. headers.many sends 30 request headers and headers.few

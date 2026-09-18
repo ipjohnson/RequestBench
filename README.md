@@ -30,7 +30,7 @@ removing. Where this changes what a target answers, the framework declares its o
 in `targets/<lang>/<framework>/client-exception`.
 
 **What a correct answer is, is written down.** `spec/expected.json` holds the status, the
-content type, the content encoding and the body for every one of the 2,431 distinct requests
+content type, the content encoding and the body for every one of the 1,905 distinct requests
 in the plan. `make test` boots each target and checks all of them against it; nothing is ever
 compared against another target, because agreement between two frameworks is evidence that
 they are consistent and not that either is right. Every implemented target has to pass, with

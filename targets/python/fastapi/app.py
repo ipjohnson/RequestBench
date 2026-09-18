@@ -178,14 +178,15 @@ async def parameters_two(one: int, two: int):
 # RequestValidationError, which the handler above answers with FastAPI's own 422 envelope.
 @app.get("/query/one")
 async def query_one(page: int = 0):
-    return {"page": page}
+    return d.with_echo("small", {"page": page})
 
 
 @app.get("/query/many")
 async def query_many(page: int = 0, size: int = 0, status: str = "", category: str = "",
                      sort: str = "", q: str = "", min_price: int = 0, max_price: int = 0):
-    return {"page": page, "size": size, "status": status, "category": category,
-            "sort": sort, "q": q, "min_price": min_price, "max_price": max_price}
+    return d.with_echo("small", {"page": page, "size": size, "status": status,
+                                 "category": category, "sort": sort, "q": q,
+                                 "min_price": min_price, "max_price": max_price})
 
 
 # The handler reads no header at all. headers.many sends 30 request headers and headers.few

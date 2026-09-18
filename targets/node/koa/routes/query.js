@@ -1,4 +1,4 @@
-// query: query string parsing and coercion, isolated from any use of the values.
+// query: query string parsing, percent-decoding and coercion, with the values echoed.
 //
 // Koa has no binder to plug into: ctx.query is what its query parser produced and the
 // coercion is the handler's own work. This is this target's copy on purpose. Sharing one
@@ -8,6 +8,8 @@
 // A missing parameter and one that will not parse both coerce to the same value they always
 // did, which is what a target with no binder can do without inventing an error contract the
 // family does not have.
+import * as d from "../../_shared/domain.js";
+
 // rb:wiring query.*
 const int = (v) => { const n = Number(v); return Number.isInteger(n) ? n : 0; };
 const str = (v) => v ?? null;
@@ -27,7 +29,7 @@ export const coerceMany = (q) => ({
 export const coerceFilter = (q) => ({ page: int(q.page), size: int(q.size), status: str(q.status) });
 
 export default function query(router) {
-  router.get("/query/one", (ctx) => { ctx.body = coerceOne(ctx.query); });
+  router.get("/query/one", (ctx) => { ctx.body = d.withEcho("small", coerceOne(ctx.query)); });
 
-  router.get("/query/many", (ctx) => { ctx.body = coerceMany(ctx.query); });
+  router.get("/query/many", (ctx) => { ctx.body = d.withEcho("small", coerceMany(ctx.query)); });
 }

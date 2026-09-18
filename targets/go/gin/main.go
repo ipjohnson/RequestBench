@@ -221,18 +221,18 @@ func router() *gin.Engine {
 		}
 	})
 
-	// Gin binds both arms, so the handler answers the struct it filled rather than reading
+	// Gin binds both arms, so the handler echoes the struct it filled rather than reading
 	// the raw map. query.go holds the shapes and the tags it reads them with.
 	r.GET("/query/one", func(c *gin.Context) {
 		var q queryOne
 		if bindQuery(c, &q) {
-			c.JSON(200, q)
+			c.JSON(200, d.WithEcho("small", q))
 		}
 	})
 	r.GET("/query/many", func(c *gin.Context) {
 		var q queryMany
 		if bindQuery(c, &q) {
-			c.JSON(200, q)
+			c.JSON(200, d.WithEcho("small", q))
 		}
 	})
 

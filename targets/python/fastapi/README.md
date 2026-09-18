@@ -12,9 +12,9 @@ returns a plain value and FastAPI serializes it; where a family needs a header, 
 handler takes `response: Response` and sets it, and where it needs to answer 304 it
 returns a `Response` of its own.
 
-The body families declare `body: dict`, so FastAPI parses and binds the request itself.
-That is what makes `errors.malformed` FastAPI's failure rather than the domain's, and a
-`RequestValidationError` handler is what gives it the same 422 body as
+The body families declare a Pydantic model, so FastAPI parses, binds and validates the
+request itself. That is what makes `errors.malformed` FastAPI's failure rather than the
+domain's, and a `RequestValidationError` handler is what gives it the same 422 envelope as
 `body.rejected_all`.
 
 ## What is unusual about it
@@ -45,12 +45,6 @@ Returning `JSONResponse(...)` from the handler skips it: FastAPI passes a Respon
 untouched. That is what the Starlette target does, because it is Starlette's own API, and
 doing it here would make `python:fastapi` a measurement of Starlette wearing FastAPI's
 router. FastAPI's own documentation returns the value, so that is what this target returns.
-
-**The query string is read from `request.query_params`, not from declared parameters.**
-Declared parameters would be FastAPI coercing, which is the more FastAPI-shaped answer,
-but the query arms have to echo values including the ones that were absent or malformed,
-and a declared `int` rejects what the other five Python targets accept. The framework
-still parses the string; the domain coerces what it parsed.
 
 **The JSON family is three static routes, not `/json/{size}`.** A capture would make the
 router pay parameter cost on the family that anchors most of the endpoint set, and it

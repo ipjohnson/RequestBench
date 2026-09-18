@@ -75,8 +75,9 @@
       "comparable": "frameworks"
     },
     "query": {
-      "exercises": "query string parsing and coercion, isolated from any use of the values",
-      "comparable": "frameworks"
+      "exercises": "query string parsing, percent-decoding and coercion, with the values echoed and put to no other use",
+      "comparable": "frameworks",
+      "note": "Eight parameters on query.many, because eight is what a typical search endpoint carries: page and size, a sort, a text term and four filters."
     },
     "headers": {
       "exercises": "the request header map at five and at thirty headers, left unread and with three of them bound and echoed",
@@ -146,7 +147,7 @@
       "reads": "a body that is not JSON at all"
     },
     "query_params": {
-      "reads": "more query string keys parsed and coerced"
+      "reads": "more query string keys parsed, coerced and echoed"
     },
     "route": {
       "reads": "a different route carrying the same handler, which should cost nothing"
@@ -253,6 +254,44 @@
     "account": {
       "kind": "int",
       "digits": 6
+    },
+    "page": {
+      "kind": "int",
+      "digits": 3
+    },
+    "size": {
+      "kind": "int",
+      "digits": 2
+    },
+    "status": {
+      "kind": "choice",
+      "from": "fixture.statuses"
+    },
+    "category": {
+      "kind": "choice",
+      "from": "fixture.categories"
+    },
+    "sort": {
+      "kind": "choice",
+      "values": [
+        "name",
+        "created",
+        "total"
+      ]
+    },
+    "q": {
+      "kind": "words",
+      "count": 2,
+      "length": 5,
+      "chars": "abcdefghijklmnopqrstuvwxyz"
+    },
+    "min_price": {
+      "kind": "int",
+      "digits": 4
+    },
+    "max_price": {
+      "kind": "int",
+      "digits": 5
     }
   },
   "varying_headers": "Header sets whose values differ between one instance of an endpoint and the next. A response cache keyed on a header it never sees vary is keyed on nothing, so the vary rows send a pinned set of values and the store has to hold a key per combination. harness/plan.py takes the product in the order written here and hands the driver one merged header set per combination; instance i of the endpoint sends combination i modulo the count. The values live in the fixture with the capacity derived from them, because the count of distinct keys is what every target has to size its store against.",
@@ -565,8 +604,12 @@
       "id": "query.one",
       "family": "query",
       "method": "GET",
-      "path": "/query/one?page={page}",
+      "path": "/query/one?page={run.page}",
       "expect": 200,
+      "payload": "small",
+      "echo": [
+        "page"
+      ],
       "base": "json.small",
       "varies": "query_params"
     },
@@ -574,8 +617,19 @@
       "id": "query.many",
       "family": "query",
       "method": "GET",
-      "path": "/query/many?page={page}&size={size}&status={status}&category={category}&sort={sort}&q={term}&min_price={minp}&max_price={maxp}",
+      "path": "/query/many?page={run.page}&size={run.size}&status={run.status}&category={run.category}&sort={run.sort}&q={run.q}&min_price={run.min_price}&max_price={run.max_price}",
       "expect": 200,
+      "payload": "small",
+      "echo": [
+        "page",
+        "size",
+        "status",
+        "category",
+        "sort",
+        "q",
+        "min_price",
+        "max_price"
+      ],
       "base": "query.one",
       "varies": "query_params"
     },
@@ -801,10 +855,6 @@
       "kind": "choice",
       "from": "fixture.regions"
     },
-    "category": {
-      "kind": "choice",
-      "from": "fixture.categories"
-    },
     "status": {
       "kind": "choice",
       "from": "fixture.statuses"
@@ -820,34 +870,6 @@
         10,
         25,
         50
-      ]
-    },
-    "minp": {
-      "kind": "int_range",
-      "min": 1,
-      "max": 40
-    },
-    "maxp": {
-      "kind": "int_range",
-      "min": 41,
-      "max": 200
-    },
-    "term": {
-      "kind": "choice",
-      "values": [
-        "ring",
-        "bolt",
-        "seed",
-        "pan",
-        "desk"
-      ]
-    },
-    "sort": {
-      "kind": "choice",
-      "values": [
-        "name",
-        "created",
-        "total"
       ]
     }
   }

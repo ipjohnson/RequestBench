@@ -5,7 +5,8 @@ using Wolverine.Http;
 namespace RequestBench.WolverineTarget.Routes;
 
 /// <summary>
-/// query: query string parsing and coercion, isolated from any use of the values.
+/// query: query string parsing, percent-decoding and coercion, with the values echoed and put
+/// to no other use.
 ///
 /// Wolverine binds a query parameter by declaring it on the endpoint method: the name and
 /// the type are the binding, and it converts what was parsed before the method runs.
@@ -18,12 +19,15 @@ namespace RequestBench.WolverineTarget.Routes;
 public static class QueryEndpoints
 {
     [WolverineGet("/query/one")]
-    public static QueryOne One([FromQuery] int page) => new(page);
+    public static PayloadWithEcho One([FromQuery] int page, DomainModel domain) =>
+        domain.WithEcho("small", new QueryOne(page));
 
     [WolverineGet("/query/many")]
-    public static QueryMany Many([FromQuery] int page, [FromQuery] int size,
-                                 [FromQuery] string status, [FromQuery] string category,
-                                 [FromQuery] string sort, [FromQuery] string q,
-                                 [FromQuery] int min_price, [FromQuery] int max_price) =>
-        new(page, size, status, category, sort, q, min_price, max_price);
+    public static PayloadWithEcho Many([FromQuery] int page, [FromQuery] int size,
+                                       [FromQuery] string status, [FromQuery] string category,
+                                       [FromQuery] string sort, [FromQuery] string q,
+                                       [FromQuery] int min_price, [FromQuery] int max_price,
+                                       DomainModel domain) =>
+        domain.WithEcho("small", new QueryMany(page, size, status, category, sort, q,
+                                               min_price, max_price));
 }

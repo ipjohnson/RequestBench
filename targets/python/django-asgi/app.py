@@ -276,7 +276,7 @@ async def headers_bind(request):
 #
 # Django's binder is the same facility as its validator: a Form declares its fields, and
 # is_valid() runs each field's to_python over the values the router parsed. cleaned_data is
-# what comes out, typed, and is what the arm answers.
+# what comes out, typed, and is what the arm echoes beside the small payload.
 #
 # The fields are required, which is Django's default and what makes a missing parameter an
 # error rather than a None the view has to decide about. A value the field cannot convert
@@ -320,14 +320,16 @@ def bound(form_class, request):
                    for field, errs in form.errors.as_data().items() for e in errs])
 
 
+# rb:handler query.one
 @require_GET
 async def query_one(request):
-    return JsonResponse(bound(QueryOneForm, request))
+    return JsonResponse(d.with_echo("small", bound(QueryOneForm, request)))
 
 
+# rb:handler query.many
 @require_GET
 async def query_many(request):
-    return JsonResponse(bound(QueryManyForm, request))
+    return JsonResponse(d.with_echo("small", bound(QueryManyForm, request)))
 
 
 # ---- middleware: one view decorator per layer ----------------------------------------

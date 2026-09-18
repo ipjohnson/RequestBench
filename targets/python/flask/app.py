@@ -207,13 +207,13 @@ def parameters_two(one, two):
 # holds, and the family keeps its single 200 contract.
 @app.get("/query/one")
 def query_one():
-    return jsonify({"page": request.args.get("page", 0, type=int)})
+    return jsonify(d.with_echo("small", {"page": request.args.get("page", 0, type=int)}))
 
 
 @app.get("/query/many")
 def query_many():
     a = request.args
-    return jsonify({
+    return jsonify(d.with_echo("small", {
         "page": a.get("page", 0, type=int),
         "size": a.get("size", 0, type=int),
         "status": a.get("status", ""),
@@ -222,7 +222,7 @@ def query_many():
         "q": a.get("q", ""),
         "min_price": a.get("min_price", 0, type=int),
         "max_price": a.get("max_price", 0, type=int),
-    })
+    }))
 
 
 # The handler reads no header at all. headers.many sends 30 request headers and headers.few

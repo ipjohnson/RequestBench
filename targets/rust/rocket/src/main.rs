@@ -181,7 +181,7 @@ impl<'r> FromRequest<'r> for Token {
 //
 // Rocket binds a query through the route attribute: `?<q..>` names a guard, and the
 // derived FromForm parses and types each field before the handler runs. The struct it
-// fills is the struct the handler answers.
+// fills is what the handler echoes beside the small payload.
 //
 // The fields are plain, so FromForm decides what a missing or unparseable one is, and what
 // Rocket answers when a guard does not fit is Rocket's own. The endpoint set sends neither.
@@ -324,12 +324,12 @@ fn param_two(one: i64, two: i64) -> Json<d::WithEcho<ParamTwo>> {
 }
 
 #[get("/query/one?<q..>")]
-fn query_one(q: QueryOne) -> Json<QueryOne> {
-    Json(q)
+fn query_one(q: QueryOne) -> Json<d::WithEcho<QueryOne>> {
+    Json(d::with_echo("small", q))
 }
 #[get("/query/many?<q..>")]
-fn query_many(q: QueryMany) -> Json<QueryMany> {
-    Json(q)
+fn query_many(q: QueryMany) -> Json<d::WithEcho<QueryMany>> {
+    Json(d::with_echo("small", q))
 }
 
 /// The handler reads no header at all, so headers.many minus headers.few is the cost of

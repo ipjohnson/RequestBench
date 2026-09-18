@@ -8,7 +8,7 @@ run. Agreement between two frameworks is evidence that they are consistent; it i
 evidence that either is right, and nothing in the repository said what the right answer
 was. This produces that statement.
 
-It is derived rather than hand-written, because fifty endpoints against a 2,431-entry
+It is derived rather than hand-written, because fifty endpoints against a 1,905-entry
 plan is not a file anyone can author correctly. The derivation is only trustworthy because
 of what it insists on: every contributing target must answer identically, and they are
 independent implementations in four languages against four different HTTP stacks. A value

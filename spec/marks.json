@@ -63,11 +63,9 @@
       "label": "not reaching the domain",
       "scope": "record",
       "what": "a handler and its support together must name something the shared domain gave the file",
-      "why": "a registration that names a handler defined elsewhere is complete, correct, and shows a reader nothing. The shared domain is where the behaviour is, so a snippet that never gets there has not captured the endpoint. The exceptions are the two families that have no domain to reach: baseline.plaintext returns a literal, and the query family is parsing and coercion isolated from any use of the values",
+      "why": "a registration that names a handler defined elsewhere is complete, correct, and shows a reader nothing. The shared domain is where the behaviour is, so a snippet that never gets there has not captured the endpoint. The exception is baseline.plaintext, which has no domain to reach: it returns a literal",
       "except": [
-        "baseline.plaintext",
-        "query.one",
-        "query.many"
+        "baseline.plaintext"
       ]
     },
     "mentions_dep": {

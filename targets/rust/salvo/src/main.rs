@@ -148,8 +148,8 @@ async fn parse(req: &mut Request, res: &mut Response) -> Option<Value> {
 //
 // `req.parse_queries::<T>()` is the framework's binding half, the same shape as
 // `parse_json` on the body: salvo deserializes the query string into the struct and
-// answers its own ParseError for what will not fit. The struct it fills is the struct the
-// handler answers.
+// answers its own ParseError for what will not fit. The struct it fills is what the handler
+// echoes beside the small payload.
 //
 // The fields are plain, so serde decides what a missing or unparseable one is, and the
 // status written for it is salvo's own, the same 400 a body that will not parse gets. The
@@ -311,17 +311,19 @@ async fn require_token(req: &mut Request, res: &mut Response, ctrl: &mut FlowCtr
 #[handler]
 async fn noop() {}
 
+// rb:wiring query.*
 #[handler]
 async fn query_one(req: &mut Request, res: &mut Response) {
     if let Some(q) = bound_query::<QueryOne>(req, res) {
-        res.render(Json(q));
+        res.render(Json(d::with_echo("small", q)));
     }
 }
 
+// rb:wiring query.*
 #[handler]
 async fn query_many(req: &mut Request, res: &mut Response) {
     if let Some(q) = bound_query::<QueryMany>(req, res) {
-        res.render(Json(q));
+        res.render(Json(d::with_echo("small", q)));
     }
 }
 

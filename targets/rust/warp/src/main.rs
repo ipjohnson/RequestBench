@@ -174,7 +174,7 @@ fn parse(b: &Bytes) -> Result<Value, Response> {
 // `warp::query::<T>()` is the framework's binding half, the same shape as
 // `warp::body::json::<T>()` on the body: it is a filter in the chain that deserializes the
 // query string into the struct and rejects what will not fit before the handler runs. The
-// struct it fills is the struct the handler answers.
+// struct it fills is what the handler echoes beside the small payload.
 //
 // The fields are plain, so serde decides what a missing or unparseable one is: an
 // InvalidQuery rejection, which warp renders as its own 400. The endpoint set sends
@@ -360,11 +360,11 @@ fn routes() -> impl warp::Filter<Extract = (impl warp::Reply,), Error = std::con
     let queries = warp::path!("query" / "one")
         .and(warp::get())
         .and(warp::query::<QueryOne>())
-        .map(|q: QueryOne| json(&q))
+        .map(|q: QueryOne| json(&d::with_echo("small", q)))
         .or(warp::path!("query" / "many")
             .and(warp::get())
             .and(warp::query::<QueryMany>())
-            .map(|q: QueryMany| json(&q)))
+            .map(|q: QueryMany| json(&d::with_echo("small", q))))
         .unify()
         // The handler reads no header at all, so headers.many minus headers.few is the
         // cost of materialising 25 nobody asked for.

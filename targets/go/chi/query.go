@@ -1,4 +1,5 @@
-// query: query string parsing and coercion, isolated from any use of the values.
+// query: query string parsing, percent-decoding and coercion, with the values echoed and
+// put to no other use.
 //
 // chi has no binder to plug into: it routes net/http handlers, so r.URL.Query() is as far
 // as the framework goes and the coercion is the handler's own work. This is this target's
@@ -16,6 +17,7 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
+	d "github.com/ianjohnson/requestbench/targets/go/_shared"
 )
 
 // rb:wiring query.*
@@ -54,16 +56,16 @@ func qint(q map[string][]string, k string) int {
 func registerQuery(r chi.Router) {
 	r.Get("/query/one", func(w http.ResponseWriter, req *http.Request) {
 		q := req.URL.Query()
-		writeJSON(w, 200, queryOne{Page: qint(q, "page")})
+		writeJSON(w, 200, d.WithEcho("small", queryOne{Page: qint(q, "page")}))
 	})
 
 	r.Get("/query/many", func(w http.ResponseWriter, req *http.Request) {
 		q := req.URL.Query()
-		writeJSON(w, 200, queryMany{
+		writeJSON(w, 200, d.WithEcho("small", queryMany{
 			Page: qint(q, "page"), Size: qint(q, "size"),
 			Status: qstr(q, "status"), Category: qstr(q, "category"),
 			Sort: qstr(q, "sort"), Q: qstr(q, "q"),
 			MinPrice: qint(q, "min_price"), MaxPrice: qint(q, "max_price"),
-		})
+		}))
 	})
 }

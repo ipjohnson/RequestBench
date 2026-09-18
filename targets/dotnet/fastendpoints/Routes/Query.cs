@@ -4,7 +4,8 @@ using RequestBench.Domain;
 namespace RequestBench.FastEndpointsTarget.Routes;
 
 /// <summary>
-/// query: query string parsing and coercion, isolated from any use of the values.
+/// query: query string parsing, percent-decoding and coercion, with the values echoed and put
+/// to no other use.
 ///
 /// FastEndpoints binds into a request DTO: an Endpoint&lt;TRequest, TResponse&gt; has the
 /// framework fill TRequest from the request before ExecuteAsync runs, and for a GET that is
@@ -52,7 +53,8 @@ public sealed class OrderFilterRequest
 }
 
 // rb:handler query.one
-public sealed class QueryOneEndpoint : Endpoint<QueryOneRequest, QueryOne>
+public sealed class QueryOneEndpoint(DomainModel domain)
+    : Endpoint<QueryOneRequest, PayloadWithEcho>
 {
     public override void Configure()
     {
@@ -60,12 +62,14 @@ public sealed class QueryOneEndpoint : Endpoint<QueryOneRequest, QueryOne>
         AllowAnonymous();
     }
 
-    public override Task<QueryOne> ExecuteAsync(QueryOneRequest req, CancellationToken ct) =>
-        Task.FromResult(new QueryOne(req.Page));
+    public override Task<PayloadWithEcho> ExecuteAsync(QueryOneRequest req,
+                                                       CancellationToken ct) =>
+        Task.FromResult(domain.WithEcho("small", new QueryOne(req.Page)));
 }
 
 // rb:handler query.many
-public sealed class QueryManyEndpoint : Endpoint<QueryManyRequest, QueryMany>
+public sealed class QueryManyEndpoint(DomainModel domain)
+    : Endpoint<QueryManyRequest, PayloadWithEcho>
 {
     public override void Configure()
     {
@@ -73,7 +77,9 @@ public sealed class QueryManyEndpoint : Endpoint<QueryManyRequest, QueryMany>
         AllowAnonymous();
     }
 
-    public override Task<QueryMany> ExecuteAsync(QueryManyRequest req, CancellationToken ct) =>
-        Task.FromResult(new QueryMany(req.Page, req.Size, req.Status, req.Category,
-                                      req.Sort, req.Q, req.MinPrice, req.MaxPrice));
+    public override Task<PayloadWithEcho> ExecuteAsync(QueryManyRequest req,
+                                                       CancellationToken ct) =>
+        Task.FromResult(domain.WithEcho("small", new QueryMany(req.Page, req.Size, req.Status,
+                                                               req.Category, req.Sort, req.Q,
+                                                               req.MinPrice, req.MaxPrice)));
 }

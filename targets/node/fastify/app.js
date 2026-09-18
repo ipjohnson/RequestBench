@@ -92,9 +92,9 @@ app.get("/parameters/:one/with-second/:two", bindsTwoCaptures,
   (req) => d.withEcho("small", req.params));
 
 // The schema is the binding: ajv coerces the declared parameters and drops the rest, so
-// req.query is already what the arm answers.
-app.get("/query/one",  bindsOne,  (req) => req.query);
-app.get("/query/many", bindsMany, (req) => req.query);
+// req.query is already the echo.
+app.get("/query/one",  bindsOne,  (req) => d.withEcho("small", req.query));
+app.get("/query/many", bindsMany, (req) => d.withEcho("small", req.query));
 
 // The handler reads no header at all, so headers.many minus headers.few is the cost of
 // materialising 25 more that nobody asked for.

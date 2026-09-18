@@ -388,17 +388,17 @@ footer { margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--rule);
 
 <div class="grp">
   <div class="grphead"><h3>query</h3><span class="cnt">2 endpoints</span>
-    <p class="job">Query string parsing and coercion, isolated from anything the values are used for.</p></div>
+    <p class="job">Query string parsing, percent-decoding and coercion through the framework's own binder, with the values echoed beside the small payload and put to no other use.</p></div>
   <div class="scroll"><table>
   <thead><tr><th>Id</th><th>Method</th><th>Path</th><th class="n">Expect</th><th>Base</th></tr></thead>
   <tbody>
-  <tr><td class="m">query.one</td><td class="m">GET</td><td class="w">/query/one?page={page}</td><td class="n">200</td><td class="base">json.small</td></tr>
-  <tr><td class="m">query.many</td><td class="m">GET</td><td class="w">/query/many?page={page}&amp;size={size}&amp;…<br><span class="base">eight parameters, mixed types</span></td><td class="n">200</td><td class="base">query.one</td></tr>
+  <tr><td class="m">query.one</td><td class="m">GET</td><td class="w">/query/one?page={run.page}</td><td class="n">200</td><td class="base">json.small</td></tr>
+  <tr><td class="m">query.many</td><td class="m">GET</td><td class="w">/query/many?page={run.page}&amp;size={run.size}&amp;…<br><span class="base">eight parameters, mixed types</span></td><td class="n">200</td><td class="base">query.one</td></tr>
   </tbody></table></div>
   <dl class="holds">
-    <div><dt>Held constant</dt><dd>Route, and the work done with the values: none beyond echoing them coerced.</dd></div>
-    <div><dt>Varies</dt><dd>Parameter count, 1 against 8.</dd></div>
-    <div><dt>The delta reads</dt><dd>Per-parameter parse and coercion cost. The response must echo the coerced values, or the parse can be skipped.</dd></div>
+    <div><dt>Held constant</dt><dd>Route, and the work done with the values: none beyond echoing them coerced. The response is the small payload with an <code>echo</code> object beside it, where <code>page</code>, <code>size</code>, <code>min_price</code> and <code>max_price</code> are numbers and <code>status</code>, <code>category</code>, <code>sort</code> and <code>q</code> are strings. The values are drawn once per run: the integers at a fixed number of digits, the three words from the choices a typed binder accepts, and <code>q</code> as two five-letter words around one space, which the driver sends as <code>%20</code> and never <code>+</code>, so every framework runs its percent-decoder and none can trim the space away.</dd></div>
+    <div><dt>Varies</dt><dd>Parameter count, 1 against 8. Eight is what a typical search endpoint carries: page and size, a sort, a text term and four filters.</dd></div>
+    <div><dt>The delta reads</dt><dd><span class="mono">one − json.small</span> is binding one parameter and echoing it. <span class="mono">many − one</span> is binding and echoing seven more. The response must echo the coerced values, or the parse can be skipped.</dd></div>
   </dl>
 </div>
 

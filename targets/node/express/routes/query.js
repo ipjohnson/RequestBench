@@ -1,4 +1,4 @@
-// query: query string parsing and coercion, isolated from any use of the values.
+// query: query string parsing, percent-decoding and coercion, with the values echoed.
 //
 // Express has no binder to plug into: req.query is what its query parser produced and the
 // coercion is the handler's own work. This is this target's copy on purpose. Sharing one
@@ -8,6 +8,8 @@
 // A missing parameter and one that will not parse both coerce to the same value they always
 // did, which is what a target with no binder can do without inventing an error contract the
 // family does not have.
+import * as d from "../../_shared/domain.js";
+
 // rb:wiring query.*
 const int = (v) => { const n = Number(v); return Number.isInteger(n) ? n : 0; };
 const str = (v) => v ?? null;
@@ -25,7 +27,7 @@ export const coerceFilter = (q) => ({ page: int(q.page), size: int(q.size), stat
 // rb:end
 
 export default function query(app) {
-  app.get("/query/one", (req, res) => res.json(coerceOne(req.query)));
+  app.get("/query/one", (req, res) => res.json(d.withEcho("small", coerceOne(req.query))));
 
-  app.get("/query/many", (req, res) => res.json(coerceMany(req.query)));
+  app.get("/query/many", (req, res) => res.json(d.withEcho("small", coerceMany(req.query))));
 }

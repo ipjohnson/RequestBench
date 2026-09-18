@@ -1,8 +1,9 @@
-"""query: parsing and coercing query parameters, at one and at eight.
+"""query: parsing, percent-decoding and coercing query parameters, at one and at eight.
 
-The values never reach the answer, which is the point: this family is the parse and the
-coercion isolated from any use of them. A target that silently drops a parameter it cannot
-coerce answers the same body as one that read all eight, so what these hold is the status.
+The answer is the small payload with an echo of every value the target bound. planned.py
+draws the values once per process and fills them into the pinned answer, so floor.check
+holds each of them as well as the status. A target that drops a parameter, coerces one wrong
+or leaves the %20 in q undecoded answers a different echo.
 """
 
 import floor

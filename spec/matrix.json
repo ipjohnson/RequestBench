@@ -284,7 +284,7 @@
         "builtin": "MVC's own model validation: [ApiController] checks ModelState against the DataAnnotations on the shared OrderIn before the action is entered, and answers ProblemDetails itself."
       },
       "query": {
-        "builtin": "[FromQuery] on a typed parameter is the binding, converted before the action runs."
+        "builtin": "[FromQuery] on a typed parameter is the binding, converted before the action runs. The action echoes the bound values beside the small payload."
       },
       "headers": {
         "builtin": "[FromHeader] on a typed parameter is the binding, converted before the action runs. The /headers action declares none and reads none."
@@ -330,7 +330,7 @@
         "mentions": "AbstractValidator"
       },
       "query": {
-        "builtin": "A typed lambda parameter is the binding: ASP.NET converts it from the query string before the route runs."
+        "builtin": "A typed lambda parameter is the binding: ASP.NET converts it from the query string before the route runs. The route echoes the bound values beside the small payload."
       },
       "headers": {
         "builtin": "[FromHeader] on a typed lambda parameter is the binding: ASP.NET converts the header before the route runs. /headers declares none and reads none."
@@ -374,7 +374,7 @@
         "mechanism": "FastEndpoints' own request binding and validation over the annotated request class"
       },
       "query": {
-        "builtin": "A property on the request class is the binding: FastEndpoints fills it from the query string before ExecuteAsync runs."
+        "builtin": "A property on the request class is the binding: FastEndpoints fills it from the query string before ExecuteAsync runs. ExecuteAsync echoes the bound values beside the small payload."
       },
       "headers": {
         "builtin": "A [FromHeader] property on the request class is the binding: FastEndpoints fills it from the header before ExecuteAsync runs. The /headers endpoint has no request class and reads nothing."
@@ -418,7 +418,7 @@
         "mechanism": "minimal APIs' own validation, new in .NET 10: the framework checks the annotated record before the endpoint is entered"
       },
       "query": {
-        "builtin": "A typed lambda parameter is the binding: ASP.NET converts it from the query string before the endpoint runs."
+        "builtin": "A typed lambda parameter is the binding: ASP.NET converts it from the query string before the endpoint runs. The endpoint echoes the bound values beside the small payload."
       },
       "headers": {
         "builtin": "[FromHeader] on a typed lambda parameter is the binding: ASP.NET converts the header before the endpoint runs. /headers declares none and reads none."
@@ -464,7 +464,7 @@
         "mentions": "AbstractValidator"
       },
       "query": {
-        "builtin": "A typed method parameter is the binding: Wolverine fills it from the query string before the endpoint runs."
+        "builtin": "A typed method parameter is the binding: Wolverine fills it from the query string before the endpoint runs. The endpoint echoes the bound values beside the small payload."
       },
       "headers": {
         "builtin": "[FromHeader] on a typed method parameter is the binding: Wolverine fills it from the header before the endpoint runs. /headers declares none and reads none."
@@ -508,7 +508,7 @@
         "mechanism": "encoding/json into a map, then this target's own field walk: chi has no validation layer to plug into"
       },
       "query": {
-        "mechanism": "r.URL.Query() coerced by hand, which is as far as a router over net/http handlers goes"
+        "mechanism": "r.URL.Query() coerced by hand, which is as far as a router over net/http handlers goes, with the coerced struct as the echo beside the small payload"
       },
       "headers": {
         "mechanism": "req.Header.Get converted by hand on /headers/bind, which is as far as a router over net/http handlers goes, with the values echoed beside the small payload; /headers reads no header at all"
@@ -554,7 +554,7 @@
         "mentions": "validator"
       },
       "query": {
-        "mechanism": "Echo's own binder reading the query: tag, with the bound struct as the response shape"
+        "mechanism": "Echo's own binder reading the query: tag, with the bound struct as the echo beside the small payload"
       },
       "headers": {
         "mechanism": "the DefaultBinder's BindHeaders reading the header: tag on /headers/bind, since c.Bind never reads a header, with the bound struct echoed beside the small payload; /headers reads no header at all"
@@ -604,7 +604,7 @@
         "mentions": "validator"
       },
       "query": {
-        "mechanism": "c.Bind().Query through gofiber/schema, reading the query: tag, with the bound struct as the response shape"
+        "mechanism": "c.Bind().Query through gofiber/schema, reading the query: tag, with the bound struct as the echo beside the small payload"
       },
       "headers": {
         "mechanism": "c.Bind().Header through gofiber/schema, reading the header: tag on /headers/bind, with the bound struct echoed beside the small payload; /headers reads no header at all"
@@ -654,7 +654,7 @@
         "mentions": "validator"
       },
       "query": {
-        "mechanism": "ShouldBindQuery reading the form: tag, with the bound struct as the response shape"
+        "mechanism": "ShouldBindQuery reading the form: tag, with the bound struct as the echo beside the small payload"
       },
       "headers": {
         "mechanism": "ShouldBindHeader reading the header: tag on /headers/bind, with the bound struct echoed beside the small payload; /headers reads no header at all"
@@ -700,7 +700,7 @@
         "mechanism": "encoding/json into a map, then this target's own field walk: mux has no validation layer to plug into"
       },
       "query": {
-        "mechanism": "r.URL.Query() coerced by hand, which is as far as a router over net/http handlers goes"
+        "mechanism": "r.URL.Query() coerced by hand, which is as far as a router over net/http handlers goes, with the coerced struct as the echo beside the small payload"
       },
       "headers": {
         "mechanism": "req.Header.Get converted by hand on /headers/bind, which is as far as a router over net/http handlers goes, with the values echoed beside the small payload; /headers reads no header at all"
@@ -744,7 +744,7 @@
         "mechanism": "this target's own field walk: Helidon SE is a routing and server library and Bean Validation lives in the MP flavour"
       },
       "query": {
-        "builtin": "req.query() is what Helidon parsed, and the handler coerces it in place."
+        "builtin": "req.query() is what Helidon parsed, and the handler coerces it in place. It echoes the coerced values beside the small payload."
       },
       "headers": {
         "builtin": "req.headers() is what Helidon parsed, and the handler converts x-rb-account in place with asInt(); /headers reads none."
@@ -790,7 +790,7 @@
         "mechanism": "Javalin's own validator: bodyValidator runs the checks and raises ValidationException itself, so no handler calls a validator"
       },
       "query": {
-        "mechanism": "ctx.queryParamAsClass, Javalin's own converter, with the coerced values as the response shape"
+        "mechanism": "ctx.queryParamAsClass, Javalin's own converter, with the coerced values echoed beside the small payload"
       },
       "headers": {
         "builtin": "The handler binds each header with ctx.headerAsClass, Javalin's own converter; /headers reads none."
@@ -836,7 +836,7 @@
         "mentions": "NotNull"
       },
       "query": {
-        "builtin": "@QueryValue names the parameter and declares its type, and Micronaut converts it before the method runs."
+        "builtin": "@QueryValue names the parameter and declares its type, and Micronaut converts it before the method runs. The method echoes the converted values beside the small payload."
       },
       "headers": {
         "builtin": "@Header names the header and declares its type, and Micronaut converts it before the method runs; /headers reads none."
@@ -884,7 +884,7 @@
         "mentions": "NotNull"
       },
       "query": {
-        "builtin": "@QueryParam names the parameter and declares its type, and RESTEasy converts it before the method runs."
+        "builtin": "@QueryParam names the parameter and declares its type, and RESTEasy converts it before the method runs. The method echoes the converted values beside the small payload."
       },
       "headers": {
         "builtin": "@HeaderParam names the header and declares its type, and RESTEasy converts it before the method runs; /headers reads none."
@@ -932,7 +932,7 @@
         "mentions": "NotNull"
       },
       "query": {
-        "builtin": "@RequestParam names the parameter and declares its type, and Spring converts it before the method runs."
+        "builtin": "@RequestParam names the parameter and declares its type, and Spring converts it before the method runs. The method echoes the converted values beside the small payload."
       },
       "headers": {
         "builtin": "@RequestHeader names the header and declares its type, and Spring converts it before the method runs; /headers reads none."
@@ -982,7 +982,7 @@
         "mentions": "ValidationHandler"
       },
       "query": {
-        "mechanism": "a ValidationHandler declaring the parameters, so Vert.x parses and coerces before the handler runs",
+        "mechanism": "a ValidationHandler declaring the parameters, so Vert.x parses and coerces before the handler runs, with the typed values echoed beside the small payload",
         "dep": "vertx-web-validation",
         "mentions": "ValidationHandler"
       },
@@ -1034,7 +1034,7 @@
         "mechanism": "express.json() mounted per route, then this target's own field walk in validation.js"
       },
       "query": {
-        "mechanism": "Express's query parser, coerced by hand: there is no binder to bind to"
+        "mechanism": "Express's query parser, coerced by hand because there is no binder to bind to, and echoed beside the small payload"
       },
       "headers": {
         "mechanism": "req.get on /headers/bind, converted by hand: Express has no header binder, and /headers reads none"
@@ -1082,7 +1082,7 @@
         "mechanism": "schema.body on the route: Fastify compiles it once and its own ajv runs it before the handler"
       },
       "query": {
-        "mechanism": "schema.querystring on the route, which is the binding: ajv coerces what is declared and drops the rest"
+        "mechanism": "schema.querystring on the route, which is the binding: ajv coerces what is declared and drops the rest, and req.query is echoed beside the small payload"
       },
       "headers": {
         "mechanism": "schema.headers on /headers/bind, which is the binding: ajv converts x-rb-account to an integer and the handler echoes the three it declared; /headers reads none"
@@ -1128,7 +1128,7 @@
         "mechanism": "readBody, then this target's own field walk in validation.js: h3 has no validation layer"
       },
       "query": {
-        "mechanism": "getValidatedQuery: h3 reads the query, runs this target's coercion and owns the refusal"
+        "mechanism": "getValidatedQuery: h3 reads the query, runs this target's coercion and owns the refusal, and the handler echoes the result beside the small payload"
       },
       "headers": {
         "mechanism": "e.req.headers.get on /headers/bind, converted by hand: h3's own header validation hands back strings only, and /headers reads none"
@@ -1174,7 +1174,7 @@
         "mechanism": "hono/validator as a route-level hook: Hono reads the body, hands it to this target's walk and short circuits on a refusal"
       },
       "query": {
-        "mechanism": "validator(\"query\", fn): Hono runs the coercion and the handler reads the result back with c.req.valid"
+        "mechanism": "validator(\"query\", fn): Hono runs the coercion, and the handler reads the result back with c.req.valid and echoes it beside the small payload"
       },
       "headers": {
         "mechanism": "validator(\"header\", fn) on /headers/bind: Hono hands the check every request header, the check converts x-rb-account, and the handler reads the three back with c.req.valid; /headers reads none"
@@ -1222,7 +1222,7 @@
         "dep": "koa-bodyparser"
       },
       "query": {
-        "mechanism": "Koa's query parser, coerced by hand: there is no binder to bind to"
+        "mechanism": "Koa's query parser, coerced by hand because there is no binder to bind to, and echoed beside the small payload"
       },
       "headers": {
         "mechanism": "ctx.get on /headers/bind, converted by hand: Koa has no header binder, and /headers reads none"
@@ -1269,7 +1269,7 @@
         "mentions": "forms.Form"
       },
       "query": {
-        "mechanism": "a django.forms.Form over request.GET, so the coercion is the framework's and the cleaned data is the response shape",
+        "mechanism": "a django.forms.Form over request.GET, so the coercion is the framework's and the cleaned data is echoed beside the small payload",
         "dep": "django",
         "mentions": "forms.Form"
       },
@@ -1319,7 +1319,7 @@
         "mentions": "BaseModel"
       },
       "query": {
-        "builtin": "A typed function parameter is the binding: FastAPI coerces it from the query string before the handler runs."
+        "builtin": "A typed function parameter is the binding: FastAPI coerces it from the query string before the handler runs. The handler echoes the bound values beside the small payload."
       },
       "headers": {
         "mechanism": "Header() on a typed function parameter for each header /headers/bind echoes, coerced before the handler runs; /headers reads none and answers through the small() helper"
@@ -1367,7 +1367,7 @@
         "mechanism": "this target's own field walk, raising Refused: Flask has no validation layer to plug into"
       },
       "query": {
-        "builtin": "request.args is Werkzeug's own MultiDict and its get() takes the conversion, so the coercion is the framework's and happens in the view."
+        "builtin": "request.args is Werkzeug's own MultiDict and its get() takes the conversion, so the coercion is the framework's and happens in the view. The view echoes the converted values beside the small payload."
       },
       "headers": {
         "mechanism": "request.headers, Werkzeug's own Headers, whose get() takes the conversion for each header /headers/bind echoes; /headers reads none and answers through the small helper"
@@ -1415,7 +1415,7 @@
         "mentions": "dataclass"
       },
       "query": {
-        "builtin": "A typed function parameter is the binding: Litestar coerces it from the query string before the handler runs."
+        "builtin": "A typed function parameter is the binding: Litestar coerces it from the query string before the handler runs. The handler echoes the bound values beside the small payload."
       },
       "headers": {
         "builtin": "HeaderParameter on a typed function parameter is the binding: Litestar reads the named header and msgspec converts it before the handler runs. /headers reads none."
@@ -1463,7 +1463,7 @@
         "mechanism": "this target's own field walk, raising Refused: Sanic has no validation layer to plug into"
       },
       "query": {
-        "mechanism": "request.args coerced by hand, which is as far as Sanic goes"
+        "mechanism": "request.args coerced by hand, which is as far as Sanic goes, and echoed beside the small payload"
       },
       "headers": {
         "mechanism": "request.headers read in the handler and converted by hand, which is as far as Sanic goes; /headers reads none and answers through the small helper"
@@ -1509,7 +1509,7 @@
         "mechanism": "this target's own field walk, raising Refused: Starlette has no validation layer to plug into"
       },
       "query": {
-        "mechanism": "request.query_params coerced by hand, which is as far as Starlette goes"
+        "mechanism": "request.query_params coerced by hand, which is as far as Starlette goes, and echoed beside the small payload"
       },
       "headers": {
         "mechanism": "request.headers read in the handler and converted by hand, which is as far as Starlette goes; /headers reads none and answers through the small handler"
@@ -1559,7 +1559,7 @@
         "mentions": "Deserialize"
       },
       "query": {
-        "mechanism": "actix's typed Query extractor over a serde struct, which is also the response shape",
+        "mechanism": "actix's typed Query extractor over a serde struct, which the handler echoes beside the small payload",
         "dep": "serde",
         "mentions": "Deserialize"
       },
@@ -1613,7 +1613,7 @@
         "mentions": "Deserialize"
       },
       "query": {
-        "mechanism": "axum's typed Query extractor over a serde struct, which is also the response shape",
+        "mechanism": "axum's typed Query extractor over a serde struct, which the handler echoes beside the small payload",
         "dep": "serde",
         "mentions": "Deserialize"
       },
@@ -1665,7 +1665,7 @@
         "mentions": "Deserialize"
       },
       "query": {
-        "mechanism": "poem's typed Query extractor over a serde struct, which is also the response shape",
+        "mechanism": "poem's typed Query extractor over a serde struct, which the handler echoes beside the small payload",
         "dep": "serde",
         "mentions": "Deserialize"
       },
@@ -1715,7 +1715,7 @@
         "mentions": "Deserialize"
       },
       "query": {
-        "mechanism": "Rocket's own FromForm query guard over a struct, which is also the response shape"
+        "mechanism": "Rocket's own FromForm query guard over a struct, which the handler echoes beside the small payload"
       },
       "headers": {
         "mechanism": "a Rocket request guard of this target's own on /headers/bind, which reads the three bound headers and converts the account itself, because Rocket has no header binder; /headers reads none"
@@ -1765,7 +1765,7 @@
         "mentions": "Deserialize"
       },
       "query": {
-        "mechanism": "salvo's own query parsing into a serde struct, which is also the response shape",
+        "mechanism": "salvo's own query parsing into a serde struct, which the handler echoes beside the small payload",
         "dep": "serde",
         "mentions": "Deserialize"
       },
@@ -1817,7 +1817,7 @@
         "mentions": "Deserialize"
       },
       "query": {
-        "mechanism": "warp's typed query filter over a serde struct, which is also the response shape",
+        "mechanism": "warp's typed query filter over a serde struct, which the handler echoes beside the small payload",
         "dep": "serde",
         "mentions": "Deserialize"
       },
@@ -2093,7 +2093,7 @@
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, over the xunit `dotnet new xunit` writes",
         "dep": "Microsoft.AspNetCore.Mvc.Testing",
         "transport": "in-memory",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the suite drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, over the xunit `dotnet new xunit` writes",
@@ -2179,7 +2179,7 @@
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, over the xunit `dotnet new xunit` writes",
         "dep": "Microsoft.AspNetCore.Mvc.Testing",
         "transport": "in-memory",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the suite drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, over the xunit `dotnet new xunit` writes",
@@ -2265,7 +2265,7 @@
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, reached for directly because Carter ships no test package of its own",
         "dep": "Microsoft.AspNetCore.Mvc.Testing",
         "transport": "in-memory",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the suite drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, reached for directly because Carter ships no test package of its own",
@@ -2351,7 +2351,7 @@
         "facility": "AppFixture<Program> from FastEndpoints.Testing, the framework's own package, which brings xunit.v3 with it",
         "dep": "FastEndpoints.Testing",
         "transport": "in-memory",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the suite drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
         "facility": "AppFixture<Program> from FastEndpoints.Testing, the framework's own package, which brings xunit.v3 with it",
@@ -2437,7 +2437,7 @@
         "facility": "AlbaHost.For<Program>, which Wolverine's documentation names for HTTP tests",
         "dep": "Alba",
         "transport": "in-memory",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the suite drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
         "facility": "AlbaHost.For<Program>, which Wolverine's documentation names for HTTP tests",
@@ -2523,7 +2523,7 @@
         "facility": "FastAPI's TestClient, which is Starlette's, over the httpx2 it asks for at the pinned Starlette; run by pytest",
         "dep": "httpx2",
         "transport": "in-memory",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the test drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
         "facility": "FastAPI's TestClient, which is Starlette's, over the httpx2 it asks for at the pinned Starlette; run by pytest",
@@ -2609,7 +2609,7 @@
         "facility": "Starlette's TestClient over httpx2; run by pytest",
         "dep": "httpx2",
         "transport": "in-memory",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the test drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
         "facility": "Starlette's TestClient over httpx2; run by pytest",
@@ -2695,7 +2695,7 @@
         "facility": "litestar.testing.TestClient, which ships with the framework and is built on httpx; run by pytest",
         "dep": "httpx",
         "transport": "in-memory",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the test drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
         "facility": "litestar.testing.TestClient, which ships with the framework and is built on httpx; run by pytest",
@@ -2772,7 +2772,7 @@
       "query": {
         "facility": "app.test_client(), Werkzeug's, which ships with Flask; run by pytest",
         "transport": "in-memory",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the test drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
         "facility": "app.test_client(), Werkzeug's, which ships with Flask; run by pytest",
@@ -2853,7 +2853,7 @@
         "facility": "app.test_client from sanic-testing, which starts the application on a loopback port for every request; run by pytest",
         "dep": "sanic-testing",
         "transport": "loopback",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the test drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
         "facility": "app.test_client from sanic-testing, which starts the application on a loopback port for every request; run by pytest",
@@ -2930,7 +2930,7 @@
       "query": {
         "facility": "self.async_client, Django's AsyncClient on a SimpleTestCase; run by Django's own DiscoverRunner rather than pytest",
         "transport": "in-memory",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the test drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
         "facility": "self.async_client, Django's AsyncClient on a SimpleTestCase; run by Django's own DiscoverRunner rather than pytest",
@@ -3002,7 +3002,7 @@
       "query": {
         "facility": "fastify.inject(), which is light-my-request and ships with Fastify; run by node:test, as Fastify's testing guide does",
         "transport": "in-memory",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the test drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
         "facility": "fastify.inject(), which is light-my-request and ships with Fastify; run by node:test, as Fastify's testing guide does",
@@ -3083,7 +3083,7 @@
         "facility": "app.request(), which hands a Request to the application's own fetch handler; run by Vitest, as Hono's testing guide does",
         "dep": "vitest",
         "transport": "in-memory",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the test drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
         "facility": "app.request(), which hands a Request to the application's own fetch handler; run by Vitest, as Hono's testing guide does",
@@ -3160,7 +3160,7 @@
       "query": {
         "facility": "app.request(), which h3's guide calls testing without listening; its documentation names no runner, so node:test",
         "transport": "in-memory",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the test drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
         "facility": "app.request(), which h3's guide calls testing without listening; its documentation names no runner, so node:test",
@@ -3241,7 +3241,7 @@
         "facility": "supertest, which binds the application to an ephemeral loopback port; run by Mocha, which is what supertest's README writes its examples for",
         "dep": "supertest",
         "transport": "loopback",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the test drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
         "facility": "supertest, which binds the application to an ephemeral loopback port; run by Mocha, which is what supertest's README writes its examples for",
@@ -3327,7 +3327,7 @@
         "facility": "supertest on app.callback(), which binds it to an ephemeral loopback port; run by Mocha, which is what supertest's README writes its examples for",
         "dep": "supertest",
         "transport": "loopback",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the test drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
         "facility": "supertest on app.callback(), which binds it to an ephemeral loopback port; run by Mocha, which is what supertest's README writes its examples for",
@@ -3413,7 +3413,7 @@
         "facility": "@SpringBootTest with MockMvc, as Spring Boot's reference starts, from the per-technology test starters Spring Initializr writes for Boot 4.1",
         "dep": "spring-boot-starter-webmvc-test",
         "transport": "in-memory",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the binding and the coercion: the answer echoes the values the test drew, so a parameter that was dropped or coerced wrong fails on the body. MockMvc's request builder parses and percent-decodes the query string itself, so the test does not reach Tomcat's decoder"
       },
       "headers": {
         "facility": "@SpringBootTest with MockMvc, as Spring Boot's reference starts, from the per-technology test starters Spring Initializr writes for Boot 4.1",
@@ -3499,7 +3499,7 @@
         "facility": "@QuarkusTest with REST Assured, as code.quarkus.io writes; it starts the application's HTTP server in the test JVM",
         "dep": "rest-assured",
         "transport": "loopback",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the test drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
         "facility": "@QuarkusTest with REST Assured, as code.quarkus.io writes; it starts the application's HTTP server in the test JVM",
@@ -3585,7 +3585,7 @@
         "facility": "@MicronautTest with an injected @Client HttpClient, as Micronaut Launch writes; it starts the embedded server on a random port",
         "dep": "micronaut-test-junit5",
         "transport": "loopback",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the test drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
         "facility": "@MicronautTest with an injected @Client HttpClient, as Micronaut Launch writes; it starts the embedded server on a random port",
@@ -3671,7 +3671,7 @@
         "facility": "@ServerTest with the injected Http1Client, which Helidon's SE testing documentation leads with and says opens ports",
         "dep": "helidon-webserver-testing-junit5",
         "transport": "loopback",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the test drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
         "facility": "@ServerTest with the injected Http1Client, which Helidon's SE testing documentation leads with and says opens ports",
@@ -3757,7 +3757,7 @@
         "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with WebClient, as vertx-junit5's documentation does",
         "dep": "vertx-junit5",
         "transport": "loopback",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the test drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
         "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with WebClient, as vertx-junit5's documentation does",
@@ -3843,7 +3843,7 @@
         "facility": "JavalinTest.test() from javalin-testtools, which starts the application on a random port per test; its client reads bodies as strings, so gzip requests go to the origin by hand",
         "dep": "javalin-testtools",
         "transport": "loopback",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the test drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
         "facility": "JavalinTest.test() from javalin-testtools, which starts the application on a random port per test; its client reads bodies as strings, so gzip requests go to the origin by hand",
@@ -3920,7 +3920,7 @@
       "query": {
         "facility": "net/http/httptest against the engine's ServeHTTP, as Gin's testing documentation does; run by go test",
         "transport": "in-memory",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the test drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
         "facility": "net/http/httptest against the engine's ServeHTTP, as Gin's testing documentation does; run by go test",
@@ -3992,7 +3992,7 @@
       "query": {
         "facility": "net/http/httptest against the Echo instance's ServeHTTP; Echo's guide calls handlers directly instead, which would skip every route-scoped middleware; run by go test",
         "transport": "in-memory",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the test drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
         "facility": "net/http/httptest against the Echo instance's ServeHTTP; Echo's guide calls handlers directly instead, which would skip every route-scoped middleware; run by go test",
@@ -4064,7 +4064,7 @@
       "query": {
         "facility": "net/http/httptest against the router's ServeHTTP; chi has no testing guide and a chi router is an http.Handler; run by go test",
         "transport": "in-memory",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the test drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
         "facility": "net/http/httptest against the router's ServeHTTP; chi has no testing guide and a chi router is an http.Handler; run by go test",
@@ -4136,7 +4136,7 @@
       "query": {
         "facility": "net/http/httptest against the router's ServeHTTP, as gorilla/mux's README tests a route; run by go test",
         "transport": "in-memory",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the test drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
         "facility": "net/http/httptest against the router's ServeHTTP, as gorilla/mux's README tests a route; run by go test",
@@ -4208,7 +4208,7 @@
       "query": {
         "facility": "app.Test(), Fiber's own, because fasthttp is not an http.Handler and httptest cannot reach it; run by go test",
         "transport": "in-memory",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the test drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
         "facility": "app.Test(), Fiber's own, because fasthttp is not an http.Handler and httptest cannot reach it; run by go test",
@@ -4280,7 +4280,7 @@
       "query": {
         "facility": "tower's ServiceExt::oneshot against the Router app() builds, as axum's testing example does; run by cargo test",
         "transport": "in-memory",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the test drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
         "facility": "tower's ServiceExt::oneshot against the Router app() builds, as axum's testing example does; run by cargo test",
@@ -4352,7 +4352,7 @@
       "query": {
         "facility": "actix-web's own test module, init_service and call_service against an App configured with config(), as actix-web's testing documentation does; run by cargo test",
         "transport": "in-memory",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the test drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
         "facility": "actix-web's own test module, init_service and call_service against an App configured with config(), as actix-web's testing documentation does; run by cargo test",
@@ -4424,7 +4424,7 @@
       "query": {
         "facility": "Rocket's blocking local Client against the Rocket rocket() builds, as Rocket's testing guide does; run by cargo test",
         "transport": "in-memory",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the test drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
         "facility": "Rocket's blocking local Client against the Rocket rocket() builds, as Rocket's testing guide does; run by cargo test",
@@ -4505,7 +4505,7 @@
         "facility": "poem's TestClient against the endpoint app() builds, from poem's test feature, as poem's testing documentation does; run by cargo test",
         "dep": "poem/test",
         "transport": "in-memory",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the test drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
         "facility": "poem's TestClient against the endpoint app() builds, from poem's test feature, as poem's testing documentation does; run by cargo test",
@@ -4591,7 +4591,7 @@
         "facility": "salvo's TestClient against the Service service() builds, from salvo's test feature, as salvo's testing documentation does, with the body read by take_bytes because take_string decodes gzip; run by cargo test",
         "dep": "salvo/test",
         "transport": "in-memory",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the test drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
         "facility": "salvo's TestClient against the Service service() builds, from salvo's test feature, as salvo's testing documentation does, with the body read by take_bytes because take_string decodes gzip; run by cargo test",
@@ -4668,7 +4668,7 @@
       "query": {
         "facility": "warp::test::request() against the filter routes() builds, as warp's documentation does; run by cargo test",
         "transport": "in-memory",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the test drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
         "facility": "warp::test::request() against the filter routes() builds, as warp's documentation does; run by cargo test",

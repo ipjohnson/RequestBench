@@ -263,13 +263,15 @@ def _qint(q, k):
         return 0
 
 
+# rb:handler query.one
 async def query_one(request: Request):
-    return JSONResponse({"page": _qint(request.query_params, "page")})
+    return JSONResponse(d.with_echo("small", {"page": _qint(request.query_params, "page")}))
 
 
+# rb:handler query.many
 async def query_many(request: Request):
     q = request.query_params
-    return JSONResponse({
+    return JSONResponse(d.with_echo("small", {
         "page": _qint(q, "page"),
         "size": _qint(q, "size"),
         "status": _qstr(q, "status"),
@@ -278,7 +280,7 @@ async def query_many(request: Request):
         "q": _qstr(q, "q"),
         "min_price": _qint(q, "min_price"),
         "max_price": _qint(q, "max_price"),
-    })
+    }))
 
 
 # rb:wiring compressed.*

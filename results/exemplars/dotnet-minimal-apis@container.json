@@ -28,7 +28,7 @@
      ],
      [
       "Date",
-      "Fri, 18 Sep 2026 15:47:49 GMT"
+      "Fri, 18 Sep 2026 16:22:48 GMT"
      ],
      [
       "Server",
@@ -61,7 +61,7 @@
      ],
      [
       "Date",
-      "Fri, 18 Sep 2026 15:47:49 GMT"
+      "Fri, 18 Sep 2026 16:22:48 GMT"
      ],
      [
       "Server",
@@ -98,7 +98,7 @@
      ],
      [
       "Date",
-      "Fri, 18 Sep 2026 15:47:49 GMT"
+      "Fri, 18 Sep 2026 16:22:48 GMT"
      ],
      [
       "Server",
@@ -135,7 +135,7 @@
      ],
      [
       "Date",
-      "Fri, 18 Sep 2026 15:47:49 GMT"
+      "Fri, 18 Sep 2026 16:22:48 GMT"
      ],
      [
       "Server",
@@ -172,7 +172,7 @@
      ],
      [
       "Date",
-      "Fri, 18 Sep 2026 15:47:50 GMT"
+      "Fri, 18 Sep 2026 16:22:48 GMT"
      ],
      [
       "Server",
@@ -195,7 +195,7 @@
    "family": "parameters",
    "request": {
     "method": "GET",
-    "path": "/parameters/4449/segment/literal",
+    "path": "/parameters/2133/segment/literal",
     "headers": [],
     "body": null,
     "body_bytes": 0
@@ -209,7 +209,7 @@
      ],
      [
       "Date",
-      "Fri, 18 Sep 2026 15:47:50 GMT"
+      "Fri, 18 Sep 2026 16:22:48 GMT"
      ],
      [
       "Server",
@@ -223,7 +223,7 @@
     "header_bytes": 129,
     "framing": "chunked",
     "body_bytes": 145,
-    "body": "{\"count\":1,\"items\":[{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"price_cents\":18928,\"in_stock\":true}],\"size\":\"small\",\"echo\":{\"one\":4449}}",
+    "body": "{\"count\":1,\"items\":[{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"price_cents\":18928,\"in_stock\":true}],\"size\":\"small\",\"echo\":{\"one\":2133}}",
     "truncated": false
    }
   },
@@ -232,7 +232,7 @@
    "family": "parameters",
    "request": {
     "method": "GET",
-    "path": "/parameters/4449/with-second/6930",
+    "path": "/parameters/2133/with-second/5879",
     "headers": [],
     "body": null,
     "body_bytes": 0
@@ -246,7 +246,7 @@
      ],
      [
       "Date",
-      "Fri, 18 Sep 2026 15:47:50 GMT"
+      "Fri, 18 Sep 2026 16:22:48 GMT"
      ],
      [
       "Server",
@@ -260,7 +260,7 @@
     "header_bytes": 129,
     "framing": "chunked",
     "body_bytes": 156,
-    "body": "{\"count\":1,\"items\":[{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"price_cents\":18928,\"in_stock\":true}],\"size\":\"small\",\"echo\":{\"one\":4449,\"two\":6930}}",
+    "body": "{\"count\":1,\"items\":[{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"price_cents\":18928,\"in_stock\":true}],\"size\":\"small\",\"echo\":{\"one\":2133,\"two\":5879}}",
     "truncated": false
    }
   },
@@ -288,7 +288,7 @@
      ],
      [
       "Date",
-      "Fri, 18 Sep 2026 15:47:50 GMT"
+      "Fri, 18 Sep 2026 16:22:49 GMT"
      ],
      [
       "Server",
@@ -330,7 +330,7 @@
      ],
      [
       "Date",
-      "Fri, 18 Sep 2026 15:47:50 GMT"
+      "Fri, 18 Sep 2026 16:22:49 GMT"
      ],
      [
       "Server",
@@ -380,7 +380,7 @@
      ],
      [
       "Date",
-      "Fri, 18 Sep 2026 15:47:50 GMT"
+      "Fri, 18 Sep 2026 16:22:49 GMT"
      ],
      [
       "Server",
@@ -430,7 +430,7 @@
      ],
      [
       "Date",
-      "Fri, 18 Sep 2026 15:47:50 GMT"
+      "Fri, 18 Sep 2026 16:22:49 GMT"
      ],
      [
       "Server",
@@ -480,7 +480,7 @@
      ],
      [
       "Date",
-      "Fri, 18 Sep 2026 15:47:51 GMT"
+      "Fri, 18 Sep 2026 16:22:49 GMT"
      ],
      [
       "Server",
@@ -530,7 +530,7 @@
      ],
      [
       "Date",
-      "Fri, 18 Sep 2026 15:47:51 GMT"
+      "Fri, 18 Sep 2026 16:22:49 GMT"
      ],
      [
       "Server",
@@ -579,7 +579,7 @@
      ],
      [
       "Date",
-      "Fri, 18 Sep 2026 15:47:52 GMT"
+      "Fri, 18 Sep 2026 16:22:50 GMT"
      ],
      [
       "Server",
@@ -628,7 +628,7 @@
      ],
      [
       "Date",
-      "Fri, 18 Sep 2026 15:47:52 GMT"
+      "Fri, 18 Sep 2026 16:22:50 GMT"
      ],
      [
       "Server",
@@ -674,7 +674,7 @@
     "headers": [
      [
       "Date",
-      "Fri, 18 Sep 2026 15:47:52 GMT"
+      "Fri, 18 Sep 2026 16:22:51 GMT"
      ],
      [
       "Server",
@@ -728,7 +728,7 @@
      ],
      [
       "Date",
-      "Fri, 18 Sep 2026 15:47:52 GMT"
+      "Fri, 18 Sep 2026 16:22:51 GMT"
      ],
      [
       "Server",
@@ -773,7 +773,7 @@
      ],
      [
       "Date",
-      "Fri, 18 Sep 2026 15:47:53 GMT"
+      "Fri, 18 Sep 2026 16:22:51 GMT"
      ],
      [
       "Server",
@@ -814,7 +814,7 @@
      ],
      [
       "Date",
-      "Fri, 18 Sep 2026 15:47:53 GMT"
+      "Fri, 18 Sep 2026 16:22:51 GMT"
      ],
      [
       "Server",
@@ -855,7 +855,7 @@
      ],
      [
       "Date",
-      "Fri, 18 Sep 2026 15:47:53 GMT"
+      "Fri, 18 Sep 2026 16:22:51 GMT"
      ],
      [
       "Server",
@@ -901,7 +901,7 @@
      ],
      [
       "Date",
-      "Fri, 18 Sep 2026 15:47:53 GMT"
+      "Fri, 18 Sep 2026 16:22:51 GMT"
      ],
      [
       "Server",
@@ -959,7 +959,7 @@
      ],
      [
       "Date",
-      "Fri, 18 Sep 2026 15:47:53 GMT"
+      "Fri, 18 Sep 2026 16:22:51 GMT"
      ],
      [
       "Server",
@@ -1009,7 +1009,7 @@
      ],
      [
       "Date",
-      "Fri, 18 Sep 2026 15:47:53 GMT"
+      "Fri, 18 Sep 2026 16:22:51 GMT"
      ],
      [
       "Server",
@@ -1051,7 +1051,7 @@
      ],
      [
       "Date",
-      "Fri, 18 Sep 2026 15:47:53 GMT"
+      "Fri, 18 Sep 2026 16:22:51 GMT"
      ],
      [
       "Server",
@@ -1093,7 +1093,7 @@
      ],
      [
       "Date",
-      "Fri, 18 Sep 2026 15:47:53 GMT"
+      "Fri, 18 Sep 2026 16:22:52 GMT"
      ],
      [
       "Server",
@@ -1135,7 +1135,7 @@
      ],
      [
       "Date",
-      "Fri, 18 Sep 2026 15:47:53 GMT"
+      "Fri, 18 Sep 2026 16:22:52 GMT"
      ],
      [
       "Server",
@@ -1177,7 +1177,7 @@
      ],
      [
       "Date",
-      "Fri, 18 Sep 2026 15:47:54 GMT"
+      "Fri, 18 Sep 2026 16:22:52 GMT"
      ],
      [
       "Server",
@@ -1231,7 +1231,7 @@
      ],
      [
       "Date",
-      "Fri, 18 Sep 2026 15:47:54 GMT"
+      "Fri, 18 Sep 2026 16:22:52 GMT"
      ],
      [
       "Server",
@@ -1266,7 +1266,7 @@
    "family": "query",
    "request": {
     "method": "GET",
-    "path": "/query/one?page=6",
+    "path": "/query/one?page=532",
     "headers": [],
     "body": null,
     "body_bytes": 0
@@ -1280,7 +1280,7 @@
      ],
      [
       "Date",
-      "Fri, 18 Sep 2026 15:47:54 GMT"
+      "Fri, 18 Sep 2026 16:22:52 GMT"
      ],
      [
       "Server",
@@ -1293,8 +1293,8 @@
     ],
     "header_bytes": 129,
     "framing": "chunked",
-    "body_bytes": 10,
-    "body": "{\"page\":6}",
+    "body_bytes": 145,
+    "body": "{\"count\":1,\"items\":[{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"price_cents\":18928,\"in_stock\":true}],\"size\":\"small\",\"echo\":{\"page\":532}}",
     "truncated": false
    }
   },
@@ -1303,7 +1303,7 @@
    "family": "query",
    "request": {
     "method": "GET",
-    "path": "/query/many?page=8&size=50&status=open&category=outdoor&sort=total&q=seed&min_price=38&max_price=49",
+    "path": "/query/many?page=532&size=10&status=cancelled&category=tools&sort=name&q=baaeh%20lddkg&min_price=6960&max_price=40945",
     "headers": [],
     "body": null,
     "body_bytes": 0
@@ -1317,7 +1317,7 @@
      ],
      [
       "Date",
-      "Fri, 18 Sep 2026 15:47:54 GMT"
+      "Fri, 18 Sep 2026 16:22:52 GMT"
      ],
      [
       "Server",
@@ -1330,8 +1330,8 @@
     ],
     "header_bytes": 129,
     "framing": "chunked",
-    "body_bytes": 113,
-    "body": "{\"page\":8,\"size\":50,\"status\":\"open\",\"category\":\"outdoor\",\"sort\":\"total\",\"q\":\"seed\",\"min_price\":38,\"max_price\":49}",
+    "body_bytes": 262,
+    "body": "{\"count\":1,\"items\":[{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"price_cents\":18928,\"in_stock\":true}],\"size\":\"small\",\"echo\":{\"page\":532,\"size\":10,\"status\":\"cancelled\",\"category\":\"tools\",\"sort\":\"name\",\"q\":\"baaeh lddkg\",\"min_price\":6960,\"max_price\":40945}}",
     "truncated": false
    }
   },
@@ -1344,15 +1344,15 @@
     "headers": [
      [
       "x-rb-account",
-      "349118"
+      "833552"
      ],
      [
       "x-rb-request-id",
-      "b1c8db623d173903"
+      "baa841736b7cc5ac"
      ],
      [
       "x-rb-tenant",
-      "cyzglfrjsqow"
+      "itkwmiosabrx"
      ]
     ],
     "body": null,
@@ -1367,7 +1367,7 @@
      ],
      [
       "Date",
-      "Fri, 18 Sep 2026 15:47:54 GMT"
+      "Fri, 18 Sep 2026 16:22:52 GMT"
      ],
      [
       "Server",
@@ -1406,7 +1406,7 @@
      ],
      [
       "x-rb-account",
-      "349118"
+      "833552"
      ],
      [
       "x-rb-amzn-trace-id",
@@ -1462,7 +1462,7 @@
      ],
      [
       "x-rb-request-id",
-      "b1c8db623d173903"
+      "baa841736b7cc5ac"
      ],
      [
       "x-rb-sec-fetch-dest",
@@ -1486,7 +1486,7 @@
      ],
      [
       "x-rb-tenant",
-      "cyzglfrjsqow"
+      "itkwmiosabrx"
      ],
      [
       "x-rb-traceparent",
@@ -1517,7 +1517,7 @@
      ],
      [
       "Date",
-      "Fri, 18 Sep 2026 15:47:54 GMT"
+      "Fri, 18 Sep 2026 16:22:52 GMT"
      ],
      [
       "Server",
@@ -1544,15 +1544,15 @@
     "headers": [
      [
       "x-rb-account",
-      "349118"
+      "833552"
      ],
      [
       "x-rb-request-id",
-      "b1c8db623d173903"
+      "baa841736b7cc5ac"
      ],
      [
       "x-rb-tenant",
-      "cyzglfrjsqow"
+      "itkwmiosabrx"
      ]
     ],
     "body": null,
@@ -1567,7 +1567,7 @@
      ],
      [
       "Date",
-      "Fri, 18 Sep 2026 15:47:54 GMT"
+      "Fri, 18 Sep 2026 16:22:52 GMT"
      ],
      [
       "Server",
@@ -1581,7 +1581,7 @@
     "header_bytes": 129,
     "framing": "chunked",
     "body_bytes": 207,
-    "body": "{\"count\":1,\"items\":[{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"price_cents\":18928,\"in_stock\":true}],\"size\":\"small\",\"echo\":{\"tenant\":\"cyzglfrjsqow\",\"request_id\":\"b1c8db623d173903\",\"account\":349118}}",
+    "body": "{\"count\":1,\"items\":[{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"price_cents\":18928,\"in_stock\":true}],\"size\":\"small\",\"echo\":{\"tenant\":\"itkwmiosabrx\",\"request_id\":\"baa841736b7cc5ac\",\"account\":833552}}",
     "truncated": false
    }
   },
@@ -1606,7 +1606,7 @@
      ],
      [
       "x-rb-account",
-      "349118"
+      "833552"
      ],
      [
       "x-rb-amzn-trace-id",
@@ -1662,7 +1662,7 @@
      ],
      [
       "x-rb-request-id",
-      "b1c8db623d173903"
+      "baa841736b7cc5ac"
      ],
      [
       "x-rb-sec-fetch-dest",
@@ -1686,7 +1686,7 @@
      ],
      [
       "x-rb-tenant",
-      "cyzglfrjsqow"
+      "itkwmiosabrx"
      ],
      [
       "x-rb-traceparent",
@@ -1717,7 +1717,7 @@
      ],
      [
       "Date",
-      "Fri, 18 Sep 2026 15:47:54 GMT"
+      "Fri, 18 Sep 2026 16:22:52 GMT"
      ],
      [
       "Server",
@@ -1731,7 +1731,7 @@
     "header_bytes": 129,
     "framing": "chunked",
     "body_bytes": 207,
-    "body": "{\"count\":1,\"items\":[{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"price_cents\":18928,\"in_stock\":true}],\"size\":\"small\",\"echo\":{\"tenant\":\"cyzglfrjsqow\",\"request_id\":\"b1c8db623d173903\",\"account\":349118}}",
+    "body": "{\"count\":1,\"items\":[{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"price_cents\":18928,\"in_stock\":true}],\"size\":\"small\",\"echo\":{\"tenant\":\"itkwmiosabrx\",\"request_id\":\"baa841736b7cc5ac\",\"account\":833552}}",
     "truncated": false
    }
   },
@@ -1754,7 +1754,7 @@
      ],
      [
       "Date",
-      "Fri, 18 Sep 2026 15:47:54 GMT"
+      "Fri, 18 Sep 2026 16:22:52 GMT"
      ],
      [
       "Server",
@@ -1791,7 +1791,7 @@
      ],
      [
       "Date",
-      "Fri, 18 Sep 2026 15:47:54 GMT"
+      "Fri, 18 Sep 2026 16:22:52 GMT"
      ],
      [
       "Server",
@@ -1828,7 +1828,7 @@
      ],
      [
       "Date",
-      "Fri, 18 Sep 2026 15:47:54 GMT"
+      "Fri, 18 Sep 2026 16:22:53 GMT"
      ],
      [
       "Server",
@@ -1851,7 +1851,7 @@
    "family": "domain",
    "request": {
     "method": "GET",
-    "path": "/domain/orders/469",
+    "path": "/domain/orders/626",
     "headers": [],
     "body": null,
     "body_bytes": 0
@@ -1865,7 +1865,7 @@
      ],
      [
       "Date",
-      "Fri, 18 Sep 2026 15:47:54 GMT"
+      "Fri, 18 Sep 2026 16:22:53 GMT"
      ],
      [
       "Server",
@@ -1878,8 +1878,8 @@
     ],
     "header_bytes": 129,
     "framing": "chunked",
-    "body_bytes": 812,
-    "body": "{\"id\":469,\"customer_id\":84,\"status\":\"paid\",\"created\":\"2026-02-22\",\"total_cents\":356134,\"lines\":[{\"id\":1,\"product_id\":34,\"qty\":4,\"unit_cents\":16627,\"total_cents\":66508},{\"id\":2,\"product_id\":38,\"qty\":1,\"unit_cents\":4876,\"total_cents\":4876},{\"id\":3,\"product_id\":50,\"qty\":3,\"unit_cents\":3094,\"total_cents\":9282},{\"id\":4,\"product_id\":29,\"qty\":3,\"unit_cents\":10907,\"total_cents\":32721},{\"id\":5,\"product_id\":43,\"qty\":3,\"unit_cents\":13259,\"total_cents\":39777},{\"id\":6,\"product_id\":24,\"qty\":4,\"unit_cents\":14955,\"total_cents\":59820},{\"id\":7,\"product_id\":31,\"qty\":1,\"unit_cents\":14282,\"total_cents\":14282},{\"id\":8,\"product_id\":38,\"qty\":4,\"unit_cents\":4876,\"total_cents\":19504},{\"id\":9,\"product_id\":37,\"qty\":4,\"unit_cents\":16907,\"total_cents\":67628},{\"id\":10,\"product_id\":6,\"qty\":4,\"unit_cents\":10434,\"total_cents\":41736}]}",
+    "body_bytes": 746,
+    "body": "{\"id\":626,\"customer_id\":183,\"status\":\"shipped\",\"created\":\"2026-06-11\",\"total_cents\":221642,\"lines\":[{\"id\":1,\"product_id\":27,\"qty\":3,\"unit_cents\":16202,\"total_cents\":48606},{\"id\":2,\"product_id\":11,\"qty\":2,\"unit_cents\":11314,\"total_cents\":22628},{\"id\":3,\"product_id\":16,\"qty\":2,\"unit_cents\":18199,\"total_cents\":36398},{\"id\":4,\"product_id\":22,\"qty\":5,\"unit_cents\":3562,\"total_cents\":17810},{\"id\":5,\"product_id\":43,\"qty\":3,\"unit_cents\":13259,\"total_cents\":39777},{\"id\":6,\"product_id\":40,\"qty\":1,\"unit_cents\":15468,\"total_cents\":15468},{\"id\":7,\"product_id\":39,\"qty\":1,\"unit_cents\":14808,\"total_cents\":14808},{\"id\":8,\"product_id\":21,\"qty\":1,\"unit_cents\":17323,\"total_cents\":17323},{\"id\":9,\"product_id\":44,\"qty\":1,\"unit_cents\":8824,\"total_cents\":8824}]}",
     "truncated": false
    }
   },
@@ -1888,7 +1888,7 @@
    "family": "domain",
    "request": {
     "method": "GET",
-    "path": "/domain/orders?status=paid&page=14&size=10",
+    "path": "/domain/orders?status=cancelled&page=18&size=10",
     "headers": [],
     "body": null,
     "body_bytes": 0
@@ -1902,7 +1902,7 @@
      ],
      [
       "Date",
-      "Fri, 18 Sep 2026 15:47:54 GMT"
+      "Fri, 18 Sep 2026 16:22:53 GMT"
      ],
      [
       "Server",
@@ -1915,8 +1915,8 @@
     ],
     "header_bytes": 129,
     "framing": "chunked",
-    "body_bytes": 4945,
-    "body": "{\"page\":14,\"size\":10,\"total\":250,\"items\":[{\"id\":561,\"customer_id\":128,\"status\":\"paid\",\"created\":\"2026-04-02\",\"total_cents\":185393,\"lines\":[{\"id\":1,\"product_id\":49,\"qty\":2,\"unit_cents\":13307,\"total_cents\":26614},{\"id\":2,\"product_id\":39,\"qty\":2,\"unit_cents\":14808,\"total_cents\":29616},{\"id\":3,\"product_id\":37,\"qty\":3,\"unit_cents\":16907,\"total_cents\":50721},{\"id\":4,\"product_id\":47,\"qty\":2,\"unit_cents\":3286,\"total_cents\":6572},{\"id\":5,\"product_id\":11,\"qty\":4,\"unit_cents\":11314,\"total_cents\":45256},{\"id\":6,\"product_id\":49,\"qty\":2,\"unit_cents\":13307,\"total_cents\":26614}]},{\"id\":565,\"customer_id\":156,\"status\":\"paid\",\"created\":\"2026-08-06\",\"total_cents\":100303,\"lines\":[{\"id\":1,\"product_id\":30,\"qty\":5,\"unit_cents\":781,\"total_cents\":3905},{\"id\":2,\"product_id\":29,\"qty\":2,\"unit_cents\":10907,\"total_cents\":21814},{\"id\":3,\"product_id\":50,\"qty\":4,\"unit_cents\":3094,\"total_cents\":12376},{\"id\":4,\"product_id\":5,\"qty\":2,\"unit_cents\":16283,\"total_cents\":32566},{\"id\":5,\"product_id\":43,\"qty\":2,\"unit_cents\":13259,\"total_cents\":26518},{\"id\":6,\"product_id\":30,\"qty\":4,\"unit_cents\":781,\"total_cents\":3124}]},{\"id\":569,\"customer_id\":184,\"status\":\"paid\",\"created\":\"2026-03-10\",\"total_cents\":234933,\"lines\":[{\"id\":1,\"product_id\":27,\"qty\":5,\"unit_cents\":16202,\"total_cents\":81010},{\"id\":2,\"product_id\":44,\"qty\":2,\"unit_cents\":8824,\"total_cents\":17648},{\"id\":3,\"product_id\":24,\"qty\":3,\"unit_cents\":14955,\"total_cents\":44865},{\"id\":4,\"product_id\":25,\"qty\":5,\"unit_cents\":18282,\"total_cents\":91410}]},{\"id\":573,\"customer_id\":12,\"status\":\"paid\",\"created\":\"2026-07-14\",\"total_cents\":253809,\"lines\":[{\"id\":1,\"product_id\":49,\"qty\":4,\"unit_cents\":13307,\"total_cents\":53228},{\"id\":2,\"product_id\":25,\"qty\":3,\"unit_cents\":18282,\"total_cents\":54846},{\"id\":3,\"product_id\":1,\"qty\":1,\"unit_cents\":7825,\"total_cents\":7825},{\"id\":4,\"product_id\":26,\"qty\":3,\"unit_cents\":7354,\"total_cents\":22062},{\"id\":5,\"product_id\":15,\"qty\":3,\"unit_cents\":18858,\"total_cents\":56574},{\"id\":6,\"product_id\":27,\"qty\":3,\"unit_cents\":16202,\"total_cents\":48606},{\"id\":7,\"product_id\":19,\"qty\":4,\"unit_cents\"",
+    "body_bytes": 5195,
+    "body": "{\"page\":18,\"size\":10,\"total\":250,\"items\":[{\"id\":723,\"customer_id\":62,\"status\":\"cancelled\",\"created\":\"2026-04-24\",\"total_cents\":37687,\"lines\":[{\"id\":1,\"product_id\":49,\"qty\":1,\"unit_cents\":13307,\"total_cents\":13307},{\"id\":2,\"product_id\":38,\"qty\":5,\"unit_cents\":4876,\"total_cents\":24380}]},{\"id\":727,\"customer_id\":90,\"status\":\"cancelled\",\"created\":\"2026-08-28\",\"total_cents\":316766,\"lines\":[{\"id\":1,\"product_id\":7,\"qty\":3,\"unit_cents\":7070,\"total_cents\":21210},{\"id\":2,\"product_id\":13,\"qty\":3,\"unit_cents\":10012,\"total_cents\":30036},{\"id\":3,\"product_id\":21,\"qty\":4,\"unit_cents\":17323,\"total_cents\":69292},{\"id\":4,\"product_id\":24,\"qty\":2,\"unit_cents\":14955,\"total_cents\":29910},{\"id\":5,\"product_id\":46,\"qty\":1,\"unit_cents\":16233,\"total_cents\":16233},{\"id\":6,\"product_id\":5,\"qty\":5,\"unit_cents\":16283,\"total_cents\":81415},{\"id\":7,\"product_id\":47,\"qty\":1,\"unit_cents\":3286,\"total_cents\":3286},{\"id\":8,\"product_id\":44,\"qty\":3,\"unit_cents\":8824,\"total_cents\":26472},{\"id\":9,\"product_id\":7,\"qty\":5,\"unit_cents\":7070,\"total_cents\":35350},{\"id\":10,\"product_id\":22,\"qty\":1,\"unit_cents\":3562,\"total_cents\":3562}]},{\"id\":731,\"customer_id\":118,\"status\":\"cancelled\",\"created\":\"2026-03-04\",\"total_cents\":78781,\"lines\":[{\"id\":1,\"product_id\":4,\"qty\":3,\"unit_cents\":2060,\"total_cents\":6180},{\"id\":2,\"product_id\":19,\"qty\":5,\"unit_cents\":931,\"total_cents\":4655},{\"id\":3,\"product_id\":3,\"qty\":5,\"unit_cents\":7045,\"total_cents\":35225},{\"id\":4,\"product_id\":29,\"qty\":3,\"unit_cents\":10907,\"total_cents\":32721}]},{\"id\":735,\"customer_id\":146,\"status\":\"cancelled\",\"created\":\"2026-07-08\",\"total_cents\":168478,\"lines\":[{\"id\":1,\"product_id\":48,\"qty\":5,\"unit_cents\":10185,\"total_cents\":50925},{\"id\":2,\"product_id\":4,\"qty\":4,\"unit_cents\":2060,\"total_cents\":8240},{\"id\":3,\"product_id\":41,\"qty\":1,\"unit_cents\":1517,\"total_cents\":1517},{\"id\":4,\"product_id\":3,\"qty\":4,\"unit_cents\":7045,\"total_cents\":28180},{\"id\":5,\"product_id\":26,\"qty\":5,\"unit_cents\":7354,\"total_cents\":36770},{\"id\":6,\"product_id\":31,\"qty\":3,\"unit_cents\":14282,\"total_cents\":42846}]},{\"id\":739,\"customer_id\":174,\"status\"",
     "truncated": true
    }
   },
@@ -1925,7 +1925,7 @@
    "family": "domain",
    "request": {
     "method": "GET",
-    "path": "/domain/customers/27/summary",
+    "path": "/domain/customers/153/summary",
     "headers": [],
     "body": null,
     "body_bytes": 0
@@ -1939,7 +1939,7 @@
      ],
      [
       "Date",
-      "Fri, 18 Sep 2026 15:47:54 GMT"
+      "Fri, 18 Sep 2026 16:22:53 GMT"
      ],
      [
       "Server",
@@ -1952,8 +1952,8 @@
     ],
     "header_bytes": 129,
     "framing": "chunked",
-    "body_bytes": 467,
-    "body": "{\"customer\":{\"id\":27,\"name\":\"grace hopper\",\"email\":\"user27@example.invalid\",\"region\":\"west\",\"created\":\"2025-04-28\"},\"order_count\":5,\"lifetime_cents\":780098,\"line_count\":24,\"units\":75,\"recent\":[{\"id\":118,\"created\":\"2026-02-07\",\"total_cents\":53036},{\"id\":318,\"created\":\"2026-04-11\",\"total_cents\":110634},{\"id\":518,\"created\":\"2026-06-15\",\"total_cents\":46662},{\"id\":718,\"created\":\"2026-08-19\",\"total_cents\":442781},{\"id\":918,\"created\":\"2026-01-23\",\"total_cents\":126985}]}",
+    "body_bytes": 476,
+    "body": "{\"customer\":{\"id\":153,\"name\":\"barbara liskov\",\"email\":\"user153@example.invalid\",\"region\":\"south\",\"created\":\"2025-10-14\"},\"order_count\":5,\"lifetime_cents\":1020822,\"line_count\":40,\"units\":114,\"recent\":[{\"id\":136,\"created\":\"2026-02-25\",\"total_cents\":202798},{\"id\":336,\"created\":\"2026-04-01\",\"total_cents\":230487},{\"id\":536,\"created\":\"2026-06-05\",\"total_cents\":275929},{\"id\":736,\"created\":\"2026-08-09\",\"total_cents\":171883},{\"id\":936,\"created\":\"2026-01-13\",\"total_cents\":139725}]}",
     "truncated": false
    }
   },
@@ -1962,7 +1962,7 @@
    "family": "domain",
    "request": {
     "method": "GET",
-    "path": "/domain/regions/north/report",
+    "path": "/domain/regions/south/report",
     "headers": [],
     "body": null,
     "body_bytes": 0
@@ -1976,7 +1976,7 @@
      ],
      [
       "Date",
-      "Fri, 18 Sep 2026 15:47:54 GMT"
+      "Fri, 18 Sep 2026 16:22:53 GMT"
      ],
      [
       "Server",
@@ -1989,8 +1989,8 @@
     ],
     "header_bytes": 129,
     "framing": "chunked",
-    "body_bytes": 397,
-    "body": "{\"region\":\"north\",\"customers\":50,\"orders\":250,\"revenue_cents\":39454155,\"top\":[{\"id\":857,\"total_cents\":403527},{\"id\":65,\"total_cents\":402726},{\"id\":813,\"total_cents\":397838},{\"id\":869,\"total_cents\":396555},{\"id\":549,\"total_cents\":395497},{\"id\":345,\"total_cents\":389067},{\"id\":893,\"total_cents\":387377},{\"id\":49,\"total_cents\":379663},{\"id\":577,\"total_cents\":357682},{\"id\":469,\"total_cents\":356134}]}",
+    "body_bytes": 399,
+    "body": "{\"region\":\"south\",\"customers\":50,\"orders\":250,\"revenue_cents\":36205542,\"top\":[{\"id\":512,\"total_cents\":389415},{\"id\":768,\"total_cents\":381785},{\"id\":876,\"total_cents\":360638},{\"id\":944,\"total_cents\":353195},{\"id\":660,\"total_cents\":351644},{\"id\":284,\"total_cents\":347530},{\"id\":444,\"total_cents\":339978},{\"id\":340,\"total_cents\":332516},{\"id\":420,\"total_cents\":331825},{\"id\":816,\"total_cents\":315506}]}",
     "truncated": false
    }
   },
@@ -2018,7 +2018,7 @@
      ],
      [
       "Date",
-      "Fri, 18 Sep 2026 15:47:55 GMT"
+      "Fri, 18 Sep 2026 16:22:53 GMT"
      ],
      [
       "Server",
@@ -2045,7 +2045,7 @@
    "family": "domain",
    "request": {
     "method": "PUT",
-    "path": "/domain/orders/679",
+    "path": "/domain/orders/428",
     "headers": [
      [
       "content-type",
@@ -2064,7 +2064,7 @@
      ],
      [
       "Date",
-      "Fri, 18 Sep 2026 15:47:55 GMT"
+      "Fri, 18 Sep 2026 16:22:53 GMT"
      ],
      [
       "Server",
@@ -2078,7 +2078,7 @@
     "header_bytes": 129,
     "framing": "chunked",
     "body_bytes": 140,
-    "body": "{\"id\":679,\"customer_id\":1,\"status\":\"open\",\"lines\":[{\"id\":1,\"product_id\":1,\"qty\":1,\"unit_cents\":7825,\"total_cents\":7825}],\"total_cents\":7825}",
+    "body": "{\"id\":428,\"customer_id\":1,\"status\":\"open\",\"lines\":[{\"id\":1,\"product_id\":1,\"qty\":1,\"unit_cents\":7825,\"total_cents\":7825}],\"total_cents\":7825}",
     "truncated": false
    }
   },
@@ -2087,7 +2087,7 @@
    "family": "domain",
    "request": {
     "method": "PATCH",
-    "path": "/domain/customers/158",
+    "path": "/domain/customers/166",
     "headers": [
      [
       "content-type",
@@ -2106,7 +2106,7 @@
      ],
      [
       "Date",
-      "Fri, 18 Sep 2026 15:47:55 GMT"
+      "Fri, 18 Sep 2026 16:22:53 GMT"
      ],
      [
       "Server",
@@ -2120,7 +2120,7 @@
     "header_bytes": 129,
     "framing": "chunked",
     "body_bytes": 100,
-    "body": "{\"id\":158,\"name\":\"Ada L.\",\"email\":\"user158@example.invalid\",\"region\":\"south\",\"created\":\"2025-03-19\"}",
+    "body": "{\"id\":166,\"name\":\"Ada L.\",\"email\":\"user166@example.invalid\",\"region\":\"south\",\"created\":\"2025-11-27\"}",
     "truncated": false
    }
   },
@@ -2129,7 +2129,7 @@
    "family": "domain",
    "request": {
     "method": "DELETE",
-    "path": "/domain/orders/776/lines/1",
+    "path": "/domain/orders/513/lines/3",
     "headers": [],
     "body": null,
     "body_bytes": 0
@@ -2139,7 +2139,7 @@
     "headers": [
      [
       "Date",
-      "Fri, 18 Sep 2026 15:47:55 GMT"
+      "Fri, 18 Sep 2026 16:22:53 GMT"
      ],
      [
       "Server",
@@ -2172,7 +2172,7 @@
      ],
      [
       "Date",
-      "Fri, 18 Sep 2026 15:47:55 GMT"
+      "Fri, 18 Sep 2026 16:22:53 GMT"
      ],
      [
       "Server",
@@ -2221,7 +2221,7 @@
      ],
      [
       "Date",
-      "Fri, 18 Sep 2026 15:47:55 GMT"
+      "Fri, 18 Sep 2026 16:22:53 GMT"
      ],
      [
       "Server",
@@ -2263,7 +2263,7 @@
      ],
      [
       "Date",
-      "Fri, 18 Sep 2026 15:47:55 GMT"
+      "Fri, 18 Sep 2026 16:22:53 GMT"
      ],
      [
       "Server",
@@ -2312,7 +2312,7 @@
      ],
      [
       "Date",
-      "Fri, 18 Sep 2026 15:47:55 GMT"
+      "Fri, 18 Sep 2026 16:22:53 GMT"
      ],
      [
       "Server",
@@ -2353,7 +2353,7 @@
      ],
      [
       "Date",
-      "Fri, 18 Sep 2026 15:47:55 GMT"
+      "Fri, 18 Sep 2026 16:22:53 GMT"
      ],
      [
       "Server",

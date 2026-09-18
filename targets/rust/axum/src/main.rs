@@ -130,8 +130,8 @@ fn parse(body: &[u8]) -> Result<Value, Response> {
 //
 // `Query<T>` is the framework's binding half, the same shape as `Json<T>` on the body:
 // axum deserializes the query string into the struct before the handler runs and rejects
-// what will not fit without the handler seeing it. The struct it fills is the struct the
-// handler answers, so nothing copies one shape into another.
+// what will not fit without the handler seeing it. The struct it fills is what the handler
+// echoes beside the small payload, so nothing copies one shape into another.
 //
 // The fields are plain, so serde decides what a missing or unparseable one is: a
 // QueryRejection, which axum renders as its own 400. The endpoint set sends neither.
@@ -489,8 +489,12 @@ fn app() -> Router {
         .route("/parameters/static/segment/literal", get(small))
         .route("/parameters/{one}/segment/literal", get(param_one))
         .route("/parameters/{one}/with-second/{two}", get(param_two))
-        .route("/query/one", get(|Query(q): Query<QueryOne>| async move { Json(q) }))
-        .route("/query/many", get(|Query(q): Query<QueryMany>| async move { Json(q) }))
+        .route("/query/one", get(|Query(q): Query<QueryOne>| async move {
+            Json(d::with_echo("small", q))
+        }))
+        .route("/query/many", get(|Query(q): Query<QueryMany>| async move {
+            Json(d::with_echo("small", q))
+        }))
         // The handler reads no header at all, so headers.many minus headers.few is the
         // cost of materialising 25 nobody asked for.
         .route("/headers", get(small))

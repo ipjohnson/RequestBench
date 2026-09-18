@@ -1,8 +1,9 @@
-// query: query string parsing and coercion, isolated from any use of the values.
+// query: query string parsing, percent-decoding and coercion, with the values echoed and
+// put to no other use.
 //
 // Fiber's own binder fills the struct: c.Bind().Query reads the `query:` tag through
-// gofiber/schema. The struct is both what Fiber fills and what the handler answers, so the
-// response is the bound values and nothing copies one shape into another.
+// gofiber/schema. The struct is both what Fiber fills and what the handler echoes beside the
+// small payload, so nothing copies one shape into another.
 //
 // SkipValidation, because the StructValidator in the config runs after every bind and these
 // two arms have no rules to run: the family measures the parse, and a validator walking
@@ -16,6 +17,7 @@ package main
 
 import (
 	"github.com/gofiber/fiber/v3"
+	d "github.com/ianjohnson/requestbench/targets/go/_shared"
 )
 
 // rb:wiring query.*
@@ -60,7 +62,7 @@ func registerQuery(app *fiber.App) {
 		if !bindQuery(c, &q) {
 			return nil
 		}
-		return c.JSON(q)
+		return c.JSON(d.WithEcho("small", q))
 	})
 
 	app.Get("/query/many", func(c fiber.Ctx) error {
@@ -68,6 +70,6 @@ func registerQuery(app *fiber.App) {
 		if !bindQuery(c, &q) {
 			return nil
 		}
-		return c.JSON(q)
+		return c.JSON(d.WithEcho("small", q))
 	})
 }

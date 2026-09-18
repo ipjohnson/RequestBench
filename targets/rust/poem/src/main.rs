@@ -172,8 +172,8 @@ fn validated(order: &OrderIn, first_error: bool) -> Result<d::ValidatedOrder, Re
 //
 // `Query<T>` is the framework's binding half, the same shape as `Json<T>` on the body:
 // poem deserializes the query string into the struct before the handler runs and rejects
-// what will not fit without the handler seeing it. The struct it fills is the struct the
-// handler answers.
+// what will not fit without the handler seeing it. The struct it fills is what the handler
+// echoes beside the small payload.
 //
 // The fields are plain, so serde decides what a missing or unparseable one is: a
 // ParseQueryError, which poem renders as its own 400. The endpoint set sends neither.
@@ -521,14 +521,16 @@ async fn validate_first(Json(order): Json<OrderIn>) -> Result<Json<d::ValidatedO
     Ok(Json(validated(&order, true)?))
 }
 
+// rb:wiring query.*
 #[poem::handler]
-async fn query_one(Query(q): Query<QueryOne>) -> Json<QueryOne> {
-    Json(q)
+async fn query_one(Query(q): Query<QueryOne>) -> Json<d::WithEcho<QueryOne>> {
+    Json(d::with_echo("small", q))
 }
 
+// rb:wiring query.*
 #[poem::handler]
-async fn query_many(Query(q): Query<QueryMany>) -> Json<QueryMany> {
-    Json(q)
+async fn query_many(Query(q): Query<QueryMany>) -> Json<d::WithEcho<QueryMany>> {
+    Json(d::with_echo("small", q))
 }
 
 #[poem::handler]

@@ -4,7 +4,8 @@ using RequestBench.Domain;
 namespace RequestBench.AspNetMvc.Controllers;
 
 /// <summary>
-/// query: query string parsing and coercion, isolated from any use of the values.
+/// query: query string parsing, percent-decoding and coercion, with the values echoed and put
+/// to no other use.
 ///
 /// MVC's own model binding: [FromQuery] names the source and the action signature declares
 /// the type, and the binder converts what the router parsed before the action runs. A Name
@@ -15,16 +16,18 @@ namespace RequestBench.AspNetMvc.Controllers;
 /// endpoint set sends neither that nor a missing parameter.
 /// </summary>
 [ApiController]
-public sealed class QueryController : ControllerBase
+public sealed class QueryController(DomainModel domain) : ControllerBase
 {
     [HttpGet("/query/one")]
-    public QueryOne One([FromQuery] int page) => new(page);
+    public PayloadWithEcho One([FromQuery] int page) =>
+        domain.WithEcho("small", new QueryOne(page));
 
     [HttpGet("/query/many")]
-    public QueryMany Many([FromQuery] int page, [FromQuery] int size,
-                          [FromQuery] string status, [FromQuery] string category,
-                          [FromQuery] string sort, [FromQuery] string q,
-                          [FromQuery(Name = "min_price")] int minPrice,
-                          [FromQuery(Name = "max_price")] int maxPrice) =>
-        new(page, size, status, category, sort, q, minPrice, maxPrice);
+    public PayloadWithEcho Many([FromQuery] int page, [FromQuery] int size,
+                                [FromQuery] string status, [FromQuery] string category,
+                                [FromQuery] string sort, [FromQuery] string q,
+                                [FromQuery(Name = "min_price")] int minPrice,
+                                [FromQuery(Name = "max_price")] int maxPrice) =>
+        domain.WithEcho("small",
+                        new QueryMany(page, size, status, category, sort, q, minPrice, maxPrice));
 }

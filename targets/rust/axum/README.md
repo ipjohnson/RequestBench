@@ -7,7 +7,7 @@ the Rust HTTP ecosystem uses rather than something axum invented.
 ## How it is wired
 
 Routes are registered on the router, with `{name}` for captures. Handlers are plain async
-functions whose arguments are extractors: `Path` for captures, `RawQuery` for the query
+functions whose arguments are extractors: `Path` for captures, `Query` for the query
 string, `Bytes` for a body. A handler returns anything that implements `IntoResponse`,
 which is why the families that set headers return a tuple of headers and a body rather
 than building a response by hand.
@@ -18,12 +18,6 @@ rather than four and sixteen written-out calls, and each layer is a real `from_f
 awaits the next.
 
 ## What is unusual about it
-
-**The query string is read raw.** axum's `Query` extractor deserializes into a struct and
-rejects what it cannot parse. The spec's query arms have to echo coerced values including
-the ones that were absent or malformed, so this target takes `RawQuery` and hands the
-string to the shared parser every language uses. Using the typed extractor would measure
-`serde_urlencoded` rejecting input the other five targets accept.
 
 **Compression is a tower layer scoped to three routes.** `tower-http`'s `CompressionLayer`
 is attached to the compressed routes alone. On the router it would put a "did the client

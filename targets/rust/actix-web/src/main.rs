@@ -117,8 +117,8 @@ fn parse(body: &[u8]) -> Result<Value, HttpResponse> {
 //
 // `web::Query<T>` is the framework's binding half, the same shape as `web::Json<T>` on the
 // body: actix deserializes the query string into the struct before the handler runs and
-// rejects what will not fit without the handler seeing it. The struct it fills is the
-// struct the handler answers.
+// rejects what will not fit without the handler seeing it. The struct it fills is what the
+// handler echoes beside the small payload.
 //
 // The fields are plain, so serde decides what a missing or unparseable one is: a
 // QueryPayloadError, which actix renders as its own 400. The endpoint set sends neither.
@@ -578,10 +578,10 @@ fn config(cfg: &mut web::ServiceConfig) {
         .route("/parameters/{one}/segment/literal", web::get().to(param_one))
         .route("/parameters/{one}/with-second/{two}", web::get().to(param_two))
         .route("/query/one", web::get().to(|q: web::Query<QueryOne>| async move {
-            HttpResponse::Ok().json(q.into_inner())
+            HttpResponse::Ok().json(d::with_echo("small", q.into_inner()))
         }))
         .route("/query/many", web::get().to(|q: web::Query<QueryMany>| async move {
-            HttpResponse::Ok().json(q.into_inner())
+            HttpResponse::Ok().json(d::with_echo("small", q.into_inner()))
         }))
         .route("/headers", web::get().to(small))
         .route("/headers/bind", web::get().to(bind_headers))
