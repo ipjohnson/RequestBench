@@ -45,6 +45,43 @@ export function famsAt(t: Target, rn: string): Record<string, FamilyRecord> {
   return t.families ?? {};
 }
 
+const familyOf = (run: Run, eid: string): string =>
+  run.targets.map((t) => t.endpoints?.[eid]?.family).find(Boolean) ?? eid.split(".")[0] ?? eid;
+
+/**
+ * The names the filter offers at a granularity: the run's families or its endpoint ids, in the
+ * order the run lists them. A run from before per-endpoint detail has no order, and its
+ * families are read off its targets at the rate on screen.
+ */
+export function choicesAt(run: Run | null, gran: Gran, rn: string | null): string[] {
+  if (!run || gran === "blend") return [];
+  const order = run.endpoint_order ?? [];
+  if (gran === "endpoint") return order;
+  const fams = order.length
+    ? order.map((eid) => familyOf(run, eid))
+    : run.targets.flatMap((t) => Object.keys(rn ? famsAt(t, rn) : {}));
+  return [...new Set(fams)];
+}
+
+/**
+ * The filter after the granularity changes to `gran`, so a family or endpoint view opens on
+ * one family or endpoint rather than on every row of every target. An endpoint becomes its
+ * family and a family its first endpoint. A filter that still matches is kept, which is how
+ * "gin" stays every gin row. Anything else becomes the run's first name.
+ */
+export function filterFor(run: Run | null, gran: Gran, rn: string | null, q: string): string {
+  if (!run || gran === "blend") return q;
+  const order = run.endpoint_order ?? [];
+  if (gran === "family" && order.includes(q)) return familyOf(run, q);
+  const first = gran === "endpoint" ? order.find((eid) => familyOf(run, eid) === q) : undefined;
+  if (first) return first;
+  const names = choicesAt(run, gran, rn);
+  const want = q.trim().toLowerCase();
+  const hit = (s: string): boolean => s.toLowerCase().includes(want);
+  if (want && (names.some(hit) || run.targets.some((t) => hit(t.target)))) return q;
+  return names[0] ?? q;
+}
+
 const numberAt = (rec: Record<string, unknown> | undefined, metric: string): number | null => {
   const v = rec?.[metric];
   return typeof v === "number" ? v : null;

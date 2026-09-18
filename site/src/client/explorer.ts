@@ -11,7 +11,17 @@ import { SERIES_DARK, SERIES_LIGHT } from "../lib/series.js";
 import type { Run } from "../lib/types.js";
 import { deltaCell } from "../lib/views.js";
 import { Data, resolveSource } from "./source.js";
-import { famsAt, isSerial, pickRung, rateLabel, rows, rungsOf, wireKeyFor } from "./select.js";
+import {
+  choicesAt,
+  famsAt,
+  filterFor,
+  isSerial,
+  pickRung,
+  rateLabel,
+  rows,
+  rungsOf,
+  wireKeyFor,
+} from "./select.js";
 import {
   COLS,
   defaultCols,
@@ -58,6 +68,8 @@ class Explorer {
   /** Wire captures already asked for, so a render while one is in flight does not ask again. */
   private readonly wireAsked = new Set<string>();
   private ownHash = "";
+  /** The filter's suggestions as last written. */
+  private qopts = "";
 
   constructor(rb: PageData, data: Data) {
     this.rb = rb;
@@ -166,9 +178,17 @@ class Explorer {
           `<button class="chip sm" data-col="${esc(c.id)}" aria-pressed="${this.st.cols.has(c.id)}">${esc(c.label)}</button>`,
       )
       .join("");
-    el<HTMLInputElement>("q").value = this.st.q;
+    const q = el<HTMLInputElement>("q");
+    q.value = this.st.q;
+    q.placeholder = `${this.st.gran === "family" ? "family" : "endpoint"} or framework`;
     for (const id of ["q", "qlabel"])
       el(id).style.display = this.st.gran === "blend" ? "none" : "";
+    // Written only when the names change, so typing in the filter does not rebuild the list
+    // it is suggesting from.
+    const opts = choicesAt(run, this.st.gran, rn)
+      .map((c) => `<option value="${esc(c)}"></option>`)
+      .join("");
+    if (opts !== this.qopts) el("qopts").innerHTML = this.qopts = opts;
 
     this.renderHostNote(run, rn);
 
@@ -446,7 +466,11 @@ class Explorer {
     document.querySelectorAll<HTMLButtonElement>(".seg button[data-gran]").forEach((b) => {
       b.onclick = (): void => {
         const g = b.dataset["gran"];
-        if (g === "blend" || g === "family" || g === "endpoint") this.st.gran = g;
+        if (g === "blend" || g === "family" || g === "endpoint") {
+          const run = this.latest();
+          this.st.q = filterFor(run, g, pickRung(run, this.st.rung), this.st.q);
+          this.st.gran = g;
+        }
         this.render();
       };
     });
@@ -481,9 +505,10 @@ class Explorer {
       else location.assign(href);
     };
     el("reset").onclick = (): void => {
+      const run = this.latest();
       this.st.langs = new Set(this.langs);
-      this.st.q = "";
       this.st.rung = null;
+      this.st.q = filterFor(run, this.st.gran, pickRung(run, null), "");
       this.st.cols = defaultCols();
       this.st.sort = { col: "value", dir: 1 };
       this.render();
