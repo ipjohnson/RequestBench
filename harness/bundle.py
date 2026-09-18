@@ -177,6 +177,11 @@ CONTRACT = "/client-exception/"
 # rather than in a suite/ of its own.
 SUITE = ("/suite/", "/client/", "/src/test/")
 
+# Go gives a test no directory at all: a test is a _test.go file beside the code it tests,
+# in the same package, which is the only way to reach a package main. So it is matched by
+# name, the way a Go build itself tells the two apart.
+TEST_SUFFIXES = ("_test.go",)
+
 # Roles a code_hash does not cover. A corrected README or a sharpened test does not read as
 # a target that changed, but it does produce a new page.
 NOT_CODE = ("prose", "test")
@@ -208,7 +213,7 @@ def role(language, path):
     name = path.rsplit("/", 1)[-1]
     # Before the name rules: the contract package has a package.json of its own, and a
     # dependency bump in it is not a dependency bump in the target.
-    if CONTRACT in path or any(d in path for d in SUITE):
+    if CONTRACT in path or any(d in path for d in SUITE) or name.endswith(TEST_SUFFIXES):
         return "test"
     if name in CONTRACT_NAMES:
         return "contract"

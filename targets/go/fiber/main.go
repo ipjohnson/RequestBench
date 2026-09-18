@@ -58,7 +58,19 @@ func main() {
 	if err := d.Load(fx); err != nil {
 		log.Fatalf("fixture: %v", err)
 	}
+	app := router()
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	log.Printf("container/fiber listening on %s", port)
+	log.Fatal(app.Listen(":"+port, fiber.ListenConfig{DisableStartupMessage: true}))
+}
 
+// router builds every route, on a router nothing is serving yet. It is its own function
+// so a test can hand it requests: built inline in main(), the only way to reach it was
+// to start this target on its container port. main() serves what it returns.
+func router() *fiber.App {
 	app := fiber.New(fiber.Config{
 		ErrorHandler: func(c fiber.Ctx, err error) error { return fail(c, err) },
 		// Fiber's validation facility: Bind().Body() runs this after binding, so no handler
@@ -92,11 +104,5 @@ func main() {
 	//
 	// rb:handler errors.unmatched
 	app.Use(func(c fiber.Ctx) error { return c.Status(404).JSON(d.NotFoundBody()) })
-
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
-	log.Printf("container/fiber listening on %s", port)
-	log.Fatal(app.Listen(":"+port, fiber.ListenConfig{DisableStartupMessage: true}))
+	return app
 }

@@ -58,7 +58,13 @@ func main() {
 	if err := d.Load(fx); err != nil {
 		log.Fatalf("fixture: %v", err)
 	}
+	hosts.Serve("chi", router(), nil)
+}
 
+// router builds every route, on a router nothing is serving yet. It is its own function
+// so a test can hand it requests: built inline in main(), the only way to reach it was
+// to start this target on its container port. main() serves what it returns.
+func router() *chi.Mux {
 	r := chi.NewRouter()
 
 	// rb:handler errors.unmatched
@@ -77,6 +83,5 @@ func main() {
 	registerBody(r)
 	registerDomain(r)
 	registerTemplate(r)
-
-	hosts.Serve("chi", r, nil)
+	return r
 }

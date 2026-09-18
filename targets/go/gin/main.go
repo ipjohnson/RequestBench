@@ -158,6 +158,13 @@ func main() {
 	if err := d.Load(fx); err != nil {
 		log.Fatalf("fixture: %v", err)
 	}
+	hosts.Serve("gin", router(), nil)
+}
+
+// router builds every route, on a router nothing is serving yet. It is its own function
+// so a test can hand it requests: built inline in main(), the only way to reach it was
+// to start this target on its container port. main() serves what it returns.
+func router() *gin.Engine {
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
 	r.Use(gin.CustomRecovery(func(c *gin.Context, v any) {
@@ -391,6 +398,5 @@ func main() {
 		}
 		c.Status(204)
 	})
-
-	hosts.Serve("gin", r, nil)
+	return r
 }
