@@ -727,7 +727,8 @@ def main():
                     help="override the offered rates, in the order they run")
     ap.add_argument("--rungs", default="",
                     help="comma separated rate names or numbers, default all. "
-                         "spec/ladder.json names them: regular, raised")
+                         "spec/ladder.json names them: "
+                         + ", ".join(r["name"] for r in LADDER["rungs"]))
     ap.add_argument("--workers", type=int, default=6)
     ap.add_argument("--skip-conform", action="store_true")
     ap.add_argument("--exemplars", action="store_true",
