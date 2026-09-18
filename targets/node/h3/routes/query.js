@@ -1,4 +1,4 @@
-// query: query string parsing and coercion, isolated from any use of the values.
+// query: query string parsing, percent-decoding and coercion, with the values echoed.
 //
 // getValidatedQuery is h3's own replacement for getQuery: it reads the query, hands it to
 // the check and answers its own 400 HTTPError if the check throws or returns false. The
@@ -29,7 +29,7 @@ const many = (q) => ({
 export const filter = (q) => ({ page: int(q.page), size: int(q.size), status: str(q.status) });
 
 export default function query(app) {
-  app.get("/query/one", (e) => getValidatedQuery(e, one));
+  app.get("/query/one", async (e) => d.withEcho("small", await getValidatedQuery(e, one)));
 
-  app.get("/query/many", (e) => getValidatedQuery(e, many));
+  app.get("/query/many", async (e) => d.withEcho("small", await getValidatedQuery(e, many)));
 }

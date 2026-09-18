@@ -1,8 +1,8 @@
 // Gin's own query binding, rather than a hand-written read of the raw map.
 //
 // `form:` is Gin's tag for a query parameter, and ShouldBindQuery is what reads it. The
-// struct is both what Gin fills and what the handler answers, so the response is the bound
-// values and nothing copies one shape into another.
+// struct is both what Gin fills and what the handler echoes beside the small payload, so
+// nothing copies one shape into another.
 //
 // Gin decides what a value it cannot bind is: a missing parameter leaves the field at its
 // zero value, and one that will not parse is an error carrying the strconv message. That

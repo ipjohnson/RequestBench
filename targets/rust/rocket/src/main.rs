@@ -181,7 +181,7 @@ impl<'r> FromRequest<'r> for Token {
 //
 // Rocket binds a query through the route attribute: `?<q..>` names a guard, and the
 // derived FromForm parses and types each field before the handler runs. The struct it
-// fills is the struct the handler answers.
+// fills is what the handler echoes beside the small payload.
 //
 // The fields are plain, so FromForm decides what a missing or unparseable one is, and what
 // Rocket answers when a guard does not fit is Rocket's own. The endpoint set sends neither.
@@ -211,6 +211,56 @@ struct OrderFilter {
     page: i64,
     size: i64,
     status: String,
+}
+
+// ---- parameters and headers: Rocket's typed segments, and a request guard -----
+//
+// Rocket binds a capture through the route attribute: `<one>` names a segment, and the i64
+// argument under it is converted by Rocket's FromParam before the handler runs. A segment
+// that is not an integer forwards with 422, which is Rocket's own answer once nothing else
+// matches.
+//
+// Rocket has no header binder. What a route takes from the request beyond its path, query
+// and body is a request guard, so the three bound headers are a guard of this target's own.
+// It converts the account itself, and a header that is missing or will not convert fails it
+// with 422, the status Rocket's own guards answer for a value that does not fit. The
+// endpoint set sends neither.
+
+#[derive(Serialize)]
+struct ParamOne {
+    one: i64,
+}
+
+#[derive(Serialize)]
+struct ParamTwo {
+    one: i64,
+    two: i64,
+}
+
+// rb:wiring headers.*
+#[derive(Serialize)]
+struct BoundHeaders {
+    tenant: String,
+    request_id: String,
+    account: i64,
+}
+
+// rb:wiring headers.*
+#[rocket::async_trait]
+impl<'r> FromRequest<'r> for BoundHeaders {
+    type Error = ();
+    async fn from_request(req: &'r Request<'_>) -> request::Outcome<Self, ()> {
+        let text = move |name: &str| req.headers().get_one(name);
+        let account = text("x-rb-account").and_then(|v| v.parse().ok());
+        match (text("x-rb-tenant"), text("x-rb-request-id"), account) {
+            (Some(tenant), Some(request_id), Some(account)) => Outcome::Success(BoundHeaders {
+                tenant: tenant.to_string(),
+                request_id: request_id.to_string(),
+                account,
+            }),
+            _ => Outcome::Error((Status::UnprocessableEntity, ())),
+        }
+    }
 }
 
 // rb:wiring middleware.*
@@ -264,29 +314,34 @@ fn json_large() -> Json<&'static d::PayloadBody> {
 fn param_static() -> Json<&'static d::PayloadBody> {
     Json(d::payload("small"))
 }
-#[get("/parameters/<_one>")]
-fn param_one(_one: &str) -> Json<&'static d::PayloadBody> {
-    Json(d::payload("small"))
+#[get("/parameters/<one>/segment/literal")]
+fn param_one(one: i64) -> Json<d::WithEcho<ParamOne>> {
+    Json(d::with_echo("small", ParamOne { one }))
 }
-#[get("/parameters/<_one>/with-second/<_two>")]
-fn param_two(_one: &str, _two: &str) -> Json<&'static d::PayloadBody> {
-    Json(d::payload("small"))
+#[get("/parameters/<one>/with-second/<two>")]
+fn param_two(one: i64, two: i64) -> Json<d::WithEcho<ParamTwo>> {
+    Json(d::with_echo("small", ParamTwo { one, two }))
 }
 
 #[get("/query/one?<q..>")]
-fn query_one(q: QueryOne) -> Json<QueryOne> {
-    Json(q)
+fn query_one(q: QueryOne) -> Json<d::WithEcho<QueryOne>> {
+    Json(d::with_echo("small", q))
 }
 #[get("/query/many?<q..>")]
-fn query_many(q: QueryMany) -> Json<QueryMany> {
-    Json(q)
+fn query_many(q: QueryMany) -> Json<d::WithEcho<QueryMany>> {
+    Json(d::with_echo("small", q))
 }
 
 /// The handler reads no header at all, so headers.many minus headers.few is the cost of
-/// materialising 27 nobody asked for.
+/// materialising 25 nobody asked for.
 #[get("/headers")]
 fn headers() -> Json<&'static d::PayloadBody> {
     Json(d::payload("small"))
+}
+
+#[get("/headers/bind")]
+fn headers_bind(h: BoundHeaders) -> Json<d::WithEcho<BoundHeaders>> {
+    Json(d::with_echo("small", h))
 }
 
 #[get("/middleware/none")]
@@ -665,7 +720,7 @@ fn rocket(port: u16) -> rocket::Rocket<rocket::Build> {
                 plaintext, health, meta,
                 json_small, json_medium, json_large,
                 param_static, param_one, param_two,
-                query_one, query_many, headers,
+                query_one, query_many, headers, headers_bind,
                 mw_none, mw_four, mw_sixteen, authorized,
                 comp_small, comp_medium, comp_large,
                 etag_small, etag_large,

@@ -4,17 +4,20 @@ using Microsoft.AspNetCore.Http;
 namespace RequestBench.WolverineTarget.Suite;
 
 /// <summary>
-/// parameters: route capture, at zero, one and two segments.
+/// parameters: route capture, at zero, one and two segments, each capture bound as an integer
+/// and echoed.
 ///
-/// The captured values do not reach the answer. The payload is the shared one, so what these
-/// hold is that the route matched at all: a target whose two-segment pattern is wrong answers
-/// 404 and the floor says so on the status line before it ever looks at a body.
+/// Plan draws the captured values for this run and fills the pinned echo with them, so the
+/// floor check is an echo check. A capture answered as a string fails it, and so does a
+/// pattern that does not match, which answers 404. The static path also matches the
+/// one-capture route beside it, and its plain payload is what shows the router chose the
+/// literal.
 /// </summary>
 public sealed class ParametersTests(TargetApp app) : IClassFixture<TargetApp>
 {
     // rb:test parameters.static
     [Fact]
-    public async Task A_route_with_nothing_to_capture_matches()
+    public async Task The_static_route_matches_ahead_of_the_capture_beside_it()
     {
         Ask ask = Plan.For("parameters.static");
 
@@ -26,7 +29,7 @@ public sealed class ParametersTests(TargetApp app) : IClassFixture<TargetApp>
 
     // rb:test parameters.one
     [Fact]
-    public async Task One_captured_segment_matches()
+    public async Task One_captured_segment_is_bound_as_an_integer()
     {
         Ask ask = Plan.For("parameters.one");
 
@@ -38,7 +41,7 @@ public sealed class ParametersTests(TargetApp app) : IClassFixture<TargetApp>
 
     // rb:test parameters.two
     [Fact]
-    public async Task Two_captured_segments_match()
+    public async Task Two_captured_segments_are_bound_the_same_way()
     {
         Ask ask = Plan.For("parameters.two");
 

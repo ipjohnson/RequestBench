@@ -208,27 +208,45 @@ func router() *gin.Engine {
 	}
 
 	r.GET("/parameters/static/segment/literal", small)
-	r.GET("/parameters/:one", small)
-	r.GET("/parameters/:one/with-second/:two", small)
+	r.GET("/parameters/:one/segment/literal", func(c *gin.Context) {
+		var p oneCapture
+		if bindCaptures(c, &p) {
+			c.JSON(200, d.WithEcho("small", p))
+		}
+	})
+	r.GET("/parameters/:one/with-second/:two", func(c *gin.Context) {
+		var p twoCaptures
+		if bindCaptures(c, &p) {
+			c.JSON(200, d.WithEcho("small", p))
+		}
+	})
 
-	// Gin binds both arms, so the handler answers the struct it filled rather than reading
+	// Gin binds both arms, so the handler echoes the struct it filled rather than reading
 	// the raw map. query.go holds the shapes and the tags it reads them with.
 	r.GET("/query/one", func(c *gin.Context) {
 		var q queryOne
 		if bindQuery(c, &q) {
-			c.JSON(200, q)
+			c.JSON(200, d.WithEcho("small", q))
 		}
 	})
 	r.GET("/query/many", func(c *gin.Context) {
 		var q queryMany
 		if bindQuery(c, &q) {
-			c.JSON(200, q)
+			c.JSON(200, d.WithEcho("small", q))
 		}
 	})
 
 	// The handler reads no header at all, so headers.many minus headers.few is the cost of
-	// materialising 27 nobody asked for.
+	// materialising 25 nobody asked for.
 	r.GET("/headers", small)
+	// Gin binds the three the plan sends on every request, so the handler echoes the struct it
+	// filled rather than reading the raw map. headers.go holds the shape and its tags.
+	r.GET("/headers/bind", func(c *gin.Context) {
+		var h boundHeaders
+		if bindHeaders(c, &h) {
+			c.JSON(200, d.WithEcho("small", h))
+		}
+	})
 
 	// ---- middleware: real Gin handlers on the route, each calling the next ----------
 

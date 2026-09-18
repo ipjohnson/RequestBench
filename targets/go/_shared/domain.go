@@ -639,6 +639,19 @@ type authDoc struct {
 // of it.
 func Payload(size string) PayloadBody { return payloads[size].Body }
 
+// PayloadWithEcho puts the payload's keys and echo in one object, because encoding/json
+// writes an embedded struct's fields into the object around it. Every Go target writes JSON
+// with encoding/json.
+type PayloadWithEcho struct {
+	PayloadBody
+	Echo any `json:"echo"`
+}
+
+// WithEcho is the payload with what a handler bound beside it. A route that binds something
+// answers this, so the value has to be converted and written back rather than bound and
+// dropped.
+func WithEcho(size string, echo any) PayloadWithEcho { return PayloadWithEcho{Payload(size), echo} }
+
 // GzipLevel is pinned across every language. Compression cost is dominated by codec and
 // level, not by framework, so an unpinned level makes compressed.* a zlib benchmark.
 const GzipLevel = 6

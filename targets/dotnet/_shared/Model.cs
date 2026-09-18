@@ -24,6 +24,15 @@ public sealed record Order(int Id, int CustomerId, string Status, string Created
 /// </summary>
 public sealed record PayloadBody(int Count, IReadOnlyList<Product> Items, string Size);
 
+/// <summary>
+/// The payload's keys and an echo in one object. System.Text.Json cannot write a nested
+/// record's properties into the object around it, so the payload's three parts are repeated.
+/// Echo is typed object, so it is written by its runtime type: the record or anonymous
+/// object the handler passed.
+/// </summary>
+public sealed record PayloadWithEcho(int Count, IReadOnlyList<Product> Items, string Size,
+                                     object Echo);
+
 public sealed record PayloadDoc(PayloadBody Body);
 
 /// <summary>

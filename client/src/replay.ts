@@ -9,13 +9,17 @@ import { comparable } from "./compare.js";
 import { bodyClass, contentEncoding, decoded, type Encoding, type Header } from "./checks.js";
 import type { PlanEndpoint, Plan } from "./spec.js";
 import { Transport, type Reply } from "./http.js";
+import { inHeader, inPath, type Values } from "./values.js";
 import type { Answer } from "@rb/schema";
 
 const EMPTY = Buffer.alloc(0);
 
 /** One request and what came back, before anything has judged it. */
 export type Visit = {
+  /** As it was sent, with this run's values in it. */
   readonly path: string;
+  /** As the plan writes it, which is what an expectation and a reference are keyed by. */
+  readonly planned: string;
   /** The headers this request actually carried, captures resolved and variant chosen. */
   readonly sent: Readonly<Record<string, string>>;
   /** 0 when nothing arrived. */
@@ -80,6 +84,8 @@ export type ReplayOptions = {
    * want every instance: x-rb-serial has to advance across them.
    */
   readonly distinct?: boolean;
+  /** This run's values, filled in wherever the plan carries a {run.<name>}. */
+  readonly values?: Values;
 };
 
 /**
@@ -98,11 +104,13 @@ export const answerOf = (v: Visit): Answer => ({
 });
 
 /**
- * The same request gen/blend.mjs sends: the endpoint's headers, and a type when there is a
- * body. `instance` picks the vary combination, the way the generator picks it from the
- * instance it drew.
+ * The same request gen/blend.mjs sends: the endpoint's headers with this run's values in
+ * them, and a type when there is a body. `instance` picks the vary combination, the way the
+ * generator picks it from the instance it drew.
  */
-export const requestHeaders = (ep: PlanEndpoint, instance = 0): Record<string, string> => {
+export const requestHeaders = (
+  ep: PlanEndpoint, instance = 0, values: Values = new Map(),
+): Record<string, string> => {
   // The gate used to add an accept the generator never sends, which meant a
   // content-negotiating target could be gated on one response and measured on another.
   const variants = ep.header_variants;
@@ -110,6 +118,7 @@ export const requestHeaders = (ep: PlanEndpoint, instance = 0): Record<string, s
     ...(ep.headers ?? {}),
     ...(variants?.length ? variants[instance % variants.length] : {}),
   };
+  for (const [name, value] of Object.entries(headers)) headers[name] = inHeader(value, values);
   if (ep.body) headers["content-type"] = "application/json";
   return headers;
 };
@@ -173,18 +182,20 @@ export class Replay {
    */
   async *endpoints(): AsyncGenerator<Replayed> {
     const captured = await this.captures();
+    const values = this.opts.values ?? new Map<string, number | string>();
     for (const ep of this.plan.endpoints) {
       const drawn = this.opts.instances ? ep.paths.slice(0, this.opts.instances) : ep.paths;
       const paths = this.opts.distinct ? [...new Set(drawn)] : drawn;
       // Built per instance rather than once, because the vary rows send a different
       // combination on each: a response cache keyed on a header it never sees vary is
       // keyed on nothing. Every other endpoint has one combination and this is that one.
-      const filled = paths.map((_, i) => fill(requestHeaders(ep, i), captured));
+      const filled = paths.map((_, i) => fill(requestHeaders(ep, i, values), captured));
       const why = filled.find((f) => f.why)?.why ?? null;
       if (why) { yield { ep, visits: [], why }; continue; }
       const visits: Visit[] = [];
-      for (const [i, path] of paths.entries()) {
+      for (const [i, planned] of paths.entries()) {
         const headers = (filled[i] as { headers: Record<string, string> }).headers;
+        const path = inPath(planned, values);
         let reply: Reply | null = null;
         let transportError: string | null = null;
         try {
@@ -195,6 +206,7 @@ export class Replay {
         }
         visits.push({
           path,
+          planned,
           sent: headers,
           status: reply?.status ?? 0,
           raw: reply?.body ?? EMPTY,

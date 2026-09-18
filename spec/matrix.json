@@ -266,7 +266,7 @@
         "builtin": "Returning the record is the whole of it: System.Text.Json serializes what the action returned."
       },
       "parameters": {
-        "builtin": "[HttpGet(\"/parameters/{one}\")] is the capture, and the action under it is the handler."
+        "builtin": "[FromRoute] on a typed parameter is the binding, converted from the route value before the action runs."
       },
       "authorized": {
         "mechanism": "an action filter attribute on the one action; authorization filters would bring a policy evaluation the other forty-four endpoints would also pay for"
@@ -284,10 +284,10 @@
         "builtin": "MVC's own model validation: [ApiController] checks ModelState against the DataAnnotations on the shared OrderIn before the action is entered, and answers ProblemDetails itself."
       },
       "query": {
-        "builtin": "[FromQuery] on a typed parameter is the binding, converted before the action runs."
+        "builtin": "[FromQuery] on a typed parameter is the binding, converted before the action runs. The action echoes the bound values beside the small payload."
       },
       "headers": {
-        "builtin": "ASP.NET materialises the request header map itself; nothing is registered to make it happen."
+        "builtin": "[FromHeader] on a typed parameter is the binding, converted before the action runs. The /headers action declares none and reads none."
       },
       "middleware": {
         "mechanism": "one action filter attribute per layer on the action, each awaiting the next and doing nothing else"
@@ -310,7 +310,7 @@
         "builtin": "Returning the record is the whole of it: System.Text.Json serializes what the route returned."
       },
       "parameters": {
-        "builtin": "MapGet(\"/parameters/{one}\") in AddRoutes is the capture, and the lambda in it is the handler."
+        "builtin": "A typed lambda parameter named after the capture is the binding: ASP.NET converts the route value before the route runs."
       },
       "authorized": {
         "builtin": "An endpoint filter written inline on the route, which the handler block already shows."
@@ -330,10 +330,10 @@
         "mentions": "AbstractValidator"
       },
       "query": {
-        "builtin": "A typed lambda parameter is the binding: ASP.NET converts it from the query string before the route runs."
+        "builtin": "A typed lambda parameter is the binding: ASP.NET converts it from the query string before the route runs. The route echoes the bound values beside the small payload."
       },
       "headers": {
-        "builtin": "ASP.NET materialises the request header map itself; nothing is registered to make it happen."
+        "builtin": "[FromHeader] on a typed lambda parameter is the binding: ASP.NET converts the header before the route runs. /headers declares none and reads none."
       },
       "middleware": {
         "mechanism": "one endpoint filter per layer added to the route, each awaiting the next and doing nothing else"
@@ -356,7 +356,7 @@
         "builtin": "Returning the record from ExecuteAsync is the whole of it: System.Text.Json serializes it."
       },
       "parameters": {
-        "builtin": "Get(\"/parameters/{one}\") in Configure is the capture, and ExecuteAsync on the same class is the handler."
+        "builtin": "A property on the request class named after the capture is the binding: FastEndpoints fills it from the route value before ExecuteAsync runs."
       },
       "authorized": {
         "mechanism": "a pre-processor on the one endpoint, which refuses by writing the response and marking it handled"
@@ -374,10 +374,10 @@
         "mechanism": "FastEndpoints' own request binding and validation over the annotated request class"
       },
       "query": {
-        "builtin": "A property on the request class is the binding: FastEndpoints fills it from the query string before ExecuteAsync runs."
+        "builtin": "A property on the request class is the binding: FastEndpoints fills it from the query string before ExecuteAsync runs. ExecuteAsync echoes the bound values beside the small payload."
       },
       "headers": {
-        "builtin": "ASP.NET materialises the request header map itself; nothing is registered to make it happen."
+        "builtin": "A [FromHeader] property on the request class is the binding: FastEndpoints fills it from the header before ExecuteAsync runs. The /headers endpoint has no request class and reads nothing."
       },
       "middleware": {
         "mechanism": "one pre-processor per layer named in Configure, each returning without doing anything else"
@@ -400,7 +400,7 @@
         "builtin": "Returning the record is the whole of it: System.Text.Json serializes what the endpoint returned."
       },
       "parameters": {
-        "builtin": "MapGet(\"/parameters/{one}\") is the capture, and the lambda in it is the handler."
+        "builtin": "A typed lambda parameter named after the capture is the binding: ASP.NET converts the route value before the endpoint runs."
       },
       "authorized": {
         "builtin": "An endpoint filter written inline on the route, which the handler block already shows. The authorization middleware would bring a policy evaluation the other forty-four endpoints would also pay for."
@@ -418,10 +418,10 @@
         "mechanism": "minimal APIs' own validation, new in .NET 10: the framework checks the annotated record before the endpoint is entered"
       },
       "query": {
-        "builtin": "A typed lambda parameter is the binding: ASP.NET converts it from the query string before the endpoint runs."
+        "builtin": "A typed lambda parameter is the binding: ASP.NET converts it from the query string before the endpoint runs. The endpoint echoes the bound values beside the small payload."
       },
       "headers": {
-        "builtin": "ASP.NET materialises the request header map itself; nothing is registered to make it happen."
+        "builtin": "[FromHeader] on a typed lambda parameter is the binding: ASP.NET converts the header before the endpoint runs. /headers declares none and reads none."
       },
       "middleware": {
         "mechanism": "one endpoint filter per layer added to the route, each awaiting the next and doing nothing else"
@@ -444,7 +444,7 @@
         "builtin": "Returning the record is the whole of it: Wolverine serializes what the endpoint method returned."
       },
       "parameters": {
-        "builtin": "[WolverineGet(\"/parameters/{one}\")] is the capture, and the method under it is the handler."
+        "builtin": "A typed method parameter named after the capture is the binding: Wolverine fills it from the route value before the endpoint runs."
       },
       "authorized": {
         "mechanism": "a Before method found by convention, which refuses by returning a result rather than letting the endpoint run"
@@ -464,10 +464,10 @@
         "mentions": "AbstractValidator"
       },
       "query": {
-        "builtin": "A typed method parameter is the binding: Wolverine fills it from the query string before the endpoint runs."
+        "builtin": "A typed method parameter is the binding: Wolverine fills it from the query string before the endpoint runs. The endpoint echoes the bound values beside the small payload."
       },
       "headers": {
-        "builtin": "ASP.NET materialises the request header map itself; nothing is registered to make it happen."
+        "builtin": "[FromHeader] on a typed method parameter is the binding: Wolverine fills it from the header before the endpoint runs. /headers declares none and reads none."
       },
       "middleware": {
         "mechanism": "one static class with a Before method per layer, found by convention rather than by an interface"
@@ -490,7 +490,7 @@
         "mechanism": "encoding/json over a body read once into the closure; chi routes net/http handlers and adds no serializer"
       },
       "parameters": {
-        "mechanism": "chi's {one} captures, with the same payload closure behind all three routes"
+        "mechanism": "chi.URLParam on chi's {one} captures, converted by hand and echoed beside the small payload; the static route answers the payload closure"
       },
       "authorized": {
         "mechanism": "a route-scoped middleware through r.With, run before the handler"
@@ -508,10 +508,10 @@
         "mechanism": "encoding/json into a map, then this target's own field walk: chi has no validation layer to plug into"
       },
       "query": {
-        "mechanism": "r.URL.Query() coerced by hand, which is as far as a router over net/http handlers goes"
+        "mechanism": "r.URL.Query() coerced by hand, which is as far as a router over net/http handlers goes, with the coerced struct as the echo beside the small payload"
       },
       "headers": {
-        "mechanism": "net/http's own request header map, which the handler never reads: the route answers the small payload"
+        "mechanism": "req.Header.Get converted by hand on /headers/bind, which is as far as a router over net/http handlers goes, with the values echoed beside the small payload; /headers reads no header at all"
       },
       "middleware": {
         "mechanism": "r.With returns a router carrying n no-op layers and nothing else"
@@ -534,7 +534,7 @@
         "mechanism": "c.JSON over a body read once into the closure, so the map lookup is not in the measurement"
       },
       "parameters": {
-        "mechanism": "Echo's :one captures, with the same payload closure behind all three routes"
+        "mechanism": "c.Bind reading the param: tag from Echo's :one captures, with the bound struct echoed beside the small payload; the static route answers the payload closure"
       },
       "authorized": {
         "mechanism": "middleware passed as a trailing argument on the route, run before the handler"
@@ -554,10 +554,10 @@
         "mentions": "validator"
       },
       "query": {
-        "mechanism": "Echo's own binder reading the query: tag, with the bound struct as the response shape"
+        "mechanism": "Echo's own binder reading the query: tag, with the bound struct as the echo beside the small payload"
       },
       "headers": {
-        "mechanism": "Echo's own request header map, which the handler never reads: the route answers the small payload"
+        "mechanism": "the DefaultBinder's BindHeaders reading the header: tag on /headers/bind, since c.Bind never reads a header, with the bound struct echoed beside the small payload; /headers reads no header at all"
       },
       "middleware": {
         "mechanism": "middleware as trailing arguments on the route, n no-op layers each calling the next"
@@ -580,7 +580,7 @@
         "mechanism": "c.JSON over a body read once into the closure, on static routes rather than a /json/:size capture"
       },
       "parameters": {
-        "mechanism": "Fiber's :one captures, with the same payload closure behind all three routes"
+        "mechanism": "c.Bind().URI through gofiber/schema, reading the uri: tag from Fiber's :one captures, with the bound struct echoed beside the small payload; the static route, registered first because Fiber tries routes in order, answers the payload closure"
       },
       "authorized": {
         "mechanism": "a handler in front of the payload on the same route, answering 403 rather than calling Next"
@@ -604,10 +604,10 @@
         "mentions": "validator"
       },
       "query": {
-        "mechanism": "c.Bind().Query through gofiber/schema, reading the query: tag, with the bound struct as the response shape"
+        "mechanism": "c.Bind().Query through gofiber/schema, reading the query: tag, with the bound struct as the echo beside the small payload"
       },
       "headers": {
-        "mechanism": "Fiber's own request header map, which the handler never reads: the route answers the small payload"
+        "mechanism": "c.Bind().Header through gofiber/schema, reading the header: tag on /headers/bind, with the bound struct echoed beside the small payload; /headers reads no header at all"
       },
       "middleware": {
         "mechanism": "handlers listed before the payload on the route, n no-op layers each calling Next"
@@ -632,7 +632,7 @@
         "mechanism": "c.JSON over a body read once into the closure, on static routes rather than a /json/:size capture"
       },
       "parameters": {
-        "mechanism": "Gin's :one radix captures, with the same payload closure behind all three routes"
+        "mechanism": "ShouldBindUri reading the uri: tag from Gin's :one radix captures, with the bound struct echoed beside the small payload; the static route answers the payload closure"
       },
       "authorized": {
         "mechanism": "middleware on the route, aborting with 403 before the handler runs"
@@ -654,10 +654,10 @@
         "mentions": "validator"
       },
       "query": {
-        "mechanism": "ShouldBindQuery reading the form: tag, with the bound struct as the response shape"
+        "mechanism": "ShouldBindQuery reading the form: tag, with the bound struct as the echo beside the small payload"
       },
       "headers": {
-        "mechanism": "Gin's own request header map, which the handler never reads: the route answers the small payload"
+        "mechanism": "ShouldBindHeader reading the header: tag on /headers/bind, with the bound struct echoed beside the small payload; /headers reads no header at all"
       },
       "middleware": {
         "mechanism": "Gin handlers appended to the route, n no-op layers each calling c.Next()"
@@ -680,7 +680,7 @@
         "mechanism": "encoding/json over a body read once into the closure; mux routes net/http handlers and adds no serializer"
       },
       "parameters": {
-        "mechanism": "mux's {one} captures, with the same payload closure behind all three routes"
+        "mechanism": "mux.Vars on mux's {one} captures, converted by hand and echoed beside the small payload; the static route, registered first because mux tries routes in order, answers the payload closure"
       },
       "authorized": {
         "mechanism": "a middleware chained onto this one handler, run before it"
@@ -700,10 +700,10 @@
         "mechanism": "encoding/json into a map, then this target's own field walk: mux has no validation layer to plug into"
       },
       "query": {
-        "mechanism": "r.URL.Query() coerced by hand, which is as far as a router over net/http handlers goes"
+        "mechanism": "r.URL.Query() coerced by hand, which is as far as a router over net/http handlers goes, with the coerced struct as the echo beside the small payload"
       },
       "headers": {
-        "mechanism": "net/http's own request header map, which the handler never reads: the route answers the small payload"
+        "mechanism": "req.Header.Get converted by hand on /headers/bind, which is as far as a router over net/http handlers goes, with the values echoed beside the small payload; /headers reads no header at all"
       },
       "middleware": {
         "mechanism": "n no-op layers chained onto the one handler that asked for them, because mux.Use applies to a whole router"
@@ -726,7 +726,7 @@
         "builtin": "res.send over the record is the whole of it; Helidon's media support serializes it."
       },
       "parameters": {
-        "builtin": "The route pattern carries the capture and the lambda under it is the handler."
+        "builtin": "req.path().pathParameters() is what Helidon captured, and the handler converts each capture in place with asInt()."
       },
       "authorized": {
         "mechanism": "a route ahead of the endpoint's own on the same path, answering 403 rather than calling next"
@@ -744,10 +744,10 @@
         "mechanism": "this target's own field walk: Helidon SE is a routing and server library and Bean Validation lives in the MP flavour"
       },
       "query": {
-        "builtin": "req.query() is what Helidon parsed, and the handler coerces it in place."
+        "builtin": "req.query() is what Helidon parsed, and the handler coerces it in place. It echoes the coerced values beside the small payload."
       },
       "headers": {
-        "builtin": "Helidon materialises the request header map itself; nothing is registered to make it happen."
+        "builtin": "req.headers() is what Helidon parsed, and the handler converts x-rb-account in place with asInt(); /headers reads none."
       },
       "middleware": {
         "mechanism": "a filter on a path, one registration per layer, each calling the chain and doing nothing else"
@@ -772,7 +772,7 @@
         "builtin": "ctx.json is Javalin's own serializer call, made in the handler."
       },
       "parameters": {
-        "builtin": "The route pattern carries the {one} capture and the lambda under it is the handler."
+        "builtin": "The handler binds each capture with ctx.pathParamAsClass, Javalin's own converter."
       },
       "authorized": {
         "mechanism": "a before handler bound to this path, answering 403 rather than letting the route run"
@@ -790,10 +790,10 @@
         "mechanism": "Javalin's own validator: bodyValidator runs the checks and raises ValidationException itself, so no handler calls a validator"
       },
       "query": {
-        "mechanism": "ctx.queryParamAsClass, Javalin's own converter, with the coerced values as the response shape"
+        "mechanism": "ctx.queryParamAsClass, Javalin's own converter, with the coerced values echoed beside the small payload"
       },
       "headers": {
-        "builtin": "Javalin materialises the request header map itself; nothing is registered to make it happen."
+        "builtin": "The handler binds each header with ctx.headerAsClass, Javalin's own converter; /headers reads none."
       },
       "middleware": {
         "mechanism": "before handlers taking a path, one registration per layer, each running and doing nothing else"
@@ -816,7 +816,7 @@
         "builtin": "Returning the record is the whole of it: Micronaut serializes what the controller method returned."
       },
       "parameters": {
-        "builtin": "@Get(\"/parameters/{one}\") is the capture, and the method under it is the handler."
+        "builtin": "@PathVariable names the capture and declares its type, and Micronaut converts it before the method runs."
       },
       "authorized": {
         "mechanism": "an @Filter bound to the one path, resolved from its annotation at compile time"
@@ -836,10 +836,10 @@
         "mentions": "NotNull"
       },
       "query": {
-        "builtin": "@QueryValue names the parameter and declares its type, and Micronaut converts it before the method runs."
+        "builtin": "@QueryValue names the parameter and declares its type, and Micronaut converts it before the method runs. The method echoes the converted values beside the small payload."
       },
       "headers": {
-        "builtin": "Micronaut materialises the request header map itself; nothing is registered to make it happen."
+        "builtin": "@Header names the header and declares its type, and Micronaut converts it before the method runs; /headers reads none."
       },
       "middleware": {
         "mechanism": "one @Filter bean per layer with the patterns it applies to, because Micronaut resolves filters from annotations at compile time"
@@ -864,7 +864,7 @@
         "builtin": "Returning the record is the whole of it: Quarkus serializes what the resource method returned."
       },
       "parameters": {
-        "builtin": "@Path(\"{one}\") is the capture, and the method under it is the handler."
+        "builtin": "@PathParam names the capture and declares its type, and RESTEasy converts it before the method runs."
       },
       "authorized": {
         "mechanism": "a JAX-RS ContainerRequestFilter bound to the one method by a @NameBinding annotation"
@@ -884,10 +884,10 @@
         "mentions": "NotNull"
       },
       "query": {
-        "builtin": "@QueryParam names the parameter and declares its type, and RESTEasy converts it before the method runs."
+        "builtin": "@QueryParam names the parameter and declares its type, and RESTEasy converts it before the method runs. The method echoes the converted values beside the small payload."
       },
       "headers": {
-        "builtin": "RESTEasy materialises the request header map itself; nothing is registered to make it happen."
+        "builtin": "@HeaderParam names the header and declares its type, and RESTEasy converts it before the method runs; /headers reads none."
       },
       "middleware": {
         "mechanism": "one @Provider filter per layer, bound to the method by a @NameBinding annotation, because JAX-RS resolves providers from annotations at deployment"
@@ -912,7 +912,7 @@
         "builtin": "Returning the record is the whole of it: Jackson serializes what the controller method returned."
       },
       "parameters": {
-        "builtin": "@GetMapping(\"/parameters/{one}\") is the capture, and the method under it is the handler."
+        "builtin": "@PathVariable names the capture and declares its type, and Spring converts it before the method runs."
       },
       "authorized": {
         "mechanism": "a servlet Filter bound to this path through a FilterRegistrationBean, not an if in the handler"
@@ -932,10 +932,10 @@
         "mentions": "NotNull"
       },
       "query": {
-        "builtin": "@RequestParam names the parameter and declares its type, and Spring converts it before the method runs."
+        "builtin": "@RequestParam names the parameter and declares its type, and Spring converts it before the method runs. The method echoes the converted values beside the small payload."
       },
       "headers": {
-        "builtin": "Spring materialises the request header map itself; nothing is registered to make it happen."
+        "builtin": "@RequestHeader names the header and declares its type, and Spring converts it before the method runs; /headers reads none."
       },
       "middleware": {
         "mechanism": "one servlet Filter registration per layer, each with the URL pattern it applies to, registered as singletons from a BeanFactoryPostProcessor"
@@ -960,7 +960,9 @@
         "mechanism": "one Reply.json helper behind every route, which sets the content type and encodes"
       },
       "parameters": {
-        "mechanism": "Vert.x Web's :one captures, with the same Reply.json call behind all three routes"
+        "mechanism": "a ValidationHandler declaring each capture as an integer, so Vert.x parses and coerces it before the handler runs",
+        "dep": "vertx-web-validation",
+        "mentions": "ValidationHandler"
       },
       "authorized": {
         "mechanism": "a handler ahead of the endpoint's own on the same route, answering 403 rather than calling next"
@@ -980,12 +982,14 @@
         "mentions": "ValidationHandler"
       },
       "query": {
-        "mechanism": "a ValidationHandler declaring the parameters, so Vert.x parses and coerces before the handler runs",
+        "mechanism": "a ValidationHandler declaring the parameters, so Vert.x parses and coerces before the handler runs, with the typed values echoed beside the small payload",
         "dep": "vertx-web-validation",
         "mentions": "ValidationHandler"
       },
       "headers": {
-        "mechanism": "Vert.x's own request header map, which the handler never reads: the route answers the small payload"
+        "mechanism": "a ValidationHandler declaring the three bound headers, so Vert.x parses and coerces x-rb-account before the handler runs; /headers reads none",
+        "dep": "vertx-web-validation",
+        "mentions": "ValidationHandler"
       },
       "middleware": {
         "mechanism": "handlers chained on the route, n no-op layers each calling next"
@@ -1010,7 +1014,7 @@
         "builtin": "res.json is Express's own serializer, called in the handler."
       },
       "parameters": {
-        "mechanism": "Express's :one captures, with one handler behind all three routes"
+        "mechanism": "app.param for one and two, Express's own hook for a named capture: it converts each to an integer before the handler echoes req.params"
       },
       "authorized": {
         "mechanism": "route-scoped middleware, run before the handler"
@@ -1030,10 +1034,10 @@
         "mechanism": "express.json() mounted per route, then this target's own field walk in validation.js"
       },
       "query": {
-        "mechanism": "Express's query parser, coerced by hand: there is no binder to bind to"
+        "mechanism": "Express's query parser, coerced by hand because there is no binder to bind to, and echoed beside the small payload"
       },
       "headers": {
-        "builtin": "Express materialises req.headers eagerly; nothing is registered to make it happen."
+        "mechanism": "req.get on /headers/bind, converted by hand: Express has no header binder, and /headers reads none"
       },
       "middleware": {
         "mechanism": "Express's per-route middleware array, n no-op layers each calling next()"
@@ -1057,7 +1061,7 @@
         "builtin": "Returning the object is the whole of it: Fastify serializes what a handler returns."
       },
       "parameters": {
-        "mechanism": "Fastify's :one captures, with one handler behind all three routes"
+        "mechanism": "schema.params on the two capturing routes, which is the binding: ajv converts each capture to an integer and the handler echoes req.params"
       },
       "authorized": {
         "mechanism": "a route-scoped onRequest hook, run before the handler"
@@ -1078,10 +1082,10 @@
         "mechanism": "schema.body on the route: Fastify compiles it once and its own ajv runs it before the handler"
       },
       "query": {
-        "mechanism": "schema.querystring on the route, which is the binding: ajv coerces what is declared and drops the rest"
+        "mechanism": "schema.querystring on the route, which is the binding: ajv coerces what is declared and drops the rest, and req.query is echoed beside the small payload"
       },
       "headers": {
-        "mechanism": "Fastify's own request header map, which the handler never reads: the route answers the small payload"
+        "mechanism": "schema.headers on /headers/bind, which is the binding: ajv converts x-rb-account to an integer and the handler echoes the three it declared; /headers reads none"
       },
       "middleware": {
         "mechanism": "a route-level onRequest hook array, n no-op layers each calling done()"
@@ -1105,7 +1109,7 @@
         "builtin": "Returning the object is the whole of it: h3 serializes what a handler returns."
       },
       "parameters": {
-        "mechanism": "h3's :one captures, with one handler behind all three routes"
+        "mechanism": "getValidatedRouterParams: h3 reads the captures, runs this target's conversion to integers and owns the refusal"
       },
       "authorized": {
         "mechanism": "a middleware list on defineHandler, run before the handler"
@@ -1124,10 +1128,10 @@
         "mechanism": "readBody, then this target's own field walk in validation.js: h3 has no validation layer"
       },
       "query": {
-        "mechanism": "getValidatedQuery: h3 reads the query, runs this target's coercion and owns the refusal"
+        "mechanism": "getValidatedQuery: h3 reads the query, runs this target's coercion and owns the refusal, and the handler echoes the result beside the small payload"
       },
       "headers": {
-        "builtin": "h3 hands the handler the Request's own header map; nothing is registered to make it happen."
+        "mechanism": "e.req.headers.get on /headers/bind, converted by hand: h3's own header validation hands back strings only, and /headers reads none"
       },
       "middleware": {
         "mechanism": "a middleware list on defineHandler, n no-op layers each calling next()"
@@ -1151,7 +1155,7 @@
         "builtin": "c.json is Hono's own serializer, called in the handler."
       },
       "parameters": {
-        "mechanism": "Hono's :one captures, with one handler behind all three routes"
+        "mechanism": "validator(\"param\", fn) on the two capturing routes: Hono runs the conversion to integers and the handler reads the captures back with c.req.valid"
       },
       "authorized": {
         "mechanism": "route-scoped middleware, awaited before the handler"
@@ -1170,10 +1174,10 @@
         "mechanism": "hono/validator as a route-level hook: Hono reads the body, hands it to this target's walk and short circuits on a refusal"
       },
       "query": {
-        "mechanism": "validator(\"query\", fn): Hono runs the coercion and the handler reads the result back with c.req.valid"
+        "mechanism": "validator(\"query\", fn): Hono runs the coercion, and the handler reads the result back with c.req.valid and echoes it beside the small payload"
       },
       "headers": {
-        "builtin": "Hono builds the header map from the Request it was handed; nothing is registered to make it happen."
+        "mechanism": "validator(\"header\", fn) on /headers/bind: Hono hands the check every request header, the check converts x-rb-account, and the handler reads the three back with c.req.valid; /headers reads none"
       },
       "middleware": {
         "mechanism": "middleware spread inline on the route, n no-op layers each awaiting next()"
@@ -1196,7 +1200,7 @@
         "builtin": "Assigning an object to ctx.body is the whole of it: Koa serializes what it was given."
       },
       "parameters": {
-        "mechanism": "@koa/router's :one captures, with one handler behind all three routes"
+        "mechanism": "router.param for one and two, @koa/router's own hook for a named capture: it converts each to an integer before the handler echoes ctx.params"
       },
       "authorized": {
         "mechanism": "route-scoped middleware, awaited before the handler"
@@ -1218,10 +1222,10 @@
         "dep": "koa-bodyparser"
       },
       "query": {
-        "mechanism": "Koa's query parser, coerced by hand: there is no binder to bind to"
+        "mechanism": "Koa's query parser, coerced by hand because there is no binder to bind to, and echoed beside the small payload"
       },
       "headers": {
-        "builtin": "Koa materialises ctx.headers eagerly; nothing is registered to make it happen."
+        "mechanism": "ctx.get on /headers/bind, converted by hand: Koa has no header binder, and /headers reads none"
       },
       "middleware": {
         "mechanism": "@koa/router takes middleware inline on the route, n no-op layers each awaiting next()"
@@ -1245,7 +1249,7 @@
         "mechanism": "JsonResponse from a per-size view factory, on static routes rather than a /json/<size> capture"
       },
       "parameters": {
-        "mechanism": "Django's <one> path converters, with the same view factory behind all three routes"
+        "mechanism": "Django's <int:one> path converters, which convert each capture before the view runs; the static view answers the small payload"
       },
       "authorized": {
         "mechanism": "a view decorator answering 403 before the view it wraps runs"
@@ -1265,12 +1269,12 @@
         "mentions": "forms.Form"
       },
       "query": {
-        "mechanism": "a django.forms.Form over request.GET, so the coercion is the framework's and the cleaned data is the response shape",
+        "mechanism": "a django.forms.Form over request.GET, so the coercion is the framework's and the cleaned data is echoed beside the small payload",
         "dep": "django",
         "mentions": "forms.Form"
       },
       "headers": {
-        "mechanism": "Django's own request.headers, which the view never reads: the route answers the small payload"
+        "mechanism": "request.headers read in the view and converted by hand, since Django has no header binder; /headers reads none and answers the small payload"
       },
       "middleware": {
         "mechanism": "one view decorator per layer, each awaiting the view below it and doing nothing else"
@@ -1295,7 +1299,7 @@
         "mechanism": "returning the dict, which FastAPI serializes; one small() helper behind the routes that answer the same payload"
       },
       "parameters": {
-        "mechanism": "FastAPI's {one} captures, with one small() helper behind all three routes"
+        "mechanism": "FastAPI's {one} captures, each bound as an int by the typed function parameter of the same name; the static route answers through the small() helper"
       },
       "authorized": {
         "mechanism": "a route dependency through Depends, run before the handler"
@@ -1315,10 +1319,10 @@
         "mentions": "BaseModel"
       },
       "query": {
-        "builtin": "A typed function parameter is the binding: FastAPI coerces it from the query string before the handler runs."
+        "builtin": "A typed function parameter is the binding: FastAPI coerces it from the query string before the handler runs. The handler echoes the bound values beside the small payload."
       },
       "headers": {
-        "mechanism": "FastAPI's own request header map, which the handler never reads: the route answers the small payload through the same helper the json family uses"
+        "mechanism": "Header() on a typed function parameter for each header /headers/bind echoes, coerced before the handler runs; /headers reads none and answers through the small() helper"
       },
       "middleware": {
         "mechanism": "a dependency per layer on the route, each awaiting and doing nothing else"
@@ -1343,7 +1347,7 @@
         "mechanism": "jsonify from one small helper behind the routes that answer the same payload"
       },
       "parameters": {
-        "mechanism": "Flask's <one> captures, with one small helper behind all three routes"
+        "mechanism": "Flask's <int:one> converters, which convert each capture before the view runs; the static route answers through the small helper"
       },
       "authorized": {
         "mechanism": "a before_request hook on its own blueprint: returning a response from it short-circuits the view"
@@ -1363,10 +1367,10 @@
         "mechanism": "this target's own field walk, raising Refused: Flask has no validation layer to plug into"
       },
       "query": {
-        "builtin": "request.args is Werkzeug's own MultiDict and its get() takes the conversion, so the coercion is the framework's and happens in the view."
+        "builtin": "request.args is Werkzeug's own MultiDict and its get() takes the conversion, so the coercion is the framework's and happens in the view. The view echoes the converted values beside the small payload."
       },
       "headers": {
-        "mechanism": "Werkzeug's own request header map, which the view never reads: the route answers the small payload"
+        "mechanism": "request.headers, Werkzeug's own Headers, whose get() takes the conversion for each header /headers/bind echoes; /headers reads none and answers through the small helper"
       },
       "middleware": {
         "mechanism": "one blueprint per layer count, each layer a before_request hook doing nothing else"
@@ -1391,7 +1395,7 @@
         "builtin": "Returning the dict is the whole of it: Litestar serializes it with msgspec."
       },
       "parameters": {
-        "builtin": "@get(\"/parameters/{one:str}\") is the capture, and the function under it is the handler."
+        "builtin": "@get(\"/parameters/{one:int}/segment/literal\") is the capture and FromPath[int] on the function under it is the binding, so Litestar converts it before the handler runs."
       },
       "authorized": {
         "mechanism": "a guard on the route, which Litestar runs before the handler"
@@ -1411,10 +1415,10 @@
         "mentions": "dataclass"
       },
       "query": {
-        "builtin": "A typed function parameter is the binding: Litestar coerces it from the query string before the handler runs."
+        "builtin": "A typed function parameter is the binding: Litestar coerces it from the query string before the handler runs. The handler echoes the bound values beside the small payload."
       },
       "headers": {
-        "builtin": "Litestar materialises the request header map itself; nothing is registered to make it happen."
+        "builtin": "HeaderParameter on a typed function parameter is the binding: Litestar reads the named header and msgspec converts it before the handler runs. /headers reads none."
       },
       "middleware": {
         "mechanism": "an ASGI middleware class per layer named on the route, each awaiting the app below it"
@@ -1439,7 +1443,7 @@
         "mechanism": "response.json from one small helper behind the routes that answer the same payload"
       },
       "parameters": {
-        "mechanism": "Sanic's <one> captures, with one small helper behind all three routes"
+        "mechanism": "Sanic's <one:int> typed captures, which Sanic converts before the handler runs; the static route answers through the small helper"
       },
       "authorized": {
         "mechanism": "on_request middleware on its own blueprint: returning a response from it short-circuits the handler"
@@ -1459,10 +1463,10 @@
         "mechanism": "this target's own field walk, raising Refused: Sanic has no validation layer to plug into"
       },
       "query": {
-        "mechanism": "request.args coerced by hand, which is as far as Sanic goes"
+        "mechanism": "request.args coerced by hand, which is as far as Sanic goes, and echoed beside the small payload"
       },
       "headers": {
-        "mechanism": "Sanic's own request header map, which the handler never reads: the route answers the small payload"
+        "mechanism": "request.headers read in the handler and converted by hand, which is as far as Sanic goes; /headers reads none and answers through the small helper"
       },
       "middleware": {
         "mechanism": "one blueprint per layer count, each layer registered on it and doing nothing else"
@@ -1485,7 +1489,7 @@
         "mechanism": "JSONResponse from a per-size closure, on static routes rather than a /json/{size} capture"
       },
       "parameters": {
-        "mechanism": "Starlette's {one} captures, with one small handler behind all three routes"
+        "mechanism": "Starlette's {one:int} convertors, which convert each capture before the handler reads request.path_params; the static route answers through the small handler"
       },
       "authorized": {
         "mechanism": "an ASGI middleware class on the route, answering 403 before the app below it runs"
@@ -1505,10 +1509,10 @@
         "mechanism": "this target's own field walk, raising Refused: Starlette has no validation layer to plug into"
       },
       "query": {
-        "mechanism": "request.query_params coerced by hand, which is as far as Starlette goes"
+        "mechanism": "request.query_params coerced by hand, which is as far as Starlette goes, and echoed beside the small payload"
       },
       "headers": {
-        "mechanism": "Starlette's own request header map, which the handler never reads: the route answers the small payload"
+        "mechanism": "request.headers read in the handler and converted by hand, which is as far as Starlette goes; /headers reads none and answers through the small handler"
       },
       "middleware": {
         "mechanism": "an ASGI middleware class per layer on the route, each awaiting the app below it"
@@ -1533,7 +1537,9 @@
         "mechanism": "a Route per size holding the serialized body, read once into the closure"
       },
       "parameters": {
-        "mechanism": "actix's {one} captures, with one small handler behind all three routes"
+        "mechanism": "actix's typed Path extractor over a serde struct, which is also the echo",
+        "dep": "serde",
+        "mentions": "Deserialize"
       },
       "authorized": {
         "mechanism": "from_fn middleware wrapped around the one resource, run before the handler"
@@ -1553,12 +1559,12 @@
         "mentions": "Deserialize"
       },
       "query": {
-        "mechanism": "actix's typed Query extractor over a serde struct, which is also the response shape",
+        "mechanism": "actix's typed Query extractor over a serde struct, which the handler echoes beside the small payload",
         "dep": "serde",
         "mentions": "Deserialize"
       },
       "headers": {
-        "mechanism": "actix's own request header map, which the handler never reads: the route answers the small payload"
+        "mechanism": "actix's typed Header extractor on /headers/bind, web::Header<T>, with a Header impl per name that parses through actix's own from_one_raw_str, so the account is converted before the handler runs; /headers reads none"
       },
       "middleware": {
         "mechanism": "from_fn layers wrapped around the resource, n of them each awaiting the next"
@@ -1583,7 +1589,9 @@
         "mechanism": "a MethodRouter per size holding serde_json's Json, so the body is read once into the closure"
       },
       "parameters": {
-        "mechanism": "axum's {one} captures, with one small handler behind all three routes"
+        "mechanism": "axum's typed Path extractor over a serde struct, which is also the echo",
+        "dep": "serde",
+        "mentions": "Deserialize"
       },
       "authorized": {
         "mechanism": "from_fn middleware layered on the one route, run before the handler"
@@ -1605,12 +1613,12 @@
         "mentions": "Deserialize"
       },
       "query": {
-        "mechanism": "axum's typed Query extractor over a serde struct, which is also the response shape",
+        "mechanism": "axum's typed Query extractor over a serde struct, which the handler echoes beside the small payload",
         "dep": "serde",
         "mentions": "Deserialize"
       },
       "headers": {
-        "mechanism": "axum's own request header map, which the handler never reads: the route answers the small payload"
+        "mechanism": "a FromRequestParts extractor of this target's own on /headers/bind, which reads the three bound headers and converts the account itself, because axum's own crate has no header binder; /headers reads none"
       },
       "middleware": {
         "mechanism": "from_fn layers applied to the MethodRouter, n of them each awaiting the next"
@@ -1635,7 +1643,9 @@
         "mechanism": "a closure per size holding the serialized body, read once rather than looked up per request"
       },
       "parameters": {
-        "mechanism": "poem's :one captures, with one small endpoint behind all three routes"
+        "mechanism": "poem's typed Path extractor over a serde struct, which is also the echo",
+        "dep": "serde",
+        "mentions": "Deserialize"
       },
       "authorized": {
         "mechanism": "an around layer on the one endpoint, run before it"
@@ -1655,12 +1665,12 @@
         "mentions": "Deserialize"
       },
       "query": {
-        "mechanism": "poem's typed Query extractor over a serde struct, which is also the response shape",
+        "mechanism": "poem's typed Query extractor over a serde struct, which the handler echoes beside the small payload",
         "dep": "serde",
         "mentions": "Deserialize"
       },
       "headers": {
-        "mechanism": "poem's own request header map, which the endpoint never reads: the route answers the small payload"
+        "mechanism": "a FromRequest extractor of this target's own on /headers/bind, as poem's documentation writes one for a header of an application's own, which reads the three bound headers and converts the account itself, because poem's TypedHeader binds only the headers crate's; /headers reads none"
       },
       "middleware": {
         "mechanism": "around layers applied to the endpoint, n of them each awaiting the next"
@@ -1685,7 +1695,7 @@
         "builtin": "Returning Json is the whole of it: Rocket serializes what the handler returned."
       },
       "parameters": {
-        "builtin": "#[get(\"/parameters/<_one>\")] is the capture, and the function under it is the handler."
+        "builtin": "#[get(\"/parameters/<one>/segment/literal\")] is the capture, and the i64 argument under it is the conversion, through Rocket's own FromParam."
       },
       "authorized": {
         "mechanism": "a request guard, which Rocket resolves before the handler runs; a fairing would be global"
@@ -1705,10 +1715,10 @@
         "mentions": "Deserialize"
       },
       "query": {
-        "mechanism": "Rocket's own FromForm query guard over a struct, which is also the response shape"
+        "mechanism": "Rocket's own FromForm query guard over a struct, which the handler echoes beside the small payload"
       },
       "headers": {
-        "builtin": "Rocket materialises the request headers itself; nothing is registered to make it happen."
+        "mechanism": "a Rocket request guard of this target's own on /headers/bind, which reads the three bound headers and converts the account itself, because Rocket has no header binder; /headers reads none"
       },
       "middleware": {
         "mechanism": "a request guard per layer, resolved in turn before the handler: Rocket has no per-route middleware and a fairing would be global"
@@ -1733,7 +1743,9 @@
         "mechanism": "one handler per size from a macro, rendering Json over the shared payload"
       },
       "parameters": {
-        "mechanism": "salvo's {one} captures, with one small handler behind all three routes"
+        "mechanism": "salvo's own path parsing, req.parse_params into a serde struct, which is also the echo",
+        "dep": "serde",
+        "mentions": "Deserialize"
       },
       "authorized": {
         "mechanism": "a hoop on the one route, run before the handler and refusing by setting the response"
@@ -1753,12 +1765,14 @@
         "mentions": "Deserialize"
       },
       "query": {
-        "mechanism": "salvo's own query parsing into a serde struct, which is also the response shape",
+        "mechanism": "salvo's own query parsing into a serde struct, which the handler echoes beside the small payload",
         "dep": "serde",
         "mentions": "Deserialize"
       },
       "headers": {
-        "mechanism": "salvo's own request header map, which the handler never reads: the route answers the small payload"
+        "mechanism": "salvo's own header parsing on /headers/bind, req.parse_headers into a serde struct named for the headers, which converts the account; /headers reads none",
+        "dep": "serde",
+        "mentions": "Deserialize"
       },
       "middleware": {
         "mechanism": "n no-op hoops on the route, each doing nothing and letting the flow carry on"
@@ -1783,7 +1797,7 @@
         "mechanism": "a filter per size, unified into one route, over a body read once into the closure"
       },
       "parameters": {
-        "mechanism": "warp's path! captures, with one small closure behind all three routes"
+        "mechanism": "warp's path! captures typed as i64, which path! converts with FromStr before the closure runs"
       },
       "authorized": {
         "mechanism": "a header filter ahead of the reply, rejecting before the handler closure runs"
@@ -1803,12 +1817,12 @@
         "mentions": "Deserialize"
       },
       "query": {
-        "mechanism": "warp's typed query filter over a serde struct, which is also the response shape",
+        "mechanism": "warp's typed query filter over a serde struct, which the handler echoes beside the small payload",
         "dep": "serde",
         "mentions": "Deserialize"
       },
       "headers": {
-        "mechanism": "warp's own header filters, which this route does not use: it answers the small payload"
+        "mechanism": "warp's own typed header filters on /headers/bind, warp::header::<T>, which convert with FromStr before the closure runs; /headers reads none"
       },
       "middleware": {
         "mechanism": "n no-op filters combined onto the route, each passing the request along"
@@ -2043,7 +2057,7 @@
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, over the xunit `dotnet new xunit` writes",
         "dep": "Microsoft.AspNetCore.Mvc.Testing",
         "transport": "in-memory",
-        "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
+        "reaches": "each capture bound as an integer and echoed, against values drawn for the run, and the static path reaching the static route rather than the capture beside it"
       },
       "authorized": {
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, over the xunit `dotnet new xunit` writes",
@@ -2079,13 +2093,13 @@
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, over the xunit `dotnet new xunit` writes",
         "dep": "Microsoft.AspNetCore.Mvc.Testing",
         "transport": "in-memory",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the suite drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, over the xunit `dotnet new xunit` writes",
         "dep": "Microsoft.AspNetCore.Mvc.Testing",
         "transport": "in-memory",
-        "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
+        "reaches": "the echo of the three bound headers, against values drawn for the run so no target can know them, and for /headers that the request was accepted with all thirty attached"
       },
       "middleware": {
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, over the xunit `dotnet new xunit` writes",
@@ -2129,7 +2143,7 @@
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, over the xunit `dotnet new xunit` writes",
         "dep": "Microsoft.AspNetCore.Mvc.Testing",
         "transport": "in-memory",
-        "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
+        "reaches": "each capture bound as an integer and echoed, against values drawn for the run, and the static path reaching the static route rather than the capture beside it"
       },
       "authorized": {
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, over the xunit `dotnet new xunit` writes",
@@ -2165,13 +2179,13 @@
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, over the xunit `dotnet new xunit` writes",
         "dep": "Microsoft.AspNetCore.Mvc.Testing",
         "transport": "in-memory",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the suite drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, over the xunit `dotnet new xunit` writes",
         "dep": "Microsoft.AspNetCore.Mvc.Testing",
         "transport": "in-memory",
-        "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
+        "reaches": "the echo of the three bound headers, against values drawn for the run so no target can know them, and for /headers that the request was accepted with all thirty attached"
       },
       "middleware": {
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, over the xunit `dotnet new xunit` writes",
@@ -2215,7 +2229,7 @@
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, reached for directly because Carter ships no test package of its own",
         "dep": "Microsoft.AspNetCore.Mvc.Testing",
         "transport": "in-memory",
-        "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
+        "reaches": "each capture bound as an integer and echoed, against values drawn for the run, and the static path reaching the static route rather than the capture beside it"
       },
       "authorized": {
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, reached for directly because Carter ships no test package of its own",
@@ -2251,13 +2265,13 @@
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, reached for directly because Carter ships no test package of its own",
         "dep": "Microsoft.AspNetCore.Mvc.Testing",
         "transport": "in-memory",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the suite drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, reached for directly because Carter ships no test package of its own",
         "dep": "Microsoft.AspNetCore.Mvc.Testing",
         "transport": "in-memory",
-        "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
+        "reaches": "the echo of the three bound headers, against values drawn for the run so no target can know them, and for /headers that the request was accepted with all thirty attached"
       },
       "middleware": {
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, reached for directly because Carter ships no test package of its own",
@@ -2301,7 +2315,7 @@
         "facility": "AppFixture<Program> from FastEndpoints.Testing, the framework's own package, which brings xunit.v3 with it",
         "dep": "FastEndpoints.Testing",
         "transport": "in-memory",
-        "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
+        "reaches": "each capture bound as an integer and echoed, against values drawn for the run, and the static path reaching the static route rather than the capture beside it"
       },
       "authorized": {
         "facility": "AppFixture<Program> from FastEndpoints.Testing, the framework's own package, which brings xunit.v3 with it",
@@ -2337,13 +2351,13 @@
         "facility": "AppFixture<Program> from FastEndpoints.Testing, the framework's own package, which brings xunit.v3 with it",
         "dep": "FastEndpoints.Testing",
         "transport": "in-memory",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the suite drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
         "facility": "AppFixture<Program> from FastEndpoints.Testing, the framework's own package, which brings xunit.v3 with it",
         "dep": "FastEndpoints.Testing",
         "transport": "in-memory",
-        "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
+        "reaches": "the echo of the three bound headers, against values drawn for the run so no target can know them, and for /headers that the request was accepted with all thirty attached"
       },
       "middleware": {
         "facility": "AppFixture<Program> from FastEndpoints.Testing, the framework's own package, which brings xunit.v3 with it",
@@ -2387,7 +2401,7 @@
         "facility": "AlbaHost.For<Program>, which Wolverine's documentation names for HTTP tests",
         "dep": "Alba",
         "transport": "in-memory",
-        "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
+        "reaches": "each capture bound as an integer and echoed, against values drawn for the run, and the static path reaching the static route rather than the capture beside it"
       },
       "authorized": {
         "facility": "AlbaHost.For<Program>, which Wolverine's documentation names for HTTP tests",
@@ -2423,13 +2437,13 @@
         "facility": "AlbaHost.For<Program>, which Wolverine's documentation names for HTTP tests",
         "dep": "Alba",
         "transport": "in-memory",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the suite drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
         "facility": "AlbaHost.For<Program>, which Wolverine's documentation names for HTTP tests",
         "dep": "Alba",
         "transport": "in-memory",
-        "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
+        "reaches": "the echo of the three bound headers, against values drawn for the run so no target can know them, and for /headers that the request was accepted with all thirty attached"
       },
       "middleware": {
         "facility": "AlbaHost.For<Program>, which Wolverine's documentation names for HTTP tests",
@@ -2473,7 +2487,7 @@
         "facility": "FastAPI's TestClient, which is Starlette's, over the httpx2 it asks for at the pinned Starlette; run by pytest",
         "dep": "httpx2",
         "transport": "in-memory",
-        "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
+        "reaches": "the route pattern and each capture in the echo as an integer; a wrong pattern answers 404 and the floor says so on the status line"
       },
       "authorized": {
         "facility": "FastAPI's TestClient, which is Starlette's, over the httpx2 it asks for at the pinned Starlette; run by pytest",
@@ -2509,13 +2523,13 @@
         "facility": "FastAPI's TestClient, which is Starlette's, over the httpx2 it asks for at the pinned Starlette; run by pytest",
         "dep": "httpx2",
         "transport": "in-memory",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the test drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
         "facility": "FastAPI's TestClient, which is Starlette's, over the httpx2 it asks for at the pinned Starlette; run by pytest",
         "dep": "httpx2",
         "transport": "in-memory",
-        "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
+        "reaches": "the three bound headers in the echo, against the values the plan reader sent; for /headers, that the request was accepted with all of them attached"
       },
       "middleware": {
         "facility": "FastAPI's TestClient, which is Starlette's, over the httpx2 it asks for at the pinned Starlette; run by pytest",
@@ -2559,7 +2573,7 @@
         "facility": "Starlette's TestClient over httpx2; run by pytest",
         "dep": "httpx2",
         "transport": "in-memory",
-        "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
+        "reaches": "the route pattern and each capture in the echo as an integer; a wrong pattern answers 404 and the floor says so on the status line"
       },
       "authorized": {
         "facility": "Starlette's TestClient over httpx2; run by pytest",
@@ -2595,13 +2609,13 @@
         "facility": "Starlette's TestClient over httpx2; run by pytest",
         "dep": "httpx2",
         "transport": "in-memory",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the test drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
         "facility": "Starlette's TestClient over httpx2; run by pytest",
         "dep": "httpx2",
         "transport": "in-memory",
-        "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
+        "reaches": "the three bound headers in the echo, against the values the plan reader sent; for /headers, that the request was accepted with all of them attached"
       },
       "middleware": {
         "facility": "Starlette's TestClient over httpx2; run by pytest",
@@ -2645,7 +2659,7 @@
         "facility": "litestar.testing.TestClient, which ships with the framework and is built on httpx; run by pytest",
         "dep": "httpx",
         "transport": "in-memory",
-        "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
+        "reaches": "the route pattern and each capture in the echo as an integer; a wrong pattern answers 404 and the floor says so on the status line"
       },
       "authorized": {
         "facility": "litestar.testing.TestClient, which ships with the framework and is built on httpx; run by pytest",
@@ -2681,13 +2695,13 @@
         "facility": "litestar.testing.TestClient, which ships with the framework and is built on httpx; run by pytest",
         "dep": "httpx",
         "transport": "in-memory",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the test drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
         "facility": "litestar.testing.TestClient, which ships with the framework and is built on httpx; run by pytest",
         "dep": "httpx",
         "transport": "in-memory",
-        "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
+        "reaches": "the three bound headers in the echo, against the values the plan reader sent; for /headers, that the request was accepted with all of them attached"
       },
       "middleware": {
         "facility": "litestar.testing.TestClient, which ships with the framework and is built on httpx; run by pytest",
@@ -2728,7 +2742,7 @@
       "parameters": {
         "facility": "app.test_client(), Werkzeug's, which ships with Flask; run by pytest",
         "transport": "in-memory",
-        "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
+        "reaches": "the route pattern and each capture in the echo as an integer; a wrong pattern answers 404 and the floor says so on the status line"
       },
       "authorized": {
         "facility": "app.test_client(), Werkzeug's, which ships with Flask; run by pytest",
@@ -2758,12 +2772,12 @@
       "query": {
         "facility": "app.test_client(), Werkzeug's, which ships with Flask; run by pytest",
         "transport": "in-memory",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the test drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
         "facility": "app.test_client(), Werkzeug's, which ships with Flask; run by pytest",
         "transport": "in-memory",
-        "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
+        "reaches": "the three bound headers in the echo, against the values the plan reader sent; for /headers, that the request was accepted with all of them attached"
       },
       "middleware": {
         "facility": "app.test_client(), Werkzeug's, which ships with Flask; run by pytest",
@@ -2803,7 +2817,7 @@
         "facility": "app.test_client from sanic-testing, which starts the application on a loopback port for every request; run by pytest",
         "dep": "sanic-testing",
         "transport": "loopback",
-        "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
+        "reaches": "the route pattern and each capture in the echo as an integer; a wrong pattern answers 404 and the floor says so on the status line"
       },
       "authorized": {
         "facility": "app.test_client from sanic-testing, which starts the application on a loopback port for every request; run by pytest",
@@ -2839,13 +2853,13 @@
         "facility": "app.test_client from sanic-testing, which starts the application on a loopback port for every request; run by pytest",
         "dep": "sanic-testing",
         "transport": "loopback",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the test drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
         "facility": "app.test_client from sanic-testing, which starts the application on a loopback port for every request; run by pytest",
         "dep": "sanic-testing",
         "transport": "loopback",
-        "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
+        "reaches": "the three bound headers in the echo, against the values the plan reader sent; for /headers, that the request was accepted with all of them attached"
       },
       "middleware": {
         "facility": "app.test_client from sanic-testing, which starts the application on a loopback port for every request; run by pytest",
@@ -2886,7 +2900,7 @@
       "parameters": {
         "facility": "self.async_client, Django's AsyncClient on a SimpleTestCase; run by Django's own DiscoverRunner rather than pytest",
         "transport": "in-memory",
-        "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
+        "reaches": "the route pattern and each capture in the echo as an integer; a wrong pattern answers 404 and the floor says so on the status line"
       },
       "authorized": {
         "facility": "self.async_client, Django's AsyncClient on a SimpleTestCase; run by Django's own DiscoverRunner rather than pytest",
@@ -2916,12 +2930,12 @@
       "query": {
         "facility": "self.async_client, Django's AsyncClient on a SimpleTestCase; run by Django's own DiscoverRunner rather than pytest",
         "transport": "in-memory",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the test drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
         "facility": "self.async_client, Django's AsyncClient on a SimpleTestCase; run by Django's own DiscoverRunner rather than pytest",
         "transport": "in-memory",
-        "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
+        "reaches": "the three bound headers in the echo, against the values the plan reader sent; for /headers, that the request was accepted with all of them attached"
       },
       "middleware": {
         "facility": "self.async_client, Django's AsyncClient on a SimpleTestCase; run by Django's own DiscoverRunner rather than pytest",
@@ -2958,7 +2972,7 @@
       "parameters": {
         "facility": "fastify.inject(), which is light-my-request and ships with Fastify; run by node:test, as Fastify's testing guide does",
         "transport": "in-memory",
-        "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
+        "reaches": "the captures as the route bound them, which the echo holds as numbers; a wrong pattern answers 404 and the floor says so on the status line"
       },
       "authorized": {
         "facility": "fastify.inject(), which is light-my-request and ships with Fastify; run by node:test, as Fastify's testing guide does",
@@ -2988,12 +3002,12 @@
       "query": {
         "facility": "fastify.inject(), which is light-my-request and ships with Fastify; run by node:test, as Fastify's testing guide does",
         "transport": "in-memory",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the test drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
         "facility": "fastify.inject(), which is light-my-request and ships with Fastify; run by node:test, as Fastify's testing guide does",
         "transport": "in-memory",
-        "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
+        "reaches": "the bound values, which the echo holds as the handler converted them; for /headers, only that the request was accepted with all of them attached"
       },
       "middleware": {
         "facility": "fastify.inject(), which is light-my-request and ships with Fastify; run by node:test, as Fastify's testing guide does",
@@ -3033,7 +3047,7 @@
         "facility": "app.request(), which hands a Request to the application's own fetch handler; run by Vitest, as Hono's testing guide does",
         "dep": "vitest",
         "transport": "in-memory",
-        "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
+        "reaches": "the captures as the route bound them, which the echo holds as numbers; a wrong pattern answers 404 and the floor says so on the status line"
       },
       "authorized": {
         "facility": "app.request(), which hands a Request to the application's own fetch handler; run by Vitest, as Hono's testing guide does",
@@ -3069,13 +3083,13 @@
         "facility": "app.request(), which hands a Request to the application's own fetch handler; run by Vitest, as Hono's testing guide does",
         "dep": "vitest",
         "transport": "in-memory",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the test drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
         "facility": "app.request(), which hands a Request to the application's own fetch handler; run by Vitest, as Hono's testing guide does",
         "dep": "vitest",
         "transport": "in-memory",
-        "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
+        "reaches": "the bound values, which the echo holds as the handler converted them; for /headers, only that the request was accepted with all of them attached"
       },
       "middleware": {
         "facility": "app.request(), which hands a Request to the application's own fetch handler; run by Vitest, as Hono's testing guide does",
@@ -3116,7 +3130,7 @@
       "parameters": {
         "facility": "app.request(), which h3's guide calls testing without listening; its documentation names no runner, so node:test",
         "transport": "in-memory",
-        "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
+        "reaches": "the captures as the route bound them, which the echo holds as numbers; a wrong pattern answers 404 and the floor says so on the status line"
       },
       "authorized": {
         "facility": "app.request(), which h3's guide calls testing without listening; its documentation names no runner, so node:test",
@@ -3146,12 +3160,12 @@
       "query": {
         "facility": "app.request(), which h3's guide calls testing without listening; its documentation names no runner, so node:test",
         "transport": "in-memory",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the test drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
         "facility": "app.request(), which h3's guide calls testing without listening; its documentation names no runner, so node:test",
         "transport": "in-memory",
-        "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
+        "reaches": "the bound values, which the echo holds as the handler converted them; for /headers, only that the request was accepted with all of them attached"
       },
       "middleware": {
         "facility": "app.request(), which h3's guide calls testing without listening; its documentation names no runner, so node:test",
@@ -3191,7 +3205,7 @@
         "facility": "supertest, which binds the application to an ephemeral loopback port; run by Mocha, which is what supertest's README writes its examples for",
         "dep": "supertest",
         "transport": "loopback",
-        "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
+        "reaches": "the captures as the route bound them, which the echo holds as numbers; a wrong pattern answers 404 and the floor says so on the status line"
       },
       "authorized": {
         "facility": "supertest, which binds the application to an ephemeral loopback port; run by Mocha, which is what supertest's README writes its examples for",
@@ -3227,13 +3241,13 @@
         "facility": "supertest, which binds the application to an ephemeral loopback port; run by Mocha, which is what supertest's README writes its examples for",
         "dep": "supertest",
         "transport": "loopback",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the test drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
         "facility": "supertest, which binds the application to an ephemeral loopback port; run by Mocha, which is what supertest's README writes its examples for",
         "dep": "supertest",
         "transport": "loopback",
-        "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
+        "reaches": "the bound values, which the echo holds as the handler converted them; for /headers, only that the request was accepted with all of them attached"
       },
       "middleware": {
         "facility": "supertest, which binds the application to an ephemeral loopback port; run by Mocha, which is what supertest's README writes its examples for",
@@ -3277,7 +3291,7 @@
         "facility": "supertest on app.callback(), which binds it to an ephemeral loopback port; run by Mocha, which is what supertest's README writes its examples for",
         "dep": "supertest",
         "transport": "loopback",
-        "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
+        "reaches": "the captures as the route bound them, which the echo holds as numbers; a wrong pattern answers 404 and the floor says so on the status line"
       },
       "authorized": {
         "facility": "supertest on app.callback(), which binds it to an ephemeral loopback port; run by Mocha, which is what supertest's README writes its examples for",
@@ -3313,13 +3327,13 @@
         "facility": "supertest on app.callback(), which binds it to an ephemeral loopback port; run by Mocha, which is what supertest's README writes its examples for",
         "dep": "supertest",
         "transport": "loopback",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the test drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
         "facility": "supertest on app.callback(), which binds it to an ephemeral loopback port; run by Mocha, which is what supertest's README writes its examples for",
         "dep": "supertest",
         "transport": "loopback",
-        "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
+        "reaches": "the bound values, which the echo holds as the handler converted them; for /headers, only that the request was accepted with all of them attached"
       },
       "middleware": {
         "facility": "supertest on app.callback(), which binds it to an ephemeral loopback port; run by Mocha, which is what supertest's README writes its examples for",
@@ -3363,7 +3377,7 @@
         "facility": "@SpringBootTest with MockMvc, as Spring Boot's reference starts, from the per-technology test starters Spring Initializr writes for Boot 4.1",
         "dep": "spring-boot-starter-webmvc-test",
         "transport": "in-memory",
-        "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
+        "reaches": "the echo of each capture, which the plan reader fills with the values it sent, so one bound as a string fails; the static route answering the plain payload holds that it still wins over {one}/segment/literal"
       },
       "authorized": {
         "facility": "@SpringBootTest with MockMvc, as Spring Boot's reference starts, from the per-technology test starters Spring Initializr writes for Boot 4.1",
@@ -3399,13 +3413,13 @@
         "facility": "@SpringBootTest with MockMvc, as Spring Boot's reference starts, from the per-technology test starters Spring Initializr writes for Boot 4.1",
         "dep": "spring-boot-starter-webmvc-test",
         "transport": "in-memory",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the binding and the coercion: the answer echoes the values the test drew, so a parameter that was dropped or coerced wrong fails on the body. MockMvc's request builder parses and percent-decodes the query string itself, so the test does not reach Tomcat's decoder"
       },
       "headers": {
         "facility": "@SpringBootTest with MockMvc, as Spring Boot's reference starts, from the per-technology test starters Spring Initializr writes for Boot 4.1",
         "dep": "spring-boot-starter-webmvc-test",
         "transport": "in-memory",
-        "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
+        "reaches": "the echo of the three bound headers, which the plan reader fills with the values it sent, so one bound under the wrong name or as the wrong type fails; /headers holds only that the request was accepted with all of them attached"
       },
       "middleware": {
         "facility": "@SpringBootTest with MockMvc, as Spring Boot's reference starts, from the per-technology test starters Spring Initializr writes for Boot 4.1",
@@ -3449,7 +3463,7 @@
         "facility": "@QuarkusTest with REST Assured, as code.quarkus.io writes; it starts the application's HTTP server in the test JVM",
         "dep": "rest-assured",
         "transport": "loopback",
-        "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
+        "reaches": "the echo of each capture, which the plan reader fills with the values it sent, so one bound as a string fails; the static route answering the plain payload holds that it still wins over {one}/segment/literal"
       },
       "authorized": {
         "facility": "@QuarkusTest with REST Assured, as code.quarkus.io writes; it starts the application's HTTP server in the test JVM",
@@ -3485,13 +3499,13 @@
         "facility": "@QuarkusTest with REST Assured, as code.quarkus.io writes; it starts the application's HTTP server in the test JVM",
         "dep": "rest-assured",
         "transport": "loopback",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the test drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
         "facility": "@QuarkusTest with REST Assured, as code.quarkus.io writes; it starts the application's HTTP server in the test JVM",
         "dep": "rest-assured",
         "transport": "loopback",
-        "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
+        "reaches": "the echo of the three bound headers, which the plan reader fills with the values it sent, so one bound under the wrong name or as the wrong type fails; /headers holds only that the request was accepted with all of them attached"
       },
       "middleware": {
         "facility": "@QuarkusTest with REST Assured, as code.quarkus.io writes; it starts the application's HTTP server in the test JVM",
@@ -3535,7 +3549,7 @@
         "facility": "@MicronautTest with an injected @Client HttpClient, as Micronaut Launch writes; it starts the embedded server on a random port",
         "dep": "micronaut-test-junit5",
         "transport": "loopback",
-        "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
+        "reaches": "the echo of each capture, which the plan reader fills with the values it sent, so one bound as a string fails; the static route answering the plain payload holds that it still wins over {one}/segment/literal"
       },
       "authorized": {
         "facility": "@MicronautTest with an injected @Client HttpClient, as Micronaut Launch writes; it starts the embedded server on a random port",
@@ -3571,13 +3585,13 @@
         "facility": "@MicronautTest with an injected @Client HttpClient, as Micronaut Launch writes; it starts the embedded server on a random port",
         "dep": "micronaut-test-junit5",
         "transport": "loopback",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the test drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
         "facility": "@MicronautTest with an injected @Client HttpClient, as Micronaut Launch writes; it starts the embedded server on a random port",
         "dep": "micronaut-test-junit5",
         "transport": "loopback",
-        "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
+        "reaches": "the echo of the three bound headers, which the plan reader fills with the values it sent, so one bound under the wrong name or as the wrong type fails; /headers holds only that the request was accepted with all of them attached"
       },
       "middleware": {
         "facility": "@MicronautTest with an injected @Client HttpClient, as Micronaut Launch writes; it starts the embedded server on a random port",
@@ -3621,7 +3635,7 @@
         "facility": "@ServerTest with the injected Http1Client, which Helidon's SE testing documentation leads with and says opens ports",
         "dep": "helidon-webserver-testing-junit5",
         "transport": "loopback",
-        "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
+        "reaches": "the echo of each capture, which the plan reader fills with the values it sent, so one bound as a string fails; the static route answering the plain payload holds that it still wins over {one}/segment/literal"
       },
       "authorized": {
         "facility": "@ServerTest with the injected Http1Client, which Helidon's SE testing documentation leads with and says opens ports",
@@ -3657,13 +3671,13 @@
         "facility": "@ServerTest with the injected Http1Client, which Helidon's SE testing documentation leads with and says opens ports",
         "dep": "helidon-webserver-testing-junit5",
         "transport": "loopback",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the test drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
         "facility": "@ServerTest with the injected Http1Client, which Helidon's SE testing documentation leads with and says opens ports",
         "dep": "helidon-webserver-testing-junit5",
         "transport": "loopback",
-        "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
+        "reaches": "the echo of the three bound headers, which the plan reader fills with the values it sent, so one bound under the wrong name or as the wrong type fails; /headers holds only that the request was accepted with all of them attached"
       },
       "middleware": {
         "facility": "@ServerTest with the injected Http1Client, which Helidon's SE testing documentation leads with and says opens ports",
@@ -3707,7 +3721,7 @@
         "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with WebClient, as vertx-junit5's documentation does",
         "dep": "vertx-junit5",
         "transport": "loopback",
-        "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
+        "reaches": "the echo of each capture, which the plan reader fills with the values it sent, so one bound as a string fails; the static route answering the plain payload holds that it still wins over {one}/segment/literal"
       },
       "authorized": {
         "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with WebClient, as vertx-junit5's documentation does",
@@ -3743,13 +3757,13 @@
         "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with WebClient, as vertx-junit5's documentation does",
         "dep": "vertx-junit5",
         "transport": "loopback",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the test drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
         "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with WebClient, as vertx-junit5's documentation does",
         "dep": "vertx-junit5",
         "transport": "loopback",
-        "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
+        "reaches": "the echo of the three bound headers, which the plan reader fills with the values it sent, so one bound under the wrong name or as the wrong type fails; /headers holds only that the request was accepted with all of them attached"
       },
       "middleware": {
         "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with WebClient, as vertx-junit5's documentation does",
@@ -3793,7 +3807,7 @@
         "facility": "JavalinTest.test() from javalin-testtools, which starts the application on a random port per test; its client reads bodies as strings, so gzip requests go to the origin by hand",
         "dep": "javalin-testtools",
         "transport": "loopback",
-        "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
+        "reaches": "the echo of each capture, which the plan reader fills with the values it sent, so one bound as a string fails; the static route answering the plain payload holds that it still wins over {one}/segment/literal"
       },
       "authorized": {
         "facility": "JavalinTest.test() from javalin-testtools, which starts the application on a random port per test; its client reads bodies as strings, so gzip requests go to the origin by hand",
@@ -3829,13 +3843,13 @@
         "facility": "JavalinTest.test() from javalin-testtools, which starts the application on a random port per test; its client reads bodies as strings, so gzip requests go to the origin by hand",
         "dep": "javalin-testtools",
         "transport": "loopback",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the test drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
         "facility": "JavalinTest.test() from javalin-testtools, which starts the application on a random port per test; its client reads bodies as strings, so gzip requests go to the origin by hand",
         "dep": "javalin-testtools",
         "transport": "loopback",
-        "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
+        "reaches": "the echo of the three bound headers, which the plan reader fills with the values it sent, so one bound under the wrong name or as the wrong type fails; /headers holds only that the request was accepted with all of them attached"
       },
       "middleware": {
         "facility": "JavalinTest.test() from javalin-testtools, which starts the application on a random port per test; its client reads bodies as strings, so gzip requests go to the origin by hand",
@@ -3876,7 +3890,7 @@
       "parameters": {
         "facility": "net/http/httptest against the engine's ServeHTTP, as Gin's testing documentation does; run by go test",
         "transport": "in-memory",
-        "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
+        "reaches": "each capture echoed back as the number in the path, because the plan reader fills the pinned echo with the values it drew, and the static path reaching the static route rather than a capture"
       },
       "authorized": {
         "facility": "net/http/httptest against the engine's ServeHTTP, as Gin's testing documentation does; run by go test",
@@ -3906,12 +3920,12 @@
       "query": {
         "facility": "net/http/httptest against the engine's ServeHTTP, as Gin's testing documentation does; run by go test",
         "transport": "in-memory",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the test drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
         "facility": "net/http/httptest against the engine's ServeHTTP, as Gin's testing documentation does; run by go test",
         "transport": "in-memory",
-        "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
+        "reaches": "each bound header echoed back as the type it was sent as, because the plan reader fills the pinned echo with the values it drew; on /headers, that the request was accepted with all of them attached"
       },
       "middleware": {
         "facility": "net/http/httptest against the engine's ServeHTTP, as Gin's testing documentation does; run by go test",
@@ -3948,7 +3962,7 @@
       "parameters": {
         "facility": "net/http/httptest against the Echo instance's ServeHTTP; Echo's guide calls handlers directly instead, which would skip every route-scoped middleware; run by go test",
         "transport": "in-memory",
-        "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
+        "reaches": "each capture echoed back as the number in the path, because the plan reader fills the pinned echo with the values it drew, and the static path reaching the static route rather than a capture"
       },
       "authorized": {
         "facility": "net/http/httptest against the Echo instance's ServeHTTP; Echo's guide calls handlers directly instead, which would skip every route-scoped middleware; run by go test",
@@ -3978,12 +3992,12 @@
       "query": {
         "facility": "net/http/httptest against the Echo instance's ServeHTTP; Echo's guide calls handlers directly instead, which would skip every route-scoped middleware; run by go test",
         "transport": "in-memory",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the test drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
         "facility": "net/http/httptest against the Echo instance's ServeHTTP; Echo's guide calls handlers directly instead, which would skip every route-scoped middleware; run by go test",
         "transport": "in-memory",
-        "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
+        "reaches": "each bound header echoed back as the type it was sent as, because the plan reader fills the pinned echo with the values it drew; on /headers, that the request was accepted with all of them attached"
       },
       "middleware": {
         "facility": "net/http/httptest against the Echo instance's ServeHTTP; Echo's guide calls handlers directly instead, which would skip every route-scoped middleware; run by go test",
@@ -4020,7 +4034,7 @@
       "parameters": {
         "facility": "net/http/httptest against the router's ServeHTTP; chi has no testing guide and a chi router is an http.Handler; run by go test",
         "transport": "in-memory",
-        "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
+        "reaches": "each capture echoed back as the number in the path, because the plan reader fills the pinned echo with the values it drew, and the static path reaching the static route rather than a capture"
       },
       "authorized": {
         "facility": "net/http/httptest against the router's ServeHTTP; chi has no testing guide and a chi router is an http.Handler; run by go test",
@@ -4050,12 +4064,12 @@
       "query": {
         "facility": "net/http/httptest against the router's ServeHTTP; chi has no testing guide and a chi router is an http.Handler; run by go test",
         "transport": "in-memory",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the test drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
         "facility": "net/http/httptest against the router's ServeHTTP; chi has no testing guide and a chi router is an http.Handler; run by go test",
         "transport": "in-memory",
-        "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
+        "reaches": "each bound header echoed back as the type it was sent as, because the plan reader fills the pinned echo with the values it drew; on /headers, that the request was accepted with all of them attached"
       },
       "middleware": {
         "facility": "net/http/httptest against the router's ServeHTTP; chi has no testing guide and a chi router is an http.Handler; run by go test",
@@ -4092,7 +4106,7 @@
       "parameters": {
         "facility": "net/http/httptest against the router's ServeHTTP, as gorilla/mux's README tests a route; run by go test",
         "transport": "in-memory",
-        "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
+        "reaches": "each capture echoed back as the number in the path, because the plan reader fills the pinned echo with the values it drew, and the static path reaching the static route rather than a capture"
       },
       "authorized": {
         "facility": "net/http/httptest against the router's ServeHTTP, as gorilla/mux's README tests a route; run by go test",
@@ -4122,12 +4136,12 @@
       "query": {
         "facility": "net/http/httptest against the router's ServeHTTP, as gorilla/mux's README tests a route; run by go test",
         "transport": "in-memory",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the test drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
         "facility": "net/http/httptest against the router's ServeHTTP, as gorilla/mux's README tests a route; run by go test",
         "transport": "in-memory",
-        "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
+        "reaches": "each bound header echoed back as the type it was sent as, because the plan reader fills the pinned echo with the values it drew; on /headers, that the request was accepted with all of them attached"
       },
       "middleware": {
         "facility": "net/http/httptest against the router's ServeHTTP, as gorilla/mux's README tests a route; run by go test",
@@ -4164,7 +4178,7 @@
       "parameters": {
         "facility": "app.Test(), Fiber's own, because fasthttp is not an http.Handler and httptest cannot reach it; run by go test",
         "transport": "in-memory",
-        "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
+        "reaches": "each capture echoed back as the number in the path, because the plan reader fills the pinned echo with the values it drew, and the static path reaching the static route rather than a capture"
       },
       "authorized": {
         "facility": "app.Test(), Fiber's own, because fasthttp is not an http.Handler and httptest cannot reach it; run by go test",
@@ -4194,12 +4208,12 @@
       "query": {
         "facility": "app.Test(), Fiber's own, because fasthttp is not an http.Handler and httptest cannot reach it; run by go test",
         "transport": "in-memory",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the test drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
         "facility": "app.Test(), Fiber's own, because fasthttp is not an http.Handler and httptest cannot reach it; run by go test",
         "transport": "in-memory",
-        "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
+        "reaches": "each bound header echoed back as the type it was sent as, because the plan reader fills the pinned echo with the values it drew; on /headers, that the request was accepted with all of them attached"
       },
       "middleware": {
         "facility": "app.Test(), Fiber's own, because fasthttp is not an http.Handler and httptest cannot reach it; run by go test",
@@ -4236,7 +4250,7 @@
       "parameters": {
         "facility": "tower's ServiceExt::oneshot against the Router app() builds, as axum's testing example does; run by cargo test",
         "transport": "in-memory",
-        "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
+        "reaches": "the captures as the echo holds them, held to the values this binary drew as integers, and that the static path still reaches the static route"
       },
       "authorized": {
         "facility": "tower's ServiceExt::oneshot against the Router app() builds, as axum's testing example does; run by cargo test",
@@ -4266,12 +4280,12 @@
       "query": {
         "facility": "tower's ServiceExt::oneshot against the Router app() builds, as axum's testing example does; run by cargo test",
         "transport": "in-memory",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the test drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
         "facility": "tower's ServiceExt::oneshot against the Router app() builds, as axum's testing example does; run by cargo test",
         "transport": "in-memory",
-        "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
+        "reaches": "the echo on /headers/bind, held to the values this binary drew, and on /headers that the request was accepted with all of them attached"
       },
       "middleware": {
         "facility": "tower's ServiceExt::oneshot against the Router app() builds, as axum's testing example does; run by cargo test",
@@ -4308,7 +4322,7 @@
       "parameters": {
         "facility": "actix-web's own test module, init_service and call_service against an App configured with config(), as actix-web's testing documentation does; run by cargo test",
         "transport": "in-memory",
-        "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
+        "reaches": "the captures as the echo holds them, held to the values this binary drew as integers, and that the static path still reaches the static route"
       },
       "authorized": {
         "facility": "actix-web's own test module, init_service and call_service against an App configured with config(), as actix-web's testing documentation does; run by cargo test",
@@ -4338,12 +4352,12 @@
       "query": {
         "facility": "actix-web's own test module, init_service and call_service against an App configured with config(), as actix-web's testing documentation does; run by cargo test",
         "transport": "in-memory",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the test drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
         "facility": "actix-web's own test module, init_service and call_service against an App configured with config(), as actix-web's testing documentation does; run by cargo test",
         "transport": "in-memory",
-        "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
+        "reaches": "the echo on /headers/bind, held to the values this binary drew, and on /headers that the request was accepted with all of them attached"
       },
       "middleware": {
         "facility": "actix-web's own test module, init_service and call_service against an App configured with config(), as actix-web's testing documentation does; run by cargo test",
@@ -4380,7 +4394,7 @@
       "parameters": {
         "facility": "Rocket's blocking local Client against the Rocket rocket() builds, as Rocket's testing guide does; run by cargo test",
         "transport": "in-memory",
-        "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
+        "reaches": "the captures as the echo holds them, held to the values this binary drew as integers, and that the static path still reaches the static route"
       },
       "authorized": {
         "facility": "Rocket's blocking local Client against the Rocket rocket() builds, as Rocket's testing guide does; run by cargo test",
@@ -4410,12 +4424,12 @@
       "query": {
         "facility": "Rocket's blocking local Client against the Rocket rocket() builds, as Rocket's testing guide does; run by cargo test",
         "transport": "in-memory",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the test drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
         "facility": "Rocket's blocking local Client against the Rocket rocket() builds, as Rocket's testing guide does; run by cargo test",
         "transport": "in-memory",
-        "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
+        "reaches": "the echo on /headers/bind, held to the values this binary drew, and on /headers that the request was accepted with all of them attached"
       },
       "middleware": {
         "facility": "Rocket's blocking local Client against the Rocket rocket() builds, as Rocket's testing guide does; run by cargo test",
@@ -4455,7 +4469,7 @@
         "facility": "poem's TestClient against the endpoint app() builds, from poem's test feature, as poem's testing documentation does; run by cargo test",
         "dep": "poem/test",
         "transport": "in-memory",
-        "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
+        "reaches": "the captures as the echo holds them, held to the values this binary drew as integers, and that the static path still reaches the static route"
       },
       "authorized": {
         "facility": "poem's TestClient against the endpoint app() builds, from poem's test feature, as poem's testing documentation does; run by cargo test",
@@ -4491,13 +4505,13 @@
         "facility": "poem's TestClient against the endpoint app() builds, from poem's test feature, as poem's testing documentation does; run by cargo test",
         "dep": "poem/test",
         "transport": "in-memory",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the test drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
         "facility": "poem's TestClient against the endpoint app() builds, from poem's test feature, as poem's testing documentation does; run by cargo test",
         "dep": "poem/test",
         "transport": "in-memory",
-        "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
+        "reaches": "the echo on /headers/bind, held to the values this binary drew, and on /headers that the request was accepted with all of them attached"
       },
       "middleware": {
         "facility": "poem's TestClient against the endpoint app() builds, from poem's test feature, as poem's testing documentation does; run by cargo test",
@@ -4541,7 +4555,7 @@
         "facility": "salvo's TestClient against the Service service() builds, from salvo's test feature, as salvo's testing documentation does, with the body read by take_bytes because take_string decodes gzip; run by cargo test",
         "dep": "salvo/test",
         "transport": "in-memory",
-        "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
+        "reaches": "the captures as the echo holds them, held to the values this binary drew as integers, and that the static path still reaches the static route"
       },
       "authorized": {
         "facility": "salvo's TestClient against the Service service() builds, from salvo's test feature, as salvo's testing documentation does, with the body read by take_bytes because take_string decodes gzip; run by cargo test",
@@ -4577,13 +4591,13 @@
         "facility": "salvo's TestClient against the Service service() builds, from salvo's test feature, as salvo's testing documentation does, with the body read by take_bytes because take_string decodes gzip; run by cargo test",
         "dep": "salvo/test",
         "transport": "in-memory",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the test drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
         "facility": "salvo's TestClient against the Service service() builds, from salvo's test feature, as salvo's testing documentation does, with the body read by take_bytes because take_string decodes gzip; run by cargo test",
         "dep": "salvo/test",
         "transport": "in-memory",
-        "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
+        "reaches": "the echo on /headers/bind, held to the values this binary drew, and on /headers that the request was accepted with all of them attached"
       },
       "middleware": {
         "facility": "salvo's TestClient against the Service service() builds, from salvo's test feature, as salvo's testing documentation does, with the body read by take_bytes because take_string decodes gzip; run by cargo test",
@@ -4624,7 +4638,7 @@
       "parameters": {
         "facility": "warp::test::request() against the filter routes() builds, as warp's documentation does; run by cargo test",
         "transport": "in-memory",
-        "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
+        "reaches": "the captures as the echo holds them, held to the values this binary drew as integers, and that the static path still reaches the static route"
       },
       "authorized": {
         "facility": "warp::test::request() against the filter routes() builds, as warp's documentation does; run by cargo test",
@@ -4654,12 +4668,12 @@
       "query": {
         "facility": "warp::test::request() against the filter routes() builds, as warp's documentation does; run by cargo test",
         "transport": "in-memory",
-        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+        "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the test drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
         "facility": "warp::test::request() against the filter routes() builds, as warp's documentation does; run by cargo test",
         "transport": "in-memory",
-        "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
+        "reaches": "the echo on /headers/bind, held to the values this binary drew, and on /headers that the request was accepted with all of them attached"
       },
       "middleware": {
         "facility": "warp::test::request() against the filter routes() builds, as warp's documentation does; run by cargo test",

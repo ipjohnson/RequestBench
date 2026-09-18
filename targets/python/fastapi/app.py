@@ -18,8 +18,9 @@ and the substitutes are what the numbers describe:
               forty-two endpoints.
 """
 import pathlib
+from typing import Annotated
 
-from fastapi import Depends, FastAPI, HTTPException, Request, Response
+from fastapi import Depends, FastAPI, Header, HTTPException, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
@@ -159,14 +160,16 @@ async def parameters_static():
     return small()
 
 
-@app.get("/parameters/{one}")
-async def parameters_one():
-    return small()
+# FastAPI tries routes in the order they were registered, and {one} matches "static" before
+# the int is checked. So the static route above has to stay first.
+@app.get("/parameters/{one}/segment/literal")
+async def parameters_one(one: int):
+    return d.with_echo("small", {"one": one})
 
 
 @app.get("/parameters/{one}/with-second/{two}")
-async def parameters_two():
-    return small()
+async def parameters_two(one: int, two: int):
+    return d.with_echo("small", {"one": one, "two": two})
 
 
 # Declared parameters, which is FastAPI's whole query story: the annotation is the binding,
@@ -175,21 +178,33 @@ async def parameters_two():
 # RequestValidationError, which the handler above answers with FastAPI's own 422 envelope.
 @app.get("/query/one")
 async def query_one(page: int = 0):
-    return {"page": page}
+    return d.with_echo("small", {"page": page})
 
 
 @app.get("/query/many")
 async def query_many(page: int = 0, size: int = 0, status: str = "", category: str = "",
                      sort: str = "", q: str = "", min_price: int = 0, max_price: int = 0):
-    return {"page": page, "size": size, "status": status, "category": category,
-            "sort": sort, "q": q, "min_price": min_price, "max_price": max_price}
+    return d.with_echo("small", {"page": page, "size": size, "status": status,
+                                 "category": category, "sort": sort, "q": q,
+                                 "min_price": min_price, "max_price": max_price})
 
 
-# The handler reads no header at all, so headers.many minus headers.few is the cost of
-# materialising 27 nobody asked for.
+# The handler reads no header at all. headers.many sends 30 request headers and headers.few
+# sends 5, so the difference is the cost of materialising 25 that nobody asked for.
 @app.get("/headers")
 async def headers():
     return small()
+
+
+# Header() on a typed parameter is the binding. FastAPI reads the header named like the
+# parameter, with hyphens for underscores. Pydantic coerces x-rb-account to an int before the
+# handler runs. The default is what a missing header is.
+@app.get("/headers/bind")
+async def headers_bind(x_rb_tenant: Annotated[str, Header()] = "",
+                       x_rb_request_id: Annotated[str, Header()] = "",
+                       x_rb_account: Annotated[int, Header()] = 0):
+    return d.with_echo("small", {"tenant": x_rb_tenant, "request_id": x_rb_request_id,
+                                 "account": x_rb_account})
 
 
 # ---- middleware: a dependency per layer, scoped to the route -------------------------

@@ -19,7 +19,7 @@ export const readSpec = (): Record<string, unknown> => readJson("spec/endpoints.
  * explorer's delta column.
  *
  * The summary carries ids and families but never the route, and an id alone does not say
- * what was asked for. Forty-five short strings, so they ride in the page rather than being
+ * what was asked for. Fifty short strings, so they ride in the page rather than being
  * fetched.
  *
  * `b` and `v` are the base and the factor varied from it. They come from the spec rather

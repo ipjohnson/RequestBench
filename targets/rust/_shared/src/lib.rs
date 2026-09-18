@@ -189,6 +189,20 @@ pub fn payload(size: &str) -> &'static PayloadBody {
     &data().payloads[size].body
 }
 
+/// What [`with_echo`] answers. The payload is borrowed, so no request copies its items.
+#[derive(Serialize)]
+pub struct WithEcho<E> {
+    #[serde(flatten)]
+    pub payload: &'static PayloadBody,
+    pub echo: E,
+}
+
+/// The payload with what a handler bound beside it. A route that binds something answers
+/// this, so the value has to be converted and written back rather than bound and dropped.
+pub fn with_echo<E: Serialize>(size: &str, echo: E) -> WithEcho<E> {
+    WithEcho { payload: payload(size), echo }
+}
+
 // ---- the etag and cache families ---------------------------------------------
 //
 // No ETag value here. Salvo ships a conditional middleware and uses it; the other five

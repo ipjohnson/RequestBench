@@ -69,18 +69,58 @@ app.get("/json/small",  () => d.payload("small"));
 app.get("/json/medium", () => d.payload("medium"));
 app.get("/json/large",  () => d.payload("large"));
 
+// rb:wiring parameters.*
+// schema.params is the binding: ajv converts each declared capture to an integer before the
+// handler runs, so req.params is already what the echo holds.
+const bindsOneCapture = {
+  schema: { params: { type: "object", properties: { one: { type: "integer" } } } },
+};
+
+// rb:wiring parameters.*
+const bindsTwoCaptures = {
+  schema: {
+    params: { type: "object", properties: { one: { type: "integer" }, two: { type: "integer" } } },
+  },
+};
+
+// find-my-way tries a static segment before a capture, so /parameters/static/segment/literal
+// reaches its own route rather than the one-capture route that also matches it.
 app.get("/parameters/static/segment/literal", small);
-app.get("/parameters/:one", small);
-app.get("/parameters/:one/with-second/:two", small);
+app.get("/parameters/:one/segment/literal", bindsOneCapture,
+  (req) => d.withEcho("small", req.params));
+app.get("/parameters/:one/with-second/:two", bindsTwoCaptures,
+  (req) => d.withEcho("small", req.params));
 
 // The schema is the binding: ajv coerces the declared parameters and drops the rest, so
-// req.query is already what the arm answers.
-app.get("/query/one",  bindsOne,  (req) => req.query);
-app.get("/query/many", bindsMany, (req) => req.query);
+// req.query is already the echo.
+app.get("/query/one",  bindsOne,  (req) => d.withEcho("small", req.query));
+app.get("/query/many", bindsMany, (req) => d.withEcho("small", req.query));
 
 // The handler reads no header at all, so headers.many minus headers.few is the cost of
-// materialising 27 nobody asked for.
+// materialising 25 more that nobody asked for.
 app.get("/headers", small);
+
+// rb:wiring headers.*
+// schema.headers is the binding: ajv converts x-rb-account to an integer before the handler
+// runs, so req.headers already holds the three values the echo needs.
+const bindsHeaders = {
+  schema: {
+    headers: {
+      type: "object",
+      properties: {
+        "x-rb-tenant": { type: "string" },
+        "x-rb-request-id": { type: "string" },
+        "x-rb-account": { type: "integer" },
+      },
+    },
+  },
+};
+
+app.get("/headers/bind", bindsHeaders, (req) => d.withEcho("small", {
+  tenant: req.headers["x-rb-tenant"],
+  request_id: req.headers["x-rb-request-id"],
+  account: req.headers["x-rb-account"],
+}));
 
 // rb:wiring middleware.*
 // Fastify's middleware is its hooks, and a route-level hook array is how you scope them to

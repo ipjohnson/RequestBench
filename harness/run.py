@@ -26,6 +26,9 @@ BLEND = json.loads((SPEC / "endpoints.json").read_text())["version"]
 # ladder produced it cannot be read against an older one.
 LADDER_V = LADDER["version"]
 SEQUENCE = json.loads((SPEC / "sequence.json").read_text())["version"]
+# What a run draws before anything boots. spec/endpoints.json declares them and the plan
+# carries the declarations, which is where every driver reads them.
+RUN_VALUES = json.loads((SPEC / "plan.json").read_text())["run_values"]
 # Every target in a run gets its own published port, claimed as one block at startup, so
 # two runs on one machine never fight over 8080. Above the crowded 8080/8443 neighbourhood
 # and below the ephemeral floor on both platforms -- Linux defaults ip_local_port_range to
@@ -66,6 +69,32 @@ LAMBDA_ENV = {"AWS_LAMBDA_FUNCTION_NAME": "rb", "AWS_LAMBDA_FUNCTION_VERSION": "
               "AWS_LAMBDA_INITIALIZATION_TYPE": "on-demand",
               "AWS_LAMBDA_LOG_GROUP_NAME": "/aws/lambda/rb", "AWS_LAMBDA_LOG_STREAM_NAME": "rb",
               "AWS_REGION": "us-east-1", "AWS_DEFAULT_REGION": "us-east-1"}
+
+
+def draw_values(declared, rng=None):
+    """One value per declaration in spec/plan.json's run_values.
+
+    SystemRandom rather than a seeded generator, because a seed anyone can read is a value
+    anyone can compute, and these exist so that no target can know them in advance.
+    """
+    rng = rng or random.SystemRandom()
+
+    def text(length, chars):
+        return "".join(rng.choice(chars) for _ in range(length))
+
+    out = {}
+    for name, rule in declared.items():
+        kind = rule["kind"]
+        if kind == "int":
+            out[name] = rng.randint(10 ** (rule["digits"] - 1), 10 ** rule["digits"] - 1)
+        elif kind == "string":
+            out[name] = text(rule["length"], rule["chars"])
+        elif kind == "words":
+            out[name] = " ".join(text(rule["length"], rule["chars"])
+                                 for _ in range(rule["count"]))
+        else:
+            out[name] = rng.choice(rule["values"])
+    return out
 
 
 def select(universe, include, exclude, what):
@@ -496,7 +525,8 @@ def ramp_edges(seconds):
         edges.append(at)
     return edges
 
-def run_gen(port, rate, seconds, workers, record=True, only=None, slices=None, first=None):
+def run_gen(port, rate, seconds, workers, record=True, only=None, slices=None, first=None,
+            values=None):
     # Histograms go through a file rather than the pipe: a full rung is megabytes of
     # base64 and stdout stays readable for a human watching the run.
     tmp = ROOT / "results" / (".gen-%s.json" % uuid.uuid4().hex[:8])
@@ -511,6 +541,8 @@ def run_gen(port, rate, seconds, workers, record=True, only=None, slices=None, f
         cmd += ["--slices", ",".join(str(s) for s in slices)]
     if first:
         cmd += ["--first", first]
+    if values:
+        cmd += ["--values", values]
     gen_cpus = os.environ.get("RB_GEN_CPUS", "")
     if gen_cpus and shutil.which("taskset"):
         cmd = ["taskset", "-c", gen_cpus] + cmd
@@ -590,11 +622,13 @@ def read_meta(port):
     return {}
 
 
-def run_serial(port, count, encoding, warmup):
+def run_serial(port, count, encoding, warmup, values=None):
     tmp = ROOT / "results" / (".gen-%s.json" % uuid.uuid4().hex[:8])
     cmd = ["node", str(ROOT / "gen" / "serial.mjs"), "--target", "127.0.0.1:%d" % port,
            "--encoding", encoding, "--count", str(count), "--warmup", str(warmup),
            "--out", str(tmp)]
+    if values:
+        cmd += ["--values", values]
     gen_cpus = os.environ.get("RB_GEN_CPUS", "")
     if gen_cpus and shutil.which("taskset"):
         cmd = ["taskset", "-c", gen_cpus] + cmd
@@ -628,10 +662,10 @@ def client(port, target, *args):
     return subprocess.run(argv, capture_output=True, text=True, cwd=ROOT)
 
 
-def expect(port, target):
+def expect(port, target, values):
     """Check the running target against spec/expected.json, which never consults another
     target. Replaces the pytest suite; the authority and the wording are the same."""
-    out = client(port, target, "--mode", "expect", "--quiet")
+    out = client(port, target, "--mode", "expect", "--quiet", "--values", values)
     lines = [l.strip() for l in out.stdout.strip().splitlines() if l.strip()]
     i = next((k for k in reversed(range(len(lines)))
               if "endpoints answer spec/expected.json" in lines[k]), None)
@@ -640,7 +674,7 @@ def expect(port, target):
     return out.returncode == 0, "\n      ".join([lines[i]] + lines[:i][:12])
 
 
-def conform(port, target, reference, is_reference, exemplars=None):
+def conform(port, target, reference, is_reference, values, exemplars=None):
     """Gate the running target, against the language's reference measured in this run.
 
     The reference boots first and records what it answered; every target after it is
@@ -648,7 +682,8 @@ def conform(port, target, reference, is_reference, exemplars=None):
     every target answer forever to one target's serialization choices at one moment, and a
     change in the reference then reads as a failure in everything else.
     """
-    args = ["--quiet", "--reference" if is_reference else "--compare", str(reference)]
+    args = ["--quiet", "--reference" if is_reference else "--compare", str(reference),
+            "--values", values]
     if exemplars:
         args += ["--exemplars", str(exemplars)]
     out = client(port, target, *args)
@@ -876,6 +911,12 @@ def main():
     what = "language=%s" % languages[0] if len(languages) == 1 else "languages=%s" % ",".join(languages)
     base = claim_ports(max(PORT_BLOCK, len(pairs)))
     print("run %s  ports=%d+" % (run_id, base))
+    # Drawn once, before anything boots, and handed to every driver in the run. Each target
+    # after the anchor is compared to what the anchor answered, which only holds if every
+    # one of them was sent the same values.
+    values = json.dumps(draw_values(RUN_VALUES), separators=(",", ":"))
+    if RUN_VALUES:
+        print("  values   %s" % values)
     if a.validate_only:
         print("  %s  mode=%s  VALIDATE ONLY" % (what, a.mode))
     elif suite == "serial":
@@ -941,7 +982,7 @@ def main():
                 # here is what keeps them from describing an endpoint set two specs old.
                 exemplars = (EXEMPLARS / ("%s-%s@%s.json" % (language, target, host))
                              if a.exemplars else None)
-                ok, line = conform(port, key, reference, writes_reference, exemplars)
+                ok, line = conform(port, key, reference, writes_reference, values, exemplars)
                 print("  conformance: %s" % line)
                 if not ok:
                     nonconforming.append(key)
@@ -950,7 +991,7 @@ def main():
                 if writes_reference:
                     reference_ok.add(language)
             if a.expect:
-                ok, line = expect(port, key)
+                ok, line = expect(port, key, values)
                 print("  expectation: %s" % line)
                 if not ok:
                     nonconforming.append(key)
@@ -1008,7 +1049,7 @@ def main():
                 # steady runtime needs, so the warmup count is the language's too.
                 warm_n = LADDER["warmup"]["serial_requests"][warmup_class(language)]
                 res = run_serial(port, a.count, encoding,
-                                 min(warm_n, max(1, a.count // 2)))
+                                 min(warm_n, max(1, a.count // 2)), values)
                 o, trip = res["overall"], res.get("round_trip")
                 print("  serial  %s requests in %6.2fs -> %5d rps   p50 %5dus  p99 %6dus%s"
                       % (f"{res['completed']:,}", res["elapsed_s"], res["achieved_rps"],
@@ -1051,7 +1092,8 @@ def main():
             # nothing but the readiness probe. Kept as a ramp: the first request on its
             # own, then the whole distribution per slice.
             ramp = run_gen(port, warm_rps, warm_s, a.workers, record=False, only=live,
-                           slices=ramp_edges(warm_s), first=LADDER["warmup"]["first"])
+                           slices=ramp_edges(warm_s), first=LADDER["warmup"]["first"],
+                           values=values)
             record_target(language, target, n + 1, read_meta(port), timing)
             first, sl = ramp.get("first"), ramp["slices"]
             print("  ramp     %s   p99 %dus in the first %gs, %dus in the last %gs"
@@ -1075,7 +1117,7 @@ def main():
                 settle_s = min(LADDER.get("settle_s", 0), max(1, dur // 4))
                 if settle_s:
                     probe = run_gen(port, r["rps"], settle_s, a.workers,
-                                    record=False, only=live)
+                                    record=False, only=live, values=values)
                     offered = r["rps"] * settle_s
                     frac = probe["dropped"] / offered if offered else 0
                     if frac > LADDER["abort"]["drop_fraction"]:
@@ -1092,7 +1134,7 @@ def main():
                                      "count": 0, "p50_us": None, "p90_us": None,
                                      "p99_us": None, "p999_us": None})
                         continue
-                res = run_gen(port, r["rps"], dur, a.workers, only=live)
+                res = run_gen(port, r["rps"], dur, a.workers, only=live, values=values)
                 o = res["overall"]
                 offered = r["rps"] * dur
                 # Percentiles here are computed over what completed, and a dropped request

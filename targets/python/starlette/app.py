@@ -209,6 +209,30 @@ async def small(_: Request):
     return JSONResponse(d.payload("small"))
 
 
+async def parameters_one(request: Request):
+    return JSONResponse(d.with_echo("small", {"one": request.path_params["one"]}))
+
+
+async def parameters_two(request: Request):
+    p = request.path_params
+    return JSONResponse(d.with_echo("small", {"one": p["one"], "two": p["two"]}))
+
+
+# Starlette has no header binder, so the handler reads the three headers itself and holds the
+# conversion. An account that is missing or will not parse is 0, because the family has no
+# error contract to answer with.
+# rb:handler headers.bind_few,headers.bind_many
+async def headers_bind(request: Request):
+    h = request.headers
+    try:
+        account = int(h.get("x-rb-account"))
+    except (TypeError, ValueError):
+        account = 0
+    return JSONResponse(d.with_echo("small", {"tenant": h.get("x-rb-tenant", ""),
+                                              "request_id": h.get("x-rb-request-id", ""),
+                                              "account": account}))
+
+
 # rb:wiring json.*
 def payload_route(size):
     """The three sizes are static routes, not /json/{size}. The size set is fixed, so a
@@ -239,13 +263,15 @@ def _qint(q, k):
         return 0
 
 
+# rb:handler query.one
 async def query_one(request: Request):
-    return JSONResponse({"page": _qint(request.query_params, "page")})
+    return JSONResponse(d.with_echo("small", {"page": _qint(request.query_params, "page")}))
 
 
+# rb:handler query.many
 async def query_many(request: Request):
     q = request.query_params
-    return JSONResponse({
+    return JSONResponse(d.with_echo("small", {
         "page": _qint(q, "page"),
         "size": _qint(q, "size"),
         "status": _qstr(q, "status"),
@@ -254,7 +280,7 @@ async def query_many(request: Request):
         "q": _qstr(q, "q"),
         "min_price": _qint(q, "min_price"),
         "max_price": _qint(q, "max_price"),
-    })
+    }))
 
 
 # rb:wiring compressed.*
@@ -423,13 +449,15 @@ routes = [
     get("/json/medium", payload_route("medium")),
     get("/json/large", payload_route("large")),
     get("/parameters/static/segment/literal", small),
-    get("/parameters/{one}", small),
-    get("/parameters/{one}/with-second/{two}", small),
+    get("/parameters/{one:int}/segment/literal", parameters_one),
+    get("/parameters/{one:int}/with-second/{two:int}", parameters_two),
     get("/query/one", query_one),
     get("/query/many", query_many),
-    # The handler reads no header at all, so headers.many minus headers.few is the cost of
-    # materialising 27 nobody asked for.
+    # The handler reads no header at all. headers.many sends 30 request headers and
+    # headers.few sends 5, so the difference is the cost of materialising 25 that nobody
+    # asked for.
     get("/headers", small),
+    get("/headers/bind", headers_bind),
     get("/middleware/none", small),
     get("/middleware/four", small, middleware=layers(4)),
     get("/middleware/sixteen", small, middleware=layers(16)),

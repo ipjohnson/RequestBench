@@ -2,25 +2,38 @@ package rb.micronaut.routes;
 
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
+import io.micronaut.http.annotation.PathVariable;
 import rb.domain.Domain;
 import rb.domain.Model.PayloadBody;
+import rb.domain.Model.PayloadWithEcho;
 
-/** parameters: router captures with segment depth held constant. */
+/**
+ * parameters: router captures with segment depth held constant.
+ *
+ * Micronaut's own binding: @PathVariable names the capture and declares its type, and the
+ * conversion service converts it before the method runs. The static route needs no ordering
+ * to win over {one}/segment/literal, because Micronaut prefers the route with fewer
+ * variables.
+ */
 @Controller
 public class Parameters {
+
+  record One(int one) {}
+
+  record Two(int one, int two) {}
 
   @Get("/parameters/static/segment/literal")
   PayloadBody staticPath() {
     return Domain.payload("small");
   }
 
-  @Get("/parameters/{one}")
-  PayloadBody one(String one) {
-    return Domain.payload("small");
+  @Get("/parameters/{one}/segment/literal")
+  PayloadWithEcho one(@PathVariable("one") int one) {
+    return Domain.withEcho("small", new One(one));
   }
 
   @Get("/parameters/{one}/with-second/{two}")
-  PayloadBody two(String one, String two) {
-    return Domain.payload("small");
+  PayloadWithEcho two(@PathVariable("one") int one, @PathVariable("two") int two) {
+    return Domain.withEcho("small", new Two(one, two));
   }
 }

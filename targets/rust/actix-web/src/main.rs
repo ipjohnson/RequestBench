@@ -117,8 +117,8 @@ fn parse(body: &[u8]) -> Result<Value, HttpResponse> {
 //
 // `web::Query<T>` is the framework's binding half, the same shape as `web::Json<T>` on the
 // body: actix deserializes the query string into the struct before the handler runs and
-// rejects what will not fit without the handler seeing it. The struct it fills is the
-// struct the handler answers.
+// rejects what will not fit without the handler seeing it. The struct it fills is what the
+// handler echoes beside the small payload.
 //
 // The fields are plain, so serde decides what a missing or unparseable one is: a
 // QueryPayloadError, which actix renders as its own 400. The endpoint set sends neither.
@@ -149,6 +149,74 @@ struct OrderFilter {
     page: i64,
     size: i64,
     status: String,
+}
+
+// ---- parameters and headers: actix's typed Path and Header extractors ---------
+//
+// `web::Path<T>` binds the captures the way `web::Query<T>` binds a query string: actix
+// deserializes them into the struct before the handler runs, and the struct it fills is the
+// echo. A capture that is not an integer is actix's own 404.
+//
+// `web::Header<T>` is actix's typed header extractor. A header of this repository's own
+// needs a Header impl naming it, and each one parses through actix's own from_one_raw_str,
+// which is FromStr. So the account arrives as an integer before the handler runs, and a
+// header that is missing or will not parse is actix's own 400. The endpoint set sends
+// neither.
+
+// rb:wiring parameters.*
+#[derive(Serialize, Deserialize)]
+struct ParamOne {
+    one: i64,
+}
+
+// rb:wiring parameters.*
+#[derive(Serialize, Deserialize)]
+struct ParamTwo {
+    one: i64,
+    two: i64,
+}
+
+// rb:wiring headers.*
+/// A header web::Header can bind, by name and type. The value side is never used, and
+/// actix requires it of every Header.
+macro_rules! typed_header {
+    ($name:ident, $header:literal, $ty:ty) => {
+        struct $name($ty);
+
+        impl header::TryIntoHeaderValue for $name {
+            type Error = header::InvalidHeaderValue;
+
+            fn try_into_value(self) -> Result<header::HeaderValue, Self::Error> {
+                header::HeaderValue::from_str(&self.0.to_string())
+            }
+        }
+
+        impl header::Header for $name {
+            fn name() -> header::HeaderName {
+                header::HeaderName::from_static($header)
+            }
+
+            fn parse<M: actix_web::HttpMessage>(
+                msg: &M,
+            ) -> Result<Self, actix_web::error::ParseError> {
+                header::from_one_raw_str(msg.headers().get(Self::name())).map($name)
+            }
+        }
+    };
+}
+
+// rb:wiring headers.*
+typed_header!(Tenant, "x-rb-tenant", String);
+typed_header!(RequestId, "x-rb-request-id", String);
+typed_header!(Account, "x-rb-account", i64);
+// rb:end
+
+// rb:wiring headers.*
+#[derive(Serialize)]
+struct BoundHeaders {
+    tenant: String,
+    request_id: String,
+    account: i64,
 }
 
 // rb:wiring authorized.*
@@ -208,6 +276,25 @@ async fn meta() -> impl Responder {
 // rb:wiring parameters.*,headers.*,middleware.*,authorized.*
 async fn small() -> impl Responder {
     HttpResponse::Ok().json(d::payload("small"))
+}
+
+// rb:wiring parameters.*
+async fn param_one(p: web::Path<ParamOne>) -> HttpResponse {
+    HttpResponse::Ok().json(d::with_echo("small", p.into_inner()))
+}
+
+// rb:wiring parameters.*
+async fn param_two(p: web::Path<ParamTwo>) -> HttpResponse {
+    HttpResponse::Ok().json(d::with_echo("small", p.into_inner()))
+}
+
+// rb:wiring headers.*
+async fn bind_headers(
+    web::Header(Tenant(tenant)): web::Header<Tenant>,
+    web::Header(RequestId(request_id)): web::Header<RequestId>,
+    web::Header(Account(account)): web::Header<Account>,
+) -> HttpResponse {
+    HttpResponse::Ok().json(d::with_echo("small", BoundHeaders { tenant, request_id, account }))
 }
 
 // rb:wiring errors.*
@@ -488,15 +575,16 @@ fn config(cfg: &mut web::ServiceConfig) {
         .route("/json/medium", payload_route("medium"))
         .route("/json/large", payload_route("large"))
         .route("/parameters/static/segment/literal", web::get().to(small))
-        .route("/parameters/{one}", web::get().to(small))
-        .route("/parameters/{one}/with-second/{two}", web::get().to(small))
+        .route("/parameters/{one}/segment/literal", web::get().to(param_one))
+        .route("/parameters/{one}/with-second/{two}", web::get().to(param_two))
         .route("/query/one", web::get().to(|q: web::Query<QueryOne>| async move {
-            HttpResponse::Ok().json(q.into_inner())
+            HttpResponse::Ok().json(d::with_echo("small", q.into_inner()))
         }))
         .route("/query/many", web::get().to(|q: web::Query<QueryMany>| async move {
-            HttpResponse::Ok().json(q.into_inner())
+            HttpResponse::Ok().json(d::with_echo("small", q.into_inner()))
         }))
         .route("/headers", web::get().to(small))
+        .route("/headers/bind", web::get().to(bind_headers))
         .route("/middleware/none", web::get().to(small))
         .service(noops!(web::resource("/middleware/four").route(web::get().to(small)), 4))
         .service(noops!(web::resource("/middleware/sixteen").route(web::get().to(small)), 16))

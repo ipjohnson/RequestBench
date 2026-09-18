@@ -1,8 +1,9 @@
-// query: query string parsing and coercion, isolated from any use of the values.
+// query: query string parsing, percent-decoding and coercion, with the values echoed and
+// put to no other use.
 //
 // Echo's own binder fills the struct: c.Bind reads the `query:` tag, and for a GET that is
 // the whole of what it binds. The struct is both what Echo fills and what the handler
-// answers, so the response is the bound values and nothing copies one shape into another.
+// echoes beside the small payload, so nothing copies one shape into another.
 //
 // Echo decides what a value it cannot bind is: a missing parameter leaves the field at its
 // zero value, and one that will not parse comes back as an *echo.HTTPError carrying 400.
@@ -11,6 +12,7 @@
 package main
 
 import (
+	d "github.com/ianjohnson/requestbench/targets/go/_shared"
 	"github.com/labstack/echo/v4"
 )
 
@@ -56,7 +58,7 @@ func registerQuery(e *echo.Echo) {
 		if !bindQuery(c, &q) {
 			return nil
 		}
-		return c.JSON(200, q)
+		return c.JSON(200, d.WithEcho("small", q))
 	})
 
 	e.GET("/query/many", func(c echo.Context) error {
@@ -64,6 +66,6 @@ func registerQuery(e *echo.Echo) {
 		if !bindQuery(c, &q) {
 			return nil
 		}
-		return c.JSON(200, q)
+		return c.JSON(200, d.WithEcho("small", q))
 	})
 }

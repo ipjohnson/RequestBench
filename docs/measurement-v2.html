@@ -259,7 +259,7 @@ footer { margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--rule);
 
 <div class="note">
 <h3>Four minutes at the regular rate is below the spec's own floor</h3>
-<p>1,000 rps for 240&nbsp;s is 240,000 requests over 48 endpoints drawn uniformly, 5,000 each. The blend number is unaffected, since it aggregates all 240,000. The per-endpoint drill-down the site renders is: 5,000 samples puts a p99 on roughly 50 observations. The three ways out were a higher regular rate, a 7.5-minute sample, or bringing the constant down to what the run delivers. <a href="https://github.com/ipjohnson/RequestBench/issues/38">#38</a> took the third: <code>min_requests_per_endpoint</code> is 4,000, because the first two move every published latency and this one only stops the file claiming something untrue. The raised rate has no such problem.</p>
+<p>1,000 rps for 240&nbsp;s is 240,000 requests over 50 endpoints drawn uniformly, 4,800 each. The blend number is unaffected, since it aggregates all 240,000. The per-endpoint drill-down the site renders is: 4,800 samples puts a p99 on roughly 48 observations. The three ways out were a higher regular rate, a 7.5-minute sample, or bringing the constant down to what the run delivers. <a href="https://github.com/ipjohnson/RequestBench/issues/38">#38</a> took the third: <code>min_requests_per_endpoint</code> is 4,000, because the first two move every published latency and this one only stops the file claiming something untrue. The raised rate has no such problem.</p>
 </div>
 </section>
 <section>

@@ -4,7 +4,7 @@
 // Declaring `schema.querystring` is the whole wiring. ajv runs with coerceTypes: 'array'
 // and removeAdditional: true, which are Fastify's own defaults, so a declared integer
 // arrives as a number and anything undeclared is dropped before the handler sees it. The
-// handler answers req.query, which is what the schema left.
+// handler echoes what the schema left in req.query beside the small payload.
 //
 // No `required`, so Fastify decides what a missing parameter is: the property is simply
 // absent. A value it cannot coerce is FST_ERR_VALIDATION, Fastify's own envelope, not this

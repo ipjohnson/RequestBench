@@ -16,6 +16,7 @@ import {
 import { askFor, isError, keysOf, statusesOf, type Plan, type PlanEndpoint } from "./spec.js";
 import { errorProblem } from "./exceptions.js";
 import { Replay, answerOf } from "./replay.js";
+import { draw, echoProblem, type Values } from "./values.js";
 
 export type Exemplar = {
   endpoint: string; family: string;
@@ -51,6 +52,8 @@ export type GateOptions = {
   readonly encoding?: Encoding;
   readonly skipHeaders?: boolean;
   readonly reference?: Record<string, Comparable> | null;
+  /** This run's values. Drawn here when absent, which is right for a target gated alone. */
+  readonly values?: Values;
   readonly onEndpoint?: (r: EndpointResult) => void;
 };
 
@@ -65,9 +68,10 @@ export async function gate(
   plan: Plan, hostport: string, target: string, opts: GateOptions = {},
 ): Promise<GateResult> {
   const encoding = opts.encoding ?? "http";
+  const values = opts.values ?? draw(plan.run_values ?? {});
   const run = new Replay(plan, hostport, {
     ...(opts.instances === undefined ? {} : { instances: opts.instances }),
-    encoding,
+    encoding, values,
   });
   const responses: Record<string, Comparable> = {};
   const headerProblems: [string, string][] = [];
@@ -116,7 +120,7 @@ export async function gate(
       carriesError ? status !== 0 : allowed.has(status);
     const seen = new Map<number, number>();
     let bad: string | null = null, stale: string | null = null, lastSerial: number | null = null;
-    let envelope: string | null = null;
+    let envelope: string | null = null, echoed: string | null = null;
 
     for (const visit of visits) {
       const { path, status, raw, headers: hdrs } = visit;
@@ -152,8 +156,14 @@ export async function gate(
       if (carriesError && accepts(status)) {
         envelope ??= errorProblem(askFor(target, ep, path), answerOf(visit));
       }
+      // Every instance, for the same reason as the envelope, and on the anchor as much as on
+      // anything compared against it: the anchor's bodies are the reference, so an anchor that
+      // ignored what it was sent would otherwise pass and take every other target down.
+      if (ep.echo && accepts(status)) {
+        echoed ??= echoProblem(ep.echo, comparable(decoded(raw, hdrs), visit.contentType), values);
+      }
       if (accepts(status)) {
-        const key = `${ep.id} ${path}`;
+        const key = `${ep.id} ${visit.planned}`;
         if (!(key in responses)) responses[key] = comparable(decoded(raw, hdrs), visit.contentType);
         if (!seenOnce.has(ep.id)) {
           seenOnce.add(ep.id);
@@ -191,7 +201,7 @@ export async function gate(
     }
     const instances = visits.length;
     const ok = unsendable === null && [...seen.keys()].every(accepts) && seen.size === 1
-      && stale === null && envelope === null;
+      && stale === null && envelope === null && echoed === null;
     let note: string | null = null;
     if (opts.reference && !carriesError) {
       for (const key of keysOf(ep)) {
@@ -204,7 +214,8 @@ export async function gate(
     const result: EndpointResult = {
       id: ep.id, method: ep.method, instances, ok, seen,
       why: ok ? null
-        : (unsendable ?? bad ?? stale ?? envelope ?? `mixed statuses ${dictRepr(seen)}`),
+        : (unsendable ?? bad ?? stale ?? envelope ?? echoed
+          ?? `mixed statuses ${dictRepr(seen)}`),
       drift: note,
     };
     results.push(result);

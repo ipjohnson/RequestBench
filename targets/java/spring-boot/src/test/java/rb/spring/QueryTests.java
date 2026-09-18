@@ -3,11 +3,14 @@ package rb.spring;
 import org.junit.jupiter.api.Test;
 
 /**
- * query: parsing and coercing query parameters, at one and at eight.
+ * query: parsing, percent-decoding and coercing query parameters, at one and at eight.
  *
- * <p>The values never reach the answer, which is the point: this family is the parse and the
- * coercion isolated from any use of them. A target that silently drops a parameter it cannot
- * coerce answers the same body as one that read all eight, so what these hold is the status.
+ * <p>The answer echoes each value beside the small payload. Planned fills the pinned body with
+ * the values it drew for the path, so the floor check is an echo check. A target that drops a
+ * parameter answers a different body.
+ *
+ * <p>MockMvc's request builder decodes the %20 in q before the controller sees it, so these
+ * tests do not show that Tomcat decodes it.
  */
 class QueryTests extends SpringSuite {
 

@@ -16,12 +16,15 @@ size set makes a loop clearer. Parameters use Fastify's `:name` syntax.
 
 ## What is unusual about it
 
-**No route declares a schema.** Fastify's headline feature is a JSON Schema compiled per
-route, which gives it both validation and a specialised serializer through
-fast-json-stringify. Neither is used here. Validation goes to the shared domain module so
-that every language validates identically and the `body` family measures one thing, and
-with no response schema the serializer is plain `JSON.stringify`. This is the single
-biggest thing the numbers here do not tell you about Fastify.
+**No route declares a response schema.** Fastify's headline feature is a JSON Schema
+compiled per route, which gives it both validation and a specialised serializer through
+fast-json-stringify. Only the request half is used here. `schema.body` is declared on the
+routes that validate an order, `schema.querystring` on the two `query` routes and on
+`domain.filter`, `schema.params` on the two `parameters` routes that capture, and
+`schema.headers` on `/headers/bind`. Fastify compiles each one once, and its own ajv runs it
+before the handler and converts what it declares. With no response schema the serializer is
+plain `JSON.stringify`. This is the single biggest thing the numbers here do not tell you
+about Fastify.
 
 **The JSON body parser is replaced.** `addContentTypeParser` returns `req.raw.body`
 untouched when a function host has already parsed it, because reading the stream a second

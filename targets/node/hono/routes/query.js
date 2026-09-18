@@ -1,4 +1,4 @@
-// query: query string parsing and coercion, isolated from any use of the values.
+// query: query string parsing, percent-decoding and coercion, with the values echoed.
 //
 // Hono has no typed query binder, but validator("query", fn) is where a query check belongs
 // in it: a route-level hook that reads c.req.query(), hands the values to the check and
@@ -9,6 +9,8 @@
 // This is this target's copy on purpose. Sharing one coercer across five frameworks
 // measured the shared function rather than the framework, which is the defect #37 describes.
 import { validator } from "hono/validator";
+
+import * as d from "../../_shared/domain.js";
 
 // rb:wiring query.*
 const int = (v) => { const n = Number(v); return Number.isInteger(n) ? n : 0; };
@@ -31,7 +33,7 @@ export const bindsFilter = validator("query", (q) => ({
 }));
 
 export default function query(app) {
-  app.get("/query/one", bindsOne, (c) => c.json(c.req.valid("query")));
+  app.get("/query/one", bindsOne, (c) => c.json(d.withEcho("small", c.req.valid("query"))));
 
-  app.get("/query/many", bindsMany, (c) => c.json(c.req.valid("query")));
+  app.get("/query/many", bindsMany, (c) => c.json(d.withEcho("small", c.req.valid("query"))));
 }

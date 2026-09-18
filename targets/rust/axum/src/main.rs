@@ -130,8 +130,8 @@ fn parse(body: &[u8]) -> Result<Value, Response> {
 //
 // `Query<T>` is the framework's binding half, the same shape as `Json<T>` on the body:
 // axum deserializes the query string into the struct before the handler runs and rejects
-// what will not fit without the handler seeing it. The struct it fills is the struct the
-// handler answers, so nothing copies one shape into another.
+// what will not fit without the handler seeing it. The struct it fills is what the handler
+// echoes beside the small payload, so nothing copies one shape into another.
 //
 // The fields are plain, so serde decides what a missing or unparseable one is: a
 // QueryRejection, which axum renders as its own 400. The endpoint set sends neither.
@@ -162,6 +162,62 @@ struct OrderFilter {
     page: i64,
     size: i64,
     status: String,
+}
+
+// ---- parameters and headers: axum's Path, and an extractor of its own ---------
+//
+// `Path<T>` binds the captures the way `Query<T>` binds a query string: axum deserializes
+// them into the struct before the handler runs, and the struct it fills is the echo. A
+// capture that is not an integer is a PathRejection, which axum renders as its own 400.
+//
+// axum's own crate has no header binder. TypedHeader moved to axum-extra, which this target
+// does not depend on. So the three bound headers are read by an extractor of this target's
+// own, through FromRequestParts, the trait every axum extractor implements. It converts the
+// account itself, and answers 400 for a header that is missing or will not convert. The
+// endpoint set sends neither.
+
+// rb:wiring parameters.*
+#[derive(Serialize, Deserialize)]
+struct ParamOne {
+    one: i64,
+}
+
+// rb:wiring parameters.*
+#[derive(Serialize, Deserialize)]
+struct ParamTwo {
+    one: i64,
+    two: i64,
+}
+
+// rb:wiring headers.*
+#[derive(Serialize)]
+struct BoundHeaders {
+    tenant: String,
+    request_id: String,
+    account: i64,
+}
+
+// rb:wiring headers.*
+impl<S: Send + Sync> axum::extract::FromRequestParts<S> for BoundHeaders {
+    type Rejection = (StatusCode, Json<Value>);
+
+    async fn from_request_parts(
+        parts: &mut axum::http::request::Parts,
+        _: &S,
+    ) -> Result<Self, Self::Rejection> {
+        let refused = |name: &str| {
+            let body = serde_json::json!({ "error": "invalid_header", "detail": name });
+            (StatusCode::BAD_REQUEST, Json(body))
+        };
+        let text = |name: &'static str| {
+            parts.headers.get(name).and_then(|v| v.to_str().ok()).ok_or_else(|| refused(name))
+        };
+        Ok(BoundHeaders {
+            tenant: text("x-rb-tenant")?.to_string(),
+            request_id: text("x-rb-request-id")?.to_string(),
+            account: text("x-rb-account")?.parse().map_err(|_| refused("x-rb-account"))?,
+        })
+    }
 }
 
 // ---- middleware ---------------------------------------------------------------
@@ -214,6 +270,21 @@ async fn meta() -> Json<Value> {
 // rb:wiring parameters.*,headers.*,middleware.*,authorized.*
 async fn small() -> Json<&'static d::PayloadBody> {
     Json(d::payload("small"))
+}
+
+// rb:wiring parameters.*
+async fn param_one(Path(p): Path<ParamOne>) -> Json<d::WithEcho<ParamOne>> {
+    Json(d::with_echo("small", p))
+}
+
+// rb:wiring parameters.*
+async fn param_two(Path(p): Path<ParamTwo>) -> Json<d::WithEcho<ParamTwo>> {
+    Json(d::with_echo("small", p))
+}
+
+// rb:wiring headers.*
+async fn bind_headers(h: BoundHeaders) -> Json<d::WithEcho<BoundHeaders>> {
+    Json(d::with_echo("small", h))
 }
 
 // rb:wiring errors.*
@@ -416,13 +487,18 @@ fn app() -> Router {
         .route("/json/medium", payload_route("medium"))
         .route("/json/large", payload_route("large"))
         .route("/parameters/static/segment/literal", get(small))
-        .route("/parameters/{one}", get(small))
-        .route("/parameters/{one}/with-second/{two}", get(small))
-        .route("/query/one", get(|Query(q): Query<QueryOne>| async move { Json(q) }))
-        .route("/query/many", get(|Query(q): Query<QueryMany>| async move { Json(q) }))
+        .route("/parameters/{one}/segment/literal", get(param_one))
+        .route("/parameters/{one}/with-second/{two}", get(param_two))
+        .route("/query/one", get(|Query(q): Query<QueryOne>| async move {
+            Json(d::with_echo("small", q))
+        }))
+        .route("/query/many", get(|Query(q): Query<QueryMany>| async move {
+            Json(d::with_echo("small", q))
+        }))
         // The handler reads no header at all, so headers.many minus headers.few is the
-        // cost of materialising 27 nobody asked for.
+        // cost of materialising 25 nobody asked for.
         .route("/headers", get(small))
+        .route("/headers/bind", get(bind_headers))
         .route("/middleware/none", get(small))
         .route("/middleware/four", layered(4, get(small)))
         .route("/middleware/sixteen", layered(16, get(small)))

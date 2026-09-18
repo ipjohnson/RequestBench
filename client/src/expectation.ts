@@ -14,6 +14,7 @@ import {
   askFor, keysOf, type Expected, type ExpectedRequest, type Plan, type PlanEndpoint,
 } from "./spec.js";
 import type { Encoding } from "./checks.js";
+import { draw, filled, type Values } from "./values.js";
 import type { Answer } from "@rb/schema";
 
 export type EndpointVerdict = {
@@ -35,6 +36,8 @@ export type ExpectationResult = {
 export type ExpectationOptions = {
   readonly instances?: number;
   readonly encoding?: Encoding;
+  /** This run's values. Drawn here when absent, which is right for a target checked alone. */
+  readonly values?: Values;
   readonly onEndpoint?: (v: EndpointVerdict) => void;
 };
 
@@ -70,24 +73,25 @@ export async function check(
   plan: Plan, expected: Expected, hostport: string, target: string,
   opts: ExpectationOptions = {},
 ): Promise<ExpectationResult> {
+  const values = opts.values ?? draw(plan.run_values ?? {});
   const run = new Replay(plan, hostport, {
     ...(opts.instances === undefined ? {} : { instances: opts.instances }),
     ...(opts.encoding === undefined ? {} : { encoding: opts.encoding }),
-    distinct: true,
+    distinct: true, values,
   });
   const meta = await run.meta();
   const endpoints: EndpointVerdict[] = [];
   let sent = 0;
 
   for await (const { ep, visits, why } of run.endpoints()) {
-    const answered = new Map(visits.map((v) => [`${ep.id} ${v.path}`, v]));
+    const answered = new Map(visits.map((v) => [`${ep.id} ${v.planned}`, v]));
     sent += visits.length;
     // A capture the target would not give up. Nothing was sent, so there is nothing to
     // compare, and calling that a pass would be worse than calling it a failure.
     const problems = why ? [why]
       : ep.id in expected.errors
         ? errorProblems(ep, target, answered)
-        : requestProblems(ep, expected, answered);
+        : requestProblems(ep, expected, answered, values);
     const verdict: EndpointVerdict = {
       id: ep.id,
       ok: problems.length === 0,
@@ -123,7 +127,7 @@ function errorProblems(
 }
 
 function requestProblems(
-  ep: PlanEndpoint, expected: Expected, answered: ReadonlyMap<string, Visit>,
+  ep: PlanEndpoint, expected: Expected, answered: ReadonlyMap<string, Visit>, values: Values,
 ): string[] {
   const keys = keysOf(ep);
   const missing = keys.filter((k) => !(k in expected.requests));
@@ -137,7 +141,10 @@ function requestProblems(
   for (const key of keys) {
     const visit = answered.get(key);
     if (!visit) { out.push(`${key}: the target was never asked`); continue; }
-    const why = difference(expected.requests[key] as ExpectedRequest, answerOf(visit));
+    // The pinned body holds a placeholder wherever a run value goes, and the value this run
+    // sent is what the target had to answer with.
+    const want = expected.requests[key] as ExpectedRequest;
+    const why = difference({ ...want, body: filled(want.body, values) }, answerOf(visit));
     if (why) out.push(`${key}: ${why}`);
   }
   return out;

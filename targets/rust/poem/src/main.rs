@@ -172,8 +172,8 @@ fn validated(order: &OrderIn, first_error: bool) -> Result<d::ValidatedOrder, Re
 //
 // `Query<T>` is the framework's binding half, the same shape as `Json<T>` on the body:
 // poem deserializes the query string into the struct before the handler runs and rejects
-// what will not fit without the handler seeing it. The struct it fills is the struct the
-// handler answers.
+// what will not fit without the handler seeing it. The struct it fills is what the handler
+// echoes beside the small payload.
 //
 // The fields are plain, so serde decides what a missing or unparseable one is: a
 // ParseQueryError, which poem renders as its own 400. The endpoint set sends neither.
@@ -204,6 +204,57 @@ struct OrderFilter {
     page: i64,
     size: i64,
     status: String,
+}
+
+// ---- parameters and headers: poem's Path, and a FromRequest of its own --------
+//
+// `Path<T>` binds the captures the way `Query<T>` binds a query string: poem deserializes
+// them into the struct before the handler runs, and the struct it fills is the echo. A
+// capture that is not an integer is a ParsePathError, which poem renders as its own 400.
+//
+// poem's TypedHeader binds the headers the headers crate defines, and none of this
+// repository's own. For an application's own header, poem's documentation implements
+// FromRequest, and so does this target. The extractor reads the three bound headers and
+// converts the account itself, and answers 400 for a header that is missing or will not
+// convert. The endpoint set sends neither.
+
+// rb:wiring parameters.*
+#[derive(Serialize, Deserialize)]
+struct ParamOne {
+    one: i64,
+}
+
+// rb:wiring parameters.*
+#[derive(Serialize, Deserialize)]
+struct ParamTwo {
+    one: i64,
+    two: i64,
+}
+
+// rb:wiring headers.*
+#[derive(Serialize)]
+struct BoundHeaders {
+    tenant: String,
+    request_id: String,
+    account: i64,
+}
+
+// rb:wiring headers.*
+impl<'a> poem::FromRequest<'a> for BoundHeaders {
+    async fn from_request(req: &'a Request, _: &mut poem::RequestBody) -> poem::Result<Self> {
+        let refused = |name: &str| {
+            let body = serde_json::json!({ "error": "invalid_header", "detail": name });
+            Rejected(StatusCode::BAD_REQUEST, body)
+        };
+        let text = |name: &'static str| {
+            req.headers().get(name).and_then(|v| v.to_str().ok()).ok_or_else(|| refused(name))
+        };
+        Ok(BoundHeaders {
+            tenant: text("x-rb-tenant")?.to_string(),
+            request_id: text("x-rb-request-id")?.to_string(),
+            account: text("x-rb-account")?.parse().map_err(|_| refused("x-rb-account"))?,
+        })
+    }
 }
 
 // rb:wiring errors.*
@@ -378,13 +429,14 @@ fn app() -> impl Endpoint {
         .at("/json/medium", payload_route("medium"))
         .at("/json/large", payload_route("large"))
         .at("/parameters/static/segment/literal", small())
-        .at("/parameters/:one", small())
-        .at("/parameters/:one/with-second/:two", small())
+        .at("/parameters/:one/segment/literal", get(param_one))
+        .at("/parameters/:one/with-second/:two", get(param_two))
         .at("/query/one", get(query_one))
         .at("/query/many", get(query_many))
         // The handler reads no header at all, so headers.many minus headers.few is the
-        // cost of materialising 27 nobody asked for.
+        // cost of materialising 25 nobody asked for.
         .at("/headers", small())
+        .at("/headers/bind", get(bind_headers))
         .at("/middleware/none", small())
         .at("/middleware/four", layered(4, small().boxed()))
         .at("/middleware/sixteen", layered(16, small().boxed()))
@@ -436,6 +488,24 @@ fn app() -> impl Endpoint {
     app
 }
 
+// rb:wiring parameters.*
+#[poem::handler]
+async fn param_one(Path(p): Path<ParamOne>) -> Json<d::WithEcho<ParamOne>> {
+    Json(d::with_echo("small", p))
+}
+
+// rb:wiring parameters.*
+#[poem::handler]
+async fn param_two(Path(p): Path<ParamTwo>) -> Json<d::WithEcho<ParamTwo>> {
+    Json(d::with_echo("small", p))
+}
+
+// rb:wiring headers.*
+#[poem::handler]
+async fn bind_headers(h: BoundHeaders) -> Json<d::WithEcho<BoundHeaders>> {
+    Json(d::with_echo("small", h))
+}
+
 #[poem::handler]
 async fn bind(body: Vec<u8>) -> Result<Json<d::BindResult>, Rejected> {
     Ok(Json(d::bind_echo(parse(&body)?)))
@@ -451,14 +521,16 @@ async fn validate_first(Json(order): Json<OrderIn>) -> Result<Json<d::ValidatedO
     Ok(Json(validated(&order, true)?))
 }
 
+// rb:wiring query.*
 #[poem::handler]
-async fn query_one(Query(q): Query<QueryOne>) -> Json<QueryOne> {
-    Json(q)
+async fn query_one(Query(q): Query<QueryOne>) -> Json<d::WithEcho<QueryOne>> {
+    Json(d::with_echo("small", q))
 }
 
+// rb:wiring query.*
 #[poem::handler]
-async fn query_many(Query(q): Query<QueryMany>) -> Json<QueryMany> {
-    Json(q)
+async fn query_many(Query(q): Query<QueryMany>) -> Json<d::WithEcho<QueryMany>> {
+    Json(d::with_echo("small", q))
 }
 
 #[poem::handler]

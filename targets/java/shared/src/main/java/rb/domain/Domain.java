@@ -433,6 +433,15 @@ public final class Domain {
     return payloads.get(size).body();
   }
 
+  /**
+   * The payload with what a handler bound beside it. A route that binds something answers
+   * this, so the value has to be converted and written back rather than bound and dropped.
+   */
+  public static PayloadWithEcho withEcho(String size, Object echo) {
+    PayloadBody p = payload(size);
+    return new PayloadWithEcho(p.count(), p.items(), p.size(), echo);
+  }
+
   // ---- the etag and cache families ------------------------------------------------
   //
   // No ETag value here. Each framework's own conditional machinery computes the validator

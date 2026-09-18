@@ -6,6 +6,7 @@ import { createHash } from "node:crypto";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { Ask } from "@rb/schema";
+import type { RunValue } from "./values.js";
 
 export const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const SPEC = join(ROOT, "spec");
@@ -27,6 +28,8 @@ export type PlanEndpoint = {
    * target's response cache a key per combination to hold.
    */
   readonly header_variants?: readonly Readonly<Record<string, string>>[];
+  /** The run values the response has to hold in its echo object, each under its own name. */
+  readonly echo?: readonly string[];
 };
 
 /**
@@ -46,6 +49,8 @@ export type Plan = {
   readonly version: string;
   readonly instances: number;
   readonly captures?: Readonly<Record<string, Capture>>;
+  /** What each {run.<name>} is drawn from. The plan never holds the values themselves. */
+  readonly run_values?: Readonly<Record<string, RunValue>>;
   readonly endpoints: readonly PlanEndpoint[];
 };
 
@@ -102,7 +107,8 @@ const digest = (name: string): string =>
  *
  * The instances of an endpoint are different requests: /domain/orders/602 and
  * /domain/orders/876 return different orders, so one expectation per endpoint could only
- * ever describe the first of them.
+ * ever describe the first of them. The path is the one the plan writes, with any
+ * {run.<name>} still in it, because the path that is sent changes every run.
  */
 export const keysOf = (ep: PlanEndpoint): string[] =>
   [...new Set(ep.paths)].map((p) => `${ep.id} ${p}`);

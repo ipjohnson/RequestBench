@@ -4,11 +4,11 @@ import io.javalin.testtools.JavalinTest;
 import org.junit.jupiter.api.Test;
 
 /**
- * query: parsing and coercing query parameters, at one and at eight.
+ * query: parsing, percent-decoding and coercing query parameters, at one and at eight.
  *
- * <p>The values never reach the answer, which is the point: this family is the parse and the
- * coercion isolated from any use of them. A target that silently drops a parameter it cannot
- * coerce answers the same body as one that read all eight, so what these hold is the status.
+ * <p>The answer echoes each value beside the small payload. Planned fills the pinned body with
+ * the values it drew for the path, so the floor check is an echo check. A target that drops a
+ * parameter, or does not decode the %20 in q, answers a different body.
  */
 class QueryTests extends JavalinSuite {
 

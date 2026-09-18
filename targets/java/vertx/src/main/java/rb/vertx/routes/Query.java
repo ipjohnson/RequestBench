@@ -8,6 +8,7 @@ import io.vertx.ext.web.validation.ValidationHandler;
 import io.vertx.ext.web.validation.builder.Parameters;
 import io.vertx.ext.web.validation.builder.ValidationHandlerBuilder;
 import io.vertx.json.schema.SchemaRepository;
+import rb.domain.Domain;
 import rb.domain.Model.QueryMany;
 import rb.domain.Model.QueryOne;
 import rb.vertx.Reply;
@@ -17,7 +18,8 @@ import static io.vertx.json.schema.common.dsl.Schemas.intSchema;
 import static io.vertx.json.schema.common.dsl.Schemas.stringSchema;
 
 /**
- * query: query string parsing and coercion, isolated from any use of the values.
+ * query: query string parsing, percent-decoding and coercion, with the values echoed beside the
+ * small payload and put to no other use.
  *
  * Vert.x's own binding is the same facility as its validation: a ValidationHandler mounted on
  * the route ahead of the business handler, which parses and types each declared parameter and
@@ -71,17 +73,18 @@ public final class Query {
 
     router.get("/query/one")
           .handler(handler(repository, new String[] {"page"}, new String[] {}))
-          .handler(ctx -> Reply.json(ctx, 200, new QueryOne(qint(ctx, "page", 0))))
+          .handler(ctx -> Reply.json(ctx, 200,
+              Domain.withEcho("small", new QueryOne(qint(ctx, "page", 0)))))
           .failureHandler(Reply::failure);
 
     router.get("/query/many")
           .handler(handler(repository,
                            new String[] {"page", "size", "min_price", "max_price"},
                            new String[] {"status", "category", "sort", "q"}))
-          .handler(ctx -> Reply.json(ctx, 200, new QueryMany(
+          .handler(ctx -> Reply.json(ctx, 200, Domain.withEcho("small", new QueryMany(
               qint(ctx, "page", 0), qint(ctx, "size", 0), qstr(ctx, "status"),
               qstr(ctx, "category"), qstr(ctx, "sort"), qstr(ctx, "q"),
-              qint(ctx, "min_price", 0), qint(ctx, "max_price", 0))))
+              qint(ctx, "min_price", 0), qint(ctx, "max_price", 0)))))
           .failureHandler(Reply::failure);
   }
 }

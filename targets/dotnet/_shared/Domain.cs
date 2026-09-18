@@ -70,6 +70,16 @@ public sealed partial class DomainModel
     /// </summary>
     public PayloadBody Payload(string size) => _payloads[size].Body;
 
+    /// <summary>
+    /// The payload with what a handler bound beside it. A route that binds something answers
+    /// this, so the value has to be converted and written back rather than bound and dropped.
+    /// </summary>
+    public PayloadWithEcho WithEcho(string size, object echo)
+    {
+        PayloadBody body = Payload(size);
+        return new PayloadWithEcho(body.Count, body.Items, body.Size, echo);
+    }
+
     // ---- the etag and cache families ------------------------------------------------
     //
     // No ETag value here. ASP.NET Core ships no conditional handling for a dynamic
