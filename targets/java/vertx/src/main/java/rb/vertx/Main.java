@@ -1,6 +1,7 @@
 package rb.vertx;
 
 import io.vertx.core.Vertx;
+import io.vertx.core.http.HttpServerOptions;
 import io.vertx.ext.web.Router;
 import rb.domain.Domain;
 import rb.hosts.Hosts;
@@ -30,12 +31,22 @@ public final class Main {
   public static void main(String[] args) throws Exception {
     Domain.load(Hosts.fixture());
     Vertx vertx = Vertx.vertx();
-    vertx.createHttpServer()
+    vertx.createHttpServer(options())
          .requestHandler(router(vertx))
          .listen(Hosts.port())
          .toCompletionStage().toCompletableFuture().get();
     Hosts.listening();
     System.out.println("container/vertx listening on " + Hosts.port());
+  }
+
+  /**
+   * The HttpServer's own compression, on for every route. It gzips when the request asks for
+   * it, with no size floor, at level 1, the fastest; Vert.x's default is 6. Its own method so
+   * the suite's server compresses the way this one does.
+   */
+  // rb:wiring compressed.*
+  static HttpServerOptions options() {
+    return new HttpServerOptions().setCompressionSupported(true).setCompressionLevel(1);
   }
 
   /**

@@ -1,6 +1,8 @@
 package rb.helidon;
 
+import io.helidon.http.encoding.gzip.GzipEncoding;
 import io.helidon.webserver.WebServer;
+import io.helidon.webserver.WebServerConfig;
 import io.helidon.webserver.http.HttpRouting;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -32,13 +34,24 @@ public final class Main {
 
   public static void main(String[] args) throws Exception {
     Domain.load(Hosts.fixture());
-    WebServer.builder()
-             .port(Hosts.port())
-             .routing(Main::routes)
-             .build()
-             .start();
+    WebServerConfig.Builder server = WebServer.builder()
+                                              .port(Hosts.port())
+                                              .routing(Main::routes);
+    server(server);
+    server.build().start();
     Hosts.listening();
     System.out.println("container/helidon-se listening on " + Hosts.port());
+  }
+
+  /**
+   * Helidon's own content encoding, on the whole WebServer, with gzip from
+   * helidon-http-encoding-gzip. It gzips any response whose request asks for it, with no size
+   * floor, and has no level setting, so it runs at the JDK's default, which zlib runs as 6. Its
+   * own method so the suite's server is set up the same way.
+   */
+  // rb:wiring compressed.*
+  static void server(WebServerConfig.Builder server) {
+    server.contentEncoding(encoding -> encoding.addContentEncoding(GzipEncoding.create()));
   }
 
   static void routes(HttpRouting.Builder r) {

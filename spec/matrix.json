@@ -737,7 +737,9 @@
         "mechanism": "a route ahead of the endpoint's own on the same path, answering 403 rather than calling next"
       },
       "compressed": {
-        "mechanism": "the pinned codec behind a 1024-byte floor in the route itself; Helidon's content encoding is on the WebServer and would contaminate the other forty-two endpoints"
+        "mechanism": "the WebServer's content encoding with helidon-http-encoding-gzip, on the whole server; the gzip encoding has no level setting, so it runs at the JDK default of 6, with no size floor",
+        "dep": "helidon-http-encoding-gzip",
+        "mentions": "GzipEncoding"
       },
       "etag": {
         "mechanism": "one handler per route over the shared digest: Helidon's filters run before a handler and cannot change a response once send() has been called"
@@ -783,7 +785,7 @@
         "mechanism": "a before handler bound to this path, answering 403 rather than letting the route run"
       },
       "compressed": {
-        "mechanism": "an after handler bound to /compressed/*, holding the pinned codec and a 1024-byte floor; Javalin configures compression on the whole server and would contaminate the other forty-two endpoints"
+        "mechanism": "Javalin's CompressionStrategy on the whole server, gzip only at level 1, the fastest, over its default 1,500-byte floor"
       },
       "etag": {
         "mechanism": "a Javalin after-handler scoped to the route pattern, running with the body still in the context rather than on the wire"
@@ -827,7 +829,7 @@
         "mechanism": "an @Filter bound to the one path, resolved from its annotation at compile time"
       },
       "compressed": {
-        "mechanism": "a serve helper holding the pinned codec and a 1024-byte floor; Micronaut's netty compression setting is on the whole server and would contaminate the other forty-two endpoints"
+        "mechanism": "the Netty server's own compression on the whole server, at compression-level 1, the fastest, over its default 1 KB threshold"
       },
       "etag": {
         "mechanism": "a @ServerFilter scoped to the route pattern, which serializes the body the controller returned and hashes those bytes"
@@ -875,7 +877,7 @@
         "mechanism": "a JAX-RS ContainerRequestFilter bound to the one method by a @NameBinding annotation"
       },
       "compressed": {
-        "mechanism": "a serve helper holding the pinned codec and a 1024-byte floor; Quarkus enables compression on the whole HTTP server and would contaminate the other forty-two endpoints"
+        "mechanism": "quarkus.http.enable-compression on the whole HTTP server, at compression-level 1, the fastest, with no size floor"
       },
       "etag": {
         "mechanism": "JAX-RS's own Request.evaluatePreconditions, which compares the validator and builds the 304 itself; the digest is the target's because JAX-RS has none"
@@ -923,7 +925,7 @@
         "mechanism": "a servlet Filter bound to this path through a FilterRegistrationBean, not an if in the handler"
       },
       "compressed": {
-        "mechanism": "a serve helper holding the pinned codec and the connector's own 2048-byte floor; server.compression is on the whole connector and would contaminate the other forty-two endpoints"
+        "mechanism": "server.compression on the whole Tomcat connector; neither Spring Boot nor Tomcat has a level setting, so it gzips at the JDK default of 6, and its 2 KB floor applies only when Tomcat knows the length first, which it does not for Spring's JSON"
       },
       "etag": {
         "mechanism": "Spring's own ShallowEtagHeaderFilter, registered against /etag/* so the buffering does not reach the other forty-six endpoints"
@@ -973,7 +975,7 @@
         "mechanism": "a handler ahead of the endpoint's own on the same route, answering 403 rather than calling next"
       },
       "compressed": {
-        "mechanism": "a handler ahead of the endpoint's own on these three routes, holding the pinned codec and a 1024-byte floor; Vert.x enables compression on the HttpServer and would contaminate the other forty-two endpoints"
+        "mechanism": "HttpServerOptions compression on the whole HttpServer, at setCompressionLevel(1), the fastest, with no size floor"
       },
       "etag": {
         "mechanism": "one handler per route over the shared digest: addHeadersEndHandler sees the headers and not the body, so there is nothing to intercept afterwards"
@@ -3391,10 +3393,10 @@
         "reaches": "the refusal as well as the pass, which is the half a target that let everything through would still answer correctly"
       },
       "compressed": {
-        "facility": "@SpringBootTest with MockMvc, as Spring Boot's reference starts, from the per-technology test starters Spring Initializr writes for Boot 4.1",
+        "facility": "@SpringBootTest on a random port with a RestTestClient over a JdkClientHttpRequestFactory whose compression is off; MockMvc never reaches the Tomcat connector",
         "dep": "spring-boot-starter-webmvc-test",
-        "transport": "in-memory",
-        "reaches": "the codec, because this target compresses in its own handler rather than with the server's compression setting, which would reach every endpoint"
+        "transport": "loopback",
+        "reaches": "Tomcat's compression on the connector, which is where this target compresses"
       },
       "etag": {
         "facility": "@SpringBootTest with MockMvc, as Spring Boot's reference starts, from the per-technology test starters Spring Initializr writes for Boot 4.1",
@@ -3480,7 +3482,7 @@
         "facility": "@QuarkusTest with REST Assured, as code.quarkus.io writes; it starts the application's HTTP server in the test JVM",
         "dep": "rest-assured",
         "transport": "loopback",
-        "reaches": "the codec, because this target compresses in its own handler rather than with the server's compression setting, which would reach every endpoint"
+        "reaches": "the HTTP server's compression, which @QuarkusTest starts with the application"
       },
       "etag": {
         "facility": "@QuarkusTest with REST Assured, as code.quarkus.io writes; it starts the application's HTTP server in the test JVM",
@@ -3566,7 +3568,7 @@
         "facility": "@MicronautTest with an injected @Client HttpClient, as Micronaut Launch writes; it starts the embedded server on a random port",
         "dep": "micronaut-test-junit5",
         "transport": "loopback",
-        "reaches": "the codec, because this target compresses in its own handler rather than with the server's compression setting, which would reach every endpoint"
+        "reaches": "the Netty server's compression, which @MicronautTest starts on its random port"
       },
       "etag": {
         "facility": "@MicronautTest with an injected @Client HttpClient, as Micronaut Launch writes; it starts the embedded server on a random port",
@@ -3649,10 +3651,10 @@
         "reaches": "the refusal as well as the pass, which is the half a target that let everything through would still answer correctly"
       },
       "compressed": {
-        "facility": "@ServerTest with the injected Http1Client, which Helidon's SE testing documentation leads with and says opens ports",
+        "facility": "@ServerTest with the injected Http1Client, which Helidon's SE testing documentation leads with and says opens ports; the suite turns the client's content encoding discovery off, because with the gzip module present it decodes gzip and keeps Content-Encoding",
         "dep": "helidon-webserver-testing-junit5",
         "transport": "loopback",
-        "reaches": "the codec, because this target compresses in its own handler rather than with the server's compression setting, which would reach every endpoint"
+        "reaches": "the WebServer's content encoding, which @SetUpServer turns on through the same Main.server the target calls"
       },
       "etag": {
         "facility": "@ServerTest with the injected Http1Client, which Helidon's SE testing documentation leads with and says opens ports",
@@ -3711,85 +3713,85 @@
     },
     "java:vertx": {
       "baseline": {
-        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with WebClient, as vertx-junit5's documentation does",
+        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router and Main.options(), driven with WebClient, as vertx-junit5's documentation does",
         "dep": "vertx-junit5",
         "transport": "loopback",
         "reaches": "the literal and the content type, which is the whole of what this endpoint is"
       },
       "json": {
-        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with WebClient, as vertx-junit5's documentation does",
+        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router and Main.options(), driven with WebClient, as vertx-junit5's documentation does",
         "dep": "vertx-junit5",
         "transport": "loopback",
         "reaches": "the serializer at three sizes, which is all this family has to show"
       },
       "parameters": {
-        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with WebClient, as vertx-junit5's documentation does",
+        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router and Main.options(), driven with WebClient, as vertx-junit5's documentation does",
         "dep": "vertx-junit5",
         "transport": "loopback",
         "reaches": "the echo of each capture, which the plan reader fills with the values it sent, so one bound as a string fails; the static route answering the plain payload holds that it still wins over {one}/segment/literal"
       },
       "authorized": {
-        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with WebClient, as vertx-junit5's documentation does",
+        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router and Main.options(), driven with WebClient, as vertx-junit5's documentation does",
         "dep": "vertx-junit5",
         "transport": "loopback",
         "reaches": "the refusal as well as the pass, which is the half a target that let everything through would still answer correctly"
       },
       "compressed": {
-        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with WebClient, as vertx-junit5's documentation does",
+        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router and Main.options(), driven with WebClient, as vertx-junit5's documentation does",
         "dep": "vertx-junit5",
         "transport": "loopback",
-        "reaches": "the codec, because this target compresses in its own handler rather than with the server's compression setting, which would reach every endpoint"
+        "reaches": "the HttpServer's compression, from the Main.options() the suite's server is built with"
       },
       "etag": {
-        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with WebClient, as vertx-junit5's documentation does",
+        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router and Main.options(), driven with WebClient, as vertx-junit5's documentation does",
         "dep": "vertx-junit5",
         "transport": "loopback",
         "reaches": "the validator and the conditional answer. The 304 is the only request in the corpus that cannot be sent until the target has answered a different one, because the validator is the target's to produce"
       },
       "cache": {
-        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with WebClient, as vertx-junit5's documentation does",
+        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router and Main.options(), driven with WebClient, as vertx-junit5's documentation does",
         "dep": "vertx-junit5",
         "transport": "loopback",
         "reaches": "the response cache and what it is keyed on. A store keyed on fewer headers than it declares answers one tenant with another tenant's body"
       },
       "body": {
-        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with WebClient, as vertx-junit5's documentation does",
+        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router and Main.options(), driven with WebClient, as vertx-junit5's documentation does",
         "dep": "vertx-junit5",
         "transport": "loopback",
         "reaches": "the binding and the validation facility, including the two refusals, which are judged as the envelope this target recorded rather than against a pinned body"
       },
       "query": {
-        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with WebClient, as vertx-junit5's documentation does",
+        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router and Main.options(), driven with WebClient, as vertx-junit5's documentation does",
         "dep": "vertx-junit5",
         "transport": "loopback",
         "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the test drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
-        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with WebClient, as vertx-junit5's documentation does",
+        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router and Main.options(), driven with WebClient, as vertx-junit5's documentation does",
         "dep": "vertx-junit5",
         "transport": "loopback",
         "reaches": "the echo of the three bound headers, which the plan reader fills with the values it sent, so one bound under the wrong name or as the wrong type fails; /headers holds only that the request was accepted with all of them attached"
       },
       "middleware": {
-        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with WebClient, as vertx-junit5's documentation does",
+        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router and Main.options(), driven with WebClient, as vertx-junit5's documentation does",
         "dep": "vertx-junit5",
         "transport": "loopback",
         "reaches": "every layer, because the host boots the application rather than calling the handler, which is the way this family is failed without noticing"
       },
       "domain": {
-        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with WebClient, as vertx-junit5's documentation does",
+        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router and Main.options(), driven with WebClient, as vertx-junit5's documentation does",
         "dep": "vertx-junit5",
         "transport": "loopback",
         "reaches": "the shared model through all eight operations, including the four that write, where a 201 and a 204 with no body are answers a framework can get subtly wrong while returning the right status"
       },
       "errors": {
-        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with WebClient, as vertx-junit5's documentation does",
+        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router and Main.options(), driven with WebClient, as vertx-junit5's documentation does",
         "dep": "vertx-junit5",
         "transport": "loopback",
         "reaches": "whatever this target does with a route it does not have, which is the framework rather than a handler"
       },
       "template": {
-        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with WebClient, as vertx-junit5's documentation does",
+        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router and Main.options(), driven with WebClient, as vertx-junit5's documentation does",
         "dep": "vertx-junit5",
         "transport": "loopback",
         "reaches": "the engine's output, normalised the way the conformance client normalises it: the spec pins the content and leaves the whitespace free"
@@ -3824,7 +3826,7 @@
         "facility": "JavalinTest.test() from javalin-testtools, which starts the application on a random port per test; its client reads bodies as strings, so gzip requests go to the origin by hand",
         "dep": "javalin-testtools",
         "transport": "loopback",
-        "reaches": "the codec, because this target compresses in its own handler rather than with the server's compression setting, which would reach every endpoint"
+        "reaches": "Javalin's compression, which JavalinTest.test() starts from the application's own configuration"
       },
       "etag": {
         "facility": "JavalinTest.test() from javalin-testtools, which starts the application on a random port per test; its client reads bodies as strings, so gzip requests go to the origin by hand",

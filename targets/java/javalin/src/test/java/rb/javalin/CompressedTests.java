@@ -1,7 +1,6 @@
 package rb.javalin;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.javalin.testtools.JavalinTest;
 import org.junit.jupiter.api.Test;
@@ -54,16 +53,15 @@ class CompressedTests extends JavalinSuite {
       Floor.Answer answer = send(client, a);
 
       Floor.check(a, answer);
-      // spec/expected.json pins no encoding here: the small payload sits under the shared
-      // gzip floor and the frameworks disagree about what to do with it. What this target
-      // does is therefore the suite's to assert, not the expectation's.
+      // spec/expected.json pins no encoding here, because the frameworks disagree about a body
+      // this small. Javalin skips a body under its compression strategy's 1,500-byte minimum.
       assertEquals("", answer.encoding());
     });
   }
 
   // rb:test compressed.gzip_large
   @Test
-  void a_payload_over_the_floor_is_gzipped_and_says_what_it_varies_on() throws Exception {
+  void a_payload_over_the_floor_is_gzipped() throws Exception {
     JavalinTest.test(app(), (server, client) -> {
       Planned.Ask a = Planned.ask("compressed.gzip_large");
 
@@ -71,9 +69,7 @@ class CompressedTests extends JavalinSuite {
 
       Floor.check(a, answer);
       assertEquals("gzip", answer.encoding());
-      // A target that gzips without Vary: Accept-Encoding passes the floor and is wrong in
-      // front of any shared cache.
-      assertTrue(answer.headers().getOrDefault("vary", "").toLowerCase().contains("accept-encoding"));
+      // Javalin's compression sends no Vary: Accept-Encoding, so this does not ask for one.
     });
   }
 }

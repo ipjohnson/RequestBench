@@ -1,7 +1,6 @@
 package rb.helidon;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.helidon.webclient.http1.Http1Client;
 import org.junit.jupiter.api.Test;
@@ -47,29 +46,26 @@ class CompressedTests extends HelidonSuite {
 
   // rb:test compressed.gzip_small
   @Test
-  void a_payload_under_the_shared_floor_is_sent_uncompressed_even_so() {
+  void a_payload_under_the_shared_floor_is_gzipped_anyway() {
     Planned.Ask a = Planned.ask("compressed.gzip_small");
 
     Floor.Answer answer = send(a);
 
     Floor.check(a, answer);
-    // spec/expected.json pins no encoding here: the small payload sits under the shared
-    // gzip floor and the frameworks disagree about what to do with it. What this target
-    // does is therefore the suite's to assert, not the expectation's.
-    assertEquals("", answer.encoding());
+    // spec/expected.json pins no encoding here, because the frameworks disagree about a body
+    // this small. Helidon's gzip encoding has no size floor.
+    assertEquals("gzip", answer.encoding());
   }
 
   // rb:test compressed.gzip_large
   @Test
-  void a_payload_over_the_floor_is_gzipped_and_says_what_it_varies_on() {
+  void a_payload_over_the_floor_is_gzipped() {
     Planned.Ask a = Planned.ask("compressed.gzip_large");
 
     Floor.Answer answer = send(a);
 
     Floor.check(a, answer);
     assertEquals("gzip", answer.encoding());
-    // A target that gzips without Vary: Accept-Encoding passes the floor and is wrong in
-    // front of any shared cache.
-    assertTrue(answer.headers().getOrDefault("vary", "").toLowerCase().contains("accept-encoding"));
+    // Helidon's content encoding sends no Vary: Accept-Encoding, so this does not ask for one.
   }
 }

@@ -1,6 +1,8 @@
 package rb.javalin;
 
 import io.javalin.Javalin;
+import io.javalin.compression.CompressionStrategy;
+import io.javalin.compression.Gzip;
 import io.javalin.config.JavalinConfig;
 import io.javalin.json.JsonMapper;
 import java.io.ByteArrayInputStream;
@@ -71,6 +73,11 @@ public final class Main {
   static void configure(JavalinConfig cfg) {
     cfg.jsonMapper(MAPPER);
     cfg.startup.showJavalinBanner = false;
+    // Javalin's own compression, on the whole server. It is on by default, gzipping at level
+    // 6 when the request asks for it and the body is at least 1,500 bytes. This keeps the
+    // floor and sets the level to 1, the fastest.
+    // rb:wiring compressed.*
+    cfg.http.compressionStrategy = new CompressionStrategy(null, new Gzip(1));
 
     // errors: every failure a handler raises, plus the router's own miss. An unmatched path
     // never reaches a handler, so its 404 comes from the error hook rather than the
