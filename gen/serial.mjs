@@ -11,6 +11,10 @@
 // kept as well, and the difference between the two is the invoke path, not the framework.
 //
 //   node gen/serial.mjs --target 127.0.0.1:8080 --encoding lambda --count 20000
+//
+// --values is the run's values as one JSON object, the way harness/run.py passes them.
+// Without it the driver draws its own.
+import { randomInt } from "node:crypto";
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
@@ -44,7 +48,39 @@ const plan = JSON.parse(readFileSync(join(ROOT, "spec", "plan.json"), "utf8"));
 const seq = JSON.parse(readFileSync(join(ROOT, "spec", "sequence.json"), "utf8"));
 const epIdx = new Uint16Array(Buffer.from(seq.endpoint_index, "base64").buffer.slice(0));
 const inIdx = new Uint16Array(Buffer.from(seq.instance_index, "base64").buffer.slice(0));
-const eps = plan.endpoints;
+
+// ---- values drawn once per run --------------------------------------------------------
+// A value a handler binds and echoes is drawn once per run, so that no target can know it in
+// advance. harness/run.py passes the ones it drew; run on its own, this draws its own. Filled
+// in once, here, rather than per request.
+const RUN = /\{run\.([a-z_]+)\}/g;
+
+function draw(declared) {
+  const text = (length, chars) =>
+    Array.from({ length }, () => chars.charAt(randomInt(chars.length))).join("");
+  const out = {};
+  for (const [name, rule] of Object.entries(declared)) {
+    if (rule.kind === "int") out[name] = randomInt(10 ** (rule.digits - 1), 10 ** rule.digits);
+    else if (rule.kind === "string") out[name] = text(rule.length, rule.chars);
+    else if (rule.kind === "words") {
+      out[name] = Array.from({ length: rule.count }, () => text(rule.length, rule.chars)).join(" ");
+    } else out[name] = rule.values[randomInt(rule.values.length)];
+  }
+  return out;
+}
+
+/** The endpoints with this run's values in them: percent-encoded in a URL, as they are in a
+ *  header. A space is %20 and never +, because RFC 3986 does not read + as a space. */
+function withValues(endpoints, values) {
+  const url = (s) => s.replace(RUN, (_, name) => encodeURIComponent(String(values[name])));
+  const raw = (h) => h && Object.fromEntries(Object.entries(h).map(([k, v]) =>
+    [k, v.replace(RUN, (_, name) => String(values[name]))]));
+  return endpoints.map((ep) => ({ ...ep, paths: ep.paths.map(url), headers: raw(ep.headers),
+                                  header_variants: ep.header_variants?.map(raw) }));
+}
+
+const values = argv.values ? JSON.parse(argv.values) : draw(plan.run_values ?? {});
+const eps = withValues(plan.endpoints, values);
 
 const LAMBDA_PATH = "/2015-03-31/functions/function/invocations";
 // noDelay matters more than it looks. Writing a body and then ending is two writes, which

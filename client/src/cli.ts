@@ -4,6 +4,7 @@
 //
 //   rb-client 127.0.0.1:8080 --target node:fastify [--reference ref.json] [--compare ref.json]
 //   rb-client 127.0.0.1:8080 --target node:fastify --mode expect
+//   rb-client 127.0.0.1:8080 --target node:fastify --values '{"one":4821}'
 //
 // Two authorities, one replay. The gate checks a target against another target measured in
 // the same run; expect checks it against spec/expected.json and never against another target.
@@ -15,6 +16,7 @@ import { check, type EndpointVerdict } from "./expectation.js";
 import { loadExpected, loadPlan, type Plan } from "./spec.js";
 import type { Comparable } from "./compare.js";
 import type { Encoding } from "./checks.js";
+import { draw, parseValues, type Values } from "./values.js";
 
 const pad = (s: string | number, w: number): string => String(s).padEnd(w);
 
@@ -34,6 +36,15 @@ function asMode(v: string): "gate" | "expect" {
     throw new UsageError(`argument --mode: invalid choice: '${v}' (choose from 'gate', 'expect')`);
   }
   return v;
+}
+
+/** The values a run drew, checked against what the plan declares. */
+function asValues(v: string, plan: Plan): Values {
+  try {
+    return parseValues(v, plan.run_values ?? {});
+  } catch (e) {
+    throw new UsageError(`argument --values: ${(e as Error).message}`);
+  }
 }
 
 /** argparse's type=int. NaN would otherwise read as "every instance". */
@@ -65,12 +76,13 @@ function report(v: EndpointVerdict): string {
 
 async function expect(
   plan: Plan, hostport: string, target: string,
-  opts: { instances: number; encoding: Encoding; quiet: boolean },
+  opts: { instances: number; encoding: Encoding; quiet: boolean; values: Values },
 ): Promise<number> {
   const expected = loadExpected(plan);
   const result = await check(plan, expected, hostport, target, {
     instances: opts.instances,
     encoding: opts.encoding,
+    values: opts.values,
     onEndpoint: (v) => { if (!opts.quiet || !v.ok) console.log(report(v)); },
   });
   const failed = result.endpoints.filter((e) => !e.ok);
@@ -92,6 +104,7 @@ async function main(): Promise<number> {
       exemplars: { type: "string" },
       encoding: { type: "string", default: "http" },
       "skip-headers": { type: "boolean", default: false },
+      values: { type: "string" },
     },
   });
   const hostport = positionals[0];
@@ -107,11 +120,17 @@ async function main(): Promise<number> {
   if (!target) throw new UsageError("the following arguments are required: --target");
 
   const plan = loadPlan();
+  // A run passes the values it drew, so every target in it is sent the same ones. Anything
+  // else draws its own, which is all a target checked on its own needs.
+  const drawn = values.values === undefined
+    ? draw(plan.run_values ?? {})
+    : asValues(values.values, plan);
   if (asMode(values.mode) === "expect") {
     return await expect(plan, hostport, target, {
       instances: asCount(values.instances),
       encoding: asEncoding(values.encoding),
       quiet: values.quiet,
+      values: drawn,
     });
   }
   const reference = values.compare
@@ -123,6 +142,7 @@ async function main(): Promise<number> {
     encoding: asEncoding(values.encoding),
     skipHeaders: values["skip-headers"],
     reference,
+    values: drawn,
     onEndpoint: (r) => { if (!values.quiet) console.log(summarise(r)); },
   });
 

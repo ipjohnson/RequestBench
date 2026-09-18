@@ -41,6 +41,11 @@ declares what it answers in `targets/<lang>/<framework>/client-exception` and is
 that. Forcing ProblemDetails and a FluentValidation list into one shape would hide a real
 difference and charge every target a handler to hide it.
 
+A value a handler binds and echoes is drawn once per run instead, so that no target can know
+it in advance. The plan and the expectation hold a `{run.<name>}` placeholder where it goes,
+`harness/run.py` hands every driver in the run the same values, and the client fills in what
+it sent before comparing.
+
 ## Layout
 
     spec/endpoints.json   48 endpoints in 14 families, drawn uniformly

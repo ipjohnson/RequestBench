@@ -109,6 +109,12 @@ def payload(size):
     return data().payloads[size]["body"]
 
 
+def with_echo(size, echo):
+    """The payload with what a handler bound beside it. A route that binds something answers
+    this, so the value has to be converted and written back rather than bound and dropped."""
+    return {**payload(size), "echo": echo}
+
+
 # ---- the etag and cache families -----------------------------------------------------
 #
 # No ETag value here. Each framework's own conditional machinery computes the validator

@@ -12,7 +12,11 @@
 //
 //   node gen/blend.mjs --target 127.0.0.1:8080 --rate 1000 --seconds 30 --record false \
 //     --slices 1,2,3,4,5,6,7,8,9,10,20,30 --first json.small
+//
+// --values is the run's values as one JSON object, the way harness/run.py passes them.
+// Without it the generator draws its own.
 import { Worker, isMainThread, parentPort, workerData } from "node:worker_threads";
+import { randomInt } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
@@ -56,7 +60,38 @@ function loadPlan(only) {
     if (missing.length) throw new Error(`unknown endpoint id: ${missing.join(", ")}`);
     eps = eps.filter((e) => want.has(e.id));
   }
-  return { eps, captures: plan.captures ?? {} };
+  return { eps, captures: plan.captures ?? {}, runValues: plan.run_values ?? {} };
+}
+
+// ---- values drawn once per run --------------------------------------------------------
+// A value a handler binds and echoes is drawn once per run, so that no target can know it in
+// advance. harness/run.py passes the ones it drew, so the load carries what the gate checked.
+// Filled in before any worker starts sending, the way a capture is, which keeps the string
+// formatting out of the hot loop.
+const RUN = /\{run\.([a-z_]+)\}/g;
+
+function draw(declared) {
+  const text = (length, chars) =>
+    Array.from({ length }, () => chars.charAt(randomInt(chars.length))).join("");
+  const out = {};
+  for (const [name, rule] of Object.entries(declared)) {
+    if (rule.kind === "int") out[name] = randomInt(10 ** (rule.digits - 1), 10 ** rule.digits);
+    else if (rule.kind === "string") out[name] = text(rule.length, rule.chars);
+    else if (rule.kind === "words") {
+      out[name] = Array.from({ length: rule.count }, () => text(rule.length, rule.chars)).join(" ");
+    } else out[name] = rule.values[randomInt(rule.values.length)];
+  }
+  return out;
+}
+
+/** The endpoints with this run's values in them: percent-encoded in a URL, as they are in a
+ *  header. A space is %20 and never +, because RFC 3986 does not read + as a space. */
+function withValues(eps, values) {
+  const url = (s) => s.replace(RUN, (_, name) => encodeURIComponent(String(values[name])));
+  const raw = (h) => h && Object.fromEntries(Object.entries(h).map(([k, v]) =>
+    [k, v.replace(RUN, (_, name) => String(values[name]))]));
+  return eps.map((ep) => ({ ...ep, paths: ep.paths.map(url), headers: raw(ep.headers),
+                            header_variants: ep.header_variants?.map(raw) }));
 }
 
 // ---- the two-phase capture ----------------------------------------------------------
@@ -146,8 +181,8 @@ function headerSets(ep, captured) {
 // ---- worker -------------------------------------------------------------------------
 if (!isMainThread) {
   const { host, port, rate, seconds, offsetUs, maxInflight, seed, record, only,
-          captured, edges } = workerData;
-  const { eps } = loadPlan(only);
+          captured, edges, values } = workerData;
+  const eps = withValues(loadPlan(only).eps, values);
   // Header objects are built once per endpoint rather than per request, because this is the
   // hot loop. A vary row has one per combination instead of one for the endpoint, which is
   // still a lookup rather than an allocation: the instance drawn picks the combination, so
@@ -284,7 +319,9 @@ else {
   if (edges && (edges.some((e, i) => !(e > (i ? edges[i - 1] : 0))) || edges.at(-1) !== seconds)) {
     throw new Error(`--slices ${argv.slices} has to rise from above 0 to --seconds ${seconds}`);
   }
-  const { eps, captures } = loadPlan(only);
+  const { eps: planned, captures, runValues } = loadPlan(only);
+  const values = argv.values ? JSON.parse(argv.values) : draw(runValues);
+  const eps = withValues(planned, values);
   const firstEp = argv.first ? firstOf(eps, argv.first) : undefined;
   const first = firstEp ? await sendFirst(host, Number(port), firstEp) : null;
   // Before anything is offered, and in this thread: four workers each asking the target for
@@ -299,7 +336,7 @@ else {
     const worker = new Worker(fileURLToPath(import.meta.url), {
       workerData: { host, port: Number(port), rate: perWorker, seconds,
                     offsetUs: (w * 1e6) / rate, maxInflight: Math.ceil(maxInflight / workers),
-                    seed: 0x9e3779b9 * (w + 1), record, only, captured, edges },
+                    seed: 0x9e3779b9 * (w + 1), record, only, captured, edges, values },
     });
     worker.on("message", (m) => { results.push(m); resolve(); });
     worker.on("error", reject);

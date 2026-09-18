@@ -16,6 +16,11 @@ ETag machinery computed, so it is left as a {capture.<name>} placeholder and eac
 resolves it against the target it is about to talk to. And the vary rows need a different
 header value on one instance than on the next, so those get a list of merged header sets
 rather than one; instance i sends combination i modulo the count.
+
+A value a handler binds and echoes is not finished here either, on purpose. It has to be one
+no target could know in advance, and every target can read this file. It stays a
+{run.<name>} placeholder, in a path or a header set, and its declaration is carried into the
+plan so that a driver draws it without reading spec/endpoints.json.
 """
 import json, random, pathlib, re
 
@@ -88,11 +93,38 @@ def resolve(dotted):
 
     A capture is not resolvable from a committed file by construction: it is whatever the
     target answered, and the target has not been asked yet. It is carried through to the
-    plan unchanged and every driver fills it in against the target it is measuring.
+    plan unchanged and every driver fills it in against the target it is measuring. A run
+    value is carried the same way, because it is drawn after this file is written.
     """
-    if dotted.startswith("capture."):
+    if dotted.startswith(("capture.", "run.")):
         return "{%s}" % dotted
     return str(fixture_node(dotted))
+
+
+RUN = re.compile(r"\{run\.([a-z_]+)\}")
+
+# What each kind of run value is declared with.
+RUN_KINDS = {"int": ("digits",), "string": ("length", "chars"),
+             "words": ("count", "length", "chars"), "choice": ("values",)}
+# What a drawn value may be made of. Every driver percent-encodes with its own language's
+# function, and those agree on letters, digits and the space words puts between them. They
+# part on the rest: encodeURIComponent leaves ! * ' ( ) as they are and Python's quote does
+# not, so a value holding one would reach a target as different bytes from different drivers.
+PLAIN = re.compile(r"^[A-Za-z0-9]+$")
+
+
+def run_values():
+    """The declarations every driver draws from, as it will read them.
+
+    A choice may name a fixture list rather than repeat it, and that is written out here, so
+    no driver has to read spec/endpoints.json to know what it may draw.
+    """
+    out = {}
+    for name, rule in SPEC.get("run_values", {}).items():
+        if rule.get("kind") == "choice" and "from" in rule:
+            rule = {"kind": "choice", "values": SPEC["fixture"][rule["from"].split(".")[1]]}
+        out[name] = rule
+    return out
 
 
 def header_set(name):
@@ -124,7 +156,8 @@ def build():
     assert 4096 < len(medium) < 16384, \
         "order_medium is %d bytes, which is not the medium regime" % len(medium)
     plan = {"version": SPEC["version"], "sampling": SPEC["sampling"],
-            "instances": INSTANCES, "captures": SPEC["captures"], "endpoints": []}
+            "instances": INSTANCES, "captures": SPEC["captures"],
+            "run_values": run_values(), "endpoints": []}
     for ep in SPEC["endpoints"]:
         rows = []
         for _ in range(INSTANCES):
@@ -134,14 +167,16 @@ def build():
             path = ep["path"]
             for k, v in params.items():
                 path = path.replace("{%s}" % k, str(v))
-            assert "{" not in path, "unfilled placeholder in %s: %s" % (ep["id"], path)
+            assert "{" not in RUN.sub("", path), \
+                "unfilled placeholder in %s: %s" % (ep["id"], path)
             rows.append(path)
         entry = {"id": ep["id"], "family": ep["family"], "method": ep["method"],
                  "expect": ep["expect"], "paths": rows}
         # Carried rather than re-read from the spec, because every driver replays the plan
         # and nothing else. accepts widens the status where more than one is correct;
-        # field_errors is what the shared validator reports for the body being sent.
-        for key in ("accepts", "field_errors", "base", "varies", "payload"):
+        # field_errors is what the shared validator reports for the body being sent; echo
+        # names the run values the response has to hold.
+        for key in ("accepts", "field_errors", "base", "varies", "payload", "echo"):
             if key in ep:
                 entry[key] = ep[key]
         if "headers" in ep:
@@ -208,6 +243,7 @@ def check_references(plan):
         bad.append("factor %s is defined and nothing varies by it" % f)
     bad.extend(cycles(plan, ids))
     bad.extend(check_captures(plan))
+    bad.extend(check_run_values(plan))
     blends = json.loads((ROOT / "spec" / "blends.json").read_text())
     for name, blend in blends["blends"].items():
         if ("weights" in blend) == ("derive" in blend):
@@ -244,6 +280,45 @@ def check_captures(plan):
                 if ref not in SPEC["captures"]:
                     bad.append("%s asks for capture %s, which is not defined"
                                % (e["id"], ref))
+    return bad
+
+
+def check_run_values(plan):
+    """Every {run.<name>} has to name a declared value, and every echo a value the endpoint
+    sends.
+
+    The first because an undeclared placeholder reaches the target as the literal string.
+    The second because an echo is checked against what was sent, and a name the request
+    never carried leaves the check nothing to hold the response to. A declaration nothing
+    sends is reported as well, the way a factor nothing varies by is.
+    """
+    bad, declared, used = [], plan["run_values"], set()
+    for name, rule in sorted(declared.items()):
+        kind = rule.get("kind")
+        if kind not in RUN_KINDS:
+            bad.append("run value %s is of kind %r; the kinds are %s"
+                       % (name, kind, ", ".join(RUN_KINDS)))
+        elif any(field not in rule for field in RUN_KINDS[kind]):
+            bad.append("run value %s is %s, which is declared with %s"
+                       % (name, kind, " and ".join(RUN_KINDS[kind])))
+        elif kind == "int" and not 1 <= rule["digits"] <= 9:
+            bad.append("run value %s has %d digits; a signed 32-bit integer holds nine"
+                       % (name, rule["digits"]))
+        elif not all(PLAIN.match(t) for t in rule.get("values", [rule.get("chars", "0")])):
+            bad.append("run value %s can draw something other than letters and digits, which "
+                       "the drivers would percent-encode differently" % name)
+    for e in plan["endpoints"]:
+        texts = list(dict.fromkeys(e["paths"])) + list((e.get("headers") or {}).values())
+        texts += [v for h in e.get("header_variants", []) for v in h.values()]
+        sent = {ref for text in texts for ref in RUN.findall(text)}
+        for ref in sorted(sent - set(declared)):
+            bad.append("%s sends run value %s, which is not declared" % (e["id"], ref))
+        for ref in e.get("echo", []):
+            if ref not in sent:
+                bad.append("%s echoes %s, which it never sends" % (e["id"], ref))
+        used |= sent
+    for name in sorted(set(declared) - used):
+        bad.append("run value %s is declared and nothing sends it" % name)
     return bad
 
 
@@ -296,6 +371,9 @@ if __name__ == "__main__":
                  if "header_variants" in e)
     print("  %d captured header value(s), %d header combination(s) across the vary rows"
           % (len(plan["captures"]), varied))
+    echoing = sum(1 for e in plan["endpoints"] if "echo" in e)
+    print("  %d value(s) drawn per run, echoed by %d endpoint(s)"
+          % (len(plan["run_values"]), echoing))
     by_id = {e["id"]: e for e in plan["endpoints"]}
     blends = json.loads((ROOT / "spec" / "blends.json").read_text())["blends"]
     for name, blend in sorted(blends.items()):

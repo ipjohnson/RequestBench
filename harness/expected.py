@@ -18,6 +18,11 @@ against spec/endpoints.json by hand before this runs again.
 Once written the file is the authority. A target that disagrees with it is wrong, however
 many other targets share the mistake, and changing it is a deliberate edit with a reason,
 not a side effect of rerunning a generator.
+
+A value drawn once per run is not an expectation, because the next run draws another. This
+draws its own, sends the same ones to every target it boots, and writes each echoed value
+back as the {run.<name>} placeholder it came from. A driver fills that in with whatever it
+sent.
 """
 import argparse
 import collections
@@ -27,6 +32,7 @@ import json
 import pathlib
 import re
 import sys
+import urllib.parse
 import zlib
 
 import bundle
@@ -168,6 +174,40 @@ def body_class(ctype):
 
 
 PLACEHOLDER = re.compile(r"\{capture\.([a-z_]+)\}")
+RUN = re.compile(r"\{run\.([a-z_]+)\}")
+
+# Drawn once for every target this derivation boots, so the contributors are sent the same
+# values and their answers can agree.
+VALUES = run.draw_values(PLAN["run_values"])
+
+
+def in_url(path, values):
+    """A path from the plan with every value in it, percent-encoded with a space as %20."""
+    return RUN.sub(lambda m: urllib.parse.quote(str(values[m.group(1)]), safe=""), path)
+
+
+def in_header(value, values):
+    """A header value from the plan with every value in it, as it is."""
+    return RUN.sub(lambda m: str(values[m.group(1)]), value)
+
+
+def placeholders(ep, body, values):
+    """The body with every value this endpoint echoes put back as its placeholder.
+
+    Only a value that came back as it was sent is replaced. A contributor that echoed
+    something else keeps what it answered, so it disagrees with the others instead of having
+    its mistake written down as the expectation.
+    """
+    echo = body.get("echo") if isinstance(body, dict) else None
+    if not ep.get("echo") or not isinstance(echo, dict):
+        return body
+    back = dict(echo)
+    for name in ep["echo"]:
+        got, sent = back.get(name), values[name]
+        if got == sent and isinstance(got, str) == isinstance(sent, str) \
+                and not isinstance(got, bool):
+            back[name] = "{run.%s}" % name
+    return dict(body, echo=back)
 
 
 def resolve_captures(conn):
@@ -200,7 +240,7 @@ def filled(headers, captured):
             for k, v in headers.items()}
 
 
-def request_headers(ep, instance, captured):
+def request_headers(ep, instance, captured, values):
     """What one instance of an endpoint carries. The vary rows send a different combination
     on each instance, so a response cache has a key per combination to hold; every other
     endpoint has one combination and this is it."""
@@ -208,7 +248,7 @@ def request_headers(ep, instance, captured):
     headers = dict(ep.get("headers") or {}, **variants[instance % len(variants)])
     if ep.get("body"):
         headers["content-type"] = "application/json"
-    return filled(headers, captured)
+    return {k: in_header(v, values) for k, v in filled(headers, captured).items()}
 
 
 def capture(hostport):
@@ -225,11 +265,11 @@ def capture(hostport):
     out = {}
     for ep in PLAN["endpoints"]:
         body = ep.get("body")
-        headers = request_headers(ep, 0, captured)
+        headers = request_headers(ep, 0, captured, VALUES)
         for path in dict.fromkeys(ep["paths"]):
             key = ep["id"] + " " + path
             try:
-                conn.request(ep["method"], path, body=body, headers=headers)
+                conn.request(ep["method"], in_url(path, VALUES), body=body, headers=headers)
                 r = conn.getresponse()
                 raw, status = r.read(), r.status
                 hdrs = list(r.headers.items())
@@ -249,7 +289,7 @@ def capture(hostport):
                 # answered the right JSON -- a target that quietly stopped compressing
                 # would pass. Fiber did exactly that, for a week.
                 "encoding": lower.get("content-encoding", ""),
-                "body": comparable(decoded(raw, hdrs), ctype),
+                "body": placeholders(ep, comparable(decoded(raw, hdrs), ctype), VALUES),
             }
     conn.close()
     return out

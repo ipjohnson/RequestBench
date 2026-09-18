@@ -204,6 +204,10 @@ export const auth = fixture.auth;
 // one write at three sizes; handing back a stored string would measure none of it.
 export const payload = (size) => payloads[size].body;
 
+// The payload with what a handler bound beside it. A route that binds something answers
+// this, so the value has to be converted and written back rather than bound and dropped.
+export const withEcho = (size, echo) => ({ ...payloads[size].body, echo });
+
 // ---- the etag and cache families --------------------------------------------------
 //
 // No ETag value here. Each framework's own conditional machinery computes the validator

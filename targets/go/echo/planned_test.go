@@ -2,8 +2,14 @@ package main
 
 import (
 	"encoding/json"
+	"maps"
+	"math"
+	"math/rand/v2"
+	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 )
@@ -19,7 +25,8 @@ import (
 //
 // Instance zero, always. An endpoint sends up to 512 requests and the conformance client
 // replays every one; a suite sends one, so it has to be the same one on every run or a
-// failure would not reproduce.
+// failure would not reproduce. A value the plan writes as {run.<name>} is the exception. It
+// is drawn once per process, so that no handler can pass by knowing it in advance.
 //
 // The names are long on purpose. A Go test shares its package with the code it tests, and
 // this target already has functions called send, fail and ok.
@@ -44,13 +51,16 @@ var (
 			HeaderVariants []map[string]string `json:"header_variants"`
 			Body           *string             `json:"body"`
 		} `json:"endpoints"`
-		Captures map[string]struct{ Method, Path, Header string } `json:"captures"`
+		Captures  map[string]struct{ Method, Path, Header string } `json:"captures"`
+		RunValues map[string]runValue                              `json:"run_values"`
 	}
 	specExpected struct {
 		Errors   map[string]any                       `json:"errors"`
 		Requests map[string]map[string]any            `json:"requests"`
 		Targets  map[string]map[string]map[string]any `json:"targets"`
 	}
+	// Keyed by the placeholder that stands for each value, as the plan writes it.
+	drawnValues = map[string]any{}
 )
 
 func readSpec() {
@@ -72,6 +82,9 @@ func readSpec() {
 				panic(err)
 			}
 		}
+		for name, declared := range specPlan.RunValues {
+			drawnValues["{run."+name+"}"] = drawRunValue(declared)
+		}
 	})
 }
 
@@ -84,24 +97,28 @@ func planFor(id string) plannedRequest {
 		}
 		headers := map[string]string{}
 		for k, v := range ep.Headers {
-			headers[k] = v
+			headers[k] = runValuesInHeader(v)
 		}
 		// A vary row sends a different header set per instance, which is what the response
 		// cache is keyed on. Instance zero, for the reason above.
 		if len(ep.HeaderVariants) > 0 {
 			for k, v := range ep.HeaderVariants[0] {
-				headers[k] = v
+				headers[k] = runValuesInHeader(v)
 			}
 		}
 		if ep.Body != nil {
 			headers["content-type"] = "application/json"
 		}
+		// spec/expected.json is keyed by the path as the plan writes it, with its placeholders.
 		key := id + " " + ep.Paths[0]
 		var want map[string]any
 		if _, isError := specExpected.Errors[id]; !isError {
-			want = specExpected.Requests[key]
+			want = maps.Clone(specExpected.Requests[key])
 		}
-		return plannedRequest{id, key, ep.Method, ep.Paths[0], headers, ep.Body, want}
+		if want != nil {
+			want["body"] = runValuesInBody(want["body"])
+		}
+		return plannedRequest{id, key, ep.Method, runValuesInURL(ep.Paths[0]), headers, ep.Body, want}
 	}
 	panic("spec/plan.json has no endpoint " + id)
 }
@@ -128,6 +145,97 @@ func withCapture(a plannedRequest, captured string) map[string]string {
 		out[k] = v
 	}
 	return out
+}
+
+// runValue is one declaration in the plan's run_values.
+type runValue struct {
+	Kind                  string
+	Digits, Length, Count int
+	Chars                 string
+	Values                []string
+}
+
+// drawRunValue is one value as it is declared. The top-level functions of math/rand/v2 are
+// seeded randomly in every process, so each run draws its own.
+func drawRunValue(declared runValue) any {
+	text := func() string {
+		chars, out := []rune(declared.Chars), make([]rune, declared.Length)
+		for i := range out {
+			out[i] = chars[rand.IntN(len(chars))]
+		}
+		return string(out)
+	}
+	switch declared.Kind {
+	case "int":
+		lowest := int(math.Pow10(declared.Digits - 1))
+		return lowest + rand.IntN(9*lowest)
+	case "string":
+		return text()
+	case "words":
+		words := make([]string, declared.Count)
+		for i := range words {
+			words[i] = text()
+		}
+		return strings.Join(words, " ")
+	case "choice":
+		return declared.Values[rand.IntN(len(declared.Values))]
+	}
+	panic("spec/plan.json declares a run value of kind " + declared.Kind)
+}
+
+var runPlaceholder = regexp.MustCompile(`\{run\.[a-z_]+\}`)
+
+// runValueText is the value a placeholder stands for, as the text a request carries.
+func runValueText(placeholder string) string {
+	switch v := drawnValues[placeholder].(type) {
+	case int:
+		return strconv.Itoa(v)
+	case string:
+		return v
+	}
+	panic("spec/plan.json declares no " + placeholder)
+}
+
+// runValuesInURL is a path from the plan with every value in it. A space goes as %20 and
+// never +, because RFC 3986 does not read + as a space.
+func runValuesInURL(path string) string {
+	return runPlaceholder.ReplaceAllStringFunc(path, func(placeholder string) string {
+		return strings.ReplaceAll(url.QueryEscape(runValueText(placeholder)), "+", "%20")
+	})
+}
+
+// runValuesInHeader is a header value from the plan with every value in it, as it is.
+func runValuesInHeader(value string) string {
+	return runPlaceholder.ReplaceAllStringFunc(value, runValueText)
+}
+
+// runValuesInBody is a pinned body with every string that is exactly a placeholder replaced
+// by its value. It builds new maps and slices, because every test reads the same decoded file.
+func runValuesInBody(node any) any {
+	switch x := node.(type) {
+	case string:
+		switch v := drawnValues[x].(type) {
+		case int:
+			// A float64 is what encoding/json decodes the answer's number into, so the floor
+			// compares the two like any other numbers.
+			return float64(v)
+		case string:
+			return v
+		}
+	case []any:
+		out := make([]any, len(x))
+		for i, item := range x {
+			out[i] = runValuesInBody(item)
+		}
+		return out
+	case map[string]any:
+		out := make(map[string]any, len(x))
+		for k, item := range x {
+			out[k] = runValuesInBody(item)
+		}
+		return out
+	}
+	return node
 }
 
 // recordedEnvelope is the error envelope this target recorded, or nil.

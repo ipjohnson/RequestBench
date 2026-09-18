@@ -11,20 +11,83 @@ against a request the measurement never sends.
 Instance zero, always. An endpoint sends up to 512 requests and the conformance client replays
 every one; a suite sends one, so it has to be the same one on every run or a failure would not
 reproduce.
+
+A value drawn once per run is the exception. No committed file may hold one, because a target
+could read it there, so a suite draws its own once per process. Each goes wherever the plan or
+the pinned answer carries its {run.<name>}.
 """
 import functools
 import json
 import pathlib
+import random
+import re
+import urllib.parse
 from dataclasses import dataclass
 
 # The test runs from somewhere under the repository, and the root is where spec/ is.
 ROOT = next(p for p in pathlib.Path(__file__).resolve().parents
             if (p / "spec" / "expected.json").exists())
+RUN = re.compile(r"\{run\.([a-z_]+)\}")
 
 
 @functools.cache
 def _read(name):
     return json.loads((ROOT / "spec" / name).read_text())
+
+
+@functools.cache
+def _values():
+    """This process's value for each declaration in the plan's run_values.
+
+    SystemRandom rather than a fixed seed, because a target could compute the values from a
+    seed written here.
+    """
+    rng = random.SystemRandom()
+
+    def text(length, chars):
+        return "".join(rng.choice(chars) for _ in range(length))
+
+    out = {}
+    for name, rule in _read("plan.json")["run_values"].items():
+        if rule["kind"] == "int":
+            out[name] = rng.randint(10 ** (rule["digits"] - 1), 10 ** rule["digits"] - 1)
+        elif rule["kind"] == "string":
+            out[name] = text(rule["length"], rule["chars"])
+        elif rule["kind"] == "words":
+            out[name] = " ".join(text(rule["length"], rule["chars"])
+                                 for _ in range(rule["count"]))
+        else:
+            out[name] = rng.choice(rule["values"])
+    return out
+
+
+def _in_path(path):
+    """A path from the plan with this process's values in it, percent-encoded.
+
+    A space goes as %20 and never as +, because RFC 3986 does not read + as a space.
+    """
+    return RUN.sub(lambda m: urllib.parse.quote(str(_values()[m.group(1)]), safe=""), path)
+
+
+def _in_header(value):
+    """A header value from the plan with this process's values in it, not encoded."""
+    return RUN.sub(lambda m: str(_values()[m.group(1)]), value)
+
+
+def _filled(body):
+    """A pinned body with each string that is exactly a placeholder replaced by its value.
+
+    spec/expected.json holds every placeholder as a string. An int goes back in as the number
+    it is.
+    """
+    if isinstance(body, str):
+        m = RUN.fullmatch(body)
+        return _values()[m.group(1)] if m else body
+    if isinstance(body, list):
+        return [_filled(v) for v in body]
+    if isinstance(body, dict):
+        return {k: _filled(v) for k, v in body.items()}
+    return body
 
 
 @dataclass(frozen=True)
@@ -49,12 +112,17 @@ def ask(endpoint_id):
     # is keyed on. Instance zero, for the reason above.
     if ep.get("header_variants"):
         headers.update(ep["header_variants"][0])
+    headers = {k: _in_header(v) for k, v in headers.items()}
     if ep.get("body") is not None:
         headers["content-type"] = "application/json"
+    # spec/expected.json is keyed by the path as the plan writes it. The one that is sent
+    # changes every run.
     key = "%s %s" % (endpoint_id, path)
-    error = endpoint_id in _read("expected.json")["errors"]
-    return Ask(endpoint_id, key, ep["method"], path, headers, ep.get("body"),
-               None if error else _read("expected.json")["requests"][key])
+    want = None
+    if endpoint_id not in _read("expected.json")["errors"]:
+        pinned = _read("expected.json")["requests"][key]
+        want = dict(pinned, body=_filled(pinned["body"]))
+    return Ask(endpoint_id, key, ep["method"], _in_path(path), headers, ep.get("body"), want)
 
 
 def capture_for(a):

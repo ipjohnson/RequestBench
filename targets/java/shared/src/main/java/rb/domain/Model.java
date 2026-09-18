@@ -89,6 +89,13 @@ public final class Model {
    */
   public record PayloadBody(int count, List<Product> items, String size) {}
 
+  /**
+   * The payload with an echo beside it. PayloadBody's fields are repeated rather than nested,
+   * so the JSON is the payload's own keys plus echo. The echo is whatever the handler bound,
+   * as a record or a map of its own.
+   */
+  public record PayloadWithEcho(int count, List<Product> items, String size, Object echo) {}
+
   // The fixture carries bytes and html alongside the body, for the generator and for the
   // template comparison. A target needs neither, and Jackson refuses an undeclared field
   // unless it is told not to.

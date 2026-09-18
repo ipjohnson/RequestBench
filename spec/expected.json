@@ -15,7 +15,7 @@
    "rust:axum": "none"
   }
  },
- "plan": "sha256:f20e31920c6cda3f21ad2bc1841d7d5ea6daf70eed07fbe2a07c63a54c05f290",
+ "plan": "sha256:5e8b1a08a352bddbe4552d4d78fefcfe947ce6cb37382a01609243633848bd5d",
  "fixture": "sha256:a5e91404556e5d296af6e21fa49bf668c349a50d155254627cdf7662f5344ff0",
  "agreed_by": [
   "go:gin",
