@@ -161,7 +161,7 @@
       "compare_to": "container"
     },
     "lambda-rie": {
-      "runs": "AWS Runtime Interface Emulator",
+      "runs": "The function's own Lambda runtime, invoked through the harness's Runtime API (gen/runtime-api.mjs)",
       "languages": [
         "java",
         "go",

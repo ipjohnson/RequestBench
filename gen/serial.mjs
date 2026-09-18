@@ -6,6 +6,10 @@
 //
 // Every target replays the same order, so nothing about the mix varies between them.
 //
+// For a Lambda host the time recorded is Duration, which gen/runtime-api.mjs takes beside
+// the runtime and returns with each answer. The round trip through the invoke endpoint is
+// kept as well, and the difference between the two is the invoke path, not the framework.
+//
 //   node gen/serial.mjs --target 127.0.0.1:8080 --encoding lambda --count 20000
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -74,8 +78,8 @@ async function resolveCaptures() {
     if (encoding === "http") {
       ({ headers } = await send({ host, port, path: cap.path, method: cap.method, agent }));
     } else {
-      // The RIE serves only the invocations endpoint, so the capture goes through the same
-      // envelope every other request does and its headers come back inside the result.
+      // A Lambda host serves only the invocations endpoint, so the capture goes through the
+      // same envelope every other request does and its headers come back inside the result.
       const event = asEvent(cap.method, cap.path, undefined);
       const r = await send({ host, port, path: LAMBDA_PATH, method: "POST", agent,
                              headers: { "content-type": "application/json",
@@ -165,6 +169,8 @@ function build(i) {
 
 let timeouts = 0;
 const hist = eps.map(() => new Uint32Array(NBUCKETS));
+const trip = new Uint32Array(NBUCKETS);
+const billed = new Map();
 const counts = new Uint32Array(eps.length);
 const mismatch = new Uint32Array(eps.length);
 // The statuses an endpoint may answer with. Usually one. A body that will not
@@ -185,14 +191,33 @@ function once(i, record) {
       res.on("data", (c) => chunks.push(c));
       res.on("end", () => {
         const us = Number(process.hrtime.bigint() - t0) / 1000;
-        let status = res.statusCode;
+        let status = res.statusCode, duration;
         if (unwrap) {
           try { status = JSON.parse(Buffer.concat(chunks).toString()).statusCode; }
           catch { status = 0; }
+          const ns = res.headers["x-rb-duration-ns"];
+          if (ns === undefined && res.headers["x-amz-function-error"] !== undefined) {
+            // The Runtime API has ended the environment, because its runtime died or
+            // stopped asking for work. Nothing ran, so there is no Duration to record.
+            if (record) errors[idx]++;
+            resolve();
+            return;
+          }
+          if (ns === undefined) {
+            console.error("the invoke endpoint sent no x-rb-duration-ns, so it is not "
+              + "gen/runtime-api.mjs and there is no Duration to record");
+            process.exit(1);
+          }
+          duration = Number(ns) / 1000;
         }
         if (record) {
-          hist[idx][bucketOf(us)]++;
+          hist[idx][bucketOf(unwrap ? duration : us)]++;
           counts[idx]++;
+          if (unwrap) {
+            trip[bucketOf(us)]++;
+            const ms = Math.max(1, Math.ceil(duration / 1000));
+            billed.set(ms, (billed.get(ms) ?? 0) + 1);
+          }
           if (!accepted[idx].has(status)) mismatch[idx]++;
         }
         resolve();
@@ -215,16 +240,26 @@ const elapsed = (Date.now() - t0) / 1000;
 const all = new Uint32Array(NBUCKETS);
 for (const h of hist) for (let b = 0; b < NBUCKETS; b++) all[b] += h[b];
 const done = counts.reduce((s, c) => s + c, 0);
+const lambda = encoding === "lambda";
+const spread = (h) => ({ p50_us: percentile(h, done, 50), p90_us: percentile(h, done, 90),
+                         p99_us: percentile(h, done, 99), p999_us: percentile(h, done, 99.9) });
 
 const out = {
   suite: "serial-v1", sequence: seq.version, encoding,
+  // What every percentile below times: Duration from the Runtime API for a Lambda host,
+  // the round trip seen from here for any other.
+  timing: lambda ? "runtime-api" : "client",
   target: `${host}:${port}`, requested: count, completed: done,
   warmup, elapsed_s: Number(elapsed.toFixed(3)),
   achieved_rps: Math.round(done / elapsed),
   errors: errors.reduce((s, e) => s + e, 0), timeouts,
   status_mismatch: mismatch.reduce((s, m) => s + m, 0),
-  overall: { count: done, p50_us: percentile(all, done, 50), p90_us: percentile(all, done, 90),
-             p99_us: percentile(all, done, 99), p999_us: percentile(all, done, 99.9) },
+  overall: { count: done, ...spread(all) },
+  // Lambda bills Duration rounded up to the millisecond.
+  ...(lambda ? {
+    round_trip: spread(trip),
+    billed_ms: Object.fromEntries([...billed].sort((a, b) => a[0] - b[0])),
+  } : {}),
   endpoints: eps.map((ep, i) => ({
     id: ep.id, family: ep.family, count: counts[i], errors: errors[i], mismatch: mismatch[i],
     p50_us: percentile(hist[i], counts[i], 50), p99_us: percentile(hist[i], counts[i], 99),

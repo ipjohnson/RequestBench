@@ -4,7 +4,7 @@
   python3 harness/run.py --targets node:fastify --seconds 20 --rungs regular
   python3 harness/run.py --families json --frameworks gin,fastify
 """
-import argparse, collections, functools, hashlib, http.client, json, os, pathlib, platform, random, re, shutil, signal, socket, subprocess, sys, time, uuid
+import argparse, functools, hashlib, http.client, json, os, pathlib, platform, random, shutil, signal, socket, subprocess, sys, time, uuid
 
 import bundle
 import machine
@@ -49,6 +49,23 @@ SUITE_FOR_HOST = {"container": "blend", "gcp-func": "serial",
                   "lambda-rie": "serial", "azure-func": "serial"}
 ENCODING_FOR_HOST = {"lambda-rie": "lambda"}
 LAMBDA_INVOKE = "/2015-03-31/functions/function/invocations"
+# One vCPU, which Lambda gives a function at 1,769 MB. A serial invocation runs on one
+# thread either way, but a runtime's own threads, its JIT compiler and garbage collector,
+# would have a second core to themselves, and a Lambda function of that size has none.
+CPUS_FOR_HOST = {"lambda-rie": 1}
+# A Lambda host's events go through gen/runtime-api.mjs rather than RIE. It runs in a
+# container of its own that shares the function's network namespace, so the runtime polls
+# it on loopback as it polled RIE, and it runs on the generator's cores, not the function's.
+RUNTIME_API_IMAGE = "node:24-alpine"
+RUNTIME_API_PORT = 9001
+# The configuration Lambda hands a runtime in its environment, which RIE supplied before.
+# The Java bootstrap reads the memory size to set the heap, so it has to be the size that
+# goes with CPUS_FOR_HOST.
+LAMBDA_ENV = {"AWS_LAMBDA_FUNCTION_NAME": "rb", "AWS_LAMBDA_FUNCTION_VERSION": "$LATEST",
+              "AWS_LAMBDA_FUNCTION_MEMORY_SIZE": "1769",
+              "AWS_LAMBDA_INITIALIZATION_TYPE": "on-demand",
+              "AWS_LAMBDA_LOG_GROUP_NAME": "/aws/lambda/rb", "AWS_LAMBDA_LOG_STREAM_NAME": "rb",
+              "AWS_REGION": "us-east-1", "AWS_DEFAULT_REGION": "us-east-1"}
 
 
 def select(universe, include, exclude, what):
@@ -233,6 +250,16 @@ def cpu_model():
     return platform.processor() or platform.machine()
 
 
+def cpu_ids(spec):
+    """The ids in a cpuset list such as "0-2,6", in order."""
+    ids = []
+    for part in spec.split(","):
+        lo, _, hi = part.strip().partition("-")
+        if lo:
+            ids += range(int(lo), int(hi or lo) + 1)
+    return ids
+
+
 class Container:
     """Run a target as a container with a pinned CPU budget. What measurement uses."""
     CPUS = os.environ.get("RB_CPUS", "2")
@@ -248,6 +275,26 @@ class Container:
         self.base = self.cname = "rb-%s-%s%s-%d" % (language, name, suffix, port)
         self.image = "rb/%s-%s%s" % (language, name, suffix)
         self.starts = 0
+        self.lambda_api = ENCODING_FOR_HOST.get(self.host) == "lambda"
+
+    @classmethod
+    def budget(cls, host):
+        """The target's CPUs on this host, as a docker run flag and its value.
+
+        Keeping the target and the load generator off each other's cores is the difference
+        between measuring a framework and measuring contention. So where RB_SUT_CPUS names
+        cores the target is placed on them, narrowed to the host's width, with no --cpus
+        quota on top. The cpuset already caps the target at the width of the set, and a
+        quota is enforced per 100ms period: a burst that spends it is throttled until the
+        period rolls over, which lands in p99 as jitter belonging to the cgroup rather than
+        to the framework. On a shared machine with no cpuset there is nothing to place onto,
+        so the quota stays as the only budget there is.
+        """
+        width = CPUS_FOR_HOST.get(host)
+        if cls.CPUSET:
+            ids = cpu_ids(cls.CPUSET)
+            return "--cpuset-cpus", ",".join(str(i) for i in (ids[:width] if width else ids))
+        return "--cpus", str(width or cls.CPUS)
 
     def build(self):
         # Only a host that needs a different base image gets its own Dockerfile. Go serves
@@ -271,39 +318,73 @@ class Container:
         argv = ["docker", "run", "-d", "--rm", "--name", self.cname,
                 # Without this a target defaults to the container host whatever it was
                 # asked for, and the run records the wrong host against real numbers.
-                "-e", "RB_HOST=" + self.host]
-        if self.CPUSET:
-            # Keeping the target and the load generator off each other's cores is the
-            # difference between measuring a framework and measuring contention.
-            #
-            # Placement alone, with no --cpus quota on top of it. The cpuset already caps
-            # the target at the width of the set, and a quota is enforced per 100ms
-            # period: a burst that spends it is throttled until the period rolls over,
-            # which lands in p99 as jitter belonging to the cgroup rather than to the
-            # framework. On a shared machine with no cpuset there is nothing to place
-            # onto, so the quota stays as the only budget there is.
-            argv += ["--cpuset-cpus", self.CPUSET]
+                "-e", "RB_HOST=" + self.host, *self.budget(self.host)]
+        if self.lambda_api:
+            # The Runtime API owns the namespace and the published port. The function
+            # joins it, and its entrypoint starts the runtime rather than RIE because
+            # AWS_LAMBDA_RUNTIME_API is set.
+            self.start_api()
+            argv += ["--network", "container:" + self.api,
+                     "-e", "AWS_LAMBDA_RUNTIME_API=127.0.0.1:%d" % RUNTIME_API_PORT]
+            for k, v in LAMBDA_ENV.items():
+                argv += ["-e", "%s=%s" % (k, v)]
         else:
-            argv += ["--cpus", self.CPUS]
-        # Only the published side moves. Inside the container every target still binds
-        # 8080, which is what its Dockerfile sets and exposes.
+            # Only the published side moves. Inside the container every target still binds
+            # 8080, which is what its Dockerfile sets and exposes.
+            argv += ["-p", "%d:8080" % self.port]
         t0 = time.monotonic()
-        subprocess.run(argv + ["-p", "%d:8080" % self.port, self.image],
-                       check=True, capture_output=True)
+        subprocess.run(argv + [self.image], check=True, capture_output=True)
         self.start_ms = (time.monotonic() - t0) * 1000
         return self
+
+    def start_api(self):
+        """Start gen/runtime-api.mjs for this boot and wait until it answers.
+
+        It has to be listening before the function starts. A runtime whose first poll is
+        refused exits rather than retrying.
+        """
+        self.api = self.cname + "-api"
+        subprocess.run(["docker", "rm", "-f", self.api], capture_output=True)
+        argv = ["docker", "run", "-d", "--rm", "--name", self.api,
+                "-v", "%s:/rb/runtime-api.mjs:ro" % (ROOT / "gen" / "runtime-api.mjs")]
+        if os.environ.get("RB_GEN_CPUS"):
+            argv += ["--cpuset-cpus", os.environ["RB_GEN_CPUS"]]
+        subprocess.run(argv + ["-p", "%d:8080" % self.port, RUNTIME_API_IMAGE,
+                               "node", "/rb/runtime-api.mjs",
+                               "--invoke", "8080", "--api", str(RUNTIME_API_PORT)],
+                       check=True, capture_output=True)
+        deadline = time.monotonic() + 30
+        while time.monotonic() < deadline:
+            c = http.client.HTTPConnection("127.0.0.1", self.port, timeout=1)
+            try:
+                c.request("GET", "/ready")
+                if c.getresponse().status == 204:
+                    return
+            except (OSError, http.client.HTTPException):
+                pass
+            finally:
+                c.close()
+            time.sleep(0.05)
+        raise RuntimeError("the Lambda Runtime API never answered /ready")
 
     def alive(self):
         out = subprocess.run(["docker", "inspect", "-f", "{{.State.Running}}", self.cname],
                              capture_output=True, text=True)
         return out.stdout.strip() == "true"
 
-    def logs(self):
-        out = subprocess.run(["docker", "logs", self.cname], capture_output=True, text=True)
-        return out.stdout + out.stderr
+    def tail(self, n=15):
+        """The Runtime API's log. A runtime that fails to start posts the reason there, and
+        its own container is gone by then because of --rm."""
+        if not self.lambda_api:
+            return ""
+        out = subprocess.run(["docker", "logs", "--tail", str(n), self.api],
+                             capture_output=True, text=True)
+        return (out.stdout + out.stderr).strip()
 
     def stop(self):
         subprocess.run(["docker", "stop", "-t", "3", self.cname], capture_output=True)
+        if self.lambda_api:
+            subprocess.run(["docker", "stop", "-t", "3", self.api], capture_output=True)
 
 
 def launcher(mode, language, name, port):
@@ -361,7 +442,7 @@ def wait_healthy(target, port, timeout):
                                            timeout=max(0.001, deadline - time.monotonic()))
             sent = time.monotonic()
             if encoding == "lambda":
-                # RIE serves only the invocations endpoint, so readiness is a real
+                # A Lambda host serves only the invocations endpoint, so readiness is a real
                 # invocation and the status lives inside the returned envelope.
                 c.request("POST", LAMBDA_INVOKE, body=lambda_event("GET", "/health"),
                           headers={"content-type": "application/json"})
@@ -526,15 +607,6 @@ def run_serial(port, count, encoding, warmup):
         tmp.unlink(missing_ok=True)
 
 
-def billed_durations(text):
-    """RIE prints a REPORT line per invocation. Billed duration is what costs money, and
-    no HTTP-level timing exposes it."""
-    hist = collections.Counter()
-    for m in re.finditer(r"Billed Duration: (\d+) ms", text):
-        hist[int(m.group(1))] += 1
-    return dict(sorted(hist.items()))
-
-
 CLIENT = ROOT / "client" / "dist" / "cli.js"
 
 
@@ -548,7 +620,7 @@ def client(port, target, *args):
     if not CLIENT.exists():
         raise SystemExit("the client is not built. Run 'npm ci && npm run build'.")
     argv = ["node", str(CLIENT), "127.0.0.1:%d" % port, "--target", target, *args]
-    # The client has to speak the host's encoding. A RIE container serves only the
+    # The client has to speak the host's encoding. A Lambda host serves only the
     # invocations endpoint, so plain HTTP reaches nothing and every target fails.
     encoding = ENCODING_FOR_HOST.get(os.environ.get("RB_HOST", "container"), "http")
     if encoding != "http":
@@ -790,10 +862,16 @@ def main():
 
     rows[0]["mode"] = a.mode
     if a.mode == "docker":
-        rows[0]["cpus"] = Container.CPUSET or Container.CPUS
+        rows[0]["cpus"] = Container.budget(host)[1]
     suite = a.suite if a.suite != "auto" else SUITE_FOR_HOST.get(host, "blend")
     encoding = ENCODING_FOR_HOST.get(host, "http")
     rows[0]["suite"] = SEQUENCE if suite == "serial" else BLEND
+    if suite == "serial":
+        rows[0]["generator"] = "serial.mjs/node"
+    # What the latencies time. On a Lambda host they are the Runtime API's Duration, which
+    # leaves the invoke path out, and everywhere else the round trip the driver saw. They
+    # are different measurements, so nothing may read one against the other.
+    rows[0]["timing"] = "runtime-api" if suite == "serial" and encoding == "lambda" else "client"
     what = "language=%s" % languages[0] if len(languages) == 1 else "languages=%s" % ",".join(languages)
     base = claim_ports(max(PORT_BLOCK, len(pairs)))
     print("run %s  ports=%d+" % (run_id, base))
@@ -823,8 +901,9 @@ def main():
         except RuntimeError as e:
             print("  BOOT FAILED: %s" % e)
             boot_failed.append(key)
-            if hasattr(t, "tail"):
-                print("  --- target log ---\n%s" % t.tail())
+            log = t.tail() if hasattr(t, "tail") else ""
+            if log:
+                print("  --- target log ---\n%s" % log)
             return None
 
     def described(meta, target):
@@ -929,18 +1008,19 @@ def main():
                 warm_n = LADDER["warmup"]["serial_requests"][warmup_class(language)]
                 res = run_serial(port, a.count, encoding,
                                  min(warm_n, max(1, a.count // 2)))
-                o = res["overall"]
-                print("  serial  %s requests in %6.2fs -> %5d rps   p50 %5dus  p99 %6dus"
+                o, trip = res["overall"], res.get("round_trip")
+                print("  serial  %s requests in %6.2fs -> %5d rps   p50 %5dus  p99 %6dus%s"
                       % (f"{res['completed']:,}", res["elapsed_s"], res["achieved_rps"],
-                         o["p50_us"], o["p99_us"]))
+                         o["p50_us"], o["p99_us"],
+                         "" if trip is None else "   round trip p50 %dus  p99 %dus"
+                         % (trip["p50_us"], trip["p99_us"])))
                 if res.get("timeouts"):
                     print("  WARNING: %d request(s) timed out; elapsed is not trustworthy"
                           % res["timeouts"])
-                billed = billed_durations(t.logs()) if hasattr(t, "logs") else {}
+                billed = res.get("billed_ms", {})
                 if billed:
                     print("  billed  %s"
-                          % "  ".join("%dms x%s" % (k, f"{v:,}") for k, v in billed.items()))
-                # /__meta after the logs are read, so its invocation is not in billed_ms.
+                          % "  ".join("%sms x%s" % (k, f"{v:,}") for k, v in billed.items()))
                 record_target(language, target, n + 1, read_meta(port), timing)
                 for ep in res["endpoints"]:
                     rows.append({"kind": "sample", "run_id": run_id, "epoch": 1,
@@ -959,6 +1039,7 @@ def main():
                              "errors": res["errors"],
                              "status_mismatch": res["status_mismatch"],
                              "elapsed_s": res["elapsed_s"], "billed_ms": billed,
+                             **({"round_trip": trip} if trip else {}),
                              **{k: o[k] for k in ("count", "p50_us", "p90_us",
                                                   "p99_us", "p999_us")}})
                 continue
