@@ -25,6 +25,26 @@
   </dependencyManagement>
 
   <dependencies>
+    <!-- The suite in src/test: what start.vertx.io writes for a 5.1 project, vertx-junit5
+         with JUnit's API and engine at the version the starter pins, which is 5.9.1. Test
+         scope, so none of it reaches server.jar. -->
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-junit5</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-api</artifactId>
+      <version>5.9.1</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-engine</artifactId>
+      <version>5.9.1</version>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>dev.requestbench</groupId>
       <artifactId>rb-hosts</artifactId>

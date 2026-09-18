@@ -30,6 +30,19 @@ public final class Main {
   public static void main(String[] args) throws Exception {
     Domain.load(Hosts.fixture());
     Vertx vertx = Vertx.vertx();
+    vertx.createHttpServer()
+         .requestHandler(router(vertx))
+         .listen(Hosts.port())
+         .toCompletionStage().toCompletableFuture().get();
+    System.out.println("container/vertx listening on " + Hosts.port());
+  }
+
+  /**
+   * Every route, on a router nothing is listening with yet. Its own method so a test can put
+   * it behind a server of its own: built inline in main(), the only way to reach it was to
+   * start this target on its container port.
+   */
+  static Router router(Vertx vertx) {
     Router router = Router.router(vertx);
 
     Baseline.register(router);
@@ -51,11 +64,6 @@ public final class Main {
     //
     // rb:handler errors.unmatched
     router.route().last().handler(ctx -> Reply.json(ctx, 404, Domain.notFoundBody()));
-
-    vertx.createHttpServer()
-         .requestHandler(router)
-         .listen(Hosts.port())
-         .toCompletionStage().toCompletableFuture().get();
-    System.out.println("container/vertx listening on " + Hosts.port());
+    return router;
   }
 }

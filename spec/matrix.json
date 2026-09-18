@@ -3345,6 +3345,522 @@
         "transport": "loopback",
         "reaches": "the engine's output, normalised the way the conformance client normalises it: the spec pins the content and leaves the whitespace free"
       }
+    },
+    "java:spring-boot": {
+      "baseline": {
+        "facility": "@SpringBootTest with MockMvc, as Spring Boot's reference starts, from the per-technology test starters Spring Initializr writes for Boot 4.1",
+        "dep": "spring-boot-starter-webmvc-test",
+        "transport": "in-memory",
+        "reaches": "the literal and the content type, which is the whole of what this endpoint is"
+      },
+      "json": {
+        "facility": "@SpringBootTest with MockMvc, as Spring Boot's reference starts, from the per-technology test starters Spring Initializr writes for Boot 4.1",
+        "dep": "spring-boot-starter-webmvc-test",
+        "transport": "in-memory",
+        "reaches": "the serializer at three sizes, which is all this family has to show"
+      },
+      "parameters": {
+        "facility": "@SpringBootTest with MockMvc, as Spring Boot's reference starts, from the per-technology test starters Spring Initializr writes for Boot 4.1",
+        "dep": "spring-boot-starter-webmvc-test",
+        "transport": "in-memory",
+        "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
+      },
+      "authorized": {
+        "facility": "@SpringBootTest with MockMvc, as Spring Boot's reference starts, from the per-technology test starters Spring Initializr writes for Boot 4.1",
+        "dep": "spring-boot-starter-webmvc-test",
+        "transport": "in-memory",
+        "reaches": "the refusal as well as the pass, which is the half a target that let everything through would still answer correctly"
+      },
+      "compressed": {
+        "facility": "@SpringBootTest with MockMvc, as Spring Boot's reference starts, from the per-technology test starters Spring Initializr writes for Boot 4.1",
+        "dep": "spring-boot-starter-webmvc-test",
+        "transport": "in-memory",
+        "reaches": "the codec, because this target compresses in its own handler rather than with the server's compression setting, which would reach every endpoint"
+      },
+      "etag": {
+        "facility": "@SpringBootTest with MockMvc, as Spring Boot's reference starts, from the per-technology test starters Spring Initializr writes for Boot 4.1",
+        "dep": "spring-boot-starter-webmvc-test",
+        "transport": "in-memory",
+        "reaches": "the validator and the conditional answer. The 304 is the only request in the corpus that cannot be sent until the target has answered a different one, because the validator is the target's to produce"
+      },
+      "cache": {
+        "facility": "@SpringBootTest with MockMvc, as Spring Boot's reference starts, from the per-technology test starters Spring Initializr writes for Boot 4.1",
+        "dep": "spring-boot-starter-webmvc-test",
+        "transport": "in-memory",
+        "reaches": "the response cache and what it is keyed on. A store keyed on fewer headers than it declares answers one tenant with another tenant's body"
+      },
+      "body": {
+        "facility": "@SpringBootTest with MockMvc, as Spring Boot's reference starts, from the per-technology test starters Spring Initializr writes for Boot 4.1",
+        "dep": "spring-boot-starter-webmvc-test",
+        "transport": "in-memory",
+        "reaches": "the binding and the validation facility, including the two refusals, which are judged as the envelope this target recorded rather than against a pinned body"
+      },
+      "query": {
+        "facility": "@SpringBootTest with MockMvc, as Spring Boot's reference starts, from the per-technology test starters Spring Initializr writes for Boot 4.1",
+        "dep": "spring-boot-starter-webmvc-test",
+        "transport": "in-memory",
+        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+      },
+      "headers": {
+        "facility": "@SpringBootTest with MockMvc, as Spring Boot's reference starts, from the per-technology test starters Spring Initializr writes for Boot 4.1",
+        "dep": "spring-boot-starter-webmvc-test",
+        "transport": "in-memory",
+        "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
+      },
+      "middleware": {
+        "facility": "@SpringBootTest with MockMvc, as Spring Boot's reference starts, from the per-technology test starters Spring Initializr writes for Boot 4.1",
+        "dep": "spring-boot-starter-webmvc-test",
+        "transport": "in-memory",
+        "reaches": "every layer, because the host boots the application rather than calling the handler, which is the way this family is failed without noticing"
+      },
+      "domain": {
+        "facility": "@SpringBootTest with MockMvc, as Spring Boot's reference starts, from the per-technology test starters Spring Initializr writes for Boot 4.1",
+        "dep": "spring-boot-starter-webmvc-test",
+        "transport": "in-memory",
+        "reaches": "the shared model through all eight operations, including the four that write, where a 201 and a 204 with no body are answers a framework can get subtly wrong while returning the right status"
+      },
+      "errors": {
+        "facility": "@SpringBootTest with MockMvc, as Spring Boot's reference starts, from the per-technology test starters Spring Initializr writes for Boot 4.1",
+        "dep": "spring-boot-starter-webmvc-test",
+        "transport": "in-memory",
+        "reaches": "whatever this target does with a route it does not have, which is the framework rather than a handler"
+      },
+      "template": {
+        "facility": "@SpringBootTest with MockMvc, as Spring Boot's reference starts, from the per-technology test starters Spring Initializr writes for Boot 4.1",
+        "dep": "spring-boot-starter-webmvc-test",
+        "transport": "in-memory",
+        "reaches": "the engine's output, normalised the way the conformance client normalises it: the spec pins the content and leaves the whitespace free"
+      }
+    },
+    "java:quarkus": {
+      "baseline": {
+        "facility": "@QuarkusTest with REST Assured, as code.quarkus.io writes; it starts the application's HTTP server in the test JVM",
+        "dep": "rest-assured",
+        "transport": "loopback",
+        "reaches": "the literal and the content type, which is the whole of what this endpoint is"
+      },
+      "json": {
+        "facility": "@QuarkusTest with REST Assured, as code.quarkus.io writes; it starts the application's HTTP server in the test JVM",
+        "dep": "rest-assured",
+        "transport": "loopback",
+        "reaches": "the serializer at three sizes, which is all this family has to show"
+      },
+      "parameters": {
+        "facility": "@QuarkusTest with REST Assured, as code.quarkus.io writes; it starts the application's HTTP server in the test JVM",
+        "dep": "rest-assured",
+        "transport": "loopback",
+        "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
+      },
+      "authorized": {
+        "facility": "@QuarkusTest with REST Assured, as code.quarkus.io writes; it starts the application's HTTP server in the test JVM",
+        "dep": "rest-assured",
+        "transport": "loopback",
+        "reaches": "the refusal as well as the pass, which is the half a target that let everything through would still answer correctly"
+      },
+      "compressed": {
+        "facility": "@QuarkusTest with REST Assured, as code.quarkus.io writes; it starts the application's HTTP server in the test JVM",
+        "dep": "rest-assured",
+        "transport": "loopback",
+        "reaches": "the codec, because this target compresses in its own handler rather than with the server's compression setting, which would reach every endpoint"
+      },
+      "etag": {
+        "facility": "@QuarkusTest with REST Assured, as code.quarkus.io writes; it starts the application's HTTP server in the test JVM",
+        "dep": "rest-assured",
+        "transport": "loopback",
+        "reaches": "the validator and the conditional answer. The 304 is the only request in the corpus that cannot be sent until the target has answered a different one, because the validator is the target's to produce"
+      },
+      "cache": {
+        "facility": "@QuarkusTest with REST Assured, as code.quarkus.io writes; it starts the application's HTTP server in the test JVM",
+        "dep": "rest-assured",
+        "transport": "loopback",
+        "reaches": "the response cache and what it is keyed on. A store keyed on fewer headers than it declares answers one tenant with another tenant's body"
+      },
+      "body": {
+        "facility": "@QuarkusTest with REST Assured, as code.quarkus.io writes; it starts the application's HTTP server in the test JVM",
+        "dep": "rest-assured",
+        "transport": "loopback",
+        "reaches": "the binding and the validation facility, including the two refusals, which are judged as the envelope this target recorded rather than against a pinned body"
+      },
+      "query": {
+        "facility": "@QuarkusTest with REST Assured, as code.quarkus.io writes; it starts the application's HTTP server in the test JVM",
+        "dep": "rest-assured",
+        "transport": "loopback",
+        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+      },
+      "headers": {
+        "facility": "@QuarkusTest with REST Assured, as code.quarkus.io writes; it starts the application's HTTP server in the test JVM",
+        "dep": "rest-assured",
+        "transport": "loopback",
+        "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
+      },
+      "middleware": {
+        "facility": "@QuarkusTest with REST Assured, as code.quarkus.io writes; it starts the application's HTTP server in the test JVM",
+        "dep": "rest-assured",
+        "transport": "loopback",
+        "reaches": "every layer, because the host boots the application rather than calling the handler, which is the way this family is failed without noticing"
+      },
+      "domain": {
+        "facility": "@QuarkusTest with REST Assured, as code.quarkus.io writes; it starts the application's HTTP server in the test JVM",
+        "dep": "rest-assured",
+        "transport": "loopback",
+        "reaches": "the shared model through all eight operations, including the four that write, where a 201 and a 204 with no body are answers a framework can get subtly wrong while returning the right status"
+      },
+      "errors": {
+        "facility": "@QuarkusTest with REST Assured, as code.quarkus.io writes; it starts the application's HTTP server in the test JVM",
+        "dep": "rest-assured",
+        "transport": "loopback",
+        "reaches": "whatever this target does with a route it does not have, which is the framework rather than a handler"
+      },
+      "template": {
+        "facility": "@QuarkusTest with REST Assured, as code.quarkus.io writes; it starts the application's HTTP server in the test JVM",
+        "dep": "rest-assured",
+        "transport": "loopback",
+        "reaches": "the engine's output, normalised the way the conformance client normalises it: the spec pins the content and leaves the whitespace free"
+      }
+    },
+    "java:micronaut": {
+      "baseline": {
+        "facility": "@MicronautTest with an injected @Client HttpClient, as Micronaut Launch writes; it starts the embedded server on a random port",
+        "dep": "micronaut-test-junit5",
+        "transport": "loopback",
+        "reaches": "the literal and the content type, which is the whole of what this endpoint is"
+      },
+      "json": {
+        "facility": "@MicronautTest with an injected @Client HttpClient, as Micronaut Launch writes; it starts the embedded server on a random port",
+        "dep": "micronaut-test-junit5",
+        "transport": "loopback",
+        "reaches": "the serializer at three sizes, which is all this family has to show"
+      },
+      "parameters": {
+        "facility": "@MicronautTest with an injected @Client HttpClient, as Micronaut Launch writes; it starts the embedded server on a random port",
+        "dep": "micronaut-test-junit5",
+        "transport": "loopback",
+        "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
+      },
+      "authorized": {
+        "facility": "@MicronautTest with an injected @Client HttpClient, as Micronaut Launch writes; it starts the embedded server on a random port",
+        "dep": "micronaut-test-junit5",
+        "transport": "loopback",
+        "reaches": "the refusal as well as the pass, which is the half a target that let everything through would still answer correctly"
+      },
+      "compressed": {
+        "facility": "@MicronautTest with an injected @Client HttpClient, as Micronaut Launch writes; it starts the embedded server on a random port",
+        "dep": "micronaut-test-junit5",
+        "transport": "loopback",
+        "reaches": "the codec, because this target compresses in its own handler rather than with the server's compression setting, which would reach every endpoint"
+      },
+      "etag": {
+        "facility": "@MicronautTest with an injected @Client HttpClient, as Micronaut Launch writes; it starts the embedded server on a random port",
+        "dep": "micronaut-test-junit5",
+        "transport": "loopback",
+        "reaches": "the validator and the conditional answer. The 304 is the only request in the corpus that cannot be sent until the target has answered a different one, because the validator is the target's to produce"
+      },
+      "cache": {
+        "facility": "@MicronautTest with an injected @Client HttpClient, as Micronaut Launch writes; it starts the embedded server on a random port",
+        "dep": "micronaut-test-junit5",
+        "transport": "loopback",
+        "reaches": "the response cache and what it is keyed on. A store keyed on fewer headers than it declares answers one tenant with another tenant's body"
+      },
+      "body": {
+        "facility": "@MicronautTest with an injected @Client HttpClient, as Micronaut Launch writes; it starts the embedded server on a random port",
+        "dep": "micronaut-test-junit5",
+        "transport": "loopback",
+        "reaches": "the binding and the validation facility, including the two refusals, which are judged as the envelope this target recorded rather than against a pinned body"
+      },
+      "query": {
+        "facility": "@MicronautTest with an injected @Client HttpClient, as Micronaut Launch writes; it starts the embedded server on a random port",
+        "dep": "micronaut-test-junit5",
+        "transport": "loopback",
+        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+      },
+      "headers": {
+        "facility": "@MicronautTest with an injected @Client HttpClient, as Micronaut Launch writes; it starts the embedded server on a random port",
+        "dep": "micronaut-test-junit5",
+        "transport": "loopback",
+        "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
+      },
+      "middleware": {
+        "facility": "@MicronautTest with an injected @Client HttpClient, as Micronaut Launch writes; it starts the embedded server on a random port",
+        "dep": "micronaut-test-junit5",
+        "transport": "loopback",
+        "reaches": "every layer, because the host boots the application rather than calling the handler, which is the way this family is failed without noticing"
+      },
+      "domain": {
+        "facility": "@MicronautTest with an injected @Client HttpClient, as Micronaut Launch writes; it starts the embedded server on a random port",
+        "dep": "micronaut-test-junit5",
+        "transport": "loopback",
+        "reaches": "the shared model through all eight operations, including the four that write, where a 201 and a 204 with no body are answers a framework can get subtly wrong while returning the right status"
+      },
+      "errors": {
+        "facility": "@MicronautTest with an injected @Client HttpClient, as Micronaut Launch writes; it starts the embedded server on a random port",
+        "dep": "micronaut-test-junit5",
+        "transport": "loopback",
+        "reaches": "whatever this target does with a route it does not have, which is the framework rather than a handler"
+      },
+      "template": {
+        "facility": "@MicronautTest with an injected @Client HttpClient, as Micronaut Launch writes; it starts the embedded server on a random port",
+        "dep": "micronaut-test-junit5",
+        "transport": "loopback",
+        "reaches": "the engine's output, normalised the way the conformance client normalises it: the spec pins the content and leaves the whitespace free"
+      }
+    },
+    "java:helidon-se": {
+      "baseline": {
+        "facility": "@ServerTest with the injected Http1Client, which Helidon's SE testing documentation leads with and says opens ports",
+        "dep": "helidon-webserver-testing-junit5",
+        "transport": "loopback",
+        "reaches": "the literal and the content type, which is the whole of what this endpoint is"
+      },
+      "json": {
+        "facility": "@ServerTest with the injected Http1Client, which Helidon's SE testing documentation leads with and says opens ports",
+        "dep": "helidon-webserver-testing-junit5",
+        "transport": "loopback",
+        "reaches": "the serializer at three sizes, which is all this family has to show"
+      },
+      "parameters": {
+        "facility": "@ServerTest with the injected Http1Client, which Helidon's SE testing documentation leads with and says opens ports",
+        "dep": "helidon-webserver-testing-junit5",
+        "transport": "loopback",
+        "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
+      },
+      "authorized": {
+        "facility": "@ServerTest with the injected Http1Client, which Helidon's SE testing documentation leads with and says opens ports",
+        "dep": "helidon-webserver-testing-junit5",
+        "transport": "loopback",
+        "reaches": "the refusal as well as the pass, which is the half a target that let everything through would still answer correctly"
+      },
+      "compressed": {
+        "facility": "@ServerTest with the injected Http1Client, which Helidon's SE testing documentation leads with and says opens ports",
+        "dep": "helidon-webserver-testing-junit5",
+        "transport": "loopback",
+        "reaches": "the codec, because this target compresses in its own handler rather than with the server's compression setting, which would reach every endpoint"
+      },
+      "etag": {
+        "facility": "@ServerTest with the injected Http1Client, which Helidon's SE testing documentation leads with and says opens ports",
+        "dep": "helidon-webserver-testing-junit5",
+        "transport": "loopback",
+        "reaches": "the validator and the conditional answer. The 304 is the only request in the corpus that cannot be sent until the target has answered a different one, because the validator is the target's to produce"
+      },
+      "cache": {
+        "facility": "@ServerTest with the injected Http1Client, which Helidon's SE testing documentation leads with and says opens ports",
+        "dep": "helidon-webserver-testing-junit5",
+        "transport": "loopback",
+        "reaches": "the response cache and what it is keyed on. A store keyed on fewer headers than it declares answers one tenant with another tenant's body"
+      },
+      "body": {
+        "facility": "@ServerTest with the injected Http1Client, which Helidon's SE testing documentation leads with and says opens ports",
+        "dep": "helidon-webserver-testing-junit5",
+        "transport": "loopback",
+        "reaches": "the binding and the validation facility, including the two refusals, which are judged as the envelope this target recorded rather than against a pinned body"
+      },
+      "query": {
+        "facility": "@ServerTest with the injected Http1Client, which Helidon's SE testing documentation leads with and says opens ports",
+        "dep": "helidon-webserver-testing-junit5",
+        "transport": "loopback",
+        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+      },
+      "headers": {
+        "facility": "@ServerTest with the injected Http1Client, which Helidon's SE testing documentation leads with and says opens ports",
+        "dep": "helidon-webserver-testing-junit5",
+        "transport": "loopback",
+        "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
+      },
+      "middleware": {
+        "facility": "@ServerTest with the injected Http1Client, which Helidon's SE testing documentation leads with and says opens ports",
+        "dep": "helidon-webserver-testing-junit5",
+        "transport": "loopback",
+        "reaches": "every layer, because the host boots the application rather than calling the handler, which is the way this family is failed without noticing"
+      },
+      "domain": {
+        "facility": "@ServerTest with the injected Http1Client, which Helidon's SE testing documentation leads with and says opens ports",
+        "dep": "helidon-webserver-testing-junit5",
+        "transport": "loopback",
+        "reaches": "the shared model through all eight operations, including the four that write, where a 201 and a 204 with no body are answers a framework can get subtly wrong while returning the right status"
+      },
+      "errors": {
+        "facility": "@ServerTest with the injected Http1Client, which Helidon's SE testing documentation leads with and says opens ports",
+        "dep": "helidon-webserver-testing-junit5",
+        "transport": "loopback",
+        "reaches": "whatever this target does with a route it does not have, which is the framework rather than a handler"
+      },
+      "template": {
+        "facility": "@ServerTest with the injected Http1Client, which Helidon's SE testing documentation leads with and says opens ports",
+        "dep": "helidon-webserver-testing-junit5",
+        "transport": "loopback",
+        "reaches": "the engine's output, normalised the way the conformance client normalises it: the spec pins the content and leaves the whitespace free"
+      }
+    },
+    "java:vertx": {
+      "baseline": {
+        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with Vert.x's own HttpClient",
+        "dep": "vertx-junit5",
+        "transport": "loopback",
+        "reaches": "the literal and the content type, which is the whole of what this endpoint is"
+      },
+      "json": {
+        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with Vert.x's own HttpClient",
+        "dep": "vertx-junit5",
+        "transport": "loopback",
+        "reaches": "the serializer at three sizes, which is all this family has to show"
+      },
+      "parameters": {
+        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with Vert.x's own HttpClient",
+        "dep": "vertx-junit5",
+        "transport": "loopback",
+        "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
+      },
+      "authorized": {
+        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with Vert.x's own HttpClient",
+        "dep": "vertx-junit5",
+        "transport": "loopback",
+        "reaches": "the refusal as well as the pass, which is the half a target that let everything through would still answer correctly"
+      },
+      "compressed": {
+        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with Vert.x's own HttpClient",
+        "dep": "vertx-junit5",
+        "transport": "loopback",
+        "reaches": "the codec, because this target compresses in its own handler rather than with the server's compression setting, which would reach every endpoint"
+      },
+      "etag": {
+        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with Vert.x's own HttpClient",
+        "dep": "vertx-junit5",
+        "transport": "loopback",
+        "reaches": "the validator and the conditional answer. The 304 is the only request in the corpus that cannot be sent until the target has answered a different one, because the validator is the target's to produce"
+      },
+      "cache": {
+        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with Vert.x's own HttpClient",
+        "dep": "vertx-junit5",
+        "transport": "loopback",
+        "reaches": "the response cache and what it is keyed on. A store keyed on fewer headers than it declares answers one tenant with another tenant's body"
+      },
+      "body": {
+        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with Vert.x's own HttpClient",
+        "dep": "vertx-junit5",
+        "transport": "loopback",
+        "reaches": "the binding and the validation facility, including the two refusals, which are judged as the envelope this target recorded rather than against a pinned body"
+      },
+      "query": {
+        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with Vert.x's own HttpClient",
+        "dep": "vertx-junit5",
+        "transport": "loopback",
+        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+      },
+      "headers": {
+        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with Vert.x's own HttpClient",
+        "dep": "vertx-junit5",
+        "transport": "loopback",
+        "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
+      },
+      "middleware": {
+        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with Vert.x's own HttpClient",
+        "dep": "vertx-junit5",
+        "transport": "loopback",
+        "reaches": "every layer, because the host boots the application rather than calling the handler, which is the way this family is failed without noticing"
+      },
+      "domain": {
+        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with Vert.x's own HttpClient",
+        "dep": "vertx-junit5",
+        "transport": "loopback",
+        "reaches": "the shared model through all eight operations, including the four that write, where a 201 and a 204 with no body are answers a framework can get subtly wrong while returning the right status"
+      },
+      "errors": {
+        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with Vert.x's own HttpClient",
+        "dep": "vertx-junit5",
+        "transport": "loopback",
+        "reaches": "whatever this target does with a route it does not have, which is the framework rather than a handler"
+      },
+      "template": {
+        "facility": "vertx-junit5's VertxExtension around a server the suite starts on the target's router, driven with Vert.x's own HttpClient",
+        "dep": "vertx-junit5",
+        "transport": "loopback",
+        "reaches": "the engine's output, normalised the way the conformance client normalises it: the spec pins the content and leaves the whitespace free"
+      }
+    },
+    "java:javalin": {
+      "baseline": {
+        "facility": "JavalinTest.test() from javalin-testtools, which starts the application on a random port per test; its client reads bodies as strings, so gzip requests go to the origin by hand",
+        "dep": "javalin-testtools",
+        "transport": "loopback",
+        "reaches": "the literal and the content type, which is the whole of what this endpoint is"
+      },
+      "json": {
+        "facility": "JavalinTest.test() from javalin-testtools, which starts the application on a random port per test; its client reads bodies as strings, so gzip requests go to the origin by hand",
+        "dep": "javalin-testtools",
+        "transport": "loopback",
+        "reaches": "the serializer at three sizes, which is all this family has to show"
+      },
+      "parameters": {
+        "facility": "JavalinTest.test() from javalin-testtools, which starts the application on a random port per test; its client reads bodies as strings, so gzip requests go to the origin by hand",
+        "dep": "javalin-testtools",
+        "transport": "loopback",
+        "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
+      },
+      "authorized": {
+        "facility": "JavalinTest.test() from javalin-testtools, which starts the application on a random port per test; its client reads bodies as strings, so gzip requests go to the origin by hand",
+        "dep": "javalin-testtools",
+        "transport": "loopback",
+        "reaches": "the refusal as well as the pass, which is the half a target that let everything through would still answer correctly"
+      },
+      "compressed": {
+        "facility": "JavalinTest.test() from javalin-testtools, which starts the application on a random port per test; its client reads bodies as strings, so gzip requests go to the origin by hand",
+        "dep": "javalin-testtools",
+        "transport": "loopback",
+        "reaches": "the codec, because this target compresses in its own handler rather than with the server's compression setting, which would reach every endpoint"
+      },
+      "etag": {
+        "facility": "JavalinTest.test() from javalin-testtools, which starts the application on a random port per test; its client reads bodies as strings, so gzip requests go to the origin by hand",
+        "dep": "javalin-testtools",
+        "transport": "loopback",
+        "reaches": "the validator and the conditional answer. The 304 is the only request in the corpus that cannot be sent until the target has answered a different one, because the validator is the target's to produce"
+      },
+      "cache": {
+        "facility": "JavalinTest.test() from javalin-testtools, which starts the application on a random port per test; its client reads bodies as strings, so gzip requests go to the origin by hand",
+        "dep": "javalin-testtools",
+        "transport": "loopback",
+        "reaches": "the response cache and what it is keyed on. A store keyed on fewer headers than it declares answers one tenant with another tenant's body"
+      },
+      "body": {
+        "facility": "JavalinTest.test() from javalin-testtools, which starts the application on a random port per test; its client reads bodies as strings, so gzip requests go to the origin by hand",
+        "dep": "javalin-testtools",
+        "transport": "loopback",
+        "reaches": "the binding and the validation facility, including the two refusals, which are judged as the envelope this target recorded rather than against a pinned body"
+      },
+      "query": {
+        "facility": "JavalinTest.test() from javalin-testtools, which starts the application on a random port per test; its client reads bodies as strings, so gzip requests go to the origin by hand",
+        "dep": "javalin-testtools",
+        "transport": "loopback",
+        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+      },
+      "headers": {
+        "facility": "JavalinTest.test() from javalin-testtools, which starts the application on a random port per test; its client reads bodies as strings, so gzip requests go to the origin by hand",
+        "dep": "javalin-testtools",
+        "transport": "loopback",
+        "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
+      },
+      "middleware": {
+        "facility": "JavalinTest.test() from javalin-testtools, which starts the application on a random port per test; its client reads bodies as strings, so gzip requests go to the origin by hand",
+        "dep": "javalin-testtools",
+        "transport": "loopback",
+        "reaches": "every layer, because the host boots the application rather than calling the handler, which is the way this family is failed without noticing"
+      },
+      "domain": {
+        "facility": "JavalinTest.test() from javalin-testtools, which starts the application on a random port per test; its client reads bodies as strings, so gzip requests go to the origin by hand",
+        "dep": "javalin-testtools",
+        "transport": "loopback",
+        "reaches": "the shared model through all eight operations, including the four that write, where a 201 and a 204 with no body are answers a framework can get subtly wrong while returning the right status"
+      },
+      "errors": {
+        "facility": "JavalinTest.test() from javalin-testtools, which starts the application on a random port per test; its client reads bodies as strings, so gzip requests go to the origin by hand",
+        "dep": "javalin-testtools",
+        "transport": "loopback",
+        "reaches": "whatever this target does with a route it does not have, which is the framework rather than a handler"
+      },
+      "template": {
+        "facility": "JavalinTest.test() from javalin-testtools, which starts the application on a random port per test; its client reads bodies as strings, so gzip requests go to the origin by hand",
+        "dep": "javalin-testtools",
+        "transport": "loopback",
+        "reaches": "the engine's output, normalised the way the conformance client normalises it: the spec pins the content and leaves the whitespace free"
+      }
     }
   },
   "suites_note": "What each target's own suite tests a family with, and what it talks to. transport is \"in-memory\" for a client that calls the application with no socket at all, \"loopback\" for a real server on a loopback port in the test's own process, or \"process\" for a target booted the way harness/run.py boots one. The three are not interchangeable: a framework that compresses in its request pipeline is reached by all three, and one that leaves it to the server underneath is reached only by the last two. Per family rather than per target, because whether a test reaches the code under test is not a fact about a framework: MockMvc and @SpringBootTest(webEnvironment = RANDOM_PORT) are both Spring, and a target that tests against a socket for compressed and in memory for everything else is the case a per-target flag would hide. A family with no marked test needs no entry here; one with a marked test has to have one, and the dependency it names has to be in that target's suite project."

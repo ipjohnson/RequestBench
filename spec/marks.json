@@ -108,24 +108,6 @@
     "go:gorilla-mux": {
       "no_test": 42
     },
-    "java:helidon-se": {
-      "no_test": 45
-    },
-    "java:javalin": {
-      "no_test": 46
-    },
-    "java:micronaut": {
-      "no_test": 47
-    },
-    "java:quarkus": {
-      "no_test": 47
-    },
-    "java:spring-boot": {
-      "no_test": 47
-    },
-    "java:vertx": {
-      "no_test": 46
-    },
     "rust:actix-web": {
       "no_test": 46
     },

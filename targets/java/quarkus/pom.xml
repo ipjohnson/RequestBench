@@ -25,6 +25,19 @@
   </dependencyManagement>
 
   <dependencies>
+    <!-- The suite in src/test: what code.quarkus.io writes for a 3.39 project, quarkus-junit
+         (no longer quarkus-junit5) and REST Assured. Test scope, so none of it reaches the
+         runner jar. -->
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-junit</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.rest-assured</groupId>
+      <artifactId>rest-assured</artifactId>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>dev.requestbench</groupId>
       <artifactId>rb-shared</artifactId>
@@ -68,9 +81,28 @@
             <goals>
               <goal>build</goal>
               <goal>generate-code</goal>
+              <!-- What a generated project gets for its tests. -->
+              <goal>generate-code-tests</goal>
             </goals>
           </execution>
         </executions>
+      </plugin>
+      <!-- The surefire configuration code.quarkus.io writes, plus the fixture. @QuarkusTest
+           fires the StartupEvent this target loads its fixture on, so unlike the other five
+           it needs nothing done at startup; what it needs is RB_FIXTURE, because the
+           relative fallback resolves against the module directory surefire runs in. -->
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <argLine>@{argLine}</argLine>
+          <systemPropertyVariables>
+            <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
+            <maven.home>${maven.home}</maven.home>
+          </systemPropertyVariables>
+          <environmentVariables>
+            <RB_FIXTURE>${project.basedir}/../../../spec/fixture.json</RB_FIXTURE>
+          </environmentVariables>
+        </configuration>
       </plugin>
     </plugins>
   </build>

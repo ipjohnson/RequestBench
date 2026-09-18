@@ -14,5 +14,7 @@ targets/python/.venv/
 targets/*/*/client-exception/
 targets/*/*/suite/
 targets/*/*/client/
+# A Java target's suite is src/test inside the module, which is where Maven looks for it.
+targets/java/*/src/test/
 targets/rust/target/
 targets/java/*/target/
