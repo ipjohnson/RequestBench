@@ -16,6 +16,8 @@ builder.Services.AddRequestBenchDomain();
 // cache.* row is keyed by, which is where the vary rows say what folds into the key.
 builder.Services.AddRequestBenchOutputCache(
     DomainModel.Load(DomainModel.FixturePath()));
+// rb:wiring compressed.*
+builder.Services.AddResponseCompression();
 // The template family renders a Razor component, which is what ASP.NET Core ships for
 // server-side HTML. Nothing else here needs it.
 builder.Services.AddRazorComponents();
@@ -37,6 +39,12 @@ builder.Logging.ClearProviders();
 WebApplication app = builder.Build();
 // rb:wiring errors.*
 app.UseExceptionHandler(Failures.Handler);
+// Response compression covers the whole application, so every request pays the check for
+// accept-encoding. Branching it onto /compressed with UseWhen would not save that, because
+// the branch's predicate runs on every request too. It sits ahead of the output cache, so a
+// cached answer is stored as written and compressed for each request that asks.
+// rb:wiring compressed.*
+app.UseResponseCompression();
 // Output caching sits in the pipeline rather than on a route, so it is added once
 // here and opted into per route by CacheOutput.
 app.UseOutputCache();

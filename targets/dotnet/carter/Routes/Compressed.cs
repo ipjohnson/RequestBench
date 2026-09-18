@@ -6,32 +6,12 @@ namespace RequestBench.CarterTarget.Routes;
 /// <summary>
 /// compressed: outbound gzip, the cost of the wiring declining and the cost of it working.
 ///
-/// An endpoint filter on these three routes alone. ASP.NET's response compression
-/// middleware sits on the application, which would put a "did the client ask?" check on all
-/// forty-five endpoints and contaminate the rows this family is measured against.
-///
-/// The codec and the floor are the pinned ones every language shares.
+/// These routes answer like any other. The response compression middleware that Program.cs
+/// installs on the whole application gzips the answer when the request asks for it, at the
+/// provider's default level, Fastest, with no minimum size.
 /// </summary>
 public sealed class Compressed : ICarterModule
 {
-    // rb:wiring compressed.*
-    private static async ValueTask<object?> Gzip(EndpointFilterInvocationContext context,
-                                                 EndpointFilterDelegate next)
-    {
-        object? value = await next(context);
-        byte[] raw = Json.Bytes(value);
-        HttpResponse response = context.HttpContext.Response;
-        string accept = context.HttpContext.Request.Headers.AcceptEncoding.ToString();
-        if (!accept.Contains("gzip", StringComparison.Ordinal)
-            || raw.Length < DomainModel.GzipMinSize)
-        {
-            return Results.Bytes(raw, "application/json");
-        }
-        response.Headers.ContentEncoding = "gzip";
-        response.Headers.Vary = "Accept-Encoding";
-        return Results.Bytes(DomainModel.Gzip(raw), "application/json");
-    }
-
     // rb:wiring compressed.*
     private static Func<HttpResponse, DomainModel, PayloadBody> Serve(string size) =>
         (response, model) =>
@@ -42,10 +22,10 @@ public sealed class Compressed : ICarterModule
 
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapGet("/compressed/small", Serve("small")).AddEndpointFilter(Gzip);
+        app.MapGet("/compressed/small", Serve("small"));
 
-        app.MapGet("/compressed/medium", Serve("medium")).AddEndpointFilter(Gzip);
+        app.MapGet("/compressed/medium", Serve("medium"));
 
-        app.MapGet("/compressed/large", Serve("large")).AddEndpointFilter(Gzip);
+        app.MapGet("/compressed/large", Serve("large"));
     }
 }

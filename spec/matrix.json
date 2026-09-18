@@ -272,7 +272,8 @@
         "mechanism": "an action filter attribute on the one action; authorization filters would bring a policy evaluation the other forty-four endpoints would also pay for"
       },
       "compressed": {
-        "mechanism": "a Serve helper on the controller holding the pinned codec and floor; the response compression middleware sits on the application and would contaminate the other forty-two endpoints"
+        "mechanism": "ASP.NET Core's response compression middleware on the whole application, at the gzip provider's default level, Fastest, with no minimum size; every request pays its accept-encoding check, and the Serve helper returns the payload as any other action does",
+        "mentions": "UseResponseCompression"
       },
       "etag": {
         "mechanism": "a result filter attribute on this controller alone over the shared digest, which is how MVC scopes behaviour to an action"
@@ -316,7 +317,8 @@
         "builtin": "An endpoint filter written inline on the route, which the handler block already shows."
       },
       "compressed": {
-        "mechanism": "an endpoint filter on these three routes alone, holding the pinned codec and floor; the response compression middleware sits on the application and would contaminate the other forty-two endpoints"
+        "mechanism": "ASP.NET Core's response compression middleware on the whole application, at the gzip provider's default level, Fastest, with no minimum size; every request pays its accept-encoding check, and a Serve factory sets x-rb-serial and returns the payload as any other route does",
+        "mentions": "UseResponseCompression"
       },
       "etag": {
         "mechanism": "an endpoint filter on these two routes over the shared digest, on the same IEndpointRouteBuilder minimal APIs use"
@@ -362,7 +364,8 @@
         "mechanism": "a pre-processor on the one endpoint, which refuses by writing the response and marking it handled"
       },
       "compressed": {
-        "builtin": "The pinned codec and floor are applied in ExecuteAsync, which the handler block already shows. The response compression middleware sits on the application and would contaminate the other forty-two endpoints."
+        "mechanism": "ASP.NET Core's response compression middleware on the whole application, at the gzip provider's default level, Fastest, with no minimum size; every request pays its accept-encoding check, and the endpoints return the payload as any other endpoint does",
+        "mentions": "UseResponseCompression"
       },
       "etag": {
         "mechanism": "a pipeline branch on /etag over the shared digest: FastEndpoints writes the response from inside its own delegate, so a filter around it is handed nothing to hash"
@@ -406,7 +409,8 @@
         "builtin": "An endpoint filter written inline on the route, which the handler block already shows. The authorization middleware would bring a policy evaluation the other forty-four endpoints would also pay for."
       },
       "compressed": {
-        "mechanism": "an endpoint filter on these three routes alone, holding the pinned codec and floor; the response compression middleware sits on the application and would contaminate the other forty-two endpoints"
+        "mechanism": "ASP.NET Core's response compression middleware on the whole application, at the gzip provider's default level, Fastest, with no minimum size; every request pays its accept-encoding check, and a Serve factory sets x-rb-serial and returns the payload as any other route does",
+        "mentions": "UseResponseCompression"
       },
       "etag": {
         "mechanism": "an endpoint filter on these two routes over the shared digest: nothing in ASP.NET Core computes a validator for a dynamic response"
@@ -450,7 +454,8 @@
         "mechanism": "a Before method found by convention, which refuses by returning a result rather than letting the endpoint run"
       },
       "compressed": {
-        "mechanism": "a Serve helper holding the pinned codec and floor; the response compression middleware sits on the application and would contaminate the other forty-two endpoints"
+        "mechanism": "ASP.NET Core's response compression middleware on the whole application, at the gzip provider's default level, Fastest, with no minimum size; every request pays its accept-encoding check, and the Serve helper returns the payload as any other endpoint does",
+        "mentions": "UseResponseCompression"
       },
       "etag": {
         "mechanism": "a pipeline branch on /etag over the shared digest: Wolverine compiles its endpoints into their own delegates and writes from inside them"
@@ -2069,7 +2074,7 @@
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, over the xunit `dotnet new xunit` writes",
         "dep": "Microsoft.AspNetCore.Mvc.Testing",
         "transport": "in-memory",
-        "reaches": "the codec, because these routes compress inside the request pipeline rather than leaving it to the server underneath, which an in-memory transport would not reach. Where that stops being true the declaration moves to \"loopback\": WebApplicationFactory.UseKestrel(0) with StartServer() puts a real server on a loopback port in the same process, so a socket costs one line here and not a second process"
+        "reaches": "the codec, because ASP.NET Core's response compression middleware runs inside the request pipeline rather than in the server underneath, so an in-memory transport reaches it. Where that stops being true the declaration moves to \"loopback\": WebApplicationFactory.UseKestrel(0) with StartServer() puts a real server on a loopback port in the same process, so a socket costs one line here and not a second process"
       },
       "etag": {
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, over the xunit `dotnet new xunit` writes",
@@ -2155,7 +2160,7 @@
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, over the xunit `dotnet new xunit` writes",
         "dep": "Microsoft.AspNetCore.Mvc.Testing",
         "transport": "in-memory",
-        "reaches": "the codec, because these routes compress inside the request pipeline rather than leaving it to the server underneath, which an in-memory transport would not reach. Where that stops being true the declaration moves to \"loopback\": WebApplicationFactory.UseKestrel(0) with StartServer() puts a real server on a loopback port in the same process, so a socket costs one line here and not a second process"
+        "reaches": "the codec, because ASP.NET Core's response compression middleware runs inside the request pipeline rather than in the server underneath, so an in-memory transport reaches it. Where that stops being true the declaration moves to \"loopback\": WebApplicationFactory.UseKestrel(0) with StartServer() puts a real server on a loopback port in the same process, so a socket costs one line here and not a second process"
       },
       "etag": {
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, over the xunit `dotnet new xunit` writes",
@@ -2241,7 +2246,7 @@
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, reached for directly because Carter ships no test package of its own",
         "dep": "Microsoft.AspNetCore.Mvc.Testing",
         "transport": "in-memory",
-        "reaches": "the codec, because these routes compress inside the request pipeline rather than leaving it to the server underneath, which an in-memory transport would not reach. Where that stops being true the declaration moves to \"loopback\": WebApplicationFactory.UseKestrel(0) with StartServer() puts a real server on a loopback port in the same process, so a socket costs one line here and not a second process"
+        "reaches": "the codec, because ASP.NET Core's response compression middleware runs inside the request pipeline rather than in the server underneath, so an in-memory transport reaches it. Where that stops being true the declaration moves to \"loopback\": WebApplicationFactory.UseKestrel(0) with StartServer() puts a real server on a loopback port in the same process, so a socket costs one line here and not a second process"
       },
       "etag": {
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, reached for directly because Carter ships no test package of its own",
@@ -2327,7 +2332,7 @@
         "facility": "AppFixture<Program> from FastEndpoints.Testing, the framework's own package, which brings xunit.v3 with it",
         "dep": "FastEndpoints.Testing",
         "transport": "in-memory",
-        "reaches": "the codec, because these routes compress inside the request pipeline rather than leaving it to the server underneath, which an in-memory transport would not reach. Where that stops being true the declaration moves to \"loopback\": WebApplicationFactory.UseKestrel(0) with StartServer() puts a real server on a loopback port in the same process, so a socket costs one line here and not a second process"
+        "reaches": "the codec, because ASP.NET Core's response compression middleware runs inside the request pipeline rather than in the server underneath, so an in-memory transport reaches it. Where that stops being true the declaration moves to \"loopback\": WebApplicationFactory.UseKestrel(0) with StartServer() puts a real server on a loopback port in the same process, so a socket costs one line here and not a second process"
       },
       "etag": {
         "facility": "AppFixture<Program> from FastEndpoints.Testing, the framework's own package, which brings xunit.v3 with it",
@@ -2413,7 +2418,7 @@
         "facility": "AlbaHost.For<Program>, which Wolverine's documentation names for HTTP tests",
         "dep": "Alba",
         "transport": "in-memory",
-        "reaches": "the codec, because these routes compress inside the request pipeline rather than leaving it to the server underneath, which an in-memory transport would not reach. Where that stops being true the declaration moves to \"loopback\": WebApplicationFactory.UseKestrel(0) with StartServer() puts a real server on a loopback port in the same process, so a socket costs one line here and not a second process"
+        "reaches": "the codec, because ASP.NET Core's response compression middleware runs inside the request pipeline rather than in the server underneath, so an in-memory transport reaches it. Where that stops being true the declaration moves to \"loopback\": WebApplicationFactory.UseKestrel(0) with StartServer() puts a real server on a loopback port in the same process, so a socket costs one line here and not a second process"
       },
       "etag": {
         "facility": "AlbaHost.For<Program>, which Wolverine's documentation names for HTTP tests",
