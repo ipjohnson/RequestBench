@@ -141,24 +141,6 @@
     "node:koa": {
       "no_test": 42
     },
-    "python:django-asgi": {
-      "no_test": 46
-    },
-    "python:fastapi": {
-      "no_test": 46
-    },
-    "python:flask": {
-      "no_test": 45
-    },
-    "python:litestar": {
-      "no_test": 46
-    },
-    "python:sanic": {
-      "no_test": 45
-    },
-    "python:starlette": {
-      "no_test": 45
-    },
     "rust:actix-web": {
       "no_test": 46
     },

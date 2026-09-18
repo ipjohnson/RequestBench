@@ -1,6 +1,6 @@
 comma := ,
 
-.PHONY: fixture plan spec expected test suites machine bundle snippets build client site site-dev java rust dotnet python python-lock lint validate conform expect exemplars run vars report clean help
+.PHONY: fixture plan spec expected test suites suites-dotnet suites-python machine bundle snippets build client site site-dev java rust dotnet python python-lock lint validate conform expect exemplars run vars report clean help
 # Everything is on by default: no TARGETS means every implemented target this host
 # supports. The rest narrow it. LANGUAGES/FRAMEWORKS pick what runs, FAMILIES/ENDPOINTS
 # pick what it is asked for, and a narrowed endpoint set is recorded as its own profile
@@ -97,16 +97,39 @@ test: client ## boot every target and check every endpoint against spec/expected
 # target and checks every endpoint against spec/expected.json through the conformance client,
 # and it is the authority: a suite that passes while `make test` fails that target is the
 # suite that is wrong. These run no load and are never part of a measurement.
+# One language's suites at a time, so a machine with one toolchain can still run its own.
+# Every half runs whatever the one before it did, so a failure never hides another result.
+SUITE_LANGUAGES = $(if $(LANGUAGES),$(subst $(comma), ,$(LANGUAGES)),dotnet python)
+# The interpreter harness/run.py would use: the virtualenv `make python` creates, or the one
+# on the path, which is how CI runs it after installing the lock into it.
+PYTHON ?= $(if $(wildcard targets/python/.venv/bin/python),$(CURDIR)/targets/python/.venv/bin/python,python3)
+
+suites: ## run each target's own test suite  (LANGUAGES=python to narrow)
+	@status=0; for l in $(SUITE_LANGUAGES); do \
+	  $(MAKE) --no-print-directory suites-$$l || status=1; \
+	done; exit $$status
+
 # fastendpoints runs on its own: FastEndpoints.Testing is built on xunit.v3, a Microsoft
 # Testing Platform runner, and `dotnet test` on the .NET 10 SDK refuses a solution that mixes
-# one with VSTest. Both halves run whatever the first one did, so a failure in one never
-# hides the result of the other.
-suites: ## run each target's own test suite  (dotnet only so far)
+# one with VSTest.
+suites-dotnet:
 	@cd targets/dotnet && status=0; \
 	  dotnet test suite/RequestBench.Suites.slnx -c Release --nologo || status=1; \
 	  dotnet run --project fastendpoints/suite/RequestBench.FastEndpoints.Suite.csproj \
 	    -c Release || status=1; \
 	  exit $$status
+
+# Five of the six run under pytest. django-asgi runs under Django's own DiscoverRunner,
+# because that is what Django's documentation runs a test with.
+suites-python:
+	@status=0; \
+	for t in fastapi starlette litestar flask sanic; do \
+	  echo "python:$$t"; \
+	  (cd targets/python/$$t/suite && $(PYTHON) -m pytest) || status=1; \
+	done; \
+	echo "python:django-asgi"; \
+	(cd targets/python/django-asgi/suite && $(PYTHON) runtests.py) || status=1; \
+	exit $$status
 
 expected: ## re-derive spec/expected.json from the targets named in EXPECT_FROM
 	python3 harness/expected.py --targets $(EXPECT_FROM) --mode $(MODE) --write

@@ -2030,85 +2030,85 @@
       "baseline": {
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, over the xunit `dotnet new xunit` writes",
         "dep": "Microsoft.AspNetCore.Mvc.Testing",
-        "transport": "testserver",
+        "transport": "in-memory",
         "reaches": "the literal and the content type, which is the whole of what this endpoint is"
       },
       "json": {
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, over the xunit `dotnet new xunit` writes",
         "dep": "Microsoft.AspNetCore.Mvc.Testing",
-        "transport": "testserver",
+        "transport": "in-memory",
         "reaches": "the serializer at three sizes, which is all this family has to show"
       },
       "parameters": {
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, over the xunit `dotnet new xunit` writes",
         "dep": "Microsoft.AspNetCore.Mvc.Testing",
-        "transport": "testserver",
+        "transport": "in-memory",
         "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
       },
       "authorized": {
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, over the xunit `dotnet new xunit` writes",
         "dep": "Microsoft.AspNetCore.Mvc.Testing",
-        "transport": "testserver",
+        "transport": "in-memory",
         "reaches": "the refusal as well as the pass, which is the half a target that let everything through would still answer correctly"
       },
       "compressed": {
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, over the xunit `dotnet new xunit` writes",
         "dep": "Microsoft.AspNetCore.Mvc.Testing",
-        "transport": "testserver",
-        "reaches": "the codec, because these routes compress inside the request pipeline rather than leaving it to the server underneath, which a testserver transport would not reach. Where that stops being true the declaration moves to \"kestrel\": WebApplicationFactory.UseKestrel(0) with StartServer() puts a real server on a loopback port in the same process, so a socket costs one line here and not a second process"
+        "transport": "in-memory",
+        "reaches": "the codec, because these routes compress inside the request pipeline rather than leaving it to the server underneath, which an in-memory transport would not reach. Where that stops being true the declaration moves to \"loopback\": WebApplicationFactory.UseKestrel(0) with StartServer() puts a real server on a loopback port in the same process, so a socket costs one line here and not a second process"
       },
       "etag": {
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, over the xunit `dotnet new xunit` writes",
         "dep": "Microsoft.AspNetCore.Mvc.Testing",
-        "transport": "testserver",
+        "transport": "in-memory",
         "reaches": "the validator and the conditional answer. The 304 is the only request in the corpus that cannot be sent until the target has answered a different one, because the validator is the target's to produce"
       },
       "cache": {
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, over the xunit `dotnet new xunit` writes",
         "dep": "Microsoft.AspNetCore.Mvc.Testing",
-        "transport": "testserver",
+        "transport": "in-memory",
         "reaches": "the response cache and what it is keyed on. A store keyed on fewer headers than it declares answers one tenant with another tenant's body"
       },
       "body": {
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, over the xunit `dotnet new xunit` writes",
         "dep": "Microsoft.AspNetCore.Mvc.Testing",
-        "transport": "testserver",
+        "transport": "in-memory",
         "reaches": "the binding and the validation facility, including the two refusals, which are judged as the envelope this target recorded rather than against a pinned body"
       },
       "query": {
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, over the xunit `dotnet new xunit` writes",
         "dep": "Microsoft.AspNetCore.Mvc.Testing",
-        "transport": "testserver",
+        "transport": "in-memory",
         "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
       },
       "headers": {
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, over the xunit `dotnet new xunit` writes",
         "dep": "Microsoft.AspNetCore.Mvc.Testing",
-        "transport": "testserver",
+        "transport": "in-memory",
         "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
       },
       "middleware": {
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, over the xunit `dotnet new xunit` writes",
         "dep": "Microsoft.AspNetCore.Mvc.Testing",
-        "transport": "testserver",
+        "transport": "in-memory",
         "reaches": "every layer, because the host boots the application rather than calling the handler, which is the way this family is failed without noticing"
       },
       "domain": {
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, over the xunit `dotnet new xunit` writes",
         "dep": "Microsoft.AspNetCore.Mvc.Testing",
-        "transport": "testserver",
+        "transport": "in-memory",
         "reaches": "the shared model through all eight operations, including the four that write, where a 201 and a 204 with no body are answers a framework can get subtly wrong while returning the right status"
       },
       "errors": {
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, over the xunit `dotnet new xunit` writes",
         "dep": "Microsoft.AspNetCore.Mvc.Testing",
-        "transport": "testserver",
+        "transport": "in-memory",
         "reaches": "whatever this target does with a route it does not have, which is the framework rather than a handler"
       },
       "template": {
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, over the xunit `dotnet new xunit` writes",
         "dep": "Microsoft.AspNetCore.Mvc.Testing",
-        "transport": "testserver",
+        "transport": "in-memory",
         "reaches": "the engine's output, normalised the way the conformance client normalises it: the spec pins the content and leaves the whitespace free"
       }
     },
@@ -2116,85 +2116,85 @@
       "baseline": {
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, over the xunit `dotnet new xunit` writes",
         "dep": "Microsoft.AspNetCore.Mvc.Testing",
-        "transport": "testserver",
+        "transport": "in-memory",
         "reaches": "the literal and the content type, which is the whole of what this endpoint is"
       },
       "json": {
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, over the xunit `dotnet new xunit` writes",
         "dep": "Microsoft.AspNetCore.Mvc.Testing",
-        "transport": "testserver",
+        "transport": "in-memory",
         "reaches": "the serializer at three sizes, which is all this family has to show"
       },
       "parameters": {
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, over the xunit `dotnet new xunit` writes",
         "dep": "Microsoft.AspNetCore.Mvc.Testing",
-        "transport": "testserver",
+        "transport": "in-memory",
         "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
       },
       "authorized": {
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, over the xunit `dotnet new xunit` writes",
         "dep": "Microsoft.AspNetCore.Mvc.Testing",
-        "transport": "testserver",
+        "transport": "in-memory",
         "reaches": "the refusal as well as the pass, which is the half a target that let everything through would still answer correctly"
       },
       "compressed": {
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, over the xunit `dotnet new xunit` writes",
         "dep": "Microsoft.AspNetCore.Mvc.Testing",
-        "transport": "testserver",
-        "reaches": "the codec, because these routes compress inside the request pipeline rather than leaving it to the server underneath, which a testserver transport would not reach. Where that stops being true the declaration moves to \"kestrel\": WebApplicationFactory.UseKestrel(0) with StartServer() puts a real server on a loopback port in the same process, so a socket costs one line here and not a second process"
+        "transport": "in-memory",
+        "reaches": "the codec, because these routes compress inside the request pipeline rather than leaving it to the server underneath, which an in-memory transport would not reach. Where that stops being true the declaration moves to \"loopback\": WebApplicationFactory.UseKestrel(0) with StartServer() puts a real server on a loopback port in the same process, so a socket costs one line here and not a second process"
       },
       "etag": {
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, over the xunit `dotnet new xunit` writes",
         "dep": "Microsoft.AspNetCore.Mvc.Testing",
-        "transport": "testserver",
+        "transport": "in-memory",
         "reaches": "the validator and the conditional answer. The 304 is the only request in the corpus that cannot be sent until the target has answered a different one, because the validator is the target's to produce"
       },
       "cache": {
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, over the xunit `dotnet new xunit` writes",
         "dep": "Microsoft.AspNetCore.Mvc.Testing",
-        "transport": "testserver",
+        "transport": "in-memory",
         "reaches": "the response cache and what it is keyed on. A store keyed on fewer headers than it declares answers one tenant with another tenant's body"
       },
       "body": {
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, over the xunit `dotnet new xunit` writes",
         "dep": "Microsoft.AspNetCore.Mvc.Testing",
-        "transport": "testserver",
+        "transport": "in-memory",
         "reaches": "the binding and the validation facility, including the two refusals, which are judged as the envelope this target recorded rather than against a pinned body"
       },
       "query": {
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, over the xunit `dotnet new xunit` writes",
         "dep": "Microsoft.AspNetCore.Mvc.Testing",
-        "transport": "testserver",
+        "transport": "in-memory",
         "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
       },
       "headers": {
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, over the xunit `dotnet new xunit` writes",
         "dep": "Microsoft.AspNetCore.Mvc.Testing",
-        "transport": "testserver",
+        "transport": "in-memory",
         "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
       },
       "middleware": {
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, over the xunit `dotnet new xunit` writes",
         "dep": "Microsoft.AspNetCore.Mvc.Testing",
-        "transport": "testserver",
+        "transport": "in-memory",
         "reaches": "every layer, because the host boots the application rather than calling the handler, which is the way this family is failed without noticing"
       },
       "domain": {
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, over the xunit `dotnet new xunit` writes",
         "dep": "Microsoft.AspNetCore.Mvc.Testing",
-        "transport": "testserver",
+        "transport": "in-memory",
         "reaches": "the shared model through all eight operations, including the four that write, where a 201 and a 204 with no body are answers a framework can get subtly wrong while returning the right status"
       },
       "errors": {
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, over the xunit `dotnet new xunit` writes",
         "dep": "Microsoft.AspNetCore.Mvc.Testing",
-        "transport": "testserver",
+        "transport": "in-memory",
         "reaches": "whatever this target does with a route it does not have, which is the framework rather than a handler"
       },
       "template": {
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, over the xunit `dotnet new xunit` writes",
         "dep": "Microsoft.AspNetCore.Mvc.Testing",
-        "transport": "testserver",
+        "transport": "in-memory",
         "reaches": "the engine's output, normalised the way the conformance client normalises it: the spec pins the content and leaves the whitespace free"
       }
     },
@@ -2202,85 +2202,85 @@
       "baseline": {
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, reached for directly because Carter ships no test package of its own",
         "dep": "Microsoft.AspNetCore.Mvc.Testing",
-        "transport": "testserver",
+        "transport": "in-memory",
         "reaches": "the literal and the content type, which is the whole of what this endpoint is"
       },
       "json": {
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, reached for directly because Carter ships no test package of its own",
         "dep": "Microsoft.AspNetCore.Mvc.Testing",
-        "transport": "testserver",
+        "transport": "in-memory",
         "reaches": "the serializer at three sizes, which is all this family has to show"
       },
       "parameters": {
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, reached for directly because Carter ships no test package of its own",
         "dep": "Microsoft.AspNetCore.Mvc.Testing",
-        "transport": "testserver",
+        "transport": "in-memory",
         "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
       },
       "authorized": {
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, reached for directly because Carter ships no test package of its own",
         "dep": "Microsoft.AspNetCore.Mvc.Testing",
-        "transport": "testserver",
+        "transport": "in-memory",
         "reaches": "the refusal as well as the pass, which is the half a target that let everything through would still answer correctly"
       },
       "compressed": {
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, reached for directly because Carter ships no test package of its own",
         "dep": "Microsoft.AspNetCore.Mvc.Testing",
-        "transport": "testserver",
-        "reaches": "the codec, because these routes compress inside the request pipeline rather than leaving it to the server underneath, which a testserver transport would not reach. Where that stops being true the declaration moves to \"kestrel\": WebApplicationFactory.UseKestrel(0) with StartServer() puts a real server on a loopback port in the same process, so a socket costs one line here and not a second process"
+        "transport": "in-memory",
+        "reaches": "the codec, because these routes compress inside the request pipeline rather than leaving it to the server underneath, which an in-memory transport would not reach. Where that stops being true the declaration moves to \"loopback\": WebApplicationFactory.UseKestrel(0) with StartServer() puts a real server on a loopback port in the same process, so a socket costs one line here and not a second process"
       },
       "etag": {
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, reached for directly because Carter ships no test package of its own",
         "dep": "Microsoft.AspNetCore.Mvc.Testing",
-        "transport": "testserver",
+        "transport": "in-memory",
         "reaches": "the validator and the conditional answer. The 304 is the only request in the corpus that cannot be sent until the target has answered a different one, because the validator is the target's to produce"
       },
       "cache": {
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, reached for directly because Carter ships no test package of its own",
         "dep": "Microsoft.AspNetCore.Mvc.Testing",
-        "transport": "testserver",
+        "transport": "in-memory",
         "reaches": "the response cache and what it is keyed on. A store keyed on fewer headers than it declares answers one tenant with another tenant's body"
       },
       "body": {
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, reached for directly because Carter ships no test package of its own",
         "dep": "Microsoft.AspNetCore.Mvc.Testing",
-        "transport": "testserver",
+        "transport": "in-memory",
         "reaches": "the binding and the validation facility, including the two refusals, which are judged as the envelope this target recorded rather than against a pinned body"
       },
       "query": {
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, reached for directly because Carter ships no test package of its own",
         "dep": "Microsoft.AspNetCore.Mvc.Testing",
-        "transport": "testserver",
+        "transport": "in-memory",
         "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
       },
       "headers": {
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, reached for directly because Carter ships no test package of its own",
         "dep": "Microsoft.AspNetCore.Mvc.Testing",
-        "transport": "testserver",
+        "transport": "in-memory",
         "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
       },
       "middleware": {
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, reached for directly because Carter ships no test package of its own",
         "dep": "Microsoft.AspNetCore.Mvc.Testing",
-        "transport": "testserver",
+        "transport": "in-memory",
         "reaches": "every layer, because the host boots the application rather than calling the handler, which is the way this family is failed without noticing"
       },
       "domain": {
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, reached for directly because Carter ships no test package of its own",
         "dep": "Microsoft.AspNetCore.Mvc.Testing",
-        "transport": "testserver",
+        "transport": "in-memory",
         "reaches": "the shared model through all eight operations, including the four that write, where a 201 and a 204 with no body are answers a framework can get subtly wrong while returning the right status"
       },
       "errors": {
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, reached for directly because Carter ships no test package of its own",
         "dep": "Microsoft.AspNetCore.Mvc.Testing",
-        "transport": "testserver",
+        "transport": "in-memory",
         "reaches": "whatever this target does with a route it does not have, which is the framework rather than a handler"
       },
       "template": {
         "facility": "WebApplicationFactory<Program> from Microsoft.AspNetCore.Mvc.Testing, reached for directly because Carter ships no test package of its own",
         "dep": "Microsoft.AspNetCore.Mvc.Testing",
-        "transport": "testserver",
+        "transport": "in-memory",
         "reaches": "the engine's output, normalised the way the conformance client normalises it: the spec pins the content and leaves the whitespace free"
       }
     },
@@ -2288,85 +2288,85 @@
       "baseline": {
         "facility": "AppFixture<Program> from FastEndpoints.Testing, the framework's own package, which brings xunit.v3 with it",
         "dep": "FastEndpoints.Testing",
-        "transport": "testserver",
+        "transport": "in-memory",
         "reaches": "the literal and the content type, which is the whole of what this endpoint is"
       },
       "json": {
         "facility": "AppFixture<Program> from FastEndpoints.Testing, the framework's own package, which brings xunit.v3 with it",
         "dep": "FastEndpoints.Testing",
-        "transport": "testserver",
+        "transport": "in-memory",
         "reaches": "the serializer at three sizes, which is all this family has to show"
       },
       "parameters": {
         "facility": "AppFixture<Program> from FastEndpoints.Testing, the framework's own package, which brings xunit.v3 with it",
         "dep": "FastEndpoints.Testing",
-        "transport": "testserver",
+        "transport": "in-memory",
         "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
       },
       "authorized": {
         "facility": "AppFixture<Program> from FastEndpoints.Testing, the framework's own package, which brings xunit.v3 with it",
         "dep": "FastEndpoints.Testing",
-        "transport": "testserver",
+        "transport": "in-memory",
         "reaches": "the refusal as well as the pass, which is the half a target that let everything through would still answer correctly"
       },
       "compressed": {
         "facility": "AppFixture<Program> from FastEndpoints.Testing, the framework's own package, which brings xunit.v3 with it",
         "dep": "FastEndpoints.Testing",
-        "transport": "testserver",
-        "reaches": "the codec, because these routes compress inside the request pipeline rather than leaving it to the server underneath, which a testserver transport would not reach. Where that stops being true the declaration moves to \"kestrel\": WebApplicationFactory.UseKestrel(0) with StartServer() puts a real server on a loopback port in the same process, so a socket costs one line here and not a second process"
+        "transport": "in-memory",
+        "reaches": "the codec, because these routes compress inside the request pipeline rather than leaving it to the server underneath, which an in-memory transport would not reach. Where that stops being true the declaration moves to \"loopback\": WebApplicationFactory.UseKestrel(0) with StartServer() puts a real server on a loopback port in the same process, so a socket costs one line here and not a second process"
       },
       "etag": {
         "facility": "AppFixture<Program> from FastEndpoints.Testing, the framework's own package, which brings xunit.v3 with it",
         "dep": "FastEndpoints.Testing",
-        "transport": "testserver",
+        "transport": "in-memory",
         "reaches": "the validator and the conditional answer. The 304 is the only request in the corpus that cannot be sent until the target has answered a different one, because the validator is the target's to produce"
       },
       "cache": {
         "facility": "AppFixture<Program> from FastEndpoints.Testing, the framework's own package, which brings xunit.v3 with it",
         "dep": "FastEndpoints.Testing",
-        "transport": "testserver",
+        "transport": "in-memory",
         "reaches": "the response cache and what it is keyed on. A store keyed on fewer headers than it declares answers one tenant with another tenant's body"
       },
       "body": {
         "facility": "AppFixture<Program> from FastEndpoints.Testing, the framework's own package, which brings xunit.v3 with it",
         "dep": "FastEndpoints.Testing",
-        "transport": "testserver",
+        "transport": "in-memory",
         "reaches": "the binding and the validation facility, including the two refusals, which are judged as the envelope this target recorded rather than against a pinned body"
       },
       "query": {
         "facility": "AppFixture<Program> from FastEndpoints.Testing, the framework's own package, which brings xunit.v3 with it",
         "dep": "FastEndpoints.Testing",
-        "transport": "testserver",
+        "transport": "in-memory",
         "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
       },
       "headers": {
         "facility": "AppFixture<Program> from FastEndpoints.Testing, the framework's own package, which brings xunit.v3 with it",
         "dep": "FastEndpoints.Testing",
-        "transport": "testserver",
+        "transport": "in-memory",
         "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
       },
       "middleware": {
         "facility": "AppFixture<Program> from FastEndpoints.Testing, the framework's own package, which brings xunit.v3 with it",
         "dep": "FastEndpoints.Testing",
-        "transport": "testserver",
+        "transport": "in-memory",
         "reaches": "every layer, because the host boots the application rather than calling the handler, which is the way this family is failed without noticing"
       },
       "domain": {
         "facility": "AppFixture<Program> from FastEndpoints.Testing, the framework's own package, which brings xunit.v3 with it",
         "dep": "FastEndpoints.Testing",
-        "transport": "testserver",
+        "transport": "in-memory",
         "reaches": "the shared model through all eight operations, including the four that write, where a 201 and a 204 with no body are answers a framework can get subtly wrong while returning the right status"
       },
       "errors": {
         "facility": "AppFixture<Program> from FastEndpoints.Testing, the framework's own package, which brings xunit.v3 with it",
         "dep": "FastEndpoints.Testing",
-        "transport": "testserver",
+        "transport": "in-memory",
         "reaches": "whatever this target does with a route it does not have, which is the framework rather than a handler"
       },
       "template": {
         "facility": "AppFixture<Program> from FastEndpoints.Testing, the framework's own package, which brings xunit.v3 with it",
         "dep": "FastEndpoints.Testing",
-        "transport": "testserver",
+        "transport": "in-memory",
         "reaches": "the engine's output, normalised the way the conformance client normalises it: the spec pins the content and leaves the whitespace free"
       }
     },
@@ -2374,88 +2374,576 @@
       "baseline": {
         "facility": "AlbaHost.For<Program>, which Wolverine's documentation names for HTTP tests",
         "dep": "Alba",
-        "transport": "testserver",
+        "transport": "in-memory",
         "reaches": "the literal and the content type, which is the whole of what this endpoint is"
       },
       "json": {
         "facility": "AlbaHost.For<Program>, which Wolverine's documentation names for HTTP tests",
         "dep": "Alba",
-        "transport": "testserver",
+        "transport": "in-memory",
         "reaches": "the serializer at three sizes, which is all this family has to show"
       },
       "parameters": {
         "facility": "AlbaHost.For<Program>, which Wolverine's documentation names for HTTP tests",
         "dep": "Alba",
-        "transport": "testserver",
+        "transport": "in-memory",
         "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
       },
       "authorized": {
         "facility": "AlbaHost.For<Program>, which Wolverine's documentation names for HTTP tests",
         "dep": "Alba",
-        "transport": "testserver",
+        "transport": "in-memory",
         "reaches": "the refusal as well as the pass, which is the half a target that let everything through would still answer correctly"
       },
       "compressed": {
         "facility": "AlbaHost.For<Program>, which Wolverine's documentation names for HTTP tests",
         "dep": "Alba",
-        "transport": "testserver",
-        "reaches": "the codec, because these routes compress inside the request pipeline rather than leaving it to the server underneath, which a testserver transport would not reach. Where that stops being true the declaration moves to \"kestrel\": WebApplicationFactory.UseKestrel(0) with StartServer() puts a real server on a loopback port in the same process, so a socket costs one line here and not a second process"
+        "transport": "in-memory",
+        "reaches": "the codec, because these routes compress inside the request pipeline rather than leaving it to the server underneath, which an in-memory transport would not reach. Where that stops being true the declaration moves to \"loopback\": WebApplicationFactory.UseKestrel(0) with StartServer() puts a real server on a loopback port in the same process, so a socket costs one line here and not a second process"
       },
       "etag": {
         "facility": "AlbaHost.For<Program>, which Wolverine's documentation names for HTTP tests",
         "dep": "Alba",
-        "transport": "testserver",
+        "transport": "in-memory",
         "reaches": "the validator and the conditional answer. The 304 is the only request in the corpus that cannot be sent until the target has answered a different one, because the validator is the target's to produce"
       },
       "cache": {
         "facility": "AlbaHost.For<Program>, which Wolverine's documentation names for HTTP tests",
         "dep": "Alba",
-        "transport": "testserver",
+        "transport": "in-memory",
         "reaches": "the response cache and what it is keyed on. A store keyed on fewer headers than it declares answers one tenant with another tenant's body"
       },
       "body": {
         "facility": "AlbaHost.For<Program>, which Wolverine's documentation names for HTTP tests",
         "dep": "Alba",
-        "transport": "testserver",
+        "transport": "in-memory",
         "reaches": "the binding and the validation facility, including the two refusals, which are judged as the envelope this target recorded rather than against a pinned body"
       },
       "query": {
         "facility": "AlbaHost.For<Program>, which Wolverine's documentation names for HTTP tests",
         "dep": "Alba",
-        "transport": "testserver",
+        "transport": "in-memory",
         "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
       },
       "headers": {
         "facility": "AlbaHost.For<Program>, which Wolverine's documentation names for HTTP tests",
         "dep": "Alba",
-        "transport": "testserver",
+        "transport": "in-memory",
         "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
       },
       "middleware": {
         "facility": "AlbaHost.For<Program>, which Wolverine's documentation names for HTTP tests",
         "dep": "Alba",
-        "transport": "testserver",
+        "transport": "in-memory",
         "reaches": "every layer, because the host boots the application rather than calling the handler, which is the way this family is failed without noticing"
       },
       "domain": {
         "facility": "AlbaHost.For<Program>, which Wolverine's documentation names for HTTP tests",
         "dep": "Alba",
-        "transport": "testserver",
+        "transport": "in-memory",
         "reaches": "the shared model through all eight operations, including the four that write, where a 201 and a 204 with no body are answers a framework can get subtly wrong while returning the right status"
       },
       "errors": {
         "facility": "AlbaHost.For<Program>, which Wolverine's documentation names for HTTP tests",
         "dep": "Alba",
-        "transport": "testserver",
+        "transport": "in-memory",
         "reaches": "whatever this target does with a route it does not have, which is the framework rather than a handler"
       },
       "template": {
         "facility": "AlbaHost.For<Program>, which Wolverine's documentation names for HTTP tests",
         "dep": "Alba",
-        "transport": "testserver",
+        "transport": "in-memory",
+        "reaches": "the engine's output, normalised the way the conformance client normalises it: the spec pins the content and leaves the whitespace free"
+      }
+    },
+    "python:fastapi": {
+      "baseline": {
+        "facility": "FastAPI's TestClient, which is Starlette's, over the httpx2 it asks for at the pinned Starlette; run by pytest",
+        "dep": "httpx2",
+        "transport": "in-memory",
+        "reaches": "the literal and the content type, which is the whole of what this endpoint is"
+      },
+      "json": {
+        "facility": "FastAPI's TestClient, which is Starlette's, over the httpx2 it asks for at the pinned Starlette; run by pytest",
+        "dep": "httpx2",
+        "transport": "in-memory",
+        "reaches": "the serializer at three sizes, which is all this family has to show"
+      },
+      "parameters": {
+        "facility": "FastAPI's TestClient, which is Starlette's, over the httpx2 it asks for at the pinned Starlette; run by pytest",
+        "dep": "httpx2",
+        "transport": "in-memory",
+        "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
+      },
+      "authorized": {
+        "facility": "FastAPI's TestClient, which is Starlette's, over the httpx2 it asks for at the pinned Starlette; run by pytest",
+        "dep": "httpx2",
+        "transport": "in-memory",
+        "reaches": "the refusal as well as the pass, which is the half a target that let everything through would still answer correctly"
+      },
+      "compressed": {
+        "facility": "FastAPI's TestClient, which is Starlette's, over the httpx2 it asks for at the pinned Starlette; run by pytest",
+        "dep": "httpx2",
+        "transport": "in-memory",
+        "reaches": "the codec, because this target compresses inside the application rather than leaving it to the server underneath, which in Python is a real possibility because the framework is not the server"
+      },
+      "etag": {
+        "facility": "FastAPI's TestClient, which is Starlette's, over the httpx2 it asks for at the pinned Starlette; run by pytest",
+        "dep": "httpx2",
+        "transport": "in-memory",
+        "reaches": "the validator and the conditional answer. The 304 is the only request in the corpus that cannot be sent until the target has answered a different one, because the validator is the target's to produce"
+      },
+      "cache": {
+        "facility": "FastAPI's TestClient, which is Starlette's, over the httpx2 it asks for at the pinned Starlette; run by pytest",
+        "dep": "httpx2",
+        "transport": "in-memory",
+        "reaches": "the response cache and what it is keyed on. A store keyed on fewer headers than it declares answers one tenant with another tenant's body"
+      },
+      "body": {
+        "facility": "FastAPI's TestClient, which is Starlette's, over the httpx2 it asks for at the pinned Starlette; run by pytest",
+        "dep": "httpx2",
+        "transport": "in-memory",
+        "reaches": "the binding and the validation facility, including the two refusals, which are judged as the envelope this target recorded rather than against a pinned body"
+      },
+      "query": {
+        "facility": "FastAPI's TestClient, which is Starlette's, over the httpx2 it asks for at the pinned Starlette; run by pytest",
+        "dep": "httpx2",
+        "transport": "in-memory",
+        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+      },
+      "headers": {
+        "facility": "FastAPI's TestClient, which is Starlette's, over the httpx2 it asks for at the pinned Starlette; run by pytest",
+        "dep": "httpx2",
+        "transport": "in-memory",
+        "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
+      },
+      "middleware": {
+        "facility": "FastAPI's TestClient, which is Starlette's, over the httpx2 it asks for at the pinned Starlette; run by pytest",
+        "dep": "httpx2",
+        "transport": "in-memory",
+        "reaches": "every layer, because the host boots the application rather than calling the handler, which is the way this family is failed without noticing"
+      },
+      "domain": {
+        "facility": "FastAPI's TestClient, which is Starlette's, over the httpx2 it asks for at the pinned Starlette; run by pytest",
+        "dep": "httpx2",
+        "transport": "in-memory",
+        "reaches": "the shared model through all eight operations, including the four that write, where a 201 and a 204 with no body are answers a framework can get subtly wrong while returning the right status"
+      },
+      "errors": {
+        "facility": "FastAPI's TestClient, which is Starlette's, over the httpx2 it asks for at the pinned Starlette; run by pytest",
+        "dep": "httpx2",
+        "transport": "in-memory",
+        "reaches": "whatever this target does with a route it does not have, which is the framework rather than a handler"
+      },
+      "template": {
+        "facility": "FastAPI's TestClient, which is Starlette's, over the httpx2 it asks for at the pinned Starlette; run by pytest",
+        "dep": "httpx2",
+        "transport": "in-memory",
+        "reaches": "the engine's output, normalised the way the conformance client normalises it: the spec pins the content and leaves the whitespace free"
+      }
+    },
+    "python:starlette": {
+      "baseline": {
+        "facility": "Starlette's TestClient over httpx2; run by pytest",
+        "dep": "httpx2",
+        "transport": "in-memory",
+        "reaches": "the literal and the content type, which is the whole of what this endpoint is"
+      },
+      "json": {
+        "facility": "Starlette's TestClient over httpx2; run by pytest",
+        "dep": "httpx2",
+        "transport": "in-memory",
+        "reaches": "the serializer at three sizes, which is all this family has to show"
+      },
+      "parameters": {
+        "facility": "Starlette's TestClient over httpx2; run by pytest",
+        "dep": "httpx2",
+        "transport": "in-memory",
+        "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
+      },
+      "authorized": {
+        "facility": "Starlette's TestClient over httpx2; run by pytest",
+        "dep": "httpx2",
+        "transport": "in-memory",
+        "reaches": "the refusal as well as the pass, which is the half a target that let everything through would still answer correctly"
+      },
+      "compressed": {
+        "facility": "Starlette's TestClient over httpx2; run by pytest",
+        "dep": "httpx2",
+        "transport": "in-memory",
+        "reaches": "the codec, because this target compresses inside the application rather than leaving it to the server underneath, which in Python is a real possibility because the framework is not the server"
+      },
+      "etag": {
+        "facility": "Starlette's TestClient over httpx2; run by pytest",
+        "dep": "httpx2",
+        "transport": "in-memory",
+        "reaches": "the validator and the conditional answer. The 304 is the only request in the corpus that cannot be sent until the target has answered a different one, because the validator is the target's to produce"
+      },
+      "cache": {
+        "facility": "Starlette's TestClient over httpx2; run by pytest",
+        "dep": "httpx2",
+        "transport": "in-memory",
+        "reaches": "the response cache and what it is keyed on. A store keyed on fewer headers than it declares answers one tenant with another tenant's body"
+      },
+      "body": {
+        "facility": "Starlette's TestClient over httpx2; run by pytest",
+        "dep": "httpx2",
+        "transport": "in-memory",
+        "reaches": "the binding and the validation facility, including the two refusals, which are judged as the envelope this target recorded rather than against a pinned body"
+      },
+      "query": {
+        "facility": "Starlette's TestClient over httpx2; run by pytest",
+        "dep": "httpx2",
+        "transport": "in-memory",
+        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+      },
+      "headers": {
+        "facility": "Starlette's TestClient over httpx2; run by pytest",
+        "dep": "httpx2",
+        "transport": "in-memory",
+        "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
+      },
+      "middleware": {
+        "facility": "Starlette's TestClient over httpx2; run by pytest",
+        "dep": "httpx2",
+        "transport": "in-memory",
+        "reaches": "every layer, because the host boots the application rather than calling the handler, which is the way this family is failed without noticing"
+      },
+      "domain": {
+        "facility": "Starlette's TestClient over httpx2; run by pytest",
+        "dep": "httpx2",
+        "transport": "in-memory",
+        "reaches": "the shared model through all eight operations, including the four that write, where a 201 and a 204 with no body are answers a framework can get subtly wrong while returning the right status"
+      },
+      "errors": {
+        "facility": "Starlette's TestClient over httpx2; run by pytest",
+        "dep": "httpx2",
+        "transport": "in-memory",
+        "reaches": "whatever this target does with a route it does not have, which is the framework rather than a handler"
+      },
+      "template": {
+        "facility": "Starlette's TestClient over httpx2; run by pytest",
+        "dep": "httpx2",
+        "transport": "in-memory",
+        "reaches": "the engine's output, normalised the way the conformance client normalises it: the spec pins the content and leaves the whitespace free"
+      }
+    },
+    "python:litestar": {
+      "baseline": {
+        "facility": "litestar.testing.TestClient, which ships with the framework and is built on httpx; run by pytest",
+        "dep": "httpx",
+        "transport": "in-memory",
+        "reaches": "the literal and the content type, which is the whole of what this endpoint is"
+      },
+      "json": {
+        "facility": "litestar.testing.TestClient, which ships with the framework and is built on httpx; run by pytest",
+        "dep": "httpx",
+        "transport": "in-memory",
+        "reaches": "the serializer at three sizes, which is all this family has to show"
+      },
+      "parameters": {
+        "facility": "litestar.testing.TestClient, which ships with the framework and is built on httpx; run by pytest",
+        "dep": "httpx",
+        "transport": "in-memory",
+        "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
+      },
+      "authorized": {
+        "facility": "litestar.testing.TestClient, which ships with the framework and is built on httpx; run by pytest",
+        "dep": "httpx",
+        "transport": "in-memory",
+        "reaches": "the refusal as well as the pass, which is the half a target that let everything through would still answer correctly"
+      },
+      "compressed": {
+        "facility": "litestar.testing.TestClient, which ships with the framework and is built on httpx; run by pytest",
+        "dep": "httpx",
+        "transport": "in-memory",
+        "reaches": "the codec, because this target compresses inside the application rather than leaving it to the server underneath, which in Python is a real possibility because the framework is not the server"
+      },
+      "etag": {
+        "facility": "litestar.testing.TestClient, which ships with the framework and is built on httpx; run by pytest",
+        "dep": "httpx",
+        "transport": "in-memory",
+        "reaches": "the validator and the conditional answer. The 304 is the only request in the corpus that cannot be sent until the target has answered a different one, because the validator is the target's to produce"
+      },
+      "cache": {
+        "facility": "litestar.testing.TestClient, which ships with the framework and is built on httpx; run by pytest",
+        "dep": "httpx",
+        "transport": "in-memory",
+        "reaches": "the response cache and what it is keyed on. A store keyed on fewer headers than it declares answers one tenant with another tenant's body"
+      },
+      "body": {
+        "facility": "litestar.testing.TestClient, which ships with the framework and is built on httpx; run by pytest",
+        "dep": "httpx",
+        "transport": "in-memory",
+        "reaches": "the binding and the validation facility, including the two refusals, which are judged as the envelope this target recorded rather than against a pinned body"
+      },
+      "query": {
+        "facility": "litestar.testing.TestClient, which ships with the framework and is built on httpx; run by pytest",
+        "dep": "httpx",
+        "transport": "in-memory",
+        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+      },
+      "headers": {
+        "facility": "litestar.testing.TestClient, which ships with the framework and is built on httpx; run by pytest",
+        "dep": "httpx",
+        "transport": "in-memory",
+        "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
+      },
+      "middleware": {
+        "facility": "litestar.testing.TestClient, which ships with the framework and is built on httpx; run by pytest",
+        "dep": "httpx",
+        "transport": "in-memory",
+        "reaches": "every layer, because the host boots the application rather than calling the handler, which is the way this family is failed without noticing"
+      },
+      "domain": {
+        "facility": "litestar.testing.TestClient, which ships with the framework and is built on httpx; run by pytest",
+        "dep": "httpx",
+        "transport": "in-memory",
+        "reaches": "the shared model through all eight operations, including the four that write, where a 201 and a 204 with no body are answers a framework can get subtly wrong while returning the right status"
+      },
+      "errors": {
+        "facility": "litestar.testing.TestClient, which ships with the framework and is built on httpx; run by pytest",
+        "dep": "httpx",
+        "transport": "in-memory",
+        "reaches": "whatever this target does with a route it does not have, which is the framework rather than a handler"
+      },
+      "template": {
+        "facility": "litestar.testing.TestClient, which ships with the framework and is built on httpx; run by pytest",
+        "dep": "httpx",
+        "transport": "in-memory",
+        "reaches": "the engine's output, normalised the way the conformance client normalises it: the spec pins the content and leaves the whitespace free"
+      }
+    },
+    "python:flask": {
+      "baseline": {
+        "facility": "app.test_client(), Werkzeug's, which ships with Flask; run by pytest",
+        "transport": "in-memory",
+        "reaches": "the literal and the content type, which is the whole of what this endpoint is"
+      },
+      "json": {
+        "facility": "app.test_client(), Werkzeug's, which ships with Flask; run by pytest",
+        "transport": "in-memory",
+        "reaches": "the serializer at three sizes, which is all this family has to show"
+      },
+      "parameters": {
+        "facility": "app.test_client(), Werkzeug's, which ships with Flask; run by pytest",
+        "transport": "in-memory",
+        "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
+      },
+      "authorized": {
+        "facility": "app.test_client(), Werkzeug's, which ships with Flask; run by pytest",
+        "transport": "in-memory",
+        "reaches": "the refusal as well as the pass, which is the half a target that let everything through would still answer correctly"
+      },
+      "compressed": {
+        "facility": "app.test_client(), Werkzeug's, which ships with Flask; run by pytest",
+        "transport": "in-memory",
+        "reaches": "the codec, because this target compresses inside the application rather than leaving it to the server underneath, which in Python is a real possibility because the framework is not the server"
+      },
+      "etag": {
+        "facility": "app.test_client(), Werkzeug's, which ships with Flask; run by pytest",
+        "transport": "in-memory",
+        "reaches": "the validator and the conditional answer. The 304 is the only request in the corpus that cannot be sent until the target has answered a different one, because the validator is the target's to produce"
+      },
+      "cache": {
+        "facility": "app.test_client(), Werkzeug's, which ships with Flask; run by pytest",
+        "transport": "in-memory",
+        "reaches": "the response cache and what it is keyed on. A store keyed on fewer headers than it declares answers one tenant with another tenant's body"
+      },
+      "body": {
+        "facility": "app.test_client(), Werkzeug's, which ships with Flask; run by pytest",
+        "transport": "in-memory",
+        "reaches": "the binding and the validation facility, including the two refusals, which are judged as the envelope this target recorded rather than against a pinned body"
+      },
+      "query": {
+        "facility": "app.test_client(), Werkzeug's, which ships with Flask; run by pytest",
+        "transport": "in-memory",
+        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+      },
+      "headers": {
+        "facility": "app.test_client(), Werkzeug's, which ships with Flask; run by pytest",
+        "transport": "in-memory",
+        "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
+      },
+      "middleware": {
+        "facility": "app.test_client(), Werkzeug's, which ships with Flask; run by pytest",
+        "transport": "in-memory",
+        "reaches": "every layer, because the host boots the application rather than calling the handler, which is the way this family is failed without noticing"
+      },
+      "domain": {
+        "facility": "app.test_client(), Werkzeug's, which ships with Flask; run by pytest",
+        "transport": "in-memory",
+        "reaches": "the shared model through all eight operations, including the four that write, where a 201 and a 204 with no body are answers a framework can get subtly wrong while returning the right status"
+      },
+      "errors": {
+        "facility": "app.test_client(), Werkzeug's, which ships with Flask; run by pytest",
+        "transport": "in-memory",
+        "reaches": "whatever this target does with a route it does not have, which is the framework rather than a handler"
+      },
+      "template": {
+        "facility": "app.test_client(), Werkzeug's, which ships with Flask; run by pytest",
+        "transport": "in-memory",
+        "reaches": "the engine's output, normalised the way the conformance client normalises it: the spec pins the content and leaves the whitespace free"
+      }
+    },
+    "python:sanic": {
+      "baseline": {
+        "facility": "app.test_client from sanic-testing, which starts the application on a loopback port for every request; run by pytest",
+        "dep": "sanic-testing",
+        "transport": "loopback",
+        "reaches": "the literal and the content type, which is the whole of what this endpoint is"
+      },
+      "json": {
+        "facility": "app.test_client from sanic-testing, which starts the application on a loopback port for every request; run by pytest",
+        "dep": "sanic-testing",
+        "transport": "loopback",
+        "reaches": "the serializer at three sizes, which is all this family has to show"
+      },
+      "parameters": {
+        "facility": "app.test_client from sanic-testing, which starts the application on a loopback port for every request; run by pytest",
+        "dep": "sanic-testing",
+        "transport": "loopback",
+        "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
+      },
+      "authorized": {
+        "facility": "app.test_client from sanic-testing, which starts the application on a loopback port for every request; run by pytest",
+        "dep": "sanic-testing",
+        "transport": "loopback",
+        "reaches": "the refusal as well as the pass, which is the half a target that let everything through would still answer correctly"
+      },
+      "compressed": {
+        "facility": "app.test_client from sanic-testing, which starts the application on a loopback port for every request; run by pytest",
+        "dep": "sanic-testing",
+        "transport": "loopback",
+        "reaches": "the codec, because this target compresses inside the application rather than leaving it to the server underneath, which in Python is a real possibility because the framework is not the server"
+      },
+      "etag": {
+        "facility": "app.test_client from sanic-testing, which starts the application on a loopback port for every request; run by pytest",
+        "dep": "sanic-testing",
+        "transport": "loopback",
+        "reaches": "the validator and the conditional answer. The 304 is the only request in the corpus that cannot be sent until the target has answered a different one, because the validator is the target's to produce"
+      },
+      "cache": {
+        "facility": "app.test_client from sanic-testing, which starts the application on a loopback port for every request; run by pytest",
+        "dep": "sanic-testing",
+        "transport": "loopback",
+        "reaches": "the response cache and what it is keyed on. A store keyed on fewer headers than it declares answers one tenant with another tenant's body"
+      },
+      "body": {
+        "facility": "app.test_client from sanic-testing, which starts the application on a loopback port for every request; run by pytest",
+        "dep": "sanic-testing",
+        "transport": "loopback",
+        "reaches": "the binding and the validation facility, including the two refusals, which are judged as the envelope this target recorded rather than against a pinned body"
+      },
+      "query": {
+        "facility": "app.test_client from sanic-testing, which starts the application on a loopback port for every request; run by pytest",
+        "dep": "sanic-testing",
+        "transport": "loopback",
+        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+      },
+      "headers": {
+        "facility": "app.test_client from sanic-testing, which starts the application on a loopback port for every request; run by pytest",
+        "dep": "sanic-testing",
+        "transport": "loopback",
+        "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
+      },
+      "middleware": {
+        "facility": "app.test_client from sanic-testing, which starts the application on a loopback port for every request; run by pytest",
+        "dep": "sanic-testing",
+        "transport": "loopback",
+        "reaches": "every layer, because the host boots the application rather than calling the handler, which is the way this family is failed without noticing"
+      },
+      "domain": {
+        "facility": "app.test_client from sanic-testing, which starts the application on a loopback port for every request; run by pytest",
+        "dep": "sanic-testing",
+        "transport": "loopback",
+        "reaches": "the shared model through all eight operations, including the four that write, where a 201 and a 204 with no body are answers a framework can get subtly wrong while returning the right status"
+      },
+      "errors": {
+        "facility": "app.test_client from sanic-testing, which starts the application on a loopback port for every request; run by pytest",
+        "dep": "sanic-testing",
+        "transport": "loopback",
+        "reaches": "whatever this target does with a route it does not have, which is the framework rather than a handler"
+      },
+      "template": {
+        "facility": "app.test_client from sanic-testing, which starts the application on a loopback port for every request; run by pytest",
+        "dep": "sanic-testing",
+        "transport": "loopback",
+        "reaches": "the engine's output, normalised the way the conformance client normalises it: the spec pins the content and leaves the whitespace free"
+      }
+    },
+    "python:django-asgi": {
+      "baseline": {
+        "facility": "self.async_client, Django's AsyncClient on a SimpleTestCase; run by Django's own DiscoverRunner rather than pytest",
+        "transport": "in-memory",
+        "reaches": "the literal and the content type, which is the whole of what this endpoint is"
+      },
+      "json": {
+        "facility": "self.async_client, Django's AsyncClient on a SimpleTestCase; run by Django's own DiscoverRunner rather than pytest",
+        "transport": "in-memory",
+        "reaches": "the serializer at three sizes, which is all this family has to show"
+      },
+      "parameters": {
+        "facility": "self.async_client, Django's AsyncClient on a SimpleTestCase; run by Django's own DiscoverRunner rather than pytest",
+        "transport": "in-memory",
+        "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
+      },
+      "authorized": {
+        "facility": "self.async_client, Django's AsyncClient on a SimpleTestCase; run by Django's own DiscoverRunner rather than pytest",
+        "transport": "in-memory",
+        "reaches": "the refusal as well as the pass, which is the half a target that let everything through would still answer correctly"
+      },
+      "compressed": {
+        "facility": "self.async_client, Django's AsyncClient on a SimpleTestCase; run by Django's own DiscoverRunner rather than pytest",
+        "transport": "in-memory",
+        "reaches": "the codec, because this target compresses inside the application rather than leaving it to the server underneath, which in Python is a real possibility because the framework is not the server"
+      },
+      "etag": {
+        "facility": "self.async_client, Django's AsyncClient on a SimpleTestCase; run by Django's own DiscoverRunner rather than pytest",
+        "transport": "in-memory",
+        "reaches": "the validator and the conditional answer. The 304 is the only request in the corpus that cannot be sent until the target has answered a different one, because the validator is the target's to produce"
+      },
+      "cache": {
+        "facility": "self.async_client, Django's AsyncClient on a SimpleTestCase; run by Django's own DiscoverRunner rather than pytest",
+        "transport": "in-memory",
+        "reaches": "the response cache and what it is keyed on. A store keyed on fewer headers than it declares answers one tenant with another tenant's body"
+      },
+      "body": {
+        "facility": "self.async_client, Django's AsyncClient on a SimpleTestCase; run by Django's own DiscoverRunner rather than pytest",
+        "transport": "in-memory",
+        "reaches": "the binding and the validation facility, including the two refusals, which are judged as the envelope this target recorded rather than against a pinned body"
+      },
+      "query": {
+        "facility": "self.async_client, Django's AsyncClient on a SimpleTestCase; run by Django's own DiscoverRunner rather than pytest",
+        "transport": "in-memory",
+        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+      },
+      "headers": {
+        "facility": "self.async_client, Django's AsyncClient on a SimpleTestCase; run by Django's own DiscoverRunner rather than pytest",
+        "transport": "in-memory",
+        "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
+      },
+      "middleware": {
+        "facility": "self.async_client, Django's AsyncClient on a SimpleTestCase; run by Django's own DiscoverRunner rather than pytest",
+        "transport": "in-memory",
+        "reaches": "every layer, because the host boots the application rather than calling the handler, which is the way this family is failed without noticing"
+      },
+      "domain": {
+        "facility": "self.async_client, Django's AsyncClient on a SimpleTestCase; run by Django's own DiscoverRunner rather than pytest",
+        "transport": "in-memory",
+        "reaches": "the shared model through all eight operations, including the four that write, where a 201 and a 204 with no body are answers a framework can get subtly wrong while returning the right status"
+      },
+      "errors": {
+        "facility": "self.async_client, Django's AsyncClient on a SimpleTestCase; run by Django's own DiscoverRunner rather than pytest",
+        "transport": "in-memory",
+        "reaches": "whatever this target does with a route it does not have, which is the framework rather than a handler"
+      },
+      "template": {
+        "facility": "self.async_client, Django's AsyncClient on a SimpleTestCase; run by Django's own DiscoverRunner rather than pytest",
+        "transport": "in-memory",
         "reaches": "the engine's output, normalised the way the conformance client normalises it: the spec pins the content and leaves the whitespace free"
       }
     }
   },
-  "suites_note": "What each target's own suite tests a family with, and what it talks to. transport is \"testserver\" for an in-memory transport with no socket at all, \"kestrel\" for a real server on a loopback port in the test's own process, or \"process\" for a target booted the way harness/run.py boots one. The three are not interchangeable: a framework that compresses in its request pipeline is reached by all three, and one that leaves it to the server underneath is reached only by the last two. Per family rather than per target, because whether a test reaches the code under test is not a fact about a framework: MockMvc and @SpringBootTest(webEnvironment = RANDOM_PORT) are both Spring, and a target that tests against a socket for compressed and in memory for everything else is the case a per-target flag would hide. A family with no marked test needs no entry here; one with a marked test has to have one, and the dependency it names has to be in that target's suite project."
+  "suites_note": "What each target's own suite tests a family with, and what it talks to. transport is \"in-memory\" for a client that calls the application with no socket at all, \"loopback\" for a real server on a loopback port in the test's own process, or \"process\" for a target booted the way harness/run.py boots one. The three are not interchangeable: a framework that compresses in its request pipeline is reached by all three, and one that leaves it to the server underneath is reached only by the last two. Per family rather than per target, because whether a test reaches the code under test is not a fact about a framework: MockMvc and @SpringBootTest(webEnvironment = RANDOM_PORT) are both Spring, and a target that tests against a socket for compressed and in memory for everything else is the case a per-target flag would hide. A family with no marked test needs no entry here; one with a marked test has to have one, and the dependency it names has to be in that target's suite project."
 }
