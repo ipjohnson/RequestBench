@@ -22,8 +22,13 @@ const argv = Object.fromEntries(process.argv.slice(2).reduce((a, c, i, all) => {
 const INVOKE_PORT = Number(argv.invoke ?? 8080);
 const API_PORT = Number(argv.api ?? 9001);
 
-// RIE's default. Nothing here enforces it: a runtime only reads it as the time it has left.
-const TIMEOUT_MS = 300_000;
+// The function's timeout, which the runtime is told as its deadline. A runtime that died
+// mid-invocation never answers and never polls again. RIE was the runtime's parent and
+// restarted it, but a runtime in another container cannot be restarted from here. So once
+// the runtime has polled, an event it leaves unanswered or unclaimed this long ends the
+// environment, and every event after that gets an error at once instead of hanging the
+// gate or the driver.
+const TIMEOUT_MS = 30_000;
 const ARN = "arn:aws:lambda:us-east-1:000000000000:function:rb";
 const TRACE = "Root=1-00000000-000000000000000000000000;Parent=0000000000000000;Sampled=0";
 const INVOKE = /^\/2015-03-31\/functions\/[^/]+\/invocations$/;
@@ -32,7 +37,8 @@ const ANSWER = /^\/2018-06-01\/runtime\/invocation\/([^/]+)\/(response|error)$/;
 const waiting = [];         // events not yet handed to the runtime
 const polls = [];           // GET /next requests the runtime is holding open
 const running = new Map();  // events the runtime has taken, by request id
-let initError;              // what the runtime posted to /init/error before it exited
+let polled = false;         // whether the runtime has finished starting and asked for work
+let over;                   // the answer every event gets once the environment has ended
 
 function read(req) {
   return new Promise((resolve, reject) => {
@@ -77,8 +83,30 @@ function answer(inv, payload, headers) {
   if (!inv.gone) reply(inv.res, 200, payload, { "x-rb-duration-ns": String(ns), ...headers });
 }
 
+function end(payload, why) {
+  over = payload;
+  process.stderr.write(`${why}\n`);
+  for (const inv of [...running.values(), ...waiting.splice(0)]) {
+    if (!inv.gone) reply(inv.res, 200, payload, { "x-amz-function-error": "Unhandled" });
+  }
+  running.clear();
+}
+
+setInterval(() => {
+  if (over || !polled) return;
+  const limit = BigInt(TIMEOUT_MS) * 1_000_000n, now = process.hrtime.bigint();
+  const late = [...running.values()].some((inv) => now - inv.handed > limit);
+  const stuck = !running.size && waiting.some((inv) => !inv.gone && now - inv.queued > limit);
+  if (late || stuck) {
+    const why = late ? `the runtime did not answer within ${TIMEOUT_MS} ms`
+                     : `the runtime stopped asking for work for ${TIMEOUT_MS} ms`;
+    end(json({ errorType: "Runtime.Unavailable", errorMessage: why }), why);
+  }
+}, 1000).unref();
+
 const api = http.createServer(async (req, res) => {
   if (req.method === "GET" && req.url === "/2018-06-01/runtime/invocation/next") {
+    polled = true;
     polls.push(res);
     // A runtime that dies while polling leaves its request behind, and the next event
     // must not be written into it.
@@ -106,11 +134,8 @@ const api = http.createServer(async (req, res) => {
     return;
   }
   if (req.method === "POST" && req.url === "/2018-06-01/runtime/init/error") {
-    initError = await read(req);
-    process.stderr.write(`init error: ${initError}\n`);
-    for (const inv of waiting.splice(0)) {
-      if (!inv.gone) reply(inv.res, 200, initError, { "x-amz-function-error": "Unhandled" });
-    }
+    const payload = await read(req);
+    end(payload, `init error: ${payload}`);
     reply(res, 202, json({ status: "OK" }));
     return;
   }
@@ -128,11 +153,12 @@ const front = http.createServer(async (req, res) => {
     return;
   }
   const event = await read(req);
-  if (initError) {
-    reply(res, 200, initError, { "x-amz-function-error": "Unhandled" });
+  if (over) {
+    reply(res, 200, over, { "x-amz-function-error": "Unhandled" });
     return;
   }
-  const inv = { id: randomUUID(), event, res, handed: 0n, gone: false };
+  const inv = { id: randomUUID(), event, res, handed: 0n,
+                queued: process.hrtime.bigint(), gone: false };
   // A caller can give up before the runtime takes its event. Handed over later, that
   // event would run ahead of the caller's next one.
   res.on("close", () => { if (!res.writableEnded) inv.gone = true; });
