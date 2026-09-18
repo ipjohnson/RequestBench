@@ -196,6 +196,13 @@ function once(i, record) {
           try { status = JSON.parse(Buffer.concat(chunks).toString()).statusCode; }
           catch { status = 0; }
           const ns = res.headers["x-rb-duration-ns"];
+          if (ns === undefined && res.headers["x-amz-function-error"] !== undefined) {
+            // The Runtime API has ended the environment, because its runtime died or
+            // stopped asking for work. Nothing ran, so there is no Duration to record.
+            if (record) errors[idx]++;
+            resolve();
+            return;
+          }
           if (ns === undefined) {
             console.error("the invoke endpoint sent no x-rb-duration-ns, so it is not "
               + "gen/runtime-api.mjs and there is no Duration to record");
