@@ -15,7 +15,9 @@ namespace RequestBench.Suite;
 public static class Spec
 {
     private static readonly Lazy<string> RootPath = new(FindRoot);
-    private static readonly Lazy<JsonObject> Requests = new(ReadRequests);
+    private static readonly Lazy<JsonObject> Requests = new(() => Block("requests"));
+    private static readonly Lazy<JsonObject> Errors = new(() => Block("errors"));
+    private static readonly Lazy<JsonObject> Targets = new(() => Block("targets"));
 
     /// <summary>The repository root, found by walking up from the test assembly.</summary>
     /// <remarks>
@@ -47,14 +49,18 @@ public static class Spec
     /// </remarks>
     public static string FixturePath => Path.Combine(Root, "spec", "fixture.json");
 
-    private static JsonObject ReadRequests()
+    private static readonly Lazy<JsonObject> Document = new(ReadDocument);
+
+    private static JsonObject ReadDocument()
     {
         using FileStream stream = File.OpenRead(Path.Combine(Root, "spec", "expected.json"));
-        JsonNode root = JsonNode.Parse(stream)
-                        ?? throw new InvalidOperationException("spec/expected.json is empty");
-        return root["requests"]?.AsObject()
-               ?? throw new InvalidOperationException("spec/expected.json has no requests");
+        return JsonNode.Parse(stream)?.AsObject()
+               ?? throw new InvalidOperationException("spec/expected.json is empty");
     }
+
+    private static JsonObject Block(string name) =>
+        Document.Value[name]?.AsObject()
+        ?? throw new InvalidOperationException($"spec/expected.json has no {name}");
 
     /// <summary>The expectation for an endpoint that sends one distinct request.</summary>
     /// <exception cref="InvalidOperationException">
@@ -81,6 +87,18 @@ public static class Spec
 
     /// <summary>The expectation for one request of an endpoint that sends several.</summary>
     public static Expectation For(string endpointId, string path) => At($"{endpointId} {path}");
+
+    /// <summary>Whether this endpoint is judged as an error rather than against a pinned body.</summary>
+    public static bool IsError(string endpointId) => Errors.Value.ContainsKey(endpointId);
+
+    /// <summary>The envelope shape this target recorded, or null where it recorded none.</summary>
+    /// <remarks>
+    /// Keyed by the request rather than by the endpoint, like `requests` is: errors.malformed
+    /// and body.rejected_all are sent to the same path and a framework may answer them
+    /// differently.
+    /// </remarks>
+    public static JsonObject? Envelope(string target, string key) =>
+        Targets.Value[target]?[key]?.AsObject();
 
     private static Expectation At(string key)
     {

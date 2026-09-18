@@ -51,4 +51,68 @@ public sealed class TargetApp : IAsyncLifetime
                 string.Join(", ", (string?[])response.Headers.ContentEncoding!),
                 copy.ToArray());
     }
+
+    /// <summary>Send one of an endpoint's planned requests, as an Alba scenario.</summary>
+    /// <remarks>
+    /// The method, path, headers and body all come from spec/plan.json. What is authored here
+    /// is the scenario, which is the part that differs between targets.
+    ///
+    /// Alba asserts 200 unless told not to. The status spec/expected.json pins is the
+    /// authority, and two of them would mean a wrong expectation could be masked by a
+    /// scenario that happened to agree with the target.
+    /// </remarks>
+    public Task<IScenarioResult> Send(Ask ask) => Send(ask, ask.Headers);
+
+    private async Task<IScenarioResult> Send(Ask ask, IDictionary<string, string> headers) =>
+        await Host.Scenario(scenario =>
+        {
+            int query = ask.Path.IndexOf('?', StringComparison.Ordinal);
+            string path = query < 0 ? ask.Path : ask.Path[..query];
+            IUrlExpression verb = ask.Method switch
+            {
+                "GET" => scenario.Get,
+                "POST" => scenario.Post,
+                "PUT" => scenario.Put,
+                "PATCH" => scenario.Patch,
+                "DELETE" => scenario.Delete,
+                _ => throw new InvalidOperationException($"no verb for {ask.Method}"),
+            };
+            if (ask.Body is string body)
+            {
+                verb.Text(body).ContentType("application/json").ToUrl(path);
+            }
+            else
+            {
+                verb.Url(path);
+            }
+            foreach ((string name, string value) in headers)
+            {
+                if (!name.Equals("content-type", StringComparison.OrdinalIgnoreCase))
+                {
+                    scenario.WithRequestHeader(name, value);
+                }
+            }
+            // Url() sets the path and leaves the query where it found it, which for a scenario
+            // built from a string is nowhere.
+            if (query >= 0)
+            {
+                scenario.ConfigureHttpContext(
+                    context => context.Request.QueryString = new QueryString(ask.Path[query..]));
+            }
+            scenario.IgnoreStatusCode();
+        });
+
+    /// <summary>Ask for the validator first, then send the request that carries it.</summary>
+    public async Task<IScenarioResult> SendAfterCapture(Ask ask)
+    {
+        (string method, string path, string header) = Plan.CaptureFor(ask)
+            ?? throw new InvalidOperationException($"{ask.Id} captures nothing");
+        IScenarioResult first = await Host.Scenario(scenario =>
+        {
+            if (method == "GET") { scenario.Get.Url(path); }
+            scenario.IgnoreStatusCode();
+        });
+        string captured = first.Context.Response.Headers[header].ToString();
+        return await Send(ask, Plan.Resolved(ask, captured));
+    }
 }

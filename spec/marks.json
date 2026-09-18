@@ -93,21 +93,6 @@
     }
   },
   "allowance": {
-    "dotnet:aspnet-mvc": {
-      "no_test": 39
-    },
-    "dotnet:carter": {
-      "no_test": 39
-    },
-    "dotnet:fastendpoints": {
-      "no_test": 39
-    },
-    "dotnet:minimal-apis": {
-      "no_test": 39
-    },
-    "dotnet:wolverine-http": {
-      "no_test": 39
-    },
     "go:chi": {
       "no_test": 42
     },

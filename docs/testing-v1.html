@@ -141,7 +141,7 @@ footer { margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--rule);
 <dl class="meta">
   <div><dt>Date</dt><dd>17 September 2026</dd></div>
   <div><dt>Adds</dt><dd>a suite beside each target, at role <code>test</code>; <code>rb:test</code> becomes a required kind</dd></div>
-  <div><dt>Built</dt><dd>5 of 33 targets, 2 of 14 families, 35 tests</dd></div>
+  <div><dt>Built</dt><dd>5 of 33 targets, every family, 240 tests</dd></div>
   <div><dt>Status</dt><dd>&sect;1 to &sect;5 ship. The client projects of &sect;6 are not started, and the other five languages are not either.</dd></div>
 </dl>
 
@@ -184,7 +184,7 @@ footer { margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--rule);
 <div class="sectionhead">
   <span class="num">&sect;4 &middot; Five targets, four test hosts</span>
   <h2>What the first language found</h2>
-  <p><code>compressed</code> and <code>middleware</code>, the two families where a test can pass and prove nothing.</p>
+  <p>Forty-eight endpoints each, which is every endpoint the corpus has. <code>compressed</code> and <code>middleware</code> were written first, because they are the two families where a test can pass and prove nothing.</p>
 </div>
 <div class="scroll"><table>
 <thead><tr><th>Target</th><th>Facility</th><th>What it cost</th></tr></thead>
@@ -202,8 +202,26 @@ footer { margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--rule);
 <p>The socket case is also one process. <code>WebApplicationFactory.UseKestrel(0)</code> followed by <code>StartServer()</code> replaces the in-memory transport with a real <code>KestrelServerImpl</code> on a loopback port, in the test&rsquo;s own process, and <code>CreateClient()</code> then talks HTTP to it. Measured on minimal-apis: <code>server=KestrelServerImpl base=http://127.0.0.1:58707/</code>, same pid, same gzipped 19,141 bytes as the in-memory run. So <code>transport</code> has three values and not two, and the family that needs a real port in .NET costs a line rather than a second process. The suites stay on <code>testserver</code> because that is what the documentation leads with and because the negative test above proves it reaches the codec.</p>
 <p>The trap that did fire is the client, not the host. Most test clients decode transparently, and one that did would make every gzip assertion pass against an identity response. Four of the five suites use the plain client for that reason, and the gzip is undone by the floor assertion where the comparison needs it rather than by the transport. Alba does not have the problem at all, because it hands back the response the endpoint wrote.</p>
 <p><code>compressed.gzip_small</code> is the endpoint the expectation does not pin. The payload sits under the shared 1,024-byte floor, the contributing frameworks disagree, and <code>unpinned</code> records the disagreement rather than choosing a winner. The floor assertion skips the field and each suite asserts what its own target does, which for all five .NET targets is identity.</p>
+<h3>Where the request comes from</h3>
+<p>A suite writes its own arrange and its own act, because the difference between two frameworks there is the thing being captured. The values in the request are not the suite&rsquo;s to choose. <code>spec/plan.json</code> is where an order id, a query string and a request body come from, and a test that typed one out would be asserting against a request the measurement never sends. Instance zero always, because an endpoint sends up to 512 of them and a failure that picked a different one each run would not reproduce.</p>
+<p>One endpoint cannot be sent at all until the target has answered a different one. <code>etag.match_large</code> carries an <code>if-none-match</code> the target itself has to issue, so its test asks for <code>/etag/large</code>, takes the validator off the response and sends the conditional request with it. That is the endpoint&rsquo;s own shape rather than something the suite decided to do, and <code>spec/plan.json</code> says so in its <code>captures</code> block.</p>
+<h3>What an error endpoint is judged against</h3>
+<p>Not <code>spec/expected.json</code>&rsquo;s <code>errors</code> block, which is what caught this on the first full run. That block says what the plan intends, and a framework is allowed to declare otherwise: the <code>client-exception</code> package beside each target is where it does, and minimal-apis uses it to say that a body <code>AddValidation</code> could not read is a bare 400 and not the 422 the plan asks for. Those packages are TypeScript read by the conformance client, so reconciling the two is the client&rsquo;s job and not a suite&rsquo;s.</p>
+<p>A suite reads the envelope this target recorded instead: the status, the kind of body, and the shape, which is the envelope with the values taken out. The shape rather than the body, because ASP.NET&rsquo;s <code>ProblemDetails</code> carries a <code>traceId</code> that changes per connection and an exact body could never match twice. <code>Shape.Of</code> is a port of <code>shape_of()</code> in <code>harness/expected.py</code>, which is what wrote those shapes.</p>
 <h3>What <code>middleware</code> can hold</h3>
 <p>The layers are no-ops, so nothing they do is visible in a response and no assertion over one can tell four apart from sixteen. What a test can hold is the thing that goes wrong in practice: a test that calls the handler rather than the app passes while the layers never ran. FastEndpoints and Wolverine make that unusually easy, because an endpoint is a class anyone can new up and an endpoint method is a static function. Going through the test host is what puts the layers back in the path, and that is the whole of what these three tests assert.</p>
+<h3>Proven to bite, not just to pass</h3>
+<p>A suite that passes says nothing until something has been broken under it. Four breakages, each reverted:</p>
+<div class="scroll"><table>
+<thead><tr><th>Broken</th><th>Caught by</th></tr></thead>
+<tbody>
+<tr><td class="w">the shared payload, small answering medium</td><td>17 tests across 9 families, on all five targets</td></tr>
+<tr><td class="w">the JSON naming policy, snake_case to camelCase</td><td>35 tests across 12 families</td></tr>
+<tr><td class="w"><code>MapFallback</code> answering 410</td><td><code>errors.unmatched</code>: expected 404, got 410</td></tr>
+<tr><td class="w">the plaintext literal, one changed letter</td><td><code>baseline.plaintext</code>: 'Hello, world!' vs 'Hello, World!'</td></tr>
+</tbody>
+</table></div>
+<p>Every family is covered by at least one of the four.</p>
 </section>
 
 <section>
@@ -212,7 +230,7 @@ footer { margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--rule);
   <h2>A required kind that cannot use <code>required: "every"</code></h2>
   <p>Two of the three planned assertions did not survive contact with the corpus. What replaced them is below.</p>
 </div>
-<p><code>harness/snippets.py</code> drops every record that lacks a kind marked <code>every</code>, so setting it on <code>test</code> would empty the snippet map for all forty-eight endpoints on all thirty-three targets and the site would render nothing at all. <code>required: "ratchet"</code> is the third value: absence is counted against the committed allowance, which only ever goes down, and the filter stays keyed to <code>handler</code> alone. The allowance today is 1,442 endpoints with no test out of 1,584, and 142 held by one.</p>
+<p><code>harness/snippets.py</code> drops every record that lacks a kind marked <code>every</code>, so setting it on <code>test</code> would empty the snippet map for all forty-eight endpoints on all thirty-three targets and the site would render nothing at all. <code>required: "ratchet"</code> is the third value: absence is counted against the committed allowance, which only ever goes down, and the filter stays keyed to <code>handler</code> alone. The allowance today is 1,247 endpoints with no test out of 1,584, and 337 held by one. The five .NET targets are off it entirely; twenty-eight remain.</p>
 <h3><code>reads_expectation</code></h3>
 <p>A test snippet has to name the endpoint it is marked for, which is the key <code>spec/expected.json</code> is read by. This is what stops 1,584 hand-written assertions drifting away from the file that decides what a correct answer is, and it catches the second thing <code>mentions_dep</code> catches: a mark that drifted onto neighbouring lines stops naming its endpoint, and a drifted mark is otherwise indistinguishable from a correct one.</p>
 <h3><code>asserts_status</code>, which is not here</h3>
@@ -231,7 +249,6 @@ footer { margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--rule);
   <h2>The order the rest goes in</h2>
 </div>
 <ol class="steps">
-  <li><h3>The other twelve families in .NET</h3><p>Mechanical now that the floor, the lookup and five test hosts exist. <code>etag</code> and <code>cache</code> are the next two worth doing, because both are about headers a test client can quietly normalise.</p></li>
   <li><h3>The other five languages</h3><p>Java next, because its test facilities are the most opinionated and least alike, and because <code>compressed</code> there is where the per-family <code>transport</code> field stops saying <code>testserver</code> five times.</p></li>
   <li><h3>The client projects</h3><p>Not started. The framework-shaped question is whether a framework describes its own routes well enough that a client can be generated from the description rather than written, and it needs the OpenAPI question settled per target first.</p>
   <p>One thing is already known and is why <code>SUITE</code> in <code>harness/bundle.py</code> catches <code>/client/</code> before the name rules. A file called <code>openapi.json</code> is role <code>contract</code>, which <code>handler</code> reads and which is <code>cardinality: one</code>. A document written out of a target&rsquo;s routes therefore registers every one of them a second time, and dropping one into a target that also routes in code turns all forty-eight of its endpoints into the &sect;7 ambiguity error. <code>openapi.yaml</code> does not trip it only because <code>route_regex</code> wants a quote on both sides of the path and a YAML key has none, which is luck and not a design.</p></li>

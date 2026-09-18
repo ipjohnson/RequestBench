@@ -20,6 +20,19 @@ public static partial class Floor
     public static async Task AssertAsync(HttpResponseMessage response, string endpointId)
         => await AssertAsync(response, Spec.For(endpointId));
 
+    /// <summary>Assert the floor against a planned request's pinned answer.</summary>
+    public static async Task AssertAsync(HttpResponseMessage response, Ask ask) =>
+        await AssertAsync(response, ask.Want
+            ?? throw new InvalidOperationException(
+                $"{ask.Id} is an error endpoint; assert it with Envelope"));
+
+    /// <summary>Assert a planned request's pinned answer, without an HttpResponseMessage.</summary>
+    public static void Assert(Ask ask, int status, string contentType, string encoding, byte[] raw)
+        => Assert(ask.Want
+            ?? throw new InvalidOperationException(
+                $"{ask.Id} is an error endpoint; assert it with Envelope"),
+            status, contentType, encoding, raw);
+
     /// <summary>Assert the floor against an expectation the caller already resolved.</summary>
     public static async Task AssertAsync(HttpResponseMessage response, Expectation want)
     {
@@ -98,7 +111,7 @@ public static partial class Floor
     }
 
     /// <summary>What kind of body this is, which is part of the contract rather than incidental.</summary>
-    private static string BodyClass(string contentType)
+    internal static string BodyClass(string contentType)
     {
         string ctype = contentType.ToLowerInvariant();
         if (ctype.Contains("json", StringComparison.Ordinal)) return "json";
