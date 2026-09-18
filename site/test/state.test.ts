@@ -41,4 +41,12 @@ describe("a row's framework page", () => {
   test("a page opened on its own links back to the default view", () => {
     expect(backHref("../index.html", "")).toBe("../index.html");
   });
+
+  test("leaves what the page is compared with on the page", () => {
+    const st = initialState("container", langs);
+    const href = pageHref("f/go-gin.html", "json.small", st, langs, null);
+    const compared = `${searchOf(href)}&vs=base&vs=go-echo`;
+    expect(backHref("../index.html", compared)).toBe(`../index.html${writeHash(st, langs)}`);
+    expect(backHref("../index.html", "?vs=go-echo")).toBe("../index.html");
+  });
 });

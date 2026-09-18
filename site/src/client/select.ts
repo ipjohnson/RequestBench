@@ -25,13 +25,16 @@ export function rateLabel(run: Run, rn: string): string {
   return rn;
 }
 
-/** The selected rate if this run has it, else the highest nobody saturated. */
+/**
+ * The selected rate if this run has it, else the first: the one every target is expected to
+ * complete, and where the ladder compares latency. A higher rate can open the table on rows
+ * with no latency, one for each target that could not sustain it.
+ */
 export function pickRung(run: Run | null, want: string | null): string | null {
   if (!run) return null;
   const rs = rungsOf(run);
   if (want && rs.includes(want)) return want;
-  const clean = rs.filter((rn) => !run.targets.some((t) => t.rungs[rn]?.saturated));
-  return clean.length ? (clean[clean.length - 1] ?? null) : (rs[Math.floor(rs.length / 2)] ?? null);
+  return rs[0] ?? null;
 }
 
 /**

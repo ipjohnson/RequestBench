@@ -1,8 +1,8 @@
-// The base's row on an endpoint's pane, and what the popup on each of its numbers says.
+// The rows an endpoint's numbers are compared against, and what the popup on each says.
 import { describe, expect, test } from "vitest";
 import { deltaFor, type Chain } from "../src/lib/delta.js";
 import type { Route, Target } from "../src/lib/types.js";
-import { baseCell, basePop } from "../src/lib/views.js";
+import { baseCell, basePop, cmpCell, peerPop, unfinished } from "../src/lib/views.js";
 
 const routes: Record<string, Route> = {
   "json.small": { m: "GET", p: "/json/small" },
@@ -74,10 +74,61 @@ describe("basePop", () => {
 describe("baseCell", () => {
   test("shows the base's number, hidden, with its popup in a template", () => {
     const cell = baseCell("100 us", chainAt({ "json.small": 100, "json.large": 400 }, "json.large"), "us", factors, "p99");
-    expect(cell).toMatch(/^<span class="fb" tabindex="0" hidden>100 us<template>.+<\/template><\/span>$/);
+    expect(cell).toMatch(/^<span class="fb" data-cmp="base" tabindex="0" hidden>100 us<template>.+<\/template><\/span>$/);
   });
 
   test("a number with nothing to compare is shown without a popup or a tab stop", () => {
-    expect(baseCell("5,327", null, "", factors, "")).toBe('<span class="fb" hidden>5,327</span>');
+    expect(baseCell("5,327", null, "", factors, "")).toBe('<span class="fb" data-cmp="base" hidden>5,327</span>');
+  });
+});
+
+describe("peerPop", () => {
+  test("says how far this framework's number is from the other's", () => {
+    expect(lines(peerPop(900, 400, "us", "echo", "p99"))).toEqual(["+500 us vs echo at p99"]);
+    expect(peerPop(400, 900, "us", "echo", "p99")).toContain('<b class="down">−500 us</b> vs echo');
+  });
+
+  test("a difference inside the histogram's grid says so", () => {
+    expect(lines(peerPop(101, 100, "us", "echo", "p50"))).toEqual([
+      "+1 us vs echo at p50",
+      "Inside the 4 us the histogram can resolve at this magnitude, so no measurable time.",
+    ]);
+  });
+
+  test("a byte count is exact, so any difference is one", () => {
+    expect(lines(peerPop(29, 27, "B", "echo", ""))).toEqual(["+2 B vs echo"]);
+    expect(peerPop(27, 27, "B", "echo", "")).toContain('<b class="flat">±0 B</b>');
+  });
+
+  test("escapes the name", () => {
+    expect(peerPop(2, 1, "B", "a<b>", "")).toContain("vs a&lt;b&gt;");
+  });
+});
+
+describe("cmpCell", () => {
+  test("says what it belongs to, and why it is empty when it is", () => {
+    expect(cmpCell("go-echo", "—", null, "echo could not sustain 5,000 rps.")).toBe(
+      '<span class="fb" data-cmp="go-echo" title="echo could not sustain 5,000 rps." hidden>—</span>',
+    );
+  });
+
+  test("a number with a difference to show carries it in a template and takes a tab stop", () => {
+    expect(cmpCell("go-echo", "400 us", peerPop(900, 400, "us", "echo", "p99"))).toMatch(
+      /^<span class="fb" data-cmp="go-echo" tabindex="0" hidden>400 us<template><p class="bphead">.+<\/template><\/span>$/,
+    );
+  });
+});
+
+describe("unfinished", () => {
+  test("says what a target achieved and dropped at a rate it did not complete", () => {
+    expect(unfinished("gin", { completed: false, offered_rps: 5000, achieved_rps: 4953, dropped: 1239 })).toBe(
+      "gin could not sustain 5,000 rps. It achieved 4,953 rps and dropped 1,239 requests, " +
+        "so there are no latencies at this rate.",
+    );
+  });
+
+  test("a rate it completed, or one no summary said anything about, needs no reason", () => {
+    expect(unfinished("gin", { completed: true })).toBeNull();
+    expect(unfinished("gin", undefined)).toBeNull();
   });
 });

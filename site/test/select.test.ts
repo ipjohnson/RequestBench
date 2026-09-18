@@ -59,8 +59,31 @@ const run: Run = {
 const st = () => initialState("container", ["go", "node"]);
 
 describe("pickRung", () => {
-  test("prefers the highest rate nobody saturated", () => {
+  /** One target on a three-rate ladder, saturated at the rates marked. */
+  const ladder = (saturated: boolean[]): Run => ({
+    ...run,
+    rungs: [1, 2, 3],
+    targets: [
+      {
+        language: "python",
+        target: "fastapi",
+        rungs: Object.fromEntries(
+          saturated.map((s, i) => [String(i + 1), { offered_rps: [500, 2500, 5000][i], saturated: s, completed: !s }]),
+        ),
+      },
+    ],
+  });
+
+  test("opens on the first rate", () => {
     expect(pickRung(run, null)).toBe("1");
+  });
+
+  test("opens on the first rate when a slow target saturated every rate", () => {
+    expect(pickRung(ladder([true, true, true]), null)).toBe("1");
+  });
+
+  test("opens on the first rate when a higher one has nobody saturated", () => {
+    expect(pickRung(ladder([false, false, false]), null)).toBe("1");
   });
 
   test("honours an explicit choice this run has", () => {

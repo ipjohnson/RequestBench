@@ -142,11 +142,15 @@ export function pageHref(
   return `${page}?${p.toString()}${detail ? `#${encodeURIComponent(detail)}` : ""}`;
 }
 
-/** The inverse of pageHref: the index, with the view back in its hash and `data` in its query. */
+/**
+ * The inverse of pageHref: the index, with the view back in its hash and `data` in its query.
+ * `vs` is what the framework page is compared with, which is that page's and not the view's.
+ */
 export function backHref(index: string, search: string): string {
   const p = new URLSearchParams(search);
   const data = p.get("data");
   p.delete("data");
+  p.delete("vs");
   const view = p.toString();
   return `${index}${data ? `?${new URLSearchParams({ data }).toString()}` : ""}${view ? `#${view}` : ""}`;
 }

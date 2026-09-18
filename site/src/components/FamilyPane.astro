@@ -37,7 +37,10 @@ const clip = (s: string, n: number): string => (s.length > n ? `${s.slice(0, n -
     endpoints' histograms merged into one.
   </p>
 
-  <h3 class="childcap">Performance</h3>
+  <div class="perfhead">
+    <h3 class="childcap">Performance</h3>
+    <p class="cmpkey" hidden></p>
+  </div>
   {
     rungs.map((r) => (
       <div class="eprate" data-rung={r.rn} hidden={!r.shown}>
@@ -45,16 +48,16 @@ const clip = (s: string, n: number): string => (s.length > n ? `${s.slice(0, n -
           <div class="fields">
             {(
               [
-                ["p50", cell(r.stats.p50_us, "us")],
-                ["p90", cell(r.stats.p90_us, "us")],
-                ["p99", cell(r.stats.p99_us, "us")],
-                ["p99.9", cell(r.stats.p999_us, "us")],
-                ["samples", cell(r.stats.count)],
+                ["p50", "p50_us", "us"],
+                ["p90", "p90_us", "us"],
+                ["p99", "p99_us", "us"],
+                ["p99.9", "p999_us", "us"],
+                ["samples", "count", ""],
               ] as const
-            ).map(([k, v]) => (
-              <div class="frow">
+            ).map(([k, m, unit]) => (
+              <div class="frow" data-k={m} data-v={r.stats?.[m] ?? undefined}>
                 <span class="fk">{k}</span>
-                <span class="fv">{v}</span>
+                <span class="fv">{cell(r.stats?.[m], unit)}</span>
               </div>
             ))}
           </div>
