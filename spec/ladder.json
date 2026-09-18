@@ -1,16 +1,16 @@
 {
-  "version": "ladder-v2",
-  "note": "Two fixed offered rates, identical for every target in every language, published as real times rather than as a ratio to anything. The rates are chosen from the traffic a reader might want to serve, not from where the targets break: set from the population they would move every time a language is added, and moving them breaks the time series. 1000 and 5000 are provisional until the dedicated machine has run. docs/measurement-v2.html is the design.",
+  "version": "ladder-v2-short",
+  "note": "Two fixed offered rates, identical for every target in every language, published as real times rather than as a ratio to anything. The rates are chosen from the traffic a reader might want to serve, not from where the targets break: set from the population they would move every time a language is added, and moving them breaks the time series. 1000 and 5000 are provisional until the dedicated machine has run. docs/measurement-v2.html is the design. This is ladder-v2 with shorter durations, so the container job fits inside measure.yml's timeout-minutes on a GitHub-hosted runner. ladder-v2 warms for 90s (jit) and 30s (steady) and runs each rung for 240s. It returns when the dedicated machine runs.",
   "warmup": {
     "rps": 1000,
-    "seconds": { "jit": 90, "steady": 30 },
+    "seconds": { "jit": 30, "steady": 10 },
     "note": "serial_requests is the serial suite's equivalent of seconds. A rate ladder warms for a duration; a host that runs one invocation at a time warms for a count, and a JVM needs thousands of invocations to reach C2 rather than the few hundred a steady runtime needs.",
     "serial_requests": { "jit": 20000, "steady": 500 }
   },
   "rungs": [
-    { "rung": 1, "name": "regular", "rps": 1000, "seconds": 240,
+    { "rung": 1, "name": "regular", "rps": 1000, "seconds": 60,
       "purpose": "traffic every target is expected to serve; this is where latency is compared" },
-    { "rung": 2, "name": "raised",  "rps": 5000, "seconds": 240,
+    { "rung": 2, "name": "raised",  "rps": 5000, "seconds": 60,
       "purpose": "traffic that separates the frameworks with headroom from the ones without" }
   ],
   "settle_s": 15,
@@ -24,6 +24,6 @@
   },
   "boot_timeout_s": { "jit": 90, "steady": 20 },
   "teardown_s": 20,
-  "min_requests_per_endpoint": 4000,
-  "min_requests_note": "What the ladder actually delivers, rather than a floor it has never met. Rung 1 is 1,000 rps for 240s, so 240,000 requests across 48 endpoints is 5,000 each; 10,000 was written when the set was smaller and the number was already half of it before the etag and cache families arrived. Lengthening the rung instead would have cost roughly five minutes a target a run and moved every published latency, because a longer rung is a different measurement. Set here so it is true, with room for about a dozen more endpoints before it binds. p99.9 rests on five observations per endpoint at this rate either way, which is what docs/measurement-v2.html says the raised rung is for."
+  "min_requests_per_endpoint": 1000,
+  "min_requests_note": "What the ladder actually delivers, rather than a floor it has never met. Rung 1 is 1,000 rps for 60s, so 60,000 requests across 48 endpoints is 1,250 each, with room for about a dozen more endpoints before it binds. At this length a per-endpoint p99 rests on about a dozen observations. ladder-v2's 240s rung delivers 5,000 each and sets this to 4,000."
 }
