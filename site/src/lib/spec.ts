@@ -15,7 +15,8 @@ function readJson(rel: string): Record<string, unknown> {
 export const readSpec = (): Record<string, unknown> => readJson("spec/endpoints.json");
 
 /**
- * Method, route and base edge per endpoint id, for the endpoint lists in the dialog.
+ * Method, route and base edge per endpoint id, for a framework page's endpoints and the
+ * explorer's delta column.
  *
  * The summary carries ids and families but never the route, and an id alone does not say
  * what was asked for. Forty-five short strings, so they ride in the page rather than being

@@ -46,6 +46,13 @@ td.h { font-family: var(--f-mono); font-size: 11px; color: var(--ink3); }
 .epfamname { display: block; font-family: var(--f-mono); font-size: 10px;
              letter-spacing: .1em; text-transform: uppercase; color: var(--ink3);
              margin: 0 0 4px; }
+/* A family opens its own pane, so its name takes the endpoint's box and the same current
+   state. The case and the size are what keep it reading as the heading of the ones below. */
+a.epfamname { text-decoration: none; padding: 3px 8px; border-radius: 3px;
+              border-left: 2px solid transparent; }
+a.epfamname:hover { background: var(--surface2); color: var(--ink2); }
+a.epfamname[aria-current="true"] { background: var(--tealsoft); border-left-color: var(--teal);
+                                   color: var(--ink); }
 .eplink { display: block; text-decoration: none; color: var(--ink2); padding: 4px 8px;
           border-radius: 3px; border-left: 2px solid transparent; }
 .eplink:hover { background: var(--surface2); }
@@ -60,6 +67,7 @@ td.h { font-family: var(--f-mono); font-size: 11px; color: var(--ink3); }
 .eppane .fields { margin-bottom: 4px; background: var(--surface); border: none; }
 .eppane .frow { outline: 1px solid var(--rule); }
 .eppane pre.code { max-height: 460px; overflow: auto; }
+.famtable td:first-child { font-family: var(--f-mono); font-size: 12.5px; }
 
 /* The wiring section: what the family declares it is wired with, then one head and block
    per support part. They come from other files than the handler, so each carries its own
@@ -84,8 +92,9 @@ td.h { font-family: var(--f-mono); font-size: 11px; color: var(--ink3); }
 .eptabs [role="tab"]:focus-visible { outline: 2px solid var(--teal); outline-offset: -2px; }
 
 /* The rate is a property of the whole panel rather than of either view, so it sits opposite
-   the tabs instead of inside one of them. */
-.eprates { display: inline-flex; margin-bottom: 6px; border: 1px solid var(--rule);
+   the tabs instead of inside one of them, and on the right when a run without bins has no
+   tabs. */
+.eprates { display: inline-flex; margin: 0 0 6px auto; border: 1px solid var(--rule);
            border-radius: 3px; overflow: hidden; }
 .eprate-pick { appearance: none; background: none; border: 0; cursor: pointer; font: inherit;
                font-family: var(--f-mono); font-size: 11.5px; color: var(--ink2);

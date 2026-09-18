@@ -19,7 +19,7 @@ output, two hydrated islands.
       bundleview.ts   the harness/siteview.py seam
     src/client/       the browser. Bundled and type-checked
       source.ts       where results are read from
-      select.ts       run to rows: pure, so the drill-down is tested rather than looked at
+      select.ts       run to rows: pure, so the table is tested rather than looked at
       explorer.ts     the DOM half of the explorer
     src/pages/        index.astro, and f/[slug].astro per target
     src/styles/       the palette and the two stylesheets

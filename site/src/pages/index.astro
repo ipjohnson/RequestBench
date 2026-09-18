@@ -85,10 +85,7 @@ const built = new Date().toISOString().slice(0, 16).replace("T", " ") + " UTC";
 
   <div class="panel">
     <h2>Over time</h2>
-    <p class="hint">
-      Click any row above to pin it here. With nothing pinned this shows the top six rows of the
-      current ranking.
-    </p>
+    <p class="hint">The top six rows of the current ranking, over every run on this host.</p>
     <div id="time"></div>
   </div>
 
@@ -98,11 +95,6 @@ const built = new Date().toISOString().slice(0, 16).replace("T", " ") + " UTC";
     the requests that survived would flatter the collapse, so what it achieved and what it
     dropped is shown instead.
   </div>
-
-  <dialog id="dlg">
-    <button id="dlgclose" aria-label="Close">&times;</button>
-    <div id="dlgbody"></div>
-  </dialog>
 
   <script id="rb-data" type="application/json" set:html={jsonScript(pageData)} />
   <script>

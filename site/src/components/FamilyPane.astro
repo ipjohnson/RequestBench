@@ -1,0 +1,107 @@
+---
+// One family's pane: what the family cost as a whole, then each endpoint in it.
+//
+// A family row in the explorer is this number, so the pane a family row opens on has to show
+// it. The endpoints are listed rather than their panes repeated; each links to its own.
+import { cell } from "../lib/metrics.js";
+import { deltaCell } from "../lib/views.js";
+import type { Chain } from "../lib/delta.js";
+import type { EndpointRung, FamilyRecord, Route } from "../lib/types.js";
+
+/** What the family and its endpoints did at one offered rate. */
+export type FamilyRung = {
+  rn: string;
+  stats: FamilyRecord | undefined;
+  endpoints: { eid: string; stats: EndpointRung | undefined; chain: Chain | null }[];
+  shown: boolean;
+};
+
+type Props = {
+  fam: string;
+  size: number;
+  routes: Record<string, Route | undefined>;
+  rungs: FamilyRung[];
+};
+
+const { fam, size, routes, rungs } = Astro.props;
+
+// Cut here rather than in CSS: the table is auto-layout, so a max-width on a cell is advisory
+// and query.many's eight parameters would widen the whole pane.
+const clip = (s: string, n: number): string => (s.length > n ? `${s.slice(0, n - 1)}…` : s);
+---
+
+<section class="eppane" data-fam={fam} hidden>
+  <h2 class="epname">{fam}</h2>
+  <p class="hint">
+    {size} {size === 1 ? "endpoint" : "endpoints"}. The family's percentiles are read from its
+    endpoints' histograms merged into one.
+  </p>
+
+  <h3 class="childcap">Performance</h3>
+  {
+    rungs.map((r) => (
+      <div class="eprate" data-rung={r.rn} hidden={!r.shown}>
+        {r.stats ? (
+          <div class="fields">
+            {(
+              [
+                ["p50", cell(r.stats.p50_us, "us")],
+                ["p90", cell(r.stats.p90_us, "us")],
+                ["p99", cell(r.stats.p99_us, "us")],
+                ["p99.9", cell(r.stats.p999_us, "us")],
+                ["samples", cell(r.stats.count)],
+              ] as const
+            ).map(([k, v]) => (
+              <div class="frow">
+                <span class="fk">{k}</span>
+                <span class="fv">{v}</span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p class="empty">Not measured at this rate.</p>
+        )}
+        <h3 class="childcap">Endpoints</h3>
+        <div class="scroll">
+          <table class="famtable">
+            <thead>
+              <tr>
+                <th class="l">endpoint</th>
+                <th class="l">route</th>
+                <th>p50</th>
+                <th>p99</th>
+                <th title="Against the root of this endpoint's base chain">over base</th>
+                <th>samples</th>
+              </tr>
+            </thead>
+            <tbody>
+              {r.endpoints.map((e) => {
+                const route = routes[e.eid];
+                return (
+                  <tr>
+                    <td class="l">
+                      <a class="famep" href={`#${e.eid}`} data-ep={e.eid}>
+                        {e.eid}
+                      </a>
+                    </td>
+                    {route ? (
+                      <td class="l route" title={`${route.m} ${route.p}`}>
+                        <span class="verb">{route.m}</span> {clip(route.p, 44)}
+                      </td>
+                    ) : (
+                      <td class="l route">&mdash;</td>
+                    )}
+                    <td>{cell(e.stats?.p50_us, "us")}</td>
+                    <td>{cell(e.stats?.p99_us, "us")}</td>
+                    <Fragment set:html={deltaCell(e.chain, "us")} />
+                    <td class="sub">{cell(e.stats?.count)}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    ))
+  }
+</section>

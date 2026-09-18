@@ -69,6 +69,9 @@ tbody tr:hover { background: var(--surface); }
 tbody tr[aria-selected="true"] { background: var(--tealsoft); }
 td.rank { color: var(--ink3); font-family: var(--f-mono); font-size: 12px; width: 34px; }
 td.name { font-weight: 600; }
+td.name a { color: inherit; text-decoration: none; }
+tbody tr[data-href] { cursor: pointer; }
+tbody tr[data-href]:hover td.name a { text-decoration: underline; }
 td.name .swatch { width: 8px; height: 8px; border-radius: 2px; display: inline-block;
                   margin-right: 7px; vertical-align: middle; }
 td.sub { color: var(--ink2); font-family: var(--f-mono); font-size: 12px; }
@@ -101,16 +104,6 @@ td.dead { color: var(--ink3); text-decoration: line-through; }
 /* Language chips carry an inline background; column chips need their own, or the
    pressed state sets onfill text on the unchanged ground and the label vanishes. */
 .chip.sm[aria-pressed="true"] { background: var(--teal); border-color: var(--teal); }
-tbody tr { cursor: pointer; }
-dialog#dlg { border: 1px solid var(--rule2); border-radius: 5px; background: var(--surface);
-             color: var(--ink); padding: 0; max-width: min(1040px, 94vw); width: 100%;
-             max-height: 88vh; }
-dialog#dlg::backdrop { background: rgba(0, 0, 0, .5); }
-#dlgbody { padding: 22px clamp(16px, 3vw, 28px) 26px; overflow-y: auto; max-height: 88vh; }
-#dlgclose { position: absolute; top: 10px; right: 12px; z-index: 2; font-size: 22px;
-            line-height: 1; padding: 2px 9px 5px; cursor: pointer; border-radius: 3px;
-            border: 1px solid var(--rule2); background: var(--ground); color: var(--ink2); }
-#dlgclose:hover { border-color: var(--teal); color: var(--tealtext); }
 .fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
           gap: 1px; background: var(--rule); border: 1px solid var(--rule);
           border-radius: 3px; margin-bottom: 20px; }
@@ -123,10 +116,6 @@ dialog#dlg::backdrop { background: rgba(0, 0, 0, .5); }
 .fv { font-family: var(--f-mono); font-size: 14px; font-variant-numeric: tabular-nums; }
 .wirebtn[aria-pressed="true"] { background: var(--teal); border-color: var(--teal);
                                 color: var(--onfill); }
-.wirehead { display: flex; flex-wrap: wrap; gap: 9px; align-items: baseline;
-            margin-bottom: 14px; font-size: 14px; }
-.wirehead .wmeta { font-family: var(--f-mono); font-size: 11.5px; color: var(--ink3);
-                   margin-left: auto; }
 .wirecols { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
 @media (max-width: 780px) { .wirecols { grid-template-columns: 1fr; } }
 .wirecols h3 { font-family: var(--f-mono); font-size: 10px; letter-spacing: .1em;
@@ -144,23 +133,13 @@ pre.wire.res { border-left: 2px solid var(--amber); }
 .hrow:last-child { border-bottom: none; }
 .hk { color: var(--tealtext); }
 .hv { color: var(--ink2); word-break: break-all; }
-.fwlink { font-family: var(--f-mono); font-size: 11.5px; margin-left: auto; }
-.crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 7px;
-          font-family: var(--f-mono); font-size: 12px; margin: 0 0 16px; }
-.crumbs button { font: inherit; background: none; border: none; padding: 0; cursor: pointer;
-                 color: var(--tealtext); text-decoration: underline; }
-.crumbs i { font-style: normal; color: var(--ink3); }
-.crumbs span { color: var(--ink); }
 h3.childcap { font-family: var(--f-display); font-size: 17px; font-weight: 600;
               margin: 20px 0 8px; }
-.childscroll { max-height: 42vh; }
 td.route { font-family: var(--f-mono); font-size: 12px; color: var(--ink2); }
 td.route .verb { color: var(--tealtext); }
 .leafroute { font-family: var(--f-mono); font-size: 13px; color: var(--ink2);
              margin: 0 0 14px; word-break: break-all; }
 .leafroute .verb { color: var(--tealtext); }
-.childscroll td.go { color: var(--tealtext); text-align: right; }
-.childscroll tbody tr:hover td.go { text-decoration: underline; }
 /* The chain from this endpoint down to its root, one row per factor. */
 table.chain td.factor { font-family: var(--f-mono); font-size: 12px; color: var(--ink); }
 table.chain td.reads { color: var(--ink2); font-size: 13px; }

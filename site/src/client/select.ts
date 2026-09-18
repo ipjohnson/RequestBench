@@ -1,9 +1,8 @@
 // Turning a run into the rows on screen: which rate, which slice, which order.
 //
-// All of it pure, so the drill-down can be tested rather than looked at. The DOM half is in
-// explorer.ts and does nothing but write what these return.
-import { deltaFor, type Chain } from "../lib/delta.js";
-import type { MetricId } from "../lib/metrics.js";
+// All of it pure, so what the table shows can be tested rather than looked at. The DOM half
+// is in explorer.ts and does nothing but write what these return.
+import { deltaFor } from "../lib/delta.js";
 import type { FamilyRecord, Route, Run, Target, WireDoc } from "../lib/types.js";
 import { COLS, type Gran, type Row, type State } from "./state.js";
 
@@ -50,53 +49,6 @@ const numberAt = (rec: Record<string, unknown> | undefined, metric: string): num
   const v = rec?.[metric];
   return typeof v === "number" ? v : null;
 };
-
-export type Child = { id: string; value: number | null; n: number | null; eps?: number; family?: string; delta?: Chain | null };
-
-export function epRowsFor(
-  run: Run,
-  t: Target,
-  rn: string,
-  family: string | null,
-  metric: MetricId,
-  routes: Record<string, Route | undefined>,
-): Child[] {
-  const eps = t.endpoints ?? {};
-  const out: Child[] = [];
-  for (const eid of run.endpoint_order ?? []) {
-    const rec = eps[eid];
-    if (!rec || (family && rec.family !== family)) continue;
-    const d = rec.rungs?.[rn];
-    if (!d) continue;
-    out.push({
-      id: eid,
-      family: rec.family ?? "",
-      value: numberAt(d, metric) ?? numberAt(d, "p50_us"),
-      n: d.count ?? null,
-      delta: deltaFor(t, eid, rn, routes, metric),
-    });
-  }
-  return out.sort((a, b) => (a.value ?? Infinity) - (b.value ?? Infinity));
-}
-
-export function famRowsFor(
-  run: Run,
-  t: Target,
-  rn: string,
-  metric: MetricId,
-  routes: Record<string, Route | undefined>,
-): Child[] {
-  return Object.entries(famsAt(t, rn))
-    .map(([f, rec]) => ({
-      id: f,
-      value: numberAt(rec, metric) ?? numberAt(rec, "p50_us"),
-      n: rec.count ?? null,
-      // Counted from this target rather than from the spec, so the number matches the list
-      // you get when you open the row.
-      eps: epRowsFor(run, t, rn, f, metric, routes).length,
-    }))
-    .sort((a, b) => (a.value ?? Infinity) - (b.value ?? Infinity));
-}
 
 /**
  * Exemplars are keyed <language>-<target>@<host>: the same framework on two hosts puts

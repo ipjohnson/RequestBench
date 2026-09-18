@@ -1,9 +1,7 @@
-// The drill-down. Every function here is pure, which is what makes it checkable at all: the
-// renderer this replaces could only be checked by opening the page and clicking.
+// What the table shows. Every function here is pure, which is what makes it checkable at all:
+// the renderer this replaces could only be checked by opening the page and clicking.
 import { describe, expect, test } from "vitest";
 import {
-  epRowsFor,
-  famRowsFor,
   famsAt,
   isSerial,
   pickRung,
@@ -133,22 +131,6 @@ describe("rows", () => {
     s.rung = "2";
     const { rows: rs } = rows({ run, st: s, routes, wireOf: () => undefined });
     expect(rs.find((r) => r.label === "chi")?.dead).toBe(true);
-  });
-});
-
-describe("the drill-down", () => {
-  test("a blend opens its families, counted from this target", () => {
-    const kids = famRowsFor(run, chi, "1", "p50_us", routes);
-    expect(kids).toEqual([{ id: "json", value: 190, n: 20, eps: 2 }]);
-  });
-
-  test("a family opens the endpoints that made it, cheapest first", () => {
-    const kids = epRowsFor(run, chi, "1", "json", "p50_us", routes);
-    expect(kids.map((k) => k.id)).toEqual(["json.small", "json.medium"]);
-  });
-
-  test("a family the target does not serve opens empty", () => {
-    expect(epRowsFor(run, chi, "1", "domain", "p50_us", routes)).toEqual([]);
   });
 });
 
