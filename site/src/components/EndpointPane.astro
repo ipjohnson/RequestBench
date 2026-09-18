@@ -1,8 +1,8 @@
 ---
 // One endpoint's pane: what it answers, what it cost, how it is wired, what it sent.
 import EndpointHistogram from "./EndpointHistogram.astro";
-import { chainTable } from "../lib/views.js";
-import { cell } from "../lib/metrics.js";
+import { baseCell } from "../lib/views.js";
+import { cell, type Unit } from "../lib/metrics.js";
 import { esc } from "../lib/html.js";
 import type { Chain } from "../lib/delta.js";
 import type { BinGrid, EndpointRung, Route, WireEndpoint } from "../lib/types.js";
@@ -12,10 +12,18 @@ import type { Mechanism, Snippet, SnippetPart } from "../lib/bundleview.js";
 export type PaneRung = {
   rn: string;
   stats: EndpointRung | undefined;
-  chain: Chain | null;
+  /** What the base did at the same rate. */
+  base: EndpointRung | undefined;
+  /** The comparison on each percentile, keyed by the statistic it was taken on. */
+  chains: Readonly<Record<string, Chain | null>>;
   span: { c0: number; c1: number; n: number } | null;
   shown: boolean;
 };
+
+type Pct = "p50_us" | "p90_us" | "p95_us" | "p99_us" | "p999_us";
+
+/** One column of the performance table. `base` is null when there is no base row. */
+type Field = { k: string; v: string; title?: string | undefined; base: string | null };
 
 type Props = {
   eid: string;
@@ -35,30 +43,49 @@ type Props = {
   /** What holds this target to its contract: its own suite, and its envelope package. */
   tests: { part: SnippetPart; link: string | null }[];
   exchange: WireEndpoint | undefined;
+  /** The endpoint this one is compared with, when the run measured it. */
+  against: string | null;
+  /** The base's captured exchange, for its size. */
+  baseExchange: WireEndpoint | undefined;
+  /** The captured response body's size against the base's, which no rate changes. */
+  size: Chain | null;
   factors: Record<string, string>;
   first: boolean;
 };
 
 const { eid, route, rungs, grid, snippet, also, link, support, alsoWired, mechanism, tests,
-        exchange, factors, first } = Astro.props;
+        exchange, against, baseExchange, size, factors, first } = Astro.props;
 
-const measure = (stats: EndpointRung | undefined): { fields: [string, string][]; measured: boolean } => {
-  const d = stats ?? {};
+const measure = (r: PaneRung): { fields: Field[]; measured: boolean } => {
+  const d = r.stats ?? {};
+  const b = r.base ?? {};
   // p95 is in summaries written after harness/summarize.py started recording it. An older
   // one carries p90, and the pane says p90 rather than labelling it p95.
-  const tail: [string, number | null | undefined] =
-    "p95_us" in d ? ["p95", d.p95_us] : ["p90", d.p90_us];
+  const tail: [string, Pct] = "p95_us" in d ? ["p95", "p95_us"] : ["p90", "p90_us"];
+  const under = (v: string, x: Chain | null | undefined, unit: Unit, level: string): string | null =>
+    against ? baseCell(v, x, unit, factors, level) : null;
+  const pct = ([k, m]: [string, Pct]): Field => ({
+    k,
+    v: cell(d[m], "us"),
+    base: under(cell(b[m], "us"), r.chains[m], "us", k),
+  });
   return {
     measured: Object.keys(d).length > 0,
     fields: [
-      ["p50", cell(d.p50_us, "us")],
-      [tail[0], cell(tail[1], "us")],
-      ["p99", cell(d.p99_us, "us")],
-      ["p99.9", cell(d.p999_us, "us")],
-      ["samples", cell(d.count)],
+      pct(["p50", "p50_us"]),
+      pct(tail),
+      pct(["p99", "p99_us"]),
+      pct(["p99.9", "p999_us"]),
+      {
+        k: "size",
+        v: cell(exchange?.sbz, "B"),
+        title: exchange && `The response body as the conformance gate captured it. Its headers add ${exchange.shz.toLocaleString()} B.`,
+        base: under(cell(baseExchange?.sbz, "B"), size, "B", ""),
+      },
+      { k: "samples", v: cell(d.count), base: under(cell(b.count), null, "", "") },
       ...(["errors", "mismatch"] as const)
         .filter((k) => d[k])
-        .map((k): [string, string] => [k, cell(d[k])]),
+        .map((k): Field => ({ k, v: cell(d[k]), base: under(cell(b[k]), null, "", "") })),
     ],
   };
 };
@@ -97,18 +124,33 @@ const hdrs = (hs: readonly (readonly [string, string])[]): string =>
   <h2 class="epname">{eid}</h2>
   <p class="leafroute"><span class="verb">{route?.m ?? ""}</span> {route?.p ?? ""}</p>
 
-  <h3 class="childcap">Performance</h3>
+  <div class="perfhead">
+    <h3 class="childcap">Performance</h3>
+    {
+      against && (
+        <button
+          type="button"
+          class="basetoggle"
+          aria-expanded="false"
+          title={`Show what ${against} measured under each number. Hover one for the difference.`}
+        >
+          vs {against}
+        </button>
+      )
+    }
+  </div>
   {
     rungs.map((r) => {
-      const { fields, measured } = measure(r.stats);
+      const { fields, measured } = measure(r);
       return (
         <div class="eprate" data-rung={r.rn} hidden={!r.shown}>
           {measured ? (
             <div class="fields">
-              {fields.map(([k, v]) => (
+              {fields.map((f) => (
                 <div class="frow">
-                  <span class="fk">{k}</span>
-                  <span class="fv">{v}</span>
+                  <span class="fk">{f.k}</span>
+                  <span class="fv" title={f.title}>{f.v}</span>
+                  {f.base !== null && <Fragment set:html={f.base} />}
                 </div>
               ))}
             </div>
@@ -116,7 +158,6 @@ const hdrs = (hs: readonly (readonly [string, string])[]): string =>
             <p class="empty">Not measured at this rate.</p>
           )}
           {grid && r.span && <EndpointHistogram grid={grid} stats={r.stats} span={r.span} eid={eid} />}
-          <Fragment set:html={chainTable(r.chain, factors, "p50", "us")} />
         </div>
       );
     })
