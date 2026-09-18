@@ -1,7 +1,6 @@
 using System.Text;
 using FastEndpoints.Testing;
 using Xunit;
-using RequestBench.Suite;
 
 namespace RequestBench.FastEndpointsTarget.Suite;
 
@@ -13,6 +12,7 @@ namespace RequestBench.FastEndpointsTarget.Suite;
 /// major than the four beside it, which `dotnet new xunit` writes at 2.9.3. Underneath it is
 /// still WebApplicationFactory, which AppFixture wraps and caches across test classes.
 /// </summary>
+// rb:test *
 public sealed class TargetApp : AppFixture<Program>
 {
     protected override ValueTask PreSetupAsync()
@@ -66,3 +66,4 @@ public sealed class TargetApp : AppFixture<Program>
         return await Send(ask, Plan.Resolved(ask, captured));
     }
 }
+// rb:end

@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
-namespace RequestBench.Suite;
+namespace RequestBench.CarterTarget.Suite;
 
 /// <summary>
 /// What a correct answer is, read out of spec/expected.json.
@@ -12,6 +12,7 @@ namespace RequestBench.Suite;
 /// status or the body as a literal in a test is how the two drift apart, which is why the
 /// floor assertion is a lookup and not an assertion the author types out.
 /// </summary>
+// rb:test *
 public static class Spec
 {
     private static readonly Lazy<string> RootPath = new(FindRoot);
@@ -62,29 +63,6 @@ public static class Spec
         Document.Value[name]?.AsObject()
         ?? throw new InvalidOperationException($"spec/expected.json has no {name}");
 
-    /// <summary>The expectation for an endpoint that sends one distinct request.</summary>
-    /// <exception cref="InvalidOperationException">
-    /// When the endpoint has more than one, which is not a case a caller can be allowed to
-    /// resolve by taking the first: the query and header families vary the request and each
-    /// variation has its own answer.
-    /// </exception>
-    public static Expectation For(string endpointId)
-    {
-        string[] keys = [.. Requests.Value
-            .Where(kv => kv.Key.StartsWith(endpointId + " ", StringComparison.Ordinal))
-            .Select(kv => kv.Key)
-            .Order(StringComparer.Ordinal)];
-        return keys switch
-        {
-            [] => throw new InvalidOperationException(
-                $"spec/expected.json says nothing about {endpointId}"),
-            [string one] => At(one),
-            _ => throw new InvalidOperationException(
-                $"{endpointId} sends {keys.Length} distinct requests; name the path: "
-                + string.Join(", ", keys.Select(k => k[(endpointId.Length + 1)..]))),
-        };
-    }
-
     /// <summary>The expectation for one request of an endpoint that sends several.</summary>
     public static Expectation For(string endpointId, string path) => At($"{endpointId} {path}");
 
@@ -114,6 +92,7 @@ public static class Spec
             Body: want["body"]);
     }
 }
+// rb:end
 
 /// <summary>
 /// One request's expected answer.
@@ -125,5 +104,7 @@ public static class Spec
 /// a winner. A null is not checked.
 /// </summary>
 /// <param name="Key">The spec/expected.json key, for a failure message that can be grepped.</param>
+// rb:test *
 public sealed record Expectation(
     string Key, string Path, int Status, string? BodyClass, string? Encoding, JsonNode? Body);
+// rb:end

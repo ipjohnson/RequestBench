@@ -1,6 +1,5 @@
 using Alba;
 using Microsoft.AspNetCore.Http;
-using RequestBench.Suite;
 
 namespace RequestBench.WolverineTarget.Suite;
 
@@ -14,6 +13,7 @@ namespace RequestBench.WolverineTarget.Suite;
 /// Wolverine compiles its endpoints at startup, which a test host pays for once here and
 /// the measurement absorbs in warmup.
 /// </summary>
+// rb:test *
 public sealed class TargetApp : IAsyncLifetime
 {
     public IAlbaHost Host { get; private set; } = null!;
@@ -116,3 +116,4 @@ public sealed class TargetApp : IAsyncLifetime
         return await Send(ask, Plan.Resolved(ask, captured));
     }
 }
+// rb:end

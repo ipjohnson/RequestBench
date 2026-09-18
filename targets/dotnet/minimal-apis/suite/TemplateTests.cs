@@ -1,4 +1,3 @@
-using RequestBench.Suite;
 
 namespace RequestBench.MinimalApis.Suite;
 

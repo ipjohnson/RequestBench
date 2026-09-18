@@ -1,6 +1,5 @@
 using System.Text;
 using Microsoft.AspNetCore.Mvc.Testing;
-using RequestBench.Suite;
 
 namespace RequestBench.AspNetMvc.Suite;
 
@@ -13,6 +12,7 @@ namespace RequestBench.AspNetMvc.Suite;
 /// calling the action directly, would never run the filter the compressed family is wired
 /// with. What is being tested here is the application, not the controller.
 /// </summary>
+// rb:test *
 public sealed class TargetApp : WebApplicationFactory<Program>
 {
     public TargetApp()
@@ -69,3 +69,4 @@ public sealed class TargetApp : WebApplicationFactory<Program>
         return await Send(ask, Plan.Resolved(ask, captured));
     }
 }
+// rb:end

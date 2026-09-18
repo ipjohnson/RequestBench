@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
-namespace RequestBench.Suite;
+namespace RequestBench.WolverineTarget.Suite;
 
 /// <summary>
 /// What an error endpoint has to answer, which is not what a 2xx endpoint has to answer.
@@ -20,23 +20,15 @@ namespace RequestBench.Suite;
 /// is the client's job and not a suite's. A suite reads what this target recorded, which is
 /// the same answer arrived at from the other side.
 /// </summary>
+// rb:test authorized.*,body.*,errors.*
 public static class Envelope
 {
     /// <summary>Assert an error answer, or throw naming the first thing that differs.</summary>
-    public static async Task AssertAsync(HttpResponseMessage response, Ask ask, string target)
-    {
-        byte[] raw = await response.Content.ReadAsByteArrayAsync();
-        Assert((int)response.StatusCode,
-               response.Content.Headers.ContentType?.ToString() ?? "",
-               raw, ask, target);
-    }
-
-    /// <summary>The same, for a host that hands back no HttpResponseMessage.</summary>
     public static void Assert(int status, string contentType, byte[] raw, Ask ask, string target)
     {
         if (Difference(status, contentType, raw, ask, target) is string why)
         {
-            throw new FloorViolation($"{ask.Key}: {why}");
+            Xunit.Assert.Fail($"{ask.Key}: {why}");
         }
     }
 
@@ -85,3 +77,4 @@ public static class Envelope
         }
     }
 }
+// rb:end

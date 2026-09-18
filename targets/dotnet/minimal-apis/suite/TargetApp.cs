@@ -1,6 +1,5 @@
 using System.Text;
 using Microsoft.AspNetCore.Mvc.Testing;
-using RequestBench.Suite;
 
 namespace RequestBench.MinimalApis.Suite;
 
@@ -14,6 +13,7 @@ namespace RequestBench.MinimalApis.Suite;
 /// than something the server does underneath it, which is the reason the compressed family
 /// can be tested this way here and cannot be everywhere.
 /// </summary>
+// rb:test *
 public sealed class TargetApp : WebApplicationFactory<Program>
 {
     public TargetApp()
@@ -76,3 +76,4 @@ public sealed class TargetApp : WebApplicationFactory<Program>
         return await Send(ask, Plan.Resolved(ask, captured));
     }
 }
+// rb:end

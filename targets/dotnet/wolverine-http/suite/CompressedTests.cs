@@ -1,6 +1,5 @@
 using Alba;
 using Microsoft.AspNetCore.Http;
-using RequestBench.Suite;
 
 namespace RequestBench.WolverineTarget.Suite;
 

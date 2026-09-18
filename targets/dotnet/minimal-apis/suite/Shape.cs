@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
-namespace RequestBench.Suite;
+namespace RequestBench.MinimalApis.Suite;
 
 /// <summary>
 /// An error envelope with the values taken out: every key path and the type at it.
@@ -10,6 +10,7 @@ namespace RequestBench.Suite;
 /// spec/expected.json. What is being held still is the shape and not the contents: a key
 /// appearing, disappearing or changing type is what a changed envelope actually is.
 /// </summary>
+// rb:test authorized.*,body.*,errors.*
 public static class Shape
 {
     public static HashSet<string> Of(JsonNode? node, string path = "")
@@ -61,3 +62,4 @@ public static class Shape
         _ => "other",
     };
 }
+// rb:end

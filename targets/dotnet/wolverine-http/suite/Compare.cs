@@ -1,8 +1,9 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
-namespace RequestBench.Suite;
+namespace RequestBench.WolverineTarget.Suite;
 
+// rb:test *
 public static partial class Floor
 {
     /// <summary>
@@ -92,3 +93,4 @@ public static partial class Floor
         _ => v.ToJsonString(),
     };
 }
+// rb:end

@@ -20,6 +20,5 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../RequestBench.FastEndpoints.csproj" />
-    <ProjectReference Include="../../suite/shared/RequestBench.Suite.csproj" />
   </ItemGroup>
 </Project>

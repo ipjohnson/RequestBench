@@ -3,7 +3,7 @@ using System.Text;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 
-namespace RequestBench.Suite;
+namespace RequestBench.MinimalApis.Suite;
 
 /// <summary>What every test asserts before it asserts anything of its own.</summary>
 /// <remarks>
@@ -14,24 +14,14 @@ namespace RequestBench.Suite;
 /// is stricter than the client fails a target the client passes, and one that is looser
 /// passes a target `make test` rejects.
 /// </remarks>
+// rb:test *
 public static partial class Floor
 {
-    /// <summary>Assert the floor, or throw naming the first thing that differs.</summary>
-    public static async Task AssertAsync(HttpResponseMessage response, string endpointId)
-        => await AssertAsync(response, Spec.For(endpointId));
-
     /// <summary>Assert the floor against a planned request's pinned answer.</summary>
     public static async Task AssertAsync(HttpResponseMessage response, Ask ask) =>
         await AssertAsync(response, ask.Want
             ?? throw new InvalidOperationException(
                 $"{ask.Id} is an error endpoint; assert it with Envelope"));
-
-    /// <summary>Assert a planned request's pinned answer, without an HttpResponseMessage.</summary>
-    public static void Assert(Ask ask, int status, string contentType, string encoding, byte[] raw)
-        => Assert(ask.Want
-            ?? throw new InvalidOperationException(
-                $"{ask.Id} is an error endpoint; assert it with Envelope"),
-            status, contentType, encoding, raw);
 
     /// <summary>Assert the floor against an expectation the caller already resolved.</summary>
     public static async Task AssertAsync(HttpResponseMessage response, Expectation want)
@@ -42,24 +32,7 @@ public static partial class Floor
         string? why = Difference(want, (int)response.StatusCode, contentType, encoding, raw);
         if (why is not null)
         {
-            throw new FloorViolation($"{want.Key}: {why}");
-        }
-    }
-
-    /// <summary>
-    /// Assert the floor against an answer that never was an HttpResponseMessage.
-    /// </summary>
-    /// <remarks>
-    /// Two of the five test hosts do not hand one back. Alba runs the scenario against an
-    /// HttpContext and FastEndpoints' own client is an HttpClient again, so the comparison
-    /// takes the four values it actually needs rather than a transport type.
-    /// </remarks>
-    public static void Assert(
-        Expectation want, int status, string contentType, string encoding, byte[] raw)
-    {
-        if (Difference(want, status, contentType, encoding, raw) is string why)
-        {
-            throw new FloorViolation($"{want.Key}: {why}");
+            Xunit.Assert.Fail($"{want.Key}: {why}");
         }
     }
 
@@ -159,6 +132,5 @@ public static partial class Floor
     [GeneratedRegex("> +")] private static partial Regex AfterTag();
     [GeneratedRegex(" +<")] private static partial Regex BeforeTag();
 }
+// rb:end
 
-/// <summary>The floor assertion failed. The message names the spec key and what differs.</summary>
-public sealed class FloorViolation(string message) : Exception(message);

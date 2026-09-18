@@ -1,6 +1,6 @@
 using System.Text.Json.Nodes;
 
-namespace RequestBench.Suite;
+namespace RequestBench.WolverineTarget.Suite;
 
 /// <summary>
 /// The request an endpoint sends, read out of spec/plan.json.
@@ -11,6 +11,7 @@ namespace RequestBench.Suite;
 /// a query string and a request body come from, and a test that typed one out would be
 /// asserting against a request the measurement never sends.
 /// </summary>
+// rb:test *
 public static class Plan
 {
     private static readonly Lazy<JsonObject> Document = new(Read);
@@ -101,10 +102,13 @@ public static class Plan
             kv => kv.Key,
             kv => kv.Value.StartsWith("{capture.", StringComparison.Ordinal) ? captured : kv.Value);
 }
+// rb:end
 
 /// <summary>One request an endpoint sends, and the answer pinned for it.</summary>
 /// <param name="Key">The spec/expected.json key, which is the id and the path.</param>
 /// <param name="Want">Null for an error endpoint; see <see cref="Envelope"/>.</param>
+// rb:test *
 public sealed record Ask(
     string Id, string Key, string Method, string Path,
     Dictionary<string, string> Headers, string? Body, Expectation? Want);
+// rb:end

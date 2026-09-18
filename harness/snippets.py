@@ -547,6 +547,12 @@ def marks(lines, syntax):
             if not named:
                 bad.append(("rb:%s %s names no %s" % (kind, selector, selects), n))
             subjects += named
+        # How widely the mark selects, which is not the same thing as how many subjects it
+        # names. A helper marked for a family serves that family's tests and is not one of
+        # them; counting it as one would let a single mark on a fixture cover forty-eight
+        # endpoints that have no test of their own.
+        scope = ("target" if "*" in selectors
+                 else "family" if any(s.endswith(".*") for s in selectors) else "endpoint")
         if not subjects:
             continue
         # The mark labels the block under it, so the range starts on the next line.
@@ -562,7 +568,7 @@ def marks(lines, syntax):
         # An explicit end wins: it is written where the block rule would not have reached.
         if closed is not None and (opened is None or closed < opened):
             end = closed - 1
-        out.append({"kind": kind, "subjects": subjects, "keys": keys,
+        out.append({"kind": kind, "subjects": subjects, "keys": keys, "scope": scope,
                     "start": start, "end": end, "line": n})
     return out, bad
 
@@ -601,6 +607,7 @@ def resolve(language, target, at=None):
                                    role, path, mk["line"] + 1))
                 continue
             got = part(path, fhash, lines, mk["start"], mk["end"], "marker")
+            got["scope"] = mk["scope"]
             if mk["keys"]:
                 got["keys"] = mk["keys"]
             for subject in mk["subjects"]:
@@ -867,10 +874,10 @@ def supporting(found):
 
 
 def tested(found):
-    """The test parts each family produced, as {family: [part, ...]}."""
+    """The tests each family has of its own, as {family: [part, ...]}."""
     out = {}
     for eid, rec in found.items():
-        out.setdefault(BY_ID[eid]["family"], []).extend(rec["test"])
+        out.setdefault(BY_ID[eid]["family"], []).extend(own_tests(rec))
     return out
 
 
@@ -881,18 +888,26 @@ def mentioned(decl):
     return decl.get("mentions", decl.get("dep", ""))
 
 
+def own_tests(rec):
+    """The test parts marked for this endpoint by name, without the helpers serving it."""
+    return [p for p in rec["test"] if p.get("scope", "endpoint") == "endpoint"]
+
+
 # An assertion reads one record, handler and support together.
 RECORD_ASSERT = {
     "not_only_annotations": lambda rec, names: only_annotations(rec["handler"]["text"]),
     "reaches_domain": lambda rec, names: not reaches_domain(
         "\n".join(p["text"] for p in [rec["handler"], *rec["support"]]), names),
     # Coverage rather than a claim about a snippet, riding the allowance because that is the
-    # machinery a count that only goes down already has. See required: "ratchet".
-    "no_test": lambda rec, names: not rec["test"],
+    # machinery a count that only goes down already has. See required: "ratchet". A helper
+    # marked for the family or the target is shown on this endpoint's page as part of what
+    # testing it cost, and is not a test of it.
+    "no_test": lambda rec, names: not own_tests(rec),
     # Silent where there is no test at all: that is what no_test counts, and reporting both
-    # would ratchet the same endpoint down twice.
-    "reads_expectation": lambda rec, names: bool(rec["test"]) and not all(
-        rec["endpoint"] in p["text"] for p in rec["test"]),
+    # would ratchet the same endpoint down twice. A helper cannot name every endpoint it
+    # serves, so only the endpoint's own test is asked to.
+    "reads_expectation": lambda rec, names: bool(own_tests(rec)) and not all(
+        rec["endpoint"] in p["text"] for p in own_tests(rec)),
 }
 
 # An assertion reads one family's support against what that family declared.

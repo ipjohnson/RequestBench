@@ -97,13 +97,16 @@ test: client ## boot every target and check every endpoint against spec/expected
 # target and checks every endpoint against spec/expected.json through the conformance client,
 # and it is the authority: a suite that passes while `make test` fails that target is the
 # suite that is wrong. These run no load and are never part of a measurement.
+# fastendpoints runs on its own: FastEndpoints.Testing is built on xunit.v3, a Microsoft
+# Testing Platform runner, and `dotnet test` on the .NET 10 SDK refuses a solution that mixes
+# one with VSTest. Both halves run whatever the first one did, so a failure in one never
+# hides the result of the other.
 suites: ## run each target's own test suite  (dotnet only so far)
-	cd targets/dotnet && dotnet test suite/RequestBench.Suites.slnx -c Release --nologo
-	# fastendpoints on its own: FastEndpoints.Testing is built on xunit.v3, a Microsoft
-	# Testing Platform runner, and `dotnet test` on the .NET 10 SDK refuses a solution that
-	# mixes one with VSTest.
-	cd targets/dotnet && dotnet run --project \
-	  fastendpoints/suite/RequestBench.FastEndpoints.Suite.csproj -c Release
+	@cd targets/dotnet && status=0; \
+	  dotnet test suite/RequestBench.Suites.slnx -c Release --nologo || status=1; \
+	  dotnet run --project fastendpoints/suite/RequestBench.FastEndpoints.Suite.csproj \
+	    -c Release || status=1; \
+	  exit $$status
 
 expected: ## re-derive spec/expected.json from the targets named in EXPECT_FROM
 	python3 harness/expected.py --targets $(EXPECT_FROM) --mode $(MODE) --write

@@ -1,6 +1,5 @@
 using System.Text;
 using Microsoft.AspNetCore.Mvc.Testing;
-using RequestBench.Suite;
 
 namespace RequestBench.CarterTarget.Suite;
 
@@ -12,6 +11,7 @@ namespace RequestBench.CarterTarget.Suite;
 /// WebApplication either way and the module is in the pipeline like any other registration.
 /// The cost of testing this target is the cost of testing the thing underneath it.
 /// </summary>
+// rb:test *
 public sealed class TargetApp : WebApplicationFactory<Program>
 {
     public TargetApp()
@@ -68,3 +68,4 @@ public sealed class TargetApp : WebApplicationFactory<Program>
         return await Send(ask, Plan.Resolved(ask, captured));
     }
 }
+// rb:end

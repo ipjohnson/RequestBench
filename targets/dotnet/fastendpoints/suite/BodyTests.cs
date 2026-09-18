@@ -1,5 +1,4 @@
 using FastEndpoints.Testing;
-using RequestBench.Suite;
 using Xunit;
 
 namespace RequestBench.FastEndpointsTarget.Suite;

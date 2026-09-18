@@ -1,0 +1,110 @@
+using System.Text.Json;
+using System.Text.Json.Nodes;
+
+namespace RequestBench.FastEndpointsTarget.Suite;
+
+/// <summary>
+/// What a correct answer is, read out of spec/expected.json.
+///
+/// A suite never decides this for itself. The committed expectation is the only authority
+/// and the conformance client is the only thing that judges a target against it, so a suite
+/// that passes while `make test` fails that target is the suite that is wrong. Writing the
+/// status or the body as a literal in a test is how the two drift apart, which is why the
+/// floor assertion is a lookup and not an assertion the author types out.
+/// </summary>
+// rb:test *
+public static class Spec
+{
+    private static readonly Lazy<string> RootPath = new(FindRoot);
+    private static readonly Lazy<JsonObject> Requests = new(() => Block("requests"));
+    private static readonly Lazy<JsonObject> Errors = new(() => Block("errors"));
+    private static readonly Lazy<JsonObject> Targets = new(() => Block("targets"));
+
+    /// <summary>The repository root, found by walking up from the test assembly.</summary>
+    /// <remarks>
+    /// A test host runs from suite/bin/&lt;config&gt;/net10.0, which is four levels under the
+    /// target and six under the root, and the relative path differs again under `dotnet test`
+    /// against a solution. Searching for the file that has to be there is the one way that
+    /// does not encode a build layout.
+    /// </remarks>
+    public static string Root => RootPath.Value;
+
+    private static string FindRoot()
+    {
+        for (DirectoryInfo? at = new(AppContext.BaseDirectory); at is not null; at = at.Parent)
+        {
+            if (File.Exists(Path.Combine(at.FullName, "spec", "expected.json")))
+            {
+                return at.FullName;
+            }
+        }
+        throw new InvalidOperationException(
+            $"no spec/expected.json above {AppContext.BaseDirectory}");
+    }
+
+    /// <summary>The fixture path a target reads, as an absolute path.</summary>
+    /// <remarks>
+    /// harness/run.py hands a booted target RB_FIXTURE. A test host boots the target in
+    /// process instead, from a working directory the relative fallback in DomainModel does
+    /// not resolve against, so the suite sets the same variable for the same reason.
+    /// </remarks>
+    public static string FixturePath => Path.Combine(Root, "spec", "fixture.json");
+
+    private static readonly Lazy<JsonObject> Document = new(ReadDocument);
+
+    private static JsonObject ReadDocument()
+    {
+        using FileStream stream = File.OpenRead(Path.Combine(Root, "spec", "expected.json"));
+        return JsonNode.Parse(stream)?.AsObject()
+               ?? throw new InvalidOperationException("spec/expected.json is empty");
+    }
+
+    private static JsonObject Block(string name) =>
+        Document.Value[name]?.AsObject()
+        ?? throw new InvalidOperationException($"spec/expected.json has no {name}");
+
+    /// <summary>The expectation for one request of an endpoint that sends several.</summary>
+    public static Expectation For(string endpointId, string path) => At($"{endpointId} {path}");
+
+    /// <summary>Whether this endpoint is judged as an error rather than against a pinned body.</summary>
+    public static bool IsError(string endpointId) => Errors.Value.ContainsKey(endpointId);
+
+    /// <summary>The envelope shape this target recorded, or null where it recorded none.</summary>
+    /// <remarks>
+    /// Keyed by the request rather than by the endpoint, like `requests` is: errors.malformed
+    /// and body.rejected_all are sent to the same path and a framework may answer them
+    /// differently.
+    /// </remarks>
+    public static JsonObject? Envelope(string target, string key) =>
+        Targets.Value[target]?[key]?.AsObject();
+
+    private static Expectation At(string key)
+    {
+        JsonObject want = Requests.Value[key]?.AsObject()
+                          ?? throw new InvalidOperationException(
+                              $"spec/expected.json says nothing about {key}");
+        return new Expectation(
+            Key: key,
+            Path: key[(key.IndexOf(' ') + 1)..],
+            Status: want["status"]!.GetValue<int>(),
+            BodyClass: want["body_class"]?.GetValue<string>(),
+            Encoding: want["encoding"]?.GetValue<string>(),
+            Body: want["body"]);
+    }
+}
+// rb:end
+
+/// <summary>
+/// One request's expected answer.
+///
+/// BodyClass and Encoding are null where spec/expected.json deliberately does not pin the
+/// field, which its own "unpinned" block explains. compressed.gzip_small is the one this
+/// family meets: the payload sits near the shared gzip floor, the frameworks disagree about
+/// whether to compress it, and the expectation records the disagreement rather than choosing
+/// a winner. A null is not checked.
+/// </summary>
+/// <param name="Key">The spec/expected.json key, for a failure message that can be grepped.</param>
+// rb:test *
+public sealed record Expectation(
+    string Key, string Path, int Status, string? BodyClass, string? Encoding, JsonNode? Body);
+// rb:end

@@ -75,7 +75,14 @@ const context = (h?.context ?? []) as { line: number; text: string }[];
 // error envelope the framework declares and is run by the conformance client against nothing
 // at all. One heading over both would say the wrong thing about whichever came second.
 const contract = tests.filter(({ part }) => part.path.includes("/client-exception/"));
-const suite = tests.filter(({ part }) => !part.path.includes("/client-exception/"));
+// A suite's helpers are marked for the family or the target they serve rather than for this
+// endpoint, and they are shown here because writing them was part of what testing this
+// endpoint cost. The endpoint's own test goes first so the page leads with what it asserts.
+const scoped = (part: SnippetPart): string => (part as { scope?: string }).scope ?? "endpoint";
+const suiteParts = tests.filter(({ part }) => !part.path.includes("/client-exception/"));
+const suite = suiteParts.filter(({ part }) => scoped(part) === "endpoint");
+const helpers = suiteParts.filter(({ part }) => scoped(part) !== "endpoint");
+const helperLines = helpers.reduce((n, { part }) => n + part.end_line - part.start_line + 1, 0);
 const hdrs = (hs: readonly (readonly [string, string])[]): string =>
   hs
     .map(([k, v]) => `<div class='hrow'><span class='hk'>${esc(k)}</span><span class='hv'>${esc(v)}</span></div>`)
@@ -175,13 +182,19 @@ const hdrs = (hs: readonly (readonly [string, string])[]): string =>
   </div>
 
   {
-    [["Test", suite], ["Contract test", contract]].map(([caption, parts]) =>
-      (parts as typeof tests).length > 0 && (
+    [["Test", suite, helpers], ["Contract test", contract, []]].map(([caption, parts, needed]) =>
+      (parts as typeof tests).length + (needed as typeof tests).length > 0 && (
         <>
           <h3 class="childcap">{caption as string}</h3>
           <div class="wiring">
-            {(parts as typeof tests).map(({ part, link: href }) => (
+            {[...(parts as typeof tests), ...(needed as typeof tests)].map(({ part, link: href }, i) => (
               <>
+                {i === (parts as typeof tests).length && (
+                  <p class="hint">
+                    What that test needed: {helperLines.toLocaleString()} lines written once for
+                    this target's suite and shown on every page they serve.
+                  </p>
+                )}
                 <div class="sniphead">
                   <span class="loc">{where(part)}</span>
                   <span class="how">{part.how}</span>
