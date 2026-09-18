@@ -8,8 +8,8 @@ import { buildCatalog, newestPerHost, type Catalog } from "./catalog.js";
 import { buildConfig, type BuildConfig } from "./config.js";
 import { loadExemplars, loadRuns, staleExemplars } from "./load.js";
 import type { PageData } from "./page-data.js";
-import { hostNotes, readSpec, specFactors, specRoutes } from "./spec.js";
-import type { Route, Run, Target, WireDoc } from "./types.js";
+import { hostNotes, readSpec, specFactors, specProjects, specRoutes } from "./spec.js";
+import type { Project, Route, Run, Target, WireDoc } from "./types.js";
 
 /** One framework page: a target as the newest tracked run on the container host measured it. */
 export type FrameworkPage = {
@@ -33,6 +33,8 @@ export type Site = {
   wire: Record<string, WireDoc>;
   routes: Record<string, Route>;
   factors: Record<string, string>;
+  /** Licence and links per "<language>:<target>", for the framework page's identity table. */
+  projects: Record<string, Project>;
   catalog: Catalog;
   /** The runs embedded in the page, one per host, so the table paints without a round trip. */
   embedded: Run[];
@@ -93,6 +95,7 @@ function read(): Site {
   const spec = readSpec();
   const routes = specRoutes(spec);
   const factors = specFactors(spec);
+  const projects = specProjects();
 
   const newest = newestContainerRun(runs);
   const pages: FrameworkPage[] = [];
@@ -144,6 +147,7 @@ function read(): Site {
     wire,
     routes,
     factors,
+    projects,
     catalog,
     embedded,
     pages,

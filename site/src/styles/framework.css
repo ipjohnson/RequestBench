@@ -145,3 +145,19 @@ td.h { font-family: var(--f-mono); font-size: 11px; color: var(--ink3); }
 .distramp i.s6 { background: var(--heat6); }
 .distramp i.s7 { background: var(--heat7); }
 .distscale { font-family: var(--f-mono); font-size: 11px; color: var(--ink3); }
+
+/* The identity table: what the project is and where to read it. Two rows, so it is a
+   header and a fact rather than a list, and it sits under the name it describes. */
+.ident-table { border-collapse: collapse; margin: 14px 0 26px; font-size: 13px; }
+.ident-table th, .ident-table td { padding: 5px 22px 5px 0; white-space: nowrap; }
+.ident-table th { font-family: var(--f-mono); font-size: 10px; letter-spacing: .1em;
+                  text-transform: uppercase; color: var(--ink3); font-weight: 400;
+                  border-bottom: 1px solid var(--rule); }
+.ident-table td { font-family: var(--f-mono); font-size: 12px; color: var(--ink2);
+                  padding-top: 8px; }
+.ident-table td a { color: var(--tealtext); }
+@media (max-width: 720px) {
+  .ident-table, .ident-table thead, .ident-table tbody, .ident-table tr { display: block; }
+  .ident-table thead { display: none; }
+  .ident-table td { display: block; padding: 2px 0; white-space: normal; overflow-wrap: anywhere; }
+}

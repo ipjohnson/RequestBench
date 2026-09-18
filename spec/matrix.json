@@ -1825,5 +1825,204 @@
         "mentions": "Template"
       }
     }
+  },
+  "projects_note": "One entry per target: what the project is called upstream, what it is licensed under, and where to read it. Licences and repositories were resolved from each ecosystem's registry at the versions the run measured, not written from memory. docs/bundles.html \u00a75 has this derived from the resolved dependency tree at run time instead, which is where it should end up: a declared URL is correct until the day it is not and nothing here would notice. Until that exists this block is hand-maintained, and a framework that moves its repository stays wrong until someone edits it.",
+  "projects": {
+    "dotnet:aspnet-mvc": {
+      "licence": "MIT",
+      "repo": "https://github.com/dotnet/aspnetcore",
+      "docs": "https://learn.microsoft.com/aspnet/core/",
+      "package": "https://www.nuget.org/packages/Microsoft.AspNetCore.App.Ref"
+    },
+    "dotnet:carter": {
+      "licence": "MIT",
+      "repo": "https://github.com/CarterCommunity/Carter",
+      "package": "https://www.nuget.org/packages/Carter"
+    },
+    "dotnet:fastendpoints": {
+      "licence": "MIT",
+      "repo": "https://github.com/FastEndpoints/FastEndpoints",
+      "docs": "https://fast-endpoints.com/",
+      "package": "https://www.nuget.org/packages/FastEndpoints"
+    },
+    "dotnet:minimal-apis": {
+      "licence": "MIT",
+      "repo": "https://github.com/dotnet/aspnetcore",
+      "docs": "https://learn.microsoft.com/aspnet/core/",
+      "package": "https://www.nuget.org/packages/Microsoft.AspNetCore.App.Ref"
+    },
+    "dotnet:wolverine-http": {
+      "licence": "MIT",
+      "repo": "https://github.com/jasperfx/wolverine",
+      "docs": "https://wolverinefx.net/",
+      "package": "https://www.nuget.org/packages/WolverineFx.Http"
+    },
+    "go:chi": {
+      "licence": "MIT",
+      "repo": "https://github.com/go-chi/chi",
+      "docs": "https://go-chi.io/",
+      "package": "https://pkg.go.dev/github.com/go-chi/chi/v5"
+    },
+    "go:echo": {
+      "licence": "MIT",
+      "repo": "https://github.com/labstack/echo",
+      "docs": "https://echo.labstack.com/docs",
+      "package": "https://pkg.go.dev/github.com/labstack/echo/v4"
+    },
+    "go:fiber": {
+      "licence": "MIT",
+      "repo": "https://github.com/gofiber/fiber",
+      "docs": "https://docs.gofiber.io/",
+      "package": "https://pkg.go.dev/github.com/gofiber/fiber/v3"
+    },
+    "go:gin": {
+      "licence": "MIT",
+      "repo": "https://github.com/gin-gonic/gin",
+      "docs": "https://gin-gonic.com/en/docs/",
+      "package": "https://pkg.go.dev/github.com/gin-gonic/gin"
+    },
+    "go:gorilla-mux": {
+      "licence": "BSD-3-Clause",
+      "repo": "https://github.com/gorilla/mux",
+      "package": "https://pkg.go.dev/github.com/gorilla/mux"
+    },
+    "java:helidon-se": {
+      "licence": "Apache-2.0",
+      "repo": "https://github.com/oracle/helidon",
+      "docs": "https://helidon.io",
+      "package": "https://central.sonatype.com/artifact/io.helidon.webserver/helidon-webserver"
+    },
+    "java:javalin": {
+      "licence": "Apache-2.0",
+      "repo": "https://github.com/javalin/javalin",
+      "docs": "https://javalin.io",
+      "package": "https://central.sonatype.com/artifact/io.javalin/javalin"
+    },
+    "java:micronaut": {
+      "licence": "Apache-2.0",
+      "repo": "https://github.com/micronaut-projects/micronaut-core",
+      "docs": "https://micronaut.io",
+      "package": "https://central.sonatype.com/artifact/io.micronaut/micronaut-core"
+    },
+    "java:quarkus": {
+      "licence": "Apache-2.0",
+      "repo": "https://github.com/quarkusio/quarkus",
+      "docs": "https://quarkus.io/guides/",
+      "package": "https://central.sonatype.com/artifact/io.quarkus/quarkus-core"
+    },
+    "java:spring-boot": {
+      "licence": "Apache-2.0",
+      "repo": "https://github.com/spring-projects/spring-boot",
+      "docs": "https://spring.io/projects/spring-boot",
+      "package": "https://central.sonatype.com/artifact/org.springframework.boot/spring-boot"
+    },
+    "java:vertx": {
+      "licence": "Apache-2.0 OR EPL-2.0",
+      "repo": "https://github.com/eclipse/vert.x",
+      "docs": "https://vertx.io/docs/",
+      "package": "https://central.sonatype.com/artifact/io.vertx/vertx-core"
+    },
+    "node:express": {
+      "licence": "MIT",
+      "repo": "https://github.com/expressjs/express",
+      "docs": "https://expressjs.com/",
+      "package": "https://www.npmjs.com/package/express"
+    },
+    "node:fastify": {
+      "licence": "MIT",
+      "repo": "https://github.com/fastify/fastify",
+      "docs": "https://fastify.dev/",
+      "package": "https://www.npmjs.com/package/fastify"
+    },
+    "node:h3": {
+      "licence": "MIT",
+      "repo": "https://github.com/h3js/h3",
+      "docs": "https://h3.dev",
+      "package": "https://www.npmjs.com/package/h3"
+    },
+    "node:hono": {
+      "licence": "MIT",
+      "repo": "https://github.com/honojs/hono",
+      "docs": "https://hono.dev",
+      "package": "https://www.npmjs.com/package/hono"
+    },
+    "node:koa": {
+      "licence": "MIT",
+      "repo": "https://github.com/koajs/koa",
+      "docs": "https://koajs.com",
+      "package": "https://www.npmjs.com/package/koa"
+    },
+    "python:django-asgi": {
+      "licence": "BSD-3-Clause",
+      "repo": "https://github.com/django/django",
+      "docs": "https://docs.djangoproject.com/",
+      "package": "https://pypi.org/project/django/"
+    },
+    "python:fastapi": {
+      "licence": "MIT",
+      "repo": "https://github.com/fastapi/fastapi",
+      "docs": "https://fastapi.tiangolo.com/",
+      "package": "https://pypi.org/project/fastapi/"
+    },
+    "python:flask": {
+      "licence": "BSD-3-Clause",
+      "repo": "https://github.com/pallets/flask",
+      "docs": "https://flask.palletsprojects.com/",
+      "package": "https://pypi.org/project/flask/"
+    },
+    "python:litestar": {
+      "licence": "MIT",
+      "repo": "https://github.com/litestar-org/litestar",
+      "docs": "https://docs.litestar.dev/",
+      "package": "https://pypi.org/project/litestar/"
+    },
+    "python:sanic": {
+      "licence": "MIT",
+      "repo": "https://github.com/sanic-org/sanic",
+      "docs": "https://sanic.dev/",
+      "package": "https://pypi.org/project/sanic/"
+    },
+    "python:starlette": {
+      "licence": "BSD-3-Clause",
+      "repo": "https://github.com/Kludex/starlette",
+      "docs": "https://starlette.dev/",
+      "package": "https://pypi.org/project/starlette/"
+    },
+    "rust:actix-web": {
+      "licence": "Apache-2.0 OR MIT",
+      "repo": "https://github.com/actix/actix-web",
+      "docs": "https://actix.rs",
+      "package": "https://crates.io/crates/actix-web"
+    },
+    "rust:axum": {
+      "licence": "MIT",
+      "repo": "https://github.com/tokio-rs/axum",
+      "docs": "https://docs.rs/axum",
+      "package": "https://crates.io/crates/axum"
+    },
+    "rust:poem": {
+      "licence": "Apache-2.0 OR MIT",
+      "repo": "https://github.com/poem-web/poem",
+      "docs": "https://docs.rs/poem/",
+      "package": "https://crates.io/crates/poem"
+    },
+    "rust:rocket": {
+      "licence": "Apache-2.0 OR MIT",
+      "repo": "https://github.com/rwf2/Rocket",
+      "docs": "https://api.rocket.rs/v0.5/rocket/",
+      "package": "https://crates.io/crates/rocket"
+    },
+    "rust:salvo": {
+      "licence": "Apache-2.0 OR MIT",
+      "repo": "https://github.com/salvo-rs/salvo",
+      "docs": "https://docs.rs/salvo/",
+      "package": "https://crates.io/crates/salvo"
+    },
+    "rust:warp": {
+      "licence": "MIT",
+      "repo": "https://github.com/seanmonstar/warp",
+      "docs": "https://docs.rs/warp",
+      "package": "https://crates.io/crates/warp"
+    }
   }
 }

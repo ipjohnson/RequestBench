@@ -32,6 +32,14 @@ export const Rung = z
   .passthrough();
 export type Rung = z.infer<typeof Rung>;
 
+/** What a framework is called upstream and where to read it, from spec/matrix.json. */
+export type Project = {
+  licence?: string;
+  repo?: string;
+  docs?: string;
+  package?: string;
+};
+
 /** The grid a summary counted its `bins` on. Recorded by the summary so the axis is
  *  labelled from the data being drawn rather than from a constant agreed out of band. */
 export const BinGrid = z.object({

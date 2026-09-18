@@ -2,7 +2,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { ROOT } from "./config.js";
-import type { HostNote, Route } from "./types.js";
+import type { HostNote, Project, Route } from "./types.js";
 
 function readJson(rel: string): Record<string, unknown> {
   try {
@@ -52,6 +52,17 @@ export function specRoutes(spec: Record<string, unknown>): Record<string, Route>
 export function specFactors(spec: Record<string, unknown>): Record<string, string> {
   const factors = (spec["factors"] as Record<string, { reads?: string }> | undefined) ?? {};
   return Object.fromEntries(Object.entries(factors).map(([k, v]) => [k, v.reads ?? ""]));
+}
+
+/**
+ * Licence and links per target, keyed `language:target`.
+ *
+ * Declared rather than derived, which docs/bundles.html §5 argues against and is right to:
+ * this goes stale silently the day a project moves. It is here so the page can say what a
+ * framework is licensed under today, and it is the half §5 replaces.
+ */
+export function specProjects(): Record<string, Project> {
+  return (readJson("spec/matrix.json")["projects"] as Record<string, Project> | undefined) ?? {};
 }
 
 /** What a host is, and what it should be compared against, straight from the spec. */

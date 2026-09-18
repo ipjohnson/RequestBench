@@ -10,8 +10,6 @@ import EndpointPane from "../../components/EndpointPane.astro";
 import "../../styles/framework.css";
 import { permalink, type SnippetPart } from "../../lib/bundleview.js";
 import { deltaFor } from "../../lib/delta.js";
-import { md } from "../../lib/markdown.js";
-import { cell } from "../../lib/metrics.js";
 import { usedSpan } from "../../lib/bins.js";
 import { site, type FrameworkPage } from "../../lib/site.js";
 
@@ -20,44 +18,30 @@ export function getStaticPaths() {
 }
 
 const { page } = Astro.props as { page: FrameworkPage };
-const { run, target: t, rn, view, verified, linkable, repo, commit } = page;
-const { wire, routes, factors } = site();
+const { run, target: t, rn, view, linkable, repo, commit } = page;
+const { wire, routes, factors, projects } = site();
 
 const name = t.framework || t.target;
 const facts = [
   `${name} ${t.version || "?"}`,
   t.target_runtime ?? "",
-  ...(["adapter", "serializer", "template", "etag", "cache"] as const)
+  ...(["adapter", "serializer", "etag", "cache"] as const)
     .filter((k) => t[k])
     .map((k) => `${k} ${t[k]}`),
 ].filter(Boolean);
 
-const short = commit.slice(0, 12);
-const verdict = !view
-  ? `<span class='verdict no'>source unavailable</span> this run recorded no commit, or history here does not hold it`
-  : verified && linkable
-    ? `<span class='verdict ok'>hash verified</span> against <code>${short}</code>`
-    : verified
-      ? `<span class='verdict ok'>hash verified</span> against <code>${short}</code>, which is not on a remote, so the code is shown without links`
-      : // A run made before the bundle fields existed has nothing to verify against. That is
-        // not a mismatch, and reading as one would accuse the history of being wrong.
-        !t.bundle_hash
-        ? `<span class='verdict no'>no bundle recorded</span> this run predates the bundle record, so its source cannot be pinned`
-        : `<span class='verdict no'>hash mismatch</span> the bundle at <code>${short}</code> is not what this run recorded, so no source is linked`;
+/** What the project is and where to read it. Absent for a target nobody has filled in yet. */
+const project = projects[`${t.language}:${t.target}`];
+const links: [string, string][] = [
+  ["source", project?.repo],
+  ["docs", project?.docs],
+  ["package", project?.package],
+].filter((l): l is [string, string] => Boolean(l[1]));
+/** github.com/gin-gonic/gin reads better in a cell than the scheme does. */
+const trim = (u: string): string => u.replace(/^https:\/\//, "").replace(/\/$/, "");
 
-/** This target's own row, and where it sits among the rows it is comparable to. */
+/** Only for the rate this page opens on, which the Endpoints hint states. */
 const row = t.rungs[rn];
-const peers = run.targets.filter((x) => x.language === t.language && x.rungs[rn]);
-const ordered = [...peers].sort((a, b) => (a.rungs[rn]?.p50_us ?? 0) - (b.rungs[rn]?.p50_us ?? 0));
-const rank = ordered.findIndex((x) => x.target === t.target) + 1;
-
-// A rate the target did not complete has no latency to state, so the line says what it
-// achieved and what it lost instead of formatting a null.
-const offered = (row?.offered_rps ?? 0) * (row?.seconds ?? 0);
-const took =
-  row?.p50_us != null
-    ? `p50 ${row.p50_us.toLocaleString()} us`
-    : `did not sustain the rate, dropping ${offered ? ((100 * (row?.dropped ?? 0)) / offered).toFixed(1) : "0.0"}%`;
 
 const order = run.endpoint_order ?? [];
 const own = t.endpoints ?? {};
@@ -140,7 +124,6 @@ const missing = order.filter((e) => !snips[e]);
 const note =
   Object.keys(snips).length && missing.length ? ` No handler located for ${missing.join(", ")}.` : "";
 const rate = row ? (row.offered_rps ?? 0).toLocaleString() : "?";
-const prose = view?.readme ? md(view.readme) : "";
 const linkFor = (eid: string): string | null => {
   const sn = snips[eid];
   if (!sn || !linkable || !repo) return null;
@@ -160,29 +143,30 @@ const linkFor = (eid: string): string | null => {
     <h1>{name}</h1>
   </div>
   <p class="factline">{facts.join(" · ")}</p>
-  <p class="factline" set:html={verdict} />
-
   {
-    prose ? (
-      <div class="panel prose" set:html={prose} />
-    ) : (
-      <div class="note">
-        No README in this target's bundle yet. The prose is the hand-written half of
-        docs/bundles.html &sect;2 and is what says how this framework is wired here.
-      </div>
-    )
-  }
-
-  {
-    row && (
-      <div class="panel">
-        <h2>Standing</h2>
-        <p class="hint">At {rate} offered rps, in the run that produced this page.</p>
-        <p
-          class="factline"
-          set:html={`${took} &middot; rank ${rank} of ${ordered.length} in ${t.language} &middot; ${(row.achieved_rps ?? 0).toLocaleString()} achieved rps`}
-        />
-      </div>
+    project && (
+      <table class="ident-table">
+        <thead>
+          <tr>
+            <th class="l">project</th>
+            <th class="l">licence</th>
+            {links.map(([label]) => (
+              <th class="l">{label}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="l">{name}</td>
+            <td class="l">{project.licence ?? "—"}</td>
+            {links.map(([, href]) => (
+              <td class="l">
+                <a href={href}>{trim(href)}</a>
+              </td>
+            ))}
+          </tr>
+        </tbody>
+      </table>
     )
   }
 
@@ -293,42 +277,6 @@ const linkFor = (eid: string): string | null => {
       </div>
     )
   }
-
-  {
-    view && (
-      <div class="panel">
-        <h2>Bundle</h2>
-        <p class="hint">
-          {view.manifest.files.length} files, hashed from history at the measured commit. code{" "}
-          {view.manifest.code_hash.slice(7, 19)} &middot; bundle{" "}
-          {view.manifest.bundle_hash.slice(7, 19)}
-        </p>
-        <div class="scroll">
-          <table>
-            <thead>
-              <tr>
-                <th class="l">role</th>
-                <th class="l">path</th>
-                <th>bytes</th>
-                <th>sha256</th>
-              </tr>
-            </thead>
-            <tbody>
-              {view.manifest.files.map((e) => (
-                <tr>
-                  <td class="l h">{e.role}</td>
-                  <td class="l path">{e.path}</td>
-                  <td class="sub">{cell(e.bytes)}</td>
-                  <td class="h">{e.hash.slice(7, 19)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    )
-  }
-  {view?.problems.map((p) => <div class="note">{p}</div>)}
 
   <script>
     import { startTree } from "../../client/endpoint-tree.js";
