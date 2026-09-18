@@ -1,9 +1,11 @@
 /**
  * parameters: route capture, at zero, one and two segments.
  *
- * The captured values do not reach the answer. The payload is the shared one, so what these
- * hold is that the route matched at all: a target whose two-segment pattern is wrong answers
- * 404 and the floor says so on the status line before it ever looks at a body.
+ * Each capture is bound as an integer and echoed. planned.js fills the pinned body with the
+ * values it sent, so the floor check holds the echo to them. The static path also matches the
+ * one-capture route, so its test holds that the router prefers the literal. A target whose
+ * two-segment pattern is wrong answers 404, and the floor says so on the status line before it
+ * ever looks at a body.
  */
 import * as floor from "./floor.js";
 import * as planned from "./planned.js";
@@ -20,7 +22,7 @@ describe("parameters", () => {
   });
 
   // rb:test parameters.one
-  it("one captured segment matches", async () => {
+  it("one captured segment is bound and echoed", async () => {
     const a = planned.ask("parameters.one");
 
     const answer = await send(a);
@@ -29,7 +31,7 @@ describe("parameters", () => {
   });
 
   // rb:test parameters.two
-  it("two captured segments match", async () => {
+  it("two captured segments are bound and echoed", async () => {
     const a = planned.ask("parameters.two");
 
     const answer = await send(a);

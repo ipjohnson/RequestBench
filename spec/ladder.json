@@ -30,5 +30,5 @@
   "boot_timeout_s": { "jit": 90, "steady": 20 },
   "teardown_s": 20,
   "min_requests_per_endpoint": 500,
-  "min_requests_note": "What the ladder actually delivers, rather than a floor it has never met. Rung 1 is 500 rps for 60s, so 30,000 requests across 48 endpoints is 625 each, with room for about a dozen more endpoints before it binds. At this length a per-endpoint p99 rests on about six observations. ladder-v2's 240s rung delivers 5,000 each and sets this to 4,000."
+  "min_requests_note": "What the ladder actually delivers, rather than a floor it has never met. Rung 1 is 500 rps for 60s, so 30,000 requests across 50 endpoints is 600 each, with room for about ten more endpoints before it binds. At this length a per-endpoint p99 rests on about six observations. ladder-v2's 240s rung delivers 4,800 each and sets this to 4,000."
 }

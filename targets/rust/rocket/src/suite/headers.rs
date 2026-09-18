@@ -1,8 +1,10 @@
-//! headers: reading request headers, at a few and at many.
+//! headers: request headers at a few and at many, read by nothing on /headers and bound on
+//! /headers/bind.
 //!
-//! The header count is the variable and the body is fixed, so a target that stopped reading
-//! headers at some limit would answer this correctly and still be wrong. What a response can
-//! hold is that the request was accepted with all of them attached, which is what these do.
+//! /headers answers a fixed body, so what a response there can hold is that the request was
+//! accepted with all of them attached. /headers/bind echoes the three it binds, and the plan
+//! reader fills the pinned echo with the values this binary drew, so the floor check there
+//! holds that each one was bound and the account converted to an integer.
 use super::floor;
 use super::planned;
 use super::send::send;
@@ -21,6 +23,26 @@ fn a_request_carrying_a_few_headers_is_served() {
 #[test]
 fn and_one_carrying_many_is_served_the_same_way() {
     let a = planned::ask("headers.many");
+
+    let got = send(&a);
+
+    floor::check(&a, &got);
+}
+
+// rb:test headers.bind_few
+#[test]
+fn three_bound_headers_come_back_in_the_echo() {
+    let a = planned::ask("headers.bind_few");
+
+    let got = send(&a);
+
+    floor::check(&a, &got);
+}
+
+// rb:test headers.bind_many
+#[test]
+fn and_the_same_three_among_many() {
+    let a = planned::ask("headers.bind_many");
 
     let got = send(&a);
 

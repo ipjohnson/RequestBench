@@ -208,6 +208,35 @@ struct OrderFilter {
     status: String,
 }
 
+// ---- parameters and headers: warp's typed path! and header filters ------------
+//
+// Both bind in the filter chain before the closure runs. path! converts each capture with
+// FromStr, so a segment that is not an integer rejects the route, and "static" never
+// reaches the capture beside it. `warp::header::<T>` converts a header the same way, so the
+// account arrives as an integer, and a header that is missing or will not convert is warp's
+// own rejection. The endpoint set sends neither. These structs are only the echo.
+
+// rb:wiring parameters.*
+#[derive(Serialize)]
+struct ParamOne {
+    one: i64,
+}
+
+// rb:wiring parameters.*
+#[derive(Serialize)]
+struct ParamTwo {
+    one: i64,
+    two: i64,
+}
+
+// rb:wiring headers.*
+#[derive(Serialize)]
+struct BoundHeaders {
+    tenant: String,
+    request_id: String,
+    account: i64,
+}
+
 // rb:wiring middleware.*
 /// One layer: a filter that runs in the chain and extracts nothing. Boxing between them is
 /// what keeps sixteen from becoming a type rustc spends minutes on.
@@ -317,11 +346,13 @@ fn routes() -> impl warp::Filter<Extract = (impl warp::Reply,), Error = std::con
     let params = warp::path!("parameters" / "static" / "segment" / "literal")
         .and(warp::get())
         .map(small)
-        .or(warp::path!("parameters" / String / "with-second" / String)
+        .or(warp::path!("parameters" / i64 / "segment" / "literal")
             .and(warp::get())
-            .map(move |_a: String, _b: String| small()))
+            .map(|one: i64| json(&d::with_echo("small", ParamOne { one }))))
         .unify()
-        .or(warp::path!("parameters" / String).and(warp::get()).map(move |_a: String| small()))
+        .or(warp::path!("parameters" / i64 / "with-second" / i64)
+            .and(warp::get())
+            .map(|one: i64, two: i64| json(&d::with_echo("small", ParamTwo { one, two }))))
         .unify()
         .boxed();
 
@@ -336,8 +367,17 @@ fn routes() -> impl warp::Filter<Extract = (impl warp::Reply,), Error = std::con
             .map(|q: QueryMany| json(&q)))
         .unify()
         // The handler reads no header at all, so headers.many minus headers.few is the
-        // cost of materialising 27 nobody asked for.
+        // cost of materialising 25 nobody asked for.
         .or(warp::path!("headers").and(warp::get()).map(small))
+        .unify()
+        .or(warp::path!("headers" / "bind")
+            .and(warp::get())
+            .and(warp::header::<String>("x-rb-tenant"))
+            .and(warp::header::<String>("x-rb-request-id"))
+            .and(warp::header::<i64>("x-rb-account"))
+            .map(|tenant, request_id, account| {
+                json(&d::with_echo("small", BoundHeaders { tenant, request_id, account }))
+            }))
         .unify()
         .boxed();
 

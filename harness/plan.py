@@ -7,8 +7,8 @@ customer who actually owns it) a build-time concern instead of a runtime one.
 
 Request headers are resolved here too, for the same reason paths are. Five families are
 defined by what the request carries rather than by where it points: the bearer token, the
-Accept-Encoding, the If-None-Match, the vary values and the twenty-seven extra headers all
-have to be the same bytes for every target, and most of them are values only the fixture
+Accept-Encoding, the If-None-Match, the vary values and the thirty headers of headers.many
+all have to be the same bytes for every target, and most of them are values only the fixture
 knows.
 
 Two of them cannot be finished here. A matching If-None-Match is whatever the target's own
@@ -127,8 +127,13 @@ def run_values():
     return out
 
 
-def header_set(name):
-    raw = SPEC["header_sets"][name]
+def header_set(names):
+    """One named set, or a list of them merged in order, with every placeholder resolved or
+    carried. headers.many is headers.few's set and twenty-five more, and naming the first
+    set twice would let the two drift apart."""
+    raw = {}
+    for name in [names] if isinstance(names, str) else names:
+        raw.update(SPEC["header_sets"][name])
     return {k: re.sub(r"\{([a-z_.]+)\}", lambda m: resolve(m.group(1)), v)
             for k, v in raw.items()}
 

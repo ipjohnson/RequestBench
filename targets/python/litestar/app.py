@@ -25,6 +25,7 @@ from litestar.exceptions import (ClientException, NotFoundException,
 from litestar.handlers.base import BaseRouteHandler
 from litestar.middleware import DefineMiddleware
 from litestar.middleware.compression import CompressionMiddleware
+from litestar.params import FromPath, HeaderParameter
 from litestar.response import Template
 from litestar.plugins.jinja import JinjaTemplateEngine
 from litestar.template.config import TemplateConfig
@@ -186,14 +187,16 @@ async def parameters_static() -> dict:
     return d.payload("small")
 
 
-@get("/parameters/{one:str}")
-async def parameters_one() -> dict:
-    return d.payload("small")
+# FromPath is how the pinned Litestar declares a path parameter. The bare `oid: str` style the
+# domain routes use is deprecated.
+@get("/parameters/{one:int}/segment/literal")
+async def parameters_one(one: FromPath[int]) -> dict:
+    return d.with_echo("small", {"one": one})
 
 
-@get("/parameters/{one:str}/with-second/{two:str}")
-async def parameters_two() -> dict:
-    return d.payload("small")
+@get("/parameters/{one:int}/with-second/{two:int}")
+async def parameters_two(one: FromPath[int], two: FromPath[int]) -> dict:
+    return d.with_echo("small", {"one": one, "two": two})
 
 
 # Declared parameters, which is how Litestar binds a query: the annotation is the binding,
@@ -213,11 +216,23 @@ async def query_many(page: int = 0, size: int = 0, status: str = "", category: s
             "sort": sort, "q": q, "min_price": min_price, "max_price": max_price}
 
 
-# The handler reads no header at all, so headers.many minus headers.few is the cost of
-# materialising 27 nobody asked for.
+# The handler reads no header at all. headers.many sends 30 request headers and headers.few
+# sends 5, so the difference is the cost of materialising 25 that nobody asked for.
 @get("/headers")
 async def headers() -> dict:
     return d.payload("small")
+
+
+# HeaderParameter names the header, because a Python parameter cannot spell x-rb-tenant.
+# msgspec converts x-rb-account to an int before the handler runs. The default is what a
+# missing header is.
+@get("/headers/bind")
+async def headers_bind(
+        tenant: Annotated[str, HeaderParameter(name="x-rb-tenant")] = "",
+        request_id: Annotated[str, HeaderParameter(name="x-rb-request-id")] = "",
+        account: Annotated[int, HeaderParameter(name="x-rb-account")] = 0) -> dict:
+    return d.with_echo("small", {"tenant": tenant, "request_id": request_id,
+                                 "account": account})
 
 
 @get("/middleware/none")
@@ -433,6 +448,7 @@ app = Litestar(
         json_small, json_medium, json_large,
         parameters_static, parameters_one, parameters_two,
         query_one, query_many, headers,
+        headers_bind,
         middleware_none, middleware_four, middleware_sixteen,
         authorized_small,
         compressed_small, compressed_medium, compressed_large,

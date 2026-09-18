@@ -191,14 +191,14 @@ def parameters_static():
     return small()
 
 
-@app.get("/parameters/<one>")
+@app.get("/parameters/<int:one>/segment/literal")
 def parameters_one(one):
-    return small()
+    return jsonify(d.with_echo("small", {"one": one}))
 
 
-@app.get("/parameters/<one>/with-second/<two>")
+@app.get("/parameters/<int:one>/with-second/<int:two>")
 def parameters_two(one, two):
-    return small()
+    return jsonify(d.with_echo("small", {"one": one, "two": two}))
 
 
 # Flask has no typed binder, but request.args is Werkzeug's own MultiDict and its get()
@@ -225,11 +225,24 @@ def query_many():
     })
 
 
-# The handler reads no header at all, so headers.many minus headers.few is the cost of
-# materialising 27 nobody asked for.
+# The handler reads no header at all. headers.many sends 30 request headers and headers.few
+# sends 5, so the difference is the cost of materialising 25 that nobody asked for.
 @app.get("/headers")
 def headers():
     return small()
+
+
+# request.headers is Werkzeug's own Headers. Its get() takes the conversion the same way
+# request.args does: `type=int` runs it and answers the default if the header is missing or
+# will not convert.
+@app.get("/headers/bind")
+def headers_bind():
+    h = request.headers
+    return jsonify(d.with_echo("small", {
+        "tenant": h.get("x-rb-tenant", ""),
+        "request_id": h.get("x-rb-request-id", ""),
+        "account": h.get("x-rb-account", 0, type=int),
+    }))
 
 
 # ---- middleware: one blueprint per layer count ---------------------------------------

@@ -6,9 +6,10 @@ import org.junit.jupiter.api.Test;
 /**
  * parameters: route capture, at zero, one and two segments.
  *
- * <p>The captured values do not reach the answer. The payload is the shared one, so what these
- * hold is that the route matched at all: a target whose two-segment pattern is wrong answers
- * 404 and the floor says so on the status line before it ever looks at a body.
+ * <p>Each captured segment is bound as an integer and echoed. The plan reader fills the pinned
+ * echo with the values it drew, so the floor check holds that each came back as the number
+ * sent. The static test holds that the literal route still wins over {one}/segment/literal,
+ * which would answer "static" with an echo or a refusal rather than the plain payload.
  */
 @QuarkusTest
 class ParametersTests extends QuarkusSuite {
@@ -25,7 +26,7 @@ class ParametersTests extends QuarkusSuite {
 
   // rb:test parameters.one
   @Test
-  void one_captured_segment_matches() throws Exception {
+  void one_captured_segment_is_bound_and_echoed() throws Exception {
     Planned.Ask a = Planned.ask("parameters.one");
 
     Floor.Answer answer = send(a);
@@ -35,7 +36,7 @@ class ParametersTests extends QuarkusSuite {
 
   // rb:test parameters.two
   @Test
-  void two_captured_segments_match() throws Exception {
+  void two_captured_segments_are_bound_and_echoed() throws Exception {
     Planned.Ask a = Planned.ask("parameters.two");
 
     Floor.Answer answer = send(a);

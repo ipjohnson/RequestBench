@@ -51,7 +51,7 @@
       "comparable": "frameworks"
     },
     "parameters": {
-      "exercises": "router captures with segment depth held constant",
+      "exercises": "router captures with segment depth held constant, each bound as an integer and echoed",
       "comparable": "frameworks"
     },
     "authorized": {
@@ -79,7 +79,7 @@
       "comparable": "frameworks"
     },
     "headers": {
-      "exercises": "eager against lazy construction of the request header map",
+      "exercises": "the request header map at five and at thirty headers, left unread and with three of them bound and echoed",
       "comparable": "frameworks"
     },
     "middleware": {
@@ -152,7 +152,10 @@
       "reads": "a different route carrying the same handler, which should cost nothing"
     },
     "header_count": {
-      "reads": "twenty-seven request headers instead of the usual few"
+      "reads": "thirty request headers instead of five"
+    },
+    "header_binding": {
+      "reads": "three request headers bound through the framework, one of them as an integer, and echoed in the response"
     },
     "layers": {
       "reads": "more no-op middleware layers in front of the handler"
@@ -164,6 +167,7 @@
       "reads": "a template rendered instead of the model serialized"
     }
   },
+  "header_counts": "headers.few carries five request headers and headers.many thirty, counting the two that Node's http.request adds itself, Host and Connection, which is what the load generator and the conformance client send with. Every request in the family carries the three that /headers/bind binds, so few is those two and these three. Many is a total rather than a count of extra headers. A browser sends about fifteen and a CDN, a load balancer or a service mesh adds five to fifteen more, so browser_and_proxy is fifteen of the first and ten of the second at realistic lengths, which puts the larger request at about 1 KB of headers, close to a real one before cookies. Every name is this repository's own x-rb-*, because a real one would switch something else on: accept-encoding compression, cookie a cookie parser, if-none-match conditional handling. An endpoint's headers names one set or a list of sets merged in order, so the three bound headers are written once.",
   "header_sets": {
     "bearer_ok": {
       "authorization": "Bearer {auth.token}"
@@ -185,34 +189,37 @@
     "stale_large": {
       "if-none-match": "{validators.stale}"
     },
-    "twenty_seven": {
-      "x-rb-h01": "v01",
-      "x-rb-h02": "v02",
-      "x-rb-h03": "v03",
-      "x-rb-h04": "v04",
-      "x-rb-h05": "v05",
-      "x-rb-h06": "v06",
-      "x-rb-h07": "v07",
-      "x-rb-h08": "v08",
-      "x-rb-h09": "v09",
-      "x-rb-h10": "v10",
-      "x-rb-h11": "v11",
-      "x-rb-h12": "v12",
-      "x-rb-h13": "v13",
-      "x-rb-h14": "v14",
-      "x-rb-h15": "v15",
-      "x-rb-h16": "v16",
-      "x-rb-h17": "v17",
-      "x-rb-h18": "v18",
-      "x-rb-h19": "v19",
-      "x-rb-h20": "v20",
-      "x-rb-h21": "v21",
-      "x-rb-h22": "v22",
-      "x-rb-h23": "v23",
-      "x-rb-h24": "v24",
-      "x-rb-h25": "v25",
-      "x-rb-h26": "v26",
-      "x-rb-h27": "v27"
+    "bound": {
+      "x-rb-tenant": "{run.tenant}",
+      "x-rb-request-id": "{run.request_id}",
+      "x-rb-account": "{run.account}"
+    },
+    "browser_and_proxy": {
+      "x-rb-user-agent": "Mozilla/5.0 (X11; Linux x86_64; rv:130.0) Gecko/20100101 Firefox/130.0",
+      "x-rb-accept": "application/json, text/plain, */*",
+      "x-rb-accept-language": "en-US,en;q=0.5",
+      "x-rb-accept-encoding": "gzip, deflate, br, zstd",
+      "x-rb-referer": "https://shop.example.com/orders?page=2",
+      "x-rb-origin": "https://shop.example.com",
+      "x-rb-sec-fetch-dest": "empty",
+      "x-rb-sec-fetch-mode": "cors",
+      "x-rb-sec-fetch-site": "same-origin",
+      "x-rb-priority": "u=4",
+      "x-rb-pragma": "no-cache",
+      "x-rb-cache-control": "no-cache",
+      "x-rb-te": "trailers",
+      "x-rb-dnt": "1",
+      "x-rb-sec-gpc": "1",
+      "x-rb-forwarded-for": "203.0.113.195, 198.51.100.17",
+      "x-rb-forwarded-proto": "https",
+      "x-rb-forwarded-host": "shop.example.com",
+      "x-rb-forwarded-port": "443",
+      "x-rb-real-ip": "203.0.113.195",
+      "x-rb-via": "1.1 cdn-edge, 1.1 envoy",
+      "x-rb-traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+      "x-rb-tracestate": "rojo=00f067aa0ba902b7,congo=t61rcWkgMzE",
+      "x-rb-envoy-attempt-count": "1",
+      "x-rb-amzn-trace-id": "Root=1-66e9b7c2-5759e988bd862e3fe1be46a9"
     }
   },
   "two_phase_capture": "A header value that cannot exist until a target has answered once. The etag family lets each framework's own machinery compute the validator, so the tag is not the same string on every target and spec/plan.json cannot pre-resolve an if-none-match the way it resolves a bearer token. Every driver sends these once before it sends anything else, reads the named response header, and substitutes the value wherever {capture.<name>} appears in a header set. Resolved once per target per process, not per request: the tag is constant for as long as the body is.",
@@ -224,8 +231,31 @@
     }
   },
   "drawn_per_run": "Values a handler binds and echoes, drawn once at the start of each run rather than fixed in the plan, so that no target can know them in advance and answer from a table. A path or a header set names one as {run.<name>}, beside {capture.<name>}, and spec/plan.json carries the placeholder as it is. harness/run.py draws the values and hands the same ones to the conformance client for every target and to the load generator, so the anchor measured first in each language answers with the same values as every target compared against it. Each value is declared with a fixed length and character set, so every run parses and serializes the same number of bytes: an int has that many digits and fits a signed 32-bit integer, a string is that many of chars, words is count words of that length joined by single spaces, and a choice is one of its values or of the fixture list it names. A value substituted into a path or a query string is percent-encoded, with a space as %20 and never +, because RFC 3986 does not read + as a space; a value in a header is sent as it is. An endpoint's echo names the values its response holds in an echo object, each under its own name, an int as a number and anything else as a string. The gate checks that echo on every target against the values it sent, because without the check an anchor that ignored its input would become the reference. spec/expected.json pins such a body with the placeholders in it, and a driver fills in the values it sent before comparing. A suite draws values of its own.",
-  "run_values": {},
-  "varying_headers":"Header sets whose values differ between one instance of an endpoint and the next. A response cache keyed on a header it never sees vary is keyed on nothing, so the vary rows send a pinned set of values and the store has to hold a key per combination. harness/plan.py takes the product in the order written here and hands the driver one merged header set per combination; instance i of the endpoint sends combination i modulo the count. The values live in the fixture with the capacity derived from them, because the count of distinct keys is what every target has to size its store against.",
+  "run_values": {
+    "one": {
+      "kind": "int",
+      "digits": 4
+    },
+    "two": {
+      "kind": "int",
+      "digits": 4
+    },
+    "tenant": {
+      "kind": "string",
+      "length": 12,
+      "chars": "abcdefghijklmnopqrstuvwxyz"
+    },
+    "request_id": {
+      "kind": "string",
+      "length": 16,
+      "chars": "0123456789abcdef"
+    },
+    "account": {
+      "kind": "int",
+      "digits": 6
+    }
+  },
+  "varying_headers": "Header sets whose values differ between one instance of an endpoint and the next. A response cache keyed on a header it never sees vary is keyed on nothing, so the vary rows send a pinned set of values and the store has to hold a key per combination. harness/plan.py takes the product in the order written here and hands the driver one merged header set per combination; instance i of the endpoint sends combination i modulo the count. The values live in the fixture with the capacity derived from them, because the count of distinct keys is what every target has to size its store against.",
   "header_axes": {
     "vary_one": {
       "from": "cache.vary.one"
@@ -284,20 +314,27 @@
       "id": "parameters.one",
       "family": "parameters",
       "method": "GET",
-      "path": "/parameters/{one}",
+      "path": "/parameters/{run.one}/segment/literal",
       "expect": 200,
       "payload": "small",
-      "base": "json.small",
+      "echo": [
+        "one"
+      ],
+      "base": "parameters.static",
       "varies": "captures"
     },
     {
       "id": "parameters.two",
       "family": "parameters",
       "method": "GET",
-      "path": "/parameters/{one}/with-second/{two}",
+      "path": "/parameters/{run.one}/with-second/{run.two}",
       "expect": 200,
       "payload": "small",
-      "base": "parameters.static",
+      "echo": [
+        "one",
+        "two"
+      ],
+      "base": "parameters.one",
       "varies": "captures"
     },
     {
@@ -549,8 +586,7 @@
       "path": "/headers",
       "expect": 200,
       "payload": "small",
-      "base": "json.small",
-      "varies": "route"
+      "headers": "bound"
     },
     {
       "id": "headers.many",
@@ -559,8 +595,46 @@
       "path": "/headers",
       "expect": 200,
       "payload": "small",
-      "headers": "twenty_seven",
+      "headers": [
+        "bound",
+        "browser_and_proxy"
+      ],
       "base": "headers.few",
+      "varies": "header_count"
+    },
+    {
+      "id": "headers.bind_few",
+      "family": "headers",
+      "method": "GET",
+      "path": "/headers/bind",
+      "expect": 200,
+      "payload": "small",
+      "headers": "bound",
+      "echo": [
+        "tenant",
+        "request_id",
+        "account"
+      ],
+      "base": "headers.few",
+      "varies": "header_binding"
+    },
+    {
+      "id": "headers.bind_many",
+      "family": "headers",
+      "method": "GET",
+      "path": "/headers/bind",
+      "expect": 200,
+      "payload": "small",
+      "headers": [
+        "bound",
+        "browser_and_proxy"
+      ],
+      "echo": [
+        "tenant",
+        "request_id",
+        "account"
+      ],
+      "base": "headers.bind_few",
       "varies": "header_count"
     },
     {
@@ -722,16 +796,6 @@
     "line": {
       "kind": "int_range",
       "from": "fixture.lines"
-    },
-    "one": {
-      "kind": "int_range",
-      "min": 1,
-      "max": 1000
-    },
-    "two": {
-      "kind": "int_range",
-      "min": 1,
-      "max": 1000
     },
     "region": {
       "kind": "choice",

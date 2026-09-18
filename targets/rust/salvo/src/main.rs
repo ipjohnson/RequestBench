@@ -203,6 +203,43 @@ fn param(req: &mut Request, name: &str) -> String {
     req.param::<String>(name).unwrap_or_default()
 }
 
+// ---- parameters and headers: salvo's own path and header parsing --------------
+//
+// `req.parse_params::<T>()` and `req.parse_headers::<T>()` are the binder the query family
+// uses, over the route's captures and the request's headers: salvo deserializes them into
+// the struct, converting each value, and the struct it fills is the echo. What will not fit
+// is salvo's own ParseError, which the handler returns for salvo to render as its own 400.
+// The endpoint set sends nothing that does not fit.
+
+// rb:wiring parameters.*,headers.*
+/// What a route that binds answers: the small payload with its echo, or salvo's refusal.
+type Echoed<T> = salvo::http::ParseResult<Json<d::WithEcho<T>>>;
+
+// rb:wiring parameters.*
+#[derive(Serialize, Deserialize)]
+struct ParamOne {
+    one: i64,
+}
+
+// rb:wiring parameters.*
+#[derive(Serialize, Deserialize)]
+struct ParamTwo {
+    one: i64,
+    two: i64,
+}
+
+// rb:wiring headers.*
+/// Read by header name and echoed by field name.
+#[derive(Serialize, Deserialize)]
+struct BoundHeaders {
+    #[serde(rename(deserialize = "x-rb-tenant"))]
+    tenant: String,
+    #[serde(rename(deserialize = "x-rb-request-id"))]
+    request_id: String,
+    #[serde(rename(deserialize = "x-rb-account"))]
+    account: i64,
+}
+
 // ---- handlers -----------------------------------------------------------------
 
 #[handler]
@@ -225,6 +262,24 @@ async fn meta(res: &mut Response) {
 #[handler]
 async fn small(res: &mut Response) {
     res.render(Json(d::payload("small")));
+}
+
+// rb:wiring parameters.*
+#[handler]
+async fn param_one(req: &mut Request) -> Echoed<ParamOne> {
+    Ok(Json(d::with_echo("small", req.parse_params::<ParamOne>()?)))
+}
+
+// rb:wiring parameters.*
+#[handler]
+async fn param_two(req: &mut Request) -> Echoed<ParamTwo> {
+    Ok(Json(d::with_echo("small", req.parse_params::<ParamTwo>()?)))
+}
+
+// rb:wiring headers.*
+#[handler]
+async fn bind_headers(req: &mut Request) -> Echoed<BoundHeaders> {
+    Ok(Json(d::with_echo("small", req.parse_headers::<BoundHeaders>()?)))
 }
 
 /// Every route salvo does not match. Registered as the catcher so the body is the same
@@ -535,13 +590,14 @@ fn service() -> Service {
         .push(Router::with_path("/json/medium").get(json_medium))
         .push(Router::with_path("/json/large").get(json_large))
         .push(Router::with_path("/parameters/static/segment/literal").get(small))
-        .push(Router::with_path("/parameters/{one}/with-second/{two}").get(small))
-        .push(Router::with_path("/parameters/{one}").get(small))
+        .push(Router::with_path("/parameters/{one}/segment/literal").get(param_one))
+        .push(Router::with_path("/parameters/{one}/with-second/{two}").get(param_two))
         .push(Router::with_path("/query/one").get(query_one))
         .push(Router::with_path("/query/many").get(query_many))
         // The handler reads no header at all, so headers.many minus headers.few is the
-        // cost of materialising 27 nobody asked for.
+        // cost of materialising 25 nobody asked for.
         .push(Router::with_path("/headers").get(small))
+        .push(Router::with_path("/headers/bind").get(bind_headers))
         .push(Router::with_path("/middleware/none").get(small))
         .push(four.get(small))
         .push(sixteen.get(small))

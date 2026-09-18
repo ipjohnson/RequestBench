@@ -248,12 +248,28 @@ async def parameters_static(_):
 
 @require_GET
 async def parameters_one(_, one):
-    return JsonResponse(d.payload("small"))
+    return JsonResponse(d.with_echo("small", {"one": one}))
 
 
 @require_GET
 async def parameters_two(_, one, two):
-    return JsonResponse(d.payload("small"))
+    return JsonResponse(d.with_echo("small", {"one": one, "two": two}))
+
+
+# Django has no header binder, so the view reads the three headers itself and holds the
+# conversion. An account that is missing or will not parse is 0, because the family has no
+# error contract to answer with.
+# rb:handler headers.bind_few,headers.bind_many
+@require_GET
+async def headers_bind(request):
+    h = request.headers
+    try:
+        account = int(h.get("x-rb-account"))
+    except (TypeError, ValueError):
+        account = 0
+    return JsonResponse(d.with_echo("small", {"tenant": h.get("x-rb-tenant", ""),
+                                              "request_id": h.get("x-rb-request-id", ""),
+                                              "account": account}))
 
 
 # ---- query: a django.forms.Form over request.GET -------------------------------------
@@ -501,13 +517,14 @@ urlpatterns = [
     path("json/medium", payload_view("medium")),
     path("json/large", payload_view("large")),
     path("parameters/static/segment/literal", parameters_static),
-    path("parameters/<one>", parameters_one),
-    path("parameters/<one>/with-second/<two>", parameters_two),
+    path("parameters/<int:one>/segment/literal", parameters_one),
+    path("parameters/<int:one>/with-second/<int:two>", parameters_two),
     path("query/one", query_one),
     path("query/many", query_many),
-    # The view reads no header at all, so headers.many minus headers.few is the cost of
-    # materialising 27 nobody asked for.
+    # The view reads no header at all. headers.many sends 30 request headers and headers.few
+    # sends 5, so the difference is the cost of materialising 25 that nobody asked for.
     path("headers", require_GET(small)),
+    path("headers/bind", headers_bind),
     path("middleware/none", layered(small, 0)),
     path("middleware/four", layered(small, 4)),
     path("middleware/sixteen", layered(small, 16)),

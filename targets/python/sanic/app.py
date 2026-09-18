@@ -186,14 +186,14 @@ async def parameters_static(request):
     return small(request)
 
 
-@app.get("/parameters/<one>")
+@app.get("/parameters/<one:int>/segment/literal")
 async def parameters_one(request, one):
-    return small(request)
+    return response.json(d.with_echo("small", {"one": one}))
 
 
-@app.get("/parameters/<one>/with-second/<two>")
+@app.get("/parameters/<one:int>/with-second/<two:int>")
 async def parameters_two(request, one, two):
-    return small(request)
+    return response.json(d.with_echo("small", {"one": one, "two": two}))
 
 
 # Sanic has no binder to plug into: request.args is what it parsed, and the coercion is the
@@ -235,11 +235,26 @@ async def query_many(request):
     })
 
 
-# The handler reads no header at all, so headers.many minus headers.few is the cost of
-# materialising 27 nobody asked for.
+# The handler reads no header at all. headers.many sends 30 request headers and headers.few
+# sends 5, so the difference is the cost of materialising 25 that nobody asked for.
 @app.get("/headers")
 async def headers(request):
     return small(request)
+
+
+# Sanic has no header binder, so the handler reads the three headers itself and holds the
+# conversion. An account that is missing or will not parse is 0, because the family has no
+# error contract to answer with.
+@app.get("/headers/bind")
+async def headers_bind(request):
+    h = request.headers
+    try:
+        account = int(h.get("x-rb-account"))
+    except (TypeError, ValueError):
+        account = 0
+    return response.json(d.with_echo("small", {"tenant": h.get("x-rb-tenant", ""),
+                                               "request_id": h.get("x-rb-request-id", ""),
+                                               "account": account}))
 
 
 # ---- middleware: one blueprint per layer count ---------------------------------------

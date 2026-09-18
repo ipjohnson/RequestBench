@@ -549,7 +549,7 @@ def marks(lines, syntax):
             subjects += named
         # How widely the mark selects, which is not the same thing as how many subjects it
         # names. A helper marked for a family serves that family's tests and is not one of
-        # them; counting it as one would let a single mark on a fixture cover forty-eight
+        # them; counting it as one would let a single mark on a fixture cover fifty
         # endpoints that have no test of their own.
         scope = ("target" if "*" in selectors
                  else "family" if any(s.endswith(".*") for s in selectors) else "endpoint")

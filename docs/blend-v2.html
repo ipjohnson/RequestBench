@@ -171,12 +171,12 @@ footer { margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--rule);
 
 <p class="eyebrow">RequestBench · design</p>
 <h1>Blend v2 Endpoints</h1>
-<p class="lede">The endpoint set as it should be: forty-eight endpoints whose names say what they test, built by adding one feature at a time to a fixed JSON response, sampled evenly, and weighted only when someone asks for an aggregate.</p>
+<p class="lede">The endpoint set as it should be: fifty endpoints whose names say what they test, built by adding one feature at a time to a fixed JSON response, sampled evenly, and weighted only when someone asks for an aggregate.</p>
 
 <dl class="meta">
   <div><dt>Date</dt><dd>14 September 2026</dd></div>
   <div><dt>Replaces</dt><dd><code>blend-v1</code>, 40 endpoints, 8 families</dd></div>
-  <div><dt>Proposes</dt><dd><code>blend-v2</code>, 48 endpoints, 14 families</dd></div>
+  <div><dt>Proposes</dt><dd><code>blend-v2</code>, 50 endpoints, 14 families</dd></div>
   <div><dt>Sampling</dt><dd>Uniform. 30,667 requests per endpoint per run.</dd></div>
   <div><dt>Status</dt><dd>Proposed. Nothing implemented.</dd></div>
 </dl>
@@ -242,7 +242,7 @@ footer { margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--rule);
 <section>
 <div class="sectionhead">
   <span class="num">§3 · The set</span>
-  <h2>Forty-five endpoints in thirteen families</h2>
+  <h2>Fifty endpoints in fourteen families</h2>
   <p>Each block gives the family's job, its rows, and the three lines that define what its deltas mean. <code>Base</code> is the endpoint to subtract. There is no weight column: every endpoint is drawn with equal probability, and what counts toward an aggregate is decided in <code>spec/blends.json</code> rather than here.</p>
 </div>
 
@@ -280,18 +280,18 @@ footer { margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--rule);
 
 <div class="grp">
   <div class="grphead"><h3>parameters</h3><span class="cnt">3 endpoints</span>
-    <p class="job">The router under forty registered routes. All three return the small payload.</p></div>
+    <p class="job">The router under forty registered routes, and the framework's own path binding. <code>static</code> returns the small payload; <code>one</code> and <code>two</code> bind their captures as integers and return it with an <code>echo</code> of them.</p></div>
   <div class="scroll"><table>
   <thead><tr><th>Id</th><th>Method</th><th>Path</th><th class="n">Expect</th><th>Base</th></tr></thead>
   <tbody>
   <tr><td class="m">parameters.static</td><td class="m">GET</td><td class="w">/parameters/static/segment/literal</td><td class="n">200</td><td class="base">json.small</td></tr>
-  <tr><td class="m">parameters.one</td><td class="m">GET</td><td class="w">/parameters/{one}</td><td class="n">200</td><td class="base">json.small</td></tr>
-  <tr><td class="m">parameters.two</td><td class="m">GET</td><td class="w">/parameters/{one}/with-second/{two}</td><td class="n">200</td><td class="base">parameters.static</td></tr>
+  <tr><td class="m">parameters.one</td><td class="m">GET</td><td class="w">/parameters/{run.one}/segment/literal</td><td class="n">200</td><td class="base">parameters.static</td></tr>
+  <tr><td class="m">parameters.two</td><td class="m">GET</td><td class="w">/parameters/{run.one}/with-second/{run.two}</td><td class="n">200</td><td class="base">parameters.one</td></tr>
   </tbody></table></div>
   <dl class="holds">
-    <div><dt>Held constant</dt><dd>Response bytes. Segment depth, across the pair that matters.</dd></div>
-    <div><dt>Varies</dt><dd>Capture count: 0, 1, 2.</dd></div>
-    <div><dt>The delta reads</dt><dd><span class="mono">two − static</span> is capture cost at four segments with depth removed. <span class="mono">one − json.small</span> is one capture plus one segment, and is not pure.</dd></div>
+    <div><dt>Held constant</dt><dd>Segment depth: all three routes are four segments deep. The value of a capture, which is drawn once per run and has a fixed number of digits, so every run sends one path per row and the same bytes.</dd></div>
+    <div><dt>Varies</dt><dd>Capture count: 0, 1, 2. Each capture is bound as an integer through the framework's own path binding and echoed.</dd></div>
+    <div><dt>The delta reads</dt><dd><span class="mono">one − static</span> is one capture, bound, converted and echoed, at the same depth. <span class="mono">two − one</span> is one more. The echo is part of the cost, because a handler that binds a value and never uses it could skip the conversion.</dd></div>
   </dl>
 </div>
 
@@ -403,18 +403,20 @@ footer { margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--rule);
 </div>
 
 <div class="grp">
-  <div class="grphead"><h3>headers</h3><span class="cnt">2 endpoints</span>
-    <p class="job">Whether the request header map is built eagerly or on demand. One route, two request shapes.</p></div>
+  <div class="grphead"><h3>headers</h3><span class="cnt">4 endpoints</span>
+    <p class="job">The request header map, built and left unread, then read through the framework's own binder. Two routes, two request shapes each.</p></div>
   <div class="scroll"><table>
   <thead><tr><th>Id</th><th>Method</th><th>Path / request</th><th class="n">Expect</th><th>Base</th></tr></thead>
   <tbody>
-  <tr><td class="m">headers.few</td><td class="m">GET</td><td class="w">/headers<br><span class="base">3 request headers</span></td><td class="n">200</td><td class="base">json.small</td></tr>
+  <tr><td class="m">headers.few</td><td class="m">GET</td><td class="w">/headers<br><span class="base">5 request headers</span></td><td class="n">200</td><td class="base">—</td></tr>
   <tr><td class="m">headers.many</td><td class="m">GET</td><td class="w">/headers<br><span class="base">30 request headers</span></td><td class="n">200</td><td class="base">headers.few</td></tr>
+  <tr><td class="m">headers.bind_few</td><td class="m">GET</td><td class="w">/headers/bind<br><span class="base">5 request headers, 3 bound</span></td><td class="n">200</td><td class="base">headers.few</td></tr>
+  <tr><td class="m">headers.bind_many</td><td class="m">GET</td><td class="w">/headers/bind<br><span class="base">30 request headers, 3 bound</span></td><td class="n">200</td><td class="base">headers.bind_few</td></tr>
   </tbody></table></div>
   <dl class="holds">
-    <div><dt>Held constant</dt><dd>Route, response, and the handler, which must read no header at all.</dd></div>
-    <div><dt>Varies</dt><dd>How many headers arrive.</dd></div>
-    <div><dt>The delta reads</dt><dd>Near zero means lazy. A clear positive means the framework materialised 27 headers nobody asked for.</dd></div>
+    <div><dt>Held constant</dt><dd>The three bound headers, <code>x-rb-tenant</code>, <code>x-rb-request-id</code> and <code>x-rb-account</code>, which every request carries: two strings and an integer, drawn once per run at a fixed length. Few is those three and the two Node's <code>http.request</code> adds itself, <code>Host</code> and <code>Connection</code>. Many is thirty in total: fifteen a browser sends on a fetch and ten a CDN, a load balancer and a service mesh add, at realistic lengths, which puts the request at about 1&nbsp;KB of headers. Every name is <code>x-rb-*</code>, because a real <code>accept-encoding</code>, <code>cookie</code> or <code>if-none-match</code> would switch on compression, a cookie parser or conditional handling.</dd></div>
+    <div><dt>Varies</dt><dd>How many headers arrive, and whether the handler reads any. <code>/headers</code> reads none. <code>/headers/bind</code> binds three through the framework's own facility, converts the integer, and echoes all three.</dd></div>
+    <div><dt>The delta reads</dt><dd><span class="mono">many − few</span> is the header map when nothing reads it: near zero means lazy, a clear positive means the framework materialised twenty-five headers nobody asked for. <span class="mono">bind_few − few</span> is binding three headers and echoing them. <span class="mono">bind_many − bind_few</span> is what the header count costs once the handler reads one, which is where a framework that builds the map lazily pays: the first read can build the whole map.</dd></div>
   </dl>
 </div>
 
@@ -554,7 +556,7 @@ footer { margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--rule);
 </table>
 </div>
 
-<p>The floor in <code>spec/ladder.json</code> stops being a design constraint to check and becomes an automatic property: whatever a rung delivers, divided by the endpoint count, is what every endpoint gets, and it follows the set rather than the set following it. Under <code>ladder-v2</code> that is 240,000 requests over 48 endpoints, or 5,000 each. The declared minimum is 4,000, so about a dozen more rows can arrive before the file stops being true. <a href="https://github.com/ipjohnson/RequestBench/issues/38">#38</a> lowered it from 10,000, which the set had already been under for some time; lengthening the rung instead would have moved every published latency, because a longer rung is a different measurement.</p>
+<p>The floor in <code>spec/ladder.json</code> stops being a design constraint to check and becomes an automatic property: whatever a rung delivers, divided by the endpoint count, is what every endpoint gets, and it follows the set rather than the set following it. Under <code>ladder-v2</code> that is 240,000 requests over 50 endpoints, or 4,800 each. The declared minimum is 4,000, so about ten more rows can arrive before the file stops being true. <a href="https://github.com/ipjohnson/RequestBench/issues/38">#38</a> lowered it from 10,000, which the set had already been under for some time; lengthening the rung instead would have moved every published latency, because a longer rung is a different measurement.</p>
 
 <p>Composition simplifies too. With every <code>n</code> equal, scaling a histogram by <code>w / n</code> is scaling it by <code>w</code>, and merging the raw histograms untouched <em>is</em> the uniform blend. There is no longer a sampling field and a weighting field to keep consistent — there is one weight vector, applied at the end, and the raw data underneath it has no opinion in it at all.</p>
 

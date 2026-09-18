@@ -81,14 +81,14 @@
       "label": "endpoint with no test",
       "scope": "coverage",
       "what": "every endpoint has to be held by at least one test in its target's own suite, marked for it by name. A helper marked for its family or for the whole target is not a test of it",
-      "why": "required: \"every\" is the right shape and cannot be used. harness/snippets.py drops a record that lacks a kind marked every, so setting it empties the snippet map for all forty-eight endpoints on all thirty-three targets and the site renders nothing at all. required: \"ratchet\" counts the endpoints with no test instead and holds the count against the allowance, which only ever goes down. The filter stays keyed to handler alone",
+      "why": "required: \"every\" is the right shape and cannot be used. harness/snippets.py drops a record that lacks a kind marked every, so setting it empties the snippet map for all fifty endpoints on all thirty-three targets and the site renders nothing at all. required: \"ratchet\" counts the endpoints with no test instead and holds the count against the allowance, which only ever goes down. The filter stays keyed to handler alone",
       "except": []
     },
     "reads_expectation": {
       "label": "test that does not read the expectation",
       "scope": "test",
       "what": "a test marked for an endpoint by name has to name it, which is the key spec/expected.json is read by. A helper marked for a family or the target cannot name every endpoint it serves and is not asked to",
-      "why": "spec/expected.json is the only authority on what a correct answer is, and a status or a body written into a test as a literal is how 1,584 assertions drift away from it. Naming the endpoint is what a lookup looks like in every language, and it catches the second thing mentions_dep catches: a mark that drifted onto neighbouring lines stops naming its endpoint, and a drifted mark is otherwise indistinguishable from a correct one",
+      "why": "spec/expected.json is the only authority on what a correct answer is, and a status or a body written into a test as a literal is how 1,650 assertions drift away from it. Naming the endpoint is what a lookup looks like in every language, and it catches the second thing mentions_dep catches: a mark that drifted onto neighbouring lines stops naming its endpoint, and a drifted mark is otherwise indistinguishable from a correct one",
       "except": []
     }
   },

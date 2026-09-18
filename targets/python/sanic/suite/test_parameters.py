@@ -1,8 +1,10 @@
-"""parameters: route capture, at zero, one and two segments.
+"""parameters: route capture at a depth of four segments, with none, one and two captured.
 
-The captured values do not reach the answer. The payload is the shared one, so what these
-hold is that the route matched at all: a target whose two-segment pattern is wrong answers
-404 and the floor says so on the status line before it ever looks at a body.
+Each capture is bound as an integer and echoed beside the small payload. The plan reader
+fills the pinned body with the values it sent, so the floor check is the echo check. A target
+whose pattern is wrong answers 404 and the floor says so on the status line. One that bound
+the wrong segment, or answered a capture as a string, fails on the body. The static route
+overlaps the one-capture route, so its test also holds that the literal wins.
 """
 
 import floor
@@ -11,7 +13,7 @@ import planned
 
 
 # rb:test parameters.static
-def test_a_route_with_nothing_to_capture_matches(send):
+def test_the_static_route_wins_over_the_capture_it_overlaps(send):
     a = planned.ask("parameters.static")
 
     answer = send(a)
@@ -20,7 +22,7 @@ def test_a_route_with_nothing_to_capture_matches(send):
 
 
 # rb:test parameters.one
-def test_one_captured_segment_matches(send):
+def test_one_captured_segment_is_bound_as_an_integer_and_echoed(send):
     a = planned.ask("parameters.one")
 
     answer = send(a)
@@ -29,7 +31,7 @@ def test_one_captured_segment_matches(send):
 
 
 # rb:test parameters.two
-def test_two_captured_segments_match(send):
+def test_and_two_are_bound_and_echoed_the_same_way(send):
     a = planned.ask("parameters.two")
 
     answer = send(a)
