@@ -52,10 +52,6 @@ td.h { font-family: var(--f-mono); font-size: 11px; color: var(--ink3); }
 .eplink[aria-current="true"] { background: var(--tealsoft); border-left-color: var(--teal);
                                color: var(--ink); }
 .epid { display: block; font-family: var(--f-mono); font-size: 12.5px; }
-.eproute { display: block; font-family: var(--f-mono); font-size: 10.5px;
-           color: var(--ink3); white-space: nowrap; overflow: hidden;
-           text-overflow: ellipsis; }
-.eplink[aria-current="true"] .eproute { color: var(--ink2); }
 .eppanes { min-width: 0; }
 .eppane .epname { font-family: var(--f-mono); font-size: 17px; margin: 0; }
 /* .fields draws its hairlines by showing a rule-coloured background through a 1px gap,
@@ -73,3 +69,79 @@ td.h { font-family: var(--f-mono); font-size: 11px; color: var(--ink3); }
 .wiring pre.code + .sniphead { margin-top: 14px; }
 .wiring .ctx { font-family: var(--f-mono); font-size: 11.5px; color: var(--ink3);
                margin: 0 0 10px; white-space: pre; overflow-x: auto; }
+
+/* Info and Distribution: two readings of one endpoint list, so the tabs sit on the rule
+   the views hang from rather than floating above them. */
+.eptabs { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px;
+          margin: 0 0 14px; border-bottom: 1px solid var(--rule); }
+.eptabs [role="tablist"] { display: flex; gap: 2px; }
+.eptabs [role="tab"] { appearance: none; background: none; border: 0; cursor: pointer;
+  font: inherit; font-size: 13px; color: var(--ink2); padding: 7px 14px;
+  border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.eptabs [role="tab"]:hover { color: var(--ink); }
+.eptabs [role="tab"][aria-selected="true"] { color: var(--ink); font-weight: 600;
+  border-bottom-color: var(--teal); }
+.eptabs [role="tab"]:focus-visible { outline: 2px solid var(--teal); outline-offset: -2px; }
+
+/* The rate is a property of the whole panel rather than of either view, so it sits opposite
+   the tabs instead of inside one of them. */
+.eprates { display: inline-flex; margin-bottom: 6px; border: 1px solid var(--rule);
+           border-radius: 3px; overflow: hidden; }
+.eprate-pick { appearance: none; background: none; border: 0; cursor: pointer; font: inherit;
+               font-family: var(--f-mono); font-size: 11.5px; color: var(--ink2);
+               padding: 4px 10px; }
+.eprate-pick + .eprate-pick { border-left: 1px solid var(--rule); }
+.eprate-pick:hover { background: var(--surface2); color: var(--ink); }
+.eprate-pick[aria-pressed="true"] { background: var(--tealsoft); color: var(--ink);
+                                    font-weight: 500; }
+.eprate-pick:focus-visible { outline: 2px solid var(--teal); outline-offset: -2px; }
+
+/* The endpoint's own histogram, under the table the percentiles are in. */
+.ephist { margin: 14px 0 0; }
+.ephist svg { display: block; max-width: 100%; height: auto; }
+.ephistbar { fill: var(--teal); }
+.ephistmark { stroke: var(--ink3); stroke-width: 1; stroke-dasharray: 2 2; }
+.ephistmarklabel { font-family: var(--f-mono); font-size: 9.5px; fill: var(--ink3); }
+.ephist figcaption { font-size: 12px; color: var(--ink3); margin-top: 6px; }
+
+/* One target's latency distribution. The grid is wider than the column on a narrow
+   screen, so it scrolls in its own box rather than widening the page. */
+.distscroll { overflow-x: auto; }
+.distsvg { display: block; max-width: 100%; height: auto; }
+.disttick { font-family: var(--f-mono); font-size: 10.5px; fill: var(--ink3); }
+.distlabel { font-family: var(--f-mono); font-size: 11px; fill: var(--ink2); }
+/* The row, not the cell, is the target: a 15px strip is already a small thing to hit and
+   the name is the part a reader aims at. */
+.distrow { cursor: pointer; }
+.disthit { fill: transparent; }
+.distrow:hover .disthit { fill: var(--surface2); }
+.distrow:hover .distlabel { fill: var(--ink); }
+/* A rail and a weight, not a wash: --tealsoft is a step off --heat1, so a selected row
+   filled with it would read as a cell's value rather than as the selection. */
+.distrail { fill: transparent; }
+.distrow[aria-current="true"] .distrail { fill: var(--teal); }
+.distrow[aria-current="true"] .distlabel { fill: var(--ink); font-weight: 500; }
+.distrow:focus-visible { outline: 2px solid var(--teal); outline-offset: -2px; }
+.distgrid { stroke: var(--rule); stroke-width: 1; }
+.distrule { stroke: var(--rule2); stroke-width: 1; }
+.distcell.s1 { fill: var(--heat1); }
+.distcell.s2 { fill: var(--heat2); }
+.distcell.s3 { fill: var(--heat3); }
+.distcell.s4 { fill: var(--heat4); }
+.distcell.s5 { fill: var(--heat5); }
+.distcell.s6 { fill: var(--heat6); }
+.distcell.s7 { fill: var(--heat7); }
+.distkey { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px;
+           margin: 12px 0 0; font-size: 12px; color: var(--ink2); }
+.distramp { display: inline-flex; }
+/* Butted, not gapped: the ramp is one continuous scale and a gap would read as seven
+   categories. The cells in the grid are gapped for the opposite reason. */
+.distramp i { width: 20px; height: 10px; display: block; }
+.distramp i.s1 { background: var(--heat1); }
+.distramp i.s2 { background: var(--heat2); }
+.distramp i.s3 { background: var(--heat3); }
+.distramp i.s4 { background: var(--heat4); }
+.distramp i.s5 { background: var(--heat5); }
+.distramp i.s6 { background: var(--heat6); }
+.distramp i.s7 { background: var(--heat7); }
+.distscale { font-family: var(--f-mono); font-size: 11px; color: var(--ink3); }

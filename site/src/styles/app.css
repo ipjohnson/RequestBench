@@ -1,4 +1,9 @@
 * { box-sizing: border-box; }
+/* `hidden` is the browser's own rule and any class that sets display outruns it, so an
+   element switched off in script stays on screen: .explorer is display:grid, and hiding it
+   to show the distribution left both views stacked. Stated here so it holds for whatever is
+   toggled next rather than being rediscovered per element. */
+[hidden] { display: none !important; }
 body { margin: 0; background: var(--ground); color: var(--ink);
        font-family: var(--f-body); font-size: 15px; line-height: 1.55;
        -webkit-font-smoothing: antialiased; }

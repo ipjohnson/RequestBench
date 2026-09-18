@@ -33,8 +33,27 @@
   --f-display: "Newsreader", Georgia, serif;
   --f-body: "Archivo", "Helvetica Neue", Arial, sans-serif;
   --f-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  /* Sequential teal for the distribution heatmap: one hue, the site's own, stepped light
+     to dark with the lightest step nearest the surface so an all-but-empty bin recedes.
+     Monotonic in OKLab lightness, which is what makes the order readable as an order. */
+  --heat1: #e2f1ec;
+  --heat2: #9cdaca;
+  --heat3: #51c1a8;
+  --heat4: #00a289;
+  --heat5: #00806b;
+  --heat6: #005f4f;
+  --heat7: #003f34;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  /* The same hue stepped for the dark surface, darkest nearest it. Not the light ramp
+     reversed by the browser: these are their own steps, chosen against #1A1E1B. */
+  --heat1: #26312d;
+  --heat2: #125346;
+  --heat3: #007461;
+  --heat4: #00967e;
+  --heat5: #00b89c;
+  --heat6: #68d5bb;
+  --heat7: #b0eddc;
   --ground: #121513;
   --surface: #1A1E1B;
   --surface2: #232823;
@@ -57,6 +76,13 @@
   --s5: #9478BE;
 } }
 :root[data-theme="dark"] {
+  --heat1: #26312d;
+  --heat2: #125346;
+  --heat3: #007461;
+  --heat4: #00967e;
+  --heat5: #00b89c;
+  --heat6: #68d5bb;
+  --heat7: #b0eddc;
   --ground: #121513;
   --surface: #1A1E1B;
   --surface2: #232823;

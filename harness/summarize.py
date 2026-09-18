@@ -11,6 +11,17 @@ import argparse, base64, json, math, pathlib, struct, sys, collections
 GROWTH, NBUCKETS = 1.02, 920
 LOG_G = math.log(GROWTH)
 
+# The coarse grid the framework page draws its distribution on. Eight bins a decade from
+# 80 us reaches 600 ms in 31 columns, which held every request every target served without
+# clipping at either end. Wide enough that a reader can tell two columns apart on screen,
+# which the native 2% grid is not: 920 buckets drawn side by side is a smear.
+#
+# Derived here rather than recorded by the generator, because it is a view of the same
+# histogram the percentiles above come from and not a second measurement. Changing these
+# three numbers changes what published summaries mean, so they are versioned with the
+# summary the way GROWTH and NBUCKETS are versioned with the run.
+BIN_LO, BIN_PER_DECADE, BIN_COUNT = 80.0, 8, 31
+
 def unpack(b64):
     raw = base64.b64decode(b64)
     return struct.unpack("<%dI" % (len(raw) // 4), raw)
@@ -42,6 +53,21 @@ def pct(counts, p):
         seen += c
     return 0
 
+def rebin(counts):
+    """The histogram at BIN_PER_DECADE bins a decade: shape to draw, not numbers to subtract.
+
+    Every request lands somewhere. A bucket below the first column or above the last is
+    folded into it rather than dropped, so the bins sum to the endpoint's count and a share
+    computed from them is a share of everything the endpoint served.
+    """
+    out = [0] * BIN_COUNT
+    for i, c in enumerate(counts):
+        if not c:
+            continue
+        j = int(math.log10(math.exp((i + 0.5) * LOG_G) / BIN_LO) * BIN_PER_DECADE)
+        out[min(BIN_COUNT - 1, max(0, j))] += c
+    return out
+
 # Past this fraction of dropped requests a target is serving less than it was offered, so
 # its percentiles describe the requests that survived rather than the load it was given.
 SATURATION = 0.01
@@ -58,12 +84,19 @@ def readable(obj, indent=0):
     which quadruples the file and makes it unreadable in a browser anyway. A leaf is an
     array or an object holding only scalars: one rung's nine statistics belong on one line,
     the same as the numeric arrays they replaced.
+
+    An array of scalars counts as a scalar for that test, so a rung holding its bins stays
+    on one line too. Without it the histogram costs four lines a rung rather than the
+    hundred and twenty characters it actually is, and triples the line count of a file
+    whose whole point is to stay readable.
     """
     pad, inner = "  " * indent, "  " * (indent + 1)
+    scalar = lambda v: not isinstance(v, (dict, list))
+    flat = lambda v: scalar(v) or (isinstance(v, list) and all(scalar(x) for x in v))
     if isinstance(obj, dict):
         if not obj:
             return "{}"
-        if all(not isinstance(v, (dict, list)) for v in obj.values()):
+        if all(flat(v) for v in obj.values()):
             return json.dumps({k: obj[k] for k in sorted(obj)}, separators=(",", ":"))
         items = ['%s%s: %s' % (inner, json.dumps(k), readable(v, indent + 1))
                  for k, v in sorted(obj.items())]
@@ -133,6 +166,10 @@ def main():
         # Rung ids are reused across ladder versions while the rates behind them change,
         # so two summaries can agree on "rung 2" and mean different offered loads.
         "ladder": env.get("ladder", "ladder-v1"),
+        # The grid every "bins" array below is counted on. Recorded rather than agreed with
+        # the reader, so the site labels the axis from the summary it is drawing and the
+        # three constants exist in one place.
+        "bin_grid": {"lo_us": BIN_LO, "per_decade": BIN_PER_DECADE, "count": BIN_COUNT},
         # Which endpoints were live. A narrowed run is a different profile, not the full
         # blend with rows hidden, so nothing may read the two against each other.
         "profile": env.get("profile", "full"),
@@ -223,6 +260,7 @@ def main():
                     "mismatch": row.get("mismatch", 0),
                     "p50_us": p50, "p90_us": p90, "p95_us": p95,
                     "p99_us": p99, "p999_us": p999,
+                    "bins": rebin(h),
                 }
             if rungs:
                 eps[eid] = {"family": ep_family[eid], "rungs": rungs}
