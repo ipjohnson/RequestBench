@@ -141,7 +141,7 @@ footer { margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--rule);
 <dl class="meta">
   <div><dt>Date</dt><dd>17 September 2026</dd></div>
   <div><dt>Adds</dt><dd>a suite beside each target, at role <code>test</code>; <code>rb:test</code> becomes a required kind</dd></div>
-  <div><dt>Built</dt><dd>11 of 33 targets in two languages, every family, 528 tests</dd></div>
+  <div><dt>Built</dt><dd>16 of 33 targets in three languages, every family, 768 tests</dd></div>
   <div><dt>Status</dt><dd>&sect;1 to &sect;5 ship. The client projects of &sect;6 are not started, and the other five languages are not either.</dd></div>
 </dl>
 
@@ -254,11 +254,33 @@ footer { margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--rule);
 
 <section>
 <div class="sectionhead">
+  <span class="num">&sect;4b &middot; Five Node targets, four runners</span>
+  <h2>What the third language found</h2>
+  <p>Each suite runs under the runner its framework&rsquo;s documentation uses, or that the tool it reaches for does, and that is four different runners for five targets.</p>
+</div>
+<div class="scroll"><table>
+<thead><tr><th>Target</th><th>Facility</th><th>What it cost</th></tr></thead>
+<tbody>
+<tr><td class="m">fastify</td><td class="w">inject(), node:test</td><td>Nothing to install. Fastify&rsquo;s testing guide ships inside the package and runs <code>inject()</code>, which is light-my-request, under <code>node:test</code>. <code>rawPayload</code> is the bytes as the reply wrote them. It answers its 304 with <code>content-type: application/json</code>, which RFC 9110 &sect;15.4.5 says a server SHOULD NOT send; the spec leaves that unpinned and so does the suite.</td></tr>
+<tr><td class="m">hono</td><td class="w">app.request(), Vitest</td><td>Hono&rsquo;s guide says Vitest and <code>app.request()</code>, which hands a Request to the application&rsquo;s own fetch handler and returns the Response it made, with nothing between to decode it. Its compress middleware gzips <code>compressed.gzip_small</code>&rsquo;s 125 bytes into 123, which is the one thing that endpoint exists to ask, and the suite pins it.</td></tr>
+<tr><td class="m">h3</td><td class="w">app.request(), node:test</td><td>h3&rsquo;s guide gives <code>app.request()</code> as testing without listening and names no runner, so the suite uses the one built into Node and installs nothing.</td></tr>
+<tr><td class="m">express</td><td class="w">supertest, Mocha</td><td>No testing guide; supertest is what the ecosystem reaches for, and its README writes its examples for Mocha. It binds the application to an ephemeral loopback port. Its superagent unzips gzip before anything can read it, and sets <code>Accept-Encoding: gzip, deflate</code> on every request with no way to leave it off, so the suite sends <code>identity</code> wherever the plan names no encoding.</td></tr>
+<tr><td class="m">koa</td><td class="w">supertest, Mocha</td><td>The same, handed <code>app.callback()</code>. koa-compress is mounted on the three compressed routes alone and nothing else answered gzip when asked.</td></tr>
+</tbody>
+</table></div>
+<h3>What the Express suite found in the Express target</h3>
+<p>With superagent&rsquo;s default header on, eight Express endpoints outside the compressed family answered gzip: every one over the 1,024-byte floor in the etag, cache, body, domain and template families. The target&rsquo;s own comment says its compression middleware sits on a router carrying only the three compressed routes, so that the other endpoints do not pay a <q>did the client ask?</q> check. The router does carry only those routes, but <code>routes.use(gzip)</code> is router-level middleware and <code>app.use(routes)</code> mounts that router at the root, so the check runs on every request that passes through it, which is every family registered after <code>compressed</code>.</p>
+<p><code>make test</code> cannot see this, because the conformance client never asks for gzip on those endpoints and so never gets it. The bodies it measures are right. What is wrong is that roughly twenty endpoints carry a middleware their rows were meant to be measured without, which is the contamination the compressed family was given its own paths to avoid. It is target code, and it is not fixed here: <code>app.use("/compressed", routes)</code>, or the middleware on each route, would scope it.</p>
+<p><code>transport</code> splits three and two: fastify, hono and h3 are <code>in-memory</code>, express and koa are <code>loopback</code>. The Node domain resolves the fixture relative to its own file, so unlike the .NET and Python suites these set no <code>RB_FIXTURE</code>. The helpers are the shortest of the three languages: an error endpoint&rsquo;s page carries 230 lines of them on Fastify, against 311 on FastAPI and 558 on minimal-apis. Breaking the shared payload fails 17 tests in each of the five suites, the count every .NET and Python suite gave.</p>
+</section>
+
+<section>
+<div class="sectionhead">
   <span class="num">&sect;5 &middot; The marks change</span>
   <h2>A required kind that cannot use <code>required: "every"</code></h2>
   <p>Two of the three planned assertions did not survive contact with the corpus. What replaced them is below.</p>
 </div>
-<p><code>harness/snippets.py</code> drops every record that lacks a kind marked <code>every</code>, so setting it on <code>test</code> would empty the snippet map for all forty-eight endpoints on all thirty-three targets and the site would render nothing at all. <code>required: "ratchet"</code> is the third value: absence is counted against the committed allowance, which only ever goes down, and the filter stays keyed to <code>handler</code> alone. The allowance today is 974 endpoints with no test out of 1,584, and 610 held by one. The eleven .NET and Python targets are off it entirely; twenty-two remain.</p>
+<p><code>harness/snippets.py</code> drops every record that lacks a kind marked <code>every</code>, so setting it on <code>test</code> would empty the snippet map for all forty-eight endpoints on all thirty-three targets and the site would render nothing at all. <code>required: "ratchet"</code> is the third value: absence is counted against the committed allowance, which only ever goes down, and the filter stays keyed to <code>handler</code> alone. The allowance today is 764 endpoints with no test out of 1,584, and 820 held by one. The sixteen .NET, Python and Node targets are off it entirely; seventeen remain.</p>
 <h3><code>reads_expectation</code></h3>
 <p>A test snippet has to name the endpoint it is marked for, which is the key <code>spec/expected.json</code> is read by. This is what stops 1,584 hand-written assertions drifting away from the file that decides what a correct answer is, and it catches the second thing <code>mentions_dep</code> catches: a mark that drifted onto neighbouring lines stops naming its endpoint, and a drifted mark is otherwise indistinguishable from a correct one.</p>
 <h3><code>asserts_status</code>, which is not here</h3>
@@ -277,7 +299,7 @@ footer { margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--rule);
   <h2>The order the rest goes in</h2>
 </div>
 <ol class="steps">
-  <li><h3>The other four languages</h3><p>Java, Go, Node and Rust, twenty-two targets. Their toolchains are not on the machine the first two were written on, which is the only reason they came after Python. Java is still the one worth having next: its test facilities are the most opinionated and least alike.</p></li>
+  <li><h3>The other three languages</h3><p>Java, Go and Rust, seventeen targets. Their toolchains are not on the machine the first three were written on, which is the only reason they came after Node. Java is still the one worth having next: its test facilities are the most opinionated and least alike.</p></li>
   <li><h3>The client projects</h3><p>Not started. The framework-shaped question is whether a framework describes its own routes well enough that a client can be generated from the description rather than written, and it needs the OpenAPI question settled per target first.</p>
   <p>One thing is already known and is why <code>SUITE</code> in <code>harness/bundle.py</code> catches <code>/client/</code> before the name rules. A file called <code>openapi.json</code> is role <code>contract</code>, which <code>handler</code> reads and which is <code>cardinality: one</code>. A document written out of a target&rsquo;s routes therefore registers every one of them a second time, and dropping one into a target that also routes in code turns all forty-eight of its endpoints into the &sect;7 ambiguity error. <code>openapi.yaml</code> does not trip it only because <code>route_regex</code> wants a quote on both sides of the path and a YAML key has none, which is luck and not a design.</p></li>
 </ol>

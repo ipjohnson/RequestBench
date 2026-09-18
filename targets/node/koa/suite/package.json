@@ -1,0 +1,8 @@
+{
+  "name": "rb-suite-koa",
+  "private": true,
+  "type": "module",
+  "comment": "supertest, and the runner its README writes its examples for. The framework it tests resolves from targets/node/node_modules, and a test dependency here never reaches the image.",
+  "scripts": { "test": "mocha '*.test.js'" },
+  "devDependencies": { "mocha": "^12.0.2", "supertest": "^7.2.2" }
+}

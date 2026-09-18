@@ -241,6 +241,25 @@ jobs:
       - name: Every Python target's own suite passes
         run: make suites LANGUAGES=python
 
+  suites-node:
+    name: node target suites pass
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: |
+            targets/node/package-lock.json
+            targets/node/*/suite/package-lock.json
+      # The targets' own install, which is what the framework under each suite resolves from.
+      # Each suite with a package.json installs its own test dependencies inside make.
+      - run: npm ci --omit=dev --no-audit --no-fund
+        working-directory: targets/node
+      - name: Every Node target's own suite passes
+        run: make suites LANGUAGES=node
+
   rust:
     name: rust targets conform
     runs-on: ubuntu-latest

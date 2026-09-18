@@ -1,6 +1,6 @@
 comma := ,
 
-.PHONY: fixture plan spec expected test suites suites-dotnet suites-python machine bundle snippets build client site site-dev java rust dotnet python python-lock lint validate conform expect exemplars run vars report clean help
+.PHONY: fixture plan spec expected test suites suites-dotnet suites-python suites-node machine bundle snippets build client site site-dev java rust dotnet python python-lock lint validate conform expect exemplars run vars report clean help
 # Everything is on by default: no TARGETS means every implemented target this host
 # supports. The rest narrow it. LANGUAGES/FRAMEWORKS pick what runs, FAMILIES/ENDPOINTS
 # pick what it is asked for, and a narrowed endpoint set is recorded as its own profile
@@ -99,7 +99,7 @@ test: client ## boot every target and check every endpoint against spec/expected
 # suite that is wrong. These run no load and are never part of a measurement.
 # One language's suites at a time, so a machine with one toolchain can still run its own.
 # Every half runs whatever the one before it did, so a failure never hides another result.
-SUITE_LANGUAGES = $(if $(LANGUAGES),$(subst $(comma), ,$(LANGUAGES)),dotnet python)
+SUITE_LANGUAGES = $(if $(LANGUAGES),$(subst $(comma), ,$(LANGUAGES)),dotnet python node)
 # The interpreter harness/run.py would use: the virtualenv `make python` creates, or the one
 # on the path, which is how CI runs it after installing the lock into it.
 PYTHON ?= $(if $(wildcard targets/python/.venv/bin/python),$(CURDIR)/targets/python/.venv/bin/python,python3)
@@ -129,6 +129,22 @@ suites-python:
 	done; \
 	echo "python:django-asgi"; \
 	(cd targets/python/django-asgi/suite && $(PYTHON) runtests.py) || status=1; \
+	exit $$status
+
+# Four runners across five targets, because each is the one that target's documentation, or the
+# documentation of the tool it reaches for, runs a test with. The three with a package.json
+# install their own test dependencies; the framework under test resolves from the targets'.
+suites-node:
+	@status=0; \
+	for t in fastify h3; do \
+	  echo "node:$$t"; (cd targets/node/$$t/suite && node --test) || status=1; \
+	done; \
+	echo "node:hono"; \
+	(cd targets/node/hono/suite && npm ci --no-audit --no-fund --silent && npx vitest run) || status=1; \
+	for t in express koa; do \
+	  echo "node:$$t"; \
+	  (cd targets/node/$$t/suite && npm ci --no-audit --no-fund --silent && npx mocha '*.test.js') || status=1; \
+	done; \
 	exit $$status
 
 expected: ## re-derive spec/expected.json from the targets named in EXPECT_FROM

@@ -2943,6 +2943,408 @@
         "transport": "in-memory",
         "reaches": "the engine's output, normalised the way the conformance client normalises it: the spec pins the content and leaves the whitespace free"
       }
+    },
+    "node:fastify": {
+      "baseline": {
+        "facility": "fastify.inject(), which is light-my-request and ships with Fastify; run by node:test, as Fastify's testing guide does",
+        "transport": "in-memory",
+        "reaches": "the literal and the content type, which is the whole of what this endpoint is"
+      },
+      "json": {
+        "facility": "fastify.inject(), which is light-my-request and ships with Fastify; run by node:test, as Fastify's testing guide does",
+        "transport": "in-memory",
+        "reaches": "the serializer at three sizes, which is all this family has to show"
+      },
+      "parameters": {
+        "facility": "fastify.inject(), which is light-my-request and ships with Fastify; run by node:test, as Fastify's testing guide does",
+        "transport": "in-memory",
+        "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
+      },
+      "authorized": {
+        "facility": "fastify.inject(), which is light-my-request and ships with Fastify; run by node:test, as Fastify's testing guide does",
+        "transport": "in-memory",
+        "reaches": "the refusal as well as the pass, which is the half a target that let everything through would still answer correctly"
+      },
+      "compressed": {
+        "facility": "fastify.inject(), which is light-my-request and ships with Fastify; run by node:test, as Fastify's testing guide does",
+        "transport": "in-memory",
+        "reaches": "the codec, because this target compresses with middleware scoped inside the application rather than leaving it to a server in front of it"
+      },
+      "etag": {
+        "facility": "fastify.inject(), which is light-my-request and ships with Fastify; run by node:test, as Fastify's testing guide does",
+        "transport": "in-memory",
+        "reaches": "the validator and the conditional answer. The 304 is the only request in the corpus that cannot be sent until the target has answered a different one, because the validator is the target's to produce"
+      },
+      "cache": {
+        "facility": "fastify.inject(), which is light-my-request and ships with Fastify; run by node:test, as Fastify's testing guide does",
+        "transport": "in-memory",
+        "reaches": "the response cache and what it is keyed on. A store keyed on fewer headers than it declares answers one tenant with another tenant's body"
+      },
+      "body": {
+        "facility": "fastify.inject(), which is light-my-request and ships with Fastify; run by node:test, as Fastify's testing guide does",
+        "transport": "in-memory",
+        "reaches": "the binding and the validation facility, including the two refusals, which are judged as the envelope this target recorded rather than against a pinned body"
+      },
+      "query": {
+        "facility": "fastify.inject(), which is light-my-request and ships with Fastify; run by node:test, as Fastify's testing guide does",
+        "transport": "in-memory",
+        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+      },
+      "headers": {
+        "facility": "fastify.inject(), which is light-my-request and ships with Fastify; run by node:test, as Fastify's testing guide does",
+        "transport": "in-memory",
+        "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
+      },
+      "middleware": {
+        "facility": "fastify.inject(), which is light-my-request and ships with Fastify; run by node:test, as Fastify's testing guide does",
+        "transport": "in-memory",
+        "reaches": "every layer, because the host boots the application rather than calling the handler, which is the way this family is failed without noticing"
+      },
+      "domain": {
+        "facility": "fastify.inject(), which is light-my-request and ships with Fastify; run by node:test, as Fastify's testing guide does",
+        "transport": "in-memory",
+        "reaches": "the shared model through all eight operations, including the four that write, where a 201 and a 204 with no body are answers a framework can get subtly wrong while returning the right status"
+      },
+      "errors": {
+        "facility": "fastify.inject(), which is light-my-request and ships with Fastify; run by node:test, as Fastify's testing guide does",
+        "transport": "in-memory",
+        "reaches": "whatever this target does with a route it does not have, which is the framework rather than a handler"
+      },
+      "template": {
+        "facility": "fastify.inject(), which is light-my-request and ships with Fastify; run by node:test, as Fastify's testing guide does",
+        "transport": "in-memory",
+        "reaches": "the engine's output, normalised the way the conformance client normalises it: the spec pins the content and leaves the whitespace free"
+      }
+    },
+    "node:hono": {
+      "baseline": {
+        "facility": "app.request(), which hands a Request to the application's own fetch handler; run by Vitest, as Hono's testing guide does",
+        "dep": "vitest",
+        "transport": "in-memory",
+        "reaches": "the literal and the content type, which is the whole of what this endpoint is"
+      },
+      "json": {
+        "facility": "app.request(), which hands a Request to the application's own fetch handler; run by Vitest, as Hono's testing guide does",
+        "dep": "vitest",
+        "transport": "in-memory",
+        "reaches": "the serializer at three sizes, which is all this family has to show"
+      },
+      "parameters": {
+        "facility": "app.request(), which hands a Request to the application's own fetch handler; run by Vitest, as Hono's testing guide does",
+        "dep": "vitest",
+        "transport": "in-memory",
+        "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
+      },
+      "authorized": {
+        "facility": "app.request(), which hands a Request to the application's own fetch handler; run by Vitest, as Hono's testing guide does",
+        "dep": "vitest",
+        "transport": "in-memory",
+        "reaches": "the refusal as well as the pass, which is the half a target that let everything through would still answer correctly"
+      },
+      "compressed": {
+        "facility": "app.request(), which hands a Request to the application's own fetch handler; run by Vitest, as Hono's testing guide does",
+        "dep": "vitest",
+        "transport": "in-memory",
+        "reaches": "the codec, because this target compresses with middleware scoped inside the application rather than leaving it to a server in front of it"
+      },
+      "etag": {
+        "facility": "app.request(), which hands a Request to the application's own fetch handler; run by Vitest, as Hono's testing guide does",
+        "dep": "vitest",
+        "transport": "in-memory",
+        "reaches": "the validator and the conditional answer. The 304 is the only request in the corpus that cannot be sent until the target has answered a different one, because the validator is the target's to produce"
+      },
+      "cache": {
+        "facility": "app.request(), which hands a Request to the application's own fetch handler; run by Vitest, as Hono's testing guide does",
+        "dep": "vitest",
+        "transport": "in-memory",
+        "reaches": "the response cache and what it is keyed on. A store keyed on fewer headers than it declares answers one tenant with another tenant's body"
+      },
+      "body": {
+        "facility": "app.request(), which hands a Request to the application's own fetch handler; run by Vitest, as Hono's testing guide does",
+        "dep": "vitest",
+        "transport": "in-memory",
+        "reaches": "the binding and the validation facility, including the two refusals, which are judged as the envelope this target recorded rather than against a pinned body"
+      },
+      "query": {
+        "facility": "app.request(), which hands a Request to the application's own fetch handler; run by Vitest, as Hono's testing guide does",
+        "dep": "vitest",
+        "transport": "in-memory",
+        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+      },
+      "headers": {
+        "facility": "app.request(), which hands a Request to the application's own fetch handler; run by Vitest, as Hono's testing guide does",
+        "dep": "vitest",
+        "transport": "in-memory",
+        "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
+      },
+      "middleware": {
+        "facility": "app.request(), which hands a Request to the application's own fetch handler; run by Vitest, as Hono's testing guide does",
+        "dep": "vitest",
+        "transport": "in-memory",
+        "reaches": "every layer, because the host boots the application rather than calling the handler, which is the way this family is failed without noticing"
+      },
+      "domain": {
+        "facility": "app.request(), which hands a Request to the application's own fetch handler; run by Vitest, as Hono's testing guide does",
+        "dep": "vitest",
+        "transport": "in-memory",
+        "reaches": "the shared model through all eight operations, including the four that write, where a 201 and a 204 with no body are answers a framework can get subtly wrong while returning the right status"
+      },
+      "errors": {
+        "facility": "app.request(), which hands a Request to the application's own fetch handler; run by Vitest, as Hono's testing guide does",
+        "dep": "vitest",
+        "transport": "in-memory",
+        "reaches": "whatever this target does with a route it does not have, which is the framework rather than a handler"
+      },
+      "template": {
+        "facility": "app.request(), which hands a Request to the application's own fetch handler; run by Vitest, as Hono's testing guide does",
+        "dep": "vitest",
+        "transport": "in-memory",
+        "reaches": "the engine's output, normalised the way the conformance client normalises it: the spec pins the content and leaves the whitespace free"
+      }
+    },
+    "node:h3": {
+      "baseline": {
+        "facility": "app.request(), which h3's guide calls testing without listening; its documentation names no runner, so node:test",
+        "transport": "in-memory",
+        "reaches": "the literal and the content type, which is the whole of what this endpoint is"
+      },
+      "json": {
+        "facility": "app.request(), which h3's guide calls testing without listening; its documentation names no runner, so node:test",
+        "transport": "in-memory",
+        "reaches": "the serializer at three sizes, which is all this family has to show"
+      },
+      "parameters": {
+        "facility": "app.request(), which h3's guide calls testing without listening; its documentation names no runner, so node:test",
+        "transport": "in-memory",
+        "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
+      },
+      "authorized": {
+        "facility": "app.request(), which h3's guide calls testing without listening; its documentation names no runner, so node:test",
+        "transport": "in-memory",
+        "reaches": "the refusal as well as the pass, which is the half a target that let everything through would still answer correctly"
+      },
+      "compressed": {
+        "facility": "app.request(), which h3's guide calls testing without listening; its documentation names no runner, so node:test",
+        "transport": "in-memory",
+        "reaches": "the codec, because this target compresses with middleware scoped inside the application rather than leaving it to a server in front of it"
+      },
+      "etag": {
+        "facility": "app.request(), which h3's guide calls testing without listening; its documentation names no runner, so node:test",
+        "transport": "in-memory",
+        "reaches": "the validator and the conditional answer. The 304 is the only request in the corpus that cannot be sent until the target has answered a different one, because the validator is the target's to produce"
+      },
+      "cache": {
+        "facility": "app.request(), which h3's guide calls testing without listening; its documentation names no runner, so node:test",
+        "transport": "in-memory",
+        "reaches": "the response cache and what it is keyed on. A store keyed on fewer headers than it declares answers one tenant with another tenant's body"
+      },
+      "body": {
+        "facility": "app.request(), which h3's guide calls testing without listening; its documentation names no runner, so node:test",
+        "transport": "in-memory",
+        "reaches": "the binding and the validation facility, including the two refusals, which are judged as the envelope this target recorded rather than against a pinned body"
+      },
+      "query": {
+        "facility": "app.request(), which h3's guide calls testing without listening; its documentation names no runner, so node:test",
+        "transport": "in-memory",
+        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+      },
+      "headers": {
+        "facility": "app.request(), which h3's guide calls testing without listening; its documentation names no runner, so node:test",
+        "transport": "in-memory",
+        "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
+      },
+      "middleware": {
+        "facility": "app.request(), which h3's guide calls testing without listening; its documentation names no runner, so node:test",
+        "transport": "in-memory",
+        "reaches": "every layer, because the host boots the application rather than calling the handler, which is the way this family is failed without noticing"
+      },
+      "domain": {
+        "facility": "app.request(), which h3's guide calls testing without listening; its documentation names no runner, so node:test",
+        "transport": "in-memory",
+        "reaches": "the shared model through all eight operations, including the four that write, where a 201 and a 204 with no body are answers a framework can get subtly wrong while returning the right status"
+      },
+      "errors": {
+        "facility": "app.request(), which h3's guide calls testing without listening; its documentation names no runner, so node:test",
+        "transport": "in-memory",
+        "reaches": "whatever this target does with a route it does not have, which is the framework rather than a handler"
+      },
+      "template": {
+        "facility": "app.request(), which h3's guide calls testing without listening; its documentation names no runner, so node:test",
+        "transport": "in-memory",
+        "reaches": "the engine's output, normalised the way the conformance client normalises it: the spec pins the content and leaves the whitespace free"
+      }
+    },
+    "node:express": {
+      "baseline": {
+        "facility": "supertest, which binds the application to an ephemeral loopback port; run by Mocha, which is what supertest's README writes its examples for",
+        "dep": "supertest",
+        "transport": "loopback",
+        "reaches": "the literal and the content type, which is the whole of what this endpoint is"
+      },
+      "json": {
+        "facility": "supertest, which binds the application to an ephemeral loopback port; run by Mocha, which is what supertest's README writes its examples for",
+        "dep": "supertest",
+        "transport": "loopback",
+        "reaches": "the serializer at three sizes, which is all this family has to show"
+      },
+      "parameters": {
+        "facility": "supertest, which binds the application to an ephemeral loopback port; run by Mocha, which is what supertest's README writes its examples for",
+        "dep": "supertest",
+        "transport": "loopback",
+        "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
+      },
+      "authorized": {
+        "facility": "supertest, which binds the application to an ephemeral loopback port; run by Mocha, which is what supertest's README writes its examples for",
+        "dep": "supertest",
+        "transport": "loopback",
+        "reaches": "the refusal as well as the pass, which is the half a target that let everything through would still answer correctly"
+      },
+      "compressed": {
+        "facility": "supertest, which binds the application to an ephemeral loopback port; run by Mocha, which is what supertest's README writes its examples for",
+        "dep": "supertest",
+        "transport": "loopback",
+        "reaches": "the codec, because this target compresses with middleware scoped inside the application rather than leaving it to a server in front of it"
+      },
+      "etag": {
+        "facility": "supertest, which binds the application to an ephemeral loopback port; run by Mocha, which is what supertest's README writes its examples for",
+        "dep": "supertest",
+        "transport": "loopback",
+        "reaches": "the validator and the conditional answer. The 304 is the only request in the corpus that cannot be sent until the target has answered a different one, because the validator is the target's to produce"
+      },
+      "cache": {
+        "facility": "supertest, which binds the application to an ephemeral loopback port; run by Mocha, which is what supertest's README writes its examples for",
+        "dep": "supertest",
+        "transport": "loopback",
+        "reaches": "the response cache and what it is keyed on. A store keyed on fewer headers than it declares answers one tenant with another tenant's body"
+      },
+      "body": {
+        "facility": "supertest, which binds the application to an ephemeral loopback port; run by Mocha, which is what supertest's README writes its examples for",
+        "dep": "supertest",
+        "transport": "loopback",
+        "reaches": "the binding and the validation facility, including the two refusals, which are judged as the envelope this target recorded rather than against a pinned body"
+      },
+      "query": {
+        "facility": "supertest, which binds the application to an ephemeral loopback port; run by Mocha, which is what supertest's README writes its examples for",
+        "dep": "supertest",
+        "transport": "loopback",
+        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+      },
+      "headers": {
+        "facility": "supertest, which binds the application to an ephemeral loopback port; run by Mocha, which is what supertest's README writes its examples for",
+        "dep": "supertest",
+        "transport": "loopback",
+        "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
+      },
+      "middleware": {
+        "facility": "supertest, which binds the application to an ephemeral loopback port; run by Mocha, which is what supertest's README writes its examples for",
+        "dep": "supertest",
+        "transport": "loopback",
+        "reaches": "every layer, because the host boots the application rather than calling the handler, which is the way this family is failed without noticing"
+      },
+      "domain": {
+        "facility": "supertest, which binds the application to an ephemeral loopback port; run by Mocha, which is what supertest's README writes its examples for",
+        "dep": "supertest",
+        "transport": "loopback",
+        "reaches": "the shared model through all eight operations, including the four that write, where a 201 and a 204 with no body are answers a framework can get subtly wrong while returning the right status"
+      },
+      "errors": {
+        "facility": "supertest, which binds the application to an ephemeral loopback port; run by Mocha, which is what supertest's README writes its examples for",
+        "dep": "supertest",
+        "transport": "loopback",
+        "reaches": "whatever this target does with a route it does not have, which is the framework rather than a handler"
+      },
+      "template": {
+        "facility": "supertest, which binds the application to an ephemeral loopback port; run by Mocha, which is what supertest's README writes its examples for",
+        "dep": "supertest",
+        "transport": "loopback",
+        "reaches": "the engine's output, normalised the way the conformance client normalises it: the spec pins the content and leaves the whitespace free"
+      }
+    },
+    "node:koa": {
+      "baseline": {
+        "facility": "supertest on app.callback(), which binds it to an ephemeral loopback port; run by Mocha, which is what supertest's README writes its examples for",
+        "dep": "supertest",
+        "transport": "loopback",
+        "reaches": "the literal and the content type, which is the whole of what this endpoint is"
+      },
+      "json": {
+        "facility": "supertest on app.callback(), which binds it to an ephemeral loopback port; run by Mocha, which is what supertest's README writes its examples for",
+        "dep": "supertest",
+        "transport": "loopback",
+        "reaches": "the serializer at three sizes, which is all this family has to show"
+      },
+      "parameters": {
+        "facility": "supertest on app.callback(), which binds it to an ephemeral loopback port; run by Mocha, which is what supertest's README writes its examples for",
+        "dep": "supertest",
+        "transport": "loopback",
+        "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
+      },
+      "authorized": {
+        "facility": "supertest on app.callback(), which binds it to an ephemeral loopback port; run by Mocha, which is what supertest's README writes its examples for",
+        "dep": "supertest",
+        "transport": "loopback",
+        "reaches": "the refusal as well as the pass, which is the half a target that let everything through would still answer correctly"
+      },
+      "compressed": {
+        "facility": "supertest on app.callback(), which binds it to an ephemeral loopback port; run by Mocha, which is what supertest's README writes its examples for",
+        "dep": "supertest",
+        "transport": "loopback",
+        "reaches": "the codec, because this target compresses with middleware scoped inside the application rather than leaving it to a server in front of it"
+      },
+      "etag": {
+        "facility": "supertest on app.callback(), which binds it to an ephemeral loopback port; run by Mocha, which is what supertest's README writes its examples for",
+        "dep": "supertest",
+        "transport": "loopback",
+        "reaches": "the validator and the conditional answer. The 304 is the only request in the corpus that cannot be sent until the target has answered a different one, because the validator is the target's to produce"
+      },
+      "cache": {
+        "facility": "supertest on app.callback(), which binds it to an ephemeral loopback port; run by Mocha, which is what supertest's README writes its examples for",
+        "dep": "supertest",
+        "transport": "loopback",
+        "reaches": "the response cache and what it is keyed on. A store keyed on fewer headers than it declares answers one tenant with another tenant's body"
+      },
+      "body": {
+        "facility": "supertest on app.callback(), which binds it to an ephemeral loopback port; run by Mocha, which is what supertest's README writes its examples for",
+        "dep": "supertest",
+        "transport": "loopback",
+        "reaches": "the binding and the validation facility, including the two refusals, which are judged as the envelope this target recorded rather than against a pinned body"
+      },
+      "query": {
+        "facility": "supertest on app.callback(), which binds it to an ephemeral loopback port; run by Mocha, which is what supertest's README writes its examples for",
+        "dep": "supertest",
+        "transport": "loopback",
+        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+      },
+      "headers": {
+        "facility": "supertest on app.callback(), which binds it to an ephemeral loopback port; run by Mocha, which is what supertest's README writes its examples for",
+        "dep": "supertest",
+        "transport": "loopback",
+        "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
+      },
+      "middleware": {
+        "facility": "supertest on app.callback(), which binds it to an ephemeral loopback port; run by Mocha, which is what supertest's README writes its examples for",
+        "dep": "supertest",
+        "transport": "loopback",
+        "reaches": "every layer, because the host boots the application rather than calling the handler, which is the way this family is failed without noticing"
+      },
+      "domain": {
+        "facility": "supertest on app.callback(), which binds it to an ephemeral loopback port; run by Mocha, which is what supertest's README writes its examples for",
+        "dep": "supertest",
+        "transport": "loopback",
+        "reaches": "the shared model through all eight operations, including the four that write, where a 201 and a 204 with no body are answers a framework can get subtly wrong while returning the right status"
+      },
+      "errors": {
+        "facility": "supertest on app.callback(), which binds it to an ephemeral loopback port; run by Mocha, which is what supertest's README writes its examples for",
+        "dep": "supertest",
+        "transport": "loopback",
+        "reaches": "whatever this target does with a route it does not have, which is the framework rather than a handler"
+      },
+      "template": {
+        "facility": "supertest on app.callback(), which binds it to an ephemeral loopback port; run by Mocha, which is what supertest's README writes its examples for",
+        "dep": "supertest",
+        "transport": "loopback",
+        "reaches": "the engine's output, normalised the way the conformance client normalises it: the spec pins the content and leaves the whitespace free"
+      }
     }
   },
   "suites_note": "What each target's own suite tests a family with, and what it talks to. transport is \"in-memory\" for a client that calls the application with no socket at all, \"loopback\" for a real server on a loopback port in the test's own process, or \"process\" for a target booted the way harness/run.py boots one. The three are not interchangeable: a framework that compresses in its request pipeline is reached by all three, and one that leaves it to the server underneath is reached only by the last two. Per family rather than per target, because whether a test reaches the code under test is not a fact about a framework: MockMvc and @SpringBootTest(webEnvironment = RANDOM_PORT) are both Spring, and a target that tests against a socket for compressed and in memory for everything else is the case a per-target flag would hide. A family with no marked test needs no entry here; one with a marked test has to have one, and the dependency it names has to be in that target's suite project."

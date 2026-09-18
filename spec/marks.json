@@ -126,21 +126,6 @@
     "java:vertx": {
       "no_test": 46
     },
-    "node:express": {
-      "no_test": 42
-    },
-    "node:fastify": {
-      "no_test": 42
-    },
-    "node:h3": {
-      "no_test": 42
-    },
-    "node:hono": {
-      "no_test": 42
-    },
-    "node:koa": {
-      "no_test": 42
-    },
     "rust:actix-web": {
       "no_test": 46
     },
