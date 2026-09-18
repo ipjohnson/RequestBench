@@ -70,6 +70,10 @@ const where = (p: SnippetPart): string =>
 // handler from a condition. They are not part of the range, because that is what the
 // permalink points at, so they are shown beside it rather than in it.
 const context = (h?.context ?? []) as { line: number; text: string }[];
+// The gate requires a mechanism or a builtin for every family, so a family with neither is
+// missing its declaration at the run's commit. That is missing data rather than a fact about
+// the framework, so the pane says nothing about it.
+const wiring = Boolean(mechanism?.mechanism || mechanism?.builtin) || context.length > 0 || support.length > 0;
 // Two kinds of test share the role and are not the same claim. A target's own suite boots
 // the target and holds it to spec/expected.json; a client-exception package describes the
 // error envelope the framework declares and is run by the conformance client against nothing
@@ -137,49 +141,45 @@ const hdrs = (hs: readonly (readonly [string, string])[]): string =>
     )
   }
 
-  <h3 class="childcap">Wiring</h3>
-  <div class="wiring">
-    {
-      mechanism?.mechanism ? (
-        <p class="mech">
-          {mechanism.mechanism}
-          {mechanism.dep && <> &middot; <code>{mechanism.dep}</code></>}
-        </p>
-      ) : mechanism?.builtin ? (
-        <p class="mech">{mechanism.builtin}</p>
-      ) : (
-        <p class="empty">No mechanism declared for this family.</p>
-      )
-    }
-    {
-      context.length > 0 && (
-        <div class="ctx">
-          {context.map((c) => (
-            <div>
-              {c.line}: {c.text}
+  {
+    wiring && (
+      <>
+        <h3 class="childcap">Wiring</h3>
+        <div class="wiring">
+          {mechanism?.mechanism ? (
+            <p class="mech">
+              {mechanism.mechanism}
+              {mechanism.dep && <> &middot; <code>{mechanism.dep}</code></>}
+            </p>
+          ) : (
+            mechanism?.builtin && <p class="mech">{mechanism.builtin}</p>
+          )}
+          {context.length > 0 && (
+            <div class="ctx">
+              {context.map((c) => (
+                <div>
+                  {c.line}: {c.text}
+                </div>
+              ))}
             </div>
+          )}
+          {support.map(({ part, link: href }) => (
+            <>
+              <div class="sniphead">
+                <span class="loc">{where(part)}</span>
+                <span class="how">{part.how}</span>
+                {href && <a href={href}>open on GitHub &rarr;</a>}
+              </div>
+              <pre class="code">{part.text}</pre>
+            </>
           ))}
+          {support.length > 0 && alsoWired.length > 0 && (
+            <p class="hint">The same wiring serves {alsoWired.join(", ")}.</p>
+          )}
         </div>
-      )
-    }
-    {
-      support.map(({ part, link: href }) => (
-        <>
-          <div class="sniphead">
-            <span class="loc">{where(part)}</span>
-            <span class="how">{part.how}</span>
-            {href && <a href={href}>open on GitHub &rarr;</a>}
-          </div>
-          <pre class="code">{part.text}</pre>
-        </>
-      ))
-    }
-    {
-      support.length > 0 && alsoWired.length > 0 && (
-        <p class="hint">The same wiring serves {alsoWired.join(", ")}.</p>
-      )
-    }
-  </div>
+      </>
+    )
+  }
 
   {
     [["Test", suite, helpers], ["Contract test", contract, []]].map(([caption, parts, needed]) =>
