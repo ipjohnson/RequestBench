@@ -5,10 +5,18 @@
 // the target falls behind, the backlog shows up as latency instead of quietly vanishing.
 //
 //   node gen/blend.mjs --target 127.0.0.1:8080 --rate 3000 --seconds 60 --workers 4
+//
+// --slices also records the run as a ramp: one histogram per slice of the schedule, every
+// endpoint merged, each slice ending at the edge given in seconds. --first sends one request
+// on its own before anything else and times it apart from the ramp.
+//
+//   node gen/blend.mjs --target 127.0.0.1:8080 --rate 1000 --seconds 30 --record false \
+//     --slices 1,2,3,4,5,6,7,8,9,10,20,30 --first json.small
 import { Worker, isMainThread, parentPort, workerData } from "node:worker_threads";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
+import { gzipSync } from "node:zlib";
 import http from "node:http";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -90,6 +98,35 @@ async function resolveCaptures(host, port, captures, eps) {
   return out;
 }
 
+// ---- the first request --------------------------------------------------------------
+// Sent alone, before the captures are read and before any worker starts, so it is the first
+// request the target serves after the readiness probe. On a cold runtime it pays for class
+// loading, static init and the first compile of its path. Inside a slice it would be one
+// sample among a thousand. A row whose headers need a capture cannot go first, so when the
+// named row is not live or needs one, the first live row that needs none goes instead.
+function firstOf(eps, id) {
+  const plain = eps.filter((ep) => referenced([ep]).size === 0);
+  return plain.find((ep) => ep.id === id) ?? plain[0];
+}
+
+function sendFirst(host, port, ep) {
+  const path = ep.paths[0];
+  const headers = headerSets(ep, {})[0];
+  return new Promise((resolve) => {
+    const t0 = process.hrtime.bigint();
+    const us = () => Math.round(Number(process.hrtime.bigint() - t0) / 1000);
+    // A connection of its own, the way a first request to a new instance arrives.
+    const opts = { host, port, path, method: ep.method, headers, agent: false };
+    const req = http.request(opts, (res) => {
+      res.resume();
+      res.on("end", () => resolve({ endpoint: ep.id, path, status: res.statusCode, us: us() }));
+    });
+    req.setTimeout(30_000, () => req.destroy(new Error("no answer in 30s")));
+    req.on("error", (e) => resolve({ endpoint: ep.id, path, error: e.code ?? e.message, us: us() }));
+    req.end(ep.body);
+  });
+}
+
 /** The plan's header sets with every capture filled in, one per vary combination. */
 function headerSets(ep, captured) {
   // Only the plan's own values are filled: content-length below is a number, and the body
@@ -109,7 +146,7 @@ function headerSets(ep, captured) {
 // ---- worker -------------------------------------------------------------------------
 if (!isMainThread) {
   const { host, port, rate, seconds, offsetUs, maxInflight, seed, record, only,
-          captured } = workerData;
+          captured, edges } = workerData;
   const { eps } = loadPlan(only);
   // Header objects are built once per endpoint rather than per request, because this is the
   // hot loop. A vary row has one per combination instead of one for the endpoint, which is
@@ -138,7 +175,24 @@ if (!isMainThread) {
   const totalReq = Math.round(rate * seconds);
   const startNs = process.hrtime.bigint() + BigInt(Math.round(offsetUs * 1000));
 
-  function fire(idx, scheduledNs) {
+  // A request belongs to the slice its scheduled moment falls in, not the one it completed
+  // in, so a backlog shows up as latency in the second that caused it.
+  const nslices = edges ? edges.length : 0;
+  const sliceHist = Array.from({ length: nslices }, () => new Uint32Array(NBUCKETS));
+  const sliceErrors = new Uint32Array(nslices);
+  const sliceMismatch = new Uint32Array(nslices);
+  const sliceDropped = new Uint32Array(nslices);
+  let slice = 0;
+  // `issued` only grows, so the slice only moves forward. Anything scheduled past the last
+  // edge is folded into the last slice rather than lost.
+  function sliceOf(i) {
+    if (!nslices) return -1;
+    const at = (offsetUs + i * periodUs) / 1e6;
+    while (slice < nslices - 1 && at >= edges[slice]) slice++;
+    return slice;
+  }
+
+  function fire(idx, scheduledNs, sl) {
     const ep = eps[idx];
     const instance = (rnd() * ep.paths.length) | 0;
     const sets = headersOf[idx];
@@ -146,18 +200,24 @@ if (!isMainThread) {
                    headers: sets[instance % sets.length] };
     inflight++;
     const req = http.request(opts, (res) => {
-      if (!accepted[idx].has(res.statusCode)) mismatch[idx]++;
+      if (!accepted[idx].has(res.statusCode)) {
+        mismatch[idx]++;
+        if (sl >= 0) sliceMismatch[sl]++;
+      }
       res.resume();
       res.on("end", () => {
         inflight--; done++;
-        if (record) {
-          const us = Number(process.hrtime.bigint() - scheduledNs) / 1000;
-          hist[idx][bucketOf(us)]++;
-          counts[idx]++;
+        if (record || sl >= 0) {
+          const b = bucketOf(Number(process.hrtime.bigint() - scheduledNs) / 1000);
+          if (record) { hist[idx][b]++; counts[idx]++; }
+          if (sl >= 0) sliceHist[sl][b]++;
         }
       });
     });
-    req.on("error", () => { inflight--; done++; errors[idx]++; });
+    req.on("error", () => {
+      inflight--; done++; errors[idx]++;
+      if (sl >= 0) sliceErrors[sl]++;
+    });
     req.end(ep.body);   // one write, not two, so there is nothing for Nagle to hold
   }
 
@@ -167,8 +227,13 @@ if (!isMainThread) {
     while (issued < totalReq) {
       const dueNs = startNs + BigInt(Math.round(issued * periodUs * 1000));
       if (dueNs > nowNs) break;
-      if (inflight >= maxInflight) { dropped++; issued++; continue; }
-      fire((rnd() * eps.length) | 0, dueNs);
+      const sl = sliceOf(issued);
+      if (inflight >= maxInflight) {
+        dropped++; issued++;
+        if (sl >= 0) sliceDropped[sl]++;
+        continue;
+      }
+      fire((rnd() * eps.length) | 0, dueNs, sl);
       issued++;
     }
     if (issued < totalReq) {
@@ -194,6 +259,9 @@ if (!isMainThread) {
       hist: hist.map((h) => Buffer.from(h.buffer, h.byteOffset, h.byteLength)),
       counts: Buffer.from(counts.buffer), errors: Buffer.from(errors.buffer),
       mismatch: Buffer.from(mismatch.buffer), dropped, issued, done,
+      sliceHist: sliceHist.map((h) => Buffer.from(h.buffer, h.byteOffset, h.byteLength)),
+      sliceErrors: Buffer.from(sliceErrors.buffer), sliceMismatch: Buffer.from(sliceMismatch.buffer),
+      sliceDropped: Buffer.from(sliceDropped.buffer),
     });
   }
   tick();
@@ -209,9 +277,16 @@ else {
   const seconds = Number(argv.seconds ?? 10);
   const workers = Number(argv.workers ?? 4);
   const maxInflight = Number(argv.maxInflight ?? 256);
+  // Whether the per-endpoint histograms are kept. --slices keeps its own either way.
   const record = argv.record !== "false";
   const only = argv.only ? argv.only.split(",").filter(Boolean) : null;
+  const edges = argv.slices ? argv.slices.split(",").map(Number) : null;
+  if (edges && (edges.some((e, i) => !(e > (i ? edges[i - 1] : 0))) || edges.at(-1) !== seconds)) {
+    throw new Error(`--slices ${argv.slices} has to rise from above 0 to --seconds ${seconds}`);
+  }
   const { eps, captures } = loadPlan(only);
+  const firstEp = argv.first ? firstOf(eps, argv.first) : undefined;
+  const first = firstEp ? await sendFirst(host, Number(port), firstEp) : null;
   // Before anything is offered, and in this thread: four workers each asking the target for
   // the same tag would be four requests for one answer, and they could disagree.
   const captured = await resolveCaptures(host, Number(port), captures, eps);
@@ -224,7 +299,7 @@ else {
     const worker = new Worker(fileURLToPath(import.meta.url), {
       workerData: { host, port: Number(port), rate: perWorker, seconds,
                     offsetUs: (w * 1e6) / rate, maxInflight: Math.ceil(maxInflight / workers),
-                    seed: 0x9e3779b9 * (w + 1), record, only, captured },
+                    seed: 0x9e3779b9 * (w + 1), record, only, captured, edges },
     });
     worker.on("message", (m) => { results.push(m); resolve(); });
     worker.on("error", reject);
@@ -248,6 +323,34 @@ else {
     dropped += r.dropped; issued += r.issued; done += r.done;
   }
 
+  const nslices = edges ? edges.length : 0;
+  const sliceHist = Array.from({ length: nslices }, () => new Uint32Array(NBUCKETS));
+  const sliceErrors = new Uint32Array(nslices);
+  const sliceMismatch = new Uint32Array(nslices);
+  const sliceDropped = new Uint32Array(nslices);
+  for (const r of results) {
+    r.sliceHist.forEach((buf, i) => {
+      const h = new Uint32Array(buf.buffer, buf.byteOffset, NBUCKETS);
+      for (let b = 0; b < NBUCKETS; b++) sliceHist[i][b] += h[b];
+    });
+    const e = new Uint32Array(r.sliceErrors.buffer, r.sliceErrors.byteOffset, nslices);
+    const m = new Uint32Array(r.sliceMismatch.buffer, r.sliceMismatch.byteOffset, nslices);
+    const d = new Uint32Array(r.sliceDropped.buffer, r.sliceDropped.byteOffset, nslices);
+    for (let i = 0; i < nslices; i++) { sliceErrors[i] += e[i]; sliceMismatch[i] += m[i]; sliceDropped[i] += d[i]; }
+  }
+  // The whole distribution per slice, gzipped. Most of the 920 buckets are empty, so a
+  // one-second slice is a few hundred bytes, and the shape in the first second against
+  // the last is what a ramp is for.
+  const slices = sliceHist.map((h, i) => {
+    const count = h.reduce((s, c) => s + c, 0);
+    return {
+      start_s: i ? edges[i - 1] : 0, seconds: edges[i] - (i ? edges[i - 1] : 0), count,
+      errors: sliceErrors[i], mismatch: sliceMismatch[i], dropped: sliceDropped[i],
+      p50_us: percentile(h, count, 50), p99_us: percentile(h, count, 99),
+      hist_gz: gzipSync(Buffer.from(h.buffer), { level: 9 }).toString("base64"),
+    };
+  });
+
   const all = new Uint32Array(NBUCKETS);
   for (const h of merged) for (let b = 0; b < NBUCKETS; b++) all[b] += h[b];
   const totalRec = counts.reduce((s, c) => s + c, 0);
@@ -268,8 +371,13 @@ else {
       p50_us: percentile(merged[i], counts[i], 50), p99_us: percentile(merged[i], counts[i], 99),
       hist_b64: Buffer.from(merged[i].buffer).toString("base64"),
     })),
+    ...(argv.first ? { first } : {}),
+    ...(edges ? { slices } : {}),
   };
   if (argv.out) { const { writeFileSync } = await import("node:fs"); writeFileSync(argv.out, JSON.stringify(out)); }
   // stdout stays human-sized; histograms travel via --out.
-  console.log(JSON.stringify({ ...out, endpoints: out.endpoints.map(({ hist_b64, ...e }) => e) }, null, 1));
+  console.log(JSON.stringify({
+    ...out, endpoints: out.endpoints.map(({ hist_b64, ...e }) => e),
+    ...(edges ? { slices: slices.map(({ hist_gz, ...s }) => s) } : {}),
+  }, null, 1));
 }
