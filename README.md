@@ -45,7 +45,7 @@ difference and charge every target a handler to hide it.
 
     spec/endpoints.json   48 endpoints in 14 families, drawn uniformly
     spec/blends.json      weight vectors, applied when an aggregate is composed
-    spec/ladder.json      two rungs, 500 and 2500 rps, 60s each
+    spec/ladder.json      three rungs, 500, 2500 and 5000 rps, 60s each
     spec/matrix.json      languages, frameworks, the runtime each is pinned to
     spec/expected.json    generated, committed: what a correct answer is, per request
     spec/fixture.json     generated, committed: identical data for all 53 targets
@@ -78,7 +78,7 @@ not one.
 
     make plan
     make test                                              # every target answers every endpoint
-    make run                                               # everything, both rates, 4 min each
+    make run                                               # everything, every rate, 1 min each
     make run LANGUAGES=node SECONDS=12 RUNGS=regular       # host processes, quick loop
     make build TARGETS=go:gin,go:echo,go:chi               # container images
     make run LANGUAGES=go MODE=docker
@@ -87,7 +87,7 @@ not one.
     make vars                                              # every variable and its default
 
 Everything is on by default. `make run` with no variables measures every implemented
-target the host supports, at both rates, for the durations in `spec/ladder.json`. The
+target the host supports, at every rate, for the durations in `spec/ladder.json`. The
 variables narrow it: `LANGUAGES` and `FRAMEWORKS` choose what runs, `FAMILIES` and
 `ENDPOINTS` choose what it is asked for, and each has a `NOT_` form that excludes instead.
 `RPS`, `SECONDS` and `WARMUP` override the spec for a quick loop.

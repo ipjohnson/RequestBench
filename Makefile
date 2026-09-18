@@ -231,7 +231,7 @@ vars: ## every variable `make run` takes, and what it defaults to
 	  FRAMEWORKS 'only these frameworks, any language' \
 	  FAMILIES   'only these endpoint families. Records its own profile' \
 	  ENDPOINTS  'only these endpoint ids. Records its own profile' \
-	  RUNGS      'which rates: regular, raised, or both. Default: both' \
+	  RUNGS      'which rates, by name or number from spec/ladder.json. Default: all' \
 	  RPS        'offered rate per selected rate. Default: spec/ladder.json' \
 	  SECONDS    'seconds per rate. Default: spec/ladder.json' \
 	  WARMUP     'warmup seconds. Default: by language warmup class' \
@@ -241,7 +241,7 @@ vars: ## every variable `make run` takes, and what it defaults to
 	  PINNED     'set to 1 to refuse an unpinned machine' \
 	  ARGS       'anything else, passed to harness/run.py verbatim'
 
-report: ## the newest run, both rates, per target
+report: ## the newest run, every rate, per target
 	python3 harness/report.py $$(ls -t results/*.jsonl | head -1) --family
 
 clean:

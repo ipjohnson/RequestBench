@@ -1,6 +1,6 @@
 {
   "version": "ladder-v3-short",
-  "note": "Two fixed offered rates, identical for every target in every language, published as real times rather than as a ratio to anything. docs/measurement-v2.html is the design, and ladder-v2 is its ladder. ladder-v2's rates are chosen from the traffic a reader might want to serve, not from where the targets break: set from the population they would move every time a language is added, and moving them breaks the time series. Its 1000 and 5000 are provisional until the dedicated machine has run. The nightly runs this ladder on a GitHub-hosted runner until then. It differs from ladder-v2 in two ways. Its durations are shorter, so the container job fits inside measure.yml's timeout-minutes: ladder-v2 warms for 90s (jit) and 30s (steady) and runs each rung for 240s. Its rung rates are half of ladder-v2's, because 26 of the 33 targets did not complete 5000 on that runner (#95). ladder-v2 returns when the dedicated machine runs.",
+  "note": "Fixed offered rates, identical for every target in every language, published as real times rather than as a ratio to anything. docs/measurement-v2.html is the design, and ladder-v2 is its ladder of two rates. ladder-v2's rates are chosen from the traffic a reader might want to serve, not from where the targets break: set from the population they would move every time a language is added, and moving them breaks the time series. Its 1000 and 5000 are provisional until the dedicated machine has run. The nightly runs this ladder on a GitHub-hosted runner. It differs from ladder-v2 in three ways. Its durations are shorter, so the container job fits inside measure.yml's timeout-minutes: ladder-v2 warms for 90s (jit) and 30s (steady) and runs each rung for 240s. Its first two rates are half of ladder-v2's, because 26 of the 33 targets did not complete 5000 on that runner (#95). It adds a third rate at 5000, so the frameworks that hold 5000 still show it.",
   "warmup": {
     "rps": 1000,
     "seconds": { "jit": 30, "steady": 10 },
@@ -14,7 +14,9 @@
     { "rung": 1, "name": "regular", "rps": 500,  "seconds": 60,
       "purpose": "traffic every target is expected to serve; this is where latency is compared" },
     { "rung": 2, "name": "raised",  "rps": 2500, "seconds": 60,
-      "purpose": "traffic that separates the frameworks with headroom from the ones without" }
+      "purpose": "traffic that separates the frameworks with headroom from the ones without" },
+    { "rung": 3, "name": "peak",    "rps": 5000, "seconds": 60,
+      "purpose": "traffic that only the frameworks with the most headroom hold" }
   ],
   "settle_s": 15,
   "abort": {

@@ -93,7 +93,7 @@ def main():
 
     if a.family:
         # The first rate: the one every target is expected to complete, so the table has
-        # a column for each of them rather than a dash where the raised rate was dropped.
+        # a column for each of them rather than a dash where a higher rate was dropped.
         mid = rung_ids[0]
         rate = next((r.get("rate") for r in rungs if r["rung"] == mid), "rung %d" % mid)
         print("\nper-family p50 us at the %s rate" % rate)
