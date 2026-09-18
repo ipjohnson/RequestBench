@@ -18,3 +18,11 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 tokio = { workspace = true }
 poem = { version = "3", features = ["compression"] }
+
+# The suite in src/suite. The standard library has no gzip decoder and the floor has to undo
+# gzip before it compares, so the suite takes the one the shared domain already encodes with.
+# The framework again with its test feature on, which is where its TestClient lives. A
+# dev-dependency's features reach a test build and no other.
+[dev-dependencies]
+flate2 = { workspace = true }
+poem = { version = "3", features = ["compression", "test"] }

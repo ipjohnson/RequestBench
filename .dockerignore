@@ -17,5 +17,7 @@ targets/*/*/suite/
 targets/*/*/client/
 # A Java target's suite is src/test inside the module, which is where Maven looks for it.
 targets/java/*/src/test/
+# A Rust target's is a module under src/, which only a test build compiles.
+targets/rust/*/src/suite/
 targets/rust/target/
 targets/java/*/target/

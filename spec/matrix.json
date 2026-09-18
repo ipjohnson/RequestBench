@@ -4221,6 +4221,466 @@
         "transport": "in-memory",
         "reaches": "the engine's output, normalised the way the conformance client normalises it: the spec pins the content and leaves the whitespace free"
       }
+    },
+    "rust:axum": {
+      "baseline": {
+        "facility": "tower's ServiceExt::oneshot against the Router app() builds, as axum's testing example does; run by cargo test",
+        "transport": "in-memory",
+        "reaches": "the literal and the content type, which is the whole of what this endpoint is"
+      },
+      "json": {
+        "facility": "tower's ServiceExt::oneshot against the Router app() builds, as axum's testing example does; run by cargo test",
+        "transport": "in-memory",
+        "reaches": "the serializer at three sizes, which is all this family has to show"
+      },
+      "parameters": {
+        "facility": "tower's ServiceExt::oneshot against the Router app() builds, as axum's testing example does; run by cargo test",
+        "transport": "in-memory",
+        "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
+      },
+      "authorized": {
+        "facility": "tower's ServiceExt::oneshot against the Router app() builds, as axum's testing example does; run by cargo test",
+        "transport": "in-memory",
+        "reaches": "the refusal as well as the pass, which is the half a target that let everything through would still answer correctly"
+      },
+      "compressed": {
+        "facility": "tower's ServiceExt::oneshot against the Router app() builds, as axum's testing example does; run by cargo test",
+        "transport": "in-memory",
+        "reaches": "the codec, because this target compresses with middleware on its own routes rather than in a server in front of it"
+      },
+      "etag": {
+        "facility": "tower's ServiceExt::oneshot against the Router app() builds, as axum's testing example does; run by cargo test",
+        "transport": "in-memory",
+        "reaches": "the validator and the conditional answer. The 304 is the only request in the corpus that cannot be sent until the target has answered a different one, because the validator is the target's to produce"
+      },
+      "cache": {
+        "facility": "tower's ServiceExt::oneshot against the Router app() builds, as axum's testing example does; run by cargo test",
+        "transport": "in-memory",
+        "reaches": "the response cache and what it is keyed on. A store keyed on fewer headers than it declares answers one tenant with another tenant's body"
+      },
+      "body": {
+        "facility": "tower's ServiceExt::oneshot against the Router app() builds, as axum's testing example does; run by cargo test",
+        "transport": "in-memory",
+        "reaches": "the binding and the validation facility, including the two refusals, which are judged as the envelope this target recorded rather than against a pinned body"
+      },
+      "query": {
+        "facility": "tower's ServiceExt::oneshot against the Router app() builds, as axum's testing example does; run by cargo test",
+        "transport": "in-memory",
+        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+      },
+      "headers": {
+        "facility": "tower's ServiceExt::oneshot against the Router app() builds, as axum's testing example does; run by cargo test",
+        "transport": "in-memory",
+        "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
+      },
+      "middleware": {
+        "facility": "tower's ServiceExt::oneshot against the Router app() builds, as axum's testing example does; run by cargo test",
+        "transport": "in-memory",
+        "reaches": "every layer, because the host boots the application rather than calling the handler, which is the way this family is failed without noticing"
+      },
+      "domain": {
+        "facility": "tower's ServiceExt::oneshot against the Router app() builds, as axum's testing example does; run by cargo test",
+        "transport": "in-memory",
+        "reaches": "the shared model through all eight operations, including the four that write, where a 201 and a 204 with no body are answers a framework can get subtly wrong while returning the right status"
+      },
+      "errors": {
+        "facility": "tower's ServiceExt::oneshot against the Router app() builds, as axum's testing example does; run by cargo test",
+        "transport": "in-memory",
+        "reaches": "whatever this target does with a route it does not have, which is the framework rather than a handler"
+      },
+      "template": {
+        "facility": "tower's ServiceExt::oneshot against the Router app() builds, as axum's testing example does; run by cargo test",
+        "transport": "in-memory",
+        "reaches": "the engine's output, normalised the way the conformance client normalises it: the spec pins the content and leaves the whitespace free"
+      }
+    },
+    "rust:actix-web": {
+      "baseline": {
+        "facility": "actix-web's own test module, init_service and call_service against an App configured with config(), as actix-web's testing documentation does; run by cargo test",
+        "transport": "in-memory",
+        "reaches": "the literal and the content type, which is the whole of what this endpoint is"
+      },
+      "json": {
+        "facility": "actix-web's own test module, init_service and call_service against an App configured with config(), as actix-web's testing documentation does; run by cargo test",
+        "transport": "in-memory",
+        "reaches": "the serializer at three sizes, which is all this family has to show"
+      },
+      "parameters": {
+        "facility": "actix-web's own test module, init_service and call_service against an App configured with config(), as actix-web's testing documentation does; run by cargo test",
+        "transport": "in-memory",
+        "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
+      },
+      "authorized": {
+        "facility": "actix-web's own test module, init_service and call_service against an App configured with config(), as actix-web's testing documentation does; run by cargo test",
+        "transport": "in-memory",
+        "reaches": "the refusal as well as the pass, which is the half a target that let everything through would still answer correctly"
+      },
+      "compressed": {
+        "facility": "actix-web's own test module, init_service and call_service against an App configured with config(), as actix-web's testing documentation does; run by cargo test",
+        "transport": "in-memory",
+        "reaches": "the codec, because this target compresses with middleware on its own routes rather than in a server in front of it"
+      },
+      "etag": {
+        "facility": "actix-web's own test module, init_service and call_service against an App configured with config(), as actix-web's testing documentation does; run by cargo test",
+        "transport": "in-memory",
+        "reaches": "the validator and the conditional answer. The 304 is the only request in the corpus that cannot be sent until the target has answered a different one, because the validator is the target's to produce"
+      },
+      "cache": {
+        "facility": "actix-web's own test module, init_service and call_service against an App configured with config(), as actix-web's testing documentation does; run by cargo test",
+        "transport": "in-memory",
+        "reaches": "the response cache and what it is keyed on. A store keyed on fewer headers than it declares answers one tenant with another tenant's body"
+      },
+      "body": {
+        "facility": "actix-web's own test module, init_service and call_service against an App configured with config(), as actix-web's testing documentation does; run by cargo test",
+        "transport": "in-memory",
+        "reaches": "the binding and the validation facility, including the two refusals, which are judged as the envelope this target recorded rather than against a pinned body"
+      },
+      "query": {
+        "facility": "actix-web's own test module, init_service and call_service against an App configured with config(), as actix-web's testing documentation does; run by cargo test",
+        "transport": "in-memory",
+        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+      },
+      "headers": {
+        "facility": "actix-web's own test module, init_service and call_service against an App configured with config(), as actix-web's testing documentation does; run by cargo test",
+        "transport": "in-memory",
+        "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
+      },
+      "middleware": {
+        "facility": "actix-web's own test module, init_service and call_service against an App configured with config(), as actix-web's testing documentation does; run by cargo test",
+        "transport": "in-memory",
+        "reaches": "every layer, because the host boots the application rather than calling the handler, which is the way this family is failed without noticing"
+      },
+      "domain": {
+        "facility": "actix-web's own test module, init_service and call_service against an App configured with config(), as actix-web's testing documentation does; run by cargo test",
+        "transport": "in-memory",
+        "reaches": "the shared model through all eight operations, including the four that write, where a 201 and a 204 with no body are answers a framework can get subtly wrong while returning the right status"
+      },
+      "errors": {
+        "facility": "actix-web's own test module, init_service and call_service against an App configured with config(), as actix-web's testing documentation does; run by cargo test",
+        "transport": "in-memory",
+        "reaches": "whatever this target does with a route it does not have, which is the framework rather than a handler"
+      },
+      "template": {
+        "facility": "actix-web's own test module, init_service and call_service against an App configured with config(), as actix-web's testing documentation does; run by cargo test",
+        "transport": "in-memory",
+        "reaches": "the engine's output, normalised the way the conformance client normalises it: the spec pins the content and leaves the whitespace free"
+      }
+    },
+    "rust:rocket": {
+      "baseline": {
+        "facility": "Rocket's blocking local Client against the Rocket rocket() builds, as Rocket's testing guide does; run by cargo test",
+        "transport": "in-memory",
+        "reaches": "the literal and the content type, which is the whole of what this endpoint is"
+      },
+      "json": {
+        "facility": "Rocket's blocking local Client against the Rocket rocket() builds, as Rocket's testing guide does; run by cargo test",
+        "transport": "in-memory",
+        "reaches": "the serializer at three sizes, which is all this family has to show"
+      },
+      "parameters": {
+        "facility": "Rocket's blocking local Client against the Rocket rocket() builds, as Rocket's testing guide does; run by cargo test",
+        "transport": "in-memory",
+        "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
+      },
+      "authorized": {
+        "facility": "Rocket's blocking local Client against the Rocket rocket() builds, as Rocket's testing guide does; run by cargo test",
+        "transport": "in-memory",
+        "reaches": "the refusal as well as the pass, which is the half a target that let everything through would still answer correctly"
+      },
+      "compressed": {
+        "facility": "Rocket's blocking local Client against the Rocket rocket() builds, as Rocket's testing guide does; run by cargo test",
+        "transport": "in-memory",
+        "reaches": "the codec, because this target compresses in its own handler. Rocket has no compression to leave it to"
+      },
+      "etag": {
+        "facility": "Rocket's blocking local Client against the Rocket rocket() builds, as Rocket's testing guide does; run by cargo test",
+        "transport": "in-memory",
+        "reaches": "the validator and the conditional answer. The 304 is the only request in the corpus that cannot be sent until the target has answered a different one, because the validator is the target's to produce"
+      },
+      "cache": {
+        "facility": "Rocket's blocking local Client against the Rocket rocket() builds, as Rocket's testing guide does; run by cargo test",
+        "transport": "in-memory",
+        "reaches": "the response cache and what it is keyed on. A store keyed on fewer headers than it declares answers one tenant with another tenant's body"
+      },
+      "body": {
+        "facility": "Rocket's blocking local Client against the Rocket rocket() builds, as Rocket's testing guide does; run by cargo test",
+        "transport": "in-memory",
+        "reaches": "the binding and the validation facility, including the two refusals, which are judged as the envelope this target recorded rather than against a pinned body"
+      },
+      "query": {
+        "facility": "Rocket's blocking local Client against the Rocket rocket() builds, as Rocket's testing guide does; run by cargo test",
+        "transport": "in-memory",
+        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+      },
+      "headers": {
+        "facility": "Rocket's blocking local Client against the Rocket rocket() builds, as Rocket's testing guide does; run by cargo test",
+        "transport": "in-memory",
+        "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
+      },
+      "middleware": {
+        "facility": "Rocket's blocking local Client against the Rocket rocket() builds, as Rocket's testing guide does; run by cargo test",
+        "transport": "in-memory",
+        "reaches": "every layer, because the host boots the application rather than calling the handler, which is the way this family is failed without noticing"
+      },
+      "domain": {
+        "facility": "Rocket's blocking local Client against the Rocket rocket() builds, as Rocket's testing guide does; run by cargo test",
+        "transport": "in-memory",
+        "reaches": "the shared model through all eight operations, including the four that write, where a 201 and a 204 with no body are answers a framework can get subtly wrong while returning the right status"
+      },
+      "errors": {
+        "facility": "Rocket's blocking local Client against the Rocket rocket() builds, as Rocket's testing guide does; run by cargo test",
+        "transport": "in-memory",
+        "reaches": "whatever this target does with a route it does not have, which is the framework rather than a handler"
+      },
+      "template": {
+        "facility": "Rocket's blocking local Client against the Rocket rocket() builds, as Rocket's testing guide does; run by cargo test",
+        "transport": "in-memory",
+        "reaches": "the engine's output, normalised the way the conformance client normalises it: the spec pins the content and leaves the whitespace free"
+      }
+    },
+    "rust:poem": {
+      "baseline": {
+        "facility": "poem's TestClient against the endpoint app() builds, from poem's test feature, as poem's testing documentation does; run by cargo test",
+        "dep": "poem/test",
+        "transport": "in-memory",
+        "reaches": "the literal and the content type, which is the whole of what this endpoint is"
+      },
+      "json": {
+        "facility": "poem's TestClient against the endpoint app() builds, from poem's test feature, as poem's testing documentation does; run by cargo test",
+        "dep": "poem/test",
+        "transport": "in-memory",
+        "reaches": "the serializer at three sizes, which is all this family has to show"
+      },
+      "parameters": {
+        "facility": "poem's TestClient against the endpoint app() builds, from poem's test feature, as poem's testing documentation does; run by cargo test",
+        "dep": "poem/test",
+        "transport": "in-memory",
+        "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
+      },
+      "authorized": {
+        "facility": "poem's TestClient against the endpoint app() builds, from poem's test feature, as poem's testing documentation does; run by cargo test",
+        "dep": "poem/test",
+        "transport": "in-memory",
+        "reaches": "the refusal as well as the pass, which is the half a target that let everything through would still answer correctly"
+      },
+      "compressed": {
+        "facility": "poem's TestClient against the endpoint app() builds, from poem's test feature, as poem's testing documentation does; run by cargo test",
+        "dep": "poem/test",
+        "transport": "in-memory",
+        "reaches": "the codec, because this target compresses with middleware on its own routes rather than in a server in front of it"
+      },
+      "etag": {
+        "facility": "poem's TestClient against the endpoint app() builds, from poem's test feature, as poem's testing documentation does; run by cargo test",
+        "dep": "poem/test",
+        "transport": "in-memory",
+        "reaches": "the validator and the conditional answer. The 304 is the only request in the corpus that cannot be sent until the target has answered a different one, because the validator is the target's to produce"
+      },
+      "cache": {
+        "facility": "poem's TestClient against the endpoint app() builds, from poem's test feature, as poem's testing documentation does; run by cargo test",
+        "dep": "poem/test",
+        "transport": "in-memory",
+        "reaches": "the response cache and what it is keyed on. A store keyed on fewer headers than it declares answers one tenant with another tenant's body"
+      },
+      "body": {
+        "facility": "poem's TestClient against the endpoint app() builds, from poem's test feature, as poem's testing documentation does; run by cargo test",
+        "dep": "poem/test",
+        "transport": "in-memory",
+        "reaches": "the binding and the validation facility, including the two refusals, which are judged as the envelope this target recorded rather than against a pinned body"
+      },
+      "query": {
+        "facility": "poem's TestClient against the endpoint app() builds, from poem's test feature, as poem's testing documentation does; run by cargo test",
+        "dep": "poem/test",
+        "transport": "in-memory",
+        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+      },
+      "headers": {
+        "facility": "poem's TestClient against the endpoint app() builds, from poem's test feature, as poem's testing documentation does; run by cargo test",
+        "dep": "poem/test",
+        "transport": "in-memory",
+        "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
+      },
+      "middleware": {
+        "facility": "poem's TestClient against the endpoint app() builds, from poem's test feature, as poem's testing documentation does; run by cargo test",
+        "dep": "poem/test",
+        "transport": "in-memory",
+        "reaches": "every layer, because the host boots the application rather than calling the handler, which is the way this family is failed without noticing"
+      },
+      "domain": {
+        "facility": "poem's TestClient against the endpoint app() builds, from poem's test feature, as poem's testing documentation does; run by cargo test",
+        "dep": "poem/test",
+        "transport": "in-memory",
+        "reaches": "the shared model through all eight operations, including the four that write, where a 201 and a 204 with no body are answers a framework can get subtly wrong while returning the right status"
+      },
+      "errors": {
+        "facility": "poem's TestClient against the endpoint app() builds, from poem's test feature, as poem's testing documentation does; run by cargo test",
+        "dep": "poem/test",
+        "transport": "in-memory",
+        "reaches": "whatever this target does with a route it does not have, which is the framework rather than a handler"
+      },
+      "template": {
+        "facility": "poem's TestClient against the endpoint app() builds, from poem's test feature, as poem's testing documentation does; run by cargo test",
+        "dep": "poem/test",
+        "transport": "in-memory",
+        "reaches": "the engine's output, normalised the way the conformance client normalises it: the spec pins the content and leaves the whitespace free"
+      }
+    },
+    "rust:salvo": {
+      "baseline": {
+        "facility": "salvo's TestClient against the Service service() builds, from salvo's test feature, as salvo's testing documentation does, with the body read by take_bytes because take_string decodes gzip; run by cargo test",
+        "dep": "salvo/test",
+        "transport": "in-memory",
+        "reaches": "the literal and the content type, which is the whole of what this endpoint is"
+      },
+      "json": {
+        "facility": "salvo's TestClient against the Service service() builds, from salvo's test feature, as salvo's testing documentation does, with the body read by take_bytes because take_string decodes gzip; run by cargo test",
+        "dep": "salvo/test",
+        "transport": "in-memory",
+        "reaches": "the serializer at three sizes, which is all this family has to show"
+      },
+      "parameters": {
+        "facility": "salvo's TestClient against the Service service() builds, from salvo's test feature, as salvo's testing documentation does, with the body read by take_bytes because take_string decodes gzip; run by cargo test",
+        "dep": "salvo/test",
+        "transport": "in-memory",
+        "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
+      },
+      "authorized": {
+        "facility": "salvo's TestClient against the Service service() builds, from salvo's test feature, as salvo's testing documentation does, with the body read by take_bytes because take_string decodes gzip; run by cargo test",
+        "dep": "salvo/test",
+        "transport": "in-memory",
+        "reaches": "the refusal as well as the pass, which is the half a target that let everything through would still answer correctly"
+      },
+      "compressed": {
+        "facility": "salvo's TestClient against the Service service() builds, from salvo's test feature, as salvo's testing documentation does, with the body read by take_bytes because take_string decodes gzip; run by cargo test",
+        "dep": "salvo/test",
+        "transport": "in-memory",
+        "reaches": "the codec, because this target compresses with middleware on its own routes rather than in a server in front of it"
+      },
+      "etag": {
+        "facility": "salvo's TestClient against the Service service() builds, from salvo's test feature, as salvo's testing documentation does, with the body read by take_bytes because take_string decodes gzip; run by cargo test",
+        "dep": "salvo/test",
+        "transport": "in-memory",
+        "reaches": "the validator and the conditional answer. The 304 is the only request in the corpus that cannot be sent until the target has answered a different one, because the validator is the target's to produce"
+      },
+      "cache": {
+        "facility": "salvo's TestClient against the Service service() builds, from salvo's test feature, as salvo's testing documentation does, with the body read by take_bytes because take_string decodes gzip; run by cargo test",
+        "dep": "salvo/test",
+        "transport": "in-memory",
+        "reaches": "the response cache and what it is keyed on. A store keyed on fewer headers than it declares answers one tenant with another tenant's body"
+      },
+      "body": {
+        "facility": "salvo's TestClient against the Service service() builds, from salvo's test feature, as salvo's testing documentation does, with the body read by take_bytes because take_string decodes gzip; run by cargo test",
+        "dep": "salvo/test",
+        "transport": "in-memory",
+        "reaches": "the binding and the validation facility, including the two refusals, which are judged as the envelope this target recorded rather than against a pinned body"
+      },
+      "query": {
+        "facility": "salvo's TestClient against the Service service() builds, from salvo's test feature, as salvo's testing documentation does, with the body read by take_bytes because take_string decodes gzip; run by cargo test",
+        "dep": "salvo/test",
+        "transport": "in-memory",
+        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+      },
+      "headers": {
+        "facility": "salvo's TestClient against the Service service() builds, from salvo's test feature, as salvo's testing documentation does, with the body read by take_bytes because take_string decodes gzip; run by cargo test",
+        "dep": "salvo/test",
+        "transport": "in-memory",
+        "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
+      },
+      "middleware": {
+        "facility": "salvo's TestClient against the Service service() builds, from salvo's test feature, as salvo's testing documentation does, with the body read by take_bytes because take_string decodes gzip; run by cargo test",
+        "dep": "salvo/test",
+        "transport": "in-memory",
+        "reaches": "every layer, because the host boots the application rather than calling the handler, which is the way this family is failed without noticing"
+      },
+      "domain": {
+        "facility": "salvo's TestClient against the Service service() builds, from salvo's test feature, as salvo's testing documentation does, with the body read by take_bytes because take_string decodes gzip; run by cargo test",
+        "dep": "salvo/test",
+        "transport": "in-memory",
+        "reaches": "the shared model through all eight operations, including the four that write, where a 201 and a 204 with no body are answers a framework can get subtly wrong while returning the right status"
+      },
+      "errors": {
+        "facility": "salvo's TestClient against the Service service() builds, from salvo's test feature, as salvo's testing documentation does, with the body read by take_bytes because take_string decodes gzip; run by cargo test",
+        "dep": "salvo/test",
+        "transport": "in-memory",
+        "reaches": "whatever this target does with a route it does not have, which is the framework rather than a handler"
+      },
+      "template": {
+        "facility": "salvo's TestClient against the Service service() builds, from salvo's test feature, as salvo's testing documentation does, with the body read by take_bytes because take_string decodes gzip; run by cargo test",
+        "dep": "salvo/test",
+        "transport": "in-memory",
+        "reaches": "the engine's output, normalised the way the conformance client normalises it: the spec pins the content and leaves the whitespace free"
+      }
+    },
+    "rust:warp": {
+      "baseline": {
+        "facility": "warp::test::request() against the filter routes() builds, as warp's documentation does; run by cargo test",
+        "transport": "in-memory",
+        "reaches": "the literal and the content type, which is the whole of what this endpoint is"
+      },
+      "json": {
+        "facility": "warp::test::request() against the filter routes() builds, as warp's documentation does; run by cargo test",
+        "transport": "in-memory",
+        "reaches": "the serializer at three sizes, which is all this family has to show"
+      },
+      "parameters": {
+        "facility": "warp::test::request() against the filter routes() builds, as warp's documentation does; run by cargo test",
+        "transport": "in-memory",
+        "reaches": "the route pattern; a target whose two-segment pattern is wrong answers 404 and the floor says so on the status line"
+      },
+      "authorized": {
+        "facility": "warp::test::request() against the filter routes() builds, as warp's documentation does; run by cargo test",
+        "transport": "in-memory",
+        "reaches": "the refusal as well as the pass, which is the half a target that let everything through would still answer correctly"
+      },
+      "compressed": {
+        "facility": "warp::test::request() against the filter routes() builds, as warp's documentation does; run by cargo test",
+        "transport": "in-memory",
+        "reaches": "the codec, because this target compresses with a filter on its own routes rather than in a server in front of it"
+      },
+      "etag": {
+        "facility": "warp::test::request() against the filter routes() builds, as warp's documentation does; run by cargo test",
+        "transport": "in-memory",
+        "reaches": "the validator and the conditional answer. The 304 is the only request in the corpus that cannot be sent until the target has answered a different one, because the validator is the target's to produce"
+      },
+      "cache": {
+        "facility": "warp::test::request() against the filter routes() builds, as warp's documentation does; run by cargo test",
+        "transport": "in-memory",
+        "reaches": "the response cache and what it is keyed on. A store keyed on fewer headers than it declares answers one tenant with another tenant's body"
+      },
+      "body": {
+        "facility": "warp::test::request() against the filter routes() builds, as warp's documentation does; run by cargo test",
+        "transport": "in-memory",
+        "reaches": "the binding and the validation facility, including the two refusals, which are judged as the envelope this target recorded rather than against a pinned body"
+      },
+      "query": {
+        "facility": "warp::test::request() against the filter routes() builds, as warp's documentation does; run by cargo test",
+        "transport": "in-memory",
+        "reaches": "the parse and the coercion, isolated from any use of the values, so what a test holds is the status rather than the body"
+      },
+      "headers": {
+        "facility": "warp::test::request() against the filter routes() builds, as warp's documentation does; run by cargo test",
+        "transport": "in-memory",
+        "reaches": "that the request was accepted with all of them attached; the count is the variable and the body is fixed"
+      },
+      "middleware": {
+        "facility": "warp::test::request() against the filter routes() builds, as warp's documentation does; run by cargo test",
+        "transport": "in-memory",
+        "reaches": "every layer, because the host boots the application rather than calling the handler, which is the way this family is failed without noticing"
+      },
+      "domain": {
+        "facility": "warp::test::request() against the filter routes() builds, as warp's documentation does; run by cargo test",
+        "transport": "in-memory",
+        "reaches": "the shared model through all eight operations, including the four that write, where a 201 and a 204 with no body are answers a framework can get subtly wrong while returning the right status"
+      },
+      "errors": {
+        "facility": "warp::test::request() against the filter routes() builds, as warp's documentation does; run by cargo test",
+        "transport": "in-memory",
+        "reaches": "whatever this target does with a route it does not have, which is the framework rather than a handler"
+      },
+      "template": {
+        "facility": "warp::test::request() against the filter routes() builds, as warp's documentation does; run by cargo test",
+        "transport": "in-memory",
+        "reaches": "the engine's output, normalised the way the conformance client normalises it: the spec pins the content and leaves the whitespace free"
+      }
     }
   },
   "suites_note": "What each target's own suite tests a family with, and what it talks to. transport is \"in-memory\" for a client that calls the application with no socket at all, \"loopback\" for a real server on a loopback port in the test's own process, or \"process\" for a target booted the way harness/run.py boots one. The three are not interchangeable: a framework that compresses in its request pipeline is reached by all three, and one that leaves it to the server underneath is reached only by the last two. Per family rather than per target, because whether a test reaches the code under test is not a fact about a framework: MockMvc and @SpringBootTest(webEnvironment = RANDOM_PORT) are both Spring, and a target that tests against a socket for compressed and in memory for everything else is the case a per-target flag would hide. A family with no marked test needs no entry here; one with a marked test has to have one, and the dependency it names has to be in that target's suite project."

@@ -464,93 +464,101 @@ fn items_html(size: &'static str) -> String {
     Items { body: d::payload(size) }.render().unwrap_or_default()
 }
 
+#[cfg(test)]
+mod suite;
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     let port = rb_host::boot("actix-web");
-    HttpServer::new(|| {
-        App::new()
-            .route("/plaintext", web::get().to(plaintext))
-            .route("/health", web::get().to(health))
-            .route("/__meta", web::get().to(meta))
-            .route("/json/small", payload_route("small"))
-            .route("/json/medium", payload_route("medium"))
-            .route("/json/large", payload_route("large"))
-            .route("/parameters/static/segment/literal", web::get().to(small))
-            .route("/parameters/{one}", web::get().to(small))
-            .route("/parameters/{one}/with-second/{two}", web::get().to(small))
-            .route("/query/one", web::get().to(|q: web::Query<QueryOne>| async move {
-                HttpResponse::Ok().json(q.into_inner())
-            }))
-            .route("/query/many", web::get().to(|q: web::Query<QueryMany>| async move {
-                HttpResponse::Ok().json(q.into_inner())
-            }))
-            .route("/headers", web::get().to(small))
-            .route("/middleware/none", web::get().to(small))
-            .service(noops!(web::resource("/middleware/four").route(web::get().to(small)), 4))
-            .service(noops!(web::resource("/middleware/sixteen").route(web::get().to(small)), 16))
-            .service(
-                web::resource("/authorized/small")
-                    .wrap(actix_web::middleware::from_fn(require_token))
-                    .route(web::get().to(small)),
-            )
-            // Level pinned across every language; the default size threshold is left
-            // alone, because whether a framework bothers to compress a body too small to
-            // benefit is what compressed.gzip_small is in the set to show.
-            // rb:handler compressed.*
-            .service(
-                web::scope("/compressed")
-                    .wrap(Compress::default())
-                    .route("/small", compressed_route("small"))
-                    .route("/medium", compressed_route("medium"))
-                    .route("/large", compressed_route("large")),
-            )
-            .service(
-                // rb:handler etag.*
-                web::scope("/etag")
-                    .wrap(from_fn(revalidate))
-                    .route("/small", etag_route("small"))
-                    .route("/large", etag_route("large")),
-            )
-            // The vary scopes come first: actix matches scopes in registration order, and
-            // /cache would otherwise claim /cache/vary/one and answer its own 404.
-            // rb:handler cache.vary_one,cache.vary_many
-            .service(
-                web::resource("/cache/vary/one")
-                    .wrap(from_fn(|req, next| replay(VARY_ONE, req, next)))
-                    .route(cache_route("small", VARY_ONE)),
-            )
-            .service(
-                web::resource("/cache/vary/many")
-                    .wrap(from_fn(|req, next| replay(VARY_MANY, req, next)))
-                    .route(cache_route("small", VARY_MANY)),
-            )
-            .service(
-                // rb:handler cache.small,cache.medium,cache.large
-                web::scope("/cache")
-                    .wrap(from_fn(|req, next| replay(&[], req, next)))
-                    .route("/small", cache_route("small", &[]))
-                    .route("/medium", cache_route("medium", &[]))
-                    .route("/large", cache_route("large", &[])),
-            )
-            .route("/template/small", template_route("small"))
-            .route("/template/medium", template_route("medium"))
-            .route("/body/bind/small", web::post().to(bind))
-            .route("/body/bind/medium", web::post().to(bind))
-            .route("/body/validate/first-error", web::post().to(validate_first))
-            .route("/body/validate/small", web::post().to(validate_all))
-            .route("/body/validate/medium", web::post().to(validate_all))
-            .route("/domain/orders", web::get().to(filter))
-            .route("/domain/orders", web::post().to(create))
-            .route("/domain/orders/{oid}", web::get().to(lookup))
-            .route("/domain/orders/{oid}", web::put().to(replace))
-            .route("/domain/customers/{cid}/summary", web::get().to(join))
-            .route("/domain/regions/{region}/report", web::get().to(aggregate))
-            .route("/domain/customers/{cid}", web::patch().to(patch))
-            .route("/domain/orders/{oid}/lines/{lid}", web::delete().to(delete_line))
-            // rb:handler errors.unmatched
-            .default_service(web::to(not_found))
-    })
-    .bind(("0.0.0.0", port))?
-    .run()
-    .await
+    HttpServer::new(|| App::new().configure(config))
+        .bind(("0.0.0.0", port))?
+        .run()
+        .await
+}
+
+/// Every route, on the ServiceConfig App::configure hands over. Its own function so a test can
+/// hand it requests: built inline in main(), the only way to reach it was to start this target
+/// on its container port. main() serves an App configured with it.
+fn config(cfg: &mut web::ServiceConfig) {
+    cfg
+        .route("/plaintext", web::get().to(plaintext))
+        .route("/health", web::get().to(health))
+        .route("/__meta", web::get().to(meta))
+        .route("/json/small", payload_route("small"))
+        .route("/json/medium", payload_route("medium"))
+        .route("/json/large", payload_route("large"))
+        .route("/parameters/static/segment/literal", web::get().to(small))
+        .route("/parameters/{one}", web::get().to(small))
+        .route("/parameters/{one}/with-second/{two}", web::get().to(small))
+        .route("/query/one", web::get().to(|q: web::Query<QueryOne>| async move {
+            HttpResponse::Ok().json(q.into_inner())
+        }))
+        .route("/query/many", web::get().to(|q: web::Query<QueryMany>| async move {
+            HttpResponse::Ok().json(q.into_inner())
+        }))
+        .route("/headers", web::get().to(small))
+        .route("/middleware/none", web::get().to(small))
+        .service(noops!(web::resource("/middleware/four").route(web::get().to(small)), 4))
+        .service(noops!(web::resource("/middleware/sixteen").route(web::get().to(small)), 16))
+        .service(
+            web::resource("/authorized/small")
+                .wrap(actix_web::middleware::from_fn(require_token))
+                .route(web::get().to(small)),
+        )
+        // Level pinned across every language; the default size threshold is left
+        // alone, because whether a framework bothers to compress a body too small to
+        // benefit is what compressed.gzip_small is in the set to show.
+        // rb:handler compressed.*
+        .service(
+            web::scope("/compressed")
+                .wrap(Compress::default())
+                .route("/small", compressed_route("small"))
+                .route("/medium", compressed_route("medium"))
+                .route("/large", compressed_route("large")),
+        )
+        .service(
+            // rb:handler etag.*
+            web::scope("/etag")
+                .wrap(from_fn(revalidate))
+                .route("/small", etag_route("small"))
+                .route("/large", etag_route("large")),
+        )
+        // The vary scopes come first: actix matches scopes in registration order, and
+        // /cache would otherwise claim /cache/vary/one and answer its own 404.
+        // rb:handler cache.vary_one,cache.vary_many
+        .service(
+            web::resource("/cache/vary/one")
+                .wrap(from_fn(|req, next| replay(VARY_ONE, req, next)))
+                .route(cache_route("small", VARY_ONE)),
+        )
+        .service(
+            web::resource("/cache/vary/many")
+                .wrap(from_fn(|req, next| replay(VARY_MANY, req, next)))
+                .route(cache_route("small", VARY_MANY)),
+        )
+        .service(
+            // rb:handler cache.small,cache.medium,cache.large
+            web::scope("/cache")
+                .wrap(from_fn(|req, next| replay(&[], req, next)))
+                .route("/small", cache_route("small", &[]))
+                .route("/medium", cache_route("medium", &[]))
+                .route("/large", cache_route("large", &[])),
+        )
+        .route("/template/small", template_route("small"))
+        .route("/template/medium", template_route("medium"))
+        .route("/body/bind/small", web::post().to(bind))
+        .route("/body/bind/medium", web::post().to(bind))
+        .route("/body/validate/first-error", web::post().to(validate_first))
+        .route("/body/validate/small", web::post().to(validate_all))
+        .route("/body/validate/medium", web::post().to(validate_all))
+        .route("/domain/orders", web::get().to(filter))
+        .route("/domain/orders", web::post().to(create))
+        .route("/domain/orders/{oid}", web::get().to(lookup))
+        .route("/domain/orders/{oid}", web::put().to(replace))
+        .route("/domain/customers/{cid}/summary", web::get().to(join))
+        .route("/domain/regions/{region}/report", web::get().to(aggregate))
+        .route("/domain/customers/{cid}", web::patch().to(patch))
+        .route("/domain/orders/{oid}/lines/{lid}", web::delete().to(delete_line))
+        // rb:handler errors.unmatched
+        .default_service(web::to(not_found));
 }
