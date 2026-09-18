@@ -7,6 +7,7 @@
 import Shell from "../../components/Shell.astro";
 import Distribution from "../../components/Distribution.astro";
 import EndpointPane from "../../components/EndpointPane.astro";
+import FamilyPane from "../../components/FamilyPane.astro";
 import "../../styles/framework.css";
 import { permalink, type SnippetPart } from "../../lib/bundleview.js";
 import { deltaFor } from "../../lib/delta.js";
@@ -100,6 +101,10 @@ for (const eid of order) {
   if (!last || last[0] !== fam) groups.push([fam, [eid]]);
   else last[1].push(eid);
 }
+// Keyed by name rather than read off groups, which are runs of the order: a family split
+// across it would otherwise get two panes.
+const families = new Map<string, string[]>();
+for (const [fam, eids] of groups) if (fam) families.set(fam, [...(families.get(fam) ?? []), ...eids]);
 
 // A summary written before bins existed has none, and one whose target did not complete the
 // rate has no histogram to draw. Either way the page renders as it did before rather than an
@@ -120,6 +125,18 @@ const rates = (run.rungs ?? [])
   }));
 const hasBins = Boolean(grid) && rates.some((r) => r.span);
 
+const famRungs = (fam: string, eids: string[]) =>
+  rates.map((r) => ({
+    rn: r.rn,
+    stats: t.families_by_rung?.[r.rn]?.[fam],
+    endpoints: eids.map((eid) => ({
+      eid,
+      stats: own[eid]?.rungs?.[r.rn],
+      chain: deltaFor(t, eid, r.rn, routes, "p50_us"),
+    })),
+    shown: r.shown,
+  }));
+
 const missing = order.filter((e) => !snips[e]);
 const note =
   Object.keys(snips).length && missing.length ? ` No handler located for ${missing.join(", ")}.` : "";
@@ -137,7 +154,7 @@ const linkFor = (eid: string): string | null => {
   footerLeftHref="../index.html"
   footerRight={`run ${run.run_id}`}
 >
-  <p class="crumb"><a href="../index.html">&larr; results</a></p>
+  <p class="crumb"><a id="back" href="../index.html">&larr; results</a></p>
   <div class="ident">
     <div class="mono-mark">{name[0]?.toUpperCase()}</div>
     <h1>{name}</h1>
@@ -180,24 +197,26 @@ const linkFor = (eid: string): string | null => {
           {order.length} endpoints in {groups.length} families, on the {host} host
           {rates.length > 1 ? ", at the rate picked on the right" : ` at ${rate} offered rps`}.{note}
         </p>
-        {hasBins && grid && (
+        {((hasBins && grid) || rates.length > 1) && (
           <div class="eptabs">
-            <div role="tablist" aria-label="How to read these endpoints">
-              <button type="button" role="tab" id="tab-info" aria-controls="view-info" aria-selected="true">
-                Info
-              </button>
-              <button
-                type="button"
-                role="tab"
-                id="tab-dist"
-                aria-controls="view-dist"
-                aria-selected="false"
-              >
-                Distribution
-              </button>
-            </div>
+            {hasBins && grid && (
+              <div role="tablist" aria-label="How to read these endpoints">
+                <button type="button" role="tab" id="tab-info" aria-controls="view-info" aria-selected="true">
+                  Info
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  id="tab-dist"
+                  aria-controls="view-dist"
+                  aria-selected="false"
+                >
+                  Distribution
+                </button>
+              </div>
+            )}
             {rates.length > 1 && (
-              <div class="eprates" role="group" aria-label="Offered rate">
+              <div class="eprates" role="group" aria-label="Offered rate" data-host={host}>
                 {rates.map((r) => (
                   <button
                     type="button"
@@ -228,7 +247,13 @@ const linkFor = (eid: string): string | null => {
             <ul>
               {groups.map(([fam, eids]) => (
                 <li class="epfam">
-                  <span class="epfamname">{fam}</span>
+                  {fam ? (
+                    <a class="epfamname" href={`#${fam}`} data-fam={fam}>
+                      {fam}
+                    </a>
+                  ) : (
+                    <span class="epfamname" />
+                  )}
                   <ul>
                     {eids.map((eid) => (
                       <li>
@@ -272,6 +297,9 @@ const linkFor = (eid: string): string | null => {
                 first={eid === order[0]}
               />
             ))}
+            {[...families].map(([fam, eids]) => (
+              <FamilyPane fam={fam} size={eids.length} routes={routes} rungs={famRungs(fam, eids)} />
+            ))}
           </div>
         </div>
       </div>
@@ -280,6 +308,11 @@ const linkFor = (eid: string): string | null => {
 
   <script>
     import { startTree } from "../../client/endpoint-tree.js";
+    import { backHref } from "../../client/state.js";
+
+    // Opened from a row, the query is the explorer view that row was in.
+    const back = document.getElementById("back");
+    if (back && location.search) back.setAttribute("href", backHref(back.getAttribute("href") ?? "", location.search));
     startTree();
   </script>
 </Shell>

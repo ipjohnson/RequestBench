@@ -1,30 +1,28 @@
-// The explorer: the table, the drill-down and the time axis.
+// The explorer: the table and the time axis. A row opens its framework page.
 //
 // Everything that decides what a row says is in select.ts and lib/; this writes the result
 // into the page and wires the controls. The one rule it keeps is that a render is a function
 // of the state and nothing else, so the hash reproduces the view exactly.
 import { provenance } from "../lib/catalog.js";
-import { deltaFor } from "../lib/delta.js";
 import { esc } from "../lib/html.js";
 import { cell, METRICS, type Unit } from "../lib/metrics.js";
 import type { PageData } from "../lib/page-data.js";
 import { SERIES_DARK, SERIES_LIGHT } from "../lib/series.js";
-import type { Run, Target } from "../lib/types.js";
-import { chainTable, deltaCell } from "../lib/views.js";
-import { Data, resolveSource, type CodePart } from "./source.js";
+import type { Run } from "../lib/types.js";
+import { deltaCell } from "../lib/views.js";
+import { Data, resolveSource } from "./source.js";
+import { famsAt, isSerial, pickRung, rateLabel, rows, rungsOf, wireKeyFor } from "./select.js";
 import {
-  epRowsFor,
-  famRowsFor,
-  famsAt,
-  isSerial,
-  pickRung,
-  rateLabel,
-  rows,
-  rungsOf,
-  wireKeyFor,
-  type Child,
-} from "./select.js";
-import { COLS, defaultCols, initialState, readHash, writeHash, type Col, type Row, type State } from "./state.js";
+  COLS,
+  defaultCols,
+  initialState,
+  pageHref,
+  readHash,
+  writeHash,
+  type Col,
+  type Row,
+  type State,
+} from "./state.js";
 
 const el = <T extends HTMLElement>(id: string): T => document.getElementById(id) as T;
 
@@ -57,8 +55,8 @@ class Explorer {
   private readonly data: Data;
   private readonly langs: string[];
   private readonly st: State;
-  private shown: Row[] = [];
-  private dlgAt: { language: string; target: string; family: string | null; endpoint: string | null } | null = null;
+  /** Wire captures already asked for, so a render while one is in flight does not ask again. */
+  private readonly wireAsked = new Set<string>();
   private ownHash = "";
 
   constructor(rb: PageData, data: Data) {
@@ -187,7 +185,9 @@ class Explorer {
 
     el("meta").textContent =
       `${run.date} · ${run.cpu}, ${run.cores} cores · ${run.exec_host || "container"}` +
-      ` · ${isSerial(run) ? "serial" : "rate ladder"} · ${rs.length} rows · click a row for detail`;
+      ` · ${isSerial(run) ? "serial" : "rate ladder"} · ${rs.length} rows` +
+      ` · click a row for its framework page`;
+    this.fetchWire(run);
 
     const vc = this.visibleCols();
     const label = (c: Col): string => (c.id === "value" ? METRICS[this.st.metric].label : c.label);
@@ -207,10 +207,16 @@ class Explorer {
 
     const finite = rs.map((r) => r.value).filter((v): v is number => v != null && isFinite(v));
     const worst = finite.length ? Math.max(...finite) : 1;
+    const data = new URLSearchParams(location.search).get("data");
+    // The rate goes into the link even when it is the default, because the page opens on the
+    // rate it is handed and cannot work out which one this table defaulted to.
+    const view: State = { ...this.st, rung: rn };
     el("tbody").innerHTML =
       rs
         .map((r, i) => {
           const w = r.value != null && isFinite(r.value) ? Math.max(1.5, (100 * r.value) / worst) : 0;
+          const page = this.pageFor(r.language, r.target);
+          const href = page ? pageHref(page, r.detail, view, this.langs, data) : null;
           const tds = vc
             .map((c) => {
               if (c.id === "bar")
@@ -220,16 +226,16 @@ class Explorer {
               return `<td class="${c.cls ?? ""}${extra}">${esc(cell(c.get?.(r), this.unit(c.id)))}</td>`;
             })
             .join("");
-          return `<tr data-key="${esc(r.key)}" tabindex="0">
+          const name = href ? `<a href="${esc(href)}">${esc(r.label)}</a>` : esc(r.label);
+          return `<tr${href ? ` data-href="${esc(href)}"` : ""}>
       <td class="rank">${i + 1}</td>
-      <td class="name l"><span class="swatch" style="background:${colour[r.language]}"></span>${esc(r.label)}</td>
+      <td class="name l"><span class="swatch" style="background:${colour[r.language]}"></span>${name}</td>
       <td class="sub l">${esc(r.detail || r.language)}</td>${tds}</tr>`;
         })
         .join("") ||
       `<tr><td colspan="${vc.length + 3}" class="empty">${esc(this.emptyWhy(run))}</td></tr>`;
     el("count").textContent = `${rs.length} rows`;
 
-    this.shown = rs;
     this.renderTime(rs);
     this.pushHash();
   };
@@ -287,7 +293,7 @@ class Explorer {
     );
   }
 
-  /* ---- the drill-down ---- */
+  /* ---- what a row opens ---- */
 
   /**
    * A framework page is per target, but a row's key carries its slice: node:fastify at blend
@@ -298,191 +304,19 @@ class Explorer {
     return this.rb.pages[`${language}:${target}`];
   }
 
-  private childTable(caption: string, kids: Child[], level: "family" | "endpoint"): string {
-    if (!kids.length) return `<p class="empty">Nothing at this level for this target.</p>`;
-    const withRoute = level === "endpoint";
-    const unit = METRICS[this.st.metric].unit;
-    // Cut the route here rather than in CSS: the table is auto-layout, so a max-width on a
-    // cell is advisory and query.many's eight parameters would widen the whole dialog.
-    const clip = (s: string, n: number): string => (s.length > n ? `${s.slice(0, n - 1)}…` : s);
-    const routeCell = (id: string): string => {
-      if (!withRoute) return "";
-      const r = this.rb.routes[id];
-      if (!r) return '<td class="l route">&mdash;</td>';
-      return (
-        `<td class="l route" title="${esc(`${r.m} ${r.p}`)}">` +
-        `<span class="verb">${esc(r.m)}</span> ${esc(clip(r.p, 44))}</td>`
-      );
-    };
-    const body = kids
-      .map(
-        (k) => `
-    <tr data-down="${esc(level)}" data-id="${esc(k.id)}">
-      <td class="l name">${esc(k.id)}</td>${routeCell(k.id)}
-      ${withRoute ? "" : `<td class="sub">${k.eps ?? 0}</td>`}
-      <td>${esc(cell(k.value, unit))}</td>
-      ${withRoute ? deltaCell(k.delta, unit) : ""}
-      <td class="sub">${k.n == null ? "&mdash;" : Math.round(k.n).toLocaleString()}</td>
-      <td class="sub go">open &rarr;</td>
-    </tr>`,
-      )
-      .join("");
-    return `<h3 class="childcap">${esc(caption)}</h3>
-    <div class="scroll childscroll"><table><thead><tr>
-      <th class="l">${withRoute ? "endpoint" : "family"}</th>
-      ${withRoute ? '<th class="l">route</th>' : "<th>endpoints</th>"}
-      <th>${esc(METRICS[this.st.metric].label)}</th>
-      ${withRoute ? "<th title=\"Against the root of this endpoint's base chain\">over base</th>" : ""}
-      <th>samples</th><th></th>
-    </tr></thead><tbody>${body}</tbody></table></div>`;
-  }
-
-  private crumbs(t: Target): string {
-    const at = this.dlgAt;
-    if (!at) return "";
-    const parts = [`<button data-up="blend">${esc(t.target)}</button>`];
-    if (at.family) parts.push(`<button data-up="family">${esc(at.family)}</button>`);
-    if (at.endpoint) parts.push(`<span>${esc(at.endpoint)}</span>`);
-    return `<nav class="crumbs">${parts.join("<i>›</i>")}</nav>`;
-  }
-
-  private async openDetail(key: string): Promise<void> {
-    const r = this.shown.find((x) => x.key === key);
-    if (!r) return;
-    this.dlgAt = {
-      language: r.language,
-      target: r.target,
-      family: this.st.gran === "family" ? r.detail : this.st.gran === "endpoint" ? (r.family ?? null) : null,
-      endpoint: this.st.gran === "endpoint" ? r.detail : null,
-    };
-    await this.paintDetail();
-    el<HTMLDialogElement>("dlg").showModal();
-  }
-
-  private async paintDetail(): Promise<void> {
-    const run = this.latest();
-    const at = this.dlgAt;
-    if (!run || !at) return;
-    const t = run.targets.find((x) => x.language === at.language && x.target === at.target);
-    if (!t) return;
-    const rn = pickRung(run, this.st.rung);
-    if (!rn) return;
-    const tkey = `${at.language}:${at.target}`;
-    const box = el("dlgbody");
-    const page = this.pageFor(at.language, at.target);
-    const unit = METRICS[this.st.metric].unit;
-    const head = `
-    <div class="wirehead"><strong>${esc(t.framework || t.target)}</strong>
-      <span class="ver">${esc(t.version ?? "")}</span>
-      <span class="wmeta">${esc(t.language)}</span>
-      ${page ? `<a class="fwlink" href="${esc(page)}">README &amp; bundle &rarr;</a>` : ""}</div>
-    ${this.crumbs(t)}`;
-
-    if (!at.endpoint) {
-      const kids = at.family
-        ? epRowsFor(run, t, rn, at.family, this.st.metric, this.rb.routes)
-        : famRowsFor(run, t, rn, this.st.metric, this.rb.routes);
-      const self: Record<string, unknown> = at.family
-        ? (famsAt(t, rn)[at.family] ?? {})
-        : (t.rungs[rn] ?? {});
-      const value = (self[this.st.metric] ?? self["p50_us"]) as number | null | undefined;
-      const n = (self["count"] ?? self["achieved_rps"]) as number | null | undefined;
-      box.innerHTML =
-        head +
-        `
-      <div class="fields">
-        <div class="frow"><span class="fk">${esc(METRICS[this.st.metric].label)}</span><span class="fv">${esc(cell(value, unit))}</span></div>
-        <div class="frow"><span class="fk">samples</span><span class="fv">${esc(cell(n))}</span></div>
-      </div>` +
-        this.childTable(
-          at.family ? `Endpoints in ${at.family}` : "Families",
-          kids,
-          at.family ? "endpoint" : "family",
-        );
-      return;
-    }
-
-    /* the leaf: this endpoint's handler, then what it actually put on the wire */
-    const eid = at.endpoint;
-    const d = t.endpoints?.[eid]?.rungs?.[rn] ?? {};
-    const stat = (lab: string, k: string, u: Unit): string =>
-      `<div class="frow"><span class="fk">${esc(lab)}</span><span class="fv">${esc(cell((d as Record<string, number | null | undefined>)[k], u))}</span></div>`;
-    const route = this.rb.routes[eid];
-    box.innerHTML =
-      head +
-      `
-    ${route ? `<p class="leafroute"><span class="verb">${esc(route.m)}</span> ${esc(route.p)}</p>` : ""}
-    <div class="fields">
-      ${stat("p50", "p50_us", "us")}${stat("p90", "p90_us", "us")}
-      ${stat("p99", "p99_us", "us")}${stat("p99.9", "p999_us", "us")}
-      ${stat("samples", "count", "")}
-    </div>
-    ${chainTable(deltaFor(t, eid, rn, this.rb.routes, this.st.metric), this.rb.factors, METRICS[this.st.metric].label, unit)}
-    <p class="empty" id="leafload">Loading the handler and the captured exchange…</p>`;
-
-    const wireKey = this.wireKey(at.language, at.target);
-    const [codeDoc, wdoc] = await Promise.all([
-      this.data.fetchCode(tkey),
-      wireKey ? this.data.fetchWire(wireKey) : Promise.resolve(null),
-    ]);
-    // The dialog may have been drilled elsewhere while those were in flight.
-    if (this.dlgAt !== at || at.endpoint !== eid) return;
-
-    const sn = codeDoc?.[eid];
-    const e = wdoc?.endpoints[eid];
-    const block = (p: CodePart): string =>
-      `<div class="sniphead"><span class="loc">${esc(`${p.f}:${p.s}${p.e === p.s ? "" : `-${p.e}`}`)}</span><span class="how">${esc(p.h)}</span>
-      ${p.u ? `<a href="${esc(p.u)}">open on GitHub &rarr;</a>` : `<span class="how">commit not on a remote, so no link</span>`}</div>
-    <pre class="code">${esc(p.t)}</pre>`;
-    const handler = sn
-      ? `
-    <h3 class="childcap">Handler</h3>
-    ${block(sn)}`
-      : `<p class="empty">No handler located for this endpoint in this target.</p>`;
-    // The code the route does not name: what the family is wired with, and the parts that
-    // do it. A family with nothing to show says so, because a blank section reads as
-    // missing data rather than as a framework that needed no wiring.
-    const declared = sn?.w?.m
-      ? `<p class="mech">${esc(sn.w.m)}${sn.w.d ? ` &middot; <code>${esc(sn.w.d)}</code>` : ""}</p>`
-      : sn?.w?.b
-        ? `<p class="mech">${esc(sn.w.b)}</p>`
-        : "";
-    const wiring =
-      declared || sn?.sup?.length
-        ? `
-    <h3 class="childcap">Wiring</h3>
-    <div class="wiring">${declared}${(sn?.sup ?? []).map(block).join("")}</div>`
-        : "";
-    const hdr = (hs: readonly (readonly [string, string])[]): string =>
-      hs
-        .map(
-          ([k, v]) =>
-            `<div class="hrow"><span class="hk">${esc(k)}</span><span class="hv">${esc(v)}</span></div>`,
-        )
-        .join("");
-    const exchange = e
-      ? `
-    <h3 class="childcap">On the wire</h3>
-    <div class="wirecols">
-      <div><h3>Request</h3>
-        <pre class="wire req">${esc(e.m)} ${esc(e.p)}</pre>
-        <div class="hdrs">${hdr(e.rh)}</div>
-        ${e.rb ? `<pre class="wire">${esc(e.rb)}${e.rbz > 700 ? `\n… ${e.rbz.toLocaleString()} bytes total` : ""}</pre>` : '<p class="empty" style="padding:6px 0">no body</p>'}
-      </div>
-      <div><h3>Response</h3>
-        <pre class="wire res">HTTP ${e.s}</pre>
-        <div class="hdrs">${hdr(e.sh)}</div>
-        ${e.sb ? `<pre class="wire">${esc(e.sb)}${e.tr ? `\n… ${e.sbz.toLocaleString()} bytes total` : ""}</pre>` : '<p class="empty" style="padding:6px 0">no body</p>'}
-      </div>
-    </div>`
-      : "";
-    const load = document.getElementById("leafload");
-    const tests = sn?.tst?.length
-      ? `
-    <h3 class="childcap">Contract test</h3>
-    <div class="wiring">${sn.tst.map(block).join("")}</div>`
-      : "";
-    if (load) load.outerHTML = handler + wiring + tests + exchange;
+  /**
+   * The wire columns read each target's captured exchange, which is fetched rather than
+   * embedded, so they are fetched once one of those columns is on.
+   */
+  private fetchWire(run: Run): void {
+    if (!this.visibleCols().some((c) => c.wire)) return;
+    const keys = run.targets
+      .filter((t) => this.st.langs.has(t.language))
+      .map((t) => this.wireKey(t.language, t.target))
+      .filter((k): k is string => k !== null && !this.wireAsked.has(k));
+    if (!keys.length) return;
+    for (const k of keys) this.wireAsked.add(k);
+    void Promise.all(keys.map((k) => this.data.fetchWire(k))).then(this.render);
   }
 
   /* ---- the time axis ---- */
@@ -639,42 +473,12 @@ class Explorer {
       this.render();
     };
     el("tbody").onclick = (e): void => {
-      const key = (e.target as HTMLElement).closest<HTMLElement>("tr[data-key]")?.dataset["key"];
-      if (key) void this.openDetail(key);
-    };
-    el("tbody").onkeydown = (e): void => {
-      if (e.key !== "Enter" && e.key !== " ") return;
-      const key = (e.target as HTMLElement).closest<HTMLElement>("tr[data-key]")?.dataset["key"];
-      if (key) {
-        e.preventDefault();
-        void this.openDetail(key);
-      }
-    };
-    el("dlgclose").onclick = (): void => el<HTMLDialogElement>("dlg").close();
-    /* Drilling happens inside the dialog, so one delegated handler covers both directions. */
-    el("dlgbody").onclick = (e): void => {
-      const at = this.dlgAt;
-      if (!at) return;
-      const down = (e.target as HTMLElement).closest<HTMLElement>("tr[data-down]");
-      if (down) {
-        const id = down.dataset["id"] ?? "";
-        if (down.dataset["down"] === "family") at.family = id;
-        else at.endpoint = id;
-        void this.paintDetail();
-        el("dlgbody").scrollTop = 0;
-        return;
-      }
-      const up = (e.target as HTMLElement).closest<HTMLElement>("button[data-up]");
-      if (up) {
-        if (up.dataset["up"] === "blend") {
-          at.family = null;
-          at.endpoint = null;
-        } else at.endpoint = null;
-        void this.paintDetail();
-      }
-    };
-    el("dlg").onclick = (e): void => {
-      if ((e.target as HTMLElement).id === "dlg") el<HTMLDialogElement>("dlg").close();
+      // The name is a link and the browser handles a click on it, modifier keys included.
+      if ((e.target as HTMLElement).closest("a")) return;
+      const href = (e.target as HTMLElement).closest<HTMLElement>("tr[data-href]")?.dataset["href"];
+      if (!href) return;
+      if (e.metaKey || e.ctrlKey) open(href, "_blank");
+      else location.assign(href);
     };
     el("reset").onclick = (): void => {
       this.st.langs = new Set(this.langs);

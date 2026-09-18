@@ -1,8 +1,7 @@
-// The two fragments both kinds of page draw: the delta cell, and the chain it belongs to.
+// The delta cell, which both kinds of page draw, and the chain it belongs to.
 //
-// Each used to be drawn twice, once for a framework page and once for the dialog, and kept in
-// step by hand. They are strings rather than components because the browser half writes them
-// into innerHTML, and a component that only ever produced a string would be a wrapper.
+// They are strings rather than components because the explorer writes the cell into
+// innerHTML, and a component that only ever produced a string would be a wrapper.
 import type { Chain, Step } from "./delta.js";
 import { floorFor } from "./delta.js";
 import { esc } from "./html.js";

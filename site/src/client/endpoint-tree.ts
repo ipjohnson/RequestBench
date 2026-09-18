@@ -1,15 +1,16 @@
 // The endpoint tree on a framework page, and the two ways of reading it.
 //
 // The panes are all in the page; the tree only chooses which one is shown. The hash carries
-// the choice, so a link to one endpoint opens on it.
+// the choice, an endpoint id or a family name, so a link to either opens on it.
 //
 // Info and Distribution are two views of the same list. The grid's rows carry the same
 // endpoint ids the tree does, so picking one there opens its pane here rather than being a
 // separate selection the reader has to reconcile.
 export function startTree(): void {
-  const links = [...document.querySelectorAll<HTMLElement>(".eplink, .distrow")];
+  const links = [...document.querySelectorAll<HTMLElement>(".eplink, .distrow, .famep, .epfamname[data-fam]")];
   const panes = [...document.querySelectorAll<HTMLElement>(".eppane")];
   if (!links.length) return;
+  const idOf = (e: HTMLElement): string => e.dataset["ep"] ?? e.dataset["fam"] ?? "";
 
   const tabs = [...document.querySelectorAll<HTMLButtonElement>(".eptabs [role=tab]")];
   const view = (id: string): HTMLElement | null =>
@@ -58,22 +59,28 @@ export function startTree(): void {
     for (const e of atRate) e.hidden = e.dataset["rung"] !== rn;
   };
   for (const b of rateBtns) b.addEventListener("click", () => setRate(b.dataset["rung"] ?? ""));
+  // Opened from a row, the page starts on the rate the row was read at. A rung is an index into
+  // one run's ladder, so it names this page's rate only when the row was on this page's host.
+  const from = new URLSearchParams(location.search);
+  const rung = from.get("rung");
+  const host = document.querySelector<HTMLElement>(".eprates")?.dataset["host"];
+  if (rung && from.get("host") === host && rateBtns.some((b) => b.dataset["rung"] === rung)) setRate(rung);
 
   const show = (id: string): boolean => {
     let hit = false;
     for (const p of panes) {
-      const on = p.dataset["ep"] === id;
+      const on = idOf(p) === id;
       p.hidden = !on;
       hit ||= on;
     }
-    for (const a of links) a.setAttribute("aria-current", String(a.dataset["ep"] === id));
+    for (const a of links) a.setAttribute("aria-current", String(idOf(a) === id));
     return hit;
   };
 
   for (const a of links) {
     a.addEventListener("click", (ev) => {
       ev.preventDefault();
-      const id = a.dataset["ep"] ?? "";
+      const id = idOf(a);
       history.replaceState(null, "", `#${encodeURIComponent(id)}`);
       show(id);
       // Picking a row in the grid is a request to read that endpoint, so it lands on the
@@ -83,6 +90,6 @@ export function startTree(): void {
   }
 
   const wanted = decodeURIComponent(location.hash.slice(1));
-  if (!wanted || !show(wanted)) show(links[0]?.dataset["ep"] ?? "");
+  if (!wanted || !show(wanted)) show(document.querySelector<HTMLElement>(".eplink")?.dataset["ep"] ?? "");
   addEventListener("hashchange", () => show(decodeURIComponent(location.hash.slice(1))));
 }
