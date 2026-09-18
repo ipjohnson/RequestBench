@@ -62,7 +62,8 @@ const built = new Date().toISOString().slice(0, 16).replace("T", " ") + " UTC";
     <div class="ctl"><label>Languages</label><div class="chips" id="chips"></div></div>
     <div class="ctl">
       <label for="q" id="qlabel">Filter</label>
-      <input type="search" id="q" placeholder="endpoint or framework" />
+      <input type="search" id="q" list="qopts" autocomplete="off" placeholder="endpoint or framework" />
+      <datalist id="qopts"></datalist>
     </div>
     <div class="ctl"><label>Columns</label><div class="chips" id="colchips"></div></div>
     <div class="spacer"></div>

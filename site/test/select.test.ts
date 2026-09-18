@@ -2,7 +2,9 @@
 // the renderer this replaces could only be checked by opening the page and clicking.
 import { describe, expect, test } from "vitest";
 import {
+  choicesAt,
   famsAt,
+  filterFor,
   isSerial,
   pickRung,
   rateLabel,
@@ -131,6 +133,64 @@ describe("rows", () => {
     s.rung = "2";
     const { rows: rs } = rows({ run, st: s, routes, wireOf: () => undefined });
     expect(rs.find((r) => r.label === "chi")?.dead).toBe(true);
+  });
+});
+
+describe("the filter at family and endpoint granularity", () => {
+  const two: Run = {
+    ...run,
+    endpoint_order: ["baseline.plaintext", "json.small", "json.medium"],
+    targets: [
+      {
+        ...chi,
+        endpoints: {
+          "baseline.plaintext": { family: "baseline", rungs: { "1": { p50_us: 150, count: 10 } } },
+          ...chi.endpoints,
+        },
+      },
+      fastify,
+    ],
+  };
+
+  test("offers the run's families or its endpoint ids, in run order", () => {
+    expect(choicesAt(two, "family", "1")).toEqual(["baseline", "json"]);
+    expect(choicesAt(two, "endpoint", "1")).toEqual(["baseline.plaintext", "json.small", "json.medium"]);
+    expect(choicesAt(two, "blend", "1")).toEqual([]);
+  });
+
+  test("a run with no endpoint order offers the families its targets carry at the rate", () => {
+    const old: Run = { ...run, endpoint_order: [] };
+    expect(choicesAt(old, "family", "1")).toEqual(["json"]);
+    expect(choicesAt(old, "endpoint", "1")).toEqual([]);
+  });
+
+  test("opens on the run's first family or endpoint when the filter names nothing", () => {
+    expect(filterFor(two, "family", "1", "")).toBe("baseline");
+    expect(filterFor(two, "endpoint", "1", "")).toBe("baseline.plaintext");
+    expect(filterFor(two, "endpoint", "1", "no-such-thing")).toBe("baseline.plaintext");
+  });
+
+  test("carries an endpoint to its family and a family to its first endpoint", () => {
+    expect(filterFor(two, "family", "1", "json.medium")).toBe("json");
+    expect(filterFor(two, "endpoint", "1", "json")).toBe("json.small");
+  });
+
+  test("keeps a filter that still matches, which is how a framework stays filtered", () => {
+    expect(filterFor(two, "endpoint", "1", "chi")).toBe("chi");
+    expect(filterFor(two, "family", "1", "chi")).toBe("chi");
+    expect(filterFor(two, "endpoint", "1", "medium")).toBe("medium");
+  });
+
+  test("leaves the blend's filter alone", () => {
+    expect(filterFor(two, "blend", "1", "")).toBe("");
+  });
+
+  test("a name from the list selects that endpoint alone", () => {
+    const s = st();
+    s.gran = "endpoint";
+    s.q = filterFor(two, "endpoint", "1", "json");
+    const { rows: rs } = rows({ run: two, st: s, routes, wireOf: () => undefined });
+    expect(rs.map((r) => r.detail)).toEqual(["json.small"]);
   });
 });
 
