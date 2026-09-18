@@ -307,8 +307,9 @@ fire((rnd() * eps.length) | 0, dueNs);</pre>
 <table>
 <thead><tr><th>Phase</th><th class="n">Duration</th><th>Note</th></tr></thead>
 <tbody>
-<tr><td class="m">boot + conformance</td><td class="n">~60 s</td><td>Longer for a JVM target. The 45-endpoint fingerprint pass is unchanged.</td></tr>
-<tr><td class="m">warmup</td><td class="n">90 s</td><td>Once per target, at the regular rate. JIT class sets the floor and everything shares it.</td></tr>
+<tr><td class="m">boot + conformance</td><td class="n">~60 s</td><td>On a boot of its own, stopped once it passes. Longer for a JVM target. The 45-endpoint fingerprint pass is unchanged.</td></tr>
+<tr><td class="m">measured boot</td><td class="n">seconds</td><td>The same image started again and timed, from <code>docker run</code> to the first 200 on <code>/health</code>. A JVM target is the slow end.</td></tr>
+<tr><td class="m">warmup</td><td class="n">90 s</td><td>Once per target, at the regular rate. JIT class sets the floor and everything shares it. Recorded as the ramp.</td></tr>
 <tr><td class="m">regular rate</td><td class="n">240 s</td><td>Recorded.</td></tr>
 <tr><td class="m">settle</td><td class="n">15 s</td><td>Discarded. The connection pool and GC adjust to the new rate; the first seconds would measure that.</td></tr>
 <tr><td class="m">raised rate</td><td class="n">240 s</td><td>Recorded, or aborted early on drops.</td></tr>
@@ -316,6 +317,8 @@ fire((rnd() * eps.length) | 0, dueNs);</pre>
 </tbody>
 </table>
 </div>
+
+<p>The measured boot and the warmup are published. The boot is timed by two clocks. The target reports <code>boot_ms</code> on <code>/__meta</code>, from the start of its process to listening. The harness times <code>docker run</code> and then the wait for the first 200, and keeps both halves and their sum. It also times the probe that got that 200, which is the first request the target served. Some runtimes do real work on their first request, and this is where it shows. The warmup is kept as a ramp: the first request, sent alone, then the latency distribution of each slice of the schedule, one second wide for the first ten seconds and ten seconds wide after. Conformance has a boot of its own, because on the measured boot it would spend the first request before anything recorded it. That earlier boot also leaves the image in the page cache, so what is published is a warm-page-cache cold start. That models a scale-out onto a node that already has the image, not a first deploy. Only a container run's boot is published, because <code>--mode local</code> compiles Go and Rust on first launch. Each target row carries its position in the run, because a target late in the order boots on a machine that has been under load for an hour.</p>
 
 <p>About eleven minutes a target. Nineteen implemented targets is three and a half hours. The full forty-three is close to eight, which is one host for one night.</p>
 
