@@ -282,6 +282,18 @@ jobs:
       - name: Every Go target's own suite passes
         run: make suites LANGUAGES=go
 
+  suites-rust:
+    name: rust target suites pass
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with: { workspaces: targets/rust }
+      # Each target's suite is a #[cfg(test)] module in its own binary.
+      - name: Every Rust target's own suite passes
+        run: make suites LANGUAGES=rust
+
   rust:
     name: rust targets conform
     runs-on: ubuntu-latest

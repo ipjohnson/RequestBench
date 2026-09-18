@@ -1,6 +1,6 @@
 comma := ,
 
-.PHONY: fixture plan spec expected test suites suites-dotnet suites-python suites-node suites-java suites-go machine bundle snippets build client site site-dev java rust dotnet python python-lock lint validate conform expect exemplars run vars report clean help
+.PHONY: fixture plan spec expected test suites suites-dotnet suites-python suites-node suites-java suites-go suites-rust machine bundle snippets build client site site-dev java rust dotnet python python-lock lint validate conform expect exemplars run vars report clean help
 # Everything is on by default: no TARGETS means every implemented target this host
 # supports. The rest narrow it. LANGUAGES/FRAMEWORKS pick what runs, FAMILIES/ENDPOINTS
 # pick what it is asked for, and a narrowed endpoint set is recorded as its own profile
@@ -99,7 +99,7 @@ test: client ## boot every target and check every endpoint against spec/expected
 # suite that is wrong. These run no load and are never part of a measurement.
 # One language's suites at a time, so a machine with one toolchain can still run its own.
 # Every half runs whatever the one before it did, so a failure never hides another result.
-SUITE_LANGUAGES = $(if $(LANGUAGES),$(subst $(comma), ,$(LANGUAGES)),dotnet python node java go)
+SUITE_LANGUAGES = $(if $(LANGUAGES),$(subst $(comma), ,$(LANGUAGES)),dotnet python node java go rust)
 # The interpreter harness/run.py would use: the virtualenv `make python` creates, or the one
 # on the path, which is how CI runs it after installing the lock into it.
 PYTHON ?= $(if $(wildcard targets/python/.venv/bin/python),$(CURDIR)/targets/python/.venv/bin/python,python3)
@@ -163,6 +163,16 @@ GO_TEST = $(if $(shell command -v go),go,docker run --rm -v $(CURDIR):/repo -v r
 
 suites-go:
 	@cd targets/go && $(GO_TEST) test -count=1 ./gin ./echo ./chi ./gorilla-mux ./fiber
+
+# A Rust suite is a #[cfg(test)] module in the binary it tests, so one `cargo test` over the
+# workspace runs all six. Without a local Cargo it runs in the image targets/rust/Dockerfile
+# builds with, and the registry and the build directory are kept in volumes between runs.
+CARGO = $(if $(shell command -v cargo),cargo,docker run --rm -v $(CURDIR):/repo \
+          -v rb-cargo:/usr/local/cargo/registry -v rb-rust-target:/repo/targets/rust/target \
+          -w /repo/targets/rust rust:1.98-slim cargo)
+
+suites-rust:
+	@cd targets/rust && $(CARGO) test --locked --no-fail-fast --bins
 
 expected: ## re-derive spec/expected.json from the targets named in EXPECT_FROM
 	python3 harness/expected.py --targets $(EXPECT_FROM) --mode $(MODE) --write

@@ -141,8 +141,8 @@ footer { margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--rule);
 <dl class="meta">
   <div><dt>Date</dt><dd>17 September 2026</dd></div>
   <div><dt>Adds</dt><dd>a suite beside each target, at role <code>test</code>; <code>rb:test</code> becomes a required kind</dd></div>
-  <div><dt>Built</dt><dd>27 of 33 targets in five languages, every family, 1,296 tests</dd></div>
-  <div><dt>Status</dt><dd>&sect;1 to &sect;5 ship. The client projects of &sect;6 are not started, and the other five languages are not either.</dd></div>
+  <div><dt>Built</dt><dd>All 33 targets in six languages, every family, 1,584 tests</dd></div>
+  <div><dt>Status</dt><dd>&sect;1 to &sect;5 ship. The client projects of &sect;6 are not started.</dd></div>
 </dl>
 
 <section>
@@ -324,11 +324,34 @@ footer { margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--rule);
 
 <section>
 <div class="sectionhead">
+  <span class="num">&sect;4e &middot; Six Rust targets, one test module each</span>
+  <h2>What the sixth language found</h2>
+  <p>Rust decides where a unit test goes: a <code>#[cfg(test)]</code> module in the crate it tests. An integration test in <code>tests/</code> can only reach a library&rsquo;s public API, and every Rust target is a binary with no library, so each suite is a test module of the binary. It lives in <code>src/suite/</code>, which the <code>/suite/</code> rule in <code>harness/bundle.py</code> already gives the role <code>test</code>.</p>
+</div>
+<div class="scroll"><table>
+<thead><tr><th>Target</th><th>Facility</th><th>What it cost</th></tr></thead>
+<tbody>
+<tr><td class="m">axum</td><td class="w">tower, oneshot</td><td>What axum&rsquo;s testing example does. The <code>Router</code> is a tower <code>Service</code>, and <code>ServiceExt::oneshot</code> hands it one request. axum is built on tower, so nothing new is declared for it. It gzips <code>compressed.gzip_small</code>&rsquo;s 125 bytes into 125, which the unpinned block in <code>spec/expected.json</code> already recorded.</td></tr>
+<tr><td class="m">actix-web</td><td class="w">test::init_service</td><td>What actix-web&rsquo;s testing documentation does. <code>init_service</code> builds the <code>App</code> in the process and <code>call_service</code> hands it a request, under actix&rsquo;s own <code>#[actix_web::test]</code>. The routes moved into a <code>config()</code> that both the server&rsquo;s <code>App</code> and the test&rsquo;s are built with, through <code>App::configure</code>. It answers its 304 with <code>content-type: application/json</code>.</td></tr>
+<tr><td class="m">rocket</td><td class="w">local::blocking::Client</td><td>The client Rocket&rsquo;s testing guide uses in its examples. It dispatches to the application with no socket, and it is synchronous, so these are the only Rust tests that are plain <code>#[test]</code>s. Rocket has no compression of its own. The target gzips anything over 32 bytes by hand, so the small payload is gzipped too.</td></tr>
+<tr><td class="m">poem</td><td class="w">poem::test::TestClient</td><td>Behind poem&rsquo;s <code>test</code> feature, so the target declares poem a second time under <code>[dev-dependencies]</code> with the feature on. Its <code>Compression</code> middleware sends no <code>Vary</code> with a gzip body.</td></tr>
+<tr><td class="m">salvo</td><td class="w">salvo::test::TestClient</td><td>Behind salvo&rsquo;s <code>test</code> feature, declared the way poem&rsquo;s is. Salvo&rsquo;s testing documentation reads a response with <code>take_string</code>, which decodes gzip, so the floor would be handed a body the target never sent. The suite reads it with <code>take_bytes</code>. Its <code>Compression</code> handler sends no <code>Vary</code>, it answers its 304 with <code>content-type: application/json; charset=utf-8</code>, and it gzips the small payload into 131 bytes, six more than it started with.</td></tr>
+<tr><td class="m">warp</td><td class="w">warp::test::request()</td><td>What warp&rsquo;s documentation tests a filter with: a request run through the filter in the process, and the <code>http::Response</code> it produced. <code>warp::compression::gzip()</code> sends no <code>Vary</code> either.</td></tr>
+</tbody>
+</table></div>
+<h3>What Rust asked of the targets</h3>
+<p>All six built their application inline in <code>main()</code>, the way the Go targets and Vert.x did. Each now has a function that builds it and that <code>main()</code> serves: <code>app()</code> on axum and poem, <code>config()</code> on actix-web, <code>rocket()</code> on Rocket, <code>service()</code> on salvo and <code>routes()</code> on warp. The marks moved with the code they label, the snippet counts are identical before and after, and all six answer <code>spec/expected.json</code> 48/48 from their images.</p>
+<p>The standard library has no gzip decoder, so every suite declares <code>flate2</code> under <code>[dev-dependencies]</code>, which is Cargo&rsquo;s test scope. The workspace already pinned it, because the shared domain gzips with it. The workspace resolver is <code>"3"</code>, which keeps a dev-dependency&rsquo;s features out of the release build, so poem&rsquo;s and salvo&rsquo;s <code>test</code> features never reach the measured binary. <code>test_dependency()</code> now reads <code>[dev-dependencies]</code>, and a facility declaration names a feature as <code>poem/test</code>. A release build never looks for a module behind <code>#[cfg(test)]</code>, so <code>.dockerignore</code> keeps <code>src/suite/</code> out of the image the way it keeps Java&rsquo;s <code>src/test/</code> out.</p>
+<p><code>transport</code> is <code>in-memory</code> for all six, like .NET and Go. Rust is the one language where every target gzips a payload under the shared floor, and five of the six end at 125 bytes, no smaller than they started. poem, salvo and warp send a gzip body with no <code>Vary: Accept-Encoding</code>, and they are the only three of the 33 targets that do, because none of the three compressors sets it. Their <code>compressed.gzip_large</code> tests say so and do not hold them to it, because <code>spec/expected.json</code> does not pin <code>Vary</code>. An error endpoint&rsquo;s page carries 344 lines of helpers on warp and 361 on salvo. Breaking the shared payload fails 17 tests in each of the six suites. The Rust suites were built and run in the <code>rust:1.98-slim</code> image, which is what <code>make suites</code> falls back to when there is no <code>cargo</code> on the path. All six run in one <code>cargo test</code> in 5 seconds once the build is cached.</p>
+</section>
+
+<section>
+<div class="sectionhead">
   <span class="num">&sect;5 &middot; The marks change</span>
   <h2>A required kind that cannot use <code>required: "every"</code></h2>
   <p>Two of the three planned assertions did not survive contact with the corpus. What replaced them is below.</p>
 </div>
-<p><code>harness/snippets.py</code> drops every record that lacks a kind marked <code>every</code>, so setting it on <code>test</code> would empty the snippet map for all forty-eight endpoints on all thirty-three targets and the site would render nothing at all. <code>required: "ratchet"</code> is the third value: absence is counted against the committed allowance, which only ever goes down, and the filter stays keyed to <code>handler</code> alone. The allowance today is 276 endpoints with no test out of 1,584, and 1,308 held by one. Every target outside Rust is off it; six remain.</p>
+<p><code>harness/snippets.py</code> drops every record that lacks a kind marked <code>every</code>, so setting it on <code>test</code> would empty the snippet map for all forty-eight endpoints on all thirty-three targets and the site would render nothing at all. <code>required: "ratchet"</code> is the third value: absence is counted against the committed allowance, which only ever goes down, and the filter stays keyed to <code>handler</code> alone. The allowance is empty now. All 1,584 are held by a test, and a target that drops one fails the check.</p>
 <h3><code>reads_expectation</code></h3>
 <p>A test snippet has to name the endpoint it is marked for, which is the key <code>spec/expected.json</code> is read by. This is what stops 1,584 hand-written assertions drifting away from the file that decides what a correct answer is, and it catches the second thing <code>mentions_dep</code> catches: a mark that drifted onto neighbouring lines stops naming its endpoint, and a drifted mark is otherwise indistinguishable from a correct one.</p>
 <h3><code>asserts_status</code>, which is not here</h3>
@@ -347,7 +370,6 @@ footer { margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--rule);
   <h2>The order the rest goes in</h2>
 </div>
 <ol class="steps">
-  <li><h3>Rust</h3><p>Six targets. Its toolchain is not on the machine the rest were written on; the Java and Go suites were built and run inside the images their Dockerfiles build with, and the same will do for Rust.</p></li>
   <li><h3>The client projects</h3><p>Not started. The framework-shaped question is whether a framework describes its own routes well enough that a client can be generated from the description rather than written, and it needs the OpenAPI question settled per target first.</p>
   <p>One thing is already known and is why <code>SUITE</code> in <code>harness/bundle.py</code> catches <code>/client/</code> before the name rules. A file called <code>openapi.json</code> is role <code>contract</code>, which <code>handler</code> reads and which is <code>cardinality: one</code>. A document written out of a target&rsquo;s routes therefore registers every one of them a second time, and dropping one into a target that also routes in code turns all forty-eight of its endpoints into the &sect;7 ambiguity error. <code>openapi.yaml</code> does not trip it only because <code>route_regex</code> wants a quote on both sides of the path and a YAML key has none, which is luck and not a design.</p></li>
 </ol>

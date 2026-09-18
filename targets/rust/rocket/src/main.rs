@@ -625,9 +625,19 @@ fn catch_400() -> Custom<Json<Value>> {
     )
 }
 
+#[cfg(test)]
+mod suite;
+
 #[rocket::main]
 async fn main() -> Result<(), rocket::Error> {
     let port = rb_host::boot("rocket");
+    rocket(port).launch().await.map(|_| ())
+}
+
+/// Every route, on a Rocket nothing is serving yet. Its own function so a test can hand it
+/// requests: built inline in main(), the only way to reach it was to start this target on
+/// its container port. main() serves what it returns.
+fn rocket(port: u16) -> rocket::Rocket<rocket::Build> {
     // rocket_dyn_templates resolves template_dir against the working directory, which under
     // MODE=local is the repo root rather than this crate. The compile-time default points at
     // the crate's own templates; the container sets ROCKET_TEMPLATE_DIR to where the image
@@ -663,7 +673,4 @@ async fn main() -> Result<(), rocket::Error> {
         // rb:wiring template.*
         .attach(Template::fairing())
         .register("/", catchers![catch_404, catch_403, catch_422, catch_400])
-        .launch()
-        .await
-        .map(|_| ())
 }

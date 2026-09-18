@@ -391,11 +391,22 @@ fn items_html(size: &'static str) -> String {
 
 // ---- main ---------------------------------------------------------------------
 
+#[cfg(test)]
+mod suite;
+
 #[tokio::main]
 async fn main() {
     let port = rb_host::boot("axum");
 
-    let app = Router::new()
+    let listener = tokio::net::TcpListener::bind(("0.0.0.0", port)).await.expect("bind");
+    axum::serve(listener, app()).await.expect("serve");
+}
+
+/// Every route, on a router nothing is serving yet. Its own function so a test can hand it
+/// requests: built inline in main(), the only way to reach it was to start this target on
+/// its container port. main() serves what it returns.
+fn app() -> Router {
+    Router::new()
         .route("/plaintext", get(plaintext))
         .route("/health", get(health))
         .route("/__meta", get(meta))
@@ -449,10 +460,7 @@ async fn main() {
         .route("/domain/customers/{cid}", patch(patch_customer))
         .route("/domain/orders/{oid}/lines/{lid}", delete(delete_line))
         // rb:handler errors.unmatched
-        .fallback(not_found);
-
-    let listener = tokio::net::TcpListener::bind(("0.0.0.0", port)).await.expect("bind");
-    axum::serve(listener, app).await.expect("serve");
+        .fallback(not_found)
 }
 
 // rb:wiring body.*

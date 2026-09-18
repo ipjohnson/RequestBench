@@ -262,10 +262,20 @@ fn items_html(size: &'static str) -> String {
     Items { body: d::payload(size) }.render().unwrap_or_default()
 }
 
+#[cfg(test)]
+mod suite;
+
 #[tokio::main]
 async fn main() {
     let port = rb_host::boot("warp");
+    warp::serve(routes()).run(([0, 0, 0, 0], port)).await;
+}
 
+/// Every route, on a filter nothing is serving yet. Its own function so a test can hand it
+/// requests: built inline in main(), the only way to reach it was to start this target on
+/// its container port. main() serves what it returns.
+fn routes() -> impl warp::Filter<Extract = (impl warp::Reply,), Error = std::convert::Infallible>
+       + Clone + Send + Sync + 'static {
     // rb:wiring parameters.*,query.*,headers.*,middleware.*,authorized.*
     let small = || json(d::payload("small"));
 
@@ -628,6 +638,5 @@ async fn main() {
             )
             .into_response())
         });
-
-    warp::serve(routes).run(([0, 0, 0, 0], port)).await;
+    routes
 }

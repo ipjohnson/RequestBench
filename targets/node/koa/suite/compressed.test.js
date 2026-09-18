@@ -56,8 +56,8 @@ describe("compressed", () => {
 
     floor.check(a, answer);
     assert.equal(answer.encoding, "gzip");
-    // Nothing in ASP.NET Core adds Vary for a response compressed by hand, so a target
-    // that forgot it would pass the floor and be wrong in front of any shared cache.
+    // A target that gzips without Vary: Accept-Encoding passes the floor and is wrong in
+    // front of any shared cache.
     assert.match(answer.headers.vary ?? "", /accept-encoding/i);
   });
 });

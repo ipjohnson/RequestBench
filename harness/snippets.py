@@ -52,7 +52,7 @@ produce the wiring it named, and the dependency it declares has to be in that ta
 manifest and be mentioned by the parts claiming it. A family with nothing to show says so
 in a sentence, because a page that renders a blank section reads as missing data.
 """
-import argparse, functools, json, pathlib, re, sys
+import argparse, functools, json, pathlib, re, sys, tomllib
 
 import bundle
 
@@ -858,16 +858,30 @@ def test_dependency(language, target, dep, at=None):
     its own: it is src/test in the module, and <scope>test</scope> in the module's pom is what
     keeps a dependency out of the jar, so a test-scoped declaration there counts and a
     compile-scoped one does not.
+
+    A Cargo crate's suite is a test module in the crate, and [dev-dependencies] is Cargo's test
+    scope. A dependency the binary already has can be declared there again with more features,
+    which is how a framework that keeps its test client behind a feature is reached, so
+    `crate/feature` names one of those and counts only if that declaration turns the feature on.
     """
     if dep in suite_text(language, target, at):
         return True
     for entry in bundle.manifest(language, target, at)["files"]:
-        if entry["role"] != "manifest" or not entry["path"].endswith("/pom.xml"):
+        if entry["role"] != "manifest":
             continue
-        pom = bundle.blob(entry["path"], at).decode("utf-8")
-        for block in re.findall(r"<dependency>(.*?)</dependency>", pom, re.S):
-            if (re.search(r"<artifactId>%s</artifactId>" % re.escape(dep), block)
-                    and re.search(r"<scope>test</scope>", block)):
+        if entry["path"].endswith("/pom.xml"):
+            pom = bundle.blob(entry["path"], at).decode("utf-8")
+            for block in re.findall(r"<dependency>(.*?)</dependency>", pom, re.S):
+                if (re.search(r"<artifactId>%s</artifactId>" % re.escape(dep), block)
+                        and re.search(r"<scope>test</scope>", block)):
+                    return True
+        elif entry["path"].endswith("/Cargo.toml"):
+            dev = tomllib.loads(bundle.blob(entry["path"], at).decode("utf-8")).get(
+                "dev-dependencies", {})
+            name, _, feature = dep.partition("/")
+            declared = dev.get(name)
+            features = declared.get("features", []) if isinstance(declared, dict) else []
+            if declared is not None and (not feature or feature in features):
                 return True
     return False
 

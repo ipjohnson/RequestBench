@@ -64,8 +64,8 @@ func TestAPayloadOverTheFloorIsGzippedAndSaysWhatItVariesOn(t *testing.T) {
 	if got.Encoding != "gzip" {
 		t.Fatalf("content-encoding %q", got.Encoding)
 	}
-	// Nothing in ASP.NET Core adds Vary for a response compressed by hand, so a target
-	// that forgot it would pass the floor and be wrong in front of any shared cache.
+	// A target that gzips without Vary: Accept-Encoding passes the floor and is wrong in
+	// front of any shared cache.
 	if !strings.Contains(strings.ToLower(got.Headers.Get("Vary")), "accept-encoding") {
 		t.Fatalf("vary %q", got.Headers.Get("Vary"))
 	}

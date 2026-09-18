@@ -242,9 +242,19 @@ fn items_html(size: &'static str) -> String {
     Items { body: d::payload(size) }.render().unwrap_or_default()
 }
 
+#[cfg(test)]
+mod suite;
+
 #[tokio::main]
 async fn main() -> Result<(), std::io::Error> {
     let port = rb_host::boot("poem");
+    Server::new(TcpListener::bind(("0.0.0.0", port))).run(app()).await
+}
+
+/// Every route, on an endpoint nothing is serving yet. Its own function so a test can hand it
+/// requests: built inline in main(), the only way to reach it was to start this target on
+/// its container port. main() serves what it returns.
+fn app() -> impl Endpoint {
 
     // rb:wiring parameters.*,headers.*,middleware.*,authorized.*
     let small = || get(make(|_| async { Json(d::payload("small")) }));
@@ -420,8 +430,7 @@ async fn main() -> Result<(), std::io::Error> {
         // well, which turned all three validation rejections into 404s.
         // rb:handler errors.unmatched
         .catch_error(|_: poem::error::NotFoundError| async { not_found().await });
-
-    Server::new(TcpListener::bind(("0.0.0.0", port))).run(app).await
+    app
 }
 
 #[poem::handler]

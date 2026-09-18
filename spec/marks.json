@@ -92,24 +92,5 @@
       "except": []
     }
   },
-  "allowance": {
-    "rust:actix-web": {
-      "no_test": 46
-    },
-    "rust:axum": {
-      "no_test": 46
-    },
-    "rust:poem": {
-      "no_test": 46
-    },
-    "rust:rocket": {
-      "no_test": 46
-    },
-    "rust:salvo": {
-      "no_test": 46
-    },
-    "rust:warp": {
-      "no_test": 46
-    }
-  }
+  "allowance": {}
 }

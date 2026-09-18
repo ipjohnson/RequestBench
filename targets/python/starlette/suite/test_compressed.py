@@ -56,6 +56,6 @@ def test_a_payload_over_the_floor_is_gzipped_and_says_what_it_varies_on(send):
 
     floor.check(a, answer)
     assert answer.encoding == "gzip"
-    # Nothing in ASP.NET Core adds Vary for a response compressed by hand, so a target
-    # that forgot it would pass the floor and be wrong in front of any shared cache.
+    # A target that gzips without Vary: Accept-Encoding passes the floor and is wrong in
+    # front of any shared cache.
     assert "accept-encoding" in answer.headers.get("vary", "").lower()

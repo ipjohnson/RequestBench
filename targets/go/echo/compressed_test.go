@@ -47,8 +47,8 @@ func TestAPayloadUnderTheSharedFloorIsGzippedAnyway(t *testing.T) {
 
 	assertFloor(t, a, got)
 	// spec/expected.json pins no encoding here: the small payload sits under the shared
-	// gzip floor and the frameworks disagree about what to do with it, and its unpinned
-	// block records Echo as one that compresses. It does: 125 bytes into 132, seven bytes more than it started with.
+	// gzip floor and the frameworks disagree about what to do with it. This target gzips it
+	// anyway, 125 bytes into 132, seven bytes more than it started with.
 	if got.Encoding != "gzip" {
 		t.Fatalf("content-encoding %q", got.Encoding)
 	}
@@ -64,8 +64,8 @@ func TestAPayloadOverTheFloorIsGzippedAndSaysWhatItVariesOn(t *testing.T) {
 	if got.Encoding != "gzip" {
 		t.Fatalf("content-encoding %q", got.Encoding)
 	}
-	// Nothing in ASP.NET Core adds Vary for a response compressed by hand, so a target
-	// that forgot it would pass the floor and be wrong in front of any shared cache.
+	// A target that gzips without Vary: Accept-Encoding passes the floor and is wrong in
+	// front of any shared cache.
 	if !strings.Contains(strings.ToLower(got.Headers.Get("Vary")), "accept-encoding") {
 		t.Fatalf("vary %q", got.Headers.Get("Vary"))
 	}

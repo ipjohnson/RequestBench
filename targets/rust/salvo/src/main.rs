@@ -495,9 +495,20 @@ fn items_html(size: &'static str) -> String {
     Items { body: d::payload(size) }.render().unwrap_or_default()
 }
 
+#[cfg(test)]
+mod suite;
+
 #[tokio::main]
 async fn main() {
     let port = rb_host::boot("salvo");
+    let acceptor = TcpListener::new(("0.0.0.0", port)).bind().await;
+    Server::new(acceptor).serve(service()).await;
+}
+
+/// Every route, on a Service nothing is serving yet. Its own function so a test can hand it
+/// requests: built inline in main(), the only way to reach it was to start this target on
+/// its container port. main() serves what it returns.
+fn service() -> Service {
 
     // rb:wiring compressed.*
     // Level pinned across every language; the default size threshold is left alone,
@@ -577,6 +588,5 @@ async fn main() {
 
     // rb:handler errors.unmatched
     let service = Service::new(router).catcher(Catcher::default().hoop(not_found));
-    let acceptor = TcpListener::new(("0.0.0.0", port)).bind().await;
-    Server::new(acceptor).serve(service).await;
+    service
 }
