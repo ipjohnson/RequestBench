@@ -49,15 +49,20 @@ SUITE_FOR_HOST = {"container": "blend", "gcp-func": "serial",
                   "lambda-rie": "serial", "azure-func": "serial"}
 ENCODING_FOR_HOST = {"lambda-rie": "lambda"}
 LAMBDA_INVOKE = "/2015-03-31/functions/function/invocations"
+# One vCPU, which Lambda gives a function at 1,769 MB. A serial invocation runs on one
+# thread either way, but a runtime's own threads, its JIT compiler and garbage collector,
+# would have a second core to themselves, and a Lambda function of that size has none.
+CPUS_FOR_HOST = {"lambda-rie": 1}
 # A Lambda host's events go through gen/runtime-api.mjs rather than RIE. It runs in a
 # container of its own that shares the function's network namespace, so the runtime polls
 # it on loopback as it polled RIE, and it runs on the generator's cores, not the function's.
 RUNTIME_API_IMAGE = "node:24-alpine"
 RUNTIME_API_PORT = 9001
 # The configuration Lambda hands a runtime in its environment, which RIE supplied before.
-# The Java bootstrap reads the memory size to set the heap. 3008 MB is what RIE reported.
+# The Java bootstrap reads the memory size to set the heap, so it has to be the size that
+# goes with CPUS_FOR_HOST.
 LAMBDA_ENV = {"AWS_LAMBDA_FUNCTION_NAME": "rb", "AWS_LAMBDA_FUNCTION_VERSION": "$LATEST",
-              "AWS_LAMBDA_FUNCTION_MEMORY_SIZE": "3008",
+              "AWS_LAMBDA_FUNCTION_MEMORY_SIZE": "1769",
               "AWS_LAMBDA_INITIALIZATION_TYPE": "on-demand",
               "AWS_LAMBDA_LOG_GROUP_NAME": "/aws/lambda/rb", "AWS_LAMBDA_LOG_STREAM_NAME": "rb",
               "AWS_REGION": "us-east-1", "AWS_DEFAULT_REGION": "us-east-1"}
@@ -245,6 +250,16 @@ def cpu_model():
     return platform.processor() or platform.machine()
 
 
+def cpu_ids(spec):
+    """The ids in a cpuset list such as "0-2,6", in order."""
+    ids = []
+    for part in spec.split(","):
+        lo, _, hi = part.strip().partition("-")
+        if lo:
+            ids += range(int(lo), int(hi or lo) + 1)
+    return ids
+
+
 class Container:
     """Run a target as a container with a pinned CPU budget. What measurement uses."""
     CPUS = os.environ.get("RB_CPUS", "2")
@@ -261,6 +276,25 @@ class Container:
         self.image = "rb/%s-%s%s" % (language, name, suffix)
         self.starts = 0
         self.lambda_api = ENCODING_FOR_HOST.get(self.host) == "lambda"
+
+    @classmethod
+    def budget(cls, host):
+        """The target's CPUs on this host, as a docker run flag and its value.
+
+        Keeping the target and the load generator off each other's cores is the difference
+        between measuring a framework and measuring contention. So where RB_SUT_CPUS names
+        cores the target is placed on them, narrowed to the host's width, with no --cpus
+        quota on top. The cpuset already caps the target at the width of the set, and a
+        quota is enforced per 100ms period: a burst that spends it is throttled until the
+        period rolls over, which lands in p99 as jitter belonging to the cgroup rather than
+        to the framework. On a shared machine with no cpuset there is nothing to place onto,
+        so the quota stays as the only budget there is.
+        """
+        width = CPUS_FOR_HOST.get(host)
+        if cls.CPUSET:
+            ids = cpu_ids(cls.CPUSET)
+            return "--cpuset-cpus", ",".join(str(i) for i in (ids[:width] if width else ids))
+        return "--cpus", str(width or cls.CPUS)
 
     def build(self):
         # Only a host that needs a different base image gets its own Dockerfile. Go serves
@@ -284,20 +318,7 @@ class Container:
         argv = ["docker", "run", "-d", "--rm", "--name", self.cname,
                 # Without this a target defaults to the container host whatever it was
                 # asked for, and the run records the wrong host against real numbers.
-                "-e", "RB_HOST=" + self.host]
-        if self.CPUSET:
-            # Keeping the target and the load generator off each other's cores is the
-            # difference between measuring a framework and measuring contention.
-            #
-            # Placement alone, with no --cpus quota on top of it. The cpuset already caps
-            # the target at the width of the set, and a quota is enforced per 100ms
-            # period: a burst that spends it is throttled until the period rolls over,
-            # which lands in p99 as jitter belonging to the cgroup rather than to the
-            # framework. On a shared machine with no cpuset there is nothing to place
-            # onto, so the quota stays as the only budget there is.
-            argv += ["--cpuset-cpus", self.CPUSET]
-        else:
-            argv += ["--cpus", self.CPUS]
+                "-e", "RB_HOST=" + self.host, *self.budget(self.host)]
         if self.lambda_api:
             # The Runtime API owns the namespace and the published port. The function
             # joins it, and its entrypoint starts the runtime rather than RIE because
@@ -841,7 +862,7 @@ def main():
 
     rows[0]["mode"] = a.mode
     if a.mode == "docker":
-        rows[0]["cpus"] = Container.CPUSET or Container.CPUS
+        rows[0]["cpus"] = Container.budget(host)[1]
     suite = a.suite if a.suite != "auto" else SUITE_FOR_HOST.get(host, "blend")
     encoding = ENCODING_FOR_HOST.get(host, "http")
     rows[0]["suite"] = SEQUENCE if suite == "serial" else BLEND
