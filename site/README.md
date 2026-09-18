@@ -21,6 +21,8 @@ output, two hydrated islands.
       source.ts       where results are read from
       select.ts       run to rows: pure, so the table is tested rather than looked at
       explorer.ts     the DOM half of the explorer
+      compare.ts      what a framework page is compared with: pure, like select.ts
+      endpoint-tree.ts  the DOM half of a framework page
     src/pages/        index.astro, and f/[slug].astro per target
     src/styles/       the palette and the two stylesheets
     tools/build.js    the CLI

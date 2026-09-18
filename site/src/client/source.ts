@@ -17,6 +17,7 @@
 import { Catalog } from "../lib/catalog.js";
 import type { Boot } from "../lib/page-data.js";
 import type { Run, WireDoc } from "../lib/types.js";
+import { fetchJson } from "./fetch-json.js";
 
 export type Source = { base: URL; remote: boolean };
 
@@ -46,19 +47,6 @@ export function resolveSource(doc: Document = document, loc: Location = location
     }
   }
   return { base: here, remote: false };
-}
-
-/**
- * Pages serves a .gz as application/gzip with no Content-Encoding, so the browser hands back
- * raw bytes and the stream has to be unwrapped here.
- */
-export async function fetchJson<T>(url: string | URL): Promise<T | null> {
-  const res = await fetch(url);
-  if (!res.ok) return null;
-  if (!String(url).endsWith(".gz")) return (await res.json()) as T;
-  if (!res.body) return null;
-  const stream = res.body.pipeThrough(new DecompressionStream("gzip"));
-  return (await new Response(stream).json()) as T;
 }
 
 /** Everything the explorer fetches, addressed against one base. */

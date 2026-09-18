@@ -1,4 +1,4 @@
-// The endpoint tree on a framework page, and the two ways of reading it.
+// The endpoint tree on a framework page, and the ways of reading it.
 //
 // The panes are all in the page; the tree only chooses which one is shown. The hash carries
 // the choice, an endpoint id or a family name, so a link to either opens on it.
@@ -6,12 +6,34 @@
 // Info and Distribution are two views of the same list. The grid's rows carry the same
 // endpoint ids the tree does, so picking one there opens its pane here rather than being a
 // separate selection the reader has to reconcile.
+//
+// The rate and the comparison are picked once for the whole panel, beside the tabs.
+import { esc } from "../lib/html.js";
+import { cell, type Unit } from "../lib/metrics.js";
+import type { Run, WireDoc } from "../lib/types.js";
+import { cmpCell, peerPop, unfinished } from "../lib/views.js";
+import {
+  addPick,
+  BASE,
+  dropPick,
+  endpointAt,
+  familyAt,
+  MAX,
+  readVs,
+  statOf,
+  targetOf,
+  writeVs,
+  type Pick,
+} from "./compare.js";
+import { fetchJson } from "./fetch-json.js";
+
 export function startTree(): void {
   const links = [...document.querySelectorAll<HTMLElement>(".eplink, .distrow, .famep, .epfamname[data-fam]")];
   const panes = [...document.querySelectorAll<HTMLElement>(".eppane")];
   if (!links.length) return;
   const idOf = (e: HTMLElement): string => e.dataset["ep"] ?? e.dataset["fam"] ?? "";
 
+  const bar = document.querySelector<HTMLElement>(".eptabs");
   const tabs = [...document.querySelectorAll<HTMLButtonElement>(".eptabs [role=tab]")];
   const view = (id: string): HTMLElement | null =>
     document.getElementById(tabs.find((t) => t.id === id)?.getAttribute("aria-controls") ?? "");
@@ -26,6 +48,8 @@ export function startTree(): void {
       const v = view(t.id);
       if (v) v.hidden = !on;
     }
+    // The comparison is drawn on the panes and not on the grid, so the grid's view hides it.
+    bar?.setAttribute("data-view", tab.getAttribute("aria-controls") ?? "");
     if (focus) tab.focus();
   };
 
@@ -69,21 +93,9 @@ export function startTree(): void {
   const host = document.querySelector<HTMLElement>(".eprates")?.dataset["host"];
   if (rung && from.get("host") === host && pickable.some((b) => b.dataset["rung"] === rung)) setRate(rung);
 
-  // The comparison with the base is a way of reading the page, like the rate, so opening it on
-  // one pane opens it on every pane and at every rate. It stays open while the reader walks
-  // the tree rather than closing on each endpoint.
-  const baseBtns = [...document.querySelectorAll<HTMLButtonElement>(".basetoggle")];
-  const baseCells = [...document.querySelectorAll<HTMLElement>(".fb")];
-  const setBase = (open: boolean): void => {
-    for (const b of baseBtns) b.setAttribute("aria-expanded", String(open));
-    for (const e of baseCells) e.hidden = !open;
-  };
-  for (const b of baseBtns)
-    b.addEventListener("click", () => setBase(b.getAttribute("aria-expanded") !== "true"));
-
-  // What a base number differs by, and why. One popup for the page, filled from the number's
-  // template and placed by script rather than by CSS, so it can shift to stay on screen from
-  // whichever column it opens.
+  // What a compared number differs by, and why. One popup for the page, filled from the
+  // number's template and placed by script rather than by CSS, so it can shift to stay on
+  // screen from whichever column it opens.
   const pop = document.createElement("div");
   pop.className = "basepop";
   pop.id = "basepop";
@@ -106,20 +118,35 @@ export function startTree(): void {
     pop.hidden = true;
     cell.removeAttribute("aria-describedby");
   };
-  for (const cell of baseCells.filter((c) => c.querySelector("template"))) {
-    // A mouse opens it by hovering. A key or a touch opens it by focusing the number, and a
-    // touch's pointer leaves as soon as the finger lifts, so only the mouse's leaving closes it.
-    cell.addEventListener("pointerenter", (ev) => {
-      if (ev.pointerType === "mouse") openPop(cell);
-    });
-    cell.addEventListener("pointerleave", (ev) => {
-      if (ev.pointerType === "mouse") closePop(cell);
-    });
-    cell.addEventListener("focus", () => openPop(cell));
-    cell.addEventListener("blur", () => closePop(cell));
-  }
+  // Listened for on the document rather than per number, because another framework's numbers
+  // are written after the page loads and replaced whenever the comparison changes. A mouse
+  // opens it by hovering. A key or a touch opens it by focusing the number, and a touch's
+  // pointer leaves as soon as the finger lifts, so only the mouse's leaving closes it.
+  const popCell = (t: EventTarget | null): HTMLElement | null =>
+    t instanceof Element ? t.closest<HTMLElement>(".fb[tabindex]") : null;
+  addEventListener("pointerover", (ev) => {
+    const cell = popCell(ev.target);
+    if (cell && ev.pointerType === "mouse") openPop(cell);
+  });
+  addEventListener("pointerout", (ev) => {
+    const cell = popCell(ev.target);
+    const into = ev.relatedTarget instanceof Node && cell?.contains(ev.relatedTarget);
+    if (cell && ev.pointerType === "mouse" && !into) closePop(cell);
+  });
+  addEventListener("focusin", (ev) => {
+    const cell = popCell(ev.target);
+    if (cell) openPop(cell);
+  });
+  addEventListener("focusout", (ev) => {
+    const cell = popCell(ev.target);
+    if (cell) closePop(cell);
+  });
   addEventListener("keydown", (ev) => {
     if (ev.key === "Escape") pop.hidden = true;
+  });
+
+  startCompare(() => {
+    pop.hidden = true;
   });
 
   const show = (id: string): boolean => {
@@ -148,4 +175,186 @@ export function startTree(): void {
   const wanted = decodeURIComponent(location.hash.slice(1));
   if (!wanted || !show(wanted)) show(document.querySelector<HTMLElement>(".eplink")?.dataset["ep"] ?? "");
   addEventListener("hashchange", () => show(decodeURIComponent(location.hash.slice(1))));
+}
+
+/**
+ * What the page's numbers are compared with. It is a way of reading the whole page, like the
+ * rate, so it is picked once beside the rate and every pane shows it at every rate. The
+ * reader keeps it while walking the tree, and the query keeps it for a link or a reload.
+ *
+ * The base's numbers are in the page and only shown. Another framework's are written under
+ * each number once the run's document has been read, one row per pick in the order picked.
+ */
+function startCompare(changed: () => void): void {
+  const ctl = document.querySelector<HTMLElement>(".cmp");
+  const add = ctl?.querySelector<HTMLSelectElement>(".cmpadd");
+  const chips = ctl?.querySelector<HTMLElement>(".cmpchips");
+  const status = ctl?.querySelector<HTMLElement>(".cmpstatus");
+  if (!ctl || !add || !chips || !status) return;
+
+  const opts = new Map([...add.options].filter((o) => o.value).map((o) => [o.value, o]));
+  const nameOf = (id: string): string => opts.get(id)?.dataset["name"] ?? id;
+  const panes = [...document.querySelectorAll<HTMLElement>(".eppane")];
+  let picks = readVs(location.search, new Set(opts.keys()));
+
+  // One read of the run however many frameworks are picked, and one of each framework's wire
+  // capture for its response sizes. A framework is drawn only once both have settled, so its
+  // row never appears with the sizes missing and then fills in.
+  let run: Run | null | undefined;
+  let runRead: Promise<void> | undefined;
+  const wire = new Map<string, WireDoc | null>();
+  const wireRead = new Map<string, Promise<void>>();
+  const readWire = async (id: string): Promise<void> => {
+    const at = opts.get(id)?.dataset["wire"];
+    wire.set(id, at ? await fetchJson<WireDoc>(new URL(at, location.href)).catch(() => null) : null);
+  };
+  const load = (ids: string[]): Promise<unknown> =>
+    Promise.all([
+      (runRead ??= fetchJson<Run>(new URL(ctl.dataset["run"] ?? "", location.href))
+        .catch(() => null)
+        .then((r) => {
+          run = r;
+        })),
+      ...ids.map((id) => {
+        let p = wireRead.get(id);
+        if (!p) wireRead.set(id, (p = readWire(id)));
+        return p;
+      }),
+    ]);
+
+  /** Another framework's number under one of this page's, or null until its data is read. */
+  const peerCell = (
+    id: string,
+    row: HTMLElement,
+    pane: HTMLElement,
+    rn: string,
+  ): HTMLElement | null => {
+    const t = run ? targetOf(run, id) : undefined;
+    if (!t || !wire.has(id)) return null;
+    const k = row.dataset["k"] ?? "";
+    const eid = pane.dataset["ep"];
+    const name = nameOf(id);
+    const unit: Unit = k.endsWith("_us") ? "us" : k === "sbz" ? "B" : "";
+    // The size is the wire capture's, which no rate changes.
+    const v =
+      k === "sbz"
+        ? (wire.get(id)?.endpoints[eid ?? ""]?.sbz ?? null)
+        : statOf(eid ? endpointAt(t, eid, rn) : familyAt(t, pane.dataset["fam"] ?? "", rn), k);
+    const own = row.dataset["v"] === undefined ? null : Number(row.dataset["v"]);
+    const level = unit === "us" ? (row.querySelector(".fk")?.textContent ?? "") : "";
+    const pop = unit && own !== null && v !== null ? peerPop(own, v, unit, name, level) : null;
+    const why =
+      v !== null ? undefined
+      : k === "sbz" ? `No captured exchange for ${name}.`
+      : (unfinished(name, t.rungs[rn]) ?? `${name} has no number for this at this rate.`);
+    const tpl = document.createElement("template");
+    tpl.innerHTML = cmpCell(id, cell(v, unit), pop, why);
+    return tpl.content.firstElementChild instanceof HTMLElement ? tpl.content.firstElementChild : null;
+  };
+
+  const fill = (): void => {
+    for (const e of document.querySelectorAll(".fb:not([data-cmp='base'])")) e.remove();
+    for (const pane of panes) {
+      for (const block of pane.querySelectorAll<HTMLElement>(".eprate[data-rung]")) {
+        const rn = block.dataset["rung"] ?? "";
+        for (const row of block.querySelectorAll<HTMLElement>(".frow[data-k]")) {
+          const base = row.querySelector<HTMLElement>(".fb[data-cmp='base']");
+          if (base) base.hidden = true;
+          for (const x of picks) {
+            const at = x.id === BASE ? base : peerCell(x.id, row, pane, rn);
+            if (!at) continue;
+            at.dataset["slot"] = String(x.slot);
+            at.hidden = false;
+            row.append(at);
+          }
+        }
+      }
+    }
+  };
+
+  const keyItem = (x: Pick, label: string, title: string): string =>
+    `<span class="cmpk" data-slot="${x.slot}" title="${esc(title)}"><i></i>${esc(label)}</span>`;
+  const noBase =
+    `<span class="cmpk none" title="This endpoint roots its chain, so it has no base to be ` +
+    `read against.">no base</span>`;
+  const paintKeys = (): void => {
+    for (const pane of panes) {
+      const key = pane.querySelector<HTMLElement>(".cmpkey");
+      if (!key) continue;
+      const base = pane.dataset["base"];
+      const items = picks.flatMap((x): string[] => {
+        const name = nameOf(x.id);
+        if (x.id !== BASE) {
+          const title = `What ${name} measured at the same rate in the same run. Hover a number for the difference.`;
+          return [keyItem(x, name, title)];
+        }
+        // A family is a merge of its endpoints and never has a base, so its key leaves it out.
+        if (pane.dataset["fam"] !== undefined) return [];
+        if (!base) return [noBase];
+        const title = `${base} is this endpoint's base. Hover a number for the difference and each factor between them.`;
+        return [keyItem(x, base, title)];
+      });
+      key.innerHTML = items.length ? `<span class="cmplabel">vs</span>${items.join("")}` : "";
+      key.hidden = !items.length;
+    }
+  };
+
+  const paintControl = (): void => {
+    chips.innerHTML = picks
+      .map((x) => {
+        const name = nameOf(x.id);
+        return (
+          `<button type="button" class="cmpchip" data-id="${esc(x.id)}" data-slot="${x.slot}" ` +
+          `title="${esc(opts.get(x.id)?.title ?? name)}" aria-label="${esc(`Stop comparing with ${name}`)}">` +
+          `<i></i>${esc(name)}<span class="cmpx" aria-hidden="true">&times;</span></button>`
+        );
+      })
+      .join("");
+    for (const o of opts.values()) o.disabled = picks.some((x) => x.id === o.value);
+    const full = picks.length >= MAX;
+    add.disabled = full;
+    add.title = full ? `${MAX} at most. Remove one to pick another.` : "";
+    add.value = "";
+  };
+
+  let generation = 0;
+  const apply = async (): Promise<void> => {
+    const mine = (generation += 1);
+    changed();
+    paintControl();
+    paintKeys();
+    fill();
+    const peers = picks.filter((x) => x.id !== BASE).map((x) => x.id);
+    if (!peers.length || (run !== undefined && peers.every((id) => wire.has(id)))) {
+      status.textContent = run === null && peers.length ? "Could not read the other frameworks' numbers." : "";
+      return;
+    }
+    status.textContent = "loading…";
+    await load(peers);
+    if (mine !== generation) return;
+    status.textContent = run ? "" : "Could not read the other frameworks' numbers.";
+    changed();
+    fill();
+  };
+  const set = (next: Pick[]): void => {
+    picks = next;
+    history.replaceState(null, "", `${location.pathname}${writeVs(location.search, picks)}${location.hash}`);
+    void apply();
+  };
+
+  add.addEventListener("change", () => {
+    if (add.value) set(addPick(picks, add.value));
+  });
+  chips.addEventListener("click", (ev) => {
+    const chip = ev.target instanceof Element ? ev.target.closest<HTMLElement>(".cmpchip") : null;
+    if (!chip) return;
+    const i = [...chips.children].indexOf(chip);
+    set(dropPick(picks, chip.dataset["id"] ?? ""));
+    // The chip is gone, so focus goes to the one that took its place rather than to the page.
+    const next = chips.children[i] ?? chips.children[i - 1];
+    (next instanceof HTMLElement ? next : add).focus();
+  });
+
+  ctl.hidden = false;
+  void apply();
 }

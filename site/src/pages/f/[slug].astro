@@ -13,7 +13,7 @@ import { permalink, type SnippetPart } from "../../lib/bundleview.js";
 import { chainWith, comparedOf, deltaFor, epValue, floorFor } from "../../lib/delta.js";
 import { usedSpan } from "../../lib/bins.js";
 import { site, type FrameworkPage } from "../../lib/site.js";
-import type { Rung } from "../../lib/types.js";
+import { unfinished } from "../../lib/views.js";
 
 export function getStaticPaths() {
   return site().pages.map((page) => ({ params: { slug: page.slug }, props: { page } }));
@@ -21,7 +21,7 @@ export function getStaticPaths() {
 
 const { page } = Astro.props as { page: FrameworkPage };
 const { run, target: t, rn, view, linkable, repo, commit } = page;
-const { wire, routes, factors, projects } = site();
+const { wire, routes, factors, projects, catalog } = site();
 
 const name = t.framework || t.target;
 const facts = [
@@ -125,17 +125,6 @@ for (const [fam, eids] of groups) if (fam) families.set(fam, [...(families.get(f
 // empty grid, the same treatment a missing bundle_hash gets above.
 const grid = run.bin_grid;
 
-// A rate the target did not complete publishes what it achieved and dropped instead of a
-// latency, so its button is grayed out and says why rather than opening empty panes.
-const unfinished = (r: Rung | undefined): string | null => {
-  if (r?.completed !== false) return null;
-  const n = (v: number | undefined): string => (v ?? 0).toLocaleString();
-  return (
-    `${name} could not sustain ${n(r.offered_rps)} rps. It achieved ${n(r.achieved_rps)} rps ` +
-    `and dropped ${n(r.dropped)} requests, so there are no latencies at this rate.`
-  );
-};
-
 // Every rate the run recorded for this target, not just the one the page opens on. The
 // reader flips between them in the browser, so both are rendered and one is shown; fetching
 // on demand would be a second data path for a page that is already a static file.
@@ -147,9 +136,40 @@ const rates = (run.rungs ?? [])
     label: `${(t.rungs[r]?.offered_rps ?? 0).toLocaleString()} rps`,
     span: usedSpan(own, order, r),
     shown: r === rn,
-    why: unfinished(t.rungs[r]),
+    // A rate the target did not complete publishes what it achieved and dropped instead of
+    // a latency, so its button is grayed out and says why rather than opening empty panes.
+    why: unfinished(name, t.rungs[r]),
   }));
 const hasBins = Boolean(grid) && rates.some((r) => r.span);
+
+// Every other target in this run, which measured the same endpoints on the same machine in
+// the same window. Their numbers are not in the page: every page carrying every other
+// target's would add about 135 KB to each. Once a reader picks one, the browser reads them
+// from the run's document in the data directory, the same file the explorer reads.
+const dataFile = (file: string | undefined): string => (file ? `../data/${file}` : "");
+const runFile = dataFile(catalog.runs.find((e) => e.id === run.run_id)?.file);
+const peers = runFile
+  ? run.targets
+      .filter((o) => o.language !== t.language || o.target !== t.target)
+      .map((o) => {
+        const w = [`${o.language}-${o.target}@${host}`, `${o.language}-${o.target}`].find((k) => catalog.wire[k]);
+        return {
+          id: `${o.language}-${o.target}`,
+          name: o.framework || o.target,
+          language: o.language,
+          version: o.version ?? "",
+          wire: dataFile(w && catalog.wire[w]?.file),
+        };
+      })
+  : [];
+const peerGroups = [...new Set(peers.map((p) => p.language))]
+  .sort()
+  .map((lang): [string, typeof peers] => [
+    lang,
+    peers.filter((p) => p.language === lang).sort((a, b) => a.name.localeCompare(b.name)),
+  ]);
+const hasBase = order.some((eid) => againstOf(eid));
+const comparable = peers.length > 0 || hasBase;
 
 const famRungs = (fam: string, eids: string[]) =>
   rates.map((r) => ({
@@ -223,7 +243,7 @@ const linkFor = (eid: string): string | null => {
           {order.length} endpoints in {groups.length} families, on the {host} host
           {rates.length > 1 ? ", at the rate picked on the right" : ` at ${rate} offered rps`}.{note}
         </p>
-        {((hasBins && grid) || rates.length > 1) && (
+        {((hasBins && grid) || rates.length > 1 || comparable) && (
           <div class="eptabs">
             {hasBins && grid && (
               <div role="tablist" aria-label="How to read these endpoints">
@@ -241,22 +261,57 @@ const linkFor = (eid: string): string | null => {
                 </button>
               </div>
             )}
-            {rates.length > 1 && (
-              <div class="eprates" role="group" aria-label="Offered rate" data-host={host}>
-                {rates.map((r) => (
-                  <button
-                    type="button"
-                    class="eprate-pick"
-                    data-rung={r.rn}
-                    aria-pressed={r.shown}
-                    aria-disabled={r.why ? "true" : undefined}
-                    title={r.why ?? undefined}
-                  >
-                    {r.label}
-                  </button>
-                ))}
-              </div>
-            )}
+            <div class="epread">
+              {comparable && (
+                <div class="cmp" data-run={runFile || undefined} hidden>
+                  <span class="cmplabel" id="cmp-label">vs</span>
+                  <span class="cmpchips" role="group" aria-labelledby="cmp-label" />
+                  <select class="cmpadd" aria-label="Compare with">
+                    <option value="">add&hellip;</option>
+                    {hasBase && (
+                      <option
+                        value="base"
+                        data-name="base"
+                        title={`Each endpoint's base: the same request to ${name} with one factor taken away`}
+                      >
+                        base
+                      </option>
+                    )}
+                    {peerGroups.map(([lang, ps]) => (
+                      <optgroup label={lang}>
+                        {ps.map((p) => (
+                          <option
+                            value={p.id}
+                            data-name={p.name}
+                            data-wire={p.wire || undefined}
+                            title={`${p.name} ${p.version}, measured in the same run on the same machine`}
+                          >
+                            {p.name}
+                          </option>
+                        ))}
+                      </optgroup>
+                    ))}
+                  </select>
+                  <span class="cmpstatus" role="status" />
+                </div>
+              )}
+              {rates.length > 1 && (
+                <div class="eprates" role="group" aria-label="Offered rate" data-host={host}>
+                  {rates.map((r) => (
+                    <button
+                      type="button"
+                      class="eprate-pick"
+                      data-rung={r.rn}
+                      aria-pressed={r.shown}
+                      aria-disabled={r.why ? "true" : undefined}
+                      title={r.why ?? undefined}
+                    >
+                      {r.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
         {hasBins && grid && (

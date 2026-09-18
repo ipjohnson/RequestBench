@@ -3,7 +3,8 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { gzipSync } from "node:zlib";
 import { CATALOG_VERSION, type Catalog } from "../src/lib/catalog.js";
-import { Data, fetchJson, resolveSource } from "../src/client/source.js";
+import { fetchJson } from "../src/client/fetch-json.js";
+import { Data, resolveSource } from "../src/client/source.js";
 import type { Boot } from "../src/lib/page-data.js";
 
 const page = "https://ipjohnson.github.io/RequestBench/index.html";

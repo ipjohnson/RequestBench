@@ -72,29 +72,62 @@ a.epfamname[aria-current="true"] { background: var(--tealsoft); border-left-colo
 .eppane .frow { outline: 1px solid var(--rule); }
 .eppane .fv { white-space: nowrap; }
 
-/* The base's numbers, one under each of the endpoint's own. Each is inside its own cell
-   rather than in a row of its own, so it stays under its number when the cells wrap; the
-   rule it carries spans the cell and lines up with its neighbours' into a row. They are the
-   values' size so the two rows read as columns, and the dotted line marks the ones with a
-   popup. */
+/* The numbers of whatever the page is compared with, a row per pick under each of the pane's
+   own. Each is inside its own cell rather than in a row of its own, so it stays under its
+   number when the cells wrap; the rule it carries spans the cell and lines up with its
+   neighbours' into a row. They are the values' size so the rows read as columns, and the
+   dotted line marks the ones with a popup. */
 .perfhead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px;
             margin: 20px 0 8px; }
 .perfhead h3.childcap { margin: 0; }
-.basetoggle { appearance: none; background: none; border: 0; cursor: pointer; font: inherit;
-              font-family: var(--f-mono); font-size: 11.5px; color: var(--ink3); padding: 2px 0; }
-.basetoggle::before { content: "\25B8"; display: inline-block; width: 1.3em; }
-.basetoggle[aria-expanded="true"]::before { content: "\25BE"; }
-.basetoggle:hover, .basetoggle[aria-expanded="true"] { color: var(--ink); }
-.basetoggle:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
 .eppane .fb { margin: 6px -12px 0; padding: 6px 12px 0; border-top: 1px solid var(--rule);
               font-family: var(--f-mono); font-size: 14px; font-variant-numeric: tabular-nums;
               color: var(--ink2); white-space: nowrap; }
+.eppane .fb[data-slot]::before { content: ""; margin-right: 7px; vertical-align: 1px; }
 .eppane .fb[tabindex] { text-decoration: underline dotted var(--ink3);
                         text-underline-offset: 4px; }
 .eppane .fb[tabindex]:hover { color: var(--ink); }
 .eppane .fb[tabindex]:focus-visible { outline: 2px solid var(--teal); outline-offset: -2px; }
 
-/* The popup, which endpoint-tree.ts fills from a base number's template and places under it. */
+/* Which row is which. A pick keeps one of --s1 to --s5 for as long as it is picked, and its
+   chip, its entry in each pane's key and each of its numbers carry it. The page's own numbers
+   carry none, and --s0 is the page's own teal. */
+[data-slot="1"] { --pick: var(--s1); }
+[data-slot="2"] { --pick: var(--s2); }
+[data-slot="3"] { --pick: var(--s3); }
+[data-slot="4"] { --pick: var(--s4); }
+[data-slot="5"] { --pick: var(--s5); }
+.cmpchip i, .cmpk i, .eppane .fb[data-slot]::before { display: inline-block; flex: none;
+  width: 8px; height: 8px; border-radius: 2px; background: var(--pick); }
+.cmplabel { font-family: var(--f-mono); font-size: 10px; letter-spacing: .1em;
+            text-transform: uppercase; color: var(--ink3); }
+.cmpkey { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; margin: 0;
+          font-family: var(--f-mono); font-size: 11.5px; color: var(--ink2); }
+.cmpk { display: inline-flex; align-items: center; gap: 6px; }
+.cmpk.none { color: var(--ink3); }
+
+/* The comparison itself: a chip per pick, which removes it, then the list of what else there
+   is. It sits beside the rate because it is picked once for the whole panel as the rate is.
+   The distribution grid does not draw it, so that view hides it without moving the rate. */
+.cmp { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.eptabs[data-view="view-dist"] .cmp { visibility: hidden; }
+.cmpchips { display: flex; flex-wrap: wrap; gap: 6px; }
+.cmpchip { appearance: none; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+           font: inherit; font-family: var(--f-mono); font-size: 11.5px; color: var(--ink);
+           background: var(--surface); border: 1px solid var(--rule); border-radius: 3px;
+           padding: 4px 7px 4px 9px; }
+.cmpchip:hover { background: var(--surface2); }
+.cmpchip:focus-visible { outline: 2px solid var(--teal); outline-offset: 1px; }
+.cmpx { color: var(--ink3); font-size: 13px; line-height: 1; }
+.cmpchip:hover .cmpx { color: var(--ink); }
+select.cmpadd { font-family: var(--f-mono); font-size: 11.5px; color: var(--ink2); min-width: 0;
+                background: var(--surface); border-color: var(--rule); padding: 4px 6px; }
+select.cmpadd:disabled { opacity: .45; cursor: not-allowed; }
+.cmpstatus { font-family: var(--f-mono); font-size: 11px; color: var(--ink3); }
+.cmpstatus:empty { display: none; }
+
+/* The popup, which endpoint-tree.ts fills from a compared number's template and places under
+   it. */
 .basepop { position: absolute; z-index: 20; width: max-content;
            max-width: min(340px, calc(100vw - 16px)); padding: 10px 12px;
            background: var(--surface); border: 1px solid var(--rule2); border-radius: 4px;
@@ -136,11 +169,18 @@ a.epfamname[aria-current="true"] { background: var(--tealsoft); border-left-colo
   border-bottom-color: var(--teal); }
 .eptabs [role="tab"]:focus-visible { outline: 2px solid var(--teal); outline-offset: -2px; }
 
-/* The rate is a property of the whole panel rather than of either view, so it sits opposite
-   the tabs instead of inside one of them, and on the right when a run without bins has no
-   tabs. */
-.eprates { display: inline-flex; margin: 0 0 6px auto; border: 1px solid var(--rule);
-           border-radius: 3px; overflow: hidden; }
+/* The rate and the comparison are properties of the whole panel rather than of either view, so
+   they sit opposite the tabs instead of inside one of them, and on the right when a run
+   without bins has no tabs. Five picks do not fit beside the tabs on a narrow screen, so there
+   they go above the tabs, which keep their place on the rule. */
+.epread { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end;
+          gap: 8px 18px; min-width: 0; margin: 0 0 6px auto; }
+@media (max-width: 720px) {
+  .eptabs { flex-wrap: wrap; }
+  .epread { order: -1; justify-content: flex-start; margin: 0; }
+}
+.eprates { display: inline-flex; border: 1px solid var(--rule); border-radius: 3px;
+           overflow: hidden; }
 .eprate-pick { appearance: none; background: none; border: 0; cursor: pointer; font: inherit;
                font-family: var(--f-mono); font-size: 11.5px; color: var(--ink2);
                padding: 4px 10px; }
