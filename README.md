@@ -214,7 +214,8 @@ manifest; `validate.yml` is the gate on it. That needs a `DEPS_TOKEN` secret, be
 pull request opened with the default token fires no checks.
 
 Three execution hosts are implemented: the container contract, the GCP Functions Framework,
-and the Lambda runtime interface emulator. Every Node and Go target covers all three except
+and AWS Lambda, where the function's own runtime polls a Runtime API that the harness serves
+in place of the runtime interface emulator. Every Node and Go target covers all three except
 Fiber, which runs only as a container because it is fasthttp rather than an `http.Handler`,
 and Koa, which has no Lambda entry because its body parser does not see a request body
 through serverless-express.

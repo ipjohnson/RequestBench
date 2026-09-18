@@ -1,7 +1,7 @@
 // The transport. One connection, kept alive, requests issued in order.
 //
-// Ported from harness/conform.py. Two encodings: plain HTTP, and the Lambda one, where a
-// RIE container serves only the invocations endpoint so plain HTTP reaches nothing.
+// Ported from harness/conform.py. Two encodings: plain HTTP, and the Lambda one, where the
+// host serves only the invocations endpoint so plain HTTP reaches nothing.
 import http from "node:http";
 import type { Header, Encoding } from "./checks.js";
 
@@ -80,7 +80,7 @@ export class Transport {
     if (this.#encoding === "lambda") {
       const event = asEvent(method, path, body, headers);
       const r = await this.#raw("POST", LAMBDA_INVOKE, event, { "content-type": "application/json" });
-      if (r.status !== 200) throw new Error(`RIE returned ${r.status}`);
+      if (r.status !== 200) throw new Error(`the invocations endpoint returned ${r.status}`);
       return unwrap(r.body);
     }
     return this.#raw(method, path, body, headers);

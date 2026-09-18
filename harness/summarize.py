@@ -208,6 +208,10 @@ def main():
         # Rung ids are reused across ladder versions while the rates behind them change,
         # so two summaries can agree on "rung 2" and mean different offered loads.
         "ladder": env.get("ladder", "ladder-v1"),
+        # A Lambda host's latencies are the Runtime API's Duration and every other host's
+        # are the driver's round trip, so two summaries of one host can time different
+        # things. Runs from before the field timed the round trip.
+        "timing": env.get("timing", "client"),
         # The grid every "bins" array below is counted on. Recorded rather than agreed with
         # the reader, so the site labels the axis from the summary it is drawing and the
         # three constants exist in one place.
