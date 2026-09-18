@@ -7,8 +7,8 @@
  * in between to decode it. h3's documentation names no test runner, so this suite uses the one
  * built into Node, installs nothing and has no package.json of its own.
  *
- * h3 ships no compression. The compressed family's codec is the pinned one every language
- * shares, applied on those routes, which is inside the application and reached.
+ * h3 ships no compression. The compressed family's gzip is this target's own, applied on
+ * those routes, which is inside the application and reached.
  */
 import { app } from "../app.js";
 import { captureFor, resolved } from "./planned.js";

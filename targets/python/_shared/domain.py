@@ -10,7 +10,6 @@ Failures are exceptions rather than a sentinel return. Every framework here regi
 handlers for them, which is the facility Fastify's ``setErrorHandler`` is, so a handler
 never builds a 404 or a 422 itself and the six targets cannot drift.
 """
-import gzip as _gzip
 import hashlib
 import itertools
 import json
@@ -147,23 +146,7 @@ def vary_on(which):
     return list(data().cache["vary"][which])
 
 
-#: Pinned across every language. Compression cost is dominated by codec and level, not by
-#: framework, so an unpinned level makes ``compressed.*`` a zlib benchmark.
-GZIP_LEVEL = 6
-
 CACHEABLE = "public, max-age=60"
-
-#: Where a framework's own compressor takes a size floor, this is the one it is held to.
-#: Django's gzip_page has its own at 200 and takes no setting, which changes nothing here:
-#: the small payload is 125 bytes and the medium one 8131, so both floors fall between the
-#: same two rows.
-GZIP_MIN_SIZE = 500
-
-
-def gzip(raw):
-    """Compresses at the pinned level. Targets whose framework brings its own middleware
-    use that instead and configure it to this level."""
-    return _gzip.compress(raw, compresslevel=GZIP_LEVEL, mtime=0)
 
 
 #: A counter rather than an integer because Flask serves on a thread pool: next() on this

@@ -7,16 +7,18 @@
 package main
 
 import (
+	"compress/flate"
+
 	d "github.com/ianjohnson/requestbench/targets/go/_shared"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
 
-// Level is pinned across every language. The size threshold is left at the library's own
-// default, because whether a framework bothers to compress a body too small to benefit is
-// what compressed.gzip_small is in the set to show.
+// The size threshold is left at the library's own default, because whether a framework
+// bothers to compress a body too small to benefit is what compressed.gzip_small is in the
+// set to show.
 // rb:wiring compressed.*
-var gzip = middleware.GzipWithConfig(middleware.GzipConfig{Level: d.GzipLevel})
+var gzip = middleware.GzipWithConfig(middleware.GzipConfig{Level: flate.BestSpeed})
 
 // rb:wiring compressed.*
 func compressedRoute(size string) echo.HandlerFunc {

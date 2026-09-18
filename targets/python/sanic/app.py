@@ -13,6 +13,7 @@ those rows have their own paths instead of riding on /json with an accept-encodi
 The blueprints carry no url_prefix. Scoping is what they are here for, and a prefix would
 take the route's own path out of the source, which is where harness/snippets.py finds it.
 """
+import gzip
 import pathlib
 
 from cachetools import TTLCache
@@ -303,18 +304,23 @@ authorized.get("/authorized/small")(small)
 # rb:wiring compressed.*
 compressed = Blueprint("compressed")
 
+# The floor Starlette and Litestar default to, so compressed.gzip_small lands on the same
+# side of it here as it does where the framework compresses.
+# rb:wiring compressed.*
+GZIP_MIN_SIZE = 500
+
 
 @compressed.on_response
 # rb:wiring compressed.*
 async def compress(request, res):
-    """Sanic ships no compression, so the codec is the pinned one every language shares.
-    The threshold is pinned too: whether a framework bothers to compress a body too small
-    to benefit is what compressed.gzip_small is in the set to show."""
+    """Sanic ships no compression, so this target gzips the body itself, at gzip's fastest
+    level and with a floor of its own. Whether a framework bothers to compress a body too
+    small to benefit is what compressed.gzip_small is in the set to show."""
     if "gzip" not in request.headers.get("accept-encoding", ""):
         return
-    if len(res.body) < d.GZIP_MIN_SIZE:
+    if len(res.body) < GZIP_MIN_SIZE:
         return
-    res.body = d.gzip(res.body)
+    res.body = gzip.compress(res.body, compresslevel=1, mtime=0)
     res.headers["content-encoding"] = "gzip"
     res.headers["content-length"] = str(len(res.body))
     res.headers["vary"] = "Accept-Encoding"

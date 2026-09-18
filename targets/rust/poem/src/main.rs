@@ -12,7 +12,7 @@ use poem::{
     listener::{Listener, TcpListener},
     middleware::Compression,
     post,
-    web::{Json, Path, Query},
+    web::{CompressionLevel, Json, Path, Query},
     endpoint::make,
     Body, Endpoint, EndpointExt, IntoResponse, Request, Response, Route, Server,
 };
@@ -318,16 +318,16 @@ fn app() -> impl Endpoint {
         |size: &'static str| get(make(move |_| async move { Json(d::payload(size)) }));
 
     // rb:wiring compressed.*
-    // Level pinned across every language; the default size threshold is left alone,
-    // because whether a framework bothers to compress a body too small to benefit is what
-    // compressed.gzip_small is in the set to show.
+    // The default size threshold is left alone, because whether a framework bothers to
+    // compress a body too small to benefit is what compressed.gzip_small is in the set to
+    // show.
     let compressed_route = |size: &'static str| {
         get(make(move |_| async move {
             Json(d::payload(size))
                 .with_header("x-rb-serial", d::next_serial())
                 .into_response()
         }))
-        .with(Compression::new())
+        .with(Compression::new().with_quality(CompressionLevel::Fastest))
     };
 
     // rb:wiring etag.*

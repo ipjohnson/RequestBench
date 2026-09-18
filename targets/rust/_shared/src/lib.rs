@@ -6,12 +6,10 @@
 //! a 422 body, an empty list versus a missing one, the tiebreak in a sort -- this follows
 //! Node.
 
-use flate2::{write::GzEncoder, Compression};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use sha1::{Digest, Sha1};
 use std::collections::{HashMap, VecDeque};
-use std::io::Write;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Mutex, OnceLock};
 use std::time::{Duration, Instant};
@@ -313,18 +311,6 @@ pub fn cache_key(path: &str, values: &[String]) -> String {
         key.push_str(v);
     }
     key
-}
-
-/// Pinned across every language. Compression cost is dominated by codec and level, not by
-/// framework, so an unpinned level makes `compressed.*` a zlib benchmark.
-pub const GZIP_LEVEL: u32 = 6;
-
-/// Compresses at the pinned level. Targets whose framework brings its own middleware use
-/// that instead and configure it to this level.
-pub fn gzip(bytes: &[u8]) -> Vec<u8> {
-    let mut w = GzEncoder::new(Vec::new(), Compression::new(GZIP_LEVEL));
-    let _ = w.write_all(bytes);
-    w.finish().unwrap_or_default()
 }
 
 /// `x-rb-serial`, monotonic per process. A response served from a cache anywhere in the

@@ -19,8 +19,10 @@ rocket = { version = "0.5", features = ["json"] }
 # Rocket's own view layer. The tera feature is what makes .tera files render;
 # rocket_dyn_templates picks the engine from the file extension.
 rocket_dyn_templates = { version = "0.2", features = ["tera"] }
+# Rocket 0.5 ships no compression, so the compressed routes gzip with this themselves.
+flate2 = { workspace = true }
 
 # The suite in src/suite. The standard library has no gzip decoder and the floor has to undo
-# gzip before it compares, so the suite takes the one the shared domain already encodes with.
+# gzip before it compares, so the suite takes flate2.
 [dev-dependencies]
 flate2 = { workspace = true }

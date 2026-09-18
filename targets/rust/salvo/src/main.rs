@@ -570,10 +570,10 @@ async fn main() {
 fn service() -> Service {
 
     // rb:wiring compressed.*
-    // Level pinned across every language; the default size threshold is left alone,
-    // because whether a framework bothers to compress a body too small to benefit is what
-    // compressed.gzip_small is in the set to show.
-    let compression = Compression::new().enable_gzip(CompressionLevel::Precise(d::GZIP_LEVEL as u32));
+    // The default size threshold is left alone, because whether a framework bothers to
+    // compress a body too small to benefit is what compressed.gzip_small is in the set to
+    // show.
+    let compression = Compression::new().enable_gzip(CompressionLevel::Fastest);
 
     let mut four = Router::with_path("/middleware/four");
     for _ in 0..4 {

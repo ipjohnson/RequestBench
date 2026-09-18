@@ -1115,7 +1115,7 @@
         "mechanism": "a middleware list on defineHandler, run before the handler"
       },
       "compressed": {
-        "mechanism": "route-scoped middleware around the pinned codec: h3 ships no compression, so the gzip every language shares is what runs"
+        "mechanism": "route-scoped middleware that gzips with node:zlib at its fastest level: h3 ships no compression"
       },
       "etag": {
         "mechanism": "h3's own handleCacheHeaders, which writes the validator and answers the conditional but takes the tag as an argument: h3 ships no digest, so that half is this target's"
@@ -1161,7 +1161,7 @@
         "mechanism": "route-scoped middleware, awaited before the handler"
       },
       "compressed": {
-        "mechanism": "hono/compress mounted on /compressed/* alone; the one compressor here with no level setting, because it goes through the platform's CompressionStream"
+        "mechanism": "hono/compress mounted on /compressed/* alone; it goes through the platform's CompressionStream, which has no level setting, so it runs at zlib's default of 6"
       },
       "etag": {
         "mechanism": "hono/etag, scoped to the route prefix; it hashes the body the handler returned and answers the conditional itself"
@@ -1255,7 +1255,7 @@
         "mechanism": "a view decorator answering 403 before the view it wraps runs"
       },
       "compressed": {
-        "mechanism": "gzip_page, which is Django's GZipMiddleware as a decorator, so the other forty-two endpoints never look at accept-encoding"
+        "mechanism": "gzip_page, which is Django's GZipMiddleware as a decorator, so the other endpoints never look at accept-encoding; Django compresses at level 6 and has no setting for it"
       },
       "etag": {
         "mechanism": "Django's own ConditionalGetMiddleware, scoped to the view with decorator_from_middleware"
@@ -1305,7 +1305,7 @@
         "mechanism": "a route dependency through Depends, run before the handler"
       },
       "compressed": {
-        "mechanism": "GZipMiddleware on a mounted sub-application, so the other forty-two endpoints never see the check; threshold and level are the pinned ones rather than Starlette's defaults"
+        "mechanism": "GZipMiddleware on a mounted sub-application, so the other endpoints never see the check; at the fastest level, over Starlette's own floor"
       },
       "etag": {
         "mechanism": "the shared conditional middleware on a mounted sub-application: neither FastAPI nor Starlette under it answers if-none-match for a dynamic response"
@@ -1353,7 +1353,7 @@
         "mechanism": "a before_request hook on its own blueprint: returning a response from it short-circuits the view"
       },
       "compressed": {
-        "mechanism": "an after_request hook on its own blueprint holding the pinned codec and floor; Flask ships no compression"
+        "mechanism": "an after_request hook on its own blueprint that gzips at the fastest level behind a 500-byte floor of its own; Flask ships no compression"
       },
       "etag": {
         "mechanism": "a response hook on its own blueprint over Werkzeug's own add_etag and make_conditional"
@@ -1401,7 +1401,7 @@
         "mechanism": "a guard on the route, which Litestar runs before the handler"
       },
       "compressed": {
-        "mechanism": "a DefineMiddleware compression layer named on these three routes, at the pinned level and floor"
+        "mechanism": "a DefineMiddleware compression layer named on these three routes, at the fastest level over Litestar's own floor"
       },
       "etag": {
         "mechanism": "the shared conditional middleware on the handler: Litestar's ETag datastructure emits a value the handler already knows and answers nothing"
@@ -1449,7 +1449,7 @@
         "mechanism": "on_request middleware on its own blueprint: returning a response from it short-circuits the handler"
       },
       "compressed": {
-        "mechanism": "an on_response middleware on its own blueprint holding the pinned codec and floor; Sanic ships no compression"
+        "mechanism": "an on_response middleware on its own blueprint that gzips at the fastest level behind a 500-byte floor of its own; Sanic ships no compression"
       },
       "etag": {
         "mechanism": "a response middleware on its own blueprint over the shared digest, the same scoping the compressed family uses"
@@ -1495,7 +1495,7 @@
         "mechanism": "an ASGI middleware class on the route, answering 403 before the app below it runs"
       },
       "compressed": {
-        "mechanism": "GZipMiddleware scoped to these three routes, at the pinned level and floor rather than Starlette's defaults"
+        "mechanism": "GZipMiddleware scoped to these three routes, at the fastest level over Starlette's own floor"
       },
       "etag": {
         "mechanism": "the shared conditional middleware in Route's own middleware list, which is Starlette's scoping"
@@ -1545,7 +1545,7 @@
         "mechanism": "from_fn middleware wrapped around the one resource, run before the handler"
       },
       "compressed": {
-        "mechanism": "actix's own Compress middleware wrapped around these three resources alone"
+        "mechanism": "actix's own Compress middleware wrapped around these three resources alone; it takes no level and gzips at flate2's fastest"
       },
       "etag": {
         "mechanism": "middleware on a scope, which is how actix-web scopes anything; a wrap on the App would hash every response in the blend"
@@ -1597,7 +1597,7 @@
         "mechanism": "from_fn middleware layered on the one route, run before the handler"
       },
       "compressed": {
-        "mechanism": "tower-http's CompressionLayer on these three routes alone, with a SizeAbove predicate at the pinned floor",
+        "mechanism": "tower-http's CompressionLayer at its fastest level on these three routes alone, with a SizeAbove predicate at tower-http's default of 32 bytes",
         "dep": "tower-http",
         "mentions": "Compression"
       },
@@ -1701,7 +1701,7 @@
         "mechanism": "a request guard, which Rocket resolves before the handler runs; a fairing would be global"
       },
       "compressed": {
-        "mechanism": "the pinned codec in this target's own helper; Rocket 0.5 ships no compression and a third-party fairing would be global"
+        "mechanism": "gzip in this target's own handler, with flate2 at its fastest level; Rocket 0.5 ships no compression and a third-party fairing would be global"
       },
       "etag": {
         "mechanism": "the digest and the comparison in a route: Rocket's fairings attach to the whole application, so one here would hash every response in the blend"
@@ -1751,7 +1751,7 @@
         "mechanism": "a hoop on the one route, run before the handler and refusing by setting the response"
       },
       "compressed": {
-        "mechanism": "salvo's own Compression hoop at the pinned level, hooped onto these three routes alone"
+        "mechanism": "salvo's own Compression hoop at its fastest level, hooped onto these three routes alone"
       },
       "etag": {
         "mechanism": "salvo's own CachingHeaders middleware, hooped onto these routes: the one Rust target that ships the machinery"
@@ -1803,7 +1803,7 @@
         "mechanism": "a header filter ahead of the reply, rejecting before the handler closure runs"
       },
       "compressed": {
-        "mechanism": "the pinned codec in this target's own reply helper, chosen by an accept-encoding filter; warp ships no compression"
+        "mechanism": "warp's own compression::gzip() filter on a branch an accept-encoding filter chooses; gzip() takes no level, so it runs at flate2's default of 6"
       },
       "etag": {
         "builtin": "The digest and the comparison are inside the filter that answers, which the handler block already shows. warp has nothing that can rewrite a reply after one has been produced, so there is nowhere else for them to be."

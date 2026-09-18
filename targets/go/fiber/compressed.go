@@ -12,11 +12,8 @@ import (
 	d "github.com/ianjohnson/requestbench/targets/go/_shared"
 )
 
-// Fiber names levels rather than taking a number. LevelBestSpeed and LevelBestCompression
-// are the ends; Default is what zlib calls 6, which is the level every language is pinned
-// to.
 // rb:wiring compressed.*
-var gzip = compress.New(compress.Config{Level: compress.LevelDefault})
+var gzip = compress.New(compress.Config{Level: compress.LevelBestSpeed})
 
 // rb:wiring compressed.*
 func compressedRoute(size string) fiber.Handler {

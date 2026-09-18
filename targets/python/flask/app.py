@@ -4,7 +4,7 @@ Flask is the one WSGI framework in the set. It runs under gunicorn, which its ow
 deployment documentation names first, with one worker and a thread pool: gunicorn's default
 sync worker serves one request at a time, and an open-loop ladder against that measures a
 queue of depth one rather than Flask. The thread count is pinned here rather than left to
-gunicorn's default of 1 for the same reason the gzip level is pinned.
+gunicorn's default of 1.
 
 Flask has no route-scoped middleware. A blueprint's before_request and after_request hooks
 are its per-scope facility, and that is what the authorized, compressed and middleware
@@ -15,6 +15,7 @@ against.
 The blueprints carry no url_prefix. Scoping is what they are here for, and a prefix would
 take the route's own path out of the source, which is where harness/snippets.py finds it.
 """
+import gzip
 import pathlib
 
 import gunicorn.app.base
@@ -292,19 +293,24 @@ authorized.get("/authorized/small")(small)
 # rb:wiring compressed.*
 compressed = Blueprint("compressed", __name__)
 
+# The floor Starlette and Litestar default to, so compressed.gzip_small lands on the same
+# side of it here as it does where the framework compresses.
+# rb:wiring compressed.*
+GZIP_MIN_SIZE = 500
+
 
 @compressed.after_request
 # rb:wiring compressed.*
 def compress(response):
-    """Flask ships no compression, so the codec is the pinned one every language shares. The
-    threshold is pinned too: whether a framework bothers to compress a body too small to
-    benefit is what compressed.gzip_small is in the set to show."""
+    """Flask ships no compression, so this target gzips the body itself, at gzip's fastest
+    level and with a floor of its own. Whether a framework bothers to compress a body too
+    small to benefit is what compressed.gzip_small is in the set to show."""
     if "gzip" not in request.headers.get("accept-encoding", ""):
         return response
     body = response.get_data()
-    if len(body) < d.GZIP_MIN_SIZE:
+    if len(body) < GZIP_MIN_SIZE:
         return response
-    response.set_data(d.gzip(body))
+    response.set_data(gzip.compress(body, compresslevel=1, mtime=0))
     response.headers["content-encoding"] = "gzip"
     response.headers["vary"] = "Accept-Encoding"
     return response

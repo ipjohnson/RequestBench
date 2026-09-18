@@ -30,8 +30,8 @@ comparable to `middleware.four` on a framework where it is.
 `compressed.*` is a mounted sub-application carrying `GZipMiddleware`. Mounting is
 FastAPI's own way to scope middleware, and the extra dispatch it costs lands in
 `compressed.identity_*` — which is the price of not putting a "did the client ask?" check
-on the other forty-two endpoints. The level and the size floor are the pinned ones every
-language uses.
+on the other forty-two endpoints. The level is gzip's fastest, and the size floor is
+Starlette's own default.
 
 **The default return path runs `jsonable_encoder`, and it dominates this target.** A
 handler that returns a value hands it to `serialize_response`, which walks the whole

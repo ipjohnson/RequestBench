@@ -3,8 +3,6 @@
 package domain
 
 import (
-	"bytes"
-	"compress/gzip"
 	"encoding/json"
 	"errors"
 	"os"
@@ -651,20 +649,6 @@ type PayloadWithEcho struct {
 // answers this, so the value has to be converted and written back rather than bound and
 // dropped.
 func WithEcho(size string, echo any) PayloadWithEcho { return PayloadWithEcho{Payload(size), echo} }
-
-// GzipLevel is pinned across every language. Compression cost is dominated by codec and
-// level, not by framework, so an unpinned level makes compressed.* a zlib benchmark.
-const GzipLevel = 6
-
-// Gzip compresses at the pinned level. Targets whose framework brings its own middleware
-// use that instead and configure it to this level.
-func Gzip(b []byte) []byte {
-	var out bytes.Buffer
-	w, _ := gzip.NewWriterLevel(&out, GzipLevel)
-	_, _ = w.Write(b)
-	_ = w.Close()
-	return out.Bytes()
-}
 
 // NextSerial is x-rb-serial, monotonic per process. A response served from a cache
 // anywhere in the path, or precomputed at boot, repeats a number it did not increment,

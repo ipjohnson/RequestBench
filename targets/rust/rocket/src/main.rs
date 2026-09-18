@@ -22,7 +22,8 @@ use serde::{Deserialize, Serialize};
 use rocket::{catch, catchers, get, patch, post, put, delete, routes, FromForm, Request, Response};
 use rb_domain as d;
 use serde_json::Value;
-use std::io::Cursor;
+use flate2::{write::GzEncoder, Compression};
+use std::io::{Cursor, Write};
 
 // ---- shared response shapes ---------------------------------------------------
 
@@ -367,9 +368,9 @@ fn authorized(_t: Token) -> Json<&'static d::PayloadBody> {
 }
 
 // rb:wiring compressed.*
-/// Level pinned across every language. The threshold mirrors what the other targets'
-/// middleware defaults to, because whether a framework bothers to compress a body too
-/// small to benefit is what compressed.gzip_small is in the set to show.
+/// The threshold mirrors what the other targets' middleware defaults to, because whether a
+/// framework bothers to compress a body too small to benefit is what compressed.gzip_small
+/// is in the set to show.
 fn compressed(size: &'static str, accept: Option<&str>) -> Raw {
     let body = json_raw(d::payload(size));
     let wants = accept.is_some_and(|a| a.contains("gzip"));
@@ -377,7 +378,9 @@ fn compressed(size: &'static str, accept: Option<&str>) -> Raw {
     let body = if wants && body.len() > 32 {
         headers.push(("content-encoding", "gzip".to_string()));
         headers.push(("vary", "accept-encoding".to_string()));
-        d::gzip(&body)
+        let mut gz = GzEncoder::new(Vec::new(), Compression::fast());
+        let _ = gz.write_all(&body);
+        gz.finish().unwrap_or_default()
     } else {
         body
     };

@@ -22,6 +22,6 @@ tower = "0.5"
 tower-http = { version = "0.6", features = ["compression-gzip"] }
 
 # The suite in src/suite. The standard library has no gzip decoder and the floor has to undo
-# gzip before it compares, so the suite takes the one the shared domain already encodes with.
+# gzip before it compares, so the suite takes flate2.
 [dev-dependencies]
 flate2 = { workspace = true }
