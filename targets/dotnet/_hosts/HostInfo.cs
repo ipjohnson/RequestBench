@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.InteropServices;
 
@@ -17,6 +18,22 @@ public static class HostInfo
         int.TryParse(Environment.GetEnvironmentVariable("PORT"), out int p) ? p : 8080;
 
     public static string Url() => $"http://0.0.0.0:{Port()}";
+
+    // Milliseconds from the start of the process to the server listening, once it is.
+    private static double? bootMs;
+
+    /// <summary>
+    /// Records that the server is listening, for /__meta to report as boot_ms. A target
+    /// registers this on ApplicationStarted, which ASP.NET Core raises once Kestrel has
+    /// bound. The start is the process's own, so the runtime's start is counted along with
+    /// the framework's. On Linux the kernel keeps it in 10 ms ticks, which is the resolution
+    /// of the result.
+    /// </summary>
+    public static void Listening()
+    {
+        using Process self = Process.GetCurrentProcess();
+        bootMs = Math.Round((DateTime.Now - self.StartTime).TotalMilliseconds, 1);
+    }
 
     /// <summary>
     /// The version the restore resolved for an assembly, read from the assembly actually
@@ -63,10 +80,11 @@ public static class HostInfo
     /// framework's own output caching, which every target wires the same way and differs
     /// only in where it attaches.
     /// </summary>
-    public static IReadOnlyDictionary<string, string> Meta(
+    public static IReadOnlyDictionary<string, object> Meta(
         string framework, string version, string template,
-        string serializer = "System.Text.Json") =>
-        new Dictionary<string, string>
+        string serializer = "System.Text.Json")
+    {
+        Dictionary<string, object> meta = new()
         {
             ["framework"] = framework,
             ["version"] = version,
@@ -77,4 +95,10 @@ public static class HostInfo
             ["etag"] = "sha1 (asp.net core ships no conditional handling)",
             ["cache"] = "asp.net core output caching",
         };
+        if (bootMs is double ms)
+        {
+            meta["boot_ms"] = ms;
+        }
+        return meta;
+    }
 }

@@ -549,4 +549,5 @@ def serve():
 
     port = host.boot("django-asgi")
     Server(application=application, verbosity=0,
-           endpoints=build_endpoint_description_strings(host="0.0.0.0", port=port)).run()
+           endpoints=build_endpoint_description_strings(host="0.0.0.0", port=port),
+           ready_callable=host.listening).run()

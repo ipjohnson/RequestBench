@@ -547,4 +547,7 @@ def serve():
         "threads": THREADS,
         "accesslog": None,
         "loglevel": "warning",
+        # gunicorn binds in the master and serves from the worker it forks, so the target
+        # is ready when the worker is. This is the worker's last step before it accepts.
+        "post_worker_init": lambda _: host.listening(),
     }).run()

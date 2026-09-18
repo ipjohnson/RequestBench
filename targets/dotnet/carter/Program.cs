@@ -44,6 +44,7 @@ app.MapCarter();
 // rb:handler errors.unmatched
 app.MapFallback(() => Results.Problem(statusCode: 404));
 
+app.Lifetime.ApplicationStarted.Register(HostInfo.Listening);
 Console.Error.WriteLine($"container/carter listening on {HostInfo.Port()}");
 app.Run();
 

@@ -13,7 +13,6 @@ harness/snippets.py, which refuses to guess which of them serves domain.filter.
 """
 import pathlib
 
-import uvicorn
 from starlette.applications import Starlette
 from starlette.exceptions import HTTPException
 from starlette.middleware import Middleware
@@ -477,5 +476,5 @@ app = Starlette(routes=routes, exception_handlers={
 
 
 def serve():
-    uvicorn.run(app, host="0.0.0.0", port=host.boot("starlette"),
-                log_level="warning", access_log=False)
+    host.run_uvicorn(app, host="0.0.0.0", port=host.boot("starlette"),
+                     log_level="warning", access_log=False)

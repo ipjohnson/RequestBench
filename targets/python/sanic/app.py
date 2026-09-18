@@ -551,5 +551,6 @@ for _bp in (middleware_none, middleware_four, middleware_sixteen, authorized, co
 
 
 def serve():
+    app.after_server_start(lambda _: host.listening())
     app.run(host="0.0.0.0", port=host.boot("sanic"), single_process=True,
             access_log=False, motd=False)

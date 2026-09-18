@@ -10,10 +10,21 @@ first, and /__meta records it as the adapter -- the same field Node uses for wha
 between the host and the framework. A step in a target's numbers with the framework
 version unchanged is otherwise unexplained.
 """
+import time
+
+# Where boot_ms counts from. container.py imports this module before it loads the target,
+# so the clock starts before the framework is imported. The interpreter's own start comes
+# before any Python code runs and is not counted.
+STARTED = time.monotonic()
+
 import os
 import platform
 import sys
 from importlib.metadata import PackageNotFoundError, version
+
+# The one dict every target answers /__meta with. listening() adds boot_ms to it, which is
+# why a target returns what meta() gave it rather than a copy.
+_meta = {}
 
 
 def dist_version(name):
@@ -47,7 +58,7 @@ def meta(framework, dist=None, adapter="", template="", etag="", cache=""):
         v = dist_version(adapter)
         if v:
             server = "%s %s" % (adapter, v)
-    return {
+    _meta.update({
         "framework": framework,
         "version": dist_version(dist or framework),
         "runtime": runtime(),
@@ -55,7 +66,31 @@ def meta(framework, dist=None, adapter="", template="", etag="", cache=""):
         "template": template,
         "etag": etag,
         "cache": cache,
-    }
+    })
+    return _meta
+
+
+def listening():
+    """Called by the target's server once it is ready to accept. Each of the four servers
+    has its own hook for that moment, so each target wires this to its own."""
+    _meta["boot_ms"] = round((time.monotonic() - STARTED) * 1000, 1)
+
+
+def run_uvicorn(app, **options):
+    """uvicorn.run(app, **options), calling listening() once uvicorn has bound.
+
+    uvicorn.run takes no callback, and the ASGI lifespan startup runs before uvicorn binds,
+    so the moment is only reachable from Server.startup.
+    """
+    import uvicorn
+
+    class Server(uvicorn.Server):
+        async def startup(self, sockets=None):
+            await super().startup(sockets)
+            if self.started:
+                listening()
+
+    Server(uvicorn.Config(app, **options)).run()
 
 
 def port():

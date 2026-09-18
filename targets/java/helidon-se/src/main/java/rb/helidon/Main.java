@@ -37,6 +37,7 @@ public final class Main {
              .routing(Main::routes)
              .build()
              .start();
+    Hosts.listening();
     System.out.println("container/helidon-se listening on " + Hosts.port());
   }
 

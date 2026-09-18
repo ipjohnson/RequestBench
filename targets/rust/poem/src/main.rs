@@ -9,7 +9,7 @@ use poem::{
     error::ResponseError,
     get,
     http::{header, StatusCode},
-    listener::TcpListener,
+    listener::{Listener, TcpListener},
     middleware::Compression,
     post,
     web::{Json, Path, Query},
@@ -248,7 +248,10 @@ mod suite;
 #[tokio::main]
 async fn main() -> Result<(), std::io::Error> {
     let port = rb_host::boot("poem");
-    Server::new(TcpListener::bind(("0.0.0.0", port))).run(app()).await
+    let app = app();
+    let acceptor = TcpListener::bind(("0.0.0.0", port)).into_acceptor().await?;
+    rb_host::listening();
+    Server::new_with_acceptor(acceptor).run(app).await
 }
 
 /// Every route, on an endpoint nothing is serving yet. Its own function so a test can hand it

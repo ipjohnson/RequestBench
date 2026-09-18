@@ -65,6 +65,7 @@ public final class Main {
   public static void main(String[] args) throws Exception {
     Domain.load(Hosts.fixture());
     Javalin.create(Main::configure).start(Hosts.port());
+    Hosts.listening();
   }
 
   static void configure(JavalinConfig cfg) {

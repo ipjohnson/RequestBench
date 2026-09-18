@@ -1,8 +1,10 @@
 package rb.quarkus;
 
 import io.quarkus.runtime.StartupEvent;
+import io.quarkus.vertx.http.HttpServerStart;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
+import jakarta.enterprise.event.ObservesAsync;
 import rb.domain.Domain;
 import rb.hosts.Hosts;
 
@@ -17,5 +19,10 @@ public class Startup {
   void onStart(@Observes StartupEvent event) throws Exception {
     Domain.load(Hosts.fixture());
     Hosts.serializer("jackson " + Hosts.version("jackson"));
+  }
+
+  /** Quarkus opens its socket after the startup observers return, and says when it has. */
+  void onListening(@ObservesAsync HttpServerStart event) {
+    Hosts.listening();
   }
 }

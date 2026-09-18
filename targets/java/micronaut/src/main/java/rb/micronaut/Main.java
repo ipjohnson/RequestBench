@@ -18,5 +18,6 @@ public class Main {
     System.setProperty("micronaut.server.port", String.valueOf(Hosts.port()));
     Hosts.serializer("jackson " + Hosts.version("jackson"));
     Micronaut.run(Main.class, args);
+    Hosts.listening();
   }
 }

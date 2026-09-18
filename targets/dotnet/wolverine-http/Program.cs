@@ -54,6 +54,7 @@ app.MapWolverineEndpoints(opts =>
 // rb:handler errors.unmatched
 app.MapFallback(() => Results.Problem(statusCode: 404));
 
+app.Lifetime.ApplicationStarted.Register(HostInfo.Listening);
 Console.Error.WriteLine($"container/wolverine-http listening on {HostInfo.Port()}");
 app.Run();
 

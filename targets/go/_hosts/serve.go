@@ -13,11 +13,14 @@ package hosts
 
 import (
 	"log"
+	"math"
+	"net"
 	"net/http"
 	"os"
 	"runtime"
 	"runtime/debug"
 	"strings"
+	"time"
 
 	"github.com/GoogleCloudPlatform/functions-framework-go/funcframework"
 	"github.com/GoogleCloudPlatform/functions-framework-go/functions"
@@ -29,6 +32,16 @@ import (
 // a constant because which adapter a target gets depends on the host and on whether the
 // target brought a native handler.
 var adapters []string
+
+// started is where boot_ms counts from. Package variables are initialized before main
+// runs, so this is taken before the target loads its fixture or builds its router. Go
+// keeps no start time for its own process, so the runtime's start and the initialization
+// of the packages ahead of this one are not counted.
+var started = time.Now()
+
+// boot is how long the target took to listen, set by the container host once it has.
+// Written before the server starts accepting, so every handler that reads it sees it.
+var boot time.Duration
 
 // ModVersion reads a dependency's version out of the build info the binary carries, so it
 // is whatever go.mod resolved rather than a constant kept current by hand.
@@ -67,8 +80,11 @@ func mod(path string) string {
 // the validator, and what stored the response. Both are the framework's own facility where
 // it ships one, so the rows are read against the declaration rather than across targets
 // that are not doing the same thing.
-func Meta(framework, version, tmpl, etag, cache string) map[string]string {
-	return map[string]string{
+//
+// boot_ms is there under container, where this package opens the listener itself. The
+// function hosts are started by a library that binds on its own, and report none.
+func Meta(framework, version, tmpl, etag, cache string) map[string]any {
+	m := map[string]any{
 		"framework": framework,
 		"version":   version,
 		"runtime":   runtime.Version(),
@@ -77,6 +93,10 @@ func Meta(framework, version, tmpl, etag, cache string) map[string]string {
 		"etag":      etag,
 		"cache":     cache,
 	}
+	if boot > 0 {
+		m["boot_ms"] = math.Round(float64(boot)/float64(100*time.Microsecond)) / 10
+	}
+	return m
 }
 
 func port() string {
@@ -98,8 +118,14 @@ func Serve(name string, h http.Handler, native any) {
 	}
 	switch host {
 	case "container":
+		// ListenAndServe in two halves, so the moment the socket is listening can be kept.
+		ln, err := net.Listen("tcp", ":"+port())
+		if err != nil {
+			log.Fatal(err)
+		}
+		boot = time.Since(started)
 		log.Printf("container/%s listening on %s", name, port())
-		log.Fatal(http.ListenAndServe(":"+port(), h))
+		log.Fatal(http.Serve(ln, h))
 	case "gcp-func":
 		adapters = []string{mod("github.com/GoogleCloudPlatform/functions-framework-go")}
 		functions.HTTP("rb", h.ServeHTTP)

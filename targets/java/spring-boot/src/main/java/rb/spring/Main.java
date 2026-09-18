@@ -46,5 +46,6 @@ public class Main {
     SpringApplication app = new SpringApplication(Main.class);
     app.setBannerMode(org.springframework.boot.Banner.Mode.OFF);
     app.run(args);
+    Hosts.listening();
   }
 }

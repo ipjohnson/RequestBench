@@ -11,6 +11,7 @@ package main
 import (
 	"log"
 	"os"
+	"time"
 
 	"github.com/gofiber/fiber/v3"
 	fiberrecover "github.com/gofiber/fiber/v3/middleware/recover"
@@ -64,7 +65,14 @@ func main() {
 		port = "8080"
 	}
 	log.Printf("container/fiber listening on %s", port)
-	log.Fatal(app.Listen(":"+port, fiber.ListenConfig{DisableStartupMessage: true}))
+	log.Fatal(app.Listen(":"+port, fiber.ListenConfig{
+		DisableStartupMessage: true,
+		// Called with the listener open, as the last step before Fiber serves on it.
+		BeforeServeFunc: func(*fiber.App) error {
+			boot = time.Since(started)
+			return nil
+		},
+	}))
 }
 
 // router builds every route, on a router nothing is serving yet. It is its own function

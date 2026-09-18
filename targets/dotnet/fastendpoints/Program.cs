@@ -46,6 +46,7 @@ app.UseFastEndpoints(config =>
 // rb:handler errors.unmatched
 app.MapFallback(() => Results.Json(DomainModel.NotFoundBody(), statusCode: 404));
 
+app.Lifetime.ApplicationStarted.Register(HostInfo.Listening);
 Console.Error.WriteLine($"container/fastendpoints listening on {HostInfo.Port()}");
 app.Run();
 

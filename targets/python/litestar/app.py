@@ -12,7 +12,6 @@ annotation this repository added.
 """
 import pathlib
 
-import uvicorn
 from litestar import Litestar, MediaType, Request, Response, delete, get, patch, post, put
 from litestar.config.compression import CompressionConfig
 from litestar.connection import ASGIConnection
@@ -464,5 +463,5 @@ app = Litestar(
 
 
 def serve():
-    uvicorn.run(app, host="0.0.0.0", port=host.boot("litestar"),
-                log_level="warning", access_log=False)
+    host.run_uvicorn(app, host="0.0.0.0", port=host.boot("litestar"),
+                     log_level="warning", access_log=False)

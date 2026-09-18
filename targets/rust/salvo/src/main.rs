@@ -502,7 +502,9 @@ mod suite;
 async fn main() {
     let port = rb_host::boot("salvo");
     let acceptor = TcpListener::new(("0.0.0.0", port)).bind().await;
-    Server::new(acceptor).serve(service()).await;
+    let service = service();
+    rb_host::listening();
+    Server::new(acceptor).serve(service).await;
 }
 
 /// Every route, on a Service nothing is serving yet. Its own function so a test can hand it

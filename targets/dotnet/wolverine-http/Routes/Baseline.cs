@@ -14,6 +14,6 @@ public static class BaselineEndpoints
     public static IResult Health() => Results.Text("ok");
 
     [WolverineGet("/__meta")]
-    public static IReadOnlyDictionary<string, string> Meta() =>
+    public static IReadOnlyDictionary<string, object> Meta() =>
         HostInfo.Meta("wolverine-http", HostInfo.Version(typeof(WolverineGetAttribute)), HostInfo.Razor);
 }

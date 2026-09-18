@@ -25,7 +25,7 @@ public class Baseline {
   }
 
   @GetMapping("/__meta")
-  Map<String, String> meta() {
+  Map<String, Object> meta() {
     return Hosts.meta("spring-boot", Hosts.version("spring-boot"), "thymeleaf",
                       "ShallowEtagHeaderFilter md5", "spring cache, ConcurrentMapCache");
   }

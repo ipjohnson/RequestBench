@@ -18,6 +18,9 @@ HERE = pathlib.Path(__file__).resolve().parent
 LANGUAGE = HERE.parent
 sys.path.insert(0, str(LANGUAGE))
 
+# Before the target, so the boot clock host.STARTED starts before the framework is imported.
+from _hosts import host
+
 target = os.environ.get("RB_TARGET")
 if not target:
     raise SystemExit("RB_TARGET is not set")
