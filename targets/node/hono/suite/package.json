@@ -1,0 +1,8 @@
+{
+  "name": "rb-suite-hono",
+  "private": true,
+  "type": "module",
+  "comment": "What Hono's testing guide runs app.request() under. Nothing else: the framework it tests resolves from targets/node/node_modules, and a test dependency here never reaches the image.",
+  "scripts": { "test": "vitest run" },
+  "devDependencies": { "vitest": "^5.0.1" }
+}
