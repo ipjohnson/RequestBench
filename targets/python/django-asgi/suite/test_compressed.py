@@ -56,6 +56,6 @@ class CompressedTests(SimpleTestCase):
 
         floor.check(a, answer)
         self.assertEqual(answer.encoding, "gzip")
-        # Nothing in ASP.NET Core adds Vary for a response compressed by hand, so a target
-        # that forgot it would pass the floor and be wrong in front of any shared cache.
+        # A target that gzips without Vary: Accept-Encoding passes the floor and is wrong in
+        # front of any shared cache.
         self.assertIn("accept-encoding", answer.headers.get("vary", "").lower())
