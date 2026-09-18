@@ -5,7 +5,10 @@
     "rps": 1000,
     "seconds": { "jit": 30, "steady": 10 },
     "note": "serial_requests is the serial suite's equivalent of seconds. A rate ladder warms for a duration; a host that runs one invocation at a time warms for a count, and a JVM needs thousands of invocations to reach C2 rather than the few hundred a steady runtime needs.",
-    "serial_requests": { "jit": 20000, "steady": 500 }
+    "serial_requests": { "jit": 20000, "steady": 500 },
+    "slices": { "fine_s": 1, "fine_until_s": 10, "coarse_s": 10 },
+    "first": "json.small",
+    "ramp_note": "The warmup is recorded and published as a ramp: the first request on its own, then the whole latency distribution for each slice of the schedule, one second wide until fine_until_s and ten seconds wide after it. That makes rps, seconds, slices and first protocol rather than tuning. Changing one breaks the ramp series the way moving a rung rate breaks the rung series, so it takes a new ladder version rather than an edit. json.small goes first because the readiness probe has already taken the plaintext path."
   },
   "rungs": [
     { "rung": 1, "name": "regular", "rps": 1000, "seconds": 60,

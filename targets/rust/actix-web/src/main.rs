@@ -470,10 +470,10 @@ mod suite;
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     let port = rb_host::boot("actix-web");
-    HttpServer::new(|| App::new().configure(config))
-        .bind(("0.0.0.0", port))?
-        .run()
-        .await
+    let server = HttpServer::new(|| App::new().configure(config))
+        .bind(("0.0.0.0", port))?;
+    rb_host::listening();
+    server.run().await
 }
 
 /// Every route, on the ServiceConfig App::configure hands over. Its own function so a test can

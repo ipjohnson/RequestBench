@@ -2,6 +2,7 @@ package rb.hosts;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -98,6 +99,26 @@ public final class Hosts {
     serializer = name;
   }
 
+  /** Milliseconds from the start of the JVM to the server listening, or -1 until it is. */
+  private static volatile long bootMs = -1;
+
+  /**
+   * Records that the server is listening, for /__meta to report as boot_ms. Each target
+   * starts its own server, so each calls this where its framework says the server is up.
+   *
+   * The JVM keeps its own start time, so its start is counted along with the framework's.
+   * Reading the uptime loads the management classes the first time, and that load happens
+   * after the moment being recorded, so it is taken back off.
+   */
+  public static void listening() {
+    if (bootMs >= 0) {
+      return;
+    }
+    long at = System.nanoTime();
+    long uptime = ManagementFactory.getRuntimeMXBean().getUptime();
+    bootMs = uptime - (System.nanoTime() - at) / 1_000_000;
+  }
+
   /**
    * What a target answers on /__meta.
    *
@@ -110,9 +131,9 @@ public final class Hosts {
    * facility where it ships one, so the rows are read against the declaration rather than
    * across targets that are not doing the same thing.
    */
-  public static Map<String, String> meta(String framework, String version, String template,
+  public static Map<String, Object> meta(String framework, String version, String template,
                                          String etag, String cache) {
-    Map<String, String> m = new LinkedHashMap<>(7);
+    Map<String, Object> m = new LinkedHashMap<>(9);
     m.put("framework", framework);
     m.put("version", version);
     m.put("runtime", runtime());
@@ -121,6 +142,9 @@ public final class Hosts {
     m.put("template", template);
     m.put("etag", etag);
     m.put("cache", cache);
+    if (bootMs >= 0) {
+      m.put("boot_ms", bootMs);
+    }
     return m;
   }
 

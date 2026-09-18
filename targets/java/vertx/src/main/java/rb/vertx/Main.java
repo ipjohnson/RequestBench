@@ -34,6 +34,7 @@ public final class Main {
          .requestHandler(router(vertx))
          .listen(Hosts.port())
          .toCompletionStage().toCompletableFuture().get();
+    Hosts.listening();
     System.out.println("container/vertx listening on " + Hosts.port());
   }
 

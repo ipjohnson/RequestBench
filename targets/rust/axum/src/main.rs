@@ -399,7 +399,9 @@ async fn main() {
     let port = rb_host::boot("axum");
 
     let listener = tokio::net::TcpListener::bind(("0.0.0.0", port)).await.expect("bind");
-    axum::serve(listener, app()).await.expect("serve");
+    let app = app();
+    rb_host::listening();
+    axum::serve(listener, app).await.expect("serve");
 }
 
 /// Every route, on a router nothing is serving yet. Its own function so a test can hand it

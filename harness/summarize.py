@@ -6,7 +6,7 @@ the percentiles and what was achieved and stays a few kilobytes.
 
   python3 harness/summarize.py results/<run>.jsonl --out results/summary/<run>.json
 """
-import argparse, base64, json, math, pathlib, struct, sys, collections
+import argparse, base64, gzip, json, math, pathlib, struct, sys, collections
 
 GROWTH, NBUCKETS = 1.02, 920
 LOG_G = math.log(GROWTH)
@@ -25,6 +25,21 @@ BIN_LO, BIN_PER_DECADE, BIN_COUNT = 80.0, 8, 31
 def unpack(b64):
     raw = base64.b64decode(b64)
     return struct.unpack("<%dI" % (len(raw) // 4), raw)
+
+def unpack_gz(b64):
+    """A ramp slice's histogram, which gen/blend.mjs gzips before encoding."""
+    raw = gzip.decompress(base64.b64decode(b64))
+    return struct.unpack("<%dI" % (len(raw) // 4), raw)
+
+# What a target row says about the boot it was measured on. boot_ms is the target's own
+# clock, from the start of its process to listening, read off /__meta. boot_start_ms,
+# boot_ready_ms and boot_wall_ms are the harness's: how long the start took, how long the
+# target then took to answer /health, and the two together, which is what an operator
+# waits through. boot_probe_ms is how long the probe that got that answer took, which is
+# the first request the target served. boot_page_cache says whether the same image had
+# just been run.
+BOOT = ("boot_ms", "boot_start_ms", "boot_ready_ms", "boot_wall_ms", "boot_probe_ms",
+        "boot_page_cache")
 
 def pct(counts, p):
     """The p-th percentile, positioned inside its bucket rather than snapped to the middle.
@@ -67,6 +82,28 @@ def rebin(counts):
         j = int(math.log10(math.exp((i + 0.5) * LOG_G) / BIN_LO) * BIN_PER_DECADE)
         out[min(BIN_COUNT - 1, max(0, j))] += c
     return out
+
+def ramp_of(row):
+    """The recorded warmup, or None for a run from before it was recorded.
+
+    Each slice keeps its whole histogram, gzipped as the generator wrote it. The shape of the
+    distribution in the first second against the last is what a ramp is for, and two
+    percentiles moving would not show it. The percentiles beside it are for reading the
+    file, and are computed the way every other one here is.
+    """
+    if not row:
+        return None
+    slices = []
+    for s in row["slices"]:
+        h = unpack_gz(s["hist_gz"])
+        slices.append({"start_s": s["start_s"], "seconds": s["seconds"], "count": s["count"],
+                       "errors": s["errors"], "mismatch": s["mismatch"],
+                       "dropped": s["dropped"], "p50_us": pct(h, 50), "p90_us": pct(h, 90),
+                       "p99_us": pct(h, 99), "hist_gz": s["hist_gz"]})
+    return {"offered_rps": row["offered_rps"], "seconds": row["seconds"],
+            "achieved_rps": row["achieved_rps"], "dropped": row["dropped"],
+            "errors": row["errors"], "status_mismatch": row["status_mismatch"],
+            "first": row.get("first"), "slices": slices}
 
 # Past this fraction of dropped requests a target is serving less than it was offered, so
 # its percentiles describe the requests that survived rather than the load it was given.
@@ -124,7 +161,12 @@ def main():
     env = next(r for r in rows if r["kind"] == "env")
     rungs = [r for r in rows if r["kind"] == "rung"]
     meta = {r["target"]: r for r in rows if r["kind"] == "target"}
+    ramps = {r["target"]: r for r in rows if r["kind"] == "ramp"}
     samples = [r for r in rows if r["kind"] == "sample"]
+    # A boot is published only from a container. --mode local launches go and rust through
+    # `go run` and `cargo`, which compile on first launch, so a local boot includes a
+    # compile and describes the toolchain.
+    boots = env.get("mode", "local") == "docker"
     # Nothing is divided by anything. What a run publishes is the time each target took,
     # and the reference below is the target the conformance gate compared responses
     # against, which is a statement about correctness rather than about speed.
@@ -217,6 +259,12 @@ def main():
                  # README does not read as a target that changed.
                  "bundle_hash": m.get("bundle_hash", ""),
                  "code_hash": m.get("code_hash", ""),
+                 # Where in the run this target was measured. Boot time is read against it,
+                 # because a late target boots on a machine that has been under load for an
+                 # hour.
+                 "ordinal": m.get("ordinal"),
+                 **{k: m.get(k) if boots else None for k in BOOT},
+                 "ramp": ramp_of(ramps.get(t)),
                  "rungs": {}, "families": {}, "families_by_rung": {}}
         for rn in rung_ids:
             r = by.get((t, rn))

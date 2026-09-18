@@ -35,6 +35,7 @@ app.MapControllers();
 // rb:handler errors.unmatched
 app.MapFallback(() => Results.Problem(statusCode: 404));
 
+app.Lifetime.ApplicationStarted.Register(HostInfo.Listening);
 Console.Error.WriteLine($"container/aspnet-mvc listening on {HostInfo.Port()}");
 app.Run();
 

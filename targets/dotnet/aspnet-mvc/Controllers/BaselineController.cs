@@ -16,6 +16,6 @@ public sealed class BaselineController : ControllerBase
     public ContentResult Health() => Content("ok", "text/plain");
 
     [HttpGet("/__meta")]
-    public IReadOnlyDictionary<string, string> Meta() =>
+    public IReadOnlyDictionary<string, object> Meta() =>
         HostInfo.Meta("aspnet-mvc", HostInfo.Version(typeof(ControllerBase)), HostInfo.Razor);
 }

@@ -11,6 +11,7 @@
 //! those rows are measured against.
 
 use rocket::data::{Data, Limits, ToByteUnit};
+use rocket::fairing::AdHoc;
 use rocket::http::{ContentType, Header, Status};
 use rocket::outcome::Outcome;
 use rocket::request::{self, FromRequest};
@@ -631,7 +632,12 @@ mod suite;
 #[rocket::main]
 async fn main() -> Result<(), rocket::Error> {
     let port = rb_host::boot("rocket");
-    rocket(port).launch().await.map(|_| ())
+    rocket(port)
+        // Liftoff runs once Rocket has bound its listener, just before it serves on it.
+        .attach(AdHoc::on_liftoff("rb-host", |_| Box::pin(async { rb_host::listening() })))
+        .launch()
+        .await
+        .map(|_| ())
 }
 
 /// Every route, on a Rocket nothing is serving yet. Its own function so a test can hand it

@@ -34,7 +34,7 @@ public sealed class HealthEndpoint : EndpointWithoutRequest
         HttpContext.Response.SendStringAsync("ok", cancellation: ct);
 }
 
-public sealed class MetaEndpoint : EndpointWithoutRequest<IReadOnlyDictionary<string, string>>
+public sealed class MetaEndpoint : EndpointWithoutRequest<IReadOnlyDictionary<string, object>>
 {
     public override void Configure()
     {
@@ -42,6 +42,6 @@ public sealed class MetaEndpoint : EndpointWithoutRequest<IReadOnlyDictionary<st
         AllowAnonymous();
     }
 
-    public override Task<IReadOnlyDictionary<string, string>> ExecuteAsync(CancellationToken ct) =>
+    public override Task<IReadOnlyDictionary<string, object>> ExecuteAsync(CancellationToken ct) =>
         Task.FromResult(HostInfo.Meta("fastendpoints", HostInfo.Version(typeof(IEndpoint)), HostInfo.Razor));
 }

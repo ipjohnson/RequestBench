@@ -59,6 +59,7 @@ Body.Map(app);
 DomainRoutes.Map(app);
 Templates.Map(app);
 
+app.Lifetime.ApplicationStarted.Register(HostInfo.Listening);
 Console.Error.WriteLine($"container/minimal-apis listening on {HostInfo.Port()}");
 app.Run();
 

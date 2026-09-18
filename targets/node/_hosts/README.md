@@ -9,6 +9,8 @@ Every `<framework>/app.js` exports two things:
     handler        a (req, res) function, for a host that brings its own server
 
 `container` calls `listen`, because what people deploy is the framework's own server.
+Once it resolves, the host calls `listening()` in `_shared/host.js`, and `/__meta` reports
+`boot_ms`: milliseconds from the start of the process to then.
 The function hosts pass `handler` to theirs, because that is what actually happens on
 Lambda, on Azure Functions and on Cloud Run. Neither is a wrapper around the other.
 

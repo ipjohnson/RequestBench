@@ -194,10 +194,12 @@ class Local:
         # PORT last, and set for every language: each target reads it to decide what to
         # bind, and an inherited one would put the target somewhere the harness is not
         # looking.
+        t0 = time.monotonic()
         self.proc = subprocess.Popen(argv, cwd=cwd,
                                      env={**os.environ, **extra, "PORT": str(self.port)},
                                      stdout=self.fh, stderr=subprocess.STDOUT,
                                      start_new_session=True)
+        self.start_ms = (time.monotonic() - t0) * 1000
         return self
 
     def tail(self, n=15):
@@ -243,8 +245,9 @@ class Container:
         suffix = "-" + self.host.split("-")[0] if special else ""
         # The port is in the name so two runs measuring the same target on one machine do
         # not remove each other's container the way a shared name would.
-        self.cname = "rb-%s-%s%s-%d" % (language, name, suffix, port)
+        self.base = self.cname = "rb-%s-%s%s-%d" % (language, name, suffix, port)
         self.image = "rb/%s-%s%s" % (language, name, suffix)
+        self.starts = 0
 
     def build(self):
         # Only a host that needs a different base image gets its own Dockerfile. Go serves
@@ -259,6 +262,11 @@ class Container:
         return self
 
     def start(self):
+        # Each boot of a target gets a name of its own. --rm removes a container after
+        # `docker stop` has returned, so a second boot under the same name can collide with
+        # the removal of the first.
+        self.starts += 1
+        self.cname = self.base if self.starts == 1 else "%s-%d" % (self.base, self.starts)
         subprocess.run(["docker", "rm", "-f", self.cname], capture_output=True)
         argv = ["docker", "run", "-d", "--rm", "--name", self.cname,
                 # Without this a target defaults to the container host whatever it was
@@ -279,8 +287,10 @@ class Container:
             argv += ["--cpus", self.CPUS]
         # Only the published side moves. Inside the container every target still binds
         # 8080, which is what its Dockerfile sets and exposes.
+        t0 = time.monotonic()
         subprocess.run(argv + ["-p", "%d:8080" % self.port, self.image],
                        check=True, capture_output=True)
+        self.start_ms = (time.monotonic() - t0) * 1000
         return self
 
     def alive(self):
@@ -303,23 +313,53 @@ def launcher(mode, language, name, port):
 def warmup_class(language):
     return "jit" if language in MATRIX["warmup_classes"]["jit"] else "steady"
 
+def boot_budget(mode, language):
+    """How long a target may take to answer /health before it counts as failed to boot.
+
+    `go run` compiles on first launch, which no boot budget should punish. Otherwise the
+    budget is the language's: a JVM target spends seconds starting that a steady runtime
+    does not, and 20s fails Spring Boot on two pinned cores.
+    """
+    if mode == "local" and language in ("go", "rust"):
+        return 240
+    return LADDER["boot_timeout_s"][warmup_class(language)]
+
 def wait_healthy(target, port, timeout):
-    """Wait for a 200 from /health, not merely for the port to accept.
+    """Wait for a 200 from /health, not merely for the port to accept. Returns how long that
+    took and how long the probe that got the 200 took, both in milliseconds.
 
     `docker run -p` publishes the port before the process inside has bound, so a TCP
     connect succeeds while the app is still starting. Conformance would then fire its
     first requests into a socket nobody is reading and record an empty body as that
     endpoint's fingerprint, which surfaces later as a body mismatch on whichever
     endpoints happened to land in the gap.
+
+    The probe interval is 2% of the time already waited, held between 1 and 50 ms. A Go
+    target boots in single-digit milliseconds and a JVM in seconds, so any fixed interval
+    is too coarse for one or wasteful on the other. Past 50 ms of boot this keeps the error
+    within the width of a latency histogram bucket.
+
+    The probe that gets the first 200 is the first request the target answers, and some
+    runtimes spend far longer on that request than they did binding. So a probe waits for
+    as long as the budget has left. One given up on after a fixed timeout would leave a
+    warmer probe to be timed in its place.
     """
     encoding = ENCODING_FOR_HOST.get(os.environ.get("RB_HOST", "container"), "http")
-    start = time.time()
+    start = time.monotonic()
     deadline = start + timeout
-    while time.time() < deadline:
-        if not target.alive():
-            raise RuntimeError("target exited during boot")
+    # Asking docker whether the container still runs costs tens of milliseconds, which
+    # would set the probe interval by itself. Once a second is soon enough to stop waiting
+    # on a target that has died.
+    checked = start
+    while time.monotonic() < deadline:
+        if time.monotonic() - checked >= 1.0:
+            if not target.alive():
+                raise RuntimeError("target exited during boot")
+            checked = time.monotonic()
         try:
-            c = http.client.HTTPConnection("127.0.0.1", port, timeout=2.0)
+            c = http.client.HTTPConnection("127.0.0.1", port,
+                                           timeout=max(0.001, deadline - time.monotonic()))
+            sent = time.monotonic()
             if encoding == "lambda":
                 # RIE serves only the invocations endpoint, so readiness is a real
                 # invocation and the status lives inside the returned envelope.
@@ -329,20 +369,53 @@ def wait_healthy(target, port, timeout):
                 body = r.read()
                 c.close()
                 if r.status == 200 and json.loads(body).get("statusCode") == 200:
-                    return round(time.time() - start, 2)
+                    done = time.monotonic()
+                    return (done - start) * 1000, (done - sent) * 1000
             else:
                 c.request("GET", "/health")
                 r = c.getresponse()
                 body = r.read()
                 c.close()
                 if r.status == 200 and body:
-                    return round(time.time() - start, 2)
+                    done = time.monotonic()
+                    return (done - start) * 1000, (done - sent) * 1000
         except (OSError, http.client.HTTPException, ValueError):
             pass
-        time.sleep(0.1)
+        time.sleep(min(0.05, max(0.001, (time.monotonic() - start) * 0.02)))
     raise RuntimeError("target never became ready in %ss (encoding %s)" % (timeout, encoding))
 
-def run_gen(port, rate, seconds, workers, record=True, only=None):
+
+def boot(t, port, mode, language):
+    """Start a target, wait for /health, and time the two halves apart.
+
+    `docker run` creates and starts the container and costs 100 to 300 ms with a variance
+    of its own, which is more than the whole boot of a native target. Timed only from its
+    return, the number leaves the start out. Timed only across it, the framework is buried
+    under it. So all three are kept: how long the start took, how long the target then took
+    to answer, and the sum, which is what an operator waits through. Beside them is how long
+    the answering probe took, which is the target's first request on its own.
+    """
+    t.start()
+    ready_ms, probe_ms = wait_healthy(t, port, boot_budget(mode, language))
+    return {"boot_start_ms": round(t.start_ms, 1), "boot_ready_ms": round(ready_ms, 1),
+            "boot_wall_ms": round(t.start_ms + ready_ms, 1),
+            "boot_probe_ms": round(probe_ms, 1)}
+
+
+def ramp_edges(seconds):
+    """Where each slice of a recorded warmup ends, in seconds from its start.
+
+    Fine early and coarse late, from spec/ladder.json: the cold-to-warm transition is in the
+    first seconds, and nothing interesting happens at second 70.
+    """
+    s = LADDER["warmup"]["slices"]
+    edges, at = [], 0
+    while at < seconds:
+        at = min(seconds, at + (s["fine_s"] if at < s["fine_until_s"] else s["coarse_s"]))
+        edges.append(at)
+    return edges
+
+def run_gen(port, rate, seconds, workers, record=True, only=None, slices=None, first=None):
     # Histograms go through a file rather than the pipe: a full rung is megabytes of
     # base64 and stdout stays readable for a human watching the run.
     tmp = ROOT / "results" / (".gen-%s.json" % uuid.uuid4().hex[:8])
@@ -353,6 +426,10 @@ def run_gen(port, rate, seconds, workers, record=True, only=None):
     # opposite of what a narrowed profile is asking to measure.
     if only:
         cmd += ["--only", ",".join(only)]
+    if slices:
+        cmd += ["--slices", ",".join(str(s) for s in slices)]
+    if first:
+        cmd += ["--first", first]
     gen_cpus = os.environ.get("RB_GEN_CPUS", "")
     if gen_cpus and shutil.which("taskset"):
         cmd = ["taskset", "-c", gen_cpus] + cmd
@@ -730,42 +807,39 @@ def main():
               % (what, a.mode, warm_s,
                  " ".join("%s@%d" % (r["name"], r["rps"]) for r in rungs), len(pairs)))
 
-    conformed, boot_failed, nonconforming = 0, [], []
+    boot_failed, nonconforming = [], []
     reference_ok = set()
-    for n, (language, target) in enumerate(pairs):
-        key = "%s:%s" % (language, target)
-        port = base + n
-        print("\n%-24s port %d"
-              % ("=== %s%s ===" % (("%s:" % language) if len(languages) > 1 else "", target),
-                 port))
-        t = launcher(a.mode, language, target, port).start()
+    # Conformance gets a boot of its own. It serves every endpoint at least once, so on the
+    # boot being measured it would spend the first request and the cold end of the warmup
+    # before either was recorded. A separate boot costs one container start per target and
+    # still stops a nonconforming target before it takes a measurement's worth of time.
+    gate = not a.skip_conform or a.expect or a.validate_only
+    measure = not (a.validate_only or a.expect)
+
+    def booted(t, port, language, key):
+        """The boot's timings, or None once it has said why the target did not come up."""
         try:
-            # `go run` compiles on first launch, which no boot budget should punish.
-            # Otherwise the budget is the language's: a JVM target spends seconds starting
-            # that a steady runtime does not, and 20s fails Spring Boot on two pinned cores.
-            try:
-                wait_healthy(t, port,
-                             240 if (a.mode == "local" and language in ("go", "rust"))
-                             else LADDER["boot_timeout_s"][warmup_class(language)])
-            except RuntimeError as e:
-                print("  BOOT FAILED: %s" % e)
-                boot_failed.append(key)
-                if hasattr(t, "tail"):
-                    print("  --- target log ---\n%s" % t.tail())
-                continue
-            meta = read_meta(port)
-            if meta:
-                print("  booted   %s %s on %s%s" % (meta.get("framework", target),
-                                                    meta.get("version", "?"),
-                                                    meta.get("runtime", "?"),
-                                                    " via " + meta["adapter"]
-                                                    if meta.get("adapter") else ""))
-                rows.append({"kind": "target", "run_id": run_id, "language": language,
-                             "target": target,
-                             "host": os.environ.get("RB_HOST", "container"), **meta,
-                             **bundle_hashes(language, target)})
-            else:
-                print("  booted   (no /__meta; version unknown)")
+            return boot(t, port, a.mode, language)
+        except RuntimeError as e:
+            print("  BOOT FAILED: %s" % e)
+            boot_failed.append(key)
+            if hasattr(t, "tail"):
+                print("  --- target log ---\n%s" % t.tail())
+            return None
+
+    def described(meta, target):
+        if not meta:
+            return "(no /__meta; version unknown)"
+        return "%s %s on %s%s" % (meta.get("framework", target), meta.get("version", "?"),
+                                  meta.get("runtime", "?"),
+                                  " via " + meta["adapter"] if meta.get("adapter") else "")
+
+    def gated(t, port, language, target, key):
+        """Boot the target for the gate alone, and say whether it may go on to be measured."""
+        try:
+            if booted(t, port, language, key) is None:
+                return False
+            print("  booted   %s" % described(read_meta(port), target))
             if not a.skip_conform:
                 reference = ROOT / "results" / (".ref-%s-%s.json"
                                                 % (run_id.replace(":", ""), language))
@@ -792,8 +866,7 @@ def main():
                 if not ok:
                     nonconforming.append(key)
                     print("  FAILED: target does not conform")
-                    continue
-                conformed += 1
+                    return False
                 if writes_reference:
                     reference_ok.add(language)
             if a.expect:
@@ -802,8 +875,52 @@ def main():
                 if not ok:
                     nonconforming.append(key)
                     print("  FAILED: target does not answer spec/expected.json")
-                    continue
-            if a.validate_only or a.expect:
+                    return False
+            return True
+        finally:
+            t.stop()
+            time.sleep(0.5)   # cooldown so the measured boot does not inherit a warm socket table
+
+    def record_target(language, target, ordinal, meta, timing):
+        """The measured boot's row: what the target says it is, the code it was built from,
+        and how long it took to come up. Called after the load rather than before it,
+        because /__meta is a request and the ramp is recorded from the first one."""
+        if not gate:
+            print("  booted   %s" % described(meta, target))
+        own = meta.get("boot_ms")
+        print("  boot     start %.1f + ready %.1f = %.1f ms; the first /health took %.1f ms%s"
+              % (timing["boot_start_ms"], timing["boot_ready_ms"], timing["boot_wall_ms"],
+                 timing["boot_probe_ms"],
+                 "" if own is None else "; the target reports %.1f ms to listen" % own))
+        rows.append({"kind": "target", "run_id": run_id, "language": language,
+                     "target": target, "host": host, **meta,
+                     **bundle_hashes(language, target), **timing,
+                     # Where in the run this target was measured. A target thirty places in
+                     # boots on a machine that has been under load for an hour, and the order
+                     # is stable, so boot time can trend with position as a bias on each
+                     # target rather than as noise. It only shows if the position is here.
+                     "ordinal": ordinal,
+                     # The gate's boot ran this image moments before, so its layers,
+                     # executable and libraries are in the page cache and only the process
+                     # starts cold: a scale-out onto a node that already has the image, not a
+                     # first deploy onto a fresh one. Without the gate nothing says what the
+                     # cache held.
+                     "boot_page_cache": "warm" if gate else "unknown"})
+
+    for n, (language, target) in enumerate(pairs):
+        key = "%s:%s" % (language, target)
+        port = base + n
+        print("\n%-24s port %d"
+              % ("=== %s%s ===" % (("%s:" % language) if len(languages) > 1 else "", target),
+                 port))
+        t = launcher(a.mode, language, target, port)
+        if gate and not gated(t, port, language, target, key):
+            continue
+        if not measure:
+            continue
+        try:
+            timing = booted(t, port, language, key)
+            if timing is None:
                 continue
 
             if suite == "serial":
@@ -823,6 +940,8 @@ def main():
                 if billed:
                     print("  billed  %s"
                           % "  ".join("%dms x%s" % (k, f"{v:,}") for k, v in billed.items()))
+                # /__meta after the logs are read, so its invocation is not in billed_ms.
+                record_target(language, target, n + 1, read_meta(port), timing)
                 for ep in res["endpoints"]:
                     rows.append({"kind": "sample", "run_id": run_id, "epoch": 1,
                                  "suite": SEQUENCE, "arm": None, "language": language,
@@ -846,7 +965,23 @@ def main():
 
             print("  warmup %ss @ %s rps  (%s per live endpoint)"
                   % (warm_s, warm_rps, f"{warm_rps * warm_s // len(ids):,}"))
-            run_gen(port, warm_rps, warm_s, a.workers, record=False, only=live)
+            # The window where a cold target becomes a warm one, on a boot that has served
+            # nothing but the readiness probe. Kept as a ramp: the first request on its
+            # own, then the whole distribution per slice.
+            ramp = run_gen(port, warm_rps, warm_s, a.workers, record=False, only=live,
+                           slices=ramp_edges(warm_s), first=LADDER["warmup"]["first"])
+            record_target(language, target, n + 1, read_meta(port), timing)
+            first, sl = ramp.get("first"), ramp["slices"]
+            print("  ramp     %s   p99 %dus in the first %gs, %dus in the last %gs"
+                  % ("first %s %s in %dus" % (first["endpoint"],
+                                              first.get("status", first.get("error")),
+                                              first["us"]) if first else "no first request",
+                     sl[0]["p99_us"], sl[0]["seconds"], sl[-1]["p99_us"], sl[-1]["seconds"]))
+            rows.append({"kind": "ramp", "run_id": run_id, "language": language,
+                         "target": target, "offered_rps": warm_rps, "seconds": warm_s,
+                         "achieved_rps": ramp["achieved_rps"], "dropped": ramp["dropped"],
+                         "errors": ramp["errors"], "status_mismatch": ramp["status_mismatch"],
+                         "first": first, "slices": sl})
 
             for r in rungs:
                 dur = secs or r["seconds"]

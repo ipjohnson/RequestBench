@@ -275,9 +275,7 @@ def boot_and_capture(language, target, mode, port, cached=False):
     launcher = run.launcher(mode, language, target, port)
     launcher.start()
     try:
-        run.wait_healthy(launcher, port,
-                         240 if (mode == "local" and language in ("go", "rust"))
-                         else run.LADDER["boot_timeout_s"][run.warmup_class(language)])
+        run.wait_healthy(launcher, port, run.boot_budget(mode, language))
         answers = capture("127.0.0.1:%d" % port)
     finally:
         launcher.stop()

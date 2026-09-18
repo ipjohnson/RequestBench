@@ -19,7 +19,6 @@ and the substitutes are what the numbers describe:
 """
 import pathlib
 
-import uvicorn
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.encoders import jsonable_encoder
@@ -441,5 +440,5 @@ async def template_medium(request: Request):
 
 
 def serve():
-    uvicorn.run(app, host="0.0.0.0", port=host.boot("fastapi"),
-                log_level="warning", access_log=False)
+    host.run_uvicorn(app, host="0.0.0.0", port=host.boot("fastapi"),
+                     log_level="warning", access_log=False)

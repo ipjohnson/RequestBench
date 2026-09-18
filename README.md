@@ -144,15 +144,16 @@ off rather than left to cancel.
 
 ## Status
 
-Working: the spec and plan, the conformance gate with cross-target response comparison,
-the open-loop generator with per-endpoint histograms, the orchestrator in both host and
-container mode, the aggregator, the machine preflight, the nightly measurement split by
-execution host, the nightly framework update, target bundles with a framework page per
-target, and thirty-three targets across six languages, all of them conforming. Node has
-Fastify, Express, Hono, Koa and h3. Go has Gin, Echo, chi, gorilla/mux and Fiber. Java has Spring Boot, Quarkus,
-Micronaut, Helidon SE, Vert.x and Javalin. Rust has axum, actix-web, Rocket, Poem, Salvo
-and warp, Python has FastAPI, Starlette, Litestar, Sanic, Flask and Django over ASGI, and
-.NET has minimal APIs, MVC controllers, FastEndpoints, Carter and Wolverine.HTTP.
+Working: the spec and plan, the conformance gate with cross-target response comparison, the
+open-loop generator with per-endpoint histograms, the boot time and the warmup ramp of
+every measured target, the orchestrator in both host and container mode, the aggregator,
+the machine preflight, the nightly measurement split by execution host, the nightly
+framework update, target bundles with a framework page per target, and thirty-three targets
+across six languages, all of them conforming. Node has Fastify, Express, Hono, Koa and h3.
+Go has Gin, Echo, chi, gorilla/mux and Fiber. Java has Spring Boot, Quarkus, Micronaut,
+Helidon SE, Vert.x and Javalin. Rust has axum, actix-web, Rocket, Poem, Salvo and warp,
+Python has FastAPI, Starlette, Litestar, Sanic, Flask and Django over ASGI, and .NET has
+minimal APIs, MVC controllers, FastEndpoints, Carter and Wolverine.HTTP.
 
 All thirty-three answer the forty-eight endpoints of `blend-v2`, and all thirty-three are
 checked against `spec/expected.json` rather than against each other. The expectation is
