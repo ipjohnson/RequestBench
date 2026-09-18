@@ -13,6 +13,7 @@ import { permalink, type SnippetPart } from "../../lib/bundleview.js";
 import { chainWith, comparedOf, deltaFor, epValue, floorFor } from "../../lib/delta.js";
 import { usedSpan } from "../../lib/bins.js";
 import { site, type FrameworkPage } from "../../lib/site.js";
+import type { Rung } from "../../lib/types.js";
 
 export function getStaticPaths() {
   return site().pages.map((page) => ({ params: { slug: page.slug }, props: { page } }));
@@ -124,6 +125,17 @@ for (const [fam, eids] of groups) if (fam) families.set(fam, [...(families.get(f
 // empty grid, the same treatment a missing bundle_hash gets above.
 const grid = run.bin_grid;
 
+// A rate the target did not complete publishes what it achieved and dropped instead of a
+// latency, so its button is grayed out and says why rather than opening empty panes.
+const unfinished = (r: Rung | undefined): string | null => {
+  if (r?.completed !== false) return null;
+  const n = (v: number | undefined): string => (v ?? 0).toLocaleString();
+  return (
+    `${name} could not sustain ${n(r.offered_rps)} rps. It achieved ${n(r.achieved_rps)} rps ` +
+    `and dropped ${n(r.dropped)} requests, so there are no latencies at this rate.`
+  );
+};
+
 // Every rate the run recorded for this target, not just the one the page opens on. The
 // reader flips between them in the browser, so both are rendered and one is shown; fetching
 // on demand would be a second data path for a page that is already a static file.
@@ -135,6 +147,7 @@ const rates = (run.rungs ?? [])
     label: `${(t.rungs[r]?.offered_rps ?? 0).toLocaleString()} rps`,
     span: usedSpan(own, order, r),
     shown: r === rn,
+    why: unfinished(t.rungs[r]),
   }));
 const hasBins = Boolean(grid) && rates.some((r) => r.span);
 
@@ -236,6 +249,8 @@ const linkFor = (eid: string): string | null => {
                     class="eprate-pick"
                     data-rung={r.rn}
                     aria-pressed={r.shown}
+                    aria-disabled={r.why ? "true" : undefined}
+                    title={r.why ?? undefined}
                   >
                     {r.label}
                   </button>
