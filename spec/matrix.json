@@ -357,7 +357,8 @@
         "builtin": "The endpoint class writes the string in ExecuteAsync; nothing sits between them."
       },
       "json": {
-        "builtin": "Returning the record from ExecuteAsync is the whole of it: System.Text.Json serializes it."
+        "mechanism": "a source-generated JsonSerializerContext in the target, first in the resolver chain of config.Serializer.Options in UseFastEndpoints, so System.Text.Json writes the record ExecuteAsync returns from generated metadata instead of reflection; the relaxed encoder FastEndpoints copies from minimal APIs keeps the generated fast path off",
+        "mentions": "JsonSerializerContext"
       },
       "parameters": {
         "builtin": "A property on the request class named after the capture is the binding: FastEndpoints fills it from the route value before ExecuteAsync runs."
