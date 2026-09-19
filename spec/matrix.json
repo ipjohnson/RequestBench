@@ -536,7 +536,9 @@
         "builtin": "c.String writes the string from the route itself, so the handler is all there is."
       },
       "json": {
-        "mechanism": "c.JSON over a body read once into the closure, so the map lookup is not in the measurement"
+        "mechanism": "c.JSON over a body read once into the closure, so the map lookup is not in the measurement, serialized by sonic.ConfigStd through the JSONSerializer on the engine",
+        "dep": "github.com/bytedance/sonic",
+        "mentions": "sonic"
       },
       "parameters": {
         "mechanism": "c.Bind reading the param: tag from Echo's :one captures, with the bound struct echoed beside the small payload; the static route answers the payload closure"
@@ -554,7 +556,7 @@
         "mechanism": "Echo middleware over one shared LRU store, on these routes and nowhere else"
       },
       "body": {
-        "mechanism": "c.Bind fills the struct and c.Validate runs the validator the engine holds, so no handler calls one",
+        "mechanism": "c.Bind fills the struct and c.Validate runs the validator the engine holds, so no handler calls one; the struct and the unvalidated map both decode through the sonic JSONSerializer on the engine",
         "dep": "github.com/go-playground/validator/v10",
         "mentions": "validator"
       },

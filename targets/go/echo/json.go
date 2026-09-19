@@ -6,9 +6,28 @@
 package main
 
 import (
+	"github.com/bytedance/sonic"
 	d "github.com/ianjohnson/requestbench/targets/go/_shared"
 	"github.com/labstack/echo/v4"
 )
+
+// The JSONSerializer the engine holds: DefaultJSONSerializer's two methods over
+// sonic.ConfigStd, the sonic configuration that writes what encoding/json writes. Echo
+// documents the slot and points at DefaultJSONSerializer as the shape to follow.
+// rb:wiring json.*,body.*
+type sonicSerializer struct{}
+
+func (sonicSerializer) Serialize(c echo.Context, i any, indent string) error {
+	enc := sonic.ConfigStd.NewEncoder(c.Response())
+	if indent != "" {
+		enc.SetIndent("", indent)
+	}
+	return enc.Encode(i)
+}
+
+func (sonicSerializer) Deserialize(c echo.Context, i any) error {
+	return sonic.ConfigStd.NewDecoder(c.Request().Body).Decode(i)
+}
 
 // The response is read once and served from the closure rather than looked up per request:
 // the map lookup is not what any of these endpoints is measuring.
