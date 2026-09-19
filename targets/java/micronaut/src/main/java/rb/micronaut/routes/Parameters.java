@@ -3,6 +3,7 @@ package rb.micronaut.routes;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
 import io.micronaut.http.annotation.PathVariable;
+import io.micronaut.serde.annotation.Serdeable;
 import rb.domain.Domain;
 import rb.domain.Model.PayloadBody;
 import rb.domain.Model.PayloadWithEcho;
@@ -18,8 +19,10 @@ import rb.domain.Model.PayloadWithEcho;
 @Controller
 public class Parameters {
 
+  @Serdeable
   record One(int one) {}
 
+  @Serdeable
   record Two(int one, int two) {}
 
   @Get("/parameters/static/segment/literal")

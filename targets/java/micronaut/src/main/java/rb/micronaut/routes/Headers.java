@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
 import io.micronaut.http.annotation.Header;
+import io.micronaut.serde.annotation.Serdeable;
 import rb.domain.Domain;
 import rb.domain.Model.PayloadBody;
 import rb.domain.Model.PayloadWithEcho;
@@ -19,6 +20,7 @@ import rb.domain.Model.PayloadWithEcho;
 @Controller
 public class Headers {
 
+  @Serdeable
   record Bound(String tenant, @JsonProperty("request_id") String requestId, int account) {}
 
   @Get("/headers")

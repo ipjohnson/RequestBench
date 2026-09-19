@@ -2,6 +2,7 @@ package rb.micronaut;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.micronaut.core.annotation.Introspected;
+import io.micronaut.serde.annotation.Serdeable;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -20,18 +21,21 @@ import rb.domain.Model.ValidatedOrder;
  * before the controller method is entered.
  *
  * {@code @Introspected} is what gives the processor something to generate from: without it
- * there is no bean introspection for the record and nothing to validate.
+ * there is no bean introspection for the record and nothing to validate. {@code @Serdeable}
+ * is what lets Micronaut Serialization read the body into it.
  *
  * The boxed types are what makes {@code @NotNull} mean present: an int is indistinguishable
  * from an absent one, because both arrive as zero.
  */
 @Introspected
+@Serdeable
 // rb:wiring body.*,domain.*
 public record OrderIn(@JsonProperty("customer_id") @NotNull Integer customerId,
                       @NotNull String status,
                       @NotNull @Size(min = 1) List<@Valid LineIn> lines) {
 
   @Introspected
+  @Serdeable
   public record LineIn(@JsonProperty("product_id") @NotNull Integer productId,
                        @NotNull @Min(1) Integer qty) {}
 

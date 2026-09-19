@@ -22,6 +22,6 @@ public class Handler extends APIGatewayV2HTTPEventFunction {
       throw new ExceptionInInitializerError(e);
     }
     Hosts.adapter("micronaut-function-aws-api-proxy");
-    Hosts.serializer("jackson " + Hosts.version("jackson"));
+    Hosts.serializer(rb.micronaut.Main.SERIALIZER);
   }
 }

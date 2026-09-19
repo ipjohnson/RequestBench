@@ -820,7 +820,7 @@
         "builtin": "The controller method returns the string and Micronaut writes it; nothing sits between them."
       },
       "json": {
-        "builtin": "Returning the record is the whole of it: Micronaut serializes what the controller method returned."
+        "builtin": "Returning the record is the whole of it: Micronaut Serialization writes what the controller method returned, through the introspection @SerdeImport generates for each shared record at compile time."
       },
       "parameters": {
         "builtin": "@PathVariable names the capture and declares its type, and Micronaut converts it before the method runs."
