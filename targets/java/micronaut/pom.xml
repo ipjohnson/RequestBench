@@ -63,13 +63,9 @@
       <groupId>io.micronaut.validation</groupId>
       <artifactId>micronaut-validation</artifactId>
     </dependency>
-    <!-- Micronaut Serialization, Micronaut's own serializer. It reads and writes through
-         introspections the processor below generates at compile time, not through
-         reflection, and it keeps the Jackson annotations on the shared records. Main
-         imports those records. -->
     <dependency>
-      <groupId>io.micronaut.serde</groupId>
-      <artifactId>micronaut-serde-jackson</artifactId>
+      <groupId>io.micronaut</groupId>
+      <artifactId>micronaut-jackson-databind</artifactId>
     </dependency>
     <!-- Micronaut's own view facility. Thymeleaf is the engine Micronaut Views lists
          first, and the integration brings the engine with it. -->
@@ -86,12 +82,6 @@
     <dependency>
       <groupId>io.micronaut.aws</groupId>
       <artifactId>micronaut-function-aws-api-proxy</artifactId>
-    </dependency>
-    <!-- Host: lambda-rie. The API Gateway event types, imported for Micronaut Serialization,
-         which is what the adapter reads and writes them with. -->
-    <dependency>
-      <groupId>io.micronaut.aws</groupId>
-      <artifactId>micronaut-aws-lambda-events-serde</artifactId>
     </dependency>
     <!-- Host: gcp-func. Micronaut's own Functions Framework adapter, which keeps the same
          @Controller routes the container host serves. -->
@@ -119,10 +109,6 @@
             <path>
               <groupId>io.micronaut.validation</groupId>
               <artifactId>micronaut-validation-processor</artifactId>
-            </path>
-            <path>
-              <groupId>io.micronaut.serde</groupId>
-              <artifactId>micronaut-serde-processor</artifactId>
             </path>
           </annotationProcessorPaths>
         </configuration>

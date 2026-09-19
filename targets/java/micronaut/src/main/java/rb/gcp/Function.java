@@ -19,6 +19,6 @@ public class Function extends io.micronaut.gcp.function.http.HttpFunction {
       throw new ExceptionInInitializerError(e);
     }
     Hosts.adapter("micronaut-gcp-function-http");
-    Hosts.serializer(rb.micronaut.Main.SERIALIZER);
+    Hosts.serializer("jackson " + Hosts.version("jackson"));
   }
 }
