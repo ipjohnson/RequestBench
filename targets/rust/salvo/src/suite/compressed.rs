@@ -35,7 +35,7 @@ async fn the_large_payload_is_uncompressed_too_when_identity_was_asked_for() {
 
 // rb:test compressed.gzip_small
 #[tokio::test]
-async fn a_payload_under_the_shared_floor_is_gzipped_anyway() {
+async fn a_payload_under_the_shared_floor_is_sent_uncompressed_even_so() {
     let a = planned::ask("compressed.gzip_small");
 
     let got = send(&a).await;
@@ -43,20 +43,21 @@ async fn a_payload_under_the_shared_floor_is_gzipped_anyway() {
     floor::check(&a, &got);
     // spec/expected.json pins no encoding here: the small payload sits under the shared gzip
     // floor and the frameworks disagree about what to do with it. salvo's Compression handler
-    // gzips it anyway, 125 bytes into 131, six bytes more than it started with.
-    assert_eq!(got.encoding, "gzip");
+    // leaves a body under its min_length alone, and min_length defaults to 1024 bytes.
+    assert_eq!(got.encoding, "");
 }
 
 // rb:test compressed.gzip_large
 #[tokio::test]
-async fn a_payload_over_the_floor_is_gzipped() {
+async fn a_payload_over_the_floor_is_gzipped_and_says_what_it_varies_on() {
     let a = planned::ask("compressed.gzip_large");
 
     let got = send(&a).await;
 
     floor::check(&a, &got);
     assert_eq!(got.encoding, "gzip");
-    // salvo's Compression handler sends no Vary with the gzip body, so a shared cache could
-    // hand it to a client that never asked for gzip. spec/expected.json does not pin Vary, so
-    // this test does not hold salvo to it.
+    // A target that gzips without Vary: Accept-Encoding passes the floor and is wrong in
+    // front of any shared cache.
+    let vary = got.headers.get("vary").map(|v| v.to_lowercase()).unwrap_or_default();
+    assert!(vary.contains("accept-encoding"), "vary {vary:?}");
 }

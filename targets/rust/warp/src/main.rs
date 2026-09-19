@@ -300,10 +300,10 @@ mod suite;
 #[tokio::main]
 async fn main() {
     let port = rb_host::boot("warp");
-    // run() is bind_ephemeral() and an await, and the socket is bound before the await.
-    let (_, server) = warp::serve(routes()).bind_ephemeral(([0, 0, 0, 0], port));
+    // run(addr) is bind(addr) and then run(), and bind has returned once the socket listens.
+    let server = warp::serve(routes()).bind(([0, 0, 0, 0], port)).await;
     rb_host::listening();
-    server.await;
+    server.run().await;
 }
 
 /// Every route, on a filter nothing is serving yet. Its own function so a test can hand it

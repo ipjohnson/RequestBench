@@ -18,7 +18,7 @@ askama = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 tokio = { workspace = true }
-salvo = { version = "0.87", features = ["compression", "caching-headers", "cache"] }
+salvo = { version = "0.96", features = ["compression", "caching-headers", "cache"] }
 
 # The suite in src/suite. The standard library has no gzip decoder and the floor has to undo
 # gzip before it compares, so the suite takes flate2.
@@ -26,4 +26,4 @@ salvo = { version = "0.87", features = ["compression", "caching-headers", "cache
 # dev-dependency's features reach a test build and no other.
 [dev-dependencies]
 flate2 = { workspace = true }
-salvo = { version = "0.87", features = ["compression", "caching-headers", "cache", "test"] }
+salvo = { version = "0.96", features = ["compression", "caching-headers", "cache", "test"] }
