@@ -18,7 +18,9 @@ and the substitutes are what the numbers describe:
               forty-two endpoints.
 """
 import pathlib
-from typing import Annotated
+from typing import Annotated, TypedDict
+
+import jinja2
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Request, Response
 from fastapi.exceptions import RequestValidationError
@@ -52,9 +54,12 @@ from _shared.asgi import ConditionalGet, ResponseCache
 
 
 # rb:wiring body.*,domain.*
-class LineIn(BaseModel):
+# A TypedDict rather than a nested model. Pydantic's performance guide puts a TypedDict at
+# about 2.5x faster than a nested model, because each line validates into a dict rather
+# than into a model instance.
+class LineIn(TypedDict):
     product_id: int
-    qty: int = Field(ge=1)
+    qty: Annotated[int, Field(ge=1)]
 
 
 # rb:wiring body.*,domain.*
@@ -65,10 +70,7 @@ class OrderIn(BaseModel):
 
     def order(self):
         """The order, once Pydantic has said the body is one."""
-        return d.price_order(
-            self.customer_id, self.status,
-            [{"product_id": line.product_id, "qty": line.qty} for line in self.lines],
-        )
+        return d.price_order(self.customer_id, self.status, self.lines)
 
 # The documentation routes are off: they are three more entries in the router the
 # benchmark never asks for, and /docs is not part of the endpoint set.
@@ -121,6 +123,12 @@ async def invalid(_: Request, exc: RequestValidationError):
 
 
 # ---- baseline, json, parameters, query, headers --------------------------------------
+#
+# Every handler that returns a value declares `-> dict`. When a route names no
+# response_class, FastAPI serializes a declared return type with Pydantic, straight to JSON
+# bytes. Without one it walks the value through jsonable_encoder and then json.dumps.
+# Pydantic reads `dict` as dict[Any, Any], so the validation that runs first copies the top
+# level of the value and nothing more.
 
 @app.get("/plaintext", response_class=PlainTextResponse)
 async def plaintext():
@@ -133,7 +141,7 @@ async def health():
 
 
 @app.get("/__meta")
-async def meta():
+async def meta() -> dict:
     return META
 
 
@@ -141,34 +149,34 @@ async def meta():
 # would make the router pay parameter cost on the family every other target serves from a
 # static route, and it would answer 200 with an empty body for a size that does not exist.
 @app.get("/json/small")
-async def json_small():
+async def json_small() -> dict:
     return d.payload("small")
 
 
 @app.get("/json/medium")
-async def json_medium():
+async def json_medium() -> dict:
     return d.payload("medium")
 
 
 @app.get("/json/large")
-async def json_large():
+async def json_large() -> dict:
     return d.payload("large")
 
 
 @app.get("/parameters/static/segment/literal")
-async def parameters_static():
+async def parameters_static() -> dict:
     return small()
 
 
 # FastAPI tries routes in the order they were registered, and {one} matches "static" before
 # the int is checked. So the static route above has to stay first.
 @app.get("/parameters/{one}/segment/literal")
-async def parameters_one(one: int):
+async def parameters_one(one: int) -> dict:
     return d.with_echo("small", {"one": one})
 
 
 @app.get("/parameters/{one}/with-second/{two}")
-async def parameters_two(one: int, two: int):
+async def parameters_two(one: int, two: int) -> dict:
     return d.with_echo("small", {"one": one, "two": two})
 
 
@@ -177,13 +185,14 @@ async def parameters_two(one: int, two: int):
 # default is what a missing parameter is; a value Pydantic cannot coerce is a
 # RequestValidationError, which the handler above answers with FastAPI's own 422 envelope.
 @app.get("/query/one")
-async def query_one(page: int = 0):
+async def query_one(page: int = 0) -> dict:
     return d.with_echo("small", {"page": page})
 
 
 @app.get("/query/many")
 async def query_many(page: int = 0, size: int = 0, status: str = "", category: str = "",
-                     sort: str = "", q: str = "", min_price: int = 0, max_price: int = 0):
+                     sort: str = "", q: str = "", min_price: int = 0,
+                     max_price: int = 0) -> dict:
     return d.with_echo("small", {"page": page, "size": size, "status": status,
                                  "category": category, "sort": sort, "q": q,
                                  "min_price": min_price, "max_price": max_price})
@@ -192,7 +201,7 @@ async def query_many(page: int = 0, size: int = 0, status: str = "", category: s
 # The handler reads no header at all. headers.many sends 30 request headers and headers.few
 # sends 5, so the difference is the cost of materialising 25 that nobody asked for.
 @app.get("/headers")
-async def headers():
+async def headers() -> dict:
     return small()
 
 
@@ -202,7 +211,7 @@ async def headers():
 @app.get("/headers/bind")
 async def headers_bind(x_rb_tenant: Annotated[str, Header()] = "",
                        x_rb_request_id: Annotated[str, Header()] = "",
-                       x_rb_account: Annotated[int, Header()] = 0):
+                       x_rb_account: Annotated[int, Header()] = 0) -> dict:
     return d.with_echo("small", {"tenant": x_rb_tenant, "request_id": x_rb_request_id,
                                  "account": x_rb_account})
 
@@ -220,17 +229,17 @@ def layers(n):
 
 
 @app.get("/middleware/none")
-async def middleware_none():
+async def middleware_none() -> dict:
     return small()
 
 
 @app.get("/middleware/four", dependencies=layers(4))
-async def middleware_four():
+async def middleware_four() -> dict:
     return small()
 
 
 @app.get("/middleware/sixteen", dependencies=layers(16))
-async def middleware_sixteen():
+async def middleware_sixteen() -> dict:
     return small()
 
 
@@ -243,7 +252,7 @@ async def require_token(request: Request):
 
 
 @app.get("/authorized/small", dependencies=[Depends(require_token)])
-async def authorized_small():
+async def authorized_small() -> dict:
     return small()
 
 
@@ -259,7 +268,7 @@ gzipped.add_middleware(GZipMiddleware, compresslevel=1)
 
 # rb:wiring compressed.*
 def compressed_route(size):
-    async def handler(response: Response):
+    async def handler(response: Response) -> dict:
         response.headers["x-rb-serial"] = d.next_serial()
         return d.payload(size)
     return handler
@@ -287,7 +296,7 @@ conditional.add_middleware(ConditionalGet)
 
 # rb:wiring etag.*
 def etag_route(size):
-    async def handler(response: Response):
+    async def handler(response: Response) -> dict:
         response.headers["cache-control"] = d.CACHEABLE
         response.headers["x-rb-serial"] = d.next_serial()
         return d.payload(size)
@@ -321,7 +330,7 @@ cached.add_middleware(
 
 # rb:wiring cache.*
 def cache_route(size, vary=()):
-    async def handler(response: Response):
+    async def handler(response: Response) -> dict:
         if vary:
             response.headers["vary"] = ", ".join(vary)
         response.headers["x-rb-serial"] = d.next_serial()
@@ -346,24 +355,24 @@ app.mount("/cache", cached)
 # rather than the validator plus the parse.
 
 @app.post("/body/bind/small")
-async def bind_small(body: dict):
+async def bind_small(body: dict) -> dict:
     return d.bind_echo(body)
 
 
 @app.post("/body/bind/medium")
-async def bind_medium(body: dict):
+async def bind_medium(body: dict) -> dict:
     return d.bind_echo(body)
 
 
 # The parameter's type is the wiring: FastAPI validates against the model before the
 # handler runs, so a body that does not fit never reaches one.
 @app.post("/body/validate/small")
-async def validate_small(body: OrderIn):
+async def validate_small(body: OrderIn) -> dict:
     return body.order()
 
 
 @app.post("/body/validate/medium")
-async def validate_medium(body: OrderIn):
+async def validate_medium(body: OrderIn) -> dict:
     return body.order()
 
 
@@ -371,47 +380,47 @@ async def validate_medium(body: OrderIn):
 # what Pydantic answers. The gap to body.rejected_all is what FastAPI costs rather than the
 # same walk written twice.
 @app.post("/body/validate/first-error")
-async def validate_first(body: OrderIn):
+async def validate_first(body: OrderIn) -> dict:
     return body.order()
 
 
 # ---- domain --------------------------------------------------------------------------
 
 @app.get("/domain/orders")
-async def domain_orders(page: int = 0, size: int = 0, status: str = ""):
+async def domain_orders(page: int = 0, size: int = 0, status: str = "") -> dict:
     return d.domain_filter(page, size, status)
 
 
 @app.post("/domain/orders", status_code=201)
-async def create_order(body: OrderIn, response: Response):
+async def create_order(body: OrderIn, response: Response) -> dict:
     out = body.order()
     response.headers["location"] = d.created_location()
     return out
 
 
 @app.get("/domain/orders/{oid}")
-async def lookup_order(oid: str):
+async def lookup_order(oid: str) -> dict:
     return d.get_order(oid)
 
 
 @app.put("/domain/orders/{oid}")
-async def replace_order(oid: str, body: OrderIn):
+async def replace_order(oid: str, body: OrderIn) -> dict:
     existing = d.get_order(oid)
     return {"id": existing["id"], **body.order()}
 
 
 @app.get("/domain/customers/{cid}/summary")
-async def customer_summary(cid: str):
+async def customer_summary(cid: str) -> dict:
     return d.domain_join(cid)
 
 
 @app.get("/domain/regions/{region}/report")
-async def region_report(region: str):
+async def region_report(region: str) -> dict:
     return d.domain_aggregate(region)
 
 
 @app.patch("/domain/customers/{cid}")
-async def patch_customer(cid: str, body: dict):
+async def patch_customer(cid: str, body: dict) -> dict:
     return d.patch_customer(cid, body)
 
 
@@ -430,8 +439,14 @@ async def delete_line(oid: str, lid: str):
 # first render and cached by the environment: a precomputed string would measure nothing.
 
 # rb:wiring template.*
-templates = Jinja2Templates(
-    directory=str(pathlib.Path(__file__).resolve().parent / "templates"))
+# The environment Jinja2Templates builds from `directory`, with auto_reload off. Left on,
+# it checks the template file's mtime on every render, and Jinja documents turning it off
+# for performance. Passing a built environment is how Jinja2Templates takes one.
+templates = Jinja2Templates(env=jinja2.Environment(
+    loader=jinja2.FileSystemLoader(pathlib.Path(__file__).resolve().parent / "templates"),
+    autoescape=jinja2.select_autoescape(),
+    auto_reload=False,
+))
 
 
 # rb:wiring template.*

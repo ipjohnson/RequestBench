@@ -1309,7 +1309,7 @@
         "builtin": "response_class=PlainTextResponse and a returned string; nothing sits between the route and the body."
       },
       "json": {
-        "mechanism": "returning the dict, which FastAPI serializes; one small() helper behind the routes that answer the same payload"
+        "mechanism": "returning the dict under a declared -> dict, which FastAPI serializes with Pydantic straight to JSON bytes; one small() helper behind the routes that answer the same payload"
       },
       "parameters": {
         "mechanism": "FastAPI's {one} captures, each bound as an int by the typed function parameter of the same name; the static route answers through the small() helper"
@@ -1357,7 +1357,7 @@
         "builtin": "A returned string is the body; nothing sits between the route and it."
       },
       "json": {
-        "mechanism": "jsonify from one small helper behind the routes that answer the same payload"
+        "mechanism": "jsonify, rendered by the orjson JSON provider installed as app.json, from one small helper behind the routes that answer the same payload"
       },
       "parameters": {
         "mechanism": "Flask's <int:one> converters, which convert each capture before the view runs; the static route answers through the small helper"
@@ -1423,9 +1423,9 @@
         "mechanism": "Litestar's own response cache, configured on the app through ResponseCacheConfig"
       },
       "body": {
-        "mechanism": "a typed data parameter: msgspec decodes and checks it before the handler is entered and raises ValidationException itself",
+        "mechanism": "a msgspec Struct as the typed data parameter: msgspec decodes and checks it before the handler is entered and raises ValidationException itself",
         "dep": "litestar",
-        "mentions": "dataclass"
+        "mentions": "Struct"
       },
       "query": {
         "builtin": "A typed function parameter is the binding: Litestar coerces it from the query string before the handler runs. The handler echoes the bound values beside the small payload."
@@ -1453,7 +1453,7 @@
         "builtin": "response.text over the string; nothing sits between the route and the body."
       },
       "json": {
-        "mechanism": "response.json from one small helper behind the routes that answer the same payload"
+        "mechanism": "response.json, rendered by the orjson dumps the application is given, from one small helper behind the routes that answer the same payload"
       },
       "parameters": {
         "mechanism": "Sanic's <one:int> typed captures, which Sanic converts before the handler runs; the static route answers through the small helper"
@@ -1499,7 +1499,7 @@
         "builtin": "PlainTextResponse over the string; nothing sits between the route and the body."
       },
       "json": {
-        "mechanism": "JSONResponse from a per-size closure, on static routes rather than a /json/{size} capture"
+        "mechanism": "OrjsonResponse, the JSONResponse subclass rendering with orjson that Starlette's documentation describes, from a per-size closure, on static routes rather than a /json/{size} capture"
       },
       "parameters": {
         "mechanism": "Starlette's {one:int} convertors, which convert each capture before the handler reads request.path_params; the static route answers through the small handler"

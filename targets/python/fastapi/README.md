@@ -33,18 +33,21 @@ FastAPI's own way to scope middleware, and the extra dispatch it costs lands in
 on the other forty-two endpoints. The level is gzip's fastest, and the size floor is
 Starlette's own default.
 
-**The default return path runs `jsonable_encoder`, and it dominates this target.** A
-handler that returns a value hands it to `serialize_response`, which walks the whole
-structure into JSON-ready primitives before `json.dumps` ever sees it. On the large payload
-that walk costs about ten times the dump that follows it — 5.7ms against 0.56ms on the
-machine this was written on. Four of the forty-five endpoints serve the large payload, so
-at 1000 rps most of one core goes into the encoder, every other endpoint queues behind it,
-and the target's p50 across all thirteen families moves with it.
+**Every handler that returns a value declares its return type, and that is what keeps
+`jsonable_encoder` off the path.** Without a declared type, `serialize_response` walks the
+whole value into JSON-ready primitives before `json.dumps` sees it. On the large payload
+that walk cost about ten times the dump that follows it: 5.7ms against 0.56ms on the
+machine this was written on. With a declared type and no `response_class`, FastAPI
+validates the value against the type and Pydantic writes the JSON bytes in one pass. That
+is what FastAPI's documentation recommends for
+[JSON performance](https://fastapi.tiangolo.com/advanced/custom-response/#orjson-or-response-model).
+The type is `dict`, which Pydantic reads as `dict[Any, Any]`, so the validation copies the
+top level of the value and nothing more.
 
-Returning `JSONResponse(...)` from the handler skips it: FastAPI passes a Response through
-untouched. That is what the Starlette target does, because it is Starlette's own API, and
-doing it here would make `python:fastapi` a measurement of Starlette wearing FastAPI's
-router. FastAPI's own documentation returns the value, so that is what this target returns.
+Returning `JSONResponse(...)` from the handler would also skip the encoder, because FastAPI
+passes a Response through untouched. That is what the Starlette target does, because it is
+Starlette's own API. Doing it here would make `python:fastapi` a measurement of Starlette
+wearing FastAPI's router.
 
 **The JSON family is three static routes, not `/json/{size}`.** A capture would make the
 router pay parameter cost on the family that anchors most of the endpoint set, and it

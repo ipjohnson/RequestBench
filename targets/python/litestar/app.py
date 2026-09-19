@@ -12,13 +12,13 @@ annotation this repository added.
 """
 import pathlib
 
+import jinja2
 from litestar import Litestar, MediaType, Request, Response, delete, get, patch, post, put
 from litestar.config.compression import CompressionConfig
 from litestar.connection import ASGIConnection
-from dataclasses import dataclass
 from typing import Annotated
 
-from msgspec import Meta
+from msgspec import Meta, Struct
 
 from litestar.exceptions import (ClientException, NotFoundException,
                                  PermissionDeniedException, ValidationException)
@@ -54,20 +54,21 @@ CACHE_TTL = d.cache_spec()["ttl_s"]
 # msgspec stops at the first field it cannot decode and reports that one, which is why the
 # first-error row and the collect-all row are the same answer here.
 #
+# The two types are msgspec Structs. msgspec's documentation recommends a Struct over a
+# dataclass for a schema, because a Struct is faster to decode into.
+#
 # It lives here rather than in a sibling module because _hosts/container.py loads a target
 # by file path, and this directory is named after the package it measures.
 
 
 # rb:wiring body.*,domain.*
-@dataclass
-class LineIn:
+class LineIn(Struct):
     product_id: int
     qty: Annotated[int, Meta(ge=1)]
 
 
 # rb:wiring body.*,domain.*
-@dataclass
-class OrderIn:
+class OrderIn(Struct):
     customer_id: int
     status: str
     lines: Annotated[list[LineIn], Meta(min_length=1)]
@@ -395,6 +396,19 @@ async def delete_line(oid: str, lid: str) -> None:
 # rather than calling a render function. JinjaTemplateEngine is the engine Litestar's own
 # templating docs lead with and the one litestar[standard] installs. Compiled on first
 # render and cached by the engine: a precomputed string would measure nothing.
+#
+# The engine holds the environment JinjaTemplateEngine builds from a directory, with
+# auto_reload off. Left on, it checks the template file's mtime on every render, and Jinja
+# documents turning it off for performance. Litestar's templating documentation passes an
+# environment built this way through from_environment.
+
+# rb:wiring template.*
+templates = JinjaTemplateEngine.from_environment(jinja2.Environment(
+    loader=jinja2.FileSystemLoader(pathlib.Path(__file__).resolve().parent / "templates"),
+    autoescape=True,
+    auto_reload=False,
+))
+
 
 @get("/template/small", media_type=MediaType.HTML)
 async def template_small() -> Template:
@@ -469,10 +483,7 @@ app = Litestar(
     openapi_config=None,
     response_cache_config=ResponseCacheConfig(default_expiration=CACHE_TTL),
     # rb:wiring template.*
-    template_config=TemplateConfig(
-        directory=pathlib.Path(__file__).resolve().parent / "templates",
-        engine=JinjaTemplateEngine,
-    ),
+    template_config=TemplateConfig(instance=templates),
 )
 
 

@@ -18,6 +18,7 @@ answers POST /json/small with 200.
 Django writes a URL pattern without a leading slash, because path() matches what is left
 after the one the request carried.
 """
+import logging.config
 import pathlib
 
 import django
@@ -49,6 +50,9 @@ settings.configure(
     }},
     LOGGING_CONFIG=None,
     USE_TZ=False,
+    # Nothing here is translated. Django documents that with this off it "will make some
+    # optimizations so as not to load the internationalization machinery".
+    USE_I18N=False,
     # Django's own template engine, which is what the framework ships and what its own
     # tutorial renders with. The directory is absolute because _hosts/container.py loads
     # this module by file path rather than by name, so there is no app to search. With
@@ -62,6 +66,15 @@ settings.configure(
         "OPTIONS": {},
     }],
 )
+# Django logs every 4xx answer as a warning on django.request. With LOGGING_CONFIG None
+# nothing handles it but Python's last-resort handler, which writes each one to stderr.
+# Django's documentation configures logging by hand with dictConfig when LOGGING_CONFIG is
+# None. This raises that one logger to ERROR, so a 5xx still prints.
+logging.config.dictConfig({
+    "version": 1,
+    "disable_existing_loggers": False,
+    "loggers": {"django.request": {"level": "ERROR"}},
+})
 django.setup()
 
 from django.http import HttpResponse, JsonResponse  # noqa: E402

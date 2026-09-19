@@ -16,10 +16,13 @@ The blueprints carry no url_prefix. Scoping is what they are here for, and a pre
 take the route's own path out of the source, which is where harness/snippets.py finds it.
 """
 import gzip
+import os
 import pathlib
 
 import gunicorn.app.base
+import orjson
 from flask import Blueprint, Flask, Response, jsonify, render_template, request
+from flask.json.provider import JSONProvider
 from flask_caching import Cache
 from werkzeug.exceptions import BadRequest, HTTPException
 
@@ -117,11 +120,32 @@ def validated(body, first_error=False):
 #: One process, and enough threads that the worker is not itself the queue.
 THREADS = 16
 
+
+# rb:wiring json.*,body.*
+class OrjsonProvider(JSONProvider):
+    """Flask's JSON provider over orjson, installed as app.json. Flask documents subclassing
+    JSONProvider to use a different JSON library, implementing at least dumps and loads.
+    response is the provider's own too, and this one hands orjson's bytes to the response
+    rather than decoding them to a str first."""
+
+    def dumps(self, obj, **kwargs):
+        return orjson.dumps(obj).decode()
+
+    def loads(self, s, **kwargs):
+        return orjson.loads(s)
+
+    def response(self, *args, **kwargs):
+        obj = self._prepare_response_obj(args, kwargs)
+        return self._app.response_class(orjson.dumps(obj), mimetype="application/json")
+
+
 # rb:wiring template.*
 # template_folder is absolute because _hosts/container.py loads this module by file
 # path under the name rb_target, so Flask cannot derive the root from the module name.
 app = Flask(__name__, template_folder=str(
     pathlib.Path(__file__).resolve().parent / "templates"))
+# rb:wiring json.*,body.*
+app.json = OrjsonProvider(app)
 META = host.meta("flask", adapter="gunicorn",
                  template="jinja2 " + host.dist_version("jinja2"),
                  etag="werkzeug strong sha1",
@@ -566,6 +590,11 @@ def serve():
         "threads": THREADS,
         "accesslog": None,
         "loglevel": "warning",
+        # The worker touches a heartbeat file on every pass of its loop. gunicorn documents
+        # that this can block the worker when the file is on a disk-backed filesystem, and
+        # its FAQ points worker_tmp_dir at a tmpfs. /dev/shm is one in the container and on
+        # Linux. macOS has no /dev/shm, so a local run there keeps the default.
+        "worker_tmp_dir": "/dev/shm" if os.path.isdir("/dev/shm") else None,
         # gunicorn binds in the master and serves from the worker it forks, so the target
         # is ready when the worker is. This is the worker's last step before it accepts.
         "post_worker_init": lambda _: host.listening(),
