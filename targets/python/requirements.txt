@@ -71,7 +71,7 @@ flask==3.1.3
     #   flask-caching
 flask-caching==2.5.1
     # via -r requirements.in
-gunicorn==23.0.0
+gunicorn==26.2.0
     # via -r requirements.in
 h11==0.16.0
     # via
@@ -133,9 +133,7 @@ multipart==2.0.0
 orjson==3.12.0
     # via -r requirements.in
 packaging==26.3
-    # via
-    #   gunicorn
-    #   incremental
+    # via incremental
 polyfactory==3.3.0
     # via litestar
 pycparser==3.0
