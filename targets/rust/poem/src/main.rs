@@ -329,7 +329,8 @@ fn app() -> impl Endpoint {
     // contaminate the rows this family is measured against.
     //
     // Shallow, which is the point: the handler runs and the body is built before anything
-    // is compared, so the 304 saves the write and nothing else.
+    // is compared, so the 304 saves the write and nothing else. The bytes come from poem's
+    // Json, so the digest is over what the json family's serializer writes.
     let etag_route = |size: &'static str| {
         get(make(move |req: Request| async move {
             let asked = req
@@ -337,7 +338,12 @@ fn app() -> impl Endpoint {
                 .get(header::IF_NONE_MATCH)
                 .and_then(|v| v.to_str().ok())
                 .map(str::to_string);
-            let raw = serde_json::to_vec(d::payload(size)).unwrap_or_default();
+            let raw = Json(d::payload(size))
+                .into_response()
+                .into_body()
+                .into_bytes()
+                .await
+                .unwrap_or_default();
             let etag = d::content_etag(&raw);
             let base = if asked.as_deref() == Some(etag.as_str()) {
                 Response::builder().status(StatusCode::NOT_MODIFIED).body(Body::empty())
@@ -358,7 +364,8 @@ fn app() -> impl Endpoint {
     //
     // Poem ships no response cache, so the store is the shared LRU sized from the fixture.
     // One store for the target rather than one per route, so the capacity the fixture
-    // derives from the key count means what it says.
+    // derives from the key count means what it says. A stored body is what poem's Json
+    // wrote, as it is for the etag family.
     let cache_route = |size: &'static str, on: &'static [&'static str]| {
         get(make(move |req: Request| async move {
             let values: Vec<String> = on
@@ -383,7 +390,12 @@ fn app() -> impl Endpoint {
                     let fresh = d::StoredResponse {
                         status: 200,
                         headers,
-                        body: serde_json::to_vec(d::payload(size)).unwrap_or_default(),
+                        body: Json(d::payload(size))
+                            .into_response()
+                            .into_body()
+                            .into_vec()
+                            .await
+                            .unwrap_or_default(),
                     };
                     CACHE.put(key, fresh.clone());
                     fresh
