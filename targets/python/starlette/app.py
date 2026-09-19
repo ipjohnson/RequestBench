@@ -23,10 +23,22 @@ from starlette.routing import Route
 from starlette.templating import Jinja2Templates
 
 from cachetools import TTLCache
+import orjson
 
 from _hosts import host
 from _shared import domain as d
 from _shared.asgi import ConditionalGet, ResponseCache
+
+# ---- responses: JSONResponse rendered by orjson --------------------------------------
+#
+# Starlette documents subclassing JSONResponse and overriding render to use a third-party
+# JSON library, with orjson as its example. Every JSON body this target answers is one.
+
+# rb:wiring json.*
+class OrjsonResponse(JSONResponse):
+    def render(self, content):
+        return orjson.dumps(content)
+
 
 # ---- validation: this target's own walk ----------------------------------------------
 #
@@ -187,7 +199,7 @@ class RequireToken:
         header = Request(scope).headers.get("authorization")
         if d.token_ok(header):
             return await self.app(scope, receive, send)
-        await JSONResponse(d.forbidden_body(), status_code=403)(scope, receive, send)
+        await OrjsonResponse(d.forbidden_body(), status_code=403)(scope, receive, send)
 
 
 # ---- handlers ------------------------------------------------------------------------
@@ -201,21 +213,21 @@ async def health(_: Request):
 
 
 async def meta(_: Request):
-    return JSONResponse(META)
+    return OrjsonResponse(META)
 
 
 # rb:wiring parameters.*,headers.*,middleware.*,authorized.*
 async def small(_: Request):
-    return JSONResponse(d.payload("small"))
+    return OrjsonResponse(d.payload("small"))
 
 
 async def parameters_one(request: Request):
-    return JSONResponse(d.with_echo("small", {"one": request.path_params["one"]}))
+    return OrjsonResponse(d.with_echo("small", {"one": request.path_params["one"]}))
 
 
 async def parameters_two(request: Request):
     p = request.path_params
-    return JSONResponse(d.with_echo("small", {"one": p["one"], "two": p["two"]}))
+    return OrjsonResponse(d.with_echo("small", {"one": p["one"], "two": p["two"]}))
 
 
 # Starlette has no header binder, so the handler reads the three headers itself and holds the
@@ -228,9 +240,9 @@ async def headers_bind(request: Request):
         account = int(h.get("x-rb-account"))
     except (TypeError, ValueError):
         account = 0
-    return JSONResponse(d.with_echo("small", {"tenant": h.get("x-rb-tenant", ""),
-                                              "request_id": h.get("x-rb-request-id", ""),
-                                              "account": account}))
+    return OrjsonResponse(d.with_echo("small", {"tenant": h.get("x-rb-tenant", ""),
+                                                "request_id": h.get("x-rb-request-id", ""),
+                                                "account": account}))
 
 
 # rb:wiring json.*
@@ -240,7 +252,7 @@ def payload_route(size):
     serves from a static route, and it would answer 200 with an empty body for a size that
     does not exist."""
     async def handler(_: Request):
-        return JSONResponse(d.payload(size))
+        return OrjsonResponse(d.payload(size))
     return handler
 
 
@@ -265,13 +277,14 @@ def _qint(q, k):
 
 # rb:handler query.one
 async def query_one(request: Request):
-    return JSONResponse(d.with_echo("small", {"page": _qint(request.query_params, "page")}))
+    return OrjsonResponse(d.with_echo("small",
+                                      {"page": _qint(request.query_params, "page")}))
 
 
 # rb:handler query.many
 async def query_many(request: Request):
     q = request.query_params
-    return JSONResponse(d.with_echo("small", {
+    return OrjsonResponse(d.with_echo("small", {
         "page": _qint(q, "page"),
         "size": _qint(q, "size"),
         "status": _qstr(q, "status"),
@@ -289,7 +302,7 @@ def compressed_route(size):
     floor. Whether a framework bothers to compress a body too small to benefit is what
     compressed.gzip_small is in the set to show."""
     async def handler(_: Request):
-        return JSONResponse(d.payload(size), headers={"x-rb-serial": d.next_serial()})
+        return OrjsonResponse(d.payload(size), headers={"x-rb-serial": d.next_serial()})
     return handler
 
 
@@ -313,7 +326,7 @@ STORE = TTLCache(maxsize=d.cache_spec()["capacity"], ttl=d.cache_spec()["ttl_s"]
 # rb:wiring etag.*
 def etag_route(size):
     async def handler(_: Request):
-        return JSONResponse(d.payload(size), headers={
+        return OrjsonResponse(d.payload(size), headers={
             "cache-control": d.CACHEABLE, "x-rb-serial": d.next_serial()})
     return handler
 
@@ -323,8 +336,8 @@ def cache_route(size, vary=()):
     headers = {"vary": ", ".join(vary)} if vary else {}
 
     async def handler(_: Request):
-        return JSONResponse(d.payload(size),
-                            headers={**headers, "x-rb-serial": d.next_serial()})
+        return OrjsonResponse(d.payload(size),
+                              headers={**headers, "x-rb-serial": d.next_serial()})
     return handler
 
 
@@ -357,50 +370,50 @@ def template_route(size):
 # bind parses and binds without validating, so validate minus bind is the validator alone
 # rather than the validator plus the parse.
 async def bind(request: Request):
-    return JSONResponse(d.bind_echo(await body_of(request)))
+    return OrjsonResponse(d.bind_echo(await body_of(request)))
 
 
 async def validate_all(request: Request):
-    return JSONResponse(validated(await body_of(request)))
+    return OrjsonResponse(validated(await body_of(request)))
 
 
 async def validate_first(request: Request):
-    return JSONResponse(validated(await body_of(request), first_error=True))
+    return OrjsonResponse(validated(await body_of(request), first_error=True))
 
 
 async def domain_orders(request: Request):
     q = request.query_params
-    return JSONResponse(d.domain_filter(_qint(q, "page"), _qint(q, "size"),
-                                        _qstr(q, "status")))
+    return OrjsonResponse(d.domain_filter(_qint(q, "page"), _qint(q, "size"),
+                                          _qstr(q, "status")))
 
 
 async def create_order(request: Request):
     out = validated(await body_of(request))
-    return JSONResponse(out, status_code=201,
-                        headers={"location": d.created_location()})
+    return OrjsonResponse(out, status_code=201,
+                          headers={"location": d.created_location()})
 
 
 async def lookup_order(request: Request):
-    return JSONResponse(d.get_order(request.path_params["oid"]))
+    return OrjsonResponse(d.get_order(request.path_params["oid"]))
 
 
 async def replace_order(request: Request):
     existing = d.get_order(request.path_params["oid"])
     out = validated(await body_of(request))
-    return JSONResponse({"id": existing["id"], **out})
+    return OrjsonResponse({"id": existing["id"], **out})
 
 
 async def customer_summary(request: Request):
-    return JSONResponse(d.domain_join(request.path_params["cid"]))
+    return OrjsonResponse(d.domain_join(request.path_params["cid"]))
 
 
 async def region_report(request: Request):
-    return JSONResponse(d.domain_aggregate(request.path_params["region"]))
+    return OrjsonResponse(d.domain_aggregate(request.path_params["region"]))
 
 
 async def patch_customer(request: Request):
     body = await body_of(request)
-    return JSONResponse(d.patch_customer(request.path_params["cid"], body))
+    return OrjsonResponse(d.patch_customer(request.path_params["cid"], body))
 
 
 async def delete_line(request: Request):
@@ -417,23 +430,23 @@ async def delete_line(request: Request):
 # rb:wiring errors.*
 async def http_error(_: Request, exc: HTTPException):
     body = d.not_found_body() if exc.status_code == 404 else {"error": "internal"}
-    return JSONResponse(body, status_code=exc.status_code)
+    return OrjsonResponse(body, status_code=exc.status_code)
 
 
 async def not_found(_: Request, __: Exception):
-    return JSONResponse(d.not_found_body(), status_code=404)
+    return OrjsonResponse(d.not_found_body(), status_code=404)
 
 
 # rb:wiring errors.*
 # The walk this target holds answers a refused body; a body that never parsed answers
 # separately, because nothing validated it and it names no field.
 async def refused(_: Request, exc: Refused):
-    return JSONResponse(refused_body(exc.errors), status_code=422)
+    return OrjsonResponse(refused_body(exc.errors), status_code=422)
 
 
 # rb:wiring errors.*
 async def malformed(_: Request, exc: d.Malformed):
-    return JSONResponse(not_bound_body(exc.detail), status_code=400)
+    return OrjsonResponse(not_bound_body(exc.detail), status_code=400)
 
 
 # rb:wiring compressed.*

@@ -1493,7 +1493,7 @@
         "builtin": "PlainTextResponse over the string; nothing sits between the route and the body."
       },
       "json": {
-        "mechanism": "JSONResponse from a per-size closure, on static routes rather than a /json/{size} capture"
+        "mechanism": "OrjsonResponse, the JSONResponse subclass rendering with orjson that Starlette's documentation describes, from a per-size closure, on static routes rather than a /json/{size} capture"
       },
       "parameters": {
         "mechanism": "Starlette's {one:int} convertors, which convert each capture before the handler reads request.path_params; the static route answers through the small handler"
