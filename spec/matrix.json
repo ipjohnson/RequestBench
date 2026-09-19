@@ -584,7 +584,9 @@
         "builtin": "c.SendString writes the string from the route itself, so the handler is all there is."
       },
       "json": {
-        "mechanism": "c.JSON over a body read once into the closure, on static routes rather than a /json/:size capture"
+        "mechanism": "c.JSON over a body read once into the closure, on static routes rather than a /json/:size capture, serialized by sonic.ConfigStd through the JSONEncoder in fiber.Config",
+        "dep": "github.com/bytedance/sonic",
+        "mentions": "sonic"
       },
       "parameters": {
         "mechanism": "c.Bind().URI through gofiber/schema, reading the uri: tag from Fiber's :one captures, with the bound struct echoed beside the small payload; the static route, registered first because Fiber tries routes in order, answers the payload closure"
@@ -606,7 +608,7 @@
         "mentions": "cache"
       },
       "body": {
-        "mechanism": "a StructValidator in fiber.Config, which Fiber runs as part of c.Bind().Body(), so binding and validating are one call it owns",
+        "mechanism": "a StructValidator in fiber.Config, which Fiber runs as part of c.Bind().Body(), so binding and validating are one call it owns; the struct and the unvalidated map both decode through the sonic JSONDecoder in fiber.Config",
         "dep": "github.com/go-playground/validator/v10",
         "mentions": "validator"
       },

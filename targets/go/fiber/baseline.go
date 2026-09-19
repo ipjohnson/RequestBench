@@ -39,7 +39,7 @@ func meta() fiber.Map {
 		"version":    fiberVersion,
 		"runtime":    runtime.Version(),
 		"adapter":    "",
-		"serializer": "encoding/json",
+		"serializer": "github.com/bytedance/sonic",
 		"template":   "html/template",
 		"etag":       "fiber/middleware/etag strong sha1",
 		"cache":      "fiber/middleware/cache in-memory",
