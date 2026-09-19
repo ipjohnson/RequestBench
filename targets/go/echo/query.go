@@ -13,7 +13,7 @@ package main
 
 import (
 	d "github.com/ianjohnson/requestbench/targets/go/_shared"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 // rb:wiring query.*
@@ -44,7 +44,7 @@ type orderFilter struct {
 // rb:wiring query.*,domain.*
 // bindQuery fills out from the query string, answering the failure itself if there is one.
 // The same 400 shape as a body Echo could not bind, because it is the same binder refusing.
-func bindQuery(c echo.Context, out any) bool {
+func bindQuery(c *echo.Context, out any) bool {
 	if err := c.Bind(out); err != nil {
 		_ = c.JSON(400, map[string]string{"error": "invalid_query", "detail": err.Error()})
 		return false
@@ -53,7 +53,7 @@ func bindQuery(c echo.Context, out any) bool {
 }
 
 func registerQuery(e *echo.Echo) {
-	e.GET("/query/one", func(c echo.Context) error {
+	e.GET("/query/one", func(c *echo.Context) error {
 		var q queryOne
 		if !bindQuery(c, &q) {
 			return nil
@@ -61,7 +61,7 @@ func registerQuery(e *echo.Echo) {
 		return c.JSON(200, d.WithEcho("small", q))
 	})
 
-	e.GET("/query/many", func(c echo.Context) error {
+	e.GET("/query/many", func(c *echo.Context) error {
 		var q queryMany
 		if !bindQuery(c, &q) {
 			return nil

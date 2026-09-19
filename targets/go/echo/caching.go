@@ -11,11 +11,11 @@ import (
 	"strings"
 
 	d "github.com/ianjohnson/requestbench/targets/go/_shared"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 // capture holds the response until the middleware around it has hashed or stored the
-// bytes. Echo writes through its own Response, so swapping the writer under it is how a
+// bytes. Echo writes through whatever c.SetResponse installed, so installing this is how a
 // middleware gets at them.
 type capture struct {
 	http.ResponseWriter
@@ -34,27 +34,30 @@ func (c *capture) Write(p []byte) (int, error) {
 	return c.buf.Write(p)
 }
 
+// Unwrap is how echo.UnwrapResponse finds Echo's own Response under this writer, which
+// c.SetResponse asks of anything it installs.
+func (c *capture) Unwrap() http.ResponseWriter { return c.ResponseWriter }
+
 // rb:wiring etag.*
 // revalidates hashes the body the handler wrote and answers the conditional. Shallow,
 // which is the point: the handler runs and the body is built before anything is compared,
 // so the 304 saves the write and nothing else.
 func revalidates(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		res := c.Response()
-		original := res.Writer
+	return func(c *echo.Context) error {
+		original := c.Response()
 		buffer := &capture{ResponseWriter: original}
-		res.Writer = buffer
+		c.SetResponse(buffer)
 		err := next(c)
-		res.Writer = original
+		c.SetResponse(original)
 		if err != nil {
 			return err
 		}
 		body := buffer.buf.Bytes()
 		etag := d.ContentETag(body)
-		res.Header().Set("etag", etag)
-		res.Header().Set("cache-control", d.Cacheable)
+		original.Header().Set("etag", etag)
+		original.Header().Set("cache-control", d.Cacheable)
 		if c.Request().Header.Get("if-none-match") == etag {
-			res.Header().Del("content-type")
+			original.Header().Del("content-type")
 			original.WriteHeader(http.StatusNotModified)
 			return nil
 		}
@@ -69,34 +72,33 @@ func revalidates(next echo.HandlerFunc) echo.HandlerFunc {
 // when it does not.
 func replays(store *d.Store, on []string) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
+		return func(c *echo.Context) error {
 			values := make([]string, len(on))
 			for i, name := range on {
 				values[i] = c.Request().Header.Get(name)
 			}
 			key := d.CacheKey(c.Request().URL.Path, values)
-			res := c.Response()
+			original := c.Response()
 			if hit, ok := store.Get(key); ok {
 				for name, vs := range hit.Header {
 					for _, v := range vs {
-						res.Header().Add(name, v)
+						original.Header().Add(name, v)
 					}
 				}
-				res.Writer.WriteHeader(hit.Status)
-				_, err := res.Writer.Write(hit.Body)
+				original.WriteHeader(hit.Status)
+				_, err := original.Write(hit.Body)
 				return err
 			}
-			original := res.Writer
 			buffer := &capture{ResponseWriter: original}
-			res.Writer = buffer
+			c.SetResponse(buffer)
 			err := next(c)
-			res.Writer = original
+			c.SetResponse(original)
 			if err != nil {
 				return err
 			}
 			body := buffer.buf.Bytes()
 			if buffer.status == http.StatusOK {
-				store.Set(key, d.Stored{Status: 200, Header: res.Header().Clone(), Body: body})
+				store.Set(key, d.Stored{Status: 200, Header: original.Header().Clone(), Body: body})
 			}
 			original.WriteHeader(buffer.status)
 			_, err = original.Write(body)
@@ -108,7 +110,7 @@ func replays(store *d.Store, on []string) echo.MiddlewareFunc {
 // served is payload() plus the freshness counter both families carry.
 func served(size string, extra map[string]string) echo.HandlerFunc {
 	body := d.Payload(size)
-	return func(c echo.Context) error {
+	return func(c *echo.Context) error {
 		for name, value := range extra {
 			c.Response().Header().Set(name, value)
 		}

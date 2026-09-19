@@ -14,7 +14,7 @@ import (
 	"io"
 
 	d "github.com/ianjohnson/requestbench/targets/go/_shared"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 // rb:wiring template.*
@@ -26,7 +26,7 @@ var itemsTemplate string
 // precomputed string would measure nothing.
 type renderer struct{ templates *template.Template }
 
-func (r *renderer) Render(w io.Writer, name string, data any, _ echo.Context) error {
+func (r *renderer) Render(_ *echo.Context, w io.Writer, name string, data any) error {
 	return r.templates.ExecuteTemplate(w, name, data)
 }
 
@@ -38,7 +38,7 @@ func newRenderer() echo.Renderer {
 // rb:wiring template.*
 func templateRoute(size string) echo.HandlerFunc {
 	body := d.Payload(size)
-	return func(c echo.Context) error { return c.Render(200, "items.tmpl", body) }
+	return func(c *echo.Context) error { return c.Render(200, "items.tmpl", body) }
 }
 
 func registerTemplate(e *echo.Echo) {

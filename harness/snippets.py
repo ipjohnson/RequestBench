@@ -919,7 +919,7 @@ def tested(found):
 def mentioned(decl):
     """The token a family's support has to contain. Defaults to the dependency itself, and
     is written out where the source spells it differently: go.mod carries
-    github.com/labstack/echo/v4 and the code writes echo."""
+    github.com/labstack/echo/v5 and the code writes echo."""
     return decl.get("mentions", decl.get("dep", ""))
 
 
