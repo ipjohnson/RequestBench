@@ -91,21 +91,9 @@ impl ResponseError for Rejected {
     }
 }
 
-/// An unvalidated body, for the endpoints that only parse. The validate routes use the
-/// extractor; this is only for bind, which is measured against them.
 /// The one domain failure, as this target's rejection carrier.
 fn not_found_rejection(_: d::Fail) -> Rejected {
     Rejected(StatusCode::NOT_FOUND, d::not_found_body())
-}
-
-// rb:wiring body.*,domain.*
-fn parse(body: &[u8]) -> Result<Value, Rejected> {
-    serde_json::from_slice(body).map_err(|e: serde_json::Error| {
-        Rejected(
-            StatusCode::BAD_REQUEST,
-            serde_json::json!({ "error": "invalid_body", "detail": e.to_string() }),
-        )
-    })
 }
 
 // ---- validation: poem's typed Json extractor, and this target's own rules ------
@@ -509,9 +497,11 @@ async fn bind_headers(h: BoundHeaders) -> Json<d::WithEcho<BoundHeaders>> {
     Json(d::with_echo("small", h))
 }
 
+/// The unvalidated body, through the Json extractor the validate routes use, into a Value
+/// rather than the order.
 #[poem::handler]
-async fn bind(body: Vec<u8>) -> Result<Json<d::BindResult>, Rejected> {
-    Ok(Json(d::bind_echo(parse(&body)?)))
+async fn bind(Json(body): Json<Value>) -> Json<d::BindResult> {
+    Json(d::bind_echo(body))
 }
 
 #[poem::handler]
@@ -579,10 +569,9 @@ async fn replace(
 #[poem::handler]
 async fn patch_customer(
     Path(cid): Path<String>,
-    body: Vec<u8>,
+    Json(body): Json<Value>,
 ) -> Result<Json<d::Customer>, Rejected> {
-    let v = parse(&body)?;
-    Ok(Json(d::patch_customer(&cid, &v).map_err(|e| not_found_rejection(e))?))
+    Ok(Json(d::patch_customer(&cid, &body).map_err(|e| not_found_rejection(e))?))
 }
 
 #[poem::handler]
