@@ -2,6 +2,8 @@ using RequestBench.Domain;
 using RequestBench.WolverineTarget;
 using RequestBench.WolverineTarget.Routes;
 using RequestBench.Hosts;
+using JasperFx;
+using JasperFx.CodeGeneration;
 using Wolverine.FluentValidation;
 using Wolverine;
 using Wolverine.Http;
@@ -31,7 +33,16 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 // Wolverine's own registration registers OrderBodyValidator as a singleton, because it
 // takes no constructor arguments, and the generated endpoint takes a singleton once in its
 // constructor. A scoped validator would be built again on every request.
-builder.Host.UseWolverine(opts => opts.UseFluentValidation());
+builder.Host.UseWolverine(opts =>
+{
+    opts.UseFluentValidation();
+    // The endpoint adapters come from Internal/Generated, compiled with the rest of the
+    // target. Compiled at runtime instead, they are built at Roslyn's debug optimization
+    // level, and the JIT never optimizes them. A route with no generated adapter throws
+    // ExpectedTypeMissingException instead of compiling one. `dotnet run -- codegen write`
+    // in this directory rewrites them after an endpoint changes.
+    opts.CodeGeneration.TypeLoadMode = TypeLoadMode.Static;
+});
 builder.Services.AddWolverineHttp();
 // The created row sets a Location header, and a Wolverine handler is a static
 // method with no HttpContext of its own unless one is injected.
@@ -68,9 +79,18 @@ app.MapWolverineEndpoints(opts =>
 // rb:handler errors.unmatched
 app.MapFallback(() => Results.Problem(statusCode: 404));
 
+// JasperFx's command line, for `dotnet run -- codegen write`. It runs only for that verb,
+// because it loads every assembly in the output directory to look for commands, and a
+// start through app.Run() loads none of them.
+if (args is ["codegen", ..])
+{
+    return await app.RunJasperFxCommands(args);
+}
+
 app.Lifetime.ApplicationStarted.Register(HostInfo.Listening);
 Console.Error.WriteLine($"container/wolverine-http listening on {HostInfo.Port()}");
 app.Run();
+return 0;
 
 // Top-level statements compile to an internal Program, which Alba's AlbaHost.For<Program> in suite/
 // cannot name. Declaring it public is what the ASP.NET Core integration-testing
