@@ -18,7 +18,7 @@ and the substitutes are what the numbers describe:
               forty-two endpoints.
 """
 import pathlib
-from typing import Annotated
+from typing import Annotated, TypedDict
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Request, Response
 from fastapi.exceptions import RequestValidationError
@@ -52,9 +52,12 @@ from _shared.asgi import ConditionalGet, ResponseCache
 
 
 # rb:wiring body.*,domain.*
-class LineIn(BaseModel):
+# A TypedDict rather than a nested model. Pydantic's performance guide puts a TypedDict at
+# about 2.5x faster than a nested model, because each line validates into a dict rather
+# than into a model instance.
+class LineIn(TypedDict):
     product_id: int
-    qty: int = Field(ge=1)
+    qty: Annotated[int, Field(ge=1)]
 
 
 # rb:wiring body.*,domain.*
@@ -65,10 +68,7 @@ class OrderIn(BaseModel):
 
     def order(self):
         """The order, once Pydantic has said the body is one."""
-        return d.price_order(
-            self.customer_id, self.status,
-            [{"product_id": line.product_id, "qty": line.qty} for line in self.lines],
-        )
+        return d.price_order(self.customer_id, self.status, self.lines)
 
 # The documentation routes are off: they are three more entries in the router the
 # benchmark never asks for, and /docs is not part of the endpoint set.
