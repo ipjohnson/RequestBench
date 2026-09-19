@@ -18,6 +18,7 @@ answers POST /json/small with 200.
 Django writes a URL pattern without a leading slash, because path() matches what is left
 after the one the request carried.
 """
+import logging.config
 import pathlib
 
 import django
@@ -65,6 +66,15 @@ settings.configure(
         "OPTIONS": {},
     }],
 )
+# Django logs every 4xx answer as a warning on django.request. With LOGGING_CONFIG None
+# nothing handles it but Python's last-resort handler, which writes each one to stderr.
+# Django's documentation configures logging by hand with dictConfig when LOGGING_CONFIG is
+# None. This raises that one logger to ERROR, so a 5xx still prints.
+logging.config.dictConfig({
+    "version": 1,
+    "disable_existing_loggers": False,
+    "loggers": {"django.request": {"level": "ERROR"}},
+})
 django.setup()
 
 from django.http import HttpResponse, JsonResponse  # noqa: E402
