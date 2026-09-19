@@ -1647,7 +1647,7 @@
         "builtin": "The endpoint returns the string and poem writes it; nothing sits between them."
       },
       "json": {
-        "mechanism": "a closure per size holding the serialized body, read once rather than looked up per request"
+        "mechanism": "a closure per size returning poem's Json, which serializes with sonic-rs through poem's sonic-rs feature; the size is read once rather than looked up per request"
       },
       "parameters": {
         "mechanism": "poem's typed Path extractor over a serde struct, which is also the echo",
