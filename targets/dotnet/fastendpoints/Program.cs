@@ -1,5 +1,6 @@
 using FastEndpoints;
 using RequestBench.Domain;
+using RequestBench.FastEndpoints;
 using RequestBench.FastEndpointsTarget;
 using RequestBench.Hosts;
 
@@ -43,9 +44,15 @@ app.UseOutputCache();
 // so a filter around it is handed nothing to hash.
 app.UseWhen(context => context.Request.Path.StartsWithSegments("/etag"),
             branch => branch.Use(Caching.ConditionalGet));
+// rb:wiring json.*
 app.UseFastEndpoints(config =>
 {
     config.Serializer.Options.PropertyNamingPolicy = Json.Options.PropertyNamingPolicy;
+    config.Serializer.Options.TypeInfoResolverChain.Insert(0, JsonContext.Default);
+    // The binder's object factories, property setters and value parsers, written by
+    // FastEndpoints.Generator at build time instead of compiled from expression trees at
+    // runtime.
+    config.Binding.ReflectionCache.AddFromRequestBenchFastEndpoints();
     config.Endpoints.RoutePrefix = null;
     // The envelope stays FastEndpoints' own; only the status moves. Its default for a
     // validation failure is 400, and body.rejected_* is a body that parsed and failed

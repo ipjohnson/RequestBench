@@ -2,7 +2,9 @@ using RequestBench.Domain;
 using RequestBench.WolverineTarget;
 using RequestBench.WolverineTarget.Routes;
 using RequestBench.Hosts;
-using FluentValidation;
+using JasperFx;
+using JasperFx.CodeGeneration;
+using Wolverine.FluentValidation;
 using Wolverine;
 using Wolverine.Http;
 using Wolverine.Http.FluentValidation;
@@ -19,15 +21,32 @@ builder.Services.AddResponseCompression();
 // The template family renders a Razor component, which is what ASP.NET Core ships for
 // server-side HTML. Nothing else here needs it.
 builder.Services.AddRazorComponents();
+// Wolverine serializes with these options, minimal APIs' own.
+// rb:wiring json.*
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
     options.SerializerOptions.PropertyNamingPolicy = Json.Options.PropertyNamingPolicy;
+    options.SerializerOptions.TypeInfoResolverChain.Insert(0, JsonContext.Default);
 });
-builder.Host.UseWolverine();
-builder.Services.AddWolverineHttp();
 // The middleware finds the validator through the container, so it has to be registered.
 // Without this it finds none, validates nothing, and a missing field reaches the endpoint.
-builder.Services.AddScoped<IValidator<OrderBody>, OrderBodyValidator>();
+// Wolverine's own registration registers OrderBodyValidator as a singleton, because it
+// takes no constructor arguments, and the generated endpoint takes a singleton once in its
+// constructor. A scoped validator would be built again on every request.
+builder.Host.UseWolverine(opts =>
+{
+    opts.UseFluentValidation();
+    // The endpoint adapters come from Internal/Generated, compiled with the rest of the
+    // target. Compiled at runtime instead, they are built at Roslyn's debug optimization
+    // level, and the JIT never optimizes them. A route with no generated adapter throws
+    // ExpectedTypeMissingException instead of compiling one. `dotnet run -- codegen write`
+    // in this directory rewrites them after an endpoint changes.
+    opts.CodeGeneration.TypeLoadMode = TypeLoadMode.Static;
+    // Wolverine serves HTTP here and carries no messages. The default, Balanced, assumes
+    // load-balanced nodes with messaging active and starts the agents for them.
+    opts.Durability.Mode = DurabilityMode.MediatorOnly;
+});
+builder.Services.AddWolverineHttp();
 // The created row sets a Location header, and a Wolverine handler is a static
 // method with no HttpContext of its own unless one is injected.
 builder.Services.AddHttpContextAccessor();
@@ -63,9 +82,18 @@ app.MapWolverineEndpoints(opts =>
 // rb:handler errors.unmatched
 app.MapFallback(() => Results.Problem(statusCode: 404));
 
+// JasperFx's command line, for `dotnet run -- codegen write`. It runs only for that verb,
+// because it loads every assembly in the output directory to look for commands, and a
+// start through app.Run() loads none of them.
+if (args is ["codegen", ..])
+{
+    return await app.RunJasperFxCommands(args);
+}
+
 app.Lifetime.ApplicationStarted.Register(HostInfo.Listening);
 Console.Error.WriteLine($"container/wolverine-http listening on {HostInfo.Port()}");
 app.Run();
+return 0;
 
 // Top-level statements compile to an internal Program, which Alba's AlbaHost.For<Program> in suite/
 // cannot name. Declaring it public is what the ASP.NET Core integration-testing

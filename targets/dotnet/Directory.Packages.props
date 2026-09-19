@@ -12,13 +12,17 @@
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.12" />
     <!-- The six frameworks. -->
     <PackageVersion Include="FastEndpoints" Version="8.3.0" />
+    <!-- FastEndpoints' own source generator, for its reflection cache: the object factories,
+         property setters and value parsers its binder would otherwise compile from
+         expression trees at runtime. Only the analyzer runs. The serializer-context part,
+         which installs a CLI tool, stays off. -->
+    <PackageVersion Include="FastEndpoints.Generator" Version="8.3.0" />
     <PackageVersion Include="Carter" Version="10.0.0" />
     <PackageVersion Include="WolverineFx.Http" Version="6.38.0" />
-    <!-- Wolverine 6 compiles its handlers rather than reflecting over them, and core no
-         longer ships the compiler. The alternative is committing generated code and
-         regenerating it whenever a route moves; this pays Roslyn once at startup instead,
-         which the warmup absorbs and which never touches a measured request. A production
-         deployment would pre-generate and set TypeLoadMode.Static. -->
+    <!-- Wolverine 6 generates its handlers rather than reflecting over them, and core no
+         longer ships the compiler. wolverine-http loads the handlers it generated ahead of
+         time, committed under Internal/Generated, so nothing compiles at runtime. This is
+         what Wolverine's codegen write command compiles with when it rewrites them. -->
     <PackageVersion Include="WolverineFx.RuntimeCompilation" Version="6.38.0" />
     <!-- Wolverine's own validation integration: middleware that runs a FluentValidation
          validator on the request before the endpoint, so no endpoint calls one. -->

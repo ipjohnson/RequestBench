@@ -482,6 +482,7 @@
         "type": "Project",
         "dependencies": {
           "FastEndpoints": "[8.3.0, )",
+          "FastEndpoints.Generator": "[8.3.0, )",
           "RequestBench.Domain": "[1.0.0, )",
           "RequestBench.Hosts": "[1.0.0, )"
         }
@@ -491,9 +492,6 @@
         "dependencies": {
           "RequestBench.Domain": "[1.0.0, )"
         }
-      },
-      "requestbench.suite": {
-        "type": "Project"
       },
       "FastEndpoints": {
         "type": "CentralTransitive",
@@ -506,6 +504,12 @@
           "FastEndpoints.Messaging": "8.3.0",
           "FluentValidation": "12.1.1"
         }
+      },
+      "FastEndpoints.Generator": {
+        "type": "CentralTransitive",
+        "requested": "[8.3.0, )",
+        "resolved": "8.3.0",
+        "contentHash": "pW/YwqceY1sHSpim2PMC7VGTHGkO7O1ZmhJvv2DWAKsRLOSZ1cUsNvgHPHxFi/cjxb5WV7gJ+LpRBU4+hZ1Peg=="
       },
       "FluentValidation": {
         "type": "CentralTransitive",
