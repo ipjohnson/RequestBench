@@ -58,6 +58,9 @@ use warp::http::{header, StatusCode};
 use warp::reply::Response;
 use warp::{Filter, Reply};
 
+#[global_allocator]
+static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+
 type Route = warp::filters::BoxedFilter<(Response,)>;
 
 // rb:wiring json.*,parameters.*,query.*,headers.*,middleware.*,authorized.*,template.*
@@ -327,7 +330,7 @@ fn routes() -> impl warp::Filter<Extract = (impl warp::Reply,), Error = std::con
                 .into_response()
         }))
         .unify()
-        .or(warp::path!("__meta").and(warp::get()).map(|| json(&rb_host::meta("warp", "askama"))))
+        .or(warp::path!("__meta").and(warp::get()).map(|| json(&rb_host::meta("warp", "serde_json", "askama"))))
         .unify()
         .boxed();
 

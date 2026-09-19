@@ -31,6 +31,9 @@ static CACHE: std::sync::LazyLock<d::ResponseStore> =
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
+#[global_allocator]
+static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+
 // rb:wiring errors.*,domain.*
 /// The domain's failures as poem errors, so a handler returns `Result` and never builds a
 /// 404 or a 422 itself.
@@ -88,21 +91,9 @@ impl ResponseError for Rejected {
     }
 }
 
-/// An unvalidated body, for the endpoints that only parse. The validate routes use the
-/// extractor; this is only for bind, which is measured against them.
 /// The one domain failure, as this target's rejection carrier.
 fn not_found_rejection(_: d::Fail) -> Rejected {
     Rejected(StatusCode::NOT_FOUND, d::not_found_body())
-}
-
-// rb:wiring body.*,domain.*
-fn parse(body: &[u8]) -> Result<Value, Rejected> {
-    serde_json::from_slice(body).map_err(|e: serde_json::Error| {
-        Rejected(
-            StatusCode::BAD_REQUEST,
-            serde_json::json!({ "error": "invalid_body", "detail": e.to_string() }),
-        )
-    })
 }
 
 // ---- validation: poem's typed Json extractor, and this target's own rules ------
@@ -338,7 +329,8 @@ fn app() -> impl Endpoint {
     // contaminate the rows this family is measured against.
     //
     // Shallow, which is the point: the handler runs and the body is built before anything
-    // is compared, so the 304 saves the write and nothing else.
+    // is compared, so the 304 saves the write and nothing else. The bytes come from poem's
+    // Json, so the digest is over what the json family's serializer writes.
     let etag_route = |size: &'static str| {
         get(make(move |req: Request| async move {
             let asked = req
@@ -346,7 +338,12 @@ fn app() -> impl Endpoint {
                 .get(header::IF_NONE_MATCH)
                 .and_then(|v| v.to_str().ok())
                 .map(str::to_string);
-            let raw = serde_json::to_vec(d::payload(size)).unwrap_or_default();
+            let raw = Json(d::payload(size))
+                .into_response()
+                .into_body()
+                .into_bytes()
+                .await
+                .unwrap_or_default();
             let etag = d::content_etag(&raw);
             let base = if asked.as_deref() == Some(etag.as_str()) {
                 Response::builder().status(StatusCode::NOT_MODIFIED).body(Body::empty())
@@ -367,7 +364,8 @@ fn app() -> impl Endpoint {
     //
     // Poem ships no response cache, so the store is the shared LRU sized from the fixture.
     // One store for the target rather than one per route, so the capacity the fixture
-    // derives from the key count means what it says.
+    // derives from the key count means what it says. A stored body is what poem's Json
+    // wrote, as it is for the etag family.
     let cache_route = |size: &'static str, on: &'static [&'static str]| {
         get(make(move |req: Request| async move {
             let values: Vec<String> = on
@@ -392,7 +390,12 @@ fn app() -> impl Endpoint {
                     let fresh = d::StoredResponse {
                         status: 200,
                         headers,
-                        body: serde_json::to_vec(d::payload(size)).unwrap_or_default(),
+                        body: Json(d::payload(size))
+                            .into_response()
+                            .into_body()
+                            .into_vec()
+                            .await
+                            .unwrap_or_default(),
                     };
                     CACHE.put(key, fresh.clone());
                     fresh
@@ -424,7 +427,7 @@ fn app() -> impl Endpoint {
         .at("/health", get(make(|_| async {
             "ok".with_content_type("text/plain; charset=utf-8").into_response()
         })))
-        .at("/__meta", get(make(|_| async { Json(rb_host::meta("poem", "askama")) })))
+        .at("/__meta", get(make(|_| async { Json(rb_host::meta("poem", "sonic-rs", "askama")) })))
         .at("/json/small", payload_route("small"))
         .at("/json/medium", payload_route("medium"))
         .at("/json/large", payload_route("large"))
@@ -506,9 +509,11 @@ async fn bind_headers(h: BoundHeaders) -> Json<d::WithEcho<BoundHeaders>> {
     Json(d::with_echo("small", h))
 }
 
+/// The unvalidated body, through the Json extractor the validate routes use, into a Value
+/// rather than the order.
 #[poem::handler]
-async fn bind(body: Vec<u8>) -> Result<Json<d::BindResult>, Rejected> {
-    Ok(Json(d::bind_echo(parse(&body)?)))
+async fn bind(Json(body): Json<Value>) -> Json<d::BindResult> {
+    Json(d::bind_echo(body))
 }
 
 #[poem::handler]
@@ -576,10 +581,9 @@ async fn replace(
 #[poem::handler]
 async fn patch_customer(
     Path(cid): Path<String>,
-    body: Vec<u8>,
+    Json(body): Json<Value>,
 ) -> Result<Json<d::Customer>, Rejected> {
-    let v = parse(&body)?;
-    Ok(Json(d::patch_customer(&cid, &v).map_err(|e| not_found_rejection(e))?))
+    Ok(Json(d::patch_customer(&cid, &body).map_err(|e| not_found_rejection(e))?))
 }
 
 #[poem::handler]

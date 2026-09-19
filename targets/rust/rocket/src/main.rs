@@ -25,6 +25,9 @@ use serde_json::Value;
 use flate2::{write::GzEncoder, Compression};
 use std::io::{Cursor, Write};
 
+#[global_allocator]
+static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+
 // ---- shared response shapes ---------------------------------------------------
 
 // rb:wiring compressed.*
@@ -295,7 +298,7 @@ fn health() -> (ContentType, &'static str) {
 
 #[get("/__meta")]
 fn meta() -> Json<Value> {
-    Json(rb_host::meta("rocket", "tera"))
+    Json(rb_host::meta("rocket", "serde_json", "tera"))
 }
 
 #[get("/json/small")]

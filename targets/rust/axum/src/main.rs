@@ -12,12 +12,16 @@ use axum::{
     middleware::{from_fn, Next},
     response::{IntoResponse, Response},
     routing::{delete, get, patch, post, MethodRouter},
+    serve::ListenerExt,
     Json, Router,
 };
 use rb_domain as d;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tower_http::compression::{predicate::SizeAbove, CompressionLayer};
+
+#[global_allocator]
+static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
 // ---- shared response shapes ---------------------------------------------------
 
@@ -264,7 +268,7 @@ const VARY_ONE: &[&str] = &["x-rb-tenant"];
 const VARY_MANY: &[&str] = &["x-rb-channel", "x-rb-region", "x-rb-tenant"];
 
 async fn meta() -> Json<Value> {
-    Json(rb_host::meta("axum", "askama"))
+    Json(rb_host::meta("axum", "serde_json", "askama"))
 }
 
 // rb:wiring parameters.*,headers.*,middleware.*,authorized.*
@@ -468,7 +472,14 @@ mod suite;
 async fn main() {
     let port = rb_host::boot("axum");
 
-    let listener = tokio::net::TcpListener::bind(("0.0.0.0", port)).await.expect("bind");
+    // axum 0.8 leaves TCP_NODELAY at the OS default, and tap_io is where its documentation
+    // turns it on.
+    let listener = tokio::net::TcpListener::bind(("0.0.0.0", port))
+        .await
+        .expect("bind")
+        .tap_io(|tcp| {
+            let _ = tcp.set_nodelay(true);
+        });
     let app = app();
     rb_host::listening();
     axum::serve(listener, app).await.expect("serve");

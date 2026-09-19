@@ -22,9 +22,9 @@ awaits the next.
 **Compression is a tower layer scoped to three routes.** `tower-http`'s `CompressionLayer`
 is attached to the compressed routes alone. On the router it would put a "did the client
 ask?" check on all forty-five endpoints and contaminate the rows those are measured
-against. The level is pinned to the one every language uses; the size threshold is left at
-the library's default, because whether a framework bothers to compress a body too small to
-benefit is what `compressed.gzip_small` is in the set to show.
+against. The level is tower-http's `CompressionLevel::Fastest`, the fastest it offers. The
+size threshold is left at the library's default, because whether a framework bothers to
+compress a body too small to benefit is what `compressed.gzip_small` is in the set to show.
 
 **Payloads are closed over, not looked up.** `payload_route` takes the size once and moves
 it into the handler. A `/json/{size}` capture would make the router pay parameter cost on

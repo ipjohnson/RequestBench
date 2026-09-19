@@ -30,25 +30,30 @@ pub fn crate_version(name: &str) -> &'static str {
 /// attributed to a framework version rather than to a different runner.
 ///
 /// `adapter` is empty under the container contract, where the framework serves its own
-/// requests. `template` is the engine this target renders the template family with. Each
-/// target passes its own, because each reaches an engine through its own framework's view
-/// facility, and the one framework here with a view layer does not share the others'.
+/// requests. `serializer` is the JSON library the target writes and reads JSON with. Each
+/// target passes its own, because a framework with a JSON facility is configured through it
+/// and two targets need not agree on which library. `template` is the engine this target
+/// renders the template family with. Each target passes its own, because each reaches an
+/// engine through its own framework's view facility, and the one framework here with a view
+/// layer does not share the others'.
 ///
 /// `etag` and `cache` say the same thing about the two caching families: which digest
 /// computed the validator, and what stored the response. Only salvo has either as a
 /// framework facility, so only salvo passes its own; the rest take the defaults below,
 /// which name what they hold instead.
-pub fn meta(framework: &str, template: &str) -> Value {
-    meta_with(framework, template,
+pub fn meta(framework: &str, serializer: &str, template: &str) -> Value {
+    meta_with(framework, serializer, template,
               "sha1 (the framework ships no conditional handling)", "a shared LRU")
 }
 
-pub fn meta_with(framework: &str, template: &str, etag: &str, cache: &str) -> Value {
+pub fn meta_with(framework: &str, serializer: &str, template: &str, etag: &str, cache: &str)
+    -> Value {
     let mut m = json!({
         "framework": framework,
         "version": crate_version(framework),
         "runtime": RUSTC,
         "adapter": "",
+        "serializer": serializer,
         "template": template,
         "etag": etag,
         "cache": cache,

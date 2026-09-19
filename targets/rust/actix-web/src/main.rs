@@ -22,6 +22,9 @@ const VARY_MANY: &[&str] = &["x-rb-channel", "x-rb-region", "x-rb-tenant"];
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
+#[global_allocator]
+static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+
 // rb:wiring errors.*,domain.*
 fn fail(e: d::Fail) -> HttpResponse {
     match e {
@@ -270,7 +273,7 @@ async fn health() -> impl Responder {
 }
 
 async fn meta() -> impl Responder {
-    HttpResponse::Ok().json(rb_host::meta("actix-web", "askama"))
+    HttpResponse::Ok().json(rb_host::meta("actix-web", "serde_json", "askama"))
 }
 
 // rb:wiring parameters.*,headers.*,middleware.*,authorized.*
@@ -557,7 +560,9 @@ mod suite;
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     let port = rb_host::boot("actix-web");
+    // actix-web 4 leaves TCP_NODELAY at the OS default, which keeps Nagle's algorithm on.
     let server = HttpServer::new(|| App::new().configure(config))
+        .tcp_nodelay(true)
         .bind(("0.0.0.0", port))?;
     rb_host::listening();
     server.run().await
