@@ -4644,72 +4644,86 @@
     },
     "rust:warp": {
       "baseline": {
-        "facility": "warp::test::request() against the filter routes() builds, as warp's documentation does; run by cargo test",
+        "facility": "warp::test::request() against the filter routes() builds, from warp's test feature, as warp's documentation does; run by cargo test",
+        "dep": "warp/test",
         "transport": "in-memory",
         "reaches": "the literal and the content type, which is the whole of what this endpoint is"
       },
       "json": {
-        "facility": "warp::test::request() against the filter routes() builds, as warp's documentation does; run by cargo test",
+        "facility": "warp::test::request() against the filter routes() builds, from warp's test feature, as warp's documentation does; run by cargo test",
+        "dep": "warp/test",
         "transport": "in-memory",
         "reaches": "the serializer at three sizes, which is all this family has to show"
       },
       "parameters": {
-        "facility": "warp::test::request() against the filter routes() builds, as warp's documentation does; run by cargo test",
+        "facility": "warp::test::request() against the filter routes() builds, from warp's test feature, as warp's documentation does; run by cargo test",
+        "dep": "warp/test",
         "transport": "in-memory",
         "reaches": "the captures as the echo holds them, held to the values this binary drew as integers, and that the static path still reaches the static route"
       },
       "authorized": {
-        "facility": "warp::test::request() against the filter routes() builds, as warp's documentation does; run by cargo test",
+        "facility": "warp::test::request() against the filter routes() builds, from warp's test feature, as warp's documentation does; run by cargo test",
+        "dep": "warp/test",
         "transport": "in-memory",
         "reaches": "the refusal as well as the pass, which is the half a target that let everything through would still answer correctly"
       },
       "compressed": {
-        "facility": "warp::test::request() against the filter routes() builds, as warp's documentation does; run by cargo test",
+        "facility": "warp::test::request() against the filter routes() builds, from warp's test feature, as warp's documentation does; run by cargo test",
+        "dep": "warp/test",
         "transport": "in-memory",
         "reaches": "the codec, because this target compresses with a filter on its own routes rather than in a server in front of it"
       },
       "etag": {
-        "facility": "warp::test::request() against the filter routes() builds, as warp's documentation does; run by cargo test",
+        "facility": "warp::test::request() against the filter routes() builds, from warp's test feature, as warp's documentation does; run by cargo test",
+        "dep": "warp/test",
         "transport": "in-memory",
         "reaches": "the validator and the conditional answer. The 304 is the only request in the corpus that cannot be sent until the target has answered a different one, because the validator is the target's to produce"
       },
       "cache": {
-        "facility": "warp::test::request() against the filter routes() builds, as warp's documentation does; run by cargo test",
+        "facility": "warp::test::request() against the filter routes() builds, from warp's test feature, as warp's documentation does; run by cargo test",
+        "dep": "warp/test",
         "transport": "in-memory",
         "reaches": "the response cache and what it is keyed on. A store keyed on fewer headers than it declares answers one tenant with another tenant's body"
       },
       "body": {
-        "facility": "warp::test::request() against the filter routes() builds, as warp's documentation does; run by cargo test",
+        "facility": "warp::test::request() against the filter routes() builds, from warp's test feature, as warp's documentation does; run by cargo test",
+        "dep": "warp/test",
         "transport": "in-memory",
         "reaches": "the binding and the validation facility, including the two refusals, which are judged as the envelope this target recorded rather than against a pinned body"
       },
       "query": {
-        "facility": "warp::test::request() against the filter routes() builds, as warp's documentation does; run by cargo test",
+        "facility": "warp::test::request() against the filter routes() builds, from warp's test feature, as warp's documentation does; run by cargo test",
+        "dep": "warp/test",
         "transport": "in-memory",
         "reaches": "the parse, the percent-decoding and the coercion: the answer echoes the values the test drew, so a parameter that was dropped, left encoded or coerced wrong fails on the body"
       },
       "headers": {
-        "facility": "warp::test::request() against the filter routes() builds, as warp's documentation does; run by cargo test",
+        "facility": "warp::test::request() against the filter routes() builds, from warp's test feature, as warp's documentation does; run by cargo test",
+        "dep": "warp/test",
         "transport": "in-memory",
         "reaches": "the echo on /headers/bind, held to the values this binary drew, and on /headers that the request was accepted with all of them attached"
       },
       "middleware": {
-        "facility": "warp::test::request() against the filter routes() builds, as warp's documentation does; run by cargo test",
+        "facility": "warp::test::request() against the filter routes() builds, from warp's test feature, as warp's documentation does; run by cargo test",
+        "dep": "warp/test",
         "transport": "in-memory",
         "reaches": "every layer, because the host boots the application rather than calling the handler, which is the way this family is failed without noticing"
       },
       "domain": {
-        "facility": "warp::test::request() against the filter routes() builds, as warp's documentation does; run by cargo test",
+        "facility": "warp::test::request() against the filter routes() builds, from warp's test feature, as warp's documentation does; run by cargo test",
+        "dep": "warp/test",
         "transport": "in-memory",
         "reaches": "the shared model through all eight operations, including the four that write, where a 201 and a 204 with no body are answers a framework can get subtly wrong while returning the right status"
       },
       "errors": {
-        "facility": "warp::test::request() against the filter routes() builds, as warp's documentation does; run by cargo test",
+        "facility": "warp::test::request() against the filter routes() builds, from warp's test feature, as warp's documentation does; run by cargo test",
+        "dep": "warp/test",
         "transport": "in-memory",
         "reaches": "whatever this target does with a route it does not have, which is the framework rather than a handler"
       },
       "template": {
-        "facility": "warp::test::request() against the filter routes() builds, as warp's documentation does; run by cargo test",
+        "facility": "warp::test::request() against the filter routes() builds, from warp's test feature, as warp's documentation does; run by cargo test",
+        "dep": "warp/test",
         "transport": "in-memory",
         "reaches": "the engine's output, normalised the way the conformance client normalises it: the spec pins the content and leaves the whitespace free"
       }
