@@ -1303,7 +1303,7 @@
         "builtin": "response_class=PlainTextResponse and a returned string; nothing sits between the route and the body."
       },
       "json": {
-        "mechanism": "returning the dict, which FastAPI serializes; one small() helper behind the routes that answer the same payload"
+        "mechanism": "returning the dict under a declared -> dict, which FastAPI serializes with Pydantic straight to JSON bytes; one small() helper behind the routes that answer the same payload"
       },
       "parameters": {
         "mechanism": "FastAPI's {one} captures, each bound as an int by the typed function parameter of the same name; the static route answers through the small() helper"
