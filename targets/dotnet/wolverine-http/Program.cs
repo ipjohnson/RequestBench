@@ -19,9 +19,12 @@ builder.Services.AddResponseCompression();
 // The template family renders a Razor component, which is what ASP.NET Core ships for
 // server-side HTML. Nothing else here needs it.
 builder.Services.AddRazorComponents();
+// Wolverine serializes with these options, minimal APIs' own.
+// rb:wiring json.*
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
     options.SerializerOptions.PropertyNamingPolicy = Json.Options.PropertyNamingPolicy;
+    options.SerializerOptions.TypeInfoResolverChain.Insert(0, JsonContext.Default);
 });
 // The middleware finds the validator through the container, so it has to be registered.
 // Without this it finds none, validates nothing, and a missing field reaches the endpoint.

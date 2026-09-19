@@ -449,7 +449,8 @@
         "builtin": "The endpoint method returns the string and Wolverine writes it; nothing sits between them."
       },
       "json": {
-        "builtin": "Returning the record is the whole of it: Wolverine serializes what the endpoint method returned."
+        "mechanism": "a source-generated JsonSerializerContext in the target, first in the resolver chain of the minimal API options Wolverine serializes with, so the record the endpoint method returns is written from generated metadata instead of reflection; minimal APIs' relaxed encoder keeps the generated fast path off",
+        "mentions": "JsonSerializerContext"
       },
       "parameters": {
         "builtin": "A typed method parameter named after the capture is the binding: Wolverine fills it from the route value before the endpoint runs."

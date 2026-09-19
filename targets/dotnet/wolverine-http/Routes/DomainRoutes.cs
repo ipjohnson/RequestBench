@@ -28,7 +28,7 @@ public static class DomainEndpoints
         ValidatedOrder order =
             domain.PriceOrder(body.CustomerId!.Value, body.Status!, body.Input());
         accessor.HttpContext!.Response.Headers.Location = domain.CreatedLocation();
-        return Results.Json(order, Json.Options, statusCode: 201);
+        return Results.Json(order, statusCode: 201);
     }
 
     [WolverineGet("/domain/orders/{oid}")]
