@@ -20,8 +20,8 @@ public static class Failures
         IResult result = error switch
         {
             NotFoundException => Results.Problem(statusCode: 404),
-            // A refused body never reaches here: the route runs the validator and answers it.
-            // What is left is a body nothing could read, which names no field.
+            // A refused body never reaches here: Carter's validation filter answers it with
+            // 422. What is left is a body nothing could read, which names no field.
             MalformedException or BadHttpRequestException or JsonException =>
                 Results.Problem(statusCode: 400),
             _ => Results.Problem(statusCode: 500, detail: error?.Message),

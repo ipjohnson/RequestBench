@@ -6,9 +6,9 @@ namespace RequestBench.CarterTarget.Routes;
 /// <summary>
 /// The order body, and the FluentValidation validator it pairs with.
 ///
-/// Carter 10 ships no validation of its own -- the IValidator wiring it carried in older
-/// versions is gone -- so this target takes FluentValidation directly and runs it in the
-/// route. The rules are declared once, here, rather than walked by hand in each handler.
+/// Carter's validation runs FluentValidation validators. AddCarter finds this one, and the
+/// endpoint filter behind MapPost&lt;OrderBody&gt; and MapPut&lt;OrderBody&gt; runs it before the
+/// handler and answers 422 with its failures. The rules are declared once, here.
 ///
 /// The properties are nullable so NotNull means present: an int is indistinguishable from
 /// an absent one, because both arrive as zero.

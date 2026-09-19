@@ -1,5 +1,4 @@
 using System.Text.Json;
-using FluentValidation;
 using Carter;
 using RequestBench.Domain;
 
@@ -13,30 +12,22 @@ public sealed class DomainRoutes : ICarterModule
         app.MapGet("/domain/orders", (int page, int size, string status, DomainModel d) =>
             d.DomainFilter(page, size, status));
 
-        app.MapPost("/domain/orders", (OrderBody body, DomainModel d, IValidator<OrderBody> v,
-                                      HttpResponse response) =>
+        // Carter's MapPost<T> and MapPut<T> validate the body in Carter's endpoint filter, the
+        // same as the body routes, so a refused body never reaches either handler.
+        app.MapPost<OrderBody>("/domain/orders", (OrderBody body, DomainModel d,
+                                                  HttpResponse response) =>
         {
-            if (Body.Refused(v, body) is IResult refused)
-            {
-                return refused;
-            }
-            ValidatedOrder order = d.PriceOrder(body.CustomerId!.Value, body.Status!, body.Input());
+            ValidatedOrder order = Body.Priced(d, body);
             response.Headers.Location = d.CreatedLocation();
             return Results.Json(order, statusCode: 201);
         });
 
         app.MapGet("/domain/orders/{oid}", (string oid, DomainModel d) => d.GetOrder(oid));
 
-        app.MapPut("/domain/orders/{oid}", (string oid, OrderBody body, DomainModel d,
-                                           IValidator<OrderBody> v) =>
+        app.MapPut<OrderBody>("/domain/orders/{oid}", (string oid, OrderBody body, DomainModel d) =>
         {
             Order existing = d.GetOrder(oid);
-            if (Body.Refused(v, body) is IResult refused)
-            {
-                return refused;
-            }
-            return Results.Ok(d.PriceOrder(body.CustomerId!.Value, body.Status!, body.Input())
-                with { Id = existing.Id });
+            return Results.Ok(Body.Priced(d, body) with { Id = existing.Id });
         });
 
         app.MapGet("/domain/customers/{cid}/summary", (string cid, DomainModel d) => d.DomainJoin(cid));

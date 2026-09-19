@@ -1,4 +1,6 @@
 
+using System.Text.Json.Nodes;
+
 namespace RequestBench.CarterTarget.Suite;
 
 /// <summary>
@@ -76,5 +78,27 @@ public sealed class BodyTests(TargetApp app) : IClassFixture<TargetApp>
         using HttpResponseMessage response = await app.Send(ask);
 
         await Envelope.AssertAsync(response, ask, Target);
+    }
+
+    // The plan's refused bodies fail to bind, so they never reach the validator. This body
+    // binds and breaks one rule, so Carter's filter on the route is what answers it.
+    // rb:test body.validate_small
+    [Fact]
+    public async Task A_body_that_binds_but_breaks_a_rule_gets_Carters_422()
+    {
+        Ask ask = Plan.For("body.validate_small") with
+        {
+            Body = """{"customer_id":1,"status":"open","lines":[]}""",
+        };
+
+        using HttpResponseMessage response = await app.Send(ask);
+
+        Assert.Equal(422, (int)response.StatusCode);
+        Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
+        JsonNode body = JsonNode.Parse(await response.Content.ReadAsStringAsync())!;
+        JsonNode error = Assert.Single(body["errors"]!.AsArray())!;
+        Assert.Equal("Lines", error["property_name"]!.GetValue<string>());
+        Assert.Equal("'Lines' must have at least one entry.",
+                     error["error_message"]!.GetValue<string>());
     }
 }
