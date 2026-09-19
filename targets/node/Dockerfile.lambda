@@ -1,6 +1,8 @@
 # Host: lambda-rie. The AWS base image carries the Runtime Interface Client and, when not
 # running in Lambda, the Runtime Interface Emulator, so nothing here is a stand-in.
 #   docker build -f targets/node/Dockerfile.lambda --build-arg TARGET=fastify -t rb/node-fastify-lambda .
+# Node 24 while the other Node hosts run 26. AWS publishes Node 26 only as a preview runtime,
+# tagged 26-preview, and says preview runtimes should not be used for production.
 FROM public.ecr.aws/lambda/nodejs:24
 ARG TARGET
 WORKDIR /var/task

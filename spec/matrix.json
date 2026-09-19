@@ -53,7 +53,7 @@
       ]
     },
     "node": {
-      "runtime": "node:24",
+      "runtime": "node:26",
       "frameworks": [
         "express",
         "fastify",
