@@ -1,5 +1,8 @@
 package rb.vertx;
 
+import io.vertx.core.DeploymentOptions;
+import io.vertx.core.Future;
+import io.vertx.core.VerticleBase;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.ext.web.Router;
@@ -31,12 +34,21 @@ public final class Main {
   public static void main(String[] args) throws Exception {
     Domain.load(Hosts.fixture());
     Vertx vertx = Vertx.vertx();
-    vertx.createHttpServer(options())
-         .requestHandler(router(vertx))
-         .listen(Hosts.port())
+    // One server per CPU. Vert.x runs every connection a server accepts on the one event loop
+    // the server was deployed on, and servers sharing a port take new connections in turn.
+    vertx.deployVerticle(HttpServerVerticle::new,
+                         new DeploymentOptions().setInstances(
+                             Runtime.getRuntime().availableProcessors()))
          .toCompletionStage().toCompletableFuture().get();
     Hosts.listening();
     System.out.println("container/vertx listening on " + Hosts.port());
+  }
+
+  static final class HttpServerVerticle extends VerticleBase {
+    @Override
+    public Future<?> start() {
+      return vertx.createHttpServer(options()).requestHandler(router(vertx)).listen(Hosts.port());
+    }
   }
 
   /**

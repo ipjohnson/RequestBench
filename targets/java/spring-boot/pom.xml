@@ -65,8 +65,10 @@
       <scope>test</scope>
     </dependency>
     <!-- Host: lambda-rie. The adapter people actually deploy in front of Spring Boot,
-         rather than a generic shim. Unused under the container host, where Spring serves
-         its own socket. -->
+         rather than a generic shim. The container host does not call it, because Spring
+         serves its own socket there. It still reaches that host's JsonMapper: its core
+         depends on jackson-module-afterburner, and Spring Boot adds every Jackson module it
+         finds through ServiceLoader. -->
     <dependency>
       <groupId>com.amazonaws.serverless</groupId>
       <artifactId>aws-serverless-java-container-springboot4</artifactId>

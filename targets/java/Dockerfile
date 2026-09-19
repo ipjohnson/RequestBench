@@ -35,4 +35,6 @@ COPY --from=build /server.jar /app/server.jar
 COPY spec/fixture.json /app/spec/fixture.json
 ENV RB_FIXTURE=/app/spec/fixture.json PORT=8080
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "/app/server.jar"]
+# Compact object headers are a product feature from JDK 25 (JEP 519) and the default from
+# JDK 27 (JEP 534). The collector, the heap sizes and the compiler are the JVM's own choices.
+ENTRYPOINT ["java", "-XX:+UseCompactObjectHeaders", "-jar", "/app/server.jar"]
