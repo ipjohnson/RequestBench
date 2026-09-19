@@ -1,7 +1,5 @@
 using Carter;
-using FluentValidation;
 using RequestBench.CarterTarget;
-using RequestBench.CarterTarget.Routes;
 using RequestBench.Domain;
 using RequestBench.Hosts;
 
@@ -21,10 +19,10 @@ builder.Services.AddResponseCompression();
 // The template family renders a Razor component, which is what ASP.NET Core ships for
 // server-side HTML. Nothing else here needs it.
 builder.Services.AddRazorComponents();
+// AddCarter also finds OrderBodyValidator and registers it, a singleton by default, with the
+// validator locator that the filter behind MapPost<T> and MapPut<T> asks.
+// rb:wiring body.*,domain.*
 builder.Services.AddCarter();
-// Carter 10 ships no validation, so the validator is registered here and injected into the
-// routes that need it. One validator, declared once in OrderBodyValidator.
-builder.Services.AddSingleton<IValidator<OrderBody>, OrderBodyValidator>();
 // rb:wiring json.*
 builder.Services.ConfigureHttpJsonOptions(options =>
 {

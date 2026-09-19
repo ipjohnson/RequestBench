@@ -39,8 +39,8 @@ public sealed partial class DomainModel
     //
     // Validating is the framework's own job and lives in each target: aspnet-mvc and
     // minimal-apis annotate a record for DataAnnotations, fastendpoints declares a
-    // FluentValidation Validator, carter runs one itself, and wolverine-http puts one in
-    // its middleware. What is left here is what happens once a body is known to be good,
+    // FluentValidation Validator, carter's MapPost<T> and MapPut<T> run one in Carter's
+    // endpoint filter, and wolverine-http puts one in its middleware. What is left here is what happens once a body is known to be good,
     // which is the same work whichever framework proved it.
 
     /// <summary>One order line as it arrived, before pricing.</summary>

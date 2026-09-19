@@ -1,6 +1,6 @@
 // dotnet:carter's error contract, against the bodies it actually sends.
 //
-// The binder runs before the route, so a body it could not read never reaches the validator the route would have run. That answers a bare ProblemDetails, the same as minimal-apis.
+// The binder runs before Carter's validation filter, so a body it could not read never reaches the validator. That answers a bare ProblemDetails, the same as minimal-apis.
 import { describe, expect, test } from "vitest";
 import { askIn, schemaAt, type Answer } from "@rb/schema";
 import pkg, { validationFailure } from "../src/index.js";
@@ -22,8 +22,11 @@ const judge = (endpoint: string, answered: number, body: unknown): boolean => {
 // What the target answered to {"customer_id": "not-an-int", ...} and to a truncated body.
 const notBound = { type: "https://tools.ietf.org/html/rfc9110#section-15.5.1", title: "Bad Request", status: 400 };
 
-// What it answers when its validator is reached, which the plan never does.
-const refused = { type: "about:blank", title: "One or more validation errors occurred.", status: 400, errors: { CustomerId: ["'Customer Id' must not be empty."] } };
+// What Carter's filter answered to {"customer_id":1,"status":"open","lines":[]}, a body that binds and breaks one rule. The plan never sends one.
+const refused = { type: "https://tools.ietf.org/html/rfc4918#section-11.2", title: "Unprocessable Entity", status: 422, errors: [{ property_name: "Lines", error_message: "'Lines' must have at least one entry." }] };
+
+// What the route answered before Carter's filter took validation over: 400, grouped by field.
+const refusedByTheRoute = { type: "https://tools.ietf.org/html/rfc9110#section-15.5.1", title: "One or more validation errors occurred.", status: 400, errors: { Lines: ["'Lines' must have at least one entry."] } };
 
 describe(pkg.target, () => {
   test("declares a schema for every error endpoint", () => {
@@ -53,10 +56,19 @@ describe(pkg.target, () => {
     expect(validationFailure.safeParse(refused).success).toBe(true);
   });
 
+  test("Carter answers 422 with a list, not the 400 map the route used to build", () => {
+    expect(validationFailure.safeParse(refusedByTheRoute).success).toBe(false);
+    expect(validationFailure.safeParse({ ...refused, status: 400 }).success).toBe(false);
+  });
+
+  test("a refusal that lists no failure is not an answer", () => {
+    expect(validationFailure.safeParse({ ...refused, errors: [] }).success).toBe(false);
+  });
+
   test("FluentValidation reports its own wording, not this repository's rule names", () => {
     expect(validationFailure.safeParse({
-      type: "about:blank", title: "x", status: 400,
-      errors: { CustomerId: ["'Customer Id' must not be empty."] },
+      ...refused,
+      errors: [{ property_name: "CustomerId", error_message: "'Customer Id' must not be empty." }],
     }).success).toBe(true);
   });
 });
