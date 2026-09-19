@@ -16,10 +16,12 @@ builder.Services.AddRequestBenchOutputCache(
     DomainModel.Load(DomainModel.FixturePath()));
 // rb:wiring compressed.*
 builder.Services.AddResponseCompression();
+// rb:wiring json.*
 builder.Services.AddControllersWithViews()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.PropertyNamingPolicy = Json.Options.PropertyNamingPolicy;
+        options.JsonSerializerOptions.TypeInfoResolverChain.Insert(0, JsonContext.Default);
     });
 // Nothing here overrides InvalidModelStateResponseFactory. A body MVC could not bind gets
 // MVC's own 400 ProblemDetails, which is the contract a client of an ASP.NET API expects

@@ -263,7 +263,8 @@
         "builtin": "Content() writes the string from the action itself, so the action is all there is."
       },
       "json": {
-        "builtin": "Returning the record is the whole of it: System.Text.Json serializes what the action returned."
+        "mechanism": "a source-generated JsonSerializerContext in the target, first in the resolver chain through AddJsonOptions, so System.Text.Json writes the returned record from generated metadata instead of reflection; the output formatter's relaxed encoder keeps the generated fast path off",
+        "mentions": "JsonSerializerContext"
       },
       "parameters": {
         "builtin": "[FromRoute] on a typed parameter is the binding, converted from the route value before the action runs."
