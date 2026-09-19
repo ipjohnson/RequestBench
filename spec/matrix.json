@@ -1417,9 +1417,9 @@
         "mechanism": "Litestar's own response cache, configured on the app through ResponseCacheConfig"
       },
       "body": {
-        "mechanism": "a typed data parameter: msgspec decodes and checks it before the handler is entered and raises ValidationException itself",
+        "mechanism": "a msgspec Struct as the typed data parameter: msgspec decodes and checks it before the handler is entered and raises ValidationException itself",
         "dep": "litestar",
-        "mentions": "dataclass"
+        "mentions": "Struct"
       },
       "query": {
         "builtin": "A typed function parameter is the binding: Litestar coerces it from the query string before the handler runs. The handler echoes the bound values beside the small payload."

@@ -15,10 +15,9 @@ import pathlib
 from litestar import Litestar, MediaType, Request, Response, delete, get, patch, post, put
 from litestar.config.compression import CompressionConfig
 from litestar.connection import ASGIConnection
-from dataclasses import dataclass
 from typing import Annotated
 
-from msgspec import Meta
+from msgspec import Meta, Struct
 
 from litestar.exceptions import (ClientException, NotFoundException,
                                  PermissionDeniedException, ValidationException)
@@ -54,20 +53,21 @@ CACHE_TTL = d.cache_spec()["ttl_s"]
 # msgspec stops at the first field it cannot decode and reports that one, which is why the
 # first-error row and the collect-all row are the same answer here.
 #
+# The two types are msgspec Structs. msgspec's documentation recommends a Struct over a
+# dataclass for a schema, because a Struct is faster to decode into.
+#
 # It lives here rather than in a sibling module because _hosts/container.py loads a target
 # by file path, and this directory is named after the package it measures.
 
 
 # rb:wiring body.*,domain.*
-@dataclass
-class LineIn:
+class LineIn(Struct):
     product_id: int
     qty: Annotated[int, Meta(ge=1)]
 
 
 # rb:wiring body.*,domain.*
-@dataclass
-class OrderIn:
+class OrderIn(Struct):
     customer_id: int
     status: str
     lines: Annotated[list[LineIn], Meta(min_length=1)]
