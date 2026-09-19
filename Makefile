@@ -156,13 +156,17 @@ MVN = $(if $(shell command -v mvn),mvn,docker run --rm -v $(CURDIR):/repo -v rb-
 suites-java:
 	@cd targets/java && $(MVN) -B -q test
 
-# A Go test is a _test.go file in the package it tests, so one `go test` over the module runs
-# all five. Without a local Go it runs in the image targets/go/Dockerfile builds with.
+# A Go test is a _test.go file in the package it tests, so `go test` over the five packages
+# runs all five. Without a local Go it runs in the image targets/go/Dockerfile builds with.
+# gin runs on its own, with the build tag targets/go/Dockerfile selects gin's JSON codec with.
 GO_TEST = $(if $(shell command -v go),go,docker run --rm -v $(CURDIR):/repo -v rb-gomod:/go/pkg/mod \
             -w /repo/targets/go golang:1.26-alpine go)
 
 suites-go:
-	@cd targets/go && $(GO_TEST) test -count=1 ./gin ./echo ./chi ./gorilla-mux ./fiber
+	@cd targets/go && status=0; \
+	  $(GO_TEST) test -count=1 -tags=sonic ./gin || status=1; \
+	  $(GO_TEST) test -count=1 ./echo ./chi ./gorilla-mux ./fiber || status=1; \
+	  exit $$status
 
 # A Rust suite is a #[cfg(test)] module in the binary it tests, so one `cargo test` over the
 # workspace runs all six. Without a local Cargo it runs in the image targets/rust/Dockerfile

@@ -6,8 +6,18 @@
 package main
 
 import (
+	"github.com/bytedance/sonic"
 	"github.com/gofiber/fiber/v3"
 	d "github.com/ianjohnson/requestbench/targets/go/_shared"
+)
+
+// Fiber's JSON facility is the pair fiber.Config takes: c.JSON encodes with the first and
+// c.Bind() decodes with the second. Fiber's guide to making it faster names sonic for them,
+// and sonic.ConfigStd writes what encoding/json writes.
+// rb:wiring json.*,body.*
+var (
+	encodeJSON = sonic.ConfigStd.Marshal
+	decodeJSON = sonic.ConfigStd.Unmarshal
 )
 
 // The response is read once and served from the closure rather than looked up per request:

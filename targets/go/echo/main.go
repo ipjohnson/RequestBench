@@ -62,6 +62,10 @@ func router() *echo.Echo {
 	// handler calls a render function. That slot is Echo's view facility.
 	// rb:wiring template.*
 	e.Renderer = newRenderer()
+	// And the serializer, so c.JSON and c.Bind reach sonic and no handler names a JSON
+	// library. That slot is Echo's JSON facility.
+	// rb:wiring json.*,body.*
+	e.JSONSerializer = sonicSerializer{}
 	e.HideBanner = true
 	e.HidePort = true
 

@@ -81,6 +81,10 @@ func main() {
 func router() *fiber.App {
 	app := fiber.New(fiber.Config{
 		ErrorHandler: func(c fiber.Ctx, err error) error { return fail(c, err) },
+		// Fiber's JSON facility: c.JSON and c.Bind() reach sonic through these, so no
+		// handler names a JSON library.
+		JSONEncoder: encodeJSON,
+		JSONDecoder: decodeJSON,
 		// Fiber's validation facility: Bind().Body() runs this after binding, so no handler
 		// calls a validator.
 		StructValidator: newValidator(),

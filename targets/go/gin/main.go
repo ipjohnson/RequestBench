@@ -20,6 +20,7 @@ import (
 	// rb:wiring compressed.*
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
+	ginjson "github.com/gin-gonic/gin/codec/json"
 	hosts "github.com/ianjohnson/requestbench/targets/go/_hosts"
 	d "github.com/ianjohnson/requestbench/targets/go/_shared"
 )
@@ -184,6 +185,8 @@ func router() *gin.Engine {
 	// rb:wiring json.*,parameters.*,headers.*,middleware.*,authorized.*
 	payload := func(size string) gin.HandlerFunc {
 		body := d.Payload(size)
+		// c.JSON marshals through gin's codec/json, which the sonic build tag in
+		// targets/go/Dockerfile points at sonic.
 		return func(c *gin.Context) { c.JSON(200, body) }
 	}
 	// rb:wiring parameters.*,headers.*,middleware.*,authorized.*
@@ -194,7 +197,8 @@ func router() *gin.Engine {
 	r.GET("/plaintext", func(c *gin.Context) { c.String(200, "Hello, World!") })
 	r.GET("/health", func(c *gin.Context) { c.String(200, "ok") })
 	r.GET("/__meta", func(c *gin.Context) {
-		c.JSON(200, hosts.Meta("gin", gin.Version, "html/template",
+		// ginjson.Package is gin's own record of the codec its build tags selected.
+		c.JSON(200, hosts.Meta("gin", gin.Version, ginjson.Package, "html/template",
 			"sha1 (gin ships no conditional handling)", "gin middleware over a shared LRU"))
 	})
 

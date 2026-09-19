@@ -6,7 +6,6 @@
 package main
 
 import (
-	"encoding/json"
 	"errors"
 	"reflect"
 	"strings"
@@ -94,11 +93,13 @@ func bindOrder(c fiber.Ctx) (*orderBody, bool) {
 	return &ob, true
 }
 
-// An unvalidated body, for the endpoints that only parse.
+// An unvalidated body, for the endpoints that only parse. c.Bind().Body() decodes it with the
+// JSONDecoder in Fiber's config, as it decodes the struct above, and skips the StructValidator
+// because a map is not a struct.
 // rb:wiring body.*,domain.*
 func bindAny(c fiber.Ctx) (map[string]any, bool) {
 	var m map[string]any
-	if err := json.Unmarshal(c.Body(), &m); err != nil {
+	if err := c.Bind().Body(&m); err != nil {
 		_ = c.Status(400).JSON(fiber.Map{"error": "invalid_body", "detail": err.Error()})
 		return nil, false
 	}

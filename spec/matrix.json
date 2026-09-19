@@ -536,7 +536,9 @@
         "builtin": "c.String writes the string from the route itself, so the handler is all there is."
       },
       "json": {
-        "mechanism": "c.JSON over a body read once into the closure, so the map lookup is not in the measurement"
+        "mechanism": "c.JSON over a body read once into the closure, so the map lookup is not in the measurement, serialized by sonic.ConfigStd through the JSONSerializer on the engine",
+        "dep": "github.com/bytedance/sonic",
+        "mentions": "sonic"
       },
       "parameters": {
         "mechanism": "c.Bind reading the param: tag from Echo's :one captures, with the bound struct echoed beside the small payload; the static route answers the payload closure"
@@ -554,7 +556,7 @@
         "mechanism": "Echo middleware over one shared LRU store, on these routes and nowhere else"
       },
       "body": {
-        "mechanism": "c.Bind fills the struct and c.Validate runs the validator the engine holds, so no handler calls one",
+        "mechanism": "c.Bind fills the struct and c.Validate runs the validator the engine holds, so no handler calls one; the struct and the unvalidated map both decode through the sonic JSONSerializer on the engine",
         "dep": "github.com/go-playground/validator/v10",
         "mentions": "validator"
       },
@@ -582,7 +584,9 @@
         "builtin": "c.SendString writes the string from the route itself, so the handler is all there is."
       },
       "json": {
-        "mechanism": "c.JSON over a body read once into the closure, on static routes rather than a /json/:size capture"
+        "mechanism": "c.JSON over a body read once into the closure, on static routes rather than a /json/:size capture, serialized by sonic.ConfigStd through the JSONEncoder in fiber.Config",
+        "dep": "github.com/bytedance/sonic",
+        "mentions": "sonic"
       },
       "parameters": {
         "mechanism": "c.Bind().URI through gofiber/schema, reading the uri: tag from Fiber's :one captures, with the bound struct echoed beside the small payload; the static route, registered first because Fiber tries routes in order, answers the payload closure"
@@ -604,7 +608,7 @@
         "mentions": "cache"
       },
       "body": {
-        "mechanism": "a StructValidator in fiber.Config, which Fiber runs as part of c.Bind().Body(), so binding and validating are one call it owns",
+        "mechanism": "a StructValidator in fiber.Config, which Fiber runs as part of c.Bind().Body(), so binding and validating are one call it owns; the struct and the unvalidated map both decode through the sonic JSONDecoder in fiber.Config",
         "dep": "github.com/go-playground/validator/v10",
         "mentions": "validator"
       },
@@ -634,7 +638,9 @@
         "builtin": "c.String writes the string from the route itself, so the handler is all there is."
       },
       "json": {
-        "mechanism": "c.JSON over a body read once into the closure, on static routes rather than a /json/:size capture"
+        "mechanism": "c.JSON over a body read once into the closure, on static routes rather than a /json/:size capture, serialized by sonic through gin's codec/json, which the sonic build tag selects",
+        "dep": "github.com/bytedance/sonic",
+        "mentions": "sonic"
       },
       "parameters": {
         "mechanism": "ShouldBindUri reading the uri: tag from Gin's :one radix captures, with the bound struct echoed beside the small payload; the static route answers the payload closure"
@@ -654,7 +660,7 @@
         "mechanism": "a Gin handler in front of each route, over one shared LRU store sized from the fixture"
       },
       "body": {
-        "mechanism": "Gin's binder, which parses and validates in one call through the go-playground tags on the struct",
+        "mechanism": "Gin's binder, which parses and validates in one call through the go-playground tags on the struct, and parses the unvalidated body into a map with the same sonic codec",
         "dep": "github.com/go-playground/validator/v10",
         "mentions": "validator"
       },

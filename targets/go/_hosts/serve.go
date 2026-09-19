@@ -72,6 +72,9 @@ func mod(path string) string {
 // adapter is there because a host adapter can move a target's numbers with the framework
 // version unchanged, and then nothing recorded explains the step. It is empty under
 // container, where the framework serves its own requests.
+// serializer is the JSON library the target writes and reads JSON with. Each target passes
+// its own, because a framework that has a JSON facility is configured through it and two
+// targets in one language need not agree on which library.
 // tmpl is the engine the target renders the template family with. Each target passes its
 // own, because each reaches an engine through its own framework's view facility and two
 // targets in one language need not agree on which.
@@ -83,15 +86,16 @@ func mod(path string) string {
 //
 // boot_ms is there under container, where this package opens the listener itself. The
 // function hosts are started by a library that binds on its own, and report none.
-func Meta(framework, version, tmpl, etag, cache string) map[string]any {
+func Meta(framework, version, serializer, tmpl, etag, cache string) map[string]any {
 	m := map[string]any{
-		"framework": framework,
-		"version":   version,
-		"runtime":   runtime.Version(),
-		"adapter":   strings.Join(adapters, " + "),
-		"template":  tmpl,
-		"etag":      etag,
-		"cache":     cache,
+		"framework":  framework,
+		"version":    version,
+		"runtime":    runtime.Version(),
+		"adapter":    strings.Join(adapters, " + "),
+		"serializer": serializer,
+		"template":   tmpl,
+		"etag":       etag,
+		"cache":      cache,
 	}
 	if boot > 0 {
 		m["boot_ms"] = math.Round(float64(boot)/float64(100*time.Microsecond)) / 10

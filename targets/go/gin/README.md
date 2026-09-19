@@ -20,15 +20,24 @@ would make Gin pay radix parameter cost on the family that `json.small` anchors 
 the endpoint set to, and it would answer 200 with an empty body for a size that does not
 exist. The loop is a registration convenience; the router sees three literals.
 
+**JSON goes through sonic.** Gin picks its JSON codec with a build tag, and both Go
+Dockerfiles build gin with `-tags=sonic`. That points gin's `codec/json` at
+`sonic.ConfigStd`, the sonic configuration that writes what `encoding/json` writes. `c.JSON`
+and the binder both go through it, including the unvalidated body the bind endpoints parse
+into a map. `make suites-go` and the harness's local launcher pass the same tag, and
+`/__meta` reports the codec from gin's own `codec/json.Package`.
+
 **Compression is scoped to a group.** `gin-contrib/gzip` is attached to
 `r.Group("/compressed", …)` and nowhere else. Registered on the engine it would put a
 "did the client ask?" check on all forty-five endpoints and contaminate the baseline the
-compressed rows are measured against. The level is pinned across every language; the size
-threshold is left at the library's default for the same reason as everywhere else.
+compressed rows are measured against. The level is `gzip.BestSpeed`, the fastest the
+library offers (#87); the size threshold is left at the library's default for the same
+reason as everywhere else.
 
-**The cached group carries its validators as middleware.** `validatorsFor(size)` closes
-over the pinned ETag from the fixture and short-circuits with 304, so `cached` measures
-the conditional rather than a digest.
+**The etag group carries its conditional as middleware.** `revalidates()` holds the body
+the handler wrote, hashes it with the shared SHA-1, and answers a matching `If-None-Match`
+with 304. Gin ships no ETag and neither does net/http under it. The handler still runs, so
+the 304 saves the write and nothing else.
 
 **The template is embedded in the binary.** `//go:embed views/items.tmpl` and
 `SetHTMLTemplate` at startup, because the container image is the built binary on a bare
