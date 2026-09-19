@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	d "github.com/ianjohnson/requestbench/targets/go/_shared"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 // rb:test *

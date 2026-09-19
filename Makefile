@@ -160,7 +160,7 @@ suites-java:
 # runs all five. Without a local Go it runs in the image targets/go/Dockerfile builds with.
 # gin runs on its own, with the build tag targets/go/Dockerfile selects gin's JSON codec with.
 GO_TEST = $(if $(shell command -v go),go,docker run --rm -v $(CURDIR):/repo -v rb-gomod:/go/pkg/mod \
-            -w /repo/targets/go golang:1.26-alpine go)
+            -w /repo/targets/go golang:1.27-alpine go)
 
 suites-go:
 	@cd targets/go && status=0; \

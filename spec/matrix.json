@@ -34,7 +34,7 @@
       ]
     },
     "go": {
-      "runtime": "golang:1.26",
+      "runtime": "golang:1.27",
       "frameworks": [
         "gin",
         "echo",
@@ -555,7 +555,7 @@
         "mechanism": "Echo's own gzip middleware, attached to these three routes alone"
       },
       "etag": {
-        "mechanism": "Echo middleware over the shared digest, swapping the writer under Echo's own Response so the bytes can be hashed before it commits"
+        "mechanism": "Echo middleware over the shared digest, installing a capturing writer with c.SetResponse so the bytes can be hashed before Echo's own Response commits"
       },
       "cache": {
         "mechanism": "Echo middleware over one shared LRU store, on these routes and nowhere else"
@@ -569,7 +569,7 @@
         "mechanism": "Echo's own binder reading the query: tag, with the bound struct as the echo beside the small payload"
       },
       "headers": {
-        "mechanism": "the DefaultBinder's BindHeaders reading the header: tag on /headers/bind, since c.Bind never reads a header, with the bound struct echoed beside the small payload; /headers reads no header at all"
+        "mechanism": "echo.BindHeaders reading the header: tag on /headers/bind, since c.Bind never reads a header, with the bound struct echoed beside the small payload; /headers reads no header at all"
       },
       "middleware": {
         "mechanism": "middleware as trailing arguments on the route, n no-op layers each calling the next"
@@ -1899,7 +1899,7 @@
       "licence": "MIT",
       "repo": "https://github.com/labstack/echo",
       "docs": "https://echo.labstack.com/docs",
-      "package": "https://pkg.go.dev/github.com/labstack/echo/v4"
+      "package": "https://pkg.go.dev/github.com/labstack/echo/v5"
     },
     "go:fiber": {
       "licence": "MIT",

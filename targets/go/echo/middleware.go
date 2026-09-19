@@ -4,11 +4,11 @@
 // family needs. Each layer calls the next and does nothing else.
 package main
 
-import "github.com/labstack/echo/v4"
+import "github.com/labstack/echo/v5"
 
 // rb:wiring middleware.*
 func noop(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(c echo.Context) error { return next(c) }
+	return func(c *echo.Context) error { return next(c) }
 }
 
 // rb:wiring middleware.*

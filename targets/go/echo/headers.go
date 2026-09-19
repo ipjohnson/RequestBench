@@ -5,7 +5,7 @@
 // materialising 25 nobody asked for.
 //
 // /headers/bind goes through Echo's own binder. c.Bind never reads a header, so the handler
-// asks the DefaultBinder for the headers alone, which is how Echo's guide binds from one
+// asks for the headers alone with echo.BindHeaders, which is how Echo's guide binds from one
 // source. The struct is both what Echo fills and what the handler echoes, so nothing copies
 // one shape into another.
 //
@@ -16,7 +16,7 @@ package main
 
 import (
 	d "github.com/ianjohnson/requestbench/targets/go/_shared"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 // rb:wiring headers.*
@@ -29,8 +29,8 @@ type boundHeaders struct {
 // rb:wiring headers.*
 // bindHeaders fills out from the request headers, answering the failure itself if there is
 // one, in the shape bindQuery answers a query Echo could not bind.
-func bindHeaders(c echo.Context, out any) bool {
-	if err := (&echo.DefaultBinder{}).BindHeaders(c, out); err != nil {
+func bindHeaders(c *echo.Context, out any) bool {
+	if err := echo.BindHeaders(c, out); err != nil {
 		_ = c.JSON(400, map[string]string{"error": "invalid_header", "detail": err.Error()})
 		return false
 	}
@@ -40,7 +40,7 @@ func bindHeaders(c echo.Context, out any) bool {
 func registerHeaders(e *echo.Echo) {
 	e.GET("/headers", payload("small"))
 
-	e.GET("/headers/bind", func(c echo.Context) error {
+	e.GET("/headers/bind", func(c *echo.Context) error {
 		var h boundHeaders
 		if !bindHeaders(c, &h) {
 			return nil

@@ -13,7 +13,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	d "github.com/ianjohnson/requestbench/targets/go/_shared"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 // Report the field by the name it has on the wire rather than by its Go name. The
@@ -77,7 +77,7 @@ func (o orderBody) order() *d.ValidatedOrder {
 // Two failures and two statuses, because Echo draws the line there: Bind answers an
 // HTTPError with 400 for a body it could not read, and a body that became the struct and
 // then failed a rule never went near the binder.
-func bindOrder(c echo.Context) (*orderBody, bool) {
+func bindOrder(c *echo.Context) (*orderBody, bool) {
 	var ob orderBody
 	if err := c.Bind(&ob); err != nil {
 		_ = c.JSON(400, map[string]any{"error": "invalid_body", "detail": detailOf(err)})
@@ -101,7 +101,7 @@ func bindOrder(c echo.Context) (*orderBody, bool) {
 
 // An unvalidated body, for the endpoints that only parse. It goes through the JSONSerializer
 // the engine holds, which c.Bind decodes the struct above with, and nothing validates a map.
-func bindAny(c echo.Context) (map[string]any, bool) {
+func bindAny(c *echo.Context) (map[string]any, bool) {
 	var m map[string]any
 	if err := c.Echo().JSONSerializer.Deserialize(c, &m); err != nil {
 		_ = c.JSON(400, map[string]any{"error": "invalid_body", "detail": detailOf(err)})
@@ -115,12 +115,10 @@ func bindAny(c echo.Context) (map[string]any, bool) {
 func detailOf(err error) string {
 	var he *echo.HTTPError
 	if errors.As(err, &he) {
-		if he.Internal != nil {
-			return he.Internal.Error()
+		if inner := he.Unwrap(); inner != nil {
+			return inner.Error()
 		}
-		if s, ok := he.Message.(string); ok {
-			return s
-		}
+		return he.Message
 	}
 	return err.Error()
 }
