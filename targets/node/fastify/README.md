@@ -35,8 +35,10 @@ it, and the bytes are the ones `JSON.stringify` wrote before. Two answers still 
 
 **The JSON body parser is replaced.** `addContentTypeParser` returns `req.raw.body`
 untouched when a function host has already parsed it, because reading the stream a second
-time hangs. Under the `container` host nothing has pre-parsed, so Fastify's own parser
-path runs and a parse failure becomes the shared `ValidationError`.
+time hangs. Under the `container` host nothing has pre-parsed, so the target's own parser
+reads the stream and calls `JSON.parse`. A body it cannot parse becomes a 400 with Fastify's
+`FST_ERR_CTP_INVALID_JSON` code, which `setErrorHandler` answers. Fastify's default parser,
+with its body limit and its prototype-poisoning checks, runs under no host.
 
 **Middleware is hooks.** There is no `app.use` chain in the path. `middleware.four` and
 `middleware.sixteen` pass an array of `onRequest` hooks scoped to that one route, so the
@@ -48,15 +50,16 @@ with a single hook.
 size threshold is left at the plugin's default, because whether a framework bothers to
 compress a body too small to benefit is what `compressed.gzip_small` exists to show.
 
-**The ETag hook is hand-written.** `@fastify/etag` computes a digest of the body, which
-could not produce the value pinned in the fixture. The hook here emits the pinned
-validator and compares `if-none-match`, so `cached` measures the conditional rather than a
-hash. The size is closed over per route rather than sliced out of `req.url`, which carries
-the query string.
+**ETags come from `@fastify/etag`, in its own scope.** The plugin hashes the payload
+Fastify is about to send and answers `if-none-match` itself, so no handler compares
+anything. It is registered inside `app.register(async (scope) => …)` with the two `/etag`
+routes, because on the root instance it would hash every response in the blend. Its
+default hash is fnv1a, which `/__meta` names.
 
 ## Dependencies in the bundle
 
-`fastify`, `@fastify/compress` for the compressed family, `@fastify/view` with `ejs` for
-the template family. The template engine is reported on `/__meta` and shows up in the
+`fastify`, `@fastify/compress` for the compressed family, `@fastify/etag` for the etag
+family, `@fastify/caching` with `abstract-cache` for the cache family, and `@fastify/view`
+with `ejs` for the template family. The template engine is reported on `/__meta` and shows up in the
 `template` column, which is why that family is comparable only against another target
 declaring the same engine.
