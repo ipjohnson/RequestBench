@@ -1071,7 +1071,7 @@
         "builtin": "Fastify writes the string from the route itself, so the handler is all there is."
       },
       "json": {
-        "builtin": "Returning the object is the whole of it: Fastify serializes what a handler returns."
+        "mechanism": "schema.response on the route, which Fastify compiles with fast-json-stringify into the function that writes the body; the handler still returns the object"
       },
       "parameters": {
         "mechanism": "schema.params on the two capturing routes, which is the binding: ajv converts each capture to an integer and the handler echoes req.params"

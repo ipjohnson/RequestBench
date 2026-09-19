@@ -15,9 +15,11 @@ import * as d from "../../_shared/domain.js";
 
 const VIEWS = join(dirname(dirname(fileURLToPath(import.meta.url))), "views");
 
-// Compiled once, rendered per request. A precomputed string would measure nothing.
+// Compiled once, rendered per request. A precomputed string would measure nothing. EJS
+// compiles line tracking into the template for its error messages unless compileDebug is
+// false.
 // rb:wiring template.*
-const items = ejs.compile(readFileSync(join(VIEWS, "items.ejs"), "utf8"));
+const items = ejs.compile(readFileSync(join(VIEWS, "items.ejs"), "utf8"), { compileDebug: false });
 
 // rb:wiring template.*
 const render = (size) => {

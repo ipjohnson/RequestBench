@@ -10,5 +10,8 @@ COPY targets/node/${TARGET} ./targets/node/app
 COPY spec/fixture.json ./spec/fixture.json
 # Whatever the target is called, it is copied to app/, so one entrypoint covers them all.
 ENV PORT=8080 RB_TARGET=app RB_FIXTURE=/app/spec/fixture.json
+# Express caches views, pug compiles without its debug instrumentation and @fastify/view
+# caches templates only when NODE_ENV is production.
+ENV NODE_ENV=production
 EXPOSE 8080
 CMD ["node", "targets/node/_hosts/container.mjs"]

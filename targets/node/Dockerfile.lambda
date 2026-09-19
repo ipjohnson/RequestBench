@@ -11,4 +11,6 @@ COPY targets/node/_hosts ./_hosts
 COPY targets/node/${TARGET} ./${TARGET}
 COPY spec/fixture.json /var/task/spec/fixture.json
 ENV RB_TARGET=${TARGET} RB_HOST=lambda-rie RB_FIXTURE=/var/task/spec/fixture.json
+# Production mode, for the same reasons as targets/node/Dockerfile.
+ENV NODE_ENV=production
 CMD ["_hosts/lambda-entry.handler"]
