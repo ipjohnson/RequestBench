@@ -7,7 +7,6 @@
 package main
 
 import (
-	"encoding/json"
 	"errors"
 	"reflect"
 	"strings"
@@ -100,11 +99,12 @@ func bindOrder(c echo.Context) (*orderBody, bool) {
 	return &ob, true
 }
 
-// An unvalidated body, for the endpoints that only parse.
+// An unvalidated body, for the endpoints that only parse. It goes through the JSONSerializer
+// the engine holds, which c.Bind decodes the struct above with, and nothing validates a map.
 func bindAny(c echo.Context) (map[string]any, bool) {
 	var m map[string]any
-	if err := json.NewDecoder(c.Request().Body).Decode(&m); err != nil {
-		_ = c.JSON(400, map[string]any{"error": "invalid_body", "detail": err.Error()})
+	if err := c.Echo().JSONSerializer.Deserialize(c, &m); err != nil {
+		_ = c.JSON(400, map[string]any{"error": "invalid_body", "detail": detailOf(err)})
 		return nil, false
 	}
 	return m, true
