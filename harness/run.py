@@ -178,7 +178,9 @@ class Local:
         if self.language == "go":
             if host != "container":
                 raise SystemExit("go has no launcher for host %r yet" % host)
-            return (["go", "run", "./" + d], ROOT / "targets/go",
+            # gin selects its JSON codec with a build tag, the one targets/go/Dockerfile passes.
+            tags = ["-tags=sonic"] if d == "gin" else []
+            return (["go", "run", *tags, "./" + d], ROOT / "targets/go",
                     {"RB_FIXTURE": str(ROOT / "spec/fixture.json"), "RB_HOST": host})
         if self.language == "java":
             # The jar is prebuilt by `make java` rather than built here: maven resolving a

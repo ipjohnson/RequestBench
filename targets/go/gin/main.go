@@ -185,6 +185,8 @@ func router() *gin.Engine {
 	// rb:wiring json.*,parameters.*,headers.*,middleware.*,authorized.*
 	payload := func(size string) gin.HandlerFunc {
 		body := d.Payload(size)
+		// c.JSON marshals through gin's codec/json, which the sonic build tag in
+		// targets/go/Dockerfile points at sonic.
 		return func(c *gin.Context) { c.JSON(200, body) }
 	}
 	// rb:wiring parameters.*,headers.*,middleware.*,authorized.*

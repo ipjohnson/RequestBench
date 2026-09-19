@@ -634,7 +634,9 @@
         "builtin": "c.String writes the string from the route itself, so the handler is all there is."
       },
       "json": {
-        "mechanism": "c.JSON over a body read once into the closure, on static routes rather than a /json/:size capture"
+        "mechanism": "c.JSON over a body read once into the closure, on static routes rather than a /json/:size capture, serialized by sonic through gin's codec/json, which the sonic build tag selects",
+        "dep": "github.com/bytedance/sonic",
+        "mentions": "sonic"
       },
       "parameters": {
         "mechanism": "ShouldBindUri reading the uri: tag from Gin's :one radix captures, with the bound struct echoed beside the small payload; the static route answers the payload closure"
@@ -654,7 +656,7 @@
         "mechanism": "a Gin handler in front of each route, over one shared LRU store sized from the fixture"
       },
       "body": {
-        "mechanism": "Gin's binder, which parses and validates in one call through the go-playground tags on the struct",
+        "mechanism": "Gin's binder, which parses and validates in one call through the go-playground tags on the struct, and parses the unvalidated body into a map with the same sonic codec",
         "dep": "github.com/go-playground/validator/v10",
         "mentions": "validator"
       },

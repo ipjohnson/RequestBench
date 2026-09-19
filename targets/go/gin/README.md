@@ -20,6 +20,13 @@ would make Gin pay radix parameter cost on the family that `json.small` anchors 
 the endpoint set to, and it would answer 200 with an empty body for a size that does not
 exist. The loop is a registration convenience; the router sees three literals.
 
+**JSON goes through sonic.** Gin picks its JSON codec with a build tag, and both Go
+Dockerfiles build gin with `-tags=sonic`. That points gin's `codec/json` at
+`sonic.ConfigStd`, the sonic configuration that writes what `encoding/json` writes. `c.JSON`
+and the binder both go through it, including the unvalidated body the bind endpoints parse
+into a map. `make suites-go` and the harness's local launcher pass the same tag, and
+`/__meta` reports the codec from gin's own `codec/json.Package`.
+
 **Compression is scoped to a group.** `gin-contrib/gzip` is attached to
 `r.Group("/compressed", …)` and nowhere else. Registered on the engine it would put a
 "did the client ask?" check on all forty-five endpoints and contaminate the baseline the

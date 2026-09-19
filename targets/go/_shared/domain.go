@@ -638,8 +638,8 @@ type authDoc struct {
 func Payload(size string) PayloadBody { return payloads[size].Body }
 
 // PayloadWithEcho puts the payload's keys and echo in one object, because encoding/json
-// writes an embedded struct's fields into the object around it. Every Go target writes JSON
-// with encoding/json.
+// writes an embedded struct's fields into the object around it. So does sonic.ConfigStd, the
+// other serializer the Go targets write JSON with.
 type PayloadWithEcho struct {
 	PayloadBody
 	Echo any `json:"echo"`
