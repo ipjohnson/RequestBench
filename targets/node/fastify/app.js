@@ -282,7 +282,9 @@ app.delete("/domain/orders/:oid/lines/:lid", s.responds({ 404: s.refusal }), (re
 // rb:wiring template.*
 // EJS is the engine @fastify/view's own README leads with. Compiled on first render and
 // cached by the plugin, rendered per request: a precomputed string would measure nothing.
-app.register(view, { engine: { ejs }, root: VIEWS });
+// `options` goes to ejs.compile. EJS compiles line tracking into the template for its error
+// messages unless compileDebug is false.
+app.register(view, { engine: { ejs }, root: VIEWS, options: { compileDebug: false } });
 app.get("/template/small",  (_, reply) => reply.view("items.ejs", d.payload("small")));
 app.get("/template/medium", (_, reply) => reply.view("items.ejs", d.payload("medium")));
 
