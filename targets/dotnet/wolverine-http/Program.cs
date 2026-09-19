@@ -42,6 +42,9 @@ builder.Host.UseWolverine(opts =>
     // ExpectedTypeMissingException instead of compiling one. `dotnet run -- codegen write`
     // in this directory rewrites them after an endpoint changes.
     opts.CodeGeneration.TypeLoadMode = TypeLoadMode.Static;
+    // Wolverine serves HTTP here and carries no messages. The default, Balanced, assumes
+    // load-balanced nodes with messaging active and starts the agents for them.
+    opts.Durability.Mode = DurabilityMode.MediatorOnly;
 });
 builder.Services.AddWolverineHttp();
 // The created row sets a Location header, and a Wolverine handler is a static
