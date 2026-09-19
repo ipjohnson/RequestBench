@@ -12,6 +12,7 @@ use axum::{
     middleware::{from_fn, Next},
     response::{IntoResponse, Response},
     routing::{delete, get, patch, post, MethodRouter},
+    serve::ListenerExt,
     Json, Router,
 };
 use rb_domain as d;
@@ -471,7 +472,14 @@ mod suite;
 async fn main() {
     let port = rb_host::boot("axum");
 
-    let listener = tokio::net::TcpListener::bind(("0.0.0.0", port)).await.expect("bind");
+    // axum 0.8 leaves TCP_NODELAY at the OS default, and tap_io is where its documentation
+    // turns it on.
+    let listener = tokio::net::TcpListener::bind(("0.0.0.0", port))
+        .await
+        .expect("bind")
+        .tap_io(|tcp| {
+            let _ = tcp.set_nodelay(true);
+        });
     let app = app();
     rb_host::listening();
     axum::serve(listener, app).await.expect("serve");
