@@ -41,7 +41,7 @@ func registerBaseline(r *mux.Router) {
 	}).Methods("GET")
 
 	r.HandleFunc("/__meta", func(w http.ResponseWriter, _ *http.Request) {
-		writeJSON(w, 200, hosts.Meta("gorilla-mux", muxVersion, "html/template",
+		writeJSON(w, 200, hosts.Meta("gorilla-mux", muxVersion, "encoding/json", "html/template",
 			"sha1 (net/http ships no conditional handling)",
 			"net/http middleware over a shared LRU"))
 	}).Methods("GET")

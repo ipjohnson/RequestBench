@@ -20,6 +20,7 @@ import (
 	// rb:wiring compressed.*
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
+	ginjson "github.com/gin-gonic/gin/codec/json"
 	hosts "github.com/ianjohnson/requestbench/targets/go/_hosts"
 	d "github.com/ianjohnson/requestbench/targets/go/_shared"
 )
@@ -194,7 +195,8 @@ func router() *gin.Engine {
 	r.GET("/plaintext", func(c *gin.Context) { c.String(200, "Hello, World!") })
 	r.GET("/health", func(c *gin.Context) { c.String(200, "ok") })
 	r.GET("/__meta", func(c *gin.Context) {
-		c.JSON(200, hosts.Meta("gin", gin.Version, "html/template",
+		// ginjson.Package is gin's own record of the codec its build tags selected.
+		c.JSON(200, hosts.Meta("gin", gin.Version, ginjson.Package, "html/template",
 			"sha1 (gin ships no conditional handling)", "gin middleware over a shared LRU"))
 	})
 

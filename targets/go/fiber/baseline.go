@@ -35,13 +35,14 @@ var boot time.Duration
 // and shares none of that package's helpers.
 func meta() fiber.Map {
 	m := fiber.Map{
-		"framework": "fiber",
-		"version":   fiberVersion,
-		"runtime":   runtime.Version(),
-		"adapter":   "",
-		"template":  "html/template",
-		"etag":      "fiber/middleware/etag strong sha1",
-		"cache":     "fiber/middleware/cache in-memory",
+		"framework":  "fiber",
+		"version":    fiberVersion,
+		"runtime":    runtime.Version(),
+		"adapter":    "",
+		"serializer": "encoding/json",
+		"template":   "html/template",
+		"etag":       "fiber/middleware/etag strong sha1",
+		"cache":      "fiber/middleware/cache in-memory",
 	}
 	if boot > 0 {
 		m["boot_ms"] = math.Round(float64(boot)/float64(100*time.Microsecond)) / 10
