@@ -560,7 +560,9 @@ mod suite;
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     let port = rb_host::boot("actix-web");
+    // actix-web 4 leaves TCP_NODELAY at the OS default, which keeps Nagle's algorithm on.
     let server = HttpServer::new(|| App::new().configure(config))
+        .tcp_nodelay(true)
         .bind(("0.0.0.0", port))?;
     rb_host::listening();
     server.run().await
