@@ -12,6 +12,8 @@ COPY targets/node/_hosts ./_hosts
 COPY targets/node/${TARGET} ./app
 COPY spec/fixture.json /app/spec/fixture.json
 ENV PORT=8080 RB_TARGET=app RB_HOST=gcp-func RB_FIXTURE=/app/spec/fixture.json
+# Production mode, for the same reasons as targets/node/Dockerfile.
+ENV NODE_ENV=production
 EXPOSE 8080
 CMD ["node_modules/.bin/functions-framework", "--target=rb", \
      "--source=_hosts/gcp-func.mjs", "--port=8080"]
