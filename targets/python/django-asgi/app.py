@@ -49,6 +49,9 @@ settings.configure(
     }},
     LOGGING_CONFIG=None,
     USE_TZ=False,
+    # Nothing here is translated. Django documents that with this off it "will make some
+    # optimizations so as not to load the internationalization machinery".
+    USE_I18N=False,
     # Django's own template engine, which is what the framework ships and what its own
     # tutorial renders with. The directory is absolute because _hosts/container.py loads
     # this module by file path rather than by name, so there is no app to search. With
