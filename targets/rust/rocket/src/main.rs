@@ -25,6 +25,9 @@ use serde_json::Value;
 use flate2::{write::GzEncoder, Compression};
 use std::io::{Cursor, Write};
 
+#[global_allocator]
+static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+
 // ---- shared response shapes ---------------------------------------------------
 
 // rb:wiring compressed.*

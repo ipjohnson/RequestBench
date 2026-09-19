@@ -22,6 +22,9 @@ const VARY_MANY: &[&str] = &["x-rb-channel", "x-rb-region", "x-rb-tenant"];
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
+#[global_allocator]
+static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+
 // rb:wiring errors.*,domain.*
 fn fail(e: d::Fail) -> HttpResponse {
     match e {

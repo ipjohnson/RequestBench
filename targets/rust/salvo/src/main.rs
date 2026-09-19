@@ -21,6 +21,9 @@ use serde::Serialize;
 use serde::Deserialize;
 use serde_json::Value;
 
+#[global_allocator]
+static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+
 // rb:wiring errors.*,domain.*
 /// Writes the domain's failures onto the response. Handlers call this and never build a
 /// 404 or a 422 themselves.

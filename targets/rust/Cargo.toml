@@ -20,6 +20,9 @@ flate2 = "1"
 # The digest for the etag family. Salvo's own caching middleware brings one; the other five
 # frameworks ship none, so the targets hash with this and declare it in /__meta.
 sha1 = "0.10"
+# The global allocator of every target, in place of glibc's malloc. It is a runtime
+# setting, so all six take it or none do.
+mimalloc = "0.1"
 
 # Measurement, not development. Without this every target is compared while carrying
 # debug assertions and no inlining across crates, which measures the profile rather than

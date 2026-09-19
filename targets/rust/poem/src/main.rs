@@ -31,6 +31,9 @@ static CACHE: std::sync::LazyLock<d::ResponseStore> =
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
+#[global_allocator]
+static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+
 // rb:wiring errors.*,domain.*
 /// The domain's failures as poem errors, so a handler returns `Result` and never builds a
 /// 404 or a 422 itself.

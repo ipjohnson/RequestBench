@@ -58,6 +58,9 @@ use warp::http::{header, StatusCode};
 use warp::reply::Response;
 use warp::{Filter, Reply};
 
+#[global_allocator]
+static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+
 type Route = warp::filters::BoxedFilter<(Response,)>;
 
 // rb:wiring json.*,parameters.*,query.*,headers.*,middleware.*,authorized.*,template.*

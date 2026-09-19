@@ -19,6 +19,9 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tower_http::compression::{predicate::SizeAbove, CompressionLayer};
 
+#[global_allocator]
+static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+
 // ---- shared response shapes ---------------------------------------------------
 
 // rb:wiring errors.*,domain.*
