@@ -17,6 +17,9 @@ mimalloc = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 rocket = { version = "0.5", features = ["json"] }
+# Rocket depends on tokio itself. This entry only adds the workspace's tokio features,
+# parking_lot among them, to the runtime Rocket builds.
+tokio = { workspace = true }
 # Rocket's own view layer. The tera feature is what makes .tera files render;
 # rocket_dyn_templates picks the engine from the file extension.
 rocket_dyn_templates = { version = "0.2", features = ["tera"] }
