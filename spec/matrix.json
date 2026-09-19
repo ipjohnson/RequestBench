@@ -34,7 +34,7 @@
       ]
     },
     "go": {
-      "runtime": "golang:1.26",
+      "runtime": "golang:1.27",
       "frameworks": [
         "gin",
         "echo",
