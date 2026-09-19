@@ -2,7 +2,7 @@ using RequestBench.Domain;
 using RequestBench.WolverineTarget;
 using RequestBench.WolverineTarget.Routes;
 using RequestBench.Hosts;
-using FluentValidation;
+using Wolverine.FluentValidation;
 using Wolverine;
 using Wolverine.Http;
 using Wolverine.Http.FluentValidation;
@@ -23,11 +23,13 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 {
     options.SerializerOptions.PropertyNamingPolicy = Json.Options.PropertyNamingPolicy;
 });
-builder.Host.UseWolverine();
-builder.Services.AddWolverineHttp();
 // The middleware finds the validator through the container, so it has to be registered.
 // Without this it finds none, validates nothing, and a missing field reaches the endpoint.
-builder.Services.AddScoped<IValidator<OrderBody>, OrderBodyValidator>();
+// Wolverine's own registration registers OrderBodyValidator as a singleton, because it
+// takes no constructor arguments, and the generated endpoint takes a singleton once in its
+// constructor. A scoped validator would be built again on every request.
+builder.Host.UseWolverine(opts => opts.UseFluentValidation());
+builder.Services.AddWolverineHttp();
 // The created row sets a Location header, and a Wolverine handler is a static
 // method with no HttpContext of its own unless one is injected.
 builder.Services.AddHttpContextAccessor();
