@@ -400,7 +400,8 @@
         "builtin": "The endpoint returns the string and ASP.NET writes it; nothing sits between them."
       },
       "json": {
-        "builtin": "Returning the record is the whole of it: System.Text.Json serializes what the endpoint returned."
+        "mechanism": "a source-generated JsonSerializerContext in the target, first in the resolver chain through ConfigureHttpJsonOptions, so System.Text.Json writes the returned record from generated metadata instead of reflection; minimal APIs' relaxed encoder keeps the generated fast path off",
+        "mentions": "JsonSerializerContext"
       },
       "parameters": {
         "builtin": "A typed lambda parameter named after the capture is the binding: ASP.NET converts the route value before the endpoint runs."

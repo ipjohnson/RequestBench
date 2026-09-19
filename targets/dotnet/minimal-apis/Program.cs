@@ -1,5 +1,6 @@
 using RequestBench.Domain;
 using RequestBench.Hosts;
+using RequestBench.MinimalApis;
 using RequestBench.MinimalApis.Routes;
 
 // RequestBench target: ASP.NET Core minimal APIs. Framework wiring only; behaviour from
@@ -28,9 +29,11 @@ builder.Services.AddRazorComponents();
 // ValidationProblem itself when they fail. Without it the attributes are inert and no
 // handler would be calling a validator either.
 builder.Services.AddValidation();
+// rb:wiring json.*
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
     options.SerializerOptions.PropertyNamingPolicy = Json.Options.PropertyNamingPolicy;
+    options.SerializerOptions.TypeInfoResolverChain.Insert(0, JsonContext.Default);
 });
 // A body the framework cannot bind short-circuits with its own 400 and never raises, so the
 // handler that turns failures into the shared shapes never sees it. Outside Development
