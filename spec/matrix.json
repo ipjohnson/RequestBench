@@ -1447,7 +1447,7 @@
         "builtin": "response.text over the string; nothing sits between the route and the body."
       },
       "json": {
-        "mechanism": "response.json from one small helper behind the routes that answer the same payload"
+        "mechanism": "response.json, rendered by the orjson dumps the application is given, from one small helper behind the routes that answer the same payload"
       },
       "parameters": {
         "mechanism": "Sanic's <one:int> typed captures, which Sanic converts before the handler runs; the static route answers through the small helper"

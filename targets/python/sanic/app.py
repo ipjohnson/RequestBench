@@ -16,6 +16,7 @@ take the route's own path out of the source, which is where harness/snippets.py 
 import gzip
 import pathlib
 
+import orjson
 from cachetools import TTLCache
 from sanic import Blueprint, Sanic, response
 from sanic.exceptions import NotFound as RouteMiss
@@ -112,7 +113,12 @@ def validated(body, first_error=False):
     return d.price_order(body["customer_id"], body["status"], body["lines"])
 
 
-app = Sanic("requestbench")
+# rb:wiring json.*,body.*
+# Sanic's own JSON hooks, given orjson. Left alone, Sanic serializes with ujson whenever it
+# is installed, and Sanic itself depends on ujson. Sanic documents handing the application
+# another library's dumps, with orjson as its example. loads is the same hook for request
+# bodies.
+app = Sanic("requestbench", dumps=orjson.dumps, loads=orjson.loads)
 # Sanic Extensions loads itself whenever it is installed, and it brings more than
 # templating. OAS would publish /docs and /openapi.json, and the extras below add
 # behaviour to routes this set measures, so only the piece this target asked for is left
