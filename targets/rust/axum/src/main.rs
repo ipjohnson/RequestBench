@@ -267,7 +267,7 @@ const VARY_ONE: &[&str] = &["x-rb-tenant"];
 const VARY_MANY: &[&str] = &["x-rb-channel", "x-rb-region", "x-rb-tenant"];
 
 async fn meta() -> Json<Value> {
-    Json(rb_host::meta("axum", "askama"))
+    Json(rb_host::meta("axum", "serde_json", "askama"))
 }
 
 // rb:wiring parameters.*,headers.*,middleware.*,authorized.*

@@ -298,7 +298,7 @@ fn health() -> (ContentType, &'static str) {
 
 #[get("/__meta")]
 fn meta() -> Json<Value> {
-    Json(rb_host::meta("rocket", "tera"))
+    Json(rb_host::meta("rocket", "serde_json", "tera"))
 }
 
 #[get("/json/small")]

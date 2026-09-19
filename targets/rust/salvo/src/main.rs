@@ -258,7 +258,7 @@ async fn health(res: &mut Response) {
 #[handler]
 async fn meta(res: &mut Response) {
     res.render(Json(rb_host::meta_with(
-        "salvo", "askama", "salvo CachingHeaders", "salvo::cache, MokaStore")));
+        "salvo", "serde_json", "askama", "salvo CachingHeaders", "salvo::cache, MokaStore")));
 }
 
 // rb:wiring parameters.*,headers.*,middleware.*,authorized.*

@@ -427,7 +427,7 @@ fn app() -> impl Endpoint {
         .at("/health", get(make(|_| async {
             "ok".with_content_type("text/plain; charset=utf-8").into_response()
         })))
-        .at("/__meta", get(make(|_| async { Json(rb_host::meta("poem", "askama")) })))
+        .at("/__meta", get(make(|_| async { Json(rb_host::meta("poem", "serde_json", "askama")) })))
         .at("/json/small", payload_route("small"))
         .at("/json/medium", payload_route("medium"))
         .at("/json/large", payload_route("large"))

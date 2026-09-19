@@ -273,7 +273,7 @@ async fn health() -> impl Responder {
 }
 
 async fn meta() -> impl Responder {
-    HttpResponse::Ok().json(rb_host::meta("actix-web", "askama"))
+    HttpResponse::Ok().json(rb_host::meta("actix-web", "serde_json", "askama"))
 }
 
 // rb:wiring parameters.*,headers.*,middleware.*,authorized.*

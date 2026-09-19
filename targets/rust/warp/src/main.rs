@@ -330,7 +330,7 @@ fn routes() -> impl warp::Filter<Extract = (impl warp::Reply,), Error = std::con
                 .into_response()
         }))
         .unify()
-        .or(warp::path!("__meta").and(warp::get()).map(|| json(&rb_host::meta("warp", "askama"))))
+        .or(warp::path!("__meta").and(warp::get()).map(|| json(&rb_host::meta("warp", "serde_json", "askama"))))
         .unify()
         .boxed();
 
