@@ -1351,7 +1351,7 @@
         "builtin": "A returned string is the body; nothing sits between the route and it."
       },
       "json": {
-        "mechanism": "jsonify from one small helper behind the routes that answer the same payload"
+        "mechanism": "jsonify, rendered by the orjson JSON provider installed as app.json, from one small helper behind the routes that answer the same payload"
       },
       "parameters": {
         "mechanism": "Flask's <int:one> converters, which convert each capture before the view runs; the static route answers through the small helper"
