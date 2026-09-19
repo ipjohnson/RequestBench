@@ -22,7 +22,7 @@
     <!-- Wolverine 6 generates its handlers rather than reflecting over them, and core no
          longer ships the compiler. wolverine-http loads the handlers it generated ahead of
          time, committed under Internal/Generated, so nothing compiles at runtime. This is
-         what `dotnet run -- codegen write` compiles with when it rewrites them. -->
+         what Wolverine's codegen write command compiles with when it rewrites them. -->
     <PackageVersion Include="WolverineFx.RuntimeCompilation" Version="6.38.0" />
     <!-- Wolverine's own validation integration: middleware that runs a FluentValidation
          validator on the request before the endpoint, so no endpoint calls one. -->
