@@ -33,6 +33,12 @@ gunicorn~=23.0
 cachetools~=7.2
 Flask-Caching~=2.5
 
+# orjson, for the three frameworks that document swapping their JSON library: Starlette
+# subclasses JSONResponse with it, Sanic takes it as dumps= and loads=, and Flask takes a
+# JSON provider built on it. FastAPI's documentation prefers its own Pydantic path, Litestar
+# serializes with msgspec, and Django's JsonResponse takes only a json.JSONEncoder.
+orjson~=3.12
+
 # Five of the six render with Jinja2, because it is the engine their own framework
 # reaches for: Flask builds one, FastAPI and Starlette ship Jinja2Templates, Litestar's
 # JinjaTemplateEngine is what litestar[standard] installs, and Jinja is the only engine
