@@ -13,6 +13,7 @@ harness/snippets.py, which refuses to guess which of them serves domain.filter.
 """
 import pathlib
 
+import jinja2
 from starlette.applications import Starlette
 from starlette.exceptions import HTTPException
 from starlette.middleware import Middleware
@@ -351,8 +352,15 @@ def cache_scoped(path, vary=()):
 # rendering and TemplateResponse is what reaches it; FastAPI re-exports this same class.
 # Compiled on first render and cached by the environment: a precomputed string would
 # measure nothing.
-templates = Jinja2Templates(
-    directory=str(pathlib.Path(__file__).resolve().parent / "templates"))
+#
+# The environment is the one Jinja2Templates builds from `directory`, with auto_reload off.
+# Left on, it checks the template file's mtime on every render, and Jinja documents turning
+# it off for performance. Passing a built environment is how Jinja2Templates takes one.
+templates = Jinja2Templates(env=jinja2.Environment(
+    loader=jinja2.FileSystemLoader(pathlib.Path(__file__).resolve().parent / "templates"),
+    autoescape=jinja2.select_autoescape(),
+    auto_reload=False,
+))
 
 
 # rb:wiring template.*
