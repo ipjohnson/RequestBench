@@ -7,7 +7,6 @@
 package main
 
 import (
-	"encoding/json"
 	"errors"
 	"reflect"
 	"strings"
@@ -87,12 +86,13 @@ func bindOrder(c *gin.Context) (*orderBody, bool) {
 	return &ob, true
 }
 
-// An unvalidated body, for the endpoints that only parse. The same 400 as above, because it
-// is the same decoder failing in the same way.
+// An unvalidated body, for the endpoints that only parse. Gin's binder decodes it with the
+// codec the struct above is decoded with, and a map carries no rules for it to run. The same
+// 400 as above, because it is the same decoder failing in the same way.
 // rb:wiring body.*,domain.*
 func bindAny(c *gin.Context) (map[string]any, bool) {
 	var m map[string]any
-	if err := json.NewDecoder(c.Request.Body).Decode(&m); err != nil {
+	if err := c.ShouldBindJSON(&m); err != nil {
 		c.JSON(400, gin.H{"error": "invalid_body", "detail": err.Error()})
 		return nil, false
 	}
