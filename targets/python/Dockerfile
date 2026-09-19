@@ -10,13 +10,16 @@ FROM python:${PYTHON_VERSION}-slim
 ARG TARGET
 WORKDIR /app
 COPY targets/python/requirements.txt ./targets/python/
-RUN pip install --no-cache-dir --no-compile -r targets/python/requirements.txt
+RUN pip install --no-cache-dir -r targets/python/requirements.txt
 COPY targets/python/_shared ./targets/python/_shared
 COPY targets/python/_hosts ./targets/python/_hosts
 # Whatever the target is called, it is copied to app/, so one entrypoint covers them all.
 # The directory must stay free of an __init__.py: without one it is a namespace portion,
 # which loses to the installed package of the same name, and targets/python is on sys.path.
 COPY targets/python/${TARGET} ./targets/python/app
+# Compiled here, as pip compiles the packages above, so a boot loads bytecode rather than
+# compiling every module it imports. PYTHONDONTWRITEBYTECODE only stops a write at runtime.
+RUN python -m compileall -q targets/python
 COPY spec/fixture.json ./spec/fixture.json
 ENV PORT=8080 RB_TARGET=app RB_FIXTURE=/app/spec/fixture.json PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1
