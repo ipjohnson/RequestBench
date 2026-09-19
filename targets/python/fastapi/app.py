@@ -20,6 +20,8 @@ and the substitutes are what the numbers describe:
 import pathlib
 from typing import Annotated, TypedDict
 
+import jinja2
+
 from fastapi import Depends, FastAPI, Header, HTTPException, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.encoders import jsonable_encoder
@@ -437,8 +439,14 @@ async def delete_line(oid: str, lid: str):
 # first render and cached by the environment: a precomputed string would measure nothing.
 
 # rb:wiring template.*
-templates = Jinja2Templates(
-    directory=str(pathlib.Path(__file__).resolve().parent / "templates"))
+# The environment Jinja2Templates builds from `directory`, with auto_reload off. Left on,
+# it checks the template file's mtime on every render, and Jinja documents turning it off
+# for performance. Passing a built environment is how Jinja2Templates takes one.
+templates = Jinja2Templates(env=jinja2.Environment(
+    loader=jinja2.FileSystemLoader(pathlib.Path(__file__).resolve().parent / "templates"),
+    autoescape=jinja2.select_autoescape(),
+    auto_reload=False,
+))
 
 
 # rb:wiring template.*
