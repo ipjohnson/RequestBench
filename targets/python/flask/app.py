@@ -16,6 +16,7 @@ The blueprints carry no url_prefix. Scoping is what they are here for, and a pre
 take the route's own path out of the source, which is where harness/snippets.py finds it.
 """
 import gzip
+import os
 import pathlib
 
 import gunicorn.app.base
@@ -589,6 +590,11 @@ def serve():
         "threads": THREADS,
         "accesslog": None,
         "loglevel": "warning",
+        # The worker touches a heartbeat file on every pass of its loop. gunicorn documents
+        # that this can block the worker when the file is on a disk-backed filesystem, and
+        # its FAQ points worker_tmp_dir at a tmpfs. /dev/shm is one in the container and on
+        # Linux. macOS has no /dev/shm, so a local run there keeps the default.
+        "worker_tmp_dir": "/dev/shm" if os.path.isdir("/dev/shm") else None,
         # gunicorn binds in the master and serves from the worker it forks, so the target
         # is ready when the worker is. This is the worker's last step before it accepts.
         "post_worker_init": lambda _: host.listening(),
