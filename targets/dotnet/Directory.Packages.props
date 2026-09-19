@@ -12,6 +12,11 @@
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.12" />
     <!-- The six frameworks. -->
     <PackageVersion Include="FastEndpoints" Version="8.3.0" />
+    <!-- FastEndpoints' own source generator, for its reflection cache: the object factories,
+         property setters and value parsers its binder would otherwise compile from
+         expression trees at runtime. Only the analyzer runs. The serializer-context part,
+         which installs a CLI tool, stays off. -->
+    <PackageVersion Include="FastEndpoints.Generator" Version="8.3.0" />
     <PackageVersion Include="Carter" Version="10.0.0" />
     <PackageVersion Include="WolverineFx.Http" Version="6.38.0" />
     <!-- Wolverine 6 compiles its handlers rather than reflecting over them, and core no
