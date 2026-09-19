@@ -22,8 +22,12 @@ RUN dotnet publish target -c Release --no-restore -o /out
 FROM mcr.microsoft.com/dotnet/aspnet:${DOTNET_VERSION}
 COPY --from=build /out /app
 COPY spec/fixture.json /app/spec/fixture.json
+# DATAS has been the default under server GC since .NET 9, and this turns it off. It starts
+# with one heap and adds heaps only after a few GCs under a heavier load. Each rung of the
+# ladder is a heavier load than the one before. Microsoft's DATAS documentation measures it
+# at 2-3% less throughput on TechEmpower's JSON and Fortunes benchmarks.
 ENV PORT=8080 RB_FIXTURE=/app/spec/fixture.json \
-    DOTNET_gcServer=1 ASPNETCORE_ENVIRONMENT=Production
+    DOTNET_gcServer=1 DOTNET_GCDynamicAdaptationMode=0 ASPNETCORE_ENVIRONMENT=Production
 EXPOSE 8080
 WORKDIR /app
 # The entry assembly is named after its framework rather than after the directory, so it is
