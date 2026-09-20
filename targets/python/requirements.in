@@ -22,7 +22,7 @@ sanic-ext~=25.12
 # install, so they are what a reader of either quickstart ends up running.
 uvicorn[standard]~=0.53
 daphne~=4.2
-gunicorn~=23.0
+gunicorn~=26.2
 
 # The etag and cache families. Three of the six frameworks answer a conditional request
 # themselves -- Django through ConditionalGetMiddleware, Flask through the add_etag and
