@@ -1,15 +1,14 @@
 // dotnet:carter's error contract.
 //
-// Carter 10 ships no validation of its own -- the IValidator wiring it carried in older
-// versions is gone -- so this target takes FluentValidation directly and the route runs it.
-// That is a handler calling a validator, which the other four avoid, and it is the honest
-// description of a framework with no hook to put one in.
+// Validation is Carter's own: MapPost<T> and MapPut<T> put Carter's endpoint filter on the
+// route, which finds the FluentValidation validator for T and answers 422 with its failures
+// before the handler runs.
 //
-// Because the validator runs inside the route, a body the binder could not read never gets
-// there: that answers a bare ProblemDetails with no errors, the same as
+// The binder runs before any endpoint filter, so a body it could not read never reaches the
+// validator: that answers a bare ProblemDetails with no errors, the same as
 // dotnet:minimal-apis.
 import {
-  errorEnvelope, fieldErrorMap, problemDetails, z,
+  errorEnvelope, problemDetails, z,
   type Ask, type ExceptionPackage,
 } from "@rb/schema";
 
@@ -18,18 +17,18 @@ const envelope = (body: z.ZodType<unknown>) => (ask: Ask) => errorEnvelope(ask, 
 /** A refusal that names no field: denied, not found, no route. */
 const bare = problemDetails();
 
-/** The binder could not read the body, so the route never ran and nothing names a field. */
+/** The binder could not read the body, so neither the filter nor the route ran, and nothing names a field. */
 const notBound = problemDetails();
 
 export default {
   target: "dotnet:carter",
   because:
-    "Carter 10 ships no validation, so this target takes FluentValidation directly and the " +
-    "route runs it -- the only one of the five where a handler calls a validator, because " +
-    "it is the only one with no hook to put one in. A body the binder could not read never " +
-    "reaches the route, so that answers a bare ProblemDetails with no errors. " +
-    "FluentValidation collects every rule that failed, so the first-error contract is the " +
-    "same answer as the collect-all one.",
+    "Validation is Carter's own: MapPost<T> and MapPut<T> put Carter's endpoint filter on " +
+    "the route, which runs the FluentValidation validator for the body and answers 422 with " +
+    "a list of property names and messages. A body the binder could not read never reaches " +
+    "the filter, so that answers a bare ProblemDetails with no errors. FluentValidation " +
+    "collects every rule that failed, so the first-error contract is the same answer as the " +
+    "collect-all one.",
   schemas: {
     "authorized.denied": envelope(bare),
     "errors.not_found": envelope(bare),
@@ -43,5 +42,21 @@ export default {
   },
 } satisfies ExceptionPackage;
 
-/** What the validator answers when it is reached, which the plan never does. */
-export const validationFailure = problemDetails({ errors: fieldErrorMap });
+/**
+ * One failure as Carter reports it: its ModelError, with the property name FluentValidation
+ * gives and FluentValidation's own message. The target's snake_case naming policy writes
+ * the keys.
+ */
+const modelError = z.object({
+  property_name: z.string().min(1),
+  error_message: z.string().min(1),
+}).strict();
+
+/**
+ * What Carter's filter answers when the validator is reached, which the plan never does:
+ * 422, with every failure in a list rather than grouped by field.
+ */
+export const validationFailure = problemDetails({
+  status: z.literal(422),
+  errors: z.array(modelError).min(1),
+});

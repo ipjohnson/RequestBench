@@ -1,5 +1,4 @@
 using System.Text.Json;
-using FluentValidation;
 using Carter;
 using RequestBench.Domain;
 
@@ -22,46 +21,23 @@ public sealed class Body : ICarterModule
 
         app.MapPost("/body/bind/medium", (JsonElement body) => DomainModel.BindEcho(body));
 
-        // Carter has no hook that would run a validator for us, so the route runs it. The
-        // rules still live in one place -- OrderBodyValidator -- rather than being walked by
-        // hand in each handler.
-        app.MapPost("/body/validate/small",
-                    (OrderBody body, DomainModel d, IValidator<OrderBody> v) => Priced(v, d, body));
+        // Carter's MapPost<T> puts Carter's endpoint filter on the route. The filter finds the
+        // validator for OrderBody and answers 422 with its failures before the handler runs.
+        app.MapPost<OrderBody>("/body/validate/small",
+                               (OrderBody body, DomainModel d) => Priced(d, body));
 
-        app.MapPost("/body/validate/medium",
-                    (OrderBody body, DomainModel d, IValidator<OrderBody> v) => Priced(v, d, body));
+        app.MapPost<OrderBody>("/body/validate/medium",
+                               (OrderBody body, DomainModel d) => Priced(d, body));
 
         // FluentValidation collects every rule that failed. Its CascadeMode would stop at the
         // first, but that is a property of the validator rather than of this endpoint, so
         // this row answers what the one validator answers.
-        app.MapPost("/body/validate/first-error",
-                    (OrderBody body, DomainModel d, IValidator<OrderBody> v) => Priced(v, d, body));
+        app.MapPost<OrderBody>("/body/validate/first-error",
+                               (OrderBody body, DomainModel d) => Priced(d, body));
     }
 
-    /// <summary>
-    /// Runs the validator and answers its failures, or prices the order. FluentValidation
-    /// reports the property and its own message, which is its vocabulary rather than this
-    /// repository's.
-    /// </summary>
+    /// <summary>The order priced, once Carter's filter has let the body through.</summary>
     // rb:wiring body.*,domain.*
-    internal static IResult Priced(IValidator<OrderBody> validator, DomainModel d, OrderBody body) =>
-        Refused(validator, body)
-        ?? Results.Ok(d.PriceOrder(body.CustomerId!.Value, body.Status!, body.Input()));
-
-    /// <summary>
-    /// What the validator refused, or null when it accepted the body. The writes share this
-    /// so a body is validated the same way whichever route took it.
-    /// </summary>
-    // rb:wiring body.*,errors.*
-    internal static IResult? Refused(IValidator<OrderBody> validator, OrderBody body)
-    {
-        FluentValidation.Results.ValidationResult result = validator.Validate(body);
-        return result.IsValid
-            ? null
-            : Results.ValidationProblem(
-                result.Errors
-                      .GroupBy(e => e.PropertyName)
-                      .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray()),
-                statusCode: 400);
-    }
+    internal static ValidatedOrder Priced(DomainModel d, OrderBody body) =>
+        d.PriceOrder(body.CustomerId!.Value, body.Status!, body.Input());
 }

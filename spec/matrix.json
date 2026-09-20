@@ -329,7 +329,7 @@
         "mechanism": "ASP.NET Core's own output caching through CacheOutput, with the policy deciding the key"
       },
       "body": {
-        "mechanism": "FluentValidation, which Carter runs from the module: the validator is declared beside the request class and the route asks it",
+        "mechanism": "Carter's own validation: MapPost<T> and MapPut<T> put Carter's endpoint filter on the route, which runs the FluentValidation validator declared beside the request class and answers 422 before the handler runs",
         "dep": "Carter",
         "mentions": "AbstractValidator"
       },

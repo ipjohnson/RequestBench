@@ -27,9 +27,9 @@
     <!-- Wolverine's own validation integration: middleware that runs a FluentValidation
          validator on the request before the endpoint, so no endpoint calls one. -->
     <PackageVersion Include="WolverineFx.Http.FluentValidation" Version="6.38.0" />
-    <!-- Carter 10 ships no validation of its own, so it takes FluentValidation directly.
-         Already resolved transitively by Carter and FastEndpoints; pinned here so all three
-         run the same version and a difference between them is the framework. -->
+    <!-- Carter's validation, FastEndpoints' and Wolverine's all run FluentValidation
+         validators. Already resolved transitively by Carter and FastEndpoints; pinned here so
+         all three run the same version and a difference between them is the framework. -->
     <PackageVersion Include="FluentValidation" Version="12.1.1" />
   </ItemGroup>
   <ItemGroup>
