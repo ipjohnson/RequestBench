@@ -20,11 +20,14 @@ serde_json = { workspace = true }
 tokio = { workspace = true }
 # The compression module is re-exported behind the umbrella `compression` feature, so
 # brotli comes along with gzip. Nothing negotiates it: the compressed arms send
-# `accept-encoding: gzip` or `identity` and nothing else.
-warp = { version = "0.3", features = ["compression"] }
+# `accept-encoding: gzip` or `identity` and nothing else. warp::serve is behind `server`.
+warp = { version = "0.4", features = ["compression", "server"] }
 bytes = "1"
 
 # The suite in src/suite. The standard library has no gzip decoder and the floor has to undo
 # gzip before it compares, so the suite takes flate2.
+# The framework again with its test feature on, which is where warp::test lives. A
+# dev-dependency's features reach a test build and no other.
 [dev-dependencies]
 flate2 = { workspace = true }
+warp = { version = "0.4", features = ["compression", "server", "test"] }

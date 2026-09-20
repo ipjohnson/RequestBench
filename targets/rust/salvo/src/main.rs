@@ -502,24 +502,40 @@ fn response_cache(on: &'static [&'static str]) -> Cache<MokaStore<String>, Keyed
     )
 }
 
+// rb:wiring cache.*
+/// What a vary row varies on, declared from outside the cache.
+///
+/// salvo stores no response that carries Vary, because its store does not evaluate the
+/// header at lookup time: an entry declaring one would be replayed to a client that sent
+/// different values. This target folds those values into the key through KeyedBy instead,
+/// so the declaration is written here rather than in the handler, after the cache has
+/// decided what to store, and a replayed response carries it as well.
+struct Varies(&'static [&'static str]);
+
+#[handler]
+impl Varies {
+    async fn handle(
+        &self, req: &mut Request, depot: &mut Depot, res: &mut Response, ctrl: &mut FlowCtrl,
+    ) {
+        ctrl.call_next(req, depot, res).await;
+        res.add_header(header::VARY, self.0.join(", "), true).ok();
+    }
+}
+
 macro_rules! cache_handler {
-    ($name:ident, $size:literal, $vary:expr) => {
+    ($name:ident, $size:literal) => {
         #[handler]
         async fn $name(res: &mut Response) {
-            let on: &[&str] = $vary;
-            if !on.is_empty() {
-                res.add_header(header::VARY, on.join(", "), true).ok();
-            }
             res.add_header("x-rb-serial", d::next_serial(), true).ok();
             res.render(Json(d::payload($size)));
         }
     };
 }
-cache_handler!(cache_small, "small", &[]);
-cache_handler!(cache_medium, "medium", &[]);
-cache_handler!(cache_large, "large", &[]);
-cache_handler!(cache_vary_one, "small", VARY_ONE);
-cache_handler!(cache_vary_many, "small", VARY_MANY);
+cache_handler!(cache_small, "small");
+cache_handler!(cache_medium, "medium");
+cache_handler!(cache_large, "large");
+cache_handler!(cache_vary_one, "small");
+cache_handler!(cache_vary_many, "small");
 
 // rb:wiring template.*
 macro_rules! template_handler {
@@ -623,13 +639,17 @@ fn service() -> Service {
         .push(Router::with_path("/cache/medium").hoop(response_cache(&[])).get(cache_medium))
         .push(Router::with_path("/cache/large").hoop(response_cache(&[])).get(cache_large))
         // rb:handler cache.vary_one,cache.vary_many
+        // Varies is hooped outside the cache, which is the order that matters: a response
+        // that already carries Vary is one salvo will not store.
         .push(
             Router::with_path("/cache/vary/one")
+                .hoop(Varies(VARY_ONE))
                 .hoop(response_cache(VARY_ONE))
                 .get(cache_vary_one),
         )
         .push(
             Router::with_path("/cache/vary/many")
+                .hoop(Varies(VARY_MANY))
                 .hoop(response_cache(VARY_MANY))
                 .get(cache_vary_many),
         )
