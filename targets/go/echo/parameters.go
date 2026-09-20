@@ -13,7 +13,7 @@ package main
 
 import (
 	d "github.com/ianjohnson/requestbench/targets/go/_shared"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 // rb:wiring parameters.*
@@ -30,7 +30,7 @@ type twoCaptures struct {
 // rb:wiring parameters.*
 // bindCaptures fills out from the route's captures, answering the failure itself if there is
 // one, in the shape bindQuery answers a query Echo could not bind.
-func bindCaptures(c echo.Context, out any) bool {
+func bindCaptures(c *echo.Context, out any) bool {
 	if err := c.Bind(out); err != nil {
 		_ = c.JSON(400, map[string]string{"error": "invalid_path", "detail": err.Error()})
 		return false
@@ -41,7 +41,7 @@ func bindCaptures(c echo.Context, out any) bool {
 func registerParameters(e *echo.Echo) {
 	e.GET("/parameters/static/segment/literal", payload("small"))
 
-	e.GET("/parameters/:one/segment/literal", func(c echo.Context) error {
+	e.GET("/parameters/:one/segment/literal", func(c *echo.Context) error {
 		var p oneCapture
 		if !bindCaptures(c, &p) {
 			return nil
@@ -49,7 +49,7 @@ func registerParameters(e *echo.Echo) {
 		return c.JSON(200, d.WithEcho("small", p))
 	})
 
-	e.GET("/parameters/:one/with-second/:two", func(c echo.Context) error {
+	e.GET("/parameters/:one/with-second/:two", func(c *echo.Context) error {
 		var p twoCaptures
 		if !bindCaptures(c, &p) {
 			return nil

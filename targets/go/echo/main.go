@@ -19,11 +19,11 @@ import (
 
 	hosts "github.com/ianjohnson/requestbench/targets/go/_hosts"
 	d "github.com/ianjohnson/requestbench/targets/go/_shared"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 // rb:wiring errors.*,domain.*
-func fail(c echo.Context, err error) error {
+func fail(c *echo.Context, err error) error {
 	if errors.Is(err, d.ErrNotFound) {
 		return c.JSON(404, d.NotFoundBody())
 	}
@@ -31,7 +31,7 @@ func fail(c echo.Context, err error) error {
 }
 
 // rb:wiring domain.*
-func send(c echo.Context, v any, err error, status int) error {
+func send(c *echo.Context, v any, err error, status int) error {
 	if err != nil {
 		return fail(c, err)
 	}
@@ -66,19 +66,16 @@ func router() *echo.Echo {
 	// library. That slot is Echo's JSON facility.
 	// rb:wiring json.*,body.*
 	e.JSONSerializer = sonicSerializer{}
-	e.HideBanner = true
-	e.HidePort = true
 
 	// errors: the router's own miss and every failure a handler returns. Echo hands both
 	// to one hook, which is what gives errors.unmatched the same body as errors.not_found.
 	//
 	// rb:handler errors.unmatched
-	e.HTTPErrorHandler = func(err error, c echo.Context) {
-		if c.Response().Committed {
+	e.HTTPErrorHandler = func(c *echo.Context, err error) {
+		if res, _ := echo.UnwrapResponse(c.Response()); res != nil && res.Committed {
 			return
 		}
-		var he *echo.HTTPError
-		if errors.As(err, &he) && he.Code == http.StatusNotFound {
+		if echo.StatusCode(err) == http.StatusNotFound {
 			_ = c.JSON(404, d.NotFoundBody())
 			return
 		}

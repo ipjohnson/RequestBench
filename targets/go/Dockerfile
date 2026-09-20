@@ -1,6 +1,6 @@
 # Build context is the repo root so spec/fixture.json can be baked in.
 #   docker build -f targets/go/Dockerfile --build-arg TARGET=gin -t rb/go-gin .
-ARG GO_VERSION=1.26
+ARG GO_VERSION=1.27
 FROM golang:${GO_VERSION}-alpine AS build
 ARG TARGET
 WORKDIR /src

@@ -1,12 +1,12 @@
 module github.com/ianjohnson/requestbench/targets/go
 
-go 1.26.0
+go 1.27
 
 require (
 	github.com/GoogleCloudPlatform/functions-framework-go v1.9.2
 	github.com/aws/aws-lambda-go v1.55.0
 	github.com/awslabs/aws-lambda-go-api-proxy v0.16.2
-	github.com/bytedance/sonic v1.15.2
+	github.com/bytedance/sonic v1.15.4
 	github.com/gin-contrib/gzip v1.2.7
 	github.com/gin-gonic/gin v1.12.0
 	github.com/go-chi/chi/v5 v5.3.2
@@ -15,14 +15,14 @@ require (
 	github.com/gofiber/template/html/v3 v3.0.9
 	github.com/gorilla/handlers v1.5.2
 	github.com/gorilla/mux v1.8.1
-	github.com/labstack/echo/v4 v4.15.4
+	github.com/labstack/echo/v5 v5.3.1
 )
 
 require (
 	cloud.google.com/go/functions v1.19.3 // indirect
 	github.com/andybalholm/brotli v1.2.2 // indirect
 	github.com/bytedance/gopkg v0.1.4 // indirect
-	github.com/bytedance/sonic/loader v0.5.1 // indirect
+	github.com/bytedance/sonic/loader v0.5.2 // indirect
 	github.com/cloudevents/sdk-go/v2 v2.15.2 // indirect
 	github.com/cloudwego/base64x v0.1.7 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
@@ -39,7 +39,6 @@ require (
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/compress v1.19.2 // indirect
 	github.com/klauspost/cpuid/v2 v2.4.0 // indirect
-	github.com/labstack/gommon v0.5.0 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/mattn/go-colorable v0.1.15 // indirect
 	github.com/mattn/go-isatty v0.0.24 // indirect
@@ -54,7 +53,6 @@ require (
 	github.com/ugorji/go/codec v1.3.1 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.73.0 // indirect
-	github.com/valyala/fasttemplate v1.2.2 // indirect
 	github.com/xyproto/randomstring v1.2.0 // indirect
 	go.mongodb.org/mongo-driver/v2 v2.8.0 // indirect
 	go.uber.org/atomic v1.4.0 // indirect

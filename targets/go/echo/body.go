@@ -7,11 +7,11 @@ package main
 
 import (
 	d "github.com/ianjohnson/requestbench/targets/go/_shared"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 func registerBody(e *echo.Echo) {
-	e.POST("/body/bind/small", func(c echo.Context) error {
+	e.POST("/body/bind/small", func(c *echo.Context) error {
 		m, ok := bindAny(c)
 		if !ok {
 			return nil
@@ -19,7 +19,7 @@ func registerBody(e *echo.Echo) {
 		return c.JSON(200, d.BindEcho(m))
 	})
 
-	e.POST("/body/bind/medium", func(c echo.Context) error {
+	e.POST("/body/bind/medium", func(c *echo.Context) error {
 		m, ok := bindAny(c)
 		if !ok {
 			return nil
@@ -37,7 +37,7 @@ func registerBody(e *echo.Echo) {
 	e.POST("/body/validate/first-error", validated)
 }
 
-func validated(c echo.Context) error {
+func validated(c *echo.Context) error {
 	ob, ok := bindOrder(c)
 	if !ok {
 		return nil

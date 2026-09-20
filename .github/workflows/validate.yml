@@ -121,7 +121,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-go@v7
-        with: { go-version: "1.26", cache-dependency-path: targets/go/go.sum }
+        with: { go-version: "1.27", cache-dependency-path: targets/go/go.sum }
       - uses: actions/setup-python@v7
         with: { python-version: "3.13" }
       - run: go build ./...
@@ -277,7 +277,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-go@v7
-        with: { go-version: "1.26", cache-dependency-path: targets/go/go.sum }
+        with: { go-version: "1.27", cache-dependency-path: targets/go/go.sum }
       # Each target's suite is its _test.go files, in the package they test.
       - name: Every Go target's own suite passes
         run: make suites LANGUAGES=go

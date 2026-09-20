@@ -10,8 +10,8 @@ import (
 	"compress/flate"
 
 	d "github.com/ianjohnson/requestbench/targets/go/_shared"
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
+	"github.com/labstack/echo/v5"
+	"github.com/labstack/echo/v5/middleware"
 )
 
 // The size threshold is left at the library's own default, because whether a framework
@@ -23,7 +23,7 @@ var gzip = middleware.GzipWithConfig(middleware.GzipConfig{Level: flate.BestSpee
 // rb:wiring compressed.*
 func compressedRoute(size string) echo.HandlerFunc {
 	body := d.Payload(size)
-	return func(c echo.Context) error {
+	return func(c *echo.Context) error {
 		c.Response().Header().Set("x-rb-serial", d.NextSerial())
 		return c.JSON(200, body)
 	}
