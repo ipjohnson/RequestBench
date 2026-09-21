@@ -288,7 +288,7 @@ test("arguments are refused before anything is sent", async () => {
   await refused(["--framework", "go:gin", ...rate], /go:gin has no client-exception declaration/);
   await refused([...fastify, "--seconds", "1"], /--rps is required/);
   const low = ["--framework", "node:fastify", "--values", '{"one":7}', ...rate];
-  await refused(low, /one: Number must be greater than or equal to 1000/);
+  await refused(low, /one: Too small: expected number to be >=1000/);
   await refused([...fastify, "--rps", "10", "--seconds", "2", "--slices", "1,3"], /--slices 1,3 has to rise/);
   await refused([...fastify, ...rate, "--only", "nope"], /--only nope is neither a test nor a family/);
   await refused([...fastify, ...rate, "--abort-drop-fraction", "0.05"], /needs --settle/);

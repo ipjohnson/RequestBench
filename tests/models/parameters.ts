@@ -56,10 +56,9 @@ function words(count: number, length: number, chars: string): Value<string> {
 }
 
 function choice<const T extends string | number>(values: readonly [T, T, ...T[]]): Value<T> {
-  const [a, b, ...rest] = values.map((v) => z.literal(v));
   return {
     draw: (random) => values[pick(random, values.length)]!,
-    schema: z.union([a!, b!, ...rest]),
+    schema: z.literal(values),
   };
 }
 
