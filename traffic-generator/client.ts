@@ -29,9 +29,6 @@ export interface Shared {
 export const NOTHING_SENT =
   "the test sent nothing: a call goes on the wire when it is awaited or returned from the test";
 
-/** Where `once` is refused, so the caller can say which test reached it. */
-export class OnceRefused extends Error {}
-
 /**
  * The values `once` hands out, keyed across the whole corpus. Priming runs every test before
  * anything is timed, and that is where they are made. A key the load reaches that priming did
@@ -41,11 +38,9 @@ export class OnceRefused extends Error {}
 export class Once {
   readonly #made = new Map<string, Promise<unknown>>();
   readonly #pending = new Set<string>();
-  readonly #miss: "make" | "refuse";
 
-  constructor(values: Iterable<readonly [string, unknown]>, miss: "make" | "refuse") {
+  constructor(values: Iterable<readonly [string, unknown]>) {
     for (const [key, value] of values) this.#made.set(key, Promise.resolve(value));
-    this.#miss = miss;
   }
 
   get<T>(key: string, make: () => T | Promise<T>, client: MeasuredClient): Promise<T> {
@@ -54,7 +49,6 @@ export class Once {
       if (this.#pending.has(key)) client.untimed = true;
       return known as Promise<T>;
     }
-    if (this.#miss === "refuse") return Promise.reject(new OnceRefused(`once(${JSON.stringify(key)})`));
     client.untimed = true;
     const made = new Promise<T>((resolve) => resolve(make()));
     this.#made.set(key, made);

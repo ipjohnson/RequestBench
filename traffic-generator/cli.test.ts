@@ -2,10 +2,10 @@
 // corpus the way node:fastify declares it does, and answers 500 to a request that went out
 // on the wire wrong.
 //
-//   node --test traffic-generator/
+//   node --experimental-strip-types --test traffic-generator/cli.test.ts
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { mkdtempSync, readFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import http from "node:http";
 import type { AddressInfo } from "node:net";
 import { tmpdir } from "node:os";
@@ -159,7 +159,7 @@ let runs = 0;
 function generate(...args: string[]): Promise<Ran> {
   const out = join(OUT, `run-${++runs}.json`);
   return new Promise((resolve) => {
-    execFile(process.execPath, [...NODE, CLI, address, "--out", out, ...args], (error, stdout, stderr) => {
+    execFile(process.execPath, [...NODE, CLI, "--out", out, ...args], (error, stdout, stderr) => {
       const code = error === null ? 0 : typeof error.code === "number" ? error.code : 1;
       let result: unknown;
       try {
@@ -172,124 +172,160 @@ function generate(...args: string[]): Promise<Ran> {
   });
 }
 
-const fastify = ["--framework", "node:fastify", "--values", JSON.stringify(VALUES)];
+/** A load against the stub as node:fastify with the values the stub checks, as the one argument. */
+const load = (phases: readonly object[], rest: object = {}): string =>
+  JSON.stringify({ target: address, framework: "node:fastify", values: VALUES, ...rest, phases });
 
 test("every performance test answers the status it declares", async () => {
   answering = stub();
   delay = 0;
-  const { code, result, stdout } = await generate(...fastify, "--rps", "300", "--seconds", "2", "--workers", "2");
+  const { code, result, stdout } = await generate(load([{ name: "regular", rps: 300, seconds: 2 }], { workers: 2 }));
   assert.equal(code, 0, stdout);
-  assert.equal(result.tests_live, 55);
-  assert.equal(result.scheduled, 600);
-  assert.equal(result.completed, 600, stdout);
-  assert.equal(result.status_mismatch, 0, stdout);
-  assert.equal(result.errors, 0, stdout);
-  assert.equal(result.dropped, 0);
-  assert.deepEqual(result.values, VALUES);
-  for (const t of result.tests) assert.ok(t.count > 0, `${t.id} ran no instance`);
+  assert.equal(result.testsLive, 55);
+  assert.deepEqual(result.load.values, VALUES);
+  const [regular] = result.phases;
+  assert.equal(regular.status, "done");
+  assert.equal(regular.recorded.scheduled, 600);
+  assert.equal(regular.recorded.completed, 600, stdout);
+  assert.equal(regular.recorded.mismatch, 0, stdout);
+  assert.equal(regular.recorded.errors, 0, stdout);
+  assert.equal(regular.recorded.dropped, 0);
+  for (const t of regular.recorded.tests) assert.ok(t.count > 0, `${t.id} ran no instance`);
 });
 
 test("a wrong status is counted against the test that received it and still timed", async () => {
   answering = stub((route) => (route === "GET /json/small" ? 500 : undefined));
   delay = 0;
-  const { code, result } = await generate(...fastify, "--rps", "300", "--seconds", "2", "--only", "json,baseline");
+  const { code, result } = await generate(load([{ name: "regular", rps: 300, seconds: 2 }], { only: ["json", "baseline"] }));
   assert.equal(code, 0);
-  const small = result.tests.find((t: { id: string }) => t.id === "json.small");
+  const { recorded } = result.phases[0];
+  const small = recorded.tests.find((t: { id: string }) => t.id === "json.small");
   assert.ok(small.count > 0);
   assert.equal(small.mismatch, small.count);
-  assert.equal(small.first_mismatch, "GET /json/small answered 500, expected 200");
-  assert.equal(result.status_mismatch, small.mismatch);
+  assert.equal(small.firstMismatch, "GET /json/small answered 500, expected 200");
+  assert.equal(recorded.mismatch, small.mismatch);
 });
 
 test("an instance due while the in-flight limit is reached is dropped, not sent", async () => {
   answering = stub();
   delay = 300;
   const { code, result } = await generate(
-    ...fastify,
-    ...["--rps", "100", "--seconds", "1", "--workers", "1", "--max-inflight", "5", "--only", "baseline.plaintext"],
+    load([{ name: "regular", rps: 100, seconds: 1 }], { workers: 1, maxInflight: 5, only: ["baseline.plaintext"] }),
   );
   delay = 0;
   assert.equal(code, 0);
-  assert.ok(result.dropped > 0);
-  assert.equal(result.completed + result.dropped, result.scheduled);
-  assert.ok(result.overall.p50_us >= 300_000);
+  const { recorded } = result.phases[0];
+  assert.ok(recorded.dropped > 0);
+  assert.equal(recorded.completed + recorded.dropped, recorded.scheduled);
+  assert.ok(recorded.overall.p50Us >= 300_000);
 });
 
-test("slices and the first request are recorded apart", async () => {
+test("phases run in order, a settle is never recorded, and a phase with only a settle records nothing", async () => {
   answering = stub();
   delay = 0;
-  const { code, result } = await generate(
-    ...fastify,
-    ...["--rps", "200", "--seconds", "2", "--slices", "1,2", "--first", "json.small"],
+  const file = join(OUT, "load.json");
+  writeFileSync(
+    file,
+    load([
+      { name: "warmup", rps: 200, settle: 1 },
+      { name: "regular", rps: 100, settle: 1, abortDropFraction: 0.05, seconds: 1 },
+    ]),
   );
-  assert.equal(code, 0);
-  assert.equal(result.first.test, "json.small");
-  assert.equal(result.first.status, 200);
-  assert.equal(result.slices.length, 2);
-  assert.equal(result.slices[0].count + result.slices[1].count, result.overall.count);
+  const { code, result, stdout } = await generate(file);
+  assert.equal(code, 0, stdout);
+  const [warmup, regular] = result.phases;
+  assert.equal(warmup.name, "warmup");
+  assert.equal(warmup.status, "done");
+  assert.equal(warmup.settle.scheduled, 200);
+  assert.equal(warmup.settle.completed, 200);
+  assert.equal(warmup.recorded, undefined);
+  assert.equal(regular.name, "regular");
+  assert.equal(regular.status, "done");
+  assert.equal(regular.settle.scheduled, 100);
+  assert.equal(regular.settle.completed, 100);
+  assert.equal(regular.recorded.scheduled, 100);
+  assert.equal(regular.recorded.completed, 100);
+  assert.equal(regular.recorded.overall.count, 100);
 });
 
-test("the settle runs the same schedule unrecorded before the recorded instances", async () => {
-  answering = stub();
-  delay = 0;
-  const { code, result } = await generate(
-    ...fastify,
-    ...["--rps", "200", "--settle", "1", "--abort-drop-fraction", "0.05", "--seconds", "1", "--slices", "0.5,1"],
-  );
-  assert.equal(code, 0);
-  assert.equal(result.settle.scheduled, 200);
-  assert.equal(result.settle.completed, 200);
-  assert.equal(result.settle.aborted, false);
-  assert.equal(result.scheduled, 200);
-  assert.equal(result.completed, 200);
-  assert.equal(result.overall.count, 200);
-  assert.equal(result.slices[0].count + result.slices[1].count, 200);
-});
-
-test("a settle that drops more than it may ends the run without the recorded instances", async () => {
+test("a settle that drops more than it may ends the load, and the phases after it are not run", async () => {
   answering = stub();
   delay = 300;
   const began = Date.now();
   const { code, result, stdout } = await generate(
-    ...fastify,
-    ...["--rps", "100", "--settle", "1", "--abort-drop-fraction", "0.05", "--seconds", "30"],
-    ...["--workers", "1", "--max-inflight", "5", "--only", "baseline.plaintext"],
+    load(
+      [
+        { name: "raised", rps: 100, settle: 1, abortDropFraction: 0.05, seconds: 30 },
+        { name: "peak", rps: 200, settle: 1, seconds: 30 },
+      ],
+      { workers: 1, maxInflight: 5, only: ["baseline.plaintext"] },
+    ),
   );
   delay = 0;
   assert.equal(code, 0, stdout);
-  assert.equal(result.settle.aborted, true);
-  assert.ok(result.settle.drop_fraction > 0.05);
-  assert.equal(result.tests, undefined);
-  assert.match(stdout, /more than the 0\.05 allowed, so the recorded 30s were not run/);
-  assert.ok(Date.now() - began < 15_000, "the recorded 30 seconds ran anyway");
+  const [raised, peak] = result.phases;
+  assert.equal(raised.status, "aborted");
+  assert.ok(raised.settle.dropFraction > 0.05);
+  assert.equal(raised.recorded, undefined);
+  assert.deepEqual(peak, { name: "peak", rps: 200, status: "notRun" });
+  assert.match(stdout, /more than the 0\.05 allowed, so the load ends here/);
+  assert.ok(Date.now() - began < 15_000, "a recorded 30 seconds ran anyway");
 });
 
-test("a test that needs a once() value cannot go first", async () => {
-  const { code, stderr } = await generate(...fastify, "--rps", "10", "--seconds", "1", "--first", "etag.match_large");
-  assert.equal(code, 2);
-  assert.match(stderr, /--first etag\.match_large reaches once\("\/etag\/large"\)/);
+test("the result is written after every phase", async () => {
+  answering = stub();
+  delay = 0;
+  const out = join(OUT, "partial.json");
+  const phases = [
+    { name: "first", rps: 100, seconds: 1 },
+    { name: "second", rps: 100, seconds: 30 },
+  ];
+  const child = execFile(process.execPath, [...NODE, CLI, "--out", out, load(phases)]);
+  const exited = new Promise((resolve) => child.on("exit", resolve));
+  let written: any;
+  for (let waited = 0; written === undefined && waited < 20_000; waited += 100) {
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    try {
+      written = JSON.parse(readFileSync(out, "utf8"));
+    } catch {
+      // not written yet
+    }
+  }
+  child.kill();
+  await exited;
+  assert.ok(written !== undefined, "nothing was written while the second phase ran");
+  assert.deepEqual(
+    written.phases.map((p: { name: string }) => p.name),
+    ["first"],
+  );
+  assert.equal(written.phases[0].recorded.completed, 100);
 });
 
-test("a test that cannot be sent stops the run before the load", async () => {
+test("a test that cannot be sent stops the load before any phase", async () => {
   answering = stub((route) => (route === "GET /etag/large" ? 200 : undefined));
-  const { code, stderr } = await generate(...fastify, "--rps", "10", "--seconds", "1");
+  const { code, stderr } = await generate(load([{ name: "regular", rps: 10, seconds: 1 }]));
   assert.equal(code, 1);
   assert.match(stderr, /priming etag\.match_large: GET \/etag\/large answered 200 with no etag/);
 });
 
-test("arguments are refused before anything is sent", async () => {
+test("a load is refused before anything is sent", async () => {
   const refused = async (args: string[], message: RegExp) => {
     const { code, stderr } = await generate(...args);
     assert.equal(code, 2, stderr);
     assert.match(stderr, message);
   };
-  await refused(["--rps", "10", "--seconds", "1"], /--framework is required/);
-  const rate = ["--rps", "10", "--seconds", "1"];
-  await refused(["--framework", "go:gin", ...rate], /go:gin has no client-exception declaration/);
-  await refused([...fastify, "--seconds", "1"], /--rps is required/);
-  const low = ["--framework", "node:fastify", "--values", '{"one":7}', ...rate];
-  await refused(low, /one: Too small: expected number to be >=1000/);
-  await refused([...fastify, "--rps", "10", "--seconds", "2", "--slices", "1,3"], /--slices 1,3 has to rise/);
-  await refused([...fastify, ...rate, "--only", "nope"], /--only nope is neither a test nor a family/);
-  await refused([...fastify, ...rate, "--abort-drop-fraction", "0.05"], /needs --settle/);
+  const regular = [{ name: "regular", rps: 10, seconds: 1 }];
+  await refused([], /name the load once, as JSON or a file/);
+  await refused(["{not json"], /the load is not JSON/);
+  await refused([join(OUT, "missing.json")], /cannot read the load at .*missing\.json/);
+  await refused([load(regular, { rps: 10 })], /the load: Unrecognized key: "rps"/);
+  await refused([load(regular, { target: "nowhere" })], /target: expected host:port/);
+  await refused([load(regular, { framework: "go:gin" })], /framework: go:gin has no client-exception declaration/);
+  await refused([load(regular, { values: { ...VALUES, one: 7 } })], /values\.one: Too small: expected number to be >=1000/);
+  await refused([load([])], /phases: Too small: expected array to have >=1 items/);
+  await refused([load([{ name: "warmup", rps: 10 }])], /phases\.0: a phase needs settle, seconds or both/);
+  const unjudged = [{ name: "regular", rps: 10, seconds: 1, abortDropFraction: 0.05 }];
+  await refused([load(unjudged)], /phases\.0\.abortDropFraction: there is no settle to judge/);
+  await refused([load([...regular, ...regular])], /phases: two phases are named regular/);
+  await refused([load(regular, { only: ["nope"] })], /only: nope is neither a test nor a family/);
 });

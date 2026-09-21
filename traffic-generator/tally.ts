@@ -1,5 +1,4 @@
-// What a load counts, per test and per slice of the schedule, in one thread or merged across
-// all of them.
+// What a phase counts, per test, in one thread or merged across all of them.
 import { BUCKETS, addInto } from "./histogram.ts";
 
 export interface Tally {
@@ -16,14 +15,6 @@ export interface Tally {
   firstMismatch: string | undefined;
 }
 
-/** Every instance scheduled inside one slice, whichever test it picked. */
-export interface Slice {
-  errors: number;
-  mismatch: number;
-  dropped: number;
-  readonly hist: Uint32Array;
-}
-
 export const newTally = (): Tally => ({
   count: 0,
   errors: 0,
@@ -35,8 +26,6 @@ export const newTally = (): Tally => ({
   firstMismatch: undefined,
 });
 
-export const newSlice = (): Slice => ({ errors: 0, mismatch: 0, dropped: 0, hist: new Uint32Array(BUCKETS) });
-
 export function mergeTally(into: Tally, from: Tally): void {
   into.count += from.count;
   into.errors += from.errors;
@@ -46,11 +35,4 @@ export function mergeTally(into: Tally, from: Tally): void {
   addInto(into.hist, from.hist);
   into.firstError ??= from.firstError;
   into.firstMismatch ??= from.firstMismatch;
-}
-
-export function mergeSlice(into: Slice, from: Slice): void {
-  into.errors += from.errors;
-  into.mismatch += from.mismatch;
-  into.dropped += from.dropped;
-  addInto(into.hist, from.hist);
 }

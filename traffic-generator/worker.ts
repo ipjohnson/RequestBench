@@ -1,4 +1,4 @@
-// One thread's share of the open-loop schedule.
+// One thread's share of the open-loop schedule, for each phase in turn, on the same connections.
 //
 // An instance is timed from its scheduled moment rather than from when it was sent, which is
 // the coordinated-omission correction: a backlog in the generator or the framework shows up as
@@ -11,23 +11,15 @@ import type { RunValues } from "@rb/tests/kit";
 import { drawFrom } from "@rb/tests/models/parameters";
 import { MeasuredClient, NOTHING_SENT, Once, describe, xorshift, type Statuses } from "./client.ts";
 import { bucketOf } from "./histogram.ts";
-import { newSlice, newTally, type Slice, type Tally } from "./tally.ts";
+import { newTally, type Tally } from "./tally.ts";
 
-/** What the main thread hands each worker. */
+/** What the main thread hands each worker once, for every phase. */
 export interface Job {
   readonly host: string;
   readonly port: number;
   /** The ids of the tests offered, in the order the report lists them. */
   readonly tests: readonly string[];
-  readonly rps: number;
-  /**
-   * Instances across every thread that run before the recorded ones, on the same schedule and
-   * unrecorded, so connections and the generator are warm when recording starts.
-   */
-  readonly settle: number;
-  /** Recorded instances across every thread. */
-  readonly total: number;
-  /** This thread takes every `workers`-th instance, settle and recorded alike, starting at this one. */
+  /** This thread takes every `workers`-th instance of a phase, settle and recorded alike, starting at this one. */
   readonly index: number;
   readonly workers: number;
   /** This thread's share of the in-flight limit, which is also its connection limit. */
@@ -36,13 +28,19 @@ export interface Job {
   readonly statuses: Statuses;
   readonly run: RunValues;
   readonly once: readonly (readonly [string, unknown])[];
-  /** Where each slice of the schedule ends, in seconds. Empty when the load is not sliced. */
-  readonly edges: readonly number[];
+}
+
+/** One phase, counted in instances across every thread. */
+export interface Schedule {
+  readonly rps: number;
+  /** Instances that run before the recorded ones, on the same schedule and unrecorded. */
+  readonly settle: number;
+  /** Recorded instances. */
+  readonly total: number;
 }
 
 export interface Report {
   readonly tallies: readonly Tally[];
-  readonly slices: readonly Slice[];
   /** The settle's instances, whichever test they picked. */
   readonly settle: Tally;
   /** Started and still in flight when the drain gave up. */
@@ -56,9 +54,11 @@ export type FromWorker =
   | { readonly kind: "settled"; readonly dropped: number }
   | { readonly kind: "done"; readonly report: Report };
 
-export type ToWorker = { readonly kind: "start"; readonly start: bigint } | { readonly kind: "stop" };
+export type ToWorker =
+  | { readonly kind: "phase"; readonly schedule: Schedule; readonly start: bigint }
+  | { readonly kind: "stop" };
 
-/** How long the thread waits for what is still in flight once the schedule has run out. */
+/** How long the thread waits for what is still in flight once a phase's schedule has run out. */
 const DRAIN_MS = 10_000;
 
 if (parentPort === null) throw new Error("worker.ts runs as a worker thread, started by cli.ts");
@@ -82,67 +82,62 @@ const shared = {
   statuses: job.statuses,
   run: job.run,
   draw: drawFrom(random),
-  once: new Once(job.once, "make"),
+  once: new Once(job.once),
 };
-const tallies = tests.map(newTally);
-const slices = job.edges.map(newSlice);
-const settle = newTally();
-const periodNs = 1e9 / job.rps;
-const end = job.settle + job.total;
 
-let start = 0n;
-let next = job.index;
-let slice = 0;
+/** Not reset between phases, because an instance the drain gave up on still holds its connection. */
 let inflight = 0;
-let last = 0n;
-/** Whether the main thread has this thread's settle drops. */
-let told = job.settle === 0;
-/** Set when the main thread calls the run off after judging the settle. */
-let stopped = false;
 
-const due = (k: number): bigint => start + BigInt(Math.round(k * periodNs));
-
-/** The slice an instance's scheduled moment falls in. Instances come in order, so it only moves forward. */
-function sliceOf(k: number): Slice | undefined {
-  if (slices.length === 0) return undefined;
-  const at = (k - job.settle) / job.rps;
-  while (slice < slices.length - 1 && at >= job.edges[slice]!) slice++;
-  return slices[slice];
+interface Phase {
+  readonly schedule: Schedule;
+  readonly start: bigint;
+  readonly periodNs: number;
+  readonly end: number;
+  readonly tallies: readonly Tally[];
+  readonly settle: Tally;
+  next: number;
+  /** Whether the main thread has this thread's settle drops. */
+  told: boolean;
+  /** Set when the main thread calls the phase off after judging the settle. */
+  stopped: boolean;
+  last: bigint;
 }
 
+let phase: Phase | undefined;
+
+const due = (p: Phase, k: number): bigint => p.start + BigInt(Math.round(k * p.periodNs));
+
 function tick(): void {
+  const p = phase!;
   const now = process.hrtime.bigint();
-  while (next < end && !stopped) {
-    const at = due(next);
+  while (p.next < p.end && !p.stopped) {
+    const at = due(p, p.next);
     if (at > now) break;
-    fire(next, at);
-    next += job.workers;
+    fire(p, p.next, at);
+    p.next += job.workers;
   }
-  if (!told && next >= job.settle) {
+  if (!p.told && p.next >= p.schedule.settle) {
     // An instance is dropped at its scheduled moment or not at all, so every drop in this
     // thread's share of the settle is already counted.
-    told = true;
-    port.postMessage({ kind: "settled", dropped: settle.dropped } satisfies FromWorker);
+    p.told = true;
+    port.postMessage({ kind: "settled", dropped: p.settle.dropped } satisfies FromWorker);
   }
-  if (stopped || next >= end) return drain();
+  if (p.stopped || p.next >= p.end) return drain(p);
   // setTimeout's floor is about a millisecond, which would land in the latency being measured,
   // so the thread spins on setImmediate unless the next instance is further off than that.
-  const wait = Number(due(next) - process.hrtime.bigint()) / 1e6;
+  const wait = Number(due(p, p.next) - process.hrtime.bigint()) / 1e6;
   if (wait > 4) setTimeout(tick, Math.floor(wait) - 1);
   else setImmediate(tick);
 }
 
-function fire(k: number, at: bigint): void {
+function fire(p: Phase, k: number, at: bigint): void {
   const t = Math.floor(random() * tests.length);
-  // A settle instance counts toward the settle alone, and toward no test's row or slice.
-  const settling = k < job.settle;
-  const tally = settling ? settle : tallies[t]!;
-  const into = settling ? undefined : sliceOf(k);
+  // A settle instance counts toward the settle alone, and toward no test's row.
+  const tally = k < p.schedule.settle ? p.settle : p.tallies[t]!;
   if (inflight >= job.inflight) {
     // Dropped by never being sent, so it enters no histogram. A rate with drops is reported
     // with its drop count, because percentiles over the survivors flatter a collapse.
     tally.dropped++;
-    if (into) into.dropped++;
     return;
   }
   inflight++;
@@ -151,60 +146,68 @@ function fire(k: number, at: bigint): void {
   try {
     settled = tests[t]!.request(client);
   } catch (error) {
-    failed(tally, into, error);
+    failed(tally, error);
     return;
   }
   Promise.resolve(settled).then(
-    () => (client.sent === 0 ? failed(tally, into, new Error(NOTHING_SENT)) : succeeded(tally, into, at, client)),
-    (error: unknown) => failed(tally, into, error),
+    () => (client.sent === 0 ? failed(tally, new Error(NOTHING_SENT)) : succeeded(p, tally, at, client)),
+    (error: unknown) => failed(tally, error),
   );
 }
 
-function succeeded(tally: Tally, into: Slice | undefined, at: bigint, client: MeasuredClient): void {
+function succeeded(p: Phase, tally: Tally, at: bigint, client: MeasuredClient): void {
   inflight--;
-  last = process.hrtime.bigint();
+  p.last = process.hrtime.bigint();
   if (client.mismatch !== undefined) {
     tally.mismatch++;
     tally.firstMismatch ??= client.mismatch;
-    if (into) into.mismatch++;
   }
   if (client.untimed) {
     tally.unrecorded++;
     return;
   }
-  const bucket = bucketOf(Number(last - at) / 1000);
-  tally.hist[bucket]!++;
+  tally.hist[bucketOf(Number(p.last - at) / 1000)]!++;
   tally.count++;
-  if (into) into.hist[bucket]!++;
 }
 
-function failed(tally: Tally, into: Slice | undefined, error: unknown): void {
+function failed(tally: Tally, error: unknown): void {
   inflight--;
   tally.errors++;
   tally.firstError ??= describe(error);
-  if (into) into.errors++;
 }
 
-function drain(): void {
+function drain(p: Phase): void {
   const deadline = Date.now() + DRAIN_MS;
   const poll = (): void => {
-    if (inflight === 0 || Date.now() >= deadline) report();
+    if (inflight === 0 || Date.now() >= deadline) report(p);
     else setTimeout(poll, 5);
   };
   poll();
 }
 
-function report(): void {
-  const done: FromWorker = { kind: "done", report: { tallies, slices, settle, unfinished: inflight, last } };
+function report(p: Phase): void {
+  const done: FromWorker = { kind: "done", report: { tallies: p.tallies, settle: p.settle, unfinished: inflight, last: p.last } };
   port.postMessage(done);
 }
 
 port.on("message", (message: ToWorker) => {
   if (message.kind === "stop") {
-    stopped = true;
+    if (phase !== undefined) phase.stopped = true;
     return;
   }
-  start = message.start;
+  const { schedule, start } = message;
+  phase = {
+    schedule,
+    start,
+    periodNs: 1e9 / schedule.rps,
+    end: schedule.settle + schedule.total,
+    tallies: tests.map(newTally),
+    settle: newTally(),
+    next: job.index,
+    told: schedule.settle === 0,
+    stopped: false,
+    last: 0n,
+  };
   tick();
 });
 port.postMessage({ kind: "ready" } satisfies FromWorker);
