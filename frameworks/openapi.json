@@ -1,0 +1,2721 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "RequestBench corpus",
+    "version": "77ba76e6666c",
+    "description": "Generated from the corpus in tests/ by orchestrator/openapi.ts. Do not edit it. Run npm run spec after changing a test or a payload. npm test fails while this file is out of date.\n\nIt is the same for every framework. Each operation is what one or more tests send. Its summary names the tests, and its description gives each test's file and quotes its about.\n\nEvery body the corpus compares is a payload. The harness copies tests/payloads/ into the container and names the directory in RB_PAYLOADS. Load every file before /health answers 200, keep the parsed objects in the framework's own types, and serialise them on every request. Compute nothing ahead of a request.\n\nAn example on each body names the payload it is, and holds no value. When the payload is a committed file, the example links to it, such as items.large to tests/payloads/items.large.json. That file is the exact answer. A computed answer, such as a row, a rendered page or the bind answer, has no file. Its example names the payloads it is computed from, and tests/payloads/index.ts computes it.\n\nA value written {run.name} is drawn once per run and never given to the framework. A handler binds it as the type its schema gives and writes it back in an echo object beside the payload's own fields.\n\nx-rb-serial is one counter for the whole process. A handler that writes it increments it and writes the new value. A stored answer replayed from a cache carries the value it was stored with.\n\nAn answer of 400 or above carries the framework's own error body, which has to be non-empty JSON. The corpus reads a refusal only through the framework's frameworks/<language>/<name>/client-exception/index.ts. That declaration gives four statuses, which this document writes as 4XX and names by field: rejected, malformed, notFound and wrongMethod. It also says whether a rejection names every bad field or only the first. A new framework writes its declaration and registers it in frameworks/exceptions.ts.\n\nA path's own description names any request sent there that no route may answer.\n\nThe values a framework configures itself from are in tests/payloads/settings.json. They are the bearer token, the CORS policy attached to /cors, and the cache's capacity, lifetime and vary headers.\n\nThe harness passes PORT and RB_HOST. /health and /__meta are the contract's own and are not tests."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:{port}",
+      "description": "A target binds 8080 in a container, and PORT as a host process.",
+      "variables": {
+        "port": {
+          "default": "8080"
+        }
+      }
+    }
+  ],
+  "tags": [
+    {
+      "name": "authorized",
+      "description": "The framework's own authorization mechanism, with the crypto left out.\n\nComparable across every framework. The token differs from the accepted one by its last character, so the denial arm walks the same string and measures the plumbing rather than a length check."
+    },
+    {
+      "name": "baseline",
+      "description": "The dispatch floor, with nothing serialised.\n\nComparable across every framework. It is the row the rest are read against rather than a measurement of anything on its own: a framework that is slow here is slow everywhere."
+    },
+    {
+      "name": "body",
+      "description": "The parser and the validator, with size crossed against validation.\n\nComparable across every framework. Bind parses without validating, so validate minus bind is the validator alone rather than the validator plus the parse."
+    },
+    {
+      "name": "cache",
+      "description": "The framework's response cache: the handler skipped and a stored answer replayed, keyed by path and by request header.\n\nComparable across stores rather than across frameworks. Several frameworks ship no response cache and run a package chosen for them, so a ranking that carried these rows would be ranking the package."
+    },
+    {
+      "name": "compressed",
+      "description": "Outbound gzip: the wiring declining, the wiring working, and the small- body threshold.\n\nComparable across every framework. The identity rows carry the middleware installed and refusing, so subtracting them from the gzip rows leaves the compression itself."
+    },
+    {
+      "name": "cors",
+      "description": "The framework's own CORS feature, attached to /cors with the one policy every framework configures from settings.json: a preflight the feature answers alone, and the real request it lets through.\n\nComparable across every framework. The policy names its origin, because with * the feature compares nothing, and an API that sends credentials cannot use *. A framework whose feature can only cover the whole application runs it on every request, and says so in its README."
+    },
+    {
+      "name": "errors",
+      "description": "A router miss, a handler's miss, a method the route does not have, and a parser failure.\n\nComparable across every framework, on the status and on whether the answer carries a body at all. Not on the body's shape, which is the framework's own contract."
+    },
+    {
+      "name": "etag",
+      "description": "The framework's own conditional-request machinery: the validator it computes over the body, and the 304 it answers.\n\nComparable across every framework at one body size. Not across sizes: the small row hashes a row and the large row hashes fourteen hundred, and the ratio between them is a hash rate."
+    },
+    {
+      "name": "forms",
+      "description": "Request bodies that are not JSON: a urlencoded form and a multipart upload, each bound through the framework's own form support.\n\nComparable across every framework. The urlencoded row answers what query.many answers, so the pair differs only in where the eight fields came from."
+    },
+    {
+      "name": "headers",
+      "description": "The request header map at five headers and at thirty, left unread and with three of them bound and echoed.\n\nComparable across every framework. The unread rows hold the count, so the bound rows minus them is the binding rather than the materialising."
+    },
+    {
+      "name": "items",
+      "description": "Every method on one resource, over the rows of the large item payload: a row read, its headers alone, and four writes that answer as if they had written.\n\nComparable across every framework. Each row sends one row-sized body or none and answers one row or nothing, so the methods differ in what the framework does with the request rather than in how much it serialises. A measured row may not leave the server changed, so the writes store nothing and no framework's store is what is measured."
+    },
+    {
+      "name": "json",
+      "description": "Serialising a body the framework already holds, across three size regimes.\n\nComparable across every framework at one size, and across the three sizes as a set. The small row against the large one is what separates a framework with a fast codec from one with a fast request path."
+    },
+    {
+      "name": "middleware",
+      "description": "Per-layer dispatch cost at zero, four and sixteen no-op layers.\n\nComparable across every framework. Every layer calls the next and does nothing else, so the slope between the three is the framework's per-layer cost and nothing else."
+    },
+    {
+      "name": "parameters",
+      "description": "Router captures, with segment depth held constant, each bound as an integer and echoed.\n\nComparable across every framework. The static row holds the depth, so the two capture rows minus it is the router capturing rather than the router matching."
+    },
+    {
+      "name": "query",
+      "description": "Query string parsing, percent-decoding and coercion, with the values echoed and put to no other use.\n\nComparable across every framework. Eight parameters on the many row, because eight is what a real search endpoint carries: a page and a size, a sort, a text term and four filters."
+    },
+    {
+      "name": "static",
+      "description": "The framework's static-file feature, serving a committed file from the payload directory.\n\nComparable across every framework. The file is items.large.json, so read against json.large the difference is a file sent as it is against the same rows serialised."
+    },
+    {
+      "name": "stream",
+      "description": "A response written in parts as it is produced, rather than serialised whole and sent with its length.\n\nComparable across every framework. The rows are items.medium's, so the difference from json.medium is the streaming path and a write per row."
+    },
+    {
+      "name": "template",
+      "description": "Server-side rendering of the same model the json family serialises.\n\nComparable across template engines rather than across frameworks. Rendering is partly the engine's work, so a ranking that carried these rows would be measuring one engine against another."
+    }
+  ],
+  "paths": {
+    "/__meta": {
+      "get": {
+        "operationId": "getMeta",
+        "summary": "What ran",
+        "description": "Not measured and not checked. Every key is recorded on the result row. The runner reads framework, version, runtime and adapter for its summary line, and bootMs for the boot report.",
+        "responses": {
+          "200": {
+            "description": "A JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "framework": {
+                      "type": "string"
+                    },
+                    "version": {
+                      "type": "string"
+                    },
+                    "runtime": {
+                      "type": "string"
+                    },
+                    "adapter": {
+                      "type": "string"
+                    },
+                    "bootMs": {
+                      "type": "number"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/authorized/small": {
+      "get": {
+        "operationId": "getAuthorizedSmall",
+        "summary": "authorized.allowed, authorized.denied",
+        "description": "**authorized.allowed** (tests/authorized/allowed.ts). A bearer token the framework's own authorization mechanism has to check before the handler runs. Read against json.small, the difference is the check and the plumbing that carries it, not the crypto, which this family leaves out. It sends `authorization: Bearer 5a7cc77ed0dcb825806b6f872026c317`.\n\n**authorized.denied** (tests/authorized/denied.ts). The same endpoint refusing. The token differs from the accepted one by its last character, so the comparison walks the whole string and this row measures the refusal path rather than a length check. It sends `authorization: Bearer 5a7cc77ed0dcb825806b6f872026c310`.",
+        "tags": [
+          "authorized"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "authorized.allowed: the body is `items.small`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/payloadSmall"
+                },
+                "examples": {
+                  "items.small": {
+                    "summary": "items.small",
+                    "description": "Compared as parsed JSON, so key order and how a number is written do not matter.",
+                    "externalValue": "../tests/payloads/items.small.json"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The framework's own error body, which has to be non-empty JSON.\n\nauthorized.denied: any error body. tests/authorized/denied.snap.json holds the answer each framework was captured giving.",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/body/bind/medium": {
+      "post": {
+        "operationId": "postBodyBindMedium",
+        "summary": "body.bind_medium",
+        "description": "**body.bind_medium** (tests/body/bind-medium.ts). A body parsed and bound without being validated. The answer carries a count of the leaves it found, which is what says the request was parsed rather than piped to the response. This is what the validate row of the same size is subtracted from.",
+        "tags": [
+          "body"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/orderRequest"
+              },
+              "examples": {
+                "order.medium": {
+                  "summary": "order.medium",
+                  "description": "body.bind_medium sends it.",
+                  "externalValue": "../tests/payloads/order.medium.json"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "body.bind_medium: the body is `bind.medium`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/bindEcho"
+                },
+                "examples": {
+                  "bind.medium": {
+                    "summary": "bind.medium",
+                    "description": "Computed from `order.medium`, with no file of its own. Compared as parsed JSON, so key order and how a number is written do not matter."
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/body/bind/small": {
+      "post": {
+        "operationId": "postBodyBindSmall",
+        "summary": "body.bind_small",
+        "description": "**body.bind_small** (tests/body/bind-small.ts). A body parsed and bound without being validated. The answer carries a count of the leaves it found, which is what says the request was parsed rather than piped to the response. This is what the validate row of the same size is subtracted from.",
+        "tags": [
+          "body"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/orderRequest"
+              },
+              "examples": {
+                "order.small": {
+                  "summary": "order.small",
+                  "description": "body.bind_small sends it.",
+                  "externalValue": "../tests/payloads/order.small.json"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "body.bind_small: the body is `bind.small`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/bindEcho"
+                },
+                "examples": {
+                  "bind.small": {
+                    "summary": "bind.small",
+                    "description": "Computed from `order.small`, with no file of its own. Compared as parsed JSON, so key order and how a number is written do not matter."
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/body/validate/first-error": {
+      "post": {
+        "operationId": "postBodyValidateFirstError",
+        "summary": "body.rejected_first",
+        "description": "**body.rejected_first** (tests/body/rejected-first.ts). The same body against a route that stops at the first bad field. Read against body.rejected_all, the difference is the two error contracts: one walks the whole object and one gives up, and the second is doing less work.",
+        "tags": [
+          "body"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "examples": {
+                "order.invalid": {
+                  "summary": "order.invalid",
+                  "description": "body.rejected_first sends it and expects it refused.",
+                  "externalValue": "../tests/payloads/order.invalid.json"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "4XX": {
+            "description": "The framework's own error body, which has to be non-empty JSON. Each test below names its status by the field in the framework's client-exception/index.ts.\n\nbody.rejected_first: the rejected status, naming customerId. tests/body/rejected-first.snap.json holds the answer each framework was captured giving.",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/body/validate/medium": {
+      "post": {
+        "operationId": "postBodyValidateMedium",
+        "summary": "body.validate_medium",
+        "description": "**body.validate_medium** (tests/body/validate-medium.ts). The same body checked against a schema before the handler sees it, and answered exactly as the bind row answers it. Read against body.bind_medium, the difference is the validator alone rather than the validator plus the parse.",
+        "tags": [
+          "body"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/orderRequest"
+              },
+              "examples": {
+                "order.medium": {
+                  "summary": "order.medium",
+                  "description": "body.validate_medium sends it.",
+                  "externalValue": "../tests/payloads/order.medium.json"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "body.validate_medium: the body is `bind.medium`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/bindEcho"
+                },
+                "examples": {
+                  "bind.medium": {
+                    "summary": "bind.medium",
+                    "description": "Computed from `order.medium`, with no file of its own. Compared as parsed JSON, so key order and how a number is written do not matter."
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/body/validate/small": {
+      "post": {
+        "operationId": "postBodyValidateSmall",
+        "summary": "body.rejected_all, body.validate_small, errors.malformed",
+        "description": "**body.rejected_all** (tests/body/rejected-all.ts). Three fields wrong in one body. What a rejection looks like is the framework's own contract, so the status and the field paths are read through its exceptions declaration and this test never sees an error body.\n\n**body.validate_small** (tests/body/validate-small.ts). The same body checked against a schema before the handler sees it, and answered exactly as the bind row answers it. Read against body.bind_small, the difference is the validator alone rather than the validator plus the parse.\n\n**errors.malformed** (tests/errors/malformed.ts). A body that is not JSON at all. Read against body.rejected_all, the difference is the parser failing rather than the validator refusing, which is often not even the same status inside one framework.",
+        "tags": [
+          "body",
+          "errors"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/orderRequest"
+              },
+              "examples": {
+                "order.invalid": {
+                  "summary": "order.invalid",
+                  "description": "body.rejected_all sends it and expects it refused.",
+                  "externalValue": "../tests/payloads/order.invalid.json"
+                },
+                "order.small": {
+                  "summary": "order.small",
+                  "description": "body.validate_small sends it.",
+                  "externalValue": "../tests/payloads/order.small.json"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "body.validate_small: the body is `bind.small`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/bindEcho"
+                },
+                "examples": {
+                  "bind.small": {
+                    "summary": "bind.small",
+                    "description": "Computed from `order.small`, with no file of its own. Compared as parsed JSON, so key order and how a number is written do not matter."
+                  }
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "The framework's own error body, which has to be non-empty JSON. Each test below names its status by the field in the framework's client-exception/index.ts.\n\nbody.rejected_all: the rejected status, naming customerId, status and lines, or one of them where the declaration says reports `\"first\"`. tests/body/rejected-all.snap.json holds the answer each framework was captured giving.\n\nerrors.malformed: the malformed status, because `{\"customerId\": 1, \"lines\": [` is not JSON. tests/errors/malformed.snap.json holds the answer each framework was captured giving.",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/cache/large": {
+      "get": {
+        "operationId": "getCacheLarge",
+        "summary": "cache.large",
+        "description": "**cache.large** (tests/cache/large.ts). The handler skipped and a stored answer written back. Read against json.large, the difference is the store answering instead of the framework, which is why this row asserts the serial repeated rather than advanced.",
+        "tags": [
+          "cache"
+        ],
+        "responses": {
+          "200": {
+            "description": "cache.large: the body is `items.large`, x-rb-serial repeats.",
+            "headers": {
+              "x-rb-serial": {
+                "required": true,
+                "description": "The value the stored answer was written with. Every later request for the same cache key has to repeat it. Checked by cache.large.",
+                "schema": {
+                  "type": "string",
+                  "pattern": "^\\d+$"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/payloadLarge"
+                },
+                "examples": {
+                  "items.large": {
+                    "summary": "items.large",
+                    "description": "Compared as parsed JSON, so key order and how a number is written do not matter.",
+                    "externalValue": "../tests/payloads/items.large.json"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cache/medium": {
+      "get": {
+        "operationId": "getCacheMedium",
+        "summary": "cache.medium",
+        "description": "**cache.medium** (tests/cache/medium.ts). The handler skipped and a stored answer written back. Read against json.medium, the difference is the store answering instead of the framework, which is why this row asserts the serial repeated rather than advanced.",
+        "tags": [
+          "cache"
+        ],
+        "responses": {
+          "200": {
+            "description": "cache.medium: the body is `items.medium`, x-rb-serial repeats.",
+            "headers": {
+              "x-rb-serial": {
+                "required": true,
+                "description": "The value the stored answer was written with. Every later request for the same cache key has to repeat it. Checked by cache.medium.",
+                "schema": {
+                  "type": "string",
+                  "pattern": "^\\d+$"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/payloadMedium"
+                },
+                "examples": {
+                  "items.medium": {
+                    "summary": "items.medium",
+                    "description": "Compared as parsed JSON, so key order and how a number is written do not matter.",
+                    "externalValue": "../tests/payloads/items.medium.json"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cache/small": {
+      "get": {
+        "operationId": "getCacheSmall",
+        "summary": "cache.small",
+        "description": "**cache.small** (tests/cache/small.ts). The handler skipped and a stored answer written back. Read against json.small, the difference is the store answering instead of the framework, which is why this row asserts the serial repeated rather than advanced.",
+        "tags": [
+          "cache"
+        ],
+        "responses": {
+          "200": {
+            "description": "cache.small: the body is `items.small`, x-rb-serial repeats.",
+            "headers": {
+              "x-rb-serial": {
+                "required": true,
+                "description": "The value the stored answer was written with. Every later request for the same cache key has to repeat it. Checked by cache.small.",
+                "schema": {
+                  "type": "string",
+                  "pattern": "^\\d+$"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/payloadSmall"
+                },
+                "examples": {
+                  "items.small": {
+                    "summary": "items.small",
+                    "description": "Compared as parsed JSON, so key order and how a number is written do not matter.",
+                    "externalValue": "../tests/payloads/items.small.json"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cache/vary/many": {
+      "get": {
+        "operationId": "getCacheVaryMany",
+        "summary": "cache.vary_many",
+        "description": "**cache.vary_many** (tests/cache/vary-many.ts). The same thing keyed on three headers instead of one. Read against cache.vary_one, the difference is eight distinct keys where there were two, which is what a store has to be sized against rather than what it costs to read. It sends `x-rb-channel` set per request to `web` or `app`, `x-rb-region` set per request to `eu` or `us` and `x-rb-tenant` set per request to `alpha` or `beta`.",
+        "tags": [
+          "cache"
+        ],
+        "responses": {
+          "200": {
+            "description": "cache.vary_many: the body is `items.small`, x-rb-serial repeats.",
+            "headers": {
+              "x-rb-serial": {
+                "required": true,
+                "description": "The value the stored answer was written with. Every later request for the same cache key has to repeat it. Checked by cache.vary_many.",
+                "schema": {
+                  "type": "string",
+                  "pattern": "^\\d+$"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/payloadSmall"
+                },
+                "examples": {
+                  "items.small": {
+                    "summary": "items.small",
+                    "description": "Compared as parsed JSON, so key order and how a number is written do not matter.",
+                    "externalValue": "../tests/payloads/items.small.json"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cache/vary/one": {
+      "get": {
+        "operationId": "getCacheVaryOne",
+        "summary": "cache.vary_one",
+        "description": "**cache.vary_one** (tests/cache/vary-one.ts). The stored answer keyed by a request header as well as by the path. One header with two values, picked per instance, so a store that ignores the vary header holds one entry where the plan sent two keys. It sends `x-rb-tenant` set per request to `alpha` or `beta`.",
+        "tags": [
+          "cache"
+        ],
+        "responses": {
+          "200": {
+            "description": "cache.vary_one: the body is `items.small`, x-rb-serial repeats.",
+            "headers": {
+              "x-rb-serial": {
+                "required": true,
+                "description": "The value the stored answer was written with. Every later request for the same cache key has to repeat it. Checked by cache.vary_one.",
+                "schema": {
+                  "type": "string",
+                  "pattern": "^\\d+$"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/payloadSmall"
+                },
+                "examples": {
+                  "items.small": {
+                    "summary": "items.small",
+                    "description": "Compared as parsed JSON, so key order and how a number is written do not matter.",
+                    "externalValue": "../tests/payloads/items.small.json"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/compressed/large": {
+      "get": {
+        "operationId": "getCompressedLarge",
+        "summary": "compressed.gzip_large, compressed.identity_large",
+        "description": "**compressed.gzip_large** (tests/compressed/gzip-large.ts). The middleware compressing a body large enough to be worth it. Read against compressed.identity_large, the difference is the compression and nothing else, because both rows carry the same wiring. It sends `accept-encoding: gzip` and `cache-control: no-cache`.\n\n**compressed.identity_large** (tests/compressed/identity-large.ts). The compression middleware installed and declining. The client asks for identity, so nothing is compressed and what this row carries is the cost of the wiring being in the path at all. It is what the gzip arm is subtracted from. It sends `accept-encoding: identity` and `cache-control: no-cache`.",
+        "tags": [
+          "compressed"
+        ],
+        "responses": {
+          "200": {
+            "description": "compressed.gzip_large: the body is `items.large`, gzip-encoded, x-rb-serial advances.\n\ncompressed.identity_large: the body is `items.large`, with no content coding, x-rb-serial advances.",
+            "headers": {
+              "content-encoding": {
+                "required": false,
+                "description": "Checked by compressed.gzip_large.",
+                "schema": {
+                  "type": "string",
+                  "const": "gzip"
+                }
+              },
+              "x-rb-serial": {
+                "required": true,
+                "description": "One counter for the whole process, which the handler increments and writes. It has to be larger than on the last answer that carried it. Checked by compressed.gzip_large and compressed.identity_large.",
+                "schema": {
+                  "type": "string",
+                  "pattern": "^\\d+$"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/payloadLarge"
+                },
+                "examples": {
+                  "items.large": {
+                    "summary": "items.large",
+                    "description": "Compared as parsed JSON, so key order and how a number is written do not matter.",
+                    "externalValue": "../tests/payloads/items.large.json"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/compressed/small": {
+      "get": {
+        "operationId": "getCompressedSmall",
+        "summary": "compressed.gzip_small, compressed.identity_small",
+        "description": "**compressed.gzip_small** (tests/compressed/gzip-small.ts). The middleware actually asked to compress, on a body too small to benefit. Whether a framework bothers is the point, so this row does not assert that the answer came back compressed; it asserts the answer is right either way. It sends `accept-encoding: gzip` and `cache-control: no-cache`.\n\n**compressed.identity_small** (tests/compressed/identity-small.ts). The compression middleware installed and declining. The client asks for identity, so nothing is compressed and what this row carries is the cost of the wiring being in the path at all. It is what the gzip arm is subtracted from. It sends `accept-encoding: identity` and `cache-control: no-cache`.",
+        "tags": [
+          "compressed"
+        ],
+        "responses": {
+          "200": {
+            "description": "compressed.gzip_small: the body is `items.small`, x-rb-serial advances.\n\ncompressed.identity_small: the body is `items.small`, with no content coding, x-rb-serial advances.",
+            "headers": {
+              "x-rb-serial": {
+                "required": true,
+                "description": "One counter for the whole process, which the handler increments and writes. It has to be larger than on the last answer that carried it. Checked by compressed.gzip_small and compressed.identity_small.",
+                "schema": {
+                  "type": "string",
+                  "pattern": "^\\d+$"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/payloadSmall"
+                },
+                "examples": {
+                  "items.small": {
+                    "summary": "items.small",
+                    "description": "Compared as parsed JSON, so key order and how a number is written do not matter.",
+                    "externalValue": "../tests/payloads/items.small.json"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cors/small": {
+      "get": {
+        "operationId": "getCorsSmall",
+        "summary": "cors.request, cors.vary",
+        "description": "**cors.request** (tests/cors/request.ts). The cross-origin request itself, with the origin and the custom header the preflight asked about. The feature adds its header and lets the request through to the handler. Read against json.small, the difference is the policy checked on a request that passes it. It sends `origin: https://shop.example.com` and `x-rb-tenant: {run.tenant}`.\n\n**cors.vary** (tests/cors/vary.ts, a validation test that is not measured). The real response carries Vary: Origin. A policy that names its origin answers differently per origin, so a cache in front of the framework has to key on it. It sends `origin: https://shop.example.com` and `x-rb-tenant: {run.tenant}`.",
+        "tags": [
+          "cors"
+        ],
+        "responses": {
+          "200": {
+            "description": "cors.request: the body is `items.small`, x-rb-serial advances.\n\ncors.vary: any body.",
+            "headers": {
+              "access-control-allow-origin": {
+                "required": true,
+                "description": "Checked by cors.request.",
+                "schema": {
+                  "type": "string",
+                  "const": "https://shop.example.com"
+                }
+              },
+              "x-rb-serial": {
+                "required": true,
+                "description": "One counter for the whole process, which the handler increments and writes. It has to be larger than on the last answer that carried it. Checked by cors.request.",
+                "schema": {
+                  "type": "string",
+                  "pattern": "^\\d+$"
+                }
+              },
+              "vary": {
+                "required": true,
+                "description": "It matches `/(^|,)\\s*origin\\s*(,|$)/i`. Checked by cors.vary.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/payloadSmall"
+                },
+                "examples": {
+                  "items.small": {
+                    "summary": "items.small",
+                    "description": "Compared as parsed JSON, so key order and how a number is written do not matter.",
+                    "externalValue": "../tests/payloads/items.small.json"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "options": {
+        "operationId": "optionsCorsSmall",
+        "summary": "cors.disallowed, cors.preflight",
+        "description": "**cors.disallowed** (tests/cors/disallowed.ts, a validation test that is not measured). A preflight from an origin the policy does not name gets no access-control-allow-origin, which is what stops the browser. The status is not checked, because frameworks differ on it. It sends `origin: https://elsewhere.example.net`, `access-control-request-method: GET` and `access-control-request-headers: x-rb-tenant`.\n\n**cors.preflight** (tests/cors/preflight.ts). The question a browser asks before a cross-origin request with a custom header, answered by the CORS feature before any handler runs. The handler on this route writes x-rb-serial, so its absence shows the feature answered alone. 200 and 204 are both accepted, because the Fetch standard takes any 2xx and frameworks split. Read against baseline.plaintext, the difference is the policy being matched. It sends `origin: https://shop.example.com`, `access-control-request-method: GET` and `access-control-request-headers: x-rb-tenant`.",
+        "tags": [
+          "cors"
+        ],
+        "responses": {
+          "200": {
+            "description": "cors.preflight: 200 or 204, no x-rb-serial.",
+            "headers": {
+              "access-control-allow-origin": {
+                "required": true,
+                "description": "Checked by cors.preflight.",
+                "schema": {
+                  "type": "string",
+                  "const": "https://shop.example.com"
+                }
+              },
+              "access-control-allow-headers": {
+                "required": true,
+                "description": "It matches `/(^|,)\\s*x-rb-tenant\\s*(,|$)/i`. Checked by cors.preflight.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "access-control-max-age": {
+                "required": true,
+                "description": "Checked by cors.preflight.",
+                "schema": {
+                  "type": "string",
+                  "const": "600"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "cors.preflight: 200 or 204, no x-rb-serial.",
+            "headers": {
+              "access-control-allow-origin": {
+                "required": true,
+                "description": "Checked by cors.preflight.",
+                "schema": {
+                  "type": "string",
+                  "const": "https://shop.example.com"
+                }
+              },
+              "access-control-allow-headers": {
+                "required": true,
+                "description": "It matches `/(^|,)\\s*x-rb-tenant\\s*(,|$)/i`. Checked by cors.preflight.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "access-control-max-age": {
+                "required": true,
+                "description": "Checked by cors.preflight.",
+                "schema": {
+                  "type": "string",
+                  "const": "600"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "cors.disallowed: no access-control-allow-origin."
+          }
+        }
+      }
+    },
+    "/errors/unmatched": {
+      "summary": "errors.unmatched",
+      "description": "**errors.unmatched** (tests/errors/unmatched.ts) sends GET here, and no route matches the path. The router answers with the notFound status in the framework's client-exception/index.ts, and the framework's own error body. tests/errors/unmatched.snap.json holds the answer each framework was captured giving. A path no route matches, which is the router's own miss rather than a handler's decision. A framework that walks its whole route table before giving up pays for it here and nowhere else."
+    },
+    "/etag/large": {
+      "get": {
+        "operationId": "getEtagLarge",
+        "summary": "etag.large, etag.match_large, etag.stale_large",
+        "description": "**etag.large** (tests/etag/large.ts). The framework hashing the body it is about to send and writing the validator it computed onto the response. Read against json.large, the difference is the hash and the header. The tag is the framework's own, so no two of them agree on it.\n\n**etag.match_large** (tests/etag/match-large.ts). The only row that cannot be sent until the framework has answered a different one: the validator is the framework's to produce. A 304 saves the write and nothing else, because the body is built and hashed before anything is compared. It sends `if-none-match` set to the etag the first GET answered.\n\n**etag.stale_large** (tests/etag/stale-large.ts). A conditional request whose validator does not match, answered in full. Read against etag.match_large, the difference is the write the 304 saved, and read against etag.large it is the comparison that failed. It sends `if-none-match: \"0000000000000000\"`.",
+        "tags": [
+          "etag"
+        ],
+        "responses": {
+          "200": {
+            "description": "etag.large: the body is `items.large`, x-rb-serial advances.\n\netag.stale_large: the body is `items.large`, x-rb-serial advances.",
+            "headers": {
+              "etag": {
+                "required": true,
+                "description": "Checked by etag.large.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "x-rb-serial": {
+                "required": true,
+                "description": "One counter for the whole process, which the handler increments and writes. It has to be larger than on the last answer that carried it. Checked by etag.large and etag.stale_large.",
+                "schema": {
+                  "type": "string",
+                  "pattern": "^\\d+$"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/payloadLarge"
+                },
+                "examples": {
+                  "items.large": {
+                    "summary": "items.large",
+                    "description": "Compared as parsed JSON, so key order and how a number is written do not matter.",
+                    "externalValue": "../tests/payloads/items.large.json"
+                  }
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "etag.match_large: no body."
+          }
+        }
+      }
+    },
+    "/etag/small": {
+      "get": {
+        "operationId": "getEtagSmall",
+        "summary": "etag.small",
+        "description": "**etag.small** (tests/etag/small.ts). The framework hashing the body it is about to send and writing the validator it computed onto the response. Read against json.small, the difference is the hash and the header. The tag is the framework's own, so no two of them agree on it.",
+        "tags": [
+          "etag"
+        ],
+        "responses": {
+          "200": {
+            "description": "etag.small: the body is `items.small`, x-rb-serial advances.",
+            "headers": {
+              "etag": {
+                "required": true,
+                "description": "Checked by etag.small.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "x-rb-serial": {
+                "required": true,
+                "description": "One counter for the whole process, which the handler increments and writes. It has to be larger than on the last answer that carried it. Checked by etag.small.",
+                "schema": {
+                  "type": "string",
+                  "pattern": "^\\d+$"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/payloadSmall"
+                },
+                "examples": {
+                  "items.small": {
+                    "summary": "items.small",
+                    "description": "Compared as parsed JSON, so key order and how a number is written do not matter.",
+                    "externalValue": "../tests/payloads/items.small.json"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/forms/multipart": {
+      "post": {
+        "operationId": "postFormsMultipart",
+        "summary": "forms.multipart",
+        "description": "**forms.multipart** (tests/forms/multipart.ts). A multipart/form-data upload of two fields and a 32 KB text file. The handler echoes the fields and answers the file's name and byte count, so it has to have read the whole part. Read against forms.urlencoded, the difference is the multipart parser and a body of 32 KB instead of a line.",
+        "tags": [
+          "forms"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "tenant": {
+                    "type": "string",
+                    "pattern": "^[abcdefghijklmnopqrstuvwxyz]{12}$",
+                    "description": "Drawn once per run and never given to the framework. The answer echoes it."
+                  },
+                  "requestId": {
+                    "type": "string",
+                    "pattern": "^[0123456789abcdef]{16}$",
+                    "description": "Drawn once per run and never given to the framework. The answer echoes it."
+                  },
+                  "file": {
+                    "type": "string",
+                    "contentMediaType": "text/plain",
+                    "description": "The payload `forms.file.txt`, sent under the filename forms.file.txt."
+                  }
+                },
+                "required": [
+                  "tenant",
+                  "requestId",
+                  "file"
+                ]
+              },
+              "encoding": {
+                "file": {
+                  "contentType": "text/plain"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "forms.multipart: the body is `forms.file.txt as received` with an echo of tenant and requestId.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "file": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "bytes": {
+                          "type": "integer",
+                          "exclusiveMinimum": 0,
+                          "maximum": 9007199254740991
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "bytes"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "echo": {
+                      "type": "object",
+                      "properties": {
+                        "tenant": {
+                          "type": "string",
+                          "pattern": "^[abcdefghijklmnopqrstuvwxyz]{12}$"
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "pattern": "^[0123456789abcdef]{16}$"
+                        }
+                      },
+                      "required": [
+                        "tenant",
+                        "requestId"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "file",
+                    "echo"
+                  ],
+                  "additionalProperties": false
+                },
+                "examples": {
+                  "forms.file.txt as received": {
+                    "summary": "forms.file.txt as received",
+                    "description": "Computed from `forms.file.txt`, with no file of its own. Compared as parsed JSON, so key order and how a number is written do not matter. The answer adds an echo object holding tenant and requestId, as sent."
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/forms/urlencoded": {
+      "post": {
+        "operationId": "postFormsUrlencoded",
+        "summary": "forms.urlencoded",
+        "description": "**forms.urlencoded** (tests/forms/urlencoded.ts). query.many's eight fields posted as an application/x-www-form-urlencoded body instead of a query string, bound and echoed. The answer is exactly what query.many answers, so the difference between the two is the form parser against the query parser.",
+        "tags": [
+          "forms"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "page": {
+                    "type": "integer",
+                    "minimum": 100,
+                    "maximum": 999,
+                    "description": "Drawn once per run and never given to the framework. The answer echoes it."
+                  },
+                  "size": {
+                    "type": "integer",
+                    "minimum": 10,
+                    "maximum": 99,
+                    "description": "Drawn once per run and never given to the framework. The answer echoes it."
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "open",
+                      "paid",
+                      "shipped",
+                      "cancelled"
+                    ],
+                    "description": "Drawn once per run and never given to the framework. The answer echoes it."
+                  },
+                  "category": {
+                    "type": "string",
+                    "enum": [
+                      "tools",
+                      "garden",
+                      "kitchen",
+                      "outdoor",
+                      "office"
+                    ],
+                    "description": "Drawn once per run and never given to the framework. The answer echoes it."
+                  },
+                  "sort": {
+                    "type": "string",
+                    "enum": [
+                      "name",
+                      "created",
+                      "total"
+                    ],
+                    "description": "Drawn once per run and never given to the framework. The answer echoes it."
+                  },
+                  "q": {
+                    "type": "string",
+                    "pattern": "^[abcdefghijklmnopqrstuvwxyz]{5}(?: [abcdefghijklmnopqrstuvwxyz]{5}){1}$",
+                    "description": "Drawn once per run and never given to the framework. The answer echoes it."
+                  },
+                  "minPrice": {
+                    "type": "integer",
+                    "minimum": 1000,
+                    "maximum": 9999,
+                    "description": "Drawn once per run and never given to the framework. The answer echoes it."
+                  },
+                  "maxPrice": {
+                    "type": "integer",
+                    "minimum": 10000,
+                    "maximum": 99999,
+                    "description": "Drawn once per run and never given to the framework. The answer echoes it."
+                  }
+                },
+                "required": [
+                  "page",
+                  "size",
+                  "status",
+                  "category",
+                  "sort",
+                  "q",
+                  "minPrice",
+                  "maxPrice"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "forms.urlencoded: the body is `items.small` with an echo of page, size, status, category, sort, q, minPrice and maxPrice.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "size": {
+                      "type": "string",
+                      "const": "small"
+                    },
+                    "count": {
+                      "type": "number",
+                      "const": 1
+                    },
+                    "items": {
+                      "minItems": 1,
+                      "maxItems": 1,
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/item"
+                      }
+                    },
+                    "echo": {
+                      "type": "object",
+                      "properties": {
+                        "page": {
+                          "type": "integer",
+                          "minimum": 100,
+                          "maximum": 999
+                        },
+                        "size": {
+                          "type": "integer",
+                          "minimum": 10,
+                          "maximum": 99
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "open",
+                            "paid",
+                            "shipped",
+                            "cancelled"
+                          ]
+                        },
+                        "category": {
+                          "type": "string",
+                          "enum": [
+                            "tools",
+                            "garden",
+                            "kitchen",
+                            "outdoor",
+                            "office"
+                          ]
+                        },
+                        "sort": {
+                          "type": "string",
+                          "enum": [
+                            "name",
+                            "created",
+                            "total"
+                          ]
+                        },
+                        "q": {
+                          "type": "string",
+                          "pattern": "^[abcdefghijklmnopqrstuvwxyz]{5}(?: [abcdefghijklmnopqrstuvwxyz]{5}){1}$"
+                        },
+                        "minPrice": {
+                          "type": "integer",
+                          "minimum": 1000,
+                          "maximum": 9999
+                        },
+                        "maxPrice": {
+                          "type": "integer",
+                          "minimum": 10000,
+                          "maximum": 99999
+                        }
+                      },
+                      "required": [
+                        "page",
+                        "size",
+                        "status",
+                        "category",
+                        "sort",
+                        "q",
+                        "minPrice",
+                        "maxPrice"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "size",
+                    "count",
+                    "items",
+                    "echo"
+                  ],
+                  "additionalProperties": false
+                },
+                "examples": {
+                  "items.small": {
+                    "summary": "items.small",
+                    "description": "Compared as parsed JSON, so key order and how a number is written do not matter. The answer adds an echo object holding page, size, status, category, sort, q, minPrice and maxPrice, as sent.",
+                    "externalValue": "../tests/payloads/items.small.json"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/headers": {
+      "get": {
+        "operationId": "getHeaders",
+        "summary": "headers.few, headers.many",
+        "description": "**headers.few** (tests/headers/few.ts). Five request headers, none of which the handler reads. Two of the five are what an HTTP client adds itself, and the other three are the ones the binding rows bind. This is what headers.many is subtracted from. It sends `x-rb-tenant: {run.tenant}`, `x-rb-request-id: {run.requestId}` and `x-rb-account: {run.account}`.\n\n**headers.many** (tests/headers/many.ts). Thirty request headers, still read by nothing. Read against headers.few, the difference is the cost of materialising twenty-five more that nobody asked for, which is about a kilobyte and close to what a real request carries. It sends `x-rb-tenant: {run.tenant}`, `x-rb-request-id: {run.requestId}`, `x-rb-account: {run.account}`, `x-rb-user-agent: Mozilla/5.0 (X11; Linux x86_64; rv:130.0) Gecko/20100101 Firefox/130.0`, `x-rb-accept: application/json, text/plain, */*`, `x-rb-accept-language: en-US,en;q=0.5`, `x-rb-accept-encoding: gzip, deflate, br, zstd`, `x-rb-referer: https://shop.example.com/orders?page=2`, `x-rb-origin: https://shop.example.com`, `x-rb-sec-fetch-dest: empty`, `x-rb-sec-fetch-mode: cors`, `x-rb-sec-fetch-site: same-origin`, `x-rb-priority: u=4`, `x-rb-pragma: no-cache`, `x-rb-cache-control: no-cache`, `x-rb-te: trailers`, `x-rb-dnt: 1`, `x-rb-sec-gpc: 1`, `x-rb-forwarded-for: 203.0.113.195, 198.51.100.17`, `x-rb-forwarded-proto: https`, `x-rb-forwarded-host: shop.example.com`, `x-rb-forwarded-port: 443`, `x-rb-real-ip: 203.0.113.195`, `x-rb-via: 1.1 cdn-edge, 1.1 envoy`, `x-rb-traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01`, `x-rb-tracestate: rojo=00f067aa0ba902b7,congo=t61rcWkgMzE`, `x-rb-envoy-attempt-count: 1` and `x-rb-amzn-trace-id: Root=1-66e9b7c2-5759e988bd862e3fe1be46a9`.",
+        "tags": [
+          "headers"
+        ],
+        "responses": {
+          "200": {
+            "description": "headers.few: the body is `items.small`.\n\nheaders.many: the body is `items.small`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/payloadSmall"
+                },
+                "examples": {
+                  "items.small": {
+                    "summary": "items.small",
+                    "description": "Compared as parsed JSON, so key order and how a number is written do not matter.",
+                    "externalValue": "../tests/payloads/items.small.json"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/headers/bind": {
+      "get": {
+        "operationId": "getHeadersBind",
+        "summary": "headers.bind_few, headers.bind_many",
+        "description": "**headers.bind_few** (tests/headers/bind-few.ts). The same five headers with three of them bound through the framework and written back, one as an integer. Read against headers.few, the difference is the binding rather than the materialising.\n\n**headers.bind_many** (tests/headers/bind-many.ts). Three headers bound out of thirty instead of out of five. Read against headers.bind_few, the difference is whether a framework's binder pays for the headers it was not asked about. It sends `x-rb-user-agent: Mozilla/5.0 (X11; Linux x86_64; rv:130.0) Gecko/20100101 Firefox/130.0`, `x-rb-accept: application/json, text/plain, */*`, `x-rb-accept-language: en-US,en;q=0.5`, `x-rb-accept-encoding: gzip, deflate, br, zstd`, `x-rb-referer: https://shop.example.com/orders?page=2`, `x-rb-origin: https://shop.example.com`, `x-rb-sec-fetch-dest: empty`, `x-rb-sec-fetch-mode: cors`, `x-rb-sec-fetch-site: same-origin`, `x-rb-priority: u=4`, `x-rb-pragma: no-cache`, `x-rb-cache-control: no-cache`, `x-rb-te: trailers`, `x-rb-dnt: 1`, `x-rb-sec-gpc: 1`, `x-rb-forwarded-for: 203.0.113.195, 198.51.100.17`, `x-rb-forwarded-proto: https`, `x-rb-forwarded-host: shop.example.com`, `x-rb-forwarded-port: 443`, `x-rb-real-ip: 203.0.113.195`, `x-rb-via: 1.1 cdn-edge, 1.1 envoy`, `x-rb-traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01`, `x-rb-tracestate: rojo=00f067aa0ba902b7,congo=t61rcWkgMzE`, `x-rb-envoy-attempt-count: 1` and `x-rb-amzn-trace-id: Root=1-66e9b7c2-5759e988bd862e3fe1be46a9`.",
+        "tags": [
+          "headers"
+        ],
+        "parameters": [
+          {
+            "name": "x-rb-tenant",
+            "in": "header",
+            "required": true,
+            "description": "Drawn once per run and never given to the framework. The answer echoes it as tenant.",
+            "schema": {
+              "type": "string",
+              "pattern": "^[abcdefghijklmnopqrstuvwxyz]{12}$"
+            }
+          },
+          {
+            "name": "x-rb-request-id",
+            "in": "header",
+            "required": true,
+            "description": "Drawn once per run and never given to the framework. The answer echoes it as requestId.",
+            "schema": {
+              "type": "string",
+              "pattern": "^[0123456789abcdef]{16}$"
+            }
+          },
+          {
+            "name": "x-rb-account",
+            "in": "header",
+            "required": true,
+            "description": "Drawn once per run and never given to the framework. The answer echoes it as account.",
+            "schema": {
+              "type": "integer",
+              "minimum": 100000,
+              "maximum": 999999
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "headers.bind_few: the body is `items.small` with an echo of tenant, requestId and account.\n\nheaders.bind_many: the body is `items.small` with an echo of tenant, requestId and account.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "size": {
+                      "type": "string",
+                      "const": "small"
+                    },
+                    "count": {
+                      "type": "number",
+                      "const": 1
+                    },
+                    "items": {
+                      "minItems": 1,
+                      "maxItems": 1,
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/item"
+                      }
+                    },
+                    "echo": {
+                      "type": "object",
+                      "properties": {
+                        "tenant": {
+                          "type": "string",
+                          "pattern": "^[abcdefghijklmnopqrstuvwxyz]{12}$"
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "pattern": "^[0123456789abcdef]{16}$"
+                        },
+                        "account": {
+                          "type": "integer",
+                          "minimum": 100000,
+                          "maximum": 999999
+                        }
+                      },
+                      "required": [
+                        "tenant",
+                        "requestId",
+                        "account"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "size",
+                    "count",
+                    "items",
+                    "echo"
+                  ],
+                  "additionalProperties": false
+                },
+                "examples": {
+                  "items.small": {
+                    "summary": "items.small",
+                    "description": "Compared as parsed JSON, so key order and how a number is written do not matter. The answer adds an echo object holding tenant, requestId and account, as sent.",
+                    "externalValue": "../tests/payloads/items.small.json"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "getHealth",
+        "summary": "Readiness",
+        "description": "The harness polls this and starts measuring only after a 200. Answer it once every payload is loaded.",
+        "responses": {
+          "200": {
+            "description": "Ready."
+          }
+        }
+      }
+    },
+    "/items": {
+      "post": {
+        "operationId": "postItems",
+        "summary": "items.create",
+        "description": "**items.create** (tests/items/create.ts). A new item posted as JSON and answered 201, with where it would live and what it would hold. Nothing is stored, so the answer is always the id after the last row. Read against body.bind_small, the difference is a body bound to a model and answered as a created resource rather than echoed with counts.",
+        "tags": [
+          "items"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/newItem"
+              },
+              "examples": {
+                "items.new": {
+                  "summary": "items.new",
+                  "description": "items.create sends it.",
+                  "externalValue": "../tests/payloads/items.new.json"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "items.create: the body is `items.new as row 1426`.",
+            "headers": {
+              "location": {
+                "required": true,
+                "description": "Checked by items.create.",
+                "schema": {
+                  "type": "string",
+                  "pattern": "^(https?:\\/\\/[^/]+)?\\/items\\/1426$"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/item"
+                },
+                "examples": {
+                  "items.new as row 1426": {
+                    "summary": "items.new as row 1426",
+                    "description": "Computed from `items.new`, with no file of its own. Compared as parsed JSON, so key order and how a number is written do not matter."
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/items/{id}": {
+      "summary": "errors.wrong_method",
+      "description": "**errors.wrong_method** (tests/errors/wrong-method.ts) sends POST here, and no route may answer it. The router answers with the wrongMethod status in the framework's client-exception/index.ts, and the framework's own error body. A path with routes, asked with a method none of them has. A router that matches the path first answers 405, and one that matches the method and the path together answers 404, so the status is read from the framework's declaration. Read against errors.unmatched, the difference is how far the router got before it gave up.",
+      "get": {
+        "operationId": "getItemsId",
+        "summary": "items.read, errors.not_found",
+        "description": "**items.read** (tests/items/read.ts). One row of the large payload, looked up by the id in the path. The id is drawn per request, so each instance reads a different row. Read against parameters.one, the difference is a lookup and one row serialised in place of an echo beside the small payload.\n\n**errors.not_found** (tests/errors/not-found.ts). A lookup the router matches and the handler refuses, because no row has that id. Read against items.read, the difference is the refusal in place of a row, and against errors.unmatched it is the handler deciding rather than the router missing.",
+        "tags": [
+          "items",
+          "errors"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "A row of items.large, drawn per request from 1 to 1425.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "items.read: the body is `row {id} of items.large`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/item"
+                },
+                "examples": {
+                  "row {id} of items.large": {
+                    "summary": "row {id} of items.large",
+                    "description": "Computed from `items.large`, with no file of its own. Compared as parsed JSON, so key order and how a number is written do not matter."
+                  }
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "The framework's own error body, which has to be non-empty JSON. Each test below names its status by the field in the framework's client-exception/index.ts.\n\nerrors.not_found: the notFound status for /items/999999.",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      },
+      "head": {
+        "operationId": "headItemsId",
+        "summary": "items.head",
+        "description": "**items.head** (tests/items/head.ts). The same lookup asked with HEAD, which the framework answers from its GET route with no body. Read against items.read, the difference is the body left unwritten. Content-Length is not checked, because a framework that streams its JSON sends none on the GET either.",
+        "tags": [
+          "items"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "A row of items.large, drawn per request from 1 to 1425.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "items.head: content-type matches `/^application\\/json/`, no body."
+          }
+        }
+      },
+      "put": {
+        "operationId": "putItemsId",
+        "summary": "items.replace",
+        "description": "**items.replace** (tests/items/replace.ts). A whole item put at an id and answered with the item under that id. Read against items.create, the difference is the id coming from the path rather than from the server.",
+        "tags": [
+          "items"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "A row of items.large, drawn per request from 1 to 1425.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/newItem"
+              },
+              "examples": {
+                "items.new": {
+                  "summary": "items.new",
+                  "description": "items.replace sends it.",
+                  "externalValue": "../tests/payloads/items.new.json"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "items.replace: the body is `items.new as row {id}`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/item"
+                },
+                "examples": {
+                  "items.new as row {id}": {
+                    "summary": "items.new as row {id}",
+                    "description": "Computed from `items.new`, with no file of its own. Compared as parsed JSON, so key order and how a number is written do not matter."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "operationId": "patchItemsId",
+        "summary": "items.update",
+        "description": "**items.update** (tests/items/update.ts). Two fields patched onto a row and answered with the row as it would be. The handler has to read the row, merge the body into it and serialise the result. Read against items.replace, the difference is the merge.",
+        "tags": [
+          "items"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "A row of items.large, drawn per request from 1 to 1425.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/itemPatch"
+              },
+              "examples": {
+                "items.patch": {
+                  "summary": "items.patch",
+                  "description": "items.update sends it.",
+                  "externalValue": "../tests/payloads/items.patch.json"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "items.update: the body is `row {id} of items.large with items.patch applied`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/item"
+                },
+                "examples": {
+                  "row {id} of items.large with items.patch applied": {
+                    "summary": "row {id} of items.large with items.patch applied",
+                    "description": "Computed from `items.large` and `items.patch`, with no file of its own. Compared as parsed JSON, so key order and how a number is written do not matter."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteItemsId",
+        "summary": "items.delete",
+        "description": "**items.delete** (tests/items/delete.ts). A row deleted and answered 204 with no body. Nothing is removed, so every instance finds the row it names. Read against items.read, the difference is that nothing is serialised at all.",
+        "tags": [
+          "items"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "A row of items.large, drawn per request from 1 to 1425.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "items.delete: no body."
+          }
+        }
+      }
+    },
+    "/json/large": {
+      "get": {
+        "operationId": "getJsonLarge",
+        "summary": "json.large",
+        "description": "**json.large** (tests/json/large.ts). Fourteen hundred rows out, serialised from a body the framework already holds. The size at which the writer stops being free. Read against json.small, the pair is what separates a framework with a fast codec from one with a fast request path.",
+        "tags": [
+          "json"
+        ],
+        "responses": {
+          "200": {
+            "description": "json.large: the body is `items.large`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/payloadLarge"
+                },
+                "examples": {
+                  "items.large": {
+                    "summary": "items.large",
+                    "description": "Compared as parsed JSON, so key order and how a number is written do not matter.",
+                    "externalValue": "../tests/payloads/items.large.json"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/json/medium": {
+      "get": {
+        "operationId": "getJsonMedium",
+        "summary": "json.medium",
+        "description": "**json.medium** (tests/json/medium.ts). Eighty-nine rows out, serialised from a body the framework already holds. The middle size, where the codec is doing real work and the response still fits a single write. Read against json.small rather than on its own.",
+        "tags": [
+          "json"
+        ],
+        "responses": {
+          "200": {
+            "description": "json.medium: the body is `items.medium`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/payloadMedium"
+                },
+                "examples": {
+                  "items.medium": {
+                    "summary": "items.medium",
+                    "description": "Compared as parsed JSON, so key order and how a number is written do not matter.",
+                    "externalValue": "../tests/payloads/items.medium.json"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/json/small": {
+      "get": {
+        "operationId": "getJsonSmall",
+        "summary": "cors.scoped, json.small",
+        "description": "**cors.scoped** (tests/cors/scoped.ts, a validation test that is not measured). The allowed origin asking a route outside /cors gets no access-control-allow-origin, because the policy is attached to /cors and nowhere else. A framework whose CORS feature can only cover the whole application cannot pass this, and says why in the skips of its rb.json. It sends `origin: https://shop.example.com`.\n\n**json.small** (tests/json/small.ts). One row out, serialised from a body the framework already holds. The plainest question in the corpus once something has to be serialised. Read against baseline.plaintext, the difference is the codec.",
+        "tags": [
+          "cors",
+          "json"
+        ],
+        "responses": {
+          "200": {
+            "description": "cors.scoped: no access-control-allow-origin.\n\njson.small: the body is `items.small`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/payloadSmall"
+                },
+                "examples": {
+                  "items.small": {
+                    "summary": "items.small",
+                    "description": "Compared as parsed JSON, so key order and how a number is written do not matter.",
+                    "externalValue": "../tests/payloads/items.small.json"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/middleware/four": {
+      "get": {
+        "operationId": "getMiddlewareFour",
+        "summary": "middleware.four",
+        "description": "**middleware.four** (tests/middleware/four.ts). Four no-op layers in front of a handler that serialises the small payload. Four layers in front of the handler, each calling the next and doing nothing else. Read against middleware.none, the difference divided by four is the framework's per-layer cost.",
+        "tags": [
+          "middleware"
+        ],
+        "responses": {
+          "200": {
+            "description": "middleware.four: the body is `items.small`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/payloadSmall"
+                },
+                "examples": {
+                  "items.small": {
+                    "summary": "items.small",
+                    "description": "Compared as parsed JSON, so key order and how a number is written do not matter.",
+                    "externalValue": "../tests/payloads/items.small.json"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/middleware/none": {
+      "get": {
+        "operationId": "getMiddlewareNone",
+        "summary": "middleware.none",
+        "description": "**middleware.none** (tests/middleware/none.ts). No layers in front of a handler that serialises the small payload. A different route carrying the same handler, which should cost nothing. It is the zero point the other two are read against, and a framework where this differs from json.small is paying for the route rather than the layers.",
+        "tags": [
+          "middleware"
+        ],
+        "responses": {
+          "200": {
+            "description": "middleware.none: the body is `items.small`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/payloadSmall"
+                },
+                "examples": {
+                  "items.small": {
+                    "summary": "items.small",
+                    "description": "Compared as parsed JSON, so key order and how a number is written do not matter.",
+                    "externalValue": "../tests/payloads/items.small.json"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/middleware/sixteen": {
+      "get": {
+        "operationId": "getMiddlewareSixteen",
+        "summary": "middleware.sixteen",
+        "description": "**middleware.sixteen** (tests/middleware/sixteen.ts). Sixteen no-op layers in front of a handler that serialises the small payload. Sixteen layers, which is where a per-layer cost that looked like noise at four becomes readable. Read against middleware.none, and against middleware.four to see whether the cost is linear.",
+        "tags": [
+          "middleware"
+        ],
+        "responses": {
+          "200": {
+            "description": "middleware.sixteen: the body is `items.small`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/payloadSmall"
+                },
+                "examples": {
+                  "items.small": {
+                    "summary": "items.small",
+                    "description": "Compared as parsed JSON, so key order and how a number is written do not matter.",
+                    "externalValue": "../tests/payloads/items.small.json"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/parameters/{one}/segment/literal": {
+      "get": {
+        "operationId": "getParametersOneSegmentLiteral",
+        "summary": "parameters.one",
+        "description": "**parameters.one** (tests/parameters/one.ts). One segment captured, bound as an integer and written back. The value is drawn per run, so a framework that answered from a table would have had to know it in advance, and the echo is checked against what was sent.",
+        "tags": [
+          "parameters"
+        ],
+        "parameters": [
+          {
+            "name": "one",
+            "in": "path",
+            "required": true,
+            "description": "Drawn once per run and never given to the framework. The answer echoes it.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1000,
+              "maximum": 9999
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "parameters.one: the body is `items.small` with an echo of one.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "size": {
+                      "type": "string",
+                      "const": "small"
+                    },
+                    "count": {
+                      "type": "number",
+                      "const": 1
+                    },
+                    "items": {
+                      "minItems": 1,
+                      "maxItems": 1,
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/item"
+                      }
+                    },
+                    "echo": {
+                      "type": "object",
+                      "properties": {
+                        "one": {
+                          "type": "integer",
+                          "minimum": 1000,
+                          "maximum": 9999
+                        }
+                      },
+                      "required": [
+                        "one"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "size",
+                    "count",
+                    "items",
+                    "echo"
+                  ],
+                  "additionalProperties": false
+                },
+                "examples": {
+                  "items.small": {
+                    "summary": "items.small",
+                    "description": "Compared as parsed JSON, so key order and how a number is written do not matter. The answer adds an echo object holding one, as sent.",
+                    "externalValue": "../tests/payloads/items.small.json"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/parameters/{one}/with-second/{two}": {
+      "get": {
+        "operationId": "getParametersOneWithSecondTwo",
+        "summary": "parameters.two",
+        "description": "**parameters.two** (tests/parameters/two.ts). The same depth with a second capture in it. Read against parameters.one, the difference is one more segment the router has to capture and one more value the framework has to convert.",
+        "tags": [
+          "parameters"
+        ],
+        "parameters": [
+          {
+            "name": "one",
+            "in": "path",
+            "required": true,
+            "description": "Drawn once per run and never given to the framework. The answer echoes it.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1000,
+              "maximum": 9999
+            }
+          },
+          {
+            "name": "two",
+            "in": "path",
+            "required": true,
+            "description": "Drawn once per run and never given to the framework. The answer echoes it.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1000,
+              "maximum": 9999
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "parameters.two: the body is `items.small` with an echo of one and two.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "size": {
+                      "type": "string",
+                      "const": "small"
+                    },
+                    "count": {
+                      "type": "number",
+                      "const": 1
+                    },
+                    "items": {
+                      "minItems": 1,
+                      "maxItems": 1,
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/item"
+                      }
+                    },
+                    "echo": {
+                      "type": "object",
+                      "properties": {
+                        "one": {
+                          "type": "integer",
+                          "minimum": 1000,
+                          "maximum": 9999
+                        },
+                        "two": {
+                          "type": "integer",
+                          "minimum": 1000,
+                          "maximum": 9999
+                        }
+                      },
+                      "required": [
+                        "one",
+                        "two"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "size",
+                    "count",
+                    "items",
+                    "echo"
+                  ],
+                  "additionalProperties": false
+                },
+                "examples": {
+                  "items.small": {
+                    "summary": "items.small",
+                    "description": "Compared as parsed JSON, so key order and how a number is written do not matter. The answer adds an echo object holding one and two, as sent.",
+                    "externalValue": "../tests/payloads/items.small.json"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/parameters/static/segment/literal": {
+      "get": {
+        "operationId": "getParametersStaticSegmentLiteral",
+        "summary": "parameters.static",
+        "description": "**parameters.static** (tests/parameters/static.ts). Four static segments and no captures. This holds the route depth constant for the two rows that capture, so subtracting it leaves the router capturing rather than the router matching a longer path.",
+        "tags": [
+          "parameters"
+        ],
+        "responses": {
+          "200": {
+            "description": "parameters.static: the body is `items.small`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/payloadSmall"
+                },
+                "examples": {
+                  "items.small": {
+                    "summary": "items.small",
+                    "description": "Compared as parsed JSON, so key order and how a number is written do not matter.",
+                    "externalValue": "../tests/payloads/items.small.json"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/plaintext": {
+      "get": {
+        "operationId": "getPlaintext",
+        "summary": "baseline.plaintext",
+        "description": "**baseline.plaintext** (tests/baseline/plaintext.ts). The dispatch floor. A fixed string out, with no serialiser in the way, so what is left is the framework accepting a connection, matching a route and writing a response. Every other row in the corpus is read against this one.",
+        "tags": [
+          "baseline"
+        ],
+        "responses": {
+          "200": {
+            "description": "baseline.plaintext: the body is `Hello, World!`.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                },
+                "examples": {
+                  "Hello, World!": {
+                    "summary": "Hello, World!",
+                    "description": "A literal, with no file. Compared byte for byte."
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/query/many": {
+      "get": {
+        "operationId": "getQueryMany",
+        "summary": "query.many",
+        "description": "**query.many** (tests/query/many.ts). Eight parameters, which is what a real search endpoint carries: a page and a size, a sort, a text term and four filters. Read against query.one, the difference is seven more keys parsed, coerced and echoed.",
+        "tags": [
+          "query"
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": true,
+            "description": "Drawn once per run and never given to the framework. The answer echoes it.",
+            "schema": {
+              "type": "integer",
+              "minimum": 100,
+              "maximum": 999
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": true,
+            "description": "Drawn once per run and never given to the framework. The answer echoes it.",
+            "schema": {
+              "type": "integer",
+              "minimum": 10,
+              "maximum": 99
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": true,
+            "description": "Drawn once per run and never given to the framework. The answer echoes it.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "open",
+                "paid",
+                "shipped",
+                "cancelled"
+              ]
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": true,
+            "description": "Drawn once per run and never given to the framework. The answer echoes it.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "tools",
+                "garden",
+                "kitchen",
+                "outdoor",
+                "office"
+              ]
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": true,
+            "description": "Drawn once per run and never given to the framework. The answer echoes it.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "name",
+                "created",
+                "total"
+              ]
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "description": "Drawn once per run and never given to the framework. The answer echoes it.",
+            "schema": {
+              "type": "string",
+              "pattern": "^[abcdefghijklmnopqrstuvwxyz]{5}(?: [abcdefghijklmnopqrstuvwxyz]{5}){1}$"
+            }
+          },
+          {
+            "name": "minPrice",
+            "in": "query",
+            "required": true,
+            "description": "Drawn once per run and never given to the framework. The answer echoes it.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1000,
+              "maximum": 9999
+            }
+          },
+          {
+            "name": "maxPrice",
+            "in": "query",
+            "required": true,
+            "description": "Drawn once per run and never given to the framework. The answer echoes it.",
+            "schema": {
+              "type": "integer",
+              "minimum": 10000,
+              "maximum": 99999
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "query.many: the body is `items.small` with an echo of page, size, status, category, sort, q, minPrice and maxPrice.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "size": {
+                      "type": "string",
+                      "const": "small"
+                    },
+                    "count": {
+                      "type": "number",
+                      "const": 1
+                    },
+                    "items": {
+                      "minItems": 1,
+                      "maxItems": 1,
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/item"
+                      }
+                    },
+                    "echo": {
+                      "type": "object",
+                      "properties": {
+                        "page": {
+                          "type": "integer",
+                          "minimum": 100,
+                          "maximum": 999
+                        },
+                        "size": {
+                          "type": "integer",
+                          "minimum": 10,
+                          "maximum": 99
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "open",
+                            "paid",
+                            "shipped",
+                            "cancelled"
+                          ]
+                        },
+                        "category": {
+                          "type": "string",
+                          "enum": [
+                            "tools",
+                            "garden",
+                            "kitchen",
+                            "outdoor",
+                            "office"
+                          ]
+                        },
+                        "sort": {
+                          "type": "string",
+                          "enum": [
+                            "name",
+                            "created",
+                            "total"
+                          ]
+                        },
+                        "q": {
+                          "type": "string",
+                          "pattern": "^[abcdefghijklmnopqrstuvwxyz]{5}(?: [abcdefghijklmnopqrstuvwxyz]{5}){1}$"
+                        },
+                        "minPrice": {
+                          "type": "integer",
+                          "minimum": 1000,
+                          "maximum": 9999
+                        },
+                        "maxPrice": {
+                          "type": "integer",
+                          "minimum": 10000,
+                          "maximum": 99999
+                        }
+                      },
+                      "required": [
+                        "page",
+                        "size",
+                        "status",
+                        "category",
+                        "sort",
+                        "q",
+                        "minPrice",
+                        "maxPrice"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "size",
+                    "count",
+                    "items",
+                    "echo"
+                  ],
+                  "additionalProperties": false
+                },
+                "examples": {
+                  "items.small": {
+                    "summary": "items.small",
+                    "description": "Compared as parsed JSON, so key order and how a number is written do not matter. The answer adds an echo object holding page, size, status, category, sort, q, minPrice and maxPrice, as sent.",
+                    "externalValue": "../tests/payloads/items.small.json"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/query/one": {
+      "get": {
+        "operationId": "getQueryOne",
+        "summary": "query.one",
+        "description": "**query.one** (tests/query/one.ts). One query parameter parsed, coerced to an integer and written back. Read against json.small, the difference is the query string being parsed at all.",
+        "tags": [
+          "query"
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": true,
+            "description": "Drawn once per run and never given to the framework. The answer echoes it.",
+            "schema": {
+              "type": "integer",
+              "minimum": 100,
+              "maximum": 999
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "query.one: the body is `items.small` with an echo of page.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "size": {
+                      "type": "string",
+                      "const": "small"
+                    },
+                    "count": {
+                      "type": "number",
+                      "const": 1
+                    },
+                    "items": {
+                      "minItems": 1,
+                      "maxItems": 1,
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/item"
+                      }
+                    },
+                    "echo": {
+                      "type": "object",
+                      "properties": {
+                        "page": {
+                          "type": "integer",
+                          "minimum": 100,
+                          "maximum": 999
+                        }
+                      },
+                      "required": [
+                        "page"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "size",
+                    "count",
+                    "items",
+                    "echo"
+                  ],
+                  "additionalProperties": false
+                },
+                "examples": {
+                  "items.small": {
+                    "summary": "items.small",
+                    "description": "Compared as parsed JSON, so key order and how a number is written do not matter. The answer adds an echo object holding page, as sent.",
+                    "externalValue": "../tests/payloads/items.small.json"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/static/items.large.json": {
+      "get": {
+        "operationId": "getStaticItemsLargeJson",
+        "summary": "static.file",
+        "description": "**static.file** (tests/static/file.ts). items.large.json sent by the framework's static-file feature from the payload directory, byte for byte, with its length and its modification time. This is the one row where serving the file's bytes is the point. Last-Modified is checked rather than an ETag, because Go's file server sends no ETag.",
+        "tags": [
+          "static"
+        ],
+        "responses": {
+          "200": {
+            "description": "static.file: the body is `items.large.json`.",
+            "headers": {
+              "content-length": {
+                "required": true,
+                "description": "Checked by static.file.",
+                "schema": {
+                  "type": "string",
+                  "const": "129937"
+                }
+              },
+              "last-modified": {
+                "required": true,
+                "description": "Checked by static.file.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                },
+                "examples": {
+                  "items.large.json": {
+                    "summary": "items.large.json",
+                    "description": "Compared byte for byte.",
+                    "externalValue": "../tests/payloads/items.large.json"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/stream/items": {
+      "get": {
+        "operationId": "getStreamItems",
+        "summary": "stream.ndjson",
+        "description": "**stream.ndjson** (tests/stream/ndjson.ts). items.medium's 89 rows written one per line as application/x-ndjson. There is no Content-Length, which is what shows the body left in parts rather than buffered. Read against json.medium, the difference is the framework's streaming path and a write per row.",
+        "tags": [
+          "stream"
+        ],
+        "responses": {
+          "200": {
+            "description": "stream.ndjson: the body is `items.medium, one row per line`, no content-length.",
+            "content": {
+              "application/x-ndjson": {
+                "schema": {
+                  "type": "string"
+                },
+                "examples": {
+                  "items.medium, one row per line": {
+                    "summary": "items.medium, one row per line",
+                    "description": "Computed from `items.medium`, with no file of its own. Compared line by line, each line as parsed JSON."
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/template/medium": {
+      "get": {
+        "operationId": "getTemplateMedium",
+        "summary": "template.medium",
+        "description": "**template.medium** (tests/template/medium.ts). Eighty-nine rows through the same template. Read against template.small, the difference is the engine's per-row cost, and against json.medium it is rendering against serialising at one size.",
+        "tags": [
+          "template"
+        ],
+        "responses": {
+          "200": {
+            "description": "template.medium: the body is `items.medium as a page`.",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                },
+                "examples": {
+                  "items.medium as a page": {
+                    "summary": "items.medium as a page",
+                    "description": "Computed from `items.medium`, with no file of its own. Compared with whitespace at element boundaries removed and every other run of whitespace collapsed to one space."
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/template/small": {
+      "get": {
+        "operationId": "getTemplateSmall",
+        "summary": "template.small",
+        "description": "**template.small** (tests/template/small.ts). One row rendered through the framework's own view layer instead of serialised. Read against json.small, the difference is the engine, which is why this family is comparable across engines and not across frameworks.",
+        "tags": [
+          "template"
+        ],
+        "responses": {
+          "200": {
+            "description": "template.small: the body is `items.small as a page`.",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                },
+                "examples": {
+                  "items.small as a page": {
+                    "summary": "items.small as a page",
+                    "description": "Computed from `items.small`, with no file of its own. Compared with whitespace at element boundaries removed and every other run of whitespace collapsed to one space."
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "bindEcho": {
+        "type": "object",
+        "properties": {
+          "fields": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "bytes": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "echo": {
+            "$ref": "#/components/schemas/orderRequest"
+          }
+        },
+        "required": [
+          "fields",
+          "bytes",
+          "echo"
+        ],
+        "additionalProperties": false
+      },
+      "item": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "tools",
+              "garden",
+              "kitchen",
+              "outdoor",
+              "office"
+            ]
+          },
+          "priceCents": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "inStock": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "category",
+          "priceCents",
+          "inStock"
+        ],
+        "additionalProperties": false
+      },
+      "itemPatch": {
+        "type": "object",
+        "properties": {
+          "priceCents": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "inStock": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "priceCents",
+          "inStock"
+        ],
+        "additionalProperties": false
+      },
+      "newItem": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "tools",
+              "garden",
+              "kitchen",
+              "outdoor",
+              "office"
+            ]
+          },
+          "priceCents": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "inStock": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "category",
+          "priceCents",
+          "inStock"
+        ],
+        "additionalProperties": false
+      },
+      "orderRequest": {
+        "type": "object",
+        "properties": {
+          "customerId": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "lines": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "productId": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "qty": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "maximum": 9007199254740991
+                }
+              },
+              "required": [
+                "productId",
+                "qty"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "customerId",
+          "status",
+          "lines"
+        ],
+        "additionalProperties": false
+      },
+      "payloadLarge": {
+        "type": "object",
+        "properties": {
+          "size": {
+            "type": "string",
+            "const": "large"
+          },
+          "count": {
+            "type": "number",
+            "const": 1425
+          },
+          "items": {
+            "minItems": 1425,
+            "maxItems": 1425,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/item"
+            }
+          }
+        },
+        "required": [
+          "size",
+          "count",
+          "items"
+        ],
+        "additionalProperties": false
+      },
+      "payloadMedium": {
+        "type": "object",
+        "properties": {
+          "size": {
+            "type": "string",
+            "const": "medium"
+          },
+          "count": {
+            "type": "number",
+            "const": 89
+          },
+          "items": {
+            "minItems": 89,
+            "maxItems": 89,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/item"
+            }
+          }
+        },
+        "required": [
+          "size",
+          "count",
+          "items"
+        ],
+        "additionalProperties": false
+      },
+      "payloadSmall": {
+        "type": "object",
+        "properties": {
+          "size": {
+            "type": "string",
+            "const": "small"
+          },
+          "count": {
+            "type": "number",
+            "const": 1
+          },
+          "items": {
+            "minItems": 1,
+            "maxItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/item"
+            }
+          }
+        },
+        "required": [
+          "size",
+          "count",
+          "items"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "securitySchemes": {
+      "bearer": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "The token is token in tests/payloads/settings.json."
+      }
+    }
+  }
+}

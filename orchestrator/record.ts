@@ -42,6 +42,8 @@ export interface Recording {
   readonly calls: RecordedCall[];
   /** Which run values and draws the closure reached for, in order. */
   readonly uses: string[];
+  /** The values each `draw.choice` picked from, in order. The stub always picks the first. */
+  readonly choices: (readonly unknown[])[];
   readonly expectations: string[];
 }
 
@@ -80,23 +82,28 @@ const RUN: RunValues = {
 /** A real row, because a test builds the row it expects from the id, but one no literal in a path spells. */
 const ITEM = sentinel(1417, "{draw.item}");
 
+/** What `etag()` reads back, standing for the validator the framework answered with. */
+export const ETAG = '"{etag}"';
+
+/** `text` with every sentinel in it put back as the placeholder it stands for. */
+export function placeholders(text: string): string {
+  let out = text;
+  for (const [value, placeholder] of SENTINEL) out = out.split(String(value)).join(placeholder);
+  return out;
+}
+
 /**
  * The route and query a call actually sent, with every sentinel put back as the
  * placeholder it stands for. This is what a declared `path` is compared against.
  */
 export function templateOf(call: RecordedCall): string {
-  const back = (text: string) => {
-    let out = text;
-    for (const [value, placeholder] of SENTINEL) out = out.split(String(value)).join(placeholder);
-    return out;
-  };
-  const route = back(call.path);
+  const route = placeholders(call.path);
   if (call.query.length === 0) return route;
-  return `${route}?${call.query.map(([k, v]) => `${k}=${back(v)}`).join("&")}`;
+  return `${route}?${call.query.map(([k, v]) => `${k}=${placeholders(v)}`).join("&")}`;
 }
 
 export function recorder(): { client: Client; recording: Recording } {
-  const recording: Recording = { calls: [], uses: [], expectations: [] };
+  const recording: Recording = { calls: [], uses: [], choices: [], expectations: [] };
   let priming = false;
 
   function open(method: Method, path: string, body?: Json): Call {
@@ -148,7 +155,7 @@ export function recorder(): { client: Client; recording: Recording } {
       fresh: () => put({ kind: "fresh" }),
       replayed: () => put({ kind: "replayed" }),
 
-      etag: () => readBack("etag", '"{etag}"'),
+      etag: () => readBack("etag", ETAG),
       headerValue: (name: string) => readBack(`header:${name}`, `{${name}}`),
       json: () => readBack("json", null),
       text: () => readBack("text", ""),
@@ -180,7 +187,7 @@ export function recorder(): { client: Client; recording: Recording } {
   const draw: Draw = {
     // A vary value is a real one, not a parameter: the store has to hold a key per
     // combination, so what matters is that the values differ rather than what they are.
-    choice: <T>(values: readonly T[]) => drew("choice", values[0] as T),
+    choice: <T>(values: readonly T[]) => (recording.choices.push(values), drew("choice", values[0] as T)),
     item: () => drew("item", ITEM),
   };
 

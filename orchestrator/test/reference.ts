@@ -14,16 +14,11 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { gzipSync } from "node:zlib";
 
-import type { Draw, Exceptions, Json, RunValues } from "@rb/tests/kit";
+import type { Draw, Exceptions, RunValues } from "@rb/tests/kit";
 import { orderRequest } from "@rb/tests/models/order-request";
 import { items, settings } from "@rb/tests/payloads";
+import type { Snapshot } from "../snapshots.ts";
 import type { Request, Response, Transport } from "../validate.ts";
-
-/** A refusal row's one request, and the answer each framework was captured giving it. */
-export interface Snapshot {
-  readonly request: string;
-  readonly frameworks: Readonly<Record<string, { readonly status: number; readonly body?: Json }>>;
-}
 
 /** Values of the shape a run draws, fixed so that a failure reproduces. */
 export const RUN: RunValues = {
@@ -47,17 +42,6 @@ export const DRAW: Draw = {
   choice: <T>(values: readonly T[]) => values[0] as T,
   item: () => 17,
 };
-
-/** The snapshot beside each test that has one. Only refusal rows do. */
-export function loadSnapshots(root: string, ids: Iterable<string>): Map<string, Snapshot> {
-  const out = new Map<string, Snapshot>();
-  for (const id of ids) {
-    const [family, name] = id.split(".") as [string, string];
-    const file = join(root, "tests", family, `${name.replace(/_/g, "-")}.snap.json`);
-    if (existsSync(file)) out.set(id, JSON.parse(readFileSync(file, "utf8")) as Snapshot);
-  }
-  return out;
-}
 
 interface Reply {
   readonly status: number;

@@ -16,6 +16,19 @@ export interface Payload<T = unknown> {
   readonly name: string;
   readonly format: "json" | "lines" | "text" | "html";
   readonly value: T;
+  /** The model a json payload matches, which the OpenAPI document gives as the body's schema. */
+  readonly model?: Schema<unknown, T> | undefined;
+  /**
+   * The payloads a computed answer is made from, which the OpenAPI document links to.
+   * A payload made from none is a committed file, or a literal.
+   */
+  readonly from?: readonly Payload[] | undefined;
+}
+
+/** What a computed payload matches and is made from. Neither is checked here. */
+export interface Made<T> {
+  readonly model?: Schema<unknown, T>;
+  readonly from?: readonly Payload[];
 }
 
 export interface BodyOptions {
@@ -33,7 +46,7 @@ export interface BodyOptions {
  * file that stops matching its own shape fails when the corpus loads rather than
  * in whichever row serves it first.
  */
-export function payload<O>(name: string, model: Schema<unknown, O>, value: unknown): Payload<O> {
+export function payload<O>(name: string, model: Schema<unknown, O>, value: unknown, from?: readonly Payload[]): Payload<O> {
   const checked = model["~standard"].validate(value);
   if (checked instanceof Promise) throw new Error(`payload ${name}: the model is async`);
   if (checked.issues) {
@@ -42,28 +55,28 @@ export function payload<O>(name: string, model: Schema<unknown, O>, value: unkno
     const issues = checked.issues.slice(0, 3).map((i) => `${at(i.path)}: ${i.message}`);
     throw new Error(`payload ${name} does not match its model: ${issues.join("; ")}`);
   }
-  return { name, format: "json", value: frozen(checked.value) };
+  return { name, format: "json", value: frozen(checked.value), model, from };
 }
 
 /**
  * A JSON body made from payloads already checked, such as one of their rows.
  * Not checked again, because a test may build one for every request it sends.
  */
-export function json<T extends Json>(name: string, value: T): Payload<T> {
-  return { name, format: "json", value };
+export function json<T extends Json>(name: string, value: T, made: Made<T> = {}): Payload<T> {
+  return { name, format: "json", value, model: made.model, from: made.from };
 }
 
 /** One JSON value per line. */
-export function lines(name: string, rows: readonly Json[]): Payload<readonly Json[]> {
-  return { name, format: "lines", value: rows };
+export function lines(name: string, rows: readonly Json[], from?: readonly Payload[]): Payload<readonly Json[]> {
+  return { name, format: "lines", value: rows, from };
 }
 
 export function text(name: string, value: string): Payload<string> {
   return { name, format: "text", value };
 }
 
-export function html(name: string, value: string): Payload<string> {
-  return { name, format: "html", value };
+export function html(name: string, value: string, from?: readonly Payload[]): Payload<string> {
+  return { name, format: "html", value, from };
 }
 
 /**

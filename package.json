@@ -8,7 +8,8 @@
   ],
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",
-    "test": "node --experimental-strip-types --disable-warning=ExperimentalWarning --test orchestrator/test/corpus.test.ts"
+    "spec": "node --experimental-strip-types --disable-warning=ExperimentalWarning orchestrator/spec.ts",
+    "test": "node --experimental-strip-types --disable-warning=ExperimentalWarning --test orchestrator/test/corpus.test.ts orchestrator/test/spec.test.ts"
   },
   "devDependencies": {
     "@types/node": "^26.6.2",

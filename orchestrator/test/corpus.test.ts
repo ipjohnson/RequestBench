@@ -17,9 +17,10 @@ import suite from "@rb/tests";
 import type { Test } from "@rb/tests/kit";
 import exceptions from "../../frameworks/exceptions.ts";
 import { recorder } from "../record.ts";
+import { loadSnapshots } from "../snapshots.ts";
 import { validator, type Failure, type Response, type Transport } from "../validate.ts";
 import { mistakesFor, type Mistake } from "./mutations.ts";
-import { corpusReference, DRAW, loadSnapshots, RUN } from "./reference.ts";
+import { corpusReference, DRAW, RUN } from "./reference.ts";
 
 type FrameworkId = keyof typeof exceptions;
 

@@ -57,7 +57,7 @@ export const forms = {
   file: text("forms.file.txt", read("forms.file.txt")),
 };
 
-const rows = items.large.value.items.map((r) => json(`row ${r.id} of items.large`, r));
+const rows = items.large.value.items.map((r) => json(`row ${r.id} of items.large`, r, { model: item, from: [items.large] }));
 
 /** Row `id` of items.large, which items.read answers. */
 export function row(id: number): Payload {
@@ -69,14 +69,19 @@ export function row(id: number): Payload {
 /** The id items.create answers with, one past the last row, because a measured row writes nothing. */
 export const CREATED = LARGE + 1;
 
-export const created = json(`items.new as row ${CREATED}`, { id: CREATED, ...items.new.value });
+export const created = json(`items.new as row ${CREATED}`, { id: CREATED, ...items.new.value }, { model: item, from: [items.new] });
 
 /** items.new under the path's id, which items.replace answers. */
-export const replaced = (id: number): Payload => json(`items.new as row ${id}`, { id, ...items.new.value });
+export const replaced = (id: number): Payload =>
+  json(`items.new as row ${id}`, { id, ...items.new.value }, { model: item, from: [items.new] });
 
 /** Row `id` with items.patch applied, which items.update answers. */
 export const patched = (id: number): Payload =>
-  json(`row ${id} of items.large with items.patch applied`, { ...items.large.value.items[id - 1]!, ...items.patch.value });
+  json(
+    `row ${id} of items.large with items.patch applied`,
+    { ...items.large.value.items[id - 1]!, ...items.patch.value },
+    { model: item, from: [items.large, items.patch] },
+  );
 
 /** Every value in an order that is not an object or a list. */
 function leaves(v: unknown): number {
@@ -92,7 +97,7 @@ function leaves(v: unknown): number {
  */
 function bound(name: string, sent: Payload<Order>) {
   const bytes = new TextEncoder().encode(JSON.stringify(sent.value)).length;
-  return payload(name, bindEcho, { fields: leaves(sent.value), bytes, echo: sent.value });
+  return payload(name, bindEcho, { fields: leaves(sent.value), bytes, echo: sent.value }, [sent]);
 }
 
 export const bind = {
@@ -101,9 +106,12 @@ export const bind = {
 };
 
 /** What forms.multipart answers beside its echo. */
-export const uploaded = payload("forms.file.txt as received", uploadModel, {
-  file: { name: forms.file.name, bytes: new TextEncoder().encode(forms.file.value).length },
-});
+export const uploaded = payload(
+  "forms.file.txt as received",
+  uploadModel,
+  { file: { name: forms.file.name, bytes: new TextEncoder().encode(forms.file.value).length } },
+  [forms.file],
+);
 
 /**
  * The page the template rows render, as upstream's templates wrote it. The
@@ -120,6 +128,7 @@ function page(p: Payload<Items>): Payload<string> {
     "<!doctype html><html><head><title>items</title></head><body>" +
       `<h1>${size}</h1><table><thead><tr><th>id</th><th>name</th><th>category</th><th>price</th><th>stock</th></tr></thead>` +
       `<tbody>${body}</tbody></table><p>${count} rows</p></body></html>`,
+    [p],
   );
 }
 
@@ -129,7 +138,7 @@ export const pages = {
 };
 
 /** items.medium's rows, one per line, which stream.ndjson writes. */
-export const stream = lines("items.medium, one row per line", items.medium.value.items);
+export const stream = lines("items.medium, one row per line", items.medium.value.items, [items.medium]);
 
 /** items.large.json as it is committed, which static.file serves byte for byte. */
 export const file = text("items.large.json", read("items.large.json"));
