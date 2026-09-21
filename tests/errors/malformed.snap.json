@@ -1,0 +1,341 @@
+{
+ "source": "spec/expected.json in github.com/ipjohnson/RequestBench at 9939f4c, with the corpus's own names in camelCase",
+ "agreedBy": [
+  "go:gin",
+  "node:fastify",
+  "python:fastapi",
+  "rust:axum"
+ ],
+ "statuses": [
+  400,
+  422
+ ],
+ "fieldErrors": [],
+ "request": "POST /body/validate/small",
+ "frameworks": {
+  "dotnet:aspnet-mvc": {
+   "status": 400,
+   "class": "json",
+   "shape": [
+    "errors.$.lines[0][]:string",
+    "errors.body[]:string",
+    "status:number",
+    "title:string",
+    "traceId:string",
+    "type:string"
+   ]
+  },
+  "dotnet:carter": {
+   "status": 400,
+   "class": "json",
+   "shape": [
+    "status:number",
+    "title:string",
+    "type:string"
+   ],
+   "body": {
+    "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+    "title": "Bad Request",
+    "status": 400
+   },
+   "bodyFrom": "captured"
+  },
+  "dotnet:fastendpoints": {
+   "status": 400,
+   "class": "json",
+   "shape": [
+    "errors.lines[0][]:string",
+    "message:string",
+    "status_code:number"
+   ]
+  },
+  "dotnet:minimal-apis": {
+   "status": 400,
+   "class": "json",
+   "shape": [
+    "status:number",
+    "title:string",
+    "type:string"
+   ]
+  },
+  "dotnet:wolverine-http": {
+   "status": 400,
+   "class": "json",
+   "shape": [
+    "bytePositionInLine:number",
+    "detail:string",
+    "instance:string",
+    "lineNumber:number",
+    "status:number",
+    "title:string",
+    "type:string"
+   ]
+  },
+  "go:chi": {
+   "status": 400,
+   "class": "json",
+   "shape": [
+    "detail:string",
+    "error:string"
+   ]
+  },
+  "go:echo": {
+   "status": 400,
+   "class": "json",
+   "shape": [
+    "detail:string",
+    "error:string"
+   ]
+  },
+  "go:fiber": {
+   "status": 400,
+   "class": "json",
+   "shape": [
+    "detail:string",
+    "error:string"
+   ]
+  },
+  "go:gin": {
+   "status": 400,
+   "class": "json",
+   "shape": [
+    "detail:string",
+    "error:string"
+   ]
+  },
+  "go:gorilla-mux": {
+   "status": 400,
+   "class": "json",
+   "shape": [
+    "detail:string",
+    "error:string"
+   ]
+  },
+  "java:helidon-se": {
+   "status": 400,
+   "class": "json",
+   "shape": [
+    "detail:string",
+    "error:string"
+   ]
+  },
+  "java:javalin": {
+   "status": 400,
+   "class": "json",
+   "shape": [
+    "error:string",
+    "errors[].field:string",
+    "errors[].message:string"
+   ]
+  },
+  "java:micronaut": {
+   "status": 400,
+   "class": "json",
+   "shape": [
+    "_embedded.errors[]._embedded{}",
+    "_embedded.errors[]._links{}",
+    "_embedded.errors[].logref:null",
+    "_embedded.errors[].message:string",
+    "_embedded.errors[].path:null",
+    "_links.self.deprecation:null",
+    "_links.self.href:string",
+    "_links.self.hreflang:null",
+    "_links.self.name:null",
+    "_links.self.profile:null",
+    "_links.self.templated:bool",
+    "_links.self.title:null",
+    "_links.self.type:null",
+    "logref:null",
+    "message:string",
+    "path:null"
+   ]
+  },
+  "java:quarkus": {
+   "status": 400,
+   "class": "json",
+   "shape": [
+    "detail:string",
+    "error:string"
+   ]
+  },
+  "java:spring-boot": {
+   "status": 400,
+   "class": "json",
+   "shape": [
+    "detail:string",
+    "error:string"
+   ]
+  },
+  "java:vertx": {
+   "status": 400,
+   "class": "json",
+   "shape": [
+    "detail:string",
+    "error:string"
+   ]
+  },
+  "node:express": {
+   "status": 400,
+   "class": "json",
+   "shape": [
+    "detail:string",
+    "error:string"
+   ]
+  },
+  "node:fastify": {
+   "status": 400,
+   "class": "json",
+   "shape": [
+    "code:string",
+    "error:string",
+    "message:string",
+    "statusCode:number"
+   ],
+   "body": {
+    "statusCode": 400,
+    "code": "FST_ERR_CTP_INVALID_JSON",
+    "error": "Bad Request",
+    "message": "Unexpected end of JSON input"
+   },
+   "bodyFrom": "captured"
+  },
+  "node:h3": {
+   "status": 400,
+   "class": "json",
+   "shape": [
+    "detail:string",
+    "error:string"
+   ]
+  },
+  "node:hono": {
+   "status": 400,
+   "class": "json",
+   "shape": [
+    "detail:string",
+    "error:string"
+   ]
+  },
+  "node:koa": {
+   "status": 400,
+   "class": "json",
+   "shape": [
+    "detail:string",
+    "error:string"
+   ]
+  },
+  "python:django-asgi": {
+   "status": 400,
+   "class": "json",
+   "shape": [
+    "detail:string",
+    "error:string"
+   ]
+  },
+  "python:fastapi": {
+   "status": 422,
+   "class": "json",
+   "shape": [
+    "detail[].ctx.error:string",
+    "detail[].input{}",
+    "detail[].loc[]:number",
+    "detail[].loc[]:string",
+    "detail[].msg:string",
+    "detail[].type:string"
+   ],
+   "body": {
+    "detail": [
+     {
+      "type": "json_invalid",
+      "loc": [
+       "body",
+       28
+      ],
+      "msg": "JSON decode error",
+      "input": {},
+      "ctx": {
+       "error": "Expecting value"
+      }
+     }
+    ]
+   },
+   "bodyFrom": "captured for the snake_case body, with loc moved to where the camelCase body ends"
+  },
+  "python:flask": {
+   "status": 400,
+   "class": "json",
+   "shape": [
+    "detail:string",
+    "error:string"
+   ]
+  },
+  "python:litestar": {
+   "status": 400,
+   "class": "json",
+   "shape": [
+    "detail:string",
+    "status_code:number"
+   ]
+  },
+  "python:sanic": {
+   "status": 400,
+   "class": "json",
+   "shape": [
+    "detail:string",
+    "error:string"
+   ]
+  },
+  "python:starlette": {
+   "status": 400,
+   "class": "json",
+   "shape": [
+    "detail:string",
+    "error:string"
+   ]
+  },
+  "rust:actix-web": {
+   "status": 400,
+   "class": "text",
+   "shape": [
+    ":string"
+   ]
+  },
+  "rust:axum": {
+   "status": 400,
+   "class": "text",
+   "shape": [
+    ":string"
+   ]
+  },
+  "rust:poem": {
+   "status": 400,
+   "class": "text",
+   "shape": [
+    ":string"
+   ]
+  },
+  "rust:rocket": {
+   "status": 400,
+   "class": "json",
+   "shape": [
+    "detail:string",
+    "error:string"
+   ]
+  },
+  "rust:salvo": {
+   "status": 400,
+   "class": "json",
+   "shape": [
+    "detail:string",
+    "error:string"
+   ]
+  },
+  "rust:warp": {
+   "status": 400,
+   "class": "json",
+   "shape": [
+    "detail:string",
+    "error:string"
+   ]
+  }
+ }
+}

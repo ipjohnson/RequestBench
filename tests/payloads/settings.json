@@ -1,0 +1,37 @@
+{
+  "token": "5a7cc77ed0dcb825806b6f872026c317",
+  "wrongToken": "5a7cc77ed0dcb825806b6f872026c310",
+  "staleEtag": "\"0000000000000000\"",
+  "cache": {
+    "capacity": 20,
+    "ttlSeconds": 3600,
+    "vary": {
+      "one": {
+        "x-rb-tenant": [
+          "alpha",
+          "beta"
+        ]
+      },
+      "many": {
+        "x-rb-channel": [
+          "web",
+          "app"
+        ],
+        "x-rb-region": [
+          "eu",
+          "us"
+        ],
+        "x-rb-tenant": [
+          "alpha",
+          "beta"
+        ]
+      }
+    }
+  },
+  "cors": {
+    "origin": "https://shop.example.com",
+    "method": "GET",
+    "header": "x-rb-tenant",
+    "maxAgeSeconds": 600
+  }
+}

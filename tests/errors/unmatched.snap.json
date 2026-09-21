@@ -1,0 +1,269 @@
+{
+ "source": "spec/expected.json in github.com/ipjohnson/RequestBench at 9939f4c",
+ "agreedBy": [
+  "go:gin",
+  "node:fastify",
+  "python:fastapi",
+  "rust:axum"
+ ],
+ "statuses": [
+  404
+ ],
+ "fieldErrors": [],
+ "request": "GET /errors/unmatched",
+ "frameworks": {
+  "dotnet:aspnet-mvc": {
+   "status": 404,
+   "class": "json",
+   "shape": [
+    "status:number",
+    "title:string",
+    "type:string"
+   ]
+  },
+  "dotnet:carter": {
+   "status": 404,
+   "class": "json",
+   "shape": [
+    "status:number",
+    "title:string",
+    "type:string"
+   ],
+   "body": {
+    "type": "https://tools.ietf.org/html/rfc9110#section-15.5.5",
+    "title": "Not Found",
+    "status": 404
+   },
+   "bodyFrom": "shape"
+  },
+  "dotnet:fastendpoints": {
+   "status": 404,
+   "class": "json",
+   "shape": [
+    "error:string"
+   ]
+  },
+  "dotnet:minimal-apis": {
+   "status": 404,
+   "class": "json",
+   "shape": [
+    "status:number",
+    "title:string",
+    "type:string"
+   ]
+  },
+  "dotnet:wolverine-http": {
+   "status": 404,
+   "class": "json",
+   "shape": [
+    "status:number",
+    "title:string",
+    "type:string"
+   ]
+  },
+  "go:chi": {
+   "status": 404,
+   "class": "json",
+   "shape": [
+    "error:string"
+   ]
+  },
+  "go:echo": {
+   "status": 404,
+   "class": "json",
+   "shape": [
+    "error:string"
+   ]
+  },
+  "go:fiber": {
+   "status": 404,
+   "class": "json",
+   "shape": [
+    "error:string"
+   ]
+  },
+  "go:gin": {
+   "status": 404,
+   "class": "json",
+   "shape": [
+    "error:string"
+   ]
+  },
+  "go:gorilla-mux": {
+   "status": 404,
+   "class": "json",
+   "shape": [
+    "error:string"
+   ]
+  },
+  "java:helidon-se": {
+   "status": 404,
+   "class": "json",
+   "shape": [
+    "error:string"
+   ]
+  },
+  "java:javalin": {
+   "status": 404,
+   "class": "json",
+   "shape": [
+    "error:string"
+   ]
+  },
+  "java:micronaut": {
+   "status": 404,
+   "class": "json",
+   "shape": [
+    "error:string"
+   ]
+  },
+  "java:quarkus": {
+   "status": 404,
+   "class": "json",
+   "shape": [
+    "error:string"
+   ]
+  },
+  "java:spring-boot": {
+   "status": 404,
+   "class": "json",
+   "shape": [
+    "error:string"
+   ]
+  },
+  "java:vertx": {
+   "status": 404,
+   "class": "json",
+   "shape": [
+    "error:string"
+   ]
+  },
+  "node:express": {
+   "status": 404,
+   "class": "json",
+   "shape": [
+    "error:string"
+   ]
+  },
+  "node:fastify": {
+   "status": 404,
+   "class": "json",
+   "shape": [
+    "error:string"
+   ],
+   "body": {
+    "error": "not_found"
+   },
+   "bodyFrom": "shape"
+  },
+  "node:h3": {
+   "status": 404,
+   "class": "json",
+   "shape": [
+    "error:string"
+   ]
+  },
+  "node:hono": {
+   "status": 404,
+   "class": "json",
+   "shape": [
+    "error:string"
+   ]
+  },
+  "node:koa": {
+   "status": 404,
+   "class": "json",
+   "shape": [
+    "error:string"
+   ]
+  },
+  "python:django-asgi": {
+   "status": 404,
+   "class": "json",
+   "shape": [
+    "error:string"
+   ]
+  },
+  "python:fastapi": {
+   "status": 404,
+   "class": "json",
+   "shape": [
+    "error:string"
+   ],
+   "body": {
+    "error": "not_found"
+   },
+   "bodyFrom": "shape"
+  },
+  "python:flask": {
+   "status": 404,
+   "class": "json",
+   "shape": [
+    "error:string"
+   ]
+  },
+  "python:litestar": {
+   "status": 404,
+   "class": "json",
+   "shape": [
+    "error:string"
+   ]
+  },
+  "python:sanic": {
+   "status": 404,
+   "class": "json",
+   "shape": [
+    "error:string"
+   ]
+  },
+  "python:starlette": {
+   "status": 404,
+   "class": "json",
+   "shape": [
+    "error:string"
+   ]
+  },
+  "rust:actix-web": {
+   "status": 404,
+   "class": "json",
+   "shape": [
+    "error:string"
+   ]
+  },
+  "rust:axum": {
+   "status": 404,
+   "class": "json",
+   "shape": [
+    "error:string"
+   ]
+  },
+  "rust:poem": {
+   "status": 404,
+   "class": "json",
+   "shape": [
+    "error:string"
+   ]
+  },
+  "rust:rocket": {
+   "status": 404,
+   "class": "json",
+   "shape": [
+    "error:string"
+   ]
+  },
+  "rust:salvo": {
+   "status": 404,
+   "class": "json",
+   "shape": [
+    "error:string"
+   ]
+  },
+  "rust:warp": {
+   "status": 404,
+   "class": "json",
+   "shape": [
+    "error:string"
+   ]
+  }
+ }
+}

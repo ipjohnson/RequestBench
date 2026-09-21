@@ -1,0 +1,17 @@
+{
+  "name": "requestbench",
+  "private": true,
+  "type": "module",
+  "comment": "workspaces are listed one by one, never a glob. A glob that reached frameworks/** would hoist every node target into this lockfile, and a target pinning its own resolution is what the version on its results row means.",
+  "workspaces": [
+    "tests"
+  ],
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "node --experimental-strip-types --disable-warning=ExperimentalWarning --test orchestrator/test/corpus.test.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.2",
+    "typescript": "^5.9.3"
+  }
+}

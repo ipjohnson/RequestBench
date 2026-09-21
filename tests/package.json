@@ -1,0 +1,19 @@
+{
+  "name": "@rb/tests",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./index.ts",
+    "./kit": "./kit/index.ts",
+    "./payloads": "./payloads/index.ts",
+    "./*": "./*.ts"
+  },
+  "imports": {
+    "#kit": "./kit/index.ts",
+    "#models/*": "./models/*.ts",
+    "#payloads": "./payloads/index.ts"
+  },
+  "dependencies": {
+    "zod": "^3.25.76"
+  }
+}
