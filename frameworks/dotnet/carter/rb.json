@@ -35,7 +35,7 @@
       "mechanism": "ASP.NET Core output caching, CacheOutput on each route, varied by the request headers a vary row names"
     },
     "compressed": {
-      "mechanism": "ASP.NET Core's response compression middleware on the whole application, at its default level"
+      "mechanism": "ASP.NET Core's response compression middleware on the whole application, at gzip's fastest level"
     },
     "cors": {
       "mechanism": "ASP.NET Core CORS with a named policy, required on the /cors route group alone"

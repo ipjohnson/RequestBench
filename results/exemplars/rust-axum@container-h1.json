@@ -202,7 +202,7 @@
         "headerBytes": 118,
         "framing": "content-length",
         "bodyBytes": 225,
-        "body": "{\"customer_id\":[{\"code\":\"range\",\"message\":null,\"params\":{\"value\":0,\"min\":1}}],\"status\":[{\"code\":\"length\",\"message\":null,\"params\":{\"min\":1,\"value\":\"\"}}],\"lines\":[{\"code\":\"length\",\"message\":null,\"params\":{\"min\":1,\"value\":[]}}]}",
+        "body": "{\"lines\":[{\"code\":\"length\",\"message\":null,\"params\":{\"value\":[],\"min\":1}}],\"customer_id\":[{\"code\":\"range\",\"message\":null,\"params\":{\"value\":0,\"min\":1}}],\"status\":[{\"code\":\"length\",\"message\":null,\"params\":{\"min\":1,\"value\":\"\"}}]}",
         "truncated": false
       }
     },
@@ -238,7 +238,7 @@
         "headerBytes": 117,
         "framing": "content-length",
         "bodyBytes": 78,
-        "body": "{\"customer_id\":[{\"code\":\"range\",\"message\":null,\"params\":{\"min\":1,\"value\":0}}]}",
+        "body": "{\"customer_id\":[{\"code\":\"range\",\"message\":null,\"params\":{\"value\":0,\"min\":1}}]}",
         "truncated": false
       }
     },
@@ -556,7 +556,7 @@
         ],
         "headerBytes": 179,
         "framing": "chunked",
-        "bodyBytes": 17032,
+        "bodyBytes": 25992,
         "body": "{\"size\":\"large\",\"count\":1425,\"items\":[{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"priceCents\":18928,\"inStock\":true},{\"id\":2,\"name\":\"brass-hinge-5716\",\"category\":\"garden\",\"priceCents\":17577,\"inStock\":true},{\"id\":3,\"name\":\"linen-ring-6971\",\"category\":\"kitchen\",\"priceCents\":5540,\"inStock\":true},{\"id\":4,\"name\":\"copper-bolt-9217\",\"category\":\"outdoor\",\"priceCents\":11562,\"inStock\":true},{\"id\":5,\"name\":\"linen-lamp-8288\",\"category\":\"office\",\"priceCents\":1413,\"inStock\":true},{\"id\":6,\"name\":\"copper-pan-9308\",\"category\":\"tools\",\"priceCents\":10795,\"inStock\":true},{\"id\":7,\"name\":\"slate-seed-3051\",\"category\":\"garden\",\"priceCents\":9667,\"inStock\":false},{\"id\":8,\"name\":\"oak-lamp-8662\",\"category\":\"kitchen\",\"priceCents\":18032,\"inStock\":false},{\"id\":9,\"name\":\"amber-hinge-8405\",\"category\":\"outdoor\",\"priceCents\":9566,\"inStock\":true},{\"id\":10,\"name\":\"linen-lamp-9676\",\"category\":\"office\",\"priceCents\":4288,\"inStock\":true},{\"id\":11,\"name\":\"brass-trowel-2042\",\"category\":\"tools\",\"priceCents\":17701,\"inStock\":false},{\"id\":12,\"name\":\"linen-lamp-5542\",\"category\":\"garden\",\"priceCents\":12163,\"inStock\":true},{\"id\":13,\"name\":\"linen-seed-9760\",\"category\":\"kitchen\",\"priceCents\":12305,\"inStock\":false},{\"id\":14,\"name\":\"brass-hinge-4996\",\"category\":\"outdoor\",\"priceCents\":8489,\"inStock\":true},{\"id\":15,\"name\":\"cedar-hinge-8685\",\"category\":\"office\",\"priceCents\":15667,\"inStock\":true},{\"id\":16,\"name\":\"slate-seed-3185\",\"category\":\"tools\",\"priceCents\":4111,\"inStock\":true},{\"id\":17,\"name\":\"cedar-bolt-9891\",\"category\":\"garden\",\"priceCents\":18370,\"inStock\":true},{\"id\":18,\"name\":\"copper-bolt-8081\",\"category\":\"kitchen\",\"priceCents\":14318,\"inStock\":false},{\"id\":19,\"name\":\"amber-seed-4209\",\"category\":\"outdoor\",\"priceCents\":15424,\"inStock\":true},{\"id\":20,\"name\":\"oak-bolt-9982\",\"category\":\"office\",\"priceCents\":9582,\"inStock\":true},{\"id\":21,\"name\":\"slate-bolt-7099\",\"category\":\"tools\",\"priceCents\":6732,\"inStock\":false},{\"id\":22,\"name\":\"brass-seed-9718\",\"category\":\"garden\",\"priceCents\":17198,\"inStock\":true},{\"id\":23,\"name\":\"cedar-desk-4039\",\"category\":\"kitchen\",\"p",
         "truncated": true
       }
@@ -607,7 +607,7 @@
         ],
         "headerBytes": 179,
         "framing": "chunked",
-        "bodyBytes": 125,
+        "bodyBytes": 126,
         "body": "{\"size\":\"small\",\"count\":1,\"items\":[{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"priceCents\":18928,\"inStock\":true}]}",
         "truncated": false
       }

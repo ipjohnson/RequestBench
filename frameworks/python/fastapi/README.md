@@ -57,7 +57,7 @@ the worker that accepted it, and the gate sends each test's two requests on one 
 | body | The order as a Pydantic body parameter, with types alone on the bind routes and orderRequest's rules on the validate routes. | FastAPI, Pydantic |
 | authorized | `HTTPBearer` reads the token, and a dependency on the route compares it. | FastAPI |
 | cache | A route class that answers from a `TTLCache` before the handler and stores what the handler answered. | by hand, cachetools |
-| compressed | `GZipMiddleware` at its defaults, on a sub-application mounted at `/compressed`. | Starlette |
+| compressed | `GZipMiddleware` on a sub-application mounted at `/compressed`, at its default threshold and gzip's fastest level. | Starlette |
 | etag | A route class that hashes the body with SHA-1 and answers 304 when `If-None-Match` names it. | by hand |
 | template | A Jinja2 template rendered by `Jinja2Templates`. | FastAPI, Jinja2 |
 | items | One path operation per method on `/items/{id}`, with GET and HEAD on the read route. | FastAPI |
@@ -81,8 +81,8 @@ Choices a reader might not expect:
 - FastAPI's own JSON Lines streaming answers `application/jsonl`, and `stream.ndjson` asks for
   `application/x-ndjson`. The route streams bytes through a response class of that type instead,
   as FastAPI documents for any other media type, and writes each row with Pydantic.
-- Starlette's GZipMiddleware compresses at level 9 by default, the slowest level, and the family
-  runs at that default.
+- Starlette's GZipMiddleware compresses at level 9 by default, the slowest level. The family runs
+  at level 1 instead, the fastest level every framework here compresses at.
 - uvicorn writes one access-log line per request by default. `server.py` turns that off, because
   no other framework in the corpus logs a request.
 

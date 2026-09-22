@@ -52,7 +52,7 @@ container runs two workers under its two-CPU budget, whichever way the budget is
 | body | `Json` binds the order. On the validate routes, axum-valid's `Valid` runs the validator crate's rules first and refuses with 400 and validator's errors as JSON. | axum-valid and validator |
 | authorized | `ValidateRequestHeaderLayer::has_header_value` on the route, which answers 403 unless Authorization is settings.json's bearer token. | tower-http |
 | cache | axum-response-cache's `CacheLayer` on each cache route, over an LRU with a time to live, keyed by the path and the headers the route varies on. | axum-response-cache |
-| compressed | `CompressionLayer` on the compressed routes, gzip at its default level and threshold. | tower-http |
+| compressed | `CompressionLayer` on the compressed routes, gzip at its fastest level and the default threshold. | tower-http |
 | etag | A `from_fn` layer on the two routes that hashes the answer with SHA-1 and answers 304 when If-None-Match names it. | by hand |
 | template | An askama template, compiled into the binary. | askama |
 | items | One route per method on `/items/{id}`. axum answers HEAD with the GET route and leaves the body unwritten. | axum |

@@ -34,7 +34,7 @@
       "mentions": "CacheLayer"
     },
     "compressed": {
-      "mechanism": "tower-http's CompressionLayer on the compressed routes, gzip at its default level and threshold",
+      "mechanism": "tower-http's CompressionLayer on the compressed routes, gzip at its fastest level and the default threshold",
       "dependency": "tower-http",
       "mentions": "CompressionLayer"
     },

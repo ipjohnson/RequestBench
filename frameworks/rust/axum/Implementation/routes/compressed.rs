@@ -1,5 +1,6 @@
 use axum::routing::get;
 use axum::{Json, Router};
+use tower_http::CompressionLevel;
 use tower_http::compression::CompressionLayer;
 
 use crate::Payloads;
@@ -12,7 +13,7 @@ pub fn router(p: &'static Payloads) -> Router {
         .route("/compressed/small", get(move || async move { (serial::fresh(), Json(&p.small)) }))
         .route("/compressed/large", get(move || async move { (serial::fresh(), Json(&p.large)) }))
         // rb:wiring compressed.*
-        // gzip at its default level, and the default predicate, which leaves a body under 32
-        // bytes alone.
-        .layer(CompressionLayer::new())
+        // gzip at the fastest level every framework here compresses at, and the default
+        // predicate, which leaves a body under 32 bytes alone.
+        .layer(CompressionLayer::new().quality(CompressionLevel::Fastest))
 }

@@ -45,7 +45,7 @@ corpus id it covers, so `go test ./UnitTests -run '/json.small'` runs one.
 | body | `ShouldBindJSON` decodes the order on every route. On the validate routes the struct carries `binding` tags, and Gin runs go-playground's validator over them. | Gin, go-playground/validator |
 | authorized | A middleware on the route compares the bearer token and stops any other with `c.AbortWithStatus(403)`. | by hand |
 | cache | A middleware in front of each cache route replays a stored answer, or stores what the handler wrote. | by hand |
-| compressed | `gin-contrib/gzip` on the `/compressed` group, at its default level. | gin-contrib/gzip |
+| compressed | `gin-contrib/gzip` on the `/compressed` group, at its fastest level. | gin-contrib/gzip |
 | etag | A middleware on the `/etag` group holds back the body, hashes it with SHA-1, and answers 304 when `If-None-Match` names the hash. | by hand |
 | template | `c.HTML` renders an html/template template, embedded with `go:embed` and loaded with `LoadHTMLFS`. | Gin |
 | items | One route per method on `/items/:id`, the id bound with `ShouldBindUri`. The read route names GET and HEAD with `Match`. | Gin |
@@ -70,7 +70,7 @@ Choices a reader might not expect:
 - Gin computes no ETag, and neither does net/http under it, so the etag family's middleware is
   written for it.
 - gin-contrib/gzip compresses every answer whose request asks for gzip, however small, at
-  compress/gzip's default level.
+  compress/gzip's fastest level, which every framework here compresses at.
 - The template is compiled into the binary and parsed once. In debug mode Gin parses it again on
   every render, so the server sets release mode before it builds the router.
 - JSON is encoding/json, Gin's default codec. Gin can switch to sonic or another codec with a

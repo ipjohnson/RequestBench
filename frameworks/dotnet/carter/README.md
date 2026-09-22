@@ -44,7 +44,7 @@ Client section says.
 | body | Minimal APIs bind the order. `MapPost<T>` runs the FluentValidation validator for `T` and answers 422 with the failed rules. | Carter |
 | authorized | `RequireAuthorization` with a policy that compares a claim. ASP.NET Core has no scheme for an opaque token, so `BearerToken` reads the header into that claim. | ASP.NET Core, and a scheme by hand |
 | cache | Output caching, with `SetVaryByHeader` on the vary routes. | ASP.NET Core |
-| compressed | Response compression on the whole application, gzip at its default level. | ASP.NET Core |
+| compressed | Response compression on the whole application, gzip at its fastest level. | ASP.NET Core |
 | etag | An endpoint filter hashes the serialised body with SHA-1 and answers 304 when `If-None-Match` names it. | by hand |
 | template | A Razor component rendered with `RazorComponentResult`. | ASP.NET Core |
 | items | One route per method. `MapMethods` names HEAD beside GET, because a GET route does not answer HEAD. | minimal APIs |

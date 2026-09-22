@@ -10,8 +10,9 @@ def application(p: Payloads) -> FastAPI:
     any other. Starlette's GZipMiddleware on it gzips an answer when the request asks."""
     compressed = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
     # rb:wiring compressed.*
-    # At its defaults: a body under 500 bytes goes out as it is, and gzip runs at level 9.
-    compressed.add_middleware(GZipMiddleware)
+    # A body under 500 bytes goes out as it is, which is the middleware's default, and gzip runs
+    # at level 1, the fastest level every framework here compresses at. Its own default is 9.
+    compressed.add_middleware(GZipMiddleware, compresslevel=1)
 
     # rb:handler compressed.gzip_small,compressed.identity_small
     @compressed.get("/small")

@@ -1,6 +1,8 @@
+using System.IO.Compression;
 using Carter;
 using Implementation;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Extensions.FileProviders;
 
 // RequestBench target: Carter. One module per corpus family under Routes/, which AddCarter
@@ -36,7 +38,10 @@ builder.Services.AddProblemDetails();
 // 100 MB holds every key the cache family stores many times over.
 builder.Services.AddOutputCache(options => options.DefaultExpirationTimeSpan = TimeSpan.FromSeconds(settings.Cache.TtlSeconds));
 // rb:wiring compressed.*
+// Fastest is already the provider's default, and every framework here compresses at that level,
+// so the route says so rather than leaving it to a default.
 builder.Services.AddResponseCompression();
+builder.Services.Configure<GzipCompressionProviderOptions>(options => options.Level = CompressionLevel.Fastest);
 // rb:wiring cors.*
 // A policy listing exactly one origin sends no Vary: Origin, although its answer differs by
 // origin. A policy that decides by predicate always sends it.

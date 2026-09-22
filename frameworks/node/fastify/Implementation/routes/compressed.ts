@@ -11,9 +11,10 @@ import { fresh } from "../serial.ts";
  */
 const compressed: Routes = async (app, { payloads: p }) => {
   // rb:wiring compressed.*
-  // Its onSend hook runs on these two routes and on no other. The threshold and the level are
-  // the plugin's defaults, so a body under 1 KB goes out as it is.
-  await app.register(compress);
+  // Its onSend hook runs on these two routes and on no other. The threshold is the plugin's
+  // default, so a body under 1 KB goes out as it is, and the level is the fastest zlib offers,
+  // which every framework here compresses at.
+  await app.register(compress, { zlibOptions: { level: 1 } });
 
   app.get("/compressed/small", answers(payload), async (_request, reply) => fresh(reply, p.small));
 

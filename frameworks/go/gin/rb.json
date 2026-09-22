@@ -30,7 +30,7 @@
       "mechanism": "A gin middleware in front of each cache route that replays a stored answer and otherwise stores what the handler wrote, keyed by the path and the route's vary headers, one store per process"
     },
     "compressed": {
-      "mechanism": "gin-contrib/gzip on the /compressed group, at its default level",
+      "mechanism": "gin-contrib/gzip on the /compressed group, at its fastest level",
       "dependency": "github.com/gin-contrib/gzip",
       "mentions": "gzip.Gzip"
     },

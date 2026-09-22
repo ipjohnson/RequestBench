@@ -45,7 +45,7 @@ listening. `PORT` defaults to 8080.
 | body | A JSON Schema for the body on the validate routes. The bind routes declare none, so their bodies are only parsed. | Fastify |
 | authorized | An `onRequest` hook on the route compares the token and refuses any other with `reply.forbidden()`. | Fastify, @fastify/sensible |
 | cache | An `onRequest` hook replays a stored answer and an `onSend` hook stores one, both in the cache family's plugin. A vary route names its headers in its route config. | by hand |
-| compressed | `@fastify/compress` in the compressed family's plugin, at its default threshold and level. | @fastify/compress |
+| compressed | `@fastify/compress` in the compressed family's plugin, at its default threshold and zlib's fastest level. | @fastify/compress |
 | etag | `@fastify/etag` in the etag family's plugin. It hashes the serialised body with SHA-1 and answers 304 when `If-None-Match` names it. | @fastify/etag |
 | template | An EJS template rendered by `@fastify/view`. | @fastify/view, ejs |
 | items | One route per method on `/items/:id`, the id converted by a params schema. Fastify gives every GET route a HEAD route. | Fastify |

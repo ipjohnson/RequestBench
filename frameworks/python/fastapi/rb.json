@@ -35,7 +35,7 @@
       "mechanism": "A route class on the cache router that answers from a cachetools TTLCache before the handler and stores what the handler answered, one store in each worker",
       "dependency": "cachetools"
     },
-    "compressed": { "mechanism": "Starlette's GZipMiddleware at its defaults, on a sub-application mounted at /compressed" },
+    "compressed": { "mechanism": "Starlette's GZipMiddleware on a sub-application mounted at /compressed, at its default threshold and gzip's fastest level" },
     "cors": { "mechanism": "Starlette's CORSMiddleware on a sub-application mounted at /cors" },
     "errors": {
       "builtin": "Starlette's router answers a miss with 404 and a method a path lacks with 405, FastAPI refuses a body that is not JSON with 422, and the items handlers raise HTTPException for a missing row, each as FastAPI's detail JSON."

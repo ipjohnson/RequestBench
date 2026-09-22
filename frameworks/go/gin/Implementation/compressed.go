@@ -6,10 +6,11 @@ import (
 )
 
 // compressedRoutes answer like any other. gin-contrib/gzip, on the /compressed group alone,
-// gzips the answer when the request asks for it.
+// gzips the answer when the request asks for it, at the fastest level every framework here
+// compresses at.
 func compressedRoutes(r *gin.Engine, p *Payloads) {
 	// rb:wiring compressed.*
-	compressed := r.Group("/compressed", gzip.Gzip(gzip.DefaultCompression))
+	compressed := r.Group("/compressed", gzip.Gzip(gzip.BestSpeed))
 
 	// rb:handler compressed.gzip_small,compressed.identity_small
 	compressed.GET("/small", fresh(&p.Small))

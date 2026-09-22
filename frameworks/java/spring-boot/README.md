@@ -82,6 +82,10 @@ Choices a reader might not expect:
   length is unknown or at least 2 KB. `/compressed/small`'s 123 bytes are buffered whole, so Tomcat
   knows the length and sends them as they are. Tomcat adds `Vary: accept-encoding` to every answer
   it might have compressed.
+- Every other framework here compresses at gzip's fastest level. Tomcat has no setting for it:
+  `server.compression.enabled` is off, on or force, and its filter writes through a
+  `GZIPOutputStream`, which deflates at zlib's default level. So this family's answers leave this
+  framework compressed harder, and its compressed rows are not read against another framework's.
 - Tomcat closes the connection after a 400, so errors.malformed and the two body.rejected rows pay
   for a reconnect each time under load. It also closes a keep-alive connection after its 100th
   request. Both are Tomcat's defaults and are left alone.

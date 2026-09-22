@@ -34,7 +34,7 @@
       "mechanism": "An onRequest hook that replays a stored answer and an onSend hook that stores one, in the cache family's plugin, keyed by the path and the headers the route's config names"
     },
     "compressed": {
-      "mechanism": "@fastify/compress in the compressed family's plugin, at its default threshold and level",
+      "mechanism": "@fastify/compress in the compressed family's plugin, at its default threshold and zlib's fastest level",
       "dependency": "@fastify/compress"
     },
     "cors": {

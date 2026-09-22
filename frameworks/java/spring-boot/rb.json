@@ -42,7 +42,7 @@
       "mentions": "EnableCaching"
     },
     "compressed": {
-      "mechanism": "Tomcat's compression on the whole connector, turned on in application.properties at its defaults",
+      "mechanism": "Tomcat's compression on the whole connector, turned on in application.properties. Tomcat has no setting for the level, so it deflates at zlib's default where every other framework here compresses at the fastest level",
       "mentions": "server.compression"
     },
     "cors": {
