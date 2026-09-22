@@ -324,7 +324,7 @@ test("a load is refused before anything is sent", async () => {
   await refused([join(OUT, "missing.json")], /cannot read the load at .*missing\.json/);
   await refused([load(regular, { rps: 10 })], /the load: Unrecognized key: "rps"/);
   await refused([load(regular, { target: "nowhere" })], /target: expected host:port/);
-  await refused([load(regular, { framework: "go:gin" })], /framework: go:gin has no client-exception declaration/);
+  await refused([load(regular, { framework: "go:unregistered" })], /framework: go:unregistered has no client-exception declaration/);
   await refused([load(regular, { values: { ...VALUES, one: 7 } })], /values\.one: Too small: expected number to be >=1000/);
   await refused([load([])], /phases: Too small: expected array to have >=1 items/);
   await refused([load([{ name: "warmup", rps: 10 }])], /phases\.0: a phase needs settle, seconds or both/);

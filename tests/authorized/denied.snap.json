@@ -83,10 +83,9 @@
   },
   "go:gin": {
    "status": 403,
-   "class": "json",
-   "shape": [
-    "error:string"
-   ]
+   "class": "empty",
+   "shape": [],
+   "bodyFrom": "captured from frameworks/go/gin/Implementation, which answers with no body"
   },
   "go:gorilla-mux": {
    "status": 403,

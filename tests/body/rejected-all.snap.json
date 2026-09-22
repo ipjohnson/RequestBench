@@ -25,6 +25,13 @@
    },
    "bodyFrom": "captured from frameworks/dotnet/carter/Implementation, without the traceId ASP.NET Core adds to each answer"
   },
+  "go:gin": {
+   "status": 400,
+   "body": {
+    "error": "Key: 'CheckedOrder.customerId' Error:Field validation for 'customerId' failed on the 'gt' tag\nKey: 'CheckedOrder.status' Error:Field validation for 'status' failed on the 'required' tag\nKey: 'CheckedOrder.lines' Error:Field validation for 'lines' failed on the 'min' tag"
+   },
+   "bodyFrom": "captured from frameworks/go/gin/Implementation"
+  },
   "java:spring-boot": {
    "status": 400,
    "body": {

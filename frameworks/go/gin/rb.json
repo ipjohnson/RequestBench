@@ -1,0 +1,62 @@
+{
+  "comment": "Gin 1.12 on Go 1.27, one function per family registering its routes in the implementation package under Implementation/, and the server's main package in Implementation/cmd/server. The suite is UnitTests/, go test over the router served by net/http/httptest, and never reaches the image. Gin writes nothing for a body it cannot bind, so a refusal is the answer gin's README gives: 400 and err.Error(). The validator names fields by their json names through go-playground's tag-name hook, which gin hands out through binding.Validator.Engine(). The first-error route is wired by hand, because go-playground cannot stop at the first failure. The lockfile is go.mod, which records every module version the build selects, and go.sum, which holds their hashes. upgrade is go get -u ./..., which moves every module to its newest release within its major version.",
+  "framework": "Gin",
+  "licence": "MIT",
+  "repo": "https://github.com/gin-gonic/gin",
+  "package": "https://pkg.go.dev/github.com/gin-gonic/gin",
+  "docs": "https://gin-gonic.com/en/docs/",
+  "lockfile": ["go.mod", "go.sum"],
+  "hosts": {
+    "container-h1": { "dockerfile": "Dockerfile" }
+  },
+  "suite": { "argv": ["go", "test", "./..."], "paths": ["UnitTests"] },
+  "upgrade": { "argv": ["go", "get", "-u", "./..."] },
+  "noHandler": {
+    "cors.preflight": "gin-contrib/cors on the /cors group answers the preflight, on an OPTIONS route that has no handler of its own.",
+    "errors.unmatched": "Gin's router answers a path no route matches with its own 404 and a text body.",
+    "errors.wrong_method": "Gin's router matches the method and the path together, so a method the path has no route for gets the same 404."
+  },
+  "mechanisms": {
+    "authorized": {
+      "mechanism": "A gin middleware on the route that compares the bearer token and aborts any other with 403"
+    },
+    "baseline": { "builtin": "c.String writes the text as text/plain." },
+    "body": {
+      "mechanism": "Binding tags on the validate routes' order, which ShouldBindJSON hands to go-playground's validator once the body is decoded. The first-error route runs the same validator over one field at a time, because go-playground cannot stop at the first failure",
+      "dependency": "github.com/go-playground/validator/v10",
+      "mentions": "validator.Validate"
+    },
+    "cache": {
+      "mechanism": "A gin middleware in front of each cache route that replays a stored answer and otherwise stores what the handler wrote, keyed by the path and the route's vary headers, one store per process"
+    },
+    "compressed": {
+      "mechanism": "gin-contrib/gzip on the /compressed group, at its default level",
+      "dependency": "github.com/gin-contrib/gzip",
+      "mentions": "gzip.Gzip"
+    },
+    "cors": {
+      "mechanism": "gin-contrib/cors on the /cors group, with an OPTIONS route so a preflight reaches it",
+      "dependency": "github.com/gin-contrib/cors",
+      "mentions": "cors.New"
+    },
+    "errors": {
+      "builtin": "Gin's router answers a miss, and a method a path lacks, with its own 404. A body the decoder cannot read is refused with 400 and the decoder's message, as gin's README answers a failed bind, and the items handlers abort a missing row with 404."
+    },
+    "etag": {
+      "mechanism": "A gin middleware on the /etag group that holds back the body, hashes it with SHA-1 and answers a matching If-None-Match with 304"
+    },
+    "forms": { "builtin": "ShouldBind picks gin's form or multipart binding from the Content-Type and fills the form tags, the file part as a *multipart.FileHeader." },
+    "headers": { "builtin": "ShouldBindHeader fills the header tags, the account as an int." },
+    "items": { "builtin": "One route per method on /items/:id, the id bound with ShouldBindUri. The read route names GET and HEAD, because gin answers HEAD only where a route names it." },
+    "json": { "builtin": "c.JSON writes the payload with gin's JSON codec, which is encoding/json unless a build tag picks another." },
+    "middleware": { "mechanism": "No-op gin.HandlerFunc layers ahead of the handler in the route's chain, four or sixteen of them" },
+    "parameters": { "builtin": "ShouldBindUri fills the uri tags, each capture as an int." },
+    "query": { "builtin": "ShouldBindQuery fills the form tags, the numbers as ints." },
+    "sse": { "builtin": "c.SSEvent renders each row as one event with gin's sse package, and c.Stream flushes it." },
+    "static": { "builtin": "Static registers /static/*filepath and serves the payload directory through net/http's FileServer." },
+    "stream": { "builtin": "c.Stream writes each row and its newline and flushes it." },
+    "template": {
+      "mechanism": "gin's HTML render over html/template, with the template embedded in the binary and loaded by LoadHTMLFS"
+    }
+  }
+}

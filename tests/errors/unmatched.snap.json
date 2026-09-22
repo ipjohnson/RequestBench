@@ -84,10 +84,11 @@
   },
   "go:gin": {
    "status": 404,
-   "class": "json",
+   "class": "text",
    "shape": [
-    "error:string"
-   ]
+    ":string"
+   ],
+   "bodyFrom": "captured from frameworks/go/gin/Implementation, which answers text/plain: 404 page not found"
   },
   "go:gorilla-mux": {
    "status": 404,

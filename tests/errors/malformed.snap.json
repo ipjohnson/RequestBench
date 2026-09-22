@@ -99,9 +99,12 @@
    "status": 400,
    "class": "json",
    "shape": [
-    "detail:string",
     "error:string"
-   ]
+   ],
+   "body": {
+    "error": "unexpected EOF"
+   },
+   "bodyFrom": "captured from frameworks/go/gin/Implementation"
   },
   "go:gorilla-mux": {
    "status": 400,
