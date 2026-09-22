@@ -1,0 +1,1723 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "Implementation | v1",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/__meta": {
+      "get": {
+        "tags": [
+          "__Meta"
+        ],
+        "operationId": "ImplementationEndpointsMetaEndpoint",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Meta"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/authorized/small": {
+      "get": {
+        "tags": [
+          "Authorized"
+        ],
+        "operationId": "ImplementationEndpointsAuthorizedSmallEndpoint",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/body/bind/medium": {
+      "post": {
+        "tags": [
+          "Body"
+        ],
+        "operationId": "ImplementationEndpointsBindMediumEndpoint",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrderRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Bound"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/body/bind/small": {
+      "post": {
+        "tags": [
+          "Body"
+        ],
+        "operationId": "ImplementationEndpointsBindSmallEndpoint",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrderRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Bound"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/body/validate/first-error": {
+      "post": {
+        "tags": [
+          "Body"
+        ],
+        "operationId": "ImplementationEndpointsValidateFirstErrorEndpoint",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FirstErrorOrder"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Bound"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/body/validate/medium": {
+      "post": {
+        "tags": [
+          "Body"
+        ],
+        "operationId": "ImplementationEndpointsValidateMediumEndpoint",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckedOrder"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Bound"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/body/validate/small": {
+      "post": {
+        "tags": [
+          "Body"
+        ],
+        "operationId": "ImplementationEndpointsValidateSmallEndpoint",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckedOrder"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Bound"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cache/large": {
+      "get": {
+        "tags": [
+          "Cache"
+        ],
+        "operationId": "ImplementationEndpointsCacheLargeEndpoint",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cache/medium": {
+      "get": {
+        "tags": [
+          "Cache"
+        ],
+        "operationId": "ImplementationEndpointsCacheMediumEndpoint",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cache/small": {
+      "get": {
+        "tags": [
+          "Cache"
+        ],
+        "operationId": "ImplementationEndpointsCacheSmallEndpoint",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cache/vary/many": {
+      "get": {
+        "tags": [
+          "Cache"
+        ],
+        "operationId": "ImplementationEndpointsCacheVaryManyEndpoint",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cache/vary/one": {
+      "get": {
+        "tags": [
+          "Cache"
+        ],
+        "operationId": "ImplementationEndpointsCacheVaryOneEndpoint",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/compressed/large": {
+      "get": {
+        "tags": [
+          "Compressed"
+        ],
+        "operationId": "ImplementationEndpointsCompressedLargeEndpoint",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/compressed/small": {
+      "get": {
+        "tags": [
+          "Compressed"
+        ],
+        "operationId": "ImplementationEndpointsCompressedSmallEndpoint",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cors/small": {
+      "get": {
+        "tags": [
+          "Cors"
+        ],
+        "operationId": "ImplementationEndpointsCorsSmallEndpoint",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/etag/large": {
+      "get": {
+        "tags": [
+          "Etag"
+        ],
+        "operationId": "ImplementationEndpointsEtagLargeEndpoint",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/etag/small": {
+      "get": {
+        "tags": [
+          "Etag"
+        ],
+        "operationId": "ImplementationEndpointsEtagSmallEndpoint",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/forms/multipart": {
+      "post": {
+        "tags": [
+          "Forms"
+        ],
+        "operationId": "ImplementationEndpointsFormsMultipartEndpoint",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Upload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Uploaded"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/forms/urlencoded": {
+      "post": {
+        "tags": [
+          "Forms"
+        ],
+        "operationId": "ImplementationEndpointsFormsUrlencodedEndpoint",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Search"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EchoedOfSearch"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/headers": {
+      "get": {
+        "tags": [
+          "Headers"
+        ],
+        "operationId": "ImplementationEndpointsHeadersEndpoint",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/headers/bind": {
+      "get": {
+        "tags": [
+          "Headers"
+        ],
+        "operationId": "ImplementationEndpointsHeadersBindEndpoint",
+        "parameters": [
+          {
+            "name": "x-rb-tenant",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-rb-request-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-rb-account",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EchoedOfHeadersBound"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "operationId": "ImplementationEndpointsHealthEndpoint",
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/items": {
+      "post": {
+        "tags": [
+          "Items"
+        ],
+        "operationId": "ImplementationEndpointsItemCreateEndpoint",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewItem"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Item"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/items/{id}": {
+      "delete": {
+        "tags": [
+          "Items"
+        ],
+        "operationId": "ImplementationEndpointsItemDeleteEndpoint",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Items"
+        ],
+        "operationId": "GetImplementationEndpointsItemReadEndpoint",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Item"
+                }
+              }
+            }
+          }
+        }
+      },
+      "head": {
+        "tags": [
+          "Items"
+        ],
+        "operationId": "HeadImplementationEndpointsItemReadEndpoint",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Item"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Items"
+        ],
+        "operationId": "ImplementationEndpointsItemReplaceEndpoint",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplacedItem"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Item"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Items"
+        ],
+        "operationId": "ImplementationEndpointsItemUpdateEndpoint",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ItemPatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Item"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/json/large": {
+      "get": {
+        "tags": [
+          "Json"
+        ],
+        "operationId": "ImplementationEndpointsJsonLargeEndpoint",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/json/medium": {
+      "get": {
+        "tags": [
+          "Json"
+        ],
+        "operationId": "ImplementationEndpointsJsonMediumEndpoint",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/json/small": {
+      "get": {
+        "tags": [
+          "Json"
+        ],
+        "operationId": "ImplementationEndpointsJsonSmallEndpoint",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/middleware/four": {
+      "get": {
+        "tags": [
+          "Middleware"
+        ],
+        "operationId": "ImplementationEndpointsMiddlewareFourEndpoint",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/middleware/none": {
+      "get": {
+        "tags": [
+          "Middleware"
+        ],
+        "operationId": "ImplementationEndpointsMiddlewareNoneEndpoint",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/middleware/sixteen": {
+      "get": {
+        "tags": [
+          "Middleware"
+        ],
+        "operationId": "ImplementationEndpointsMiddlewareSixteenEndpoint",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/parameters/static/segment/literal": {
+      "get": {
+        "tags": [
+          "Parameters"
+        ],
+        "operationId": "ImplementationEndpointsParametersStaticEndpoint",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/parameters/{one}/segment/literal": {
+      "get": {
+        "tags": [
+          "Parameters"
+        ],
+        "operationId": "ImplementationEndpointsParametersOneEndpoint",
+        "parameters": [
+          {
+            "name": "one",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EchoedOfParametersOne"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/parameters/{one}/with-second/{two}": {
+      "get": {
+        "tags": [
+          "Parameters"
+        ],
+        "operationId": "ImplementationEndpointsParametersTwoEndpoint",
+        "parameters": [
+          {
+            "name": "one",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "two",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EchoedOfParametersTwo"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/plaintext": {
+      "get": {
+        "tags": [
+          "Plaintext"
+        ],
+        "operationId": "ImplementationEndpointsPlaintextEndpoint",
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/query/many": {
+      "get": {
+        "tags": [
+          "Query"
+        ],
+        "operationId": "ImplementationEndpointsQueryManyEndpoint",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "minPrice",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "maxPrice",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EchoedOfSearch"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/query/one": {
+      "get": {
+        "tags": [
+          "Query"
+        ],
+        "operationId": "ImplementationEndpointsQueryOneEndpoint",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EchoedOfQueryOne"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sse/medium": {
+      "get": {
+        "tags": [
+          "Sse"
+        ],
+        "operationId": "ImplementationEndpointsSseMediumEndpoint",
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/stream/items": {
+      "get": {
+        "tags": [
+          "Stream"
+        ],
+        "operationId": "ImplementationEndpointsStreamItemsEndpoint",
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/template/medium": {
+      "get": {
+        "tags": [
+          "Template"
+        ],
+        "operationId": "ImplementationEndpointsTemplateMediumEndpoint",
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/template/small": {
+      "get": {
+        "tags": [
+          "Template"
+        ],
+        "operationId": "ImplementationEndpointsTemplateSmallEndpoint",
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Bound": {
+        "required": [
+          "fields",
+          "bytes",
+          "echo"
+        ],
+        "type": "object",
+        "properties": {
+          "fields": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "bytes": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "echo": {
+            "$ref": "#/components/schemas/OrderRequest"
+          }
+        }
+      },
+      "CheckedOrder": {
+        "const": null,
+        "required": [
+          "status",
+          "lines"
+        ],
+        "type": "object",
+        "properties": {
+          "customerId": {
+            "const": null,
+            "exclusiveMinimum": 0,
+            "type": "integer",
+            "format": "int32"
+          },
+          "status": {
+            "const": null,
+            "minLength": 1,
+            "type": "string"
+          },
+          "lines": {
+            "$ref": "#/components/schemas/ListOfOrderLine__op8CC1FB8E7CBB"
+          }
+        }
+      },
+      "EchoedOfHeadersBound": {
+        "type": "object",
+        "properties": {
+          "size": {
+            "type": "string"
+          },
+          "count": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "items": {
+            "$ref": "#/components/schemas/IReadOnlyListOfItem"
+          },
+          "echo": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/HeadersBound"
+              }
+            ]
+          }
+        }
+      },
+      "EchoedOfParametersOne": {
+        "type": "object",
+        "properties": {
+          "size": {
+            "type": "string"
+          },
+          "count": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "items": {
+            "$ref": "#/components/schemas/IReadOnlyListOfItem"
+          },
+          "echo": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ParametersOne"
+              }
+            ]
+          }
+        }
+      },
+      "EchoedOfParametersTwo": {
+        "type": "object",
+        "properties": {
+          "size": {
+            "type": "string"
+          },
+          "count": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "items": {
+            "$ref": "#/components/schemas/IReadOnlyListOfItem"
+          },
+          "echo": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ParametersTwo"
+              }
+            ]
+          }
+        }
+      },
+      "EchoedOfQueryOne": {
+        "type": "object",
+        "properties": {
+          "size": {
+            "type": "string"
+          },
+          "count": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "items": {
+            "$ref": "#/components/schemas/IReadOnlyListOfItem"
+          },
+          "echo": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/QueryOne"
+              }
+            ]
+          }
+        }
+      },
+      "EchoedOfSearch": {
+        "type": "object",
+        "properties": {
+          "size": {
+            "type": "string"
+          },
+          "count": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "items": {
+            "$ref": "#/components/schemas/IReadOnlyListOfItem"
+          },
+          "echo": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Search"
+              }
+            ]
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "integer",
+            "description": "the http status code sent to the client. default is 400.",
+            "format": "int32",
+            "default": 400
+          },
+          "message": {
+            "type": "string",
+            "description": "the message for the error response",
+            "default": "One or more errors occurred!"
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "description": "the dto used to send an error response to the client"
+      },
+      "FirstErrorOrder": {
+        "const": null,
+        "required": [
+          "status",
+          "lines"
+        ],
+        "type": "object",
+        "properties": {
+          "customerId": {
+            "const": null,
+            "exclusiveMinimum": 0,
+            "type": "integer",
+            "format": "int32"
+          },
+          "status": {
+            "const": null,
+            "minLength": 1,
+            "type": "string"
+          },
+          "lines": {
+            "$ref": "#/components/schemas/ListOfOrderLine__op8CC1FB8E7CBB"
+          }
+        }
+      },
+      "HeadersBound": {
+        "type": "object",
+        "properties": {
+          "tenant": {
+            "type": "string"
+          },
+          "requestId": {
+            "type": "string"
+          },
+          "account": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "IReadOnlyListOfItem": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/Item"
+        }
+      },
+      "Item": {
+        "required": [
+          "id",
+          "name",
+          "category",
+          "priceCents",
+          "inStock"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "priceCents": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "inStock": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ItemPatch": {
+        "const": null,
+        "type": "object",
+        "properties": {
+          "priceCents": {
+            "const": null,
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "inStock": {
+            "const": null,
+            "type": [
+              "null",
+              "boolean"
+            ]
+          }
+        }
+      },
+      "ListOfOrderLine": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/OrderLine"
+        }
+      },
+      "ListOfOrderLine__op8CC1FB8E7CBB": {
+        "const": null,
+        "minItems": 1,
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/OrderLine"
+        }
+      },
+      "Meta": {
+        "required": [
+          "framework",
+          "version",
+          "runtime",
+          "bootMs"
+        ],
+        "type": "object",
+        "properties": {
+          "framework": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "runtime": {
+            "type": "string"
+          },
+          "bootMs": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "NewItem": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "priceCents": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "inStock": {
+            "type": "boolean"
+          }
+        }
+      },
+      "OrderLine": {
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "qty": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "OrderRequest": {
+        "type": "object",
+        "properties": {
+          "customerId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "status": {
+            "type": "string"
+          },
+          "lines": {
+            "$ref": "#/components/schemas/ListOfOrderLine"
+          }
+        }
+      },
+      "ParametersOne": {
+        "type": "object",
+        "properties": {
+          "one": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "ParametersTwo": {
+        "type": "object",
+        "properties": {
+          "one": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "two": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "Payload": {
+        "required": [
+          "size",
+          "count",
+          "items"
+        ],
+        "type": "object",
+        "properties": {
+          "size": {
+            "type": "string"
+          },
+          "count": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "items": {
+            "$ref": "#/components/schemas/IReadOnlyListOfItem"
+          }
+        }
+      },
+      "QueryOne": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "ReplacedItem": {
+        "const": null,
+        "type": "object",
+        "properties": {
+          "name": {
+            "const": null,
+            "type": "string"
+          },
+          "category": {
+            "const": null,
+            "type": "string"
+          },
+          "priceCents": {
+            "const": null,
+            "type": "integer",
+            "format": "int32"
+          },
+          "inStock": {
+            "const": null,
+            "type": "boolean"
+          }
+        }
+      },
+      "Search": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "status": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "sort": {
+            "type": "string"
+          },
+          "q": {
+            "type": "string"
+          },
+          "minPrice": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "maxPrice": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "Upload": {
+        "type": "object",
+        "properties": {
+          "tenant": {
+            "type": "string"
+          },
+          "requestId": {
+            "type": "string"
+          },
+          "file": {
+            "type": "string",
+            "format": "binary"
+          }
+        }
+      },
+      "UploadEcho": {
+        "required": [
+          "tenant",
+          "requestId"
+        ],
+        "type": "object",
+        "properties": {
+          "tenant": {
+            "type": "string"
+          },
+          "requestId": {
+            "type": "string"
+          }
+        }
+      },
+      "Uploaded": {
+        "required": [
+          "file",
+          "echo"
+        ],
+        "type": "object",
+        "properties": {
+          "file": {
+            "$ref": "#/components/schemas/UploadedFile"
+          },
+          "echo": {
+            "$ref": "#/components/schemas/UploadEcho"
+          }
+        }
+      },
+      "UploadedFile": {
+        "required": [
+          "name",
+          "bytes"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "bytes": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "Bearer": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  }
+}

@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <!-- dotnet build writes the OpenAPI document to Client/openapi.json. Writing it runs Program.cs,
+       which needs the payloads, so a build with no RB_PAYLOADS, such as the image's, skips it. -->
+  <PropertyGroup>
+    <OpenApiDocumentsDirectory>../Client</OpenApiDocumentsDirectory>
+    <OpenApiGenerateDocumentsOptions>--file-name openapi</OpenApiGenerateDocumentsOptions>
+    <OpenApiGenerateDocuments Condition="'$(RB_PAYLOADS)' == ''">false</OpenApiGenerateDocuments>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.12" />
+    <PackageReference Include="Microsoft.Extensions.ApiDescription.Server" Version="10.0.12">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+</Project>

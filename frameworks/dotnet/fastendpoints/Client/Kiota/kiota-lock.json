@@ -1,0 +1,35 @@
+{
+  "descriptionHash": "DDF74F2A76BB9644B4E459D18DC2A4ECC54D61BA2FA7A44061428B9C740E9BFB37A6F5B1A0F35744C3DB844E7131A95B60C200B645BEEE67E8FA170C99795D84",
+  "descriptionLocation": "v1.json",
+  "lockFileVersion": "1.0.0",
+  "kiotaVersion": "1.29.1",
+  "clientClassName": "FastEndpointsClient",
+  "typeAccessModifier": "Public",
+  "clientNamespaceName": "Client.Kiota",
+  "language": "CSharp",
+  "usesBackingStore": false,
+  "excludeBackwardCompatible": true,
+  "includeAdditionalData": true,
+  "disableSSLValidation": false,
+  "serializers": [
+    "Microsoft.Kiota.Serialization.Json.JsonSerializationWriterFactory",
+    "Microsoft.Kiota.Serialization.Text.TextSerializationWriterFactory",
+    "Microsoft.Kiota.Serialization.Form.FormSerializationWriterFactory",
+    "Microsoft.Kiota.Serialization.Multipart.MultipartSerializationWriterFactory"
+  ],
+  "deserializers": [
+    "Microsoft.Kiota.Serialization.Json.JsonParseNodeFactory",
+    "Microsoft.Kiota.Serialization.Text.TextParseNodeFactory",
+    "Microsoft.Kiota.Serialization.Form.FormParseNodeFactory"
+  ],
+  "structuredMimeTypes": [
+    "application/json",
+    "text/plain;q=0.9",
+    "application/x-www-form-urlencoded;q=0.2",
+    "multipart/form-data;q=0.1"
+  ],
+  "includePatterns": [],
+  "excludePatterns": [],
+  "disabledValidationRules": [],
+  "allowedExternalOrigins": []
+}

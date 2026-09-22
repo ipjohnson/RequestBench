@@ -1,0 +1,67 @@
+{
+  "comment": "FastEndpoints 8.3 on ASP.NET Core 10, one endpoint class per route, the classes of a family together in one file under Implementation/Endpoints. The suite is UnitTests/, xunit.v3 over FastEndpoints.Testing's AppFixture<Program>, and never reaches the image. It runs under Microsoft.Testing.Platform, which global.json selects. upgrade is null because dotnet package update moves every package to its newest release, majors included, and nothing narrows it to patch and minor.",
+  "framework": "FastEndpoints",
+  "licence": "MIT",
+  "repo": "https://github.com/FastEndpoints/FastEndpoints",
+  "package": "https://www.nuget.org/packages/FastEndpoints",
+  "docs": "https://fast-endpoints.com/",
+  "lockfile": ["Implementation/packages.lock.json"],
+  "hosts": {
+    "container-h1": { "dockerfile": "Dockerfile" }
+  },
+  "suite": { "argv": ["dotnet", "test", "--project", "UnitTests"], "paths": ["UnitTests"] },
+  "upgrade": null,
+  "client": {
+    "document": "Client/Kiota/v1.json",
+    "writer": "FastEndpoints.OpenApi 8.3.0 over Microsoft.AspNetCore.OpenApi 10.0.12, exported by FastEndpoints.OpenApi.Kiota when Implementation's build runs the application with --generateclients true",
+    "generator": "Kiota.Builder 1.29.1, which FastEndpoints.OpenApi.Kiota 8.3.0 pins and runs inside the application, as FastEndpoints documents for client generation",
+    "argv": ["dotnet", "build", "Client"]
+  },
+  "noHandler": {
+    "cors.preflight": "ASP.NET Core's CORS middleware answers the preflight for the /cors endpoint, and no handler runs.",
+    "errors.unmatched": "ASP.NET Core's router answers a path no route matches with 404 and no body.",
+    "errors.wrong_method": "ASP.NET Core's router answers a method the path has no route for with 405 and no body."
+  },
+  "mechanisms": {
+    "authorized": {
+      "mechanism": "ASP.NET Core authorization through FastEndpoints: the one endpoint names a policy that compares a claim, which a bearer-token authentication scheme of its own reads from the header"
+    },
+    "baseline": { "builtin": "The handler sends the text with Send.StringAsync." },
+    "body": {
+      "mechanism": "FastEndpoints' Validator<TRequest>, which it runs before the handler of every endpoint taking that request type, with FluentValidation's rules underneath",
+      "dependency": "FluentValidation",
+      "mentions": "Validator"
+    },
+    "cache": {
+      "mechanism": "ASP.NET Core output caching, CacheOutput on each endpoint's route builder, varied by the request headers a vary row names"
+    },
+    "compressed": {
+      "mechanism": "ASP.NET Core's response compression middleware on the whole application, at gzip's fastest level"
+    },
+    "cors": {
+      "mechanism": "ASP.NET Core CORS with a named policy, required on the /cors endpoint through its route builder"
+    },
+    "errors": {
+      "builtin": "The router answers a miss with 404 and a method a route lacks with 405, and a handler answers a missing row with Send.NotFoundAsync, all three with no body. FastEndpoints answers a body its serializer cannot read with its 400 ErrorResponse."
+    },
+    "etag": {
+      "mechanism": "A FastEndpoints response interceptor on the two endpoints that serialises the answer, hashes it with SHA-1, and answers a matching If-None-Match with 304"
+    },
+    "forms": { "builtin": "FastEndpoints binds the form fields and the IFormFile onto the request type, on an endpoint that allows form data or file uploads." },
+    "headers": { "builtin": "FastEndpoints binds the request type's [FromHeader] properties, the account as an int." },
+    "items": { "builtin": "One endpoint per method on /items/{id:int}, the id bound onto the request type as an int." },
+    "json": {
+      "mechanism": "A source-generated JsonSerializerContext first in FastEndpoints' serializer resolver chain, so System.Text.Json writes from generated metadata",
+      "mentions": "JsonContext"
+    },
+    "middleware": { "mechanism": "No-op FastEndpoints pre-processors on the endpoint, four or sixteen of them" },
+    "parameters": { "builtin": "Route values bound onto the request type's properties as ints." },
+    "query": { "builtin": "Query values bound onto the request type's properties by name." },
+    "sse": { "builtin": "FastEndpoints' Send.EventStreamAsync writes each row as an event and flushes it." },
+    "static": {
+      "mechanism": "ASP.NET Core's static-file middleware over the payload directory, under /static"
+    },
+    "stream": { "builtin": "The handler writes each row and flushes it." },
+    "template": { "mechanism": "Razor components, rendered by RazorComponentResult and sent with Send.ResultAsync" }
+  }
+}

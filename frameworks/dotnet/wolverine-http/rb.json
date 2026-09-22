@@ -1,0 +1,67 @@
+{
+  "comment": "Wolverine.HTTP on ASP.NET Core 10, one endpoint class per family under Implementation/Endpoints. Wolverine generates a handler class for each endpoint. They are generated ahead of time by `dotnet run -- codegen write`, committed under Implementation/Internal/Generated and loaded with TypeLoadMode.Static, which Wolverine's docs recommend for production, and the suite fails when they are stale. The suite is UnitTests/, xunit over Alba, and never reaches the image. upgrade is null because dotnet package update moves every package to its newest release, majors included, and nothing narrows it to patch and minor.",
+  "framework": "Wolverine.HTTP",
+  "licence": "MIT",
+  "repo": "https://github.com/JasperFx/wolverine",
+  "package": "https://www.nuget.org/packages/WolverineFx.Http",
+  "docs": "https://wolverinefx.net/guide/http/",
+  "lockfile": ["Implementation/packages.lock.json"],
+  "hosts": {
+    "container-h1": { "dockerfile": "Dockerfile" }
+  },
+  "suite": { "argv": ["dotnet", "test", "UnitTests"], "paths": ["UnitTests"] },
+  "upgrade": null,
+  "client": {
+    "document": "Client/openapi.json",
+    "writer": "Microsoft.AspNetCore.OpenApi 10.0.12 reading the API descriptions Wolverine gives its endpoints, through Microsoft.Extensions.ApiDescription.Server on dotnet build",
+    "generator": "Kiota 1.35.0, a .NET local tool that Client.csproj runs, because neither Wolverine nor ASP.NET Core recommends a generator of its own",
+    "argv": ["dotnet", "build", "Client"]
+  },
+  "noHandler": {
+    "cors.preflight": "ASP.NET Core's CORS middleware answers the preflight for /cors/small, and no handler runs.",
+    "errors.unmatched": "The router answers a path no route matches with 404 and no body.",
+    "errors.wrong_method": "The router answers a method the path has no route for with 405, an Allow header and no body."
+  },
+  "mechanisms": {
+    "authorized": {
+      "mechanism": "ASP.NET Core authorization: [Authorize] with a policy on the endpoint, which Wolverine copies onto the route, and a bearer-token authentication scheme of its own"
+    },
+    "baseline": { "builtin": "The endpoint returns the string, and Wolverine writes it as text/plain." },
+    "body": {
+      "mechanism": "Wolverine's FluentValidation middleware, generated into the handler of every endpoint whose request type has a validator",
+      "dependency": "WolverineFx.Http.FluentValidation",
+      "mentions": "UseFluentValidationProblemDetailMiddleware"
+    },
+    "cache": {
+      "mechanism": "ASP.NET Core output caching, [OutputCache] naming a policy on each endpoint, the vary policies varied by the request headers the row names"
+    },
+    "compressed": {
+      "mechanism": "ASP.NET Core's response compression middleware on the whole application, at gzip's fastest level"
+    },
+    "cors": {
+      "mechanism": "ASP.NET Core CORS with a named policy, [EnableCors] on the one endpoint"
+    },
+    "errors": {
+      "builtin": "The router answers a miss with 404 and a method a route lacks with 405, and Wolverine answers an endpoint's null with 404, all three with no body. Wolverine answers a body it cannot read with a ProblemDetails of its own."
+    },
+    "etag": {
+      "mechanism": "A Wolverine resource writer policy on the two [Tagged] endpoints that serialises the answer and hashes it with SHA-1, then ASP.NET Core's byte-array result, which answers a matching If-None-Match with 304"
+    },
+    "forms": { "builtin": "Wolverine binds [FromForm] parameters and the IFormFile, and [DisableAntiforgery] turns off the antiforgery token it would require." },
+    "headers": { "builtin": "Wolverine binds [FromHeader] parameters, the account as an int." },
+    "items": { "builtin": "One endpoint per method on /items/{id}, [WolverineHead] beside [WolverineGet], the id bound as an int." },
+    "json": {
+      "mechanism": "A source-generated JsonSerializerContext first in the resolver chain of minimal APIs' JSON options, which Wolverine reads and writes with",
+      "mentions": "JsonContext"
+    },
+    "middleware": { "mechanism": "Wolverine middleware: [Middleware] names a class with a Before method four or sixteen times, and the generated handler calls it that many times" },
+    "parameters": { "builtin": "Wolverine binds route parameters by name, as ints." },
+    "query": { "builtin": "Wolverine binds a simple parameter that no route parameter names from the query string value of the same name." },
+    "sse": { "builtin": "TypedResults.ServerSentEvents, ASP.NET Core 10's result for server-sent events, which Wolverine executes, writes each row as an event." },
+    "static": {
+      "mechanism": "ASP.NET Core's static-file middleware over the payload directory, under /static"
+    },
+    "stream": { "builtin": "Results.Stream, which Wolverine executes, writes each row and flushes it." },
+    "template": { "mechanism": "Razor components, rendered by RazorComponentResult, which Wolverine executes" }
+  }
+}

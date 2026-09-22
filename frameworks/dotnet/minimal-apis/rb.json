@@ -1,0 +1,66 @@
+{
+  "comment": "ASP.NET Core 10 minimal APIs, one static class per family under Implementation/Routes, which is dotnet:carter's application without Carter. The suite is UnitTests/, xunit over WebApplicationFactory<Program>, and never reaches the image. Minimal APIs have no package of their own. They ship in the ASP.NET Core shared framework, which the aspnet runtime image supplies and the Dockerfile pins by digest, so package is that image's registry page and /__meta reports the shared framework's version. The lockfile pins the OpenAPI packages the build adds. The first-error route is wired by hand, because minimal APIs' validation cannot stop at the first failure. upgrade is null because dotnet package update moves every package to its newest release, majors included, and nothing narrows it to patch and minor.",
+  "framework": "ASP.NET Core minimal APIs",
+  "licence": "MIT",
+  "repo": "https://github.com/dotnet/aspnetcore",
+  "package": "https://mcr.microsoft.com/artifact/mar/dotnet/aspnet",
+  "docs": "https://learn.microsoft.com/aspnet/core/fundamentals/minimal-apis",
+  "lockfile": ["Implementation/packages.lock.json"],
+  "hosts": {
+    "container-h1": { "dockerfile": "Dockerfile" }
+  },
+  "suite": { "argv": ["dotnet", "test", "UnitTests"], "paths": ["UnitTests"] },
+  "upgrade": null,
+  "client": {
+    "document": "Client/openapi.json",
+    "writer": "Microsoft.AspNetCore.OpenApi 10.0.12, through Microsoft.Extensions.ApiDescription.Server on dotnet build",
+    "generator": "Kiota 1.35.0, a .NET local tool that Client.csproj runs, because ASP.NET Core recommends no generator of its own",
+    "argv": ["dotnet", "build", "Client"]
+  },
+  "noHandler": {
+    "cors.preflight": "ASP.NET Core's CORS middleware answers the preflight for the /cors group, and no handler runs.",
+    "errors.unmatched": "The router answers a path no route matches with 404, and ProblemDetails writes the body.",
+    "errors.wrong_method": "The router answers a method the path has no route for with 405, and ProblemDetails writes the body."
+  },
+  "mechanisms": {
+    "authorized": {
+      "mechanism": "ASP.NET Core authorization: a bearer-token authentication scheme of its own, required by a policy on this one route"
+    },
+    "baseline": { "builtin": "The handler returns the text." },
+    "body": {
+      "mechanism": "Minimal APIs' own validation, new in .NET 10: AddValidation checks the DataAnnotations on the bound order before a validate route's handler runs. The first-error route checks one property at a time with Microsoft.Extensions.Validation, because minimal APIs' validation cannot stop at the first failure",
+      "mentions": "AddValidation"
+    },
+    "cache": {
+      "mechanism": "ASP.NET Core output caching, CacheOutput on each route, varied by the request headers a vary row names"
+    },
+    "compressed": {
+      "mechanism": "ASP.NET Core's response compression middleware on the whole application, at gzip's fastest level"
+    },
+    "cors": {
+      "mechanism": "ASP.NET Core CORS with a named policy, required on the /cors route group alone"
+    },
+    "errors": {
+      "builtin": "The router answers a miss with 404 and a method a route lacks with 405, the binder refuses a body it cannot read with 400, and the items handlers answer a missing row with NotFound, each written as ASP.NET Core's ProblemDetails."
+    },
+    "etag": {
+      "mechanism": "An endpoint filter on the two routes that serialises the answer, hashes it with SHA-1, and answers a matching If-None-Match with 304"
+    },
+    "forms": { "builtin": "The minimal API binds [FromForm] parameters and the IFormFile itself." },
+    "headers": { "builtin": "The minimal API binds [FromHeader] parameters, the account as an int." },
+    "items": { "builtin": "One route per method on /items/{id:int}, the id bound as an int." },
+    "json": {
+      "mechanism": "A source-generated JsonSerializerContext first in the resolver chain, so System.Text.Json writes from generated metadata",
+      "mentions": "JsonContext"
+    },
+    "middleware": { "mechanism": "No-op endpoint filters on the route, four or sixteen of them" },
+    "parameters": { "builtin": "Route parameters bound as ints by the minimal API." },
+    "query": { "builtin": "Query parameters bound by name by the minimal API." },
+    "sse": { "builtin": "TypedResults.ServerSentEvents, ASP.NET Core 10's result for server-sent events, writes each row as an event." },
+    "static": {
+      "mechanism": "ASP.NET Core's static-file middleware over the payload directory, under /static"
+    },
+    "stream": { "builtin": "Results.Stream writes each row and flushes it." },
+    "template": { "mechanism": "Razor components, rendered by RazorComponentResult" }
+  }
+}

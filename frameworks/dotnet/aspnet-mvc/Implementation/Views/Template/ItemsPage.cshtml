@@ -1,0 +1,26 @@
+@model Implementation.Payload
+<!doctype html>
+<html>
+  <head><title>items</title></head>
+  <body>
+    <h1>@Model.Size</h1>
+    <table>
+      <thead>
+        <tr><th>id</th><th>name</th><th>category</th><th>price</th><th>stock</th></tr>
+      </thead>
+      <tbody>
+        @foreach (Implementation.Item it in Model.Items)
+        {
+          <tr>
+            <td>@it.Id</td>
+            <td>@it.Name</td>
+            <td>@it.Category</td>
+            <td>@it.PriceCents</td>
+            <td>@(it.InStock ? "yes" : "no")</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+    <p>@Model.Count rows</p>
+  </body>
+</html>

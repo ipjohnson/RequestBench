@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- FastEndpoints' own test package, which is built on xunit.v3. An xunit.v3 project is an
+       executable that runs under Microsoft.Testing.Platform, which global.json selects for
+       dotnet test. Mvc.Testing is named for its version, which FastEndpoints.Testing asks for a
+       patch lower. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="FastEndpoints.Testing" Version="8.3.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.12" />
+    <PackageReference Include="xunit.v3" Version="4.0.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Implementation/Implementation.csproj" />
+    <ProjectReference Include="../Client/Client.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="FastEndpoints.Testing" />
+    <Using Include="Xunit" />
+    <Using Include="System.Net" />
+    <Using Include="System.Text.Json.Nodes" />
+  </ItemGroup>
+</Project>

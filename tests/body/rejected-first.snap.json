@@ -2,6 +2,20 @@
  "source": "Rewritten on 2026-09-21, when order.invalid became a body that binds and breaks every rule orderRequest states. Upstream's captures answered the old body, which had a value of the wrong type in each field, and stay in spec/expected.json in github.com/ipjohnson/RequestBench at 9939f4c.",
  "request": "POST /body/validate/first-error",
  "frameworks": {
+  "dotnet:aspnet-mvc": {
+   "status": 400,
+   "body": {
+    "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+    "title": "One or more validation errors occurred.",
+    "status": 400,
+    "errors": {
+     "CustomerId": [
+      "The field CustomerId must be between 1 and 2147483647."
+     ]
+    }
+   },
+   "bodyFrom": "captured from frameworks/dotnet/aspnet-mvc/Implementation, without the traceId ASP.NET Core adds to each answer"
+  },
   "dotnet:carter": {
    "status": 422,
    "body": {
@@ -16,6 +30,47 @@
     ]
    },
    "bodyFrom": "captured from frameworks/dotnet/carter/Implementation, without the traceId ASP.NET Core adds to each answer"
+  },
+  "dotnet:fastendpoints": {
+   "status": 400,
+   "body": {
+    "statusCode": 400,
+    "message": "One or more errors occurred!",
+    "errors": {
+     "customerId": [
+      "'customer Id' must be greater than '0'."
+     ]
+    }
+   },
+   "bodyFrom": "captured from frameworks/dotnet/fastendpoints/Implementation"
+  },
+  "dotnet:minimal-apis": {
+   "status": 400,
+   "body": {
+    "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+    "title": "One or more validation errors occurred.",
+    "status": 400,
+    "errors": {
+     "CustomerId": [
+      "The field CustomerId must be between 1 and 2147483647."
+     ]
+    }
+   },
+   "bodyFrom": "captured from frameworks/dotnet/minimal-apis/Implementation, without the traceId ASP.NET Core adds to each answer"
+  },
+  "dotnet:wolverine-http": {
+   "status": 400,
+   "body": {
+    "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+    "title": "One or more validation errors occurred.",
+    "status": 400,
+    "errors": {
+     "CustomerId": [
+      "'Customer Id' must be greater than '0'."
+     ]
+    }
+   },
+   "bodyFrom": "captured from frameworks/dotnet/wolverine-http/Implementation"
   },
   "go:gin": {
    "status": 400,

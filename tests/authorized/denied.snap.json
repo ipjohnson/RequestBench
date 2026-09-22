@@ -16,8 +16,16 @@
    "status": 403,
    "class": "json",
    "shape": [
-    "status:number"
-   ]
+    "status:number",
+    "title:string",
+    "type:string"
+   ],
+   "body": {
+    "type": "https://tools.ietf.org/html/rfc9110#section-15.5.4",
+    "title": "Forbidden",
+    "status": 403
+   },
+   "bodyFrom": "captured from frameworks/dotnet/aspnet-mvc/Implementation, without the traceId ASP.NET Core adds to each answer"
   },
   "dotnet:carter": {
    "status": 403,
@@ -36,11 +44,9 @@
   },
   "dotnet:fastendpoints": {
    "status": 403,
-   "class": "json",
-   "shape": [
-    "message:string",
-    "statusCode:number"
-   ]
+   "class": "empty",
+   "shape": [],
+   "bodyFrom": "captured from frameworks/dotnet/fastendpoints/Implementation, which answers with no body"
   },
   "dotnet:minimal-apis": {
    "status": 403,
@@ -49,16 +55,19 @@
     "status:number",
     "title:string",
     "type:string"
-   ]
+   ],
+   "body": {
+    "type": "https://tools.ietf.org/html/rfc9110#section-15.5.4",
+    "title": "Forbidden",
+    "status": 403
+   },
+   "bodyFrom": "captured from frameworks/dotnet/minimal-apis/Implementation, without the traceId ASP.NET Core adds to each answer"
   },
   "dotnet:wolverine-http": {
    "status": 403,
-   "class": "json",
-   "shape": [
-    "status:number",
-    "title:string",
-    "type:string"
-   ]
+   "class": "empty",
+   "shape": [],
+   "bodyFrom": "captured from frameworks/dotnet/wolverine-http/Implementation, which answers with no body"
   },
   "go:chi": {
    "status": 403,

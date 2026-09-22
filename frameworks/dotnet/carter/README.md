@@ -86,11 +86,12 @@ side by side, so the client is Kiota's.
 - Implementation's build writes `Client/openapi.json` through
   `Microsoft.Extensions.ApiDescription.Server`. That step runs `Program.cs` on a server that never
   listens and asks `AddOpenApi` for the document. `Program.cs` loads the payloads, so the step runs
-  only when `RB_PAYLOADS` is set, and the image's build leaves it unset.
+  only when `RB_PAYLOADS` is set, and the image's build leaves it unset. The step runs in
+  `Implementation/`, so `RB_PAYLOADS` has to be an absolute path.
 - `Client.csproj` builds after Implementation. When `openapi.json` is newer than
   `Kiota/kiota-lock.json`, it runs Kiota 1.35.0 from `.config/dotnet-tools.json` and compiles what
   Kiota wrote.
-- `RB_PAYLOADS=../../../tests/payloads dotnet build Client` does both. `npm run rb -- client
+- `RB_PAYLOADS=$PWD/../../../tests/payloads dotnet build Client` does both. `npm run rb -- client
   dotnet:carter` runs it and fails if anything under `Client/` changed.
 - `UnitTests/ClientTests.cs` calls the Implementation in the test host through the client.
 

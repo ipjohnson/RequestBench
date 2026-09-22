@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Implementation's build writes Kiota/ when RB_PAYLOADS is set, so it builds first. -->
+  <ItemGroup>
+    <ProjectReference Include="../Implementation/Implementation.csproj" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Kiota.Bundle" Version="2.1.2" />
+  </ItemGroup>
+  <!-- Kiota/ can be rewritten by that build after this project's items were read, so they are read
+       again before compiling. -->
+  <Target Name="ReadClient" BeforeTargets="CoreCompile">
+    <ItemGroup>
+      <Compile Remove="Kiota/**" />
+      <Compile Include="Kiota/**/*.cs" />
+    </ItemGroup>
+  </Target>
+</Project>

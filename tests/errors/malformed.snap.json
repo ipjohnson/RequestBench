@@ -18,12 +18,25 @@
    "class": "json",
    "shape": [
     "errors.$.lines[0][]:string",
-    "errors.body[]:string",
+    "errors.order[]:string",
     "status:number",
     "title:string",
-    "traceId:string",
     "type:string"
-   ]
+   ],
+   "body": {
+    "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+    "title": "One or more validation errors occurred.",
+    "status": 400,
+    "errors": {
+     "order": [
+      "The order field is required."
+     ],
+     "$.lines[0]": [
+      "Expected depth to be zero at the end of the JSON payload. There is an open JSON object or array that should be closed. Path: $.lines[0] | LineNumber: 0 | BytePositionInLine: 28."
+     ]
+    }
+   },
+   "bodyFrom": "captured from frameworks/dotnet/aspnet-mvc/Implementation, without the traceId ASP.NET Core adds to each answer"
   },
   "dotnet:carter": {
    "status": 400,
@@ -46,8 +59,18 @@
    "shape": [
     "errors.lines[0][]:string",
     "message:string",
-    "status_code:number"
-   ]
+    "statusCode:number"
+   ],
+   "body": {
+    "statusCode": 400,
+    "message": "One or more errors occurred!",
+    "errors": {
+     "lines[0]": [
+      "Expected depth to be zero at the end of the JSON payload. There is an open JSON object or array that should be closed. LineNumber: 0 | BytePositionInLine: 28."
+     ]
+    }
+   },
+   "bodyFrom": "captured from frameworks/dotnet/fastendpoints/Implementation"
   },
   "dotnet:minimal-apis": {
    "status": 400,
@@ -56,7 +79,13 @@
     "status:number",
     "title:string",
     "type:string"
-   ]
+   ],
+   "body": {
+    "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+    "title": "Bad Request",
+    "status": 400
+   },
+   "bodyFrom": "captured from frameworks/dotnet/minimal-apis/Implementation, without the traceId ASP.NET Core adds to each answer"
   },
   "dotnet:wolverine-http": {
    "status": 400,
@@ -69,7 +98,17 @@
     "status:number",
     "title:string",
     "type:string"
-   ]
+   ],
+   "body": {
+    "type": "https://httpstatuses.com/400",
+    "title": "Invalid JSON format",
+    "status": 400,
+    "detail": "Expected depth to be zero at the end of the JSON payload. There is an open JSON object or array that should be closed. Path: $.lines[0] | LineNumber: 0 | BytePositionInLine: 28.",
+    "instance": "/body/validate/small",
+    "lineNumber": 0,
+    "bytePositionInLine": 28
+   },
+   "bodyFrom": "captured from frameworks/dotnet/wolverine-http/Implementation"
   },
   "go:chi": {
    "status": 400,

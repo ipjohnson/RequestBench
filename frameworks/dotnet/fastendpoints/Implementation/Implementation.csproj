@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <ItemGroup>
+    <PackageReference Include="FastEndpoints" Version="8.3.0" />
+    <PackageReference Include="FastEndpoints.Generator" Version="8.3.0" PrivateAssets="all" IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive" />
+    <PackageReference Include="FastEndpoints.OpenApi" Version="8.3.0" />
+    <PackageReference Include="FastEndpoints.OpenApi.Kiota" Version="8.3.0" />
+    <!-- Named for its version, which FastEndpoints.OpenApi asks for a patch lower. -->
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.12" />
+    <!-- FastEndpoints.OpenApi.Kiota pins Kiota.Builder 1.29.1, which asks for this bundle at 1.20.1
+         or later. NuGet's audit refuses 1.20.1 for GHSA-7j59-v9qr-6fq9, fixed in 1.22.0, so the
+         newest release of that major is named here. -->
+    <PackageReference Include="Microsoft.Kiota.Bundle" Version="1.22.2" />
+  </ItemGroup>
+  <!-- With RB_PAYLOADS set, a build runs what it built with generateclients set to true, as
+       FastEndpoints documents for writing clients at build time. PORT=0 lets it listen on any
+       free port while it runs. Client/Kiota is emptied first, because Kiota's own clean-output
+       mode reads the document from a temporary directory and records that path in
+       kiota-lock.json. The image's build sets no RB_PAYLOADS, so it never runs this. -->
+  <Target Name="GenerateClient" AfterTargets="Build" Condition="'$(RB_PAYLOADS)' != ''">
+    <RemoveDir Directories="../Client/Kiota" />
+    <Exec WorkingDirectory="$(ProjectDir)" Command="dotnet &quot;$(TargetPath)&quot; --generateclients true" EnvironmentVariables="PORT=0;RB_PAYLOADS=$([MSBuild]::NormalizePath('$(MSBuildStartupDirectory)', '$(RB_PAYLOADS)'))" />
+  </Target>
+</Project>

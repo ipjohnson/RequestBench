@@ -1,0 +1,68 @@
+{
+  "comment": "ASP.NET Core MVC on ASP.NET Core 10, one controller per family under Implementation/Controllers. MVC is part of ASP.NET Core's shared framework, which no package reference resolves: the aspnet runtime image supplies it, so the image's digest in the Dockerfile pins the version /__meta reports, and package names that image. packages.lock.json pins the OpenAPI packages. The suite is UnitTests/, xunit over WebApplicationFactory<Program>, and never reaches the image. upgrade is null because the version moves with the image digest, and dotnet package update moves every package to its newest release, majors included.",
+  "framework": "ASP.NET Core MVC",
+  "licence": "MIT",
+  "repo": "https://github.com/dotnet/aspnetcore",
+  "package": "https://mcr.microsoft.com/artifact/mar/dotnet/aspnet",
+  "docs": "https://learn.microsoft.com/aspnet/core/mvc/overview",
+  "lockfile": ["Implementation/packages.lock.json"],
+  "hosts": {
+    "container-h1": { "dockerfile": "Dockerfile" }
+  },
+  "suite": { "argv": ["dotnet", "test", "UnitTests"], "paths": ["UnitTests"] },
+  "upgrade": null,
+  "client": {
+    "document": "Client/openapi.json",
+    "writer": "Microsoft.AspNetCore.OpenApi 10.0.12, through Microsoft.Extensions.ApiDescription.Server on dotnet build",
+    "generator": "Kiota 1.35.0, a .NET local tool that Client.csproj runs, because ASP.NET Core recommends no generator of its own",
+    "argv": ["dotnet", "build", "Client"]
+  },
+  "noHandler": {
+    "cors.preflight": "ASP.NET Core's CORS middleware answers the preflight for the action [EnableCors] marks, and no action runs.",
+    "errors.unmatched": "The router answers a path no route matches with 404, and ProblemDetails writes the body.",
+    "errors.wrong_method": "The router answers a method the path has no action for with 405, and ProblemDetails writes the body."
+  },
+  "mechanisms": {
+    "authorized": {
+      "mechanism": "ASP.NET Core authorization: [Authorize] with a policy on this one action, over a bearer-token authentication scheme of its own"
+    },
+    "baseline": { "builtin": "The action returns the text as a ContentResult." },
+    "body": {
+      "mechanism": "MVC's model validation: DataAnnotations on the order and line types, which [ApiController] runs before the action and refuses with its automatic 400. The bind actions bind a subtype marked [ValidateNever]. The first-error action's filter checks one property at a time with DataAnnotations, because they cannot stop at the first failure"
+    },
+    "cache": {
+      "mechanism": "ASP.NET Core output caching, which MVC reads from [OutputCache] on each action, with a named policy for each vary row that varies by its request headers"
+    },
+    "compressed": {
+      "mechanism": "ASP.NET Core's response compression middleware on the whole application, at gzip's fastest level"
+    },
+    "cors": {
+      "mechanism": "ASP.NET Core CORS with a named policy, which [EnableCors] requires on the CORS controller alone"
+    },
+    "errors": {
+      "builtin": "The router answers a miss with 404 and a method a route lacks with 405, and ASP.NET Core's ProblemDetails writes the body. [ApiController] answers a body the input formatter cannot read with MVC's own 400, and an action's NotFound with MVC's ProblemDetails."
+    },
+    "etag": {
+      "mechanism": "A result filter on the two actions that serialises the answer with MVC's JSON options and hashes it with SHA-1, handing both to MVC's FileContentResult, which sets ETag and answers a matching If-None-Match with 304"
+    },
+    "forms": { "builtin": "MVC's form binding binds the urlencoded form to a record, and the multipart fields and the IFormFile by name." },
+    "headers": { "builtin": "[FromHeader] parameters, the account as an int." },
+    "items": { "builtin": "One action per method on /items/{id:int}, the id bound as an int, with HEAD beside GET on the read action." },
+    "json": {
+      "mechanism": "A source-generated JsonSerializerContext first in MVC's resolver chain, so System.Text.Json writes from generated metadata",
+      "mentions": "JsonContext"
+    },
+    "middleware": { "mechanism": "No-op action filters on the action, four or sixteen of them" },
+    "parameters": { "builtin": "Route values bound as ints by MVC's model binding." },
+    "query": { "builtin": "MVC's model binding: an action parameter for the one value, and a record bound through its constructor for the eight." },
+    "sse": { "builtin": "The action returns TypedResults.ServerSentEvents, ASP.NET Core 10's result for server-sent events, which MVC runs as an IResult and which writes each row as an event." },
+    "static": {
+      "mechanism": "ASP.NET Core's static-file middleware over the payload directory, under /static"
+    },
+    "stream": { "builtin": "The action writes each row and a newline to the response, and flushes." },
+    "template": {
+      "mechanism": "An MVC Razor view, rendered by View() through the view engine AddControllersWithViews registers",
+      "mentions": "AddControllersWithViews"
+    }
+  }
+}

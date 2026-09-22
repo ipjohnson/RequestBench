@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Implementation's build writes openapi.json here, so it builds first. -->
+  <ItemGroup>
+    <ProjectReference Include="../Implementation/Implementation.csproj" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Kiota.Bundle" Version="2.1.2" />
+  </ItemGroup>
+  <!-- After the project references build, because one of them writes the document. Kiota's output
+       is compiled from what it writes, so the Compile items are read again. -->
+  <Target Name="GenerateClient" BeforeTargets="CoreCompile" Inputs="openapi.json" Outputs="Kiota/kiota-lock.json">
+    <Exec Command="dotnet tool restore" />
+    <Exec Command="dotnet tool run kiota generate -l CSharp -d openapi.json -o Kiota -c AspNetMvcClient -n Client.Kiota --exclude-backward-compatible --clean-output --log-level Error" />
+    <ItemGroup>
+      <Compile Remove="Kiota/**" />
+      <Compile Include="Kiota/**/*.cs" />
+    </ItemGroup>
+  </Target>
+</Project>

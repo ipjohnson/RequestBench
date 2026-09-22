@@ -3,8 +3,11 @@
 A framework is a directory, `frameworks/<language>/<name>/`, that answers every performance test in
 `tests/` from a container and holds itself to that with its own suite. Its id is
 `<language>:<name>`, taken from the path. Nothing registers it except its entry in
-`frameworks/exceptions.ts`. [`dotnet/carter`](dotnet/carter) is the worked example. There is one in
-each other language: [`node/fastify`](node/fastify), [`python/fastapi`](python/fastapi),
+`frameworks/exceptions.ts`. [`dotnet/carter`](dotnet/carter) is the worked example. Four more run on
+ASP.NET Core beside it: [`dotnet/minimal-apis`](dotnet/minimal-apis),
+[`dotnet/aspnet-mvc`](dotnet/aspnet-mvc), [`dotnet/fastendpoints`](dotnet/fastendpoints) and
+[`dotnet/wolverine-http`](dotnet/wolverine-http). There is one in each other language:
+[`node/fastify`](node/fastify), [`python/fastapi`](python/fastapi),
 [`java/spring-boot`](java/spring-boot), [`rust/axum`](rust/axum) and [`go/gin`](go/gin).
 
 Discovery, bundles and marks read git's index, not the directory. Run `git add` on new files before
@@ -123,15 +126,18 @@ written in TypeScript compiles its own source with its own settings.
 ## Client
 
 `Client/` holds the OpenAPI document a framework writes about its own routes and a client generated
-from that document. Carter, Fastify, FastAPI and Spring Boot have one. axum and Gin do not, because
-neither writes a document without a third-party library.
+from that document. Every framework has one except axum and Gin, because neither writes a document
+without a third-party library.
 
 - The document comes from the framework's own tooling, reading the routes as the corpus has them.
-  The ASP.NET Core frameworks use ASP.NET Core's generation. A Java framework may start its server
-  to read the document, where that is how its tooling runs in CI.
+  The ASP.NET Core frameworks use ASP.NET Core's generation, FastEndpoints through its own
+  FastEndpoints.OpenApi, which builds on it. A Java framework may start its server to read the
+  document, where that is how its tooling runs in CI. FastEndpoints' export starts the application
+  on a free port, as its documentation describes.
 - The client comes from the generator the framework's documentation recommends. Where it recommends
   none, the client is Kiota's, when Kiota supports the language well, even through a community
-  plugin. FastAPI's is Hey API's, a TypeScript client, and the other three are Kiota's.
+  plugin. FastAPI's is Hey API's, a TypeScript client. FastEndpoints recommends Kiota and runs it
+  inside the application through its own FastEndpoints.OpenApi.Kiota. The rest run Kiota themselves.
 - Everything that writes the two runs from the framework's directory with its own toolchain, and
   rb.json `client.argv` runs it. `npm run rb -- client <id>` runs that with `RB_PAYLOADS` set and
   fails if anything under `Client/` changed.
@@ -140,7 +146,8 @@ neither writes a document without a third-party library.
   document a second time.
 - Nothing in `Client/` reaches the image, and writing the document must not change what the image
   runs. Carter writes it only when `RB_PAYLOADS` is set, and Spring Boot adds springdoc only under a
-  Maven profile.
+  Maven profile. FastEndpoints writes both only when started with `--generateclients true`, which
+  its build passes when `RB_PAYLOADS` is set.
 - The client's own tests go in the suite, without `rb:test` marks, because they hold the client and
   not a corpus row. FastAPI's TypeScript client is tested in `Client/` instead, by the client
   command.
@@ -156,11 +163,12 @@ neither writes a document without a third-party library.
 The site shows, for every test, the code that answers it, the code that wires its family, and the
 suite's test of it. Most of that is found from the source. A route literal the test's path matches
 is its handler. The method is read from the literal's own line, so keep the literal on the line of
-the call that names the method, or it matches every method. A formatter that breaks a call across
-lines separates the two, which is why axum's registrations are not run through rustfmt. Any other
-string that reads as a route matches too, with or without its leading slash, such as Gin's
-`json:"items"` struct tag, a Thymeleaf view named `items` or a `"/items/{}"` format string. Rename
-it or mark the route.
+the call that names the method, or it matches every method. The finder knows GET, POST, PUT, PATCH
+and DELETE, so a HEAD route such as Wolverine's `[WolverineHead]` matches every method and is
+marked. A formatter that breaks a call across lines separates the two, which is why axum's
+registrations are not run through rustfmt. Any other string that reads as a route matches too,
+with or without its leading slash, such as Gin's `json:"items"` struct tag, a Thymeleaf view named
+`items` or a `"/items/{}"` format string. Rename it or mark the route.
 
 Marks cover the rest. A mark is a comment, `rb:<kind> <selector>[,<selector>...]`, and labels the
 block under it. `rb:end` closes one where the block would stop short. A selector is `family.name`,
@@ -168,6 +176,8 @@ block under it. `rb:end` closes one where the block would stop short. A selector
 
 `rb:handler`, with a test as the selector, marks the lines that answer the request.
 - Use it where the route literal cannot be found or matches in more than one place.
+- Use it where the literal sits apart from the code that answers. A FastEndpoints endpoint names its
+  route in `Configure()`, and the finder would show that line alone, so each class is marked.
 - Every performance test needs a handler, except those in `noHandler`.
 
 `rb:wiring`, with a family as the selector (`family.*`), marks the code that makes a family work
@@ -180,10 +190,12 @@ and that the route does not name.
 `rb:test`, with tests as the selectors, marks a test in the framework's own suite that holds it to
 those tests.
 - The marked code has to contain each test's id.
-- Carter puts `[Trait("corpus", "<id>")]` on the test, which also lets
-  `dotnet test --filter corpus=<id>` run it. Fastify starts each test's name with its id, so
-  `node --test --test-name-pattern=<id>` runs it. FastAPI puts `@pytest.mark.corpus("<id>")` on
-  the test.
+- Carter and the other .NET frameworks put `[Trait("corpus", "<id>")]` on the test, which also
+  lets `dotnet test --filter corpus=<id>` run it. FastEndpoints' suite runs on xunit.v3 under
+  Microsoft.Testing.Platform, where it is `dotnet test --project UnitTests --filter-trait
+  "corpus=<id>"`. Fastify starts each test's name with its id, so
+  `node --test --test-name-pattern=<id>` runs it. FastAPI puts `@pytest.mark.corpus("<id>")` on the
+  test.
 - Spring Boot puts `@Tag("<id>")` on the test, so `mvn test -Dgroups=<id>` runs it. Gin runs each
   id as a subtest, `t.Run("<id>", ...)`, so `go test ./UnitTests -run '/<id>'` runs it. axum names
   the ids in the test's doc comment, which the marked block runs through onto the function.
