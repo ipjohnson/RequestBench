@@ -192,12 +192,12 @@
    "status": 404,
    "class": "json",
    "shape": [
-    "error:string"
+    "detail:string"
    ],
    "body": {
-    "error": "not_found"
+    "detail": "Not Found"
    },
-   "bodyFrom": "shape"
+   "bodyFrom": "captured from frameworks/python/fastapi/Implementation"
   },
   "python:flask": {
    "status": 404,

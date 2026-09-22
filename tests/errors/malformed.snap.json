@@ -258,7 +258,7 @@
      }
     ]
    },
-   "bodyFrom": "captured for the snake_case body, with loc moved to where the camelCase body ends"
+   "bodyFrom": "captured from frameworks/python/fastapi/Implementation"
   },
   "python:flask": {
    "status": 400,

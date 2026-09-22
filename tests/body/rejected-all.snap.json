@@ -79,7 +79,7 @@
      }
     ]
    },
-   "bodyFrom": "derived: Pydantic's messages for orderRequest's three rules, gt 0, min_length 1 and min_length 1. Not captured, because the rewrite has no FastAPI implementation yet"
+   "bodyFrom": "captured from frameworks/python/fastapi/Implementation"
   }
  }
 }

@@ -1,0 +1,31 @@
+# The application's dependencies, and the suite's. uv.lock beside it is what uv resolved, which
+# the image installs with --locked. Ranges move patch releases alone for 0.x packages, and minor
+# releases too for the rest.
+[project]
+name = "rb-fastapi"
+version = "0"
+requires-python = ">=3.14"
+dependencies = [
+  "cachetools~=7.2",
+  "fastapi~=0.141.1",
+  "jinja2~=3.1",
+  "pydantic~=2.13",
+  "python-multipart~=0.0.32",
+  # uvloop and httptools, which uvicorn picks when they are installed, come with standard.
+  "uvicorn[standard]~=0.53.0",
+]
+
+[dependency-groups]
+# Starlette's TestClient sends through httpx2.
+dev = ["httpx2~=2.13", "pytest~=9.1"]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["UnitTests"]
+pythonpath = ["Implementation"]
+addopts = "--strict-markers"
+markers = ["corpus(*ids): the corpus tests this test holds the framework to"]
+# Raised inside Starlette's TestClient, which the suite cannot change.
+filterwarnings = ["ignore:The anyio.abc.BlockingPortal alias is deprecated:DeprecationWarning"]

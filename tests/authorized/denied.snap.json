@@ -191,12 +191,12 @@
    "status": 403,
    "class": "json",
    "shape": [
-    "error:string"
+    "detail:string"
    ],
    "body": {
-    "error": "forbidden"
+    "detail": "Forbidden"
    },
-   "bodyFrom": "shape"
+   "bodyFrom": "captured from frameworks/python/fastapi/Implementation"
   },
   "python:flask": {
    "status": 403,

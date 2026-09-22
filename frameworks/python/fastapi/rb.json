@@ -1,0 +1,57 @@
+{
+  "comment": "FastAPI on uvicorn, one APIRouter per family under Implementation/routes, and a sub-application for each of the two families that need a middleware of their own. uvicorn runs two worker processes, because one Python process runs Python on one core at a time and the container has two. The suite is UnitTests/, pytest over Starlette's TestClient, and never reaches the image. The suite and upgrade run through uv, which has to be installed.",
+  "framework": "FastAPI",
+  "licence": "MIT",
+  "repo": "https://github.com/fastapi/fastapi",
+  "package": "https://pypi.org/project/fastapi/",
+  "docs": "https://fastapi.tiangolo.com/",
+  "lockfile": ["uv.lock"],
+  "hosts": {
+    "container-h1": { "dockerfile": "Dockerfile" }
+  },
+  "suite": { "argv": ["uv", "run", "--locked", "pytest"], "paths": ["UnitTests"] },
+  "upgrade": { "argv": ["uv", "lock", "--upgrade"] },
+  "noHandler": {
+    "cors.preflight": "Starlette's CORSMiddleware on the /cors sub-application answers the preflight, and no handler runs.",
+    "errors.unmatched": "Starlette's router answers a path no route matches with 404.",
+    "errors.wrong_method": "Starlette's router answers a method the path has no route for with 405."
+  },
+  "mechanisms": {
+    "authorized": {
+      "mechanism": "FastAPI's HTTPBearer security scheme, and a dependency on the route that compares its token and raises 403"
+    },
+    "baseline": { "builtin": "The handler returns the string, and PlainTextResponse writes it." },
+    "body": {
+      "mechanism": "Pydantic models as the body parameter, with types alone on the bind routes and orderRequest's rules on the validate routes. The first-error route checks the rules one field at a time in a dependency, because Pydantic cannot stop at the first failure",
+      "dependency": "pydantic"
+    },
+    "cache": {
+      "mechanism": "A route class on the cache router that answers from a cachetools TTLCache before the handler and stores what the handler answered, one store in each worker",
+      "dependency": "cachetools"
+    },
+    "compressed": { "mechanism": "Starlette's GZipMiddleware at its defaults, on a sub-application mounted at /compressed" },
+    "cors": { "mechanism": "Starlette's CORSMiddleware on a sub-application mounted at /cors" },
+    "errors": {
+      "builtin": "Starlette's router answers a miss with 404 and a method a path lacks with 405, FastAPI refuses a body that is not JSON with 422, and the items handlers raise HTTPException for a missing row, each as FastAPI's detail JSON."
+    },
+    "etag": { "mechanism": "A route class on the etag router that hashes the body with SHA-1 and answers a matching If-None-Match with 304" },
+    "forms": { "builtin": "FastAPI binds a form model and an UploadFile, both parsed by python-multipart." },
+    "headers": { "builtin": "Header() parameters, each read by its name with hyphens for underscores, the account as an int." },
+    "items": { "builtin": "One path operation per method on /items/{id}, the id an int, with GET and HEAD on the read route." },
+    "json": {
+      "mechanism": "A declared return type, which FastAPI serializes with Pydantic straight to JSON bytes",
+      "dependency": "pydantic"
+    },
+    "middleware": { "mechanism": "No-op dependencies on the route, four or sixteen of them, each run rather than cached" },
+    "parameters": { "builtin": "Path parameters typed int, which FastAPI converts." },
+    "query": { "builtin": "A Pydantic model of the query string, which FastAPI binds and converts." },
+    "sse": { "builtin": "FastAPI's EventSourceResponse, which serializes each row the handler yields with Pydantic, as one event." },
+    "static": { "mechanism": "Starlette's StaticFiles over the payload directory, mounted at /static" },
+    "stream": { "builtin": "The handler yields each row's bytes into a StreamingResponse subclass typed application/x-ndjson." },
+    "template": {
+      "mechanism": "Jinja2Templates rendering a Jinja2 template",
+      "dependency": "jinja2",
+      "mentions": "Jinja2Templates"
+    }
+  }
+}

@@ -2,6 +2,9 @@ node_modules/
 .idea/
 bin/
 obj/
+.venv/
+__pycache__/
+.pytest_cache/
 results/runs/
 # The rendered site.
 site/dist/

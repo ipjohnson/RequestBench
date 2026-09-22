@@ -56,6 +56,10 @@ The orchestrator starts the container with these settings:
 | `RB_PAYLOADS` | `/rb/payloads`, a read-only mount of `tests/payloads`. |
 | CPUs | 2 by quota, or the cores `RB_SUT_CPUS` names. |
 
+A Node framework runs one process. A Python framework runs two workers, because one Python process
+runs Python on one core at a time. [`python/fastapi`](python/fastapi) starts uvicorn with
+`workers=2`, written as a number, because under a quota Python counts every core the host has.
+
 Two routes sit outside the corpus:
 
 - `GET /health` answers 200 with a non-empty body once the framework is ready. The boot is timed
@@ -129,7 +133,8 @@ those tests.
 - The marked code has to contain each test's id.
 - Carter puts `[Trait("corpus", "<id>")]` on the test, which also lets
   `dotnet test --filter corpus=<id>` run it. Fastify starts each test's name with its id, so
-  `node --test --test-name-pattern=<id>` runs it.
+  `node --test --test-name-pattern=<id>` runs it. FastAPI puts `@pytest.mark.corpus("<id>")` on
+  the test.
 
 Every performance test needs a marked test in the framework's suite, and `rb check` fails a
 framework that lacks one. The same holds for every other assertion in `orchestrator/marks.ts`.
