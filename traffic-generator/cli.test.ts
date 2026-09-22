@@ -220,7 +220,8 @@ test("an instance due while the in-flight limit is reached is dropped, not sent"
   const { recorded } = result.phases[0];
   assert.ok(recorded.dropped > 0);
   assert.equal(recorded.completed + recorded.dropped, recorded.scheduled);
-  assert.ok(recorded.overall.p50Us >= 300_000);
+  // A percentile reads as its bucket's midpoint, and a bucket is 2% wide, so 300 ms can read as 297.9.
+  assert.ok(recorded.overall.p50Us >= 300_000 / 1.02);
 });
 
 test("phases run in order, a settle is never recorded, and a phase with only a settle records nothing", async () => {
