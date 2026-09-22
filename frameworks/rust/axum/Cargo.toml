@@ -33,6 +33,8 @@ axum-valid = { version = "0.25.0", default-features = false, features = ["valida
 askama = "0.16.1"
 cached = "1.1.0"
 futures-util = "0.3.34"
+# The allocator every Rust framework here runs on, in place of the system one.
+mimalloc = "0.1.52"
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.151"
 sha1 = "0.11.0"

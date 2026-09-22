@@ -2,6 +2,11 @@ use axum::serve::ListenerExt;
 use tokio::net::TcpListener;
 use tokio::signal::unix::{SignalKind, signal};
 
+/// The allocator the binary runs on. A server of this shape allocates on every request, and the
+/// one glibc ships is the slower of the two under threads.
+#[global_allocator]
+static ALLOCATOR: mimalloc::MiMalloc = mimalloc::MiMalloc;
+
 // Two runtime workers under the container's two-CPU quota: tokio starts one per core that
 // std::thread::available_parallelism reports, and that reads the cgroup's quota.
 #[tokio::main]

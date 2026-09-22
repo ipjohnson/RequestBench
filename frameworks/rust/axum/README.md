@@ -84,8 +84,9 @@ Choices a reader might not expect:
   axum's documentation shows.
 - The server is PID 1 in its container, and the kernel gives PID 1 no default action for SIGTERM.
   `main.rs` shuts the server down gracefully on it, so `docker stop` does not wait out its timeout.
-- The allocator is glibc's. Upstream ran every Rust framework on mimalloc. This port keeps the
-  allocator the binary links, as an axum application does unless it chooses otherwise.
+- The allocator is mimalloc, set as the global allocator in `main.rs`. A server of this shape
+  allocates on every request, and the benchmark runs every Rust framework on the same allocator so
+  that a difference between two of them is the framework.
 
 ## Refusals
 
