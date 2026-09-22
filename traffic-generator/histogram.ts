@@ -2,7 +2,7 @@
 // a histogram published by either reads the same.
 
 /** Each bucket is 2% wider than the one before it, so a percentile read off one is within 2%. */
-const LOG_GROWTH = Math.log(1.02);
+export const LOG_GROWTH = Math.log(1.02);
 
 /** 1.02^920 is about 80 seconds, and anything slower lands in the last bucket. */
 export const BUCKETS = 920;

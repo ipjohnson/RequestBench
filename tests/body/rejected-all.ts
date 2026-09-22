@@ -6,6 +6,8 @@ const path = "/body/validate/small";
 export default performanceTest({
   id: { family: "body", name: "rejected_all" },
   path,
+  base: "body.validate_small",
+  varies: "outcome",
   about:
     "Three fields wrong in one body. What a rejection looks like is the " +
     "framework's own contract, so the status and the field paths are read " +

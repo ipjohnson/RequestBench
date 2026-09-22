@@ -47,7 +47,7 @@ function typed(path: string): RegExp {
   return /^application\/json$/;
 }
 
-/** 400 for a body the parser refuses and for one the validator refuses, as fastify answers both. */
+/** 400 for a body the parser refuses and for one that breaks orderRequest's rules, as fastify answers both. */
 function validated(body: string): Answer {
   let order: unknown;
   try {
@@ -56,7 +56,9 @@ function validated(body: string): Answer {
     return 400;
   }
   const o = order as { customerId?: unknown; status?: unknown; lines?: unknown };
-  return Number.isInteger(o.customerId) && typeof o.status === "string" && Array.isArray(o.lines) ? 200 : 400;
+  const valid = Number.isInteger(o.customerId) && (o.customerId as number) > 0 && typeof o.status === "string" && o.status !== "" &&
+    Array.isArray(o.lines) && o.lines.length > 0;
+  return valid ? 200 : 400;
 }
 
 const ROUTES: readonly Route[] = [
@@ -98,6 +100,7 @@ const ROUTES: readonly Route[] = [
   }],
   [/^POST \/forms\/multipart$/, (_, __, ___, body) => (body.includes(`\r\n\r\n${VALUES.tenant}\r\n`) ? 200 : 500)],
   [/^GET \/(stream\/items|static\/items\.large\.json)$/, () => 200],
+  [/^GET \/sse\/medium$/, (_, req) => (req.headers.accept === "text/event-stream" ? 200 : 500)],
 ];
 
 /** How the stub answers, with any route swapped out for the scenario. */
@@ -181,7 +184,7 @@ test("every performance test answers the status it declares", async () => {
   delay = 0;
   const { code, result, stdout } = await generate(load([{ name: "regular", rps: 300, seconds: 2 }], { workers: 2 }));
   assert.equal(code, 0, stdout);
-  assert.equal(result.testsLive, 55);
+  assert.equal(result.testsLive, 56);
   assert.deepEqual(result.load.values, VALUES);
   const [regular] = result.phases;
   assert.equal(regular.status, "done");

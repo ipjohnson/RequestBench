@@ -7,6 +7,8 @@ const vary = settings.value.cache.vary.one;
 export default performanceTest({
   id: { family: "cache", name: "vary_one" },
   path,
+  base: "cache.small",
+  varies: "cache_key",
   about:
     "The stored answer keyed by a request header as well as by the path. One " +
     "header with two values, picked per instance, so a store that ignores the " +

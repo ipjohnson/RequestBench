@@ -184,6 +184,12 @@ export function corpusReference(snapshots: ReadonlyMap<string, Snapshot>, framew
       headers: { "content-type": "application/x-ndjson", "transfer-encoding": "chunked" },
       body: items.medium.value.items.map((r) => `${JSON.stringify(r)}\n`).join(""),
     })],
+    // Lines end in CRLF, as sse-starlette writes them, so a reader that splits on LF alone fails here.
+    ["GET", /^\/sse\/medium$/, () => ({
+      status: 200,
+      headers: { "content-type": "text/event-stream", "transfer-encoding": "chunked" },
+      body: items.medium.value.items.map((r) => `data: ${JSON.stringify(r)}\r\n\r\n`).join(""),
+    })],
     ["GET", /^\/static\/([\w.-]+)$/, (_, m) => {
       const path = join(PAYLOADS, m[1]!);
       if (!existsSync(path)) return notFound();

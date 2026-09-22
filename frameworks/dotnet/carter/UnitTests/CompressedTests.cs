@@ -1,0 +1,37 @@
+using System.IO.Compression;
+
+namespace UnitTests;
+
+public sealed class CompressedTests(CarterApp app) : IClassFixture<CarterApp>
+{
+    [Fact]
+    public async Task Gzip_asked_for_is_gzip_answered_and_the_handler_runs_each_time()
+    {
+        using HttpResponseMessage first = await Ask("/compressed/large", "gzip");
+        using HttpResponseMessage second = await Ask("/compressed/large", "gzip");
+
+        Assert.Equal(["gzip"], second.Content.Headers.ContentEncoding);
+        await using GZipStream unzipped = new(await second.Content.ReadAsStreamAsync(), CompressionMode.Decompress);
+        Assert.True(JsonNode.DeepEquals(Expected.Json("items.large.json"), await JsonNode.ParseAsync(unzipped)));
+        Assert.True(Answer.Serial(second) > Answer.Serial(first));
+    }
+
+    [Theory]
+    [InlineData("/compressed/small", "items.small.json")]
+    [InlineData("/compressed/large", "items.large.json")]
+    public async Task Identity_asked_for_is_answered_as_written(string path, string file)
+    {
+        using HttpResponseMessage response = await Ask(path, "identity");
+
+        Assert.Empty(response.Content.Headers.ContentEncoding);
+        await Answer.Is(Expected.Json(file), response);
+    }
+
+    private Task<HttpResponseMessage> Ask(string path, string encoding)
+    {
+        HttpRequestMessage request = new(HttpMethod.Get, path);
+        request.Headers.Add("accept-encoding", encoding);
+        request.Headers.Add("cache-control", "no-cache");
+        return app.CreateClient().SendAsync(request);
+    }
+}

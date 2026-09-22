@@ -6,6 +6,8 @@ const path = "/template/small";
 export default performanceTest({
   id: { family: "template", name: "small" },
   path,
+  base: "json.small",
+  varies: "renderer",
   about:
     "One row rendered through the framework's own view layer instead of " +
     "serialised. Read against json.small, the difference is the engine, which " +

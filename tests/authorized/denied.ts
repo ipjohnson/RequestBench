@@ -6,6 +6,8 @@ const path = "/authorized/small";
 export default performanceTest({
   id: { family: "authorized", name: "denied" },
   path,
+  base: "authorized.allowed",
+  varies: "outcome",
   about:
     "The same endpoint refusing. The token differs from the accepted one by " +
     "its last character, so the comparison walks the whole string and this " +

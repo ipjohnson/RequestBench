@@ -1,21 +1,27 @@
 import { z } from "zod";
-import { exceptions, fromClr, toClr } from "@rb/tests/kit";
+import { exceptions, fromClr } from "@rb/tests/kit";
 
+/**
+ * ASP.NET Core's ProblemDetails, which Carter answers every refusal with. Carter's
+ * validation filter adds errors, one entry per failed rule.
+ */
 const Envelope = z.object({
+  type: z.string(),
   title: z.string(),
   status: z.number(),
-  errors: z.record(z.string(), z.array(z.string()).min(1)),
+  errors: z.array(z.object({ propertyName: z.string(), errorMessage: z.string() })).optional(),
 });
 
 export default exceptions({
   about:
-    "ProblemDetails, written by the FluentValidation filter. The keys are the " +
-    "CLR property path, so PascalCase with a bracketed index, and each one " +
-    "holds every message for that field.",
-  rejected: 400,
+    "ASP.NET Core's ProblemDetails. Carter's validation filter answers 422 and lists each failed " +
+    "rule under errors, named by its CLR property path. A body that is not JSON never reaches the " +
+    "filter, and the binder refuses it with a 400 that names no field.",
+  rejected: 422,
+  malformed: 400,
   notFound: 404,
   wrongMethod: 405,
   envelope: Envelope,
-  fields: (b) => Object.keys(b.errors).map(fromClr),
-  message: (b, f) => b.errors[toClr(f)]?.[0],
+  fields: (b) => (b.errors ?? []).map((e) => fromClr(e.propertyName)),
+  message: (b, f) => b.errors?.find((e) => fromClr(e.propertyName) === f)?.errorMessage,
 });

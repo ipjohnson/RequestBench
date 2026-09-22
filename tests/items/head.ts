@@ -5,6 +5,8 @@ const path = "/items/{draw.item}";
 export default performanceTest({
   id: { family: "items", name: "head" },
   path,
+  base: "items.read",
+  varies: "method",
   about:
     "The same lookup asked with HEAD, which the framework answers from its GET " +
     "route with no body. Read against items.read, the difference is the body " +

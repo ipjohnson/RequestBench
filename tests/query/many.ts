@@ -6,6 +6,8 @@ const path = "/query/many?page={run.page}&size={run.size}&status={run.status}&ca
 export default performanceTest({
   id: { family: "query", name: "many" },
   path,
+  base: "query.one",
+  varies: "query_params",
   about:
     "Eight parameters, which is what a real search endpoint carries: a page " +
     "and a size, a sort, a text term and four filters. Read against " +

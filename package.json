@@ -4,12 +4,16 @@
   "type": "module",
   "comment": "workspaces are listed one by one, never a glob. A glob that reached frameworks/** would hoist every node target into this lockfile, and a target pinning its own resolution is what the version on its results row means.",
   "workspaces": [
-    "tests"
+    "tests",
+    "site"
   ],
   "scripts": {
-    "typecheck": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json && npm run typecheck -w @rb/site",
     "spec": "node --experimental-strip-types --disable-warning=ExperimentalWarning orchestrator/spec.ts",
-    "test": "node --experimental-strip-types --disable-warning=ExperimentalWarning --test orchestrator/test/corpus.test.ts orchestrator/test/spec.test.ts"
+    "test": "node --experimental-strip-types --disable-warning=ExperimentalWarning --test orchestrator/test/corpus.test.ts orchestrator/test/spec.test.ts orchestrator/test/bundle.test.ts orchestrator/test/manifest.test.ts orchestrator/test/version.test.ts orchestrator/test/edges.test.ts orchestrator/test/snippets.test.ts orchestrator/test/siteview.test.ts orchestrator/test/live.test.ts orchestrator/test/measure.test.ts orchestrator/test/summarize.test.ts traffic-generator/cli.test.ts site/test/*.test.ts",
+    "test:docker": "node --experimental-strip-types --disable-warning=ExperimentalWarning --test orchestrator/test/container.test.ts",
+    "rb": "node --experimental-strip-types --disable-warning=ExperimentalWarning orchestrator/cli.ts",
+    "site": "node --experimental-strip-types --disable-warning=ExperimentalWarning site/tools/build.ts"
   },
   "devDependencies": {
     "@types/node": "^26.6.2",

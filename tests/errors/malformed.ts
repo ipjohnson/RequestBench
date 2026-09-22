@@ -8,6 +8,8 @@ const MALFORMED = '{"customerId": 1, "lines": [';
 export default performanceTest({
   id: { family: "errors", name: "malformed" },
   path,
+  base: "body.rejected_all",
+  varies: "parse_failure",
   about:
     "A body that is not JSON at all. Read against body.rejected_all, the " +
     "difference is the parser failing rather than the validator refusing, " +

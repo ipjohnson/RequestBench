@@ -40,7 +40,7 @@ export interface Corpus {
   readonly files: ReadonlySet<string>;
 }
 
-const FORMATS = new Set(["json", "lines", "text", "html"]);
+const FORMATS = new Set(["json", "lines", "events", "text", "html"]);
 
 const isPayload = (v: unknown): v is Payload =>
   v !== null && typeof v === "object" && typeof (v as Payload).name === "string" && FORMATS.has((v as Payload).format) && "value" in v;
@@ -173,6 +173,7 @@ const code = (s: string) => `\`${s}\``;
 const BY_FORMAT: Readonly<Record<Payload["format"], string>> = {
   json: "application/json",
   lines: "application/x-ndjson",
+  events: "text/event-stream",
   text: "text/plain",
   html: "text/html",
 };
@@ -180,6 +181,7 @@ const BY_FORMAT: Readonly<Record<Payload["format"], string>> = {
 const COMPARED: Readonly<Record<Payload["format"], string>> = {
   json: "Compared as parsed JSON, so key order and how a number is written do not matter.",
   lines: "Compared line by line, each line as parsed JSON.",
+  events: "Compared event by event as an EventSource dispatches them: each of type message with no id, and its data as parsed JSON.",
   text: "Compared byte for byte.",
   html: "Compared with whitespace at element boundaries removed and every other run of whitespace collapsed to one space.",
 };

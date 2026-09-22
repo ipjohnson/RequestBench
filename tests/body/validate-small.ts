@@ -6,6 +6,8 @@ const path = "/body/validate/small";
 export default performanceTest({
   id: { family: "body", name: "validate_small" },
   path,
+  base: "body.bind_small",
+  varies: "validation",
   about:
     "The same body checked against a schema before the handler sees it, and " +
     "answered exactly as the bind row answers it. Read against " +

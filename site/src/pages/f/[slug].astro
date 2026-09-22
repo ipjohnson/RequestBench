@@ -1,0 +1,432 @@
+---
+// One framework, as one run measured it.
+//
+// Rendered from the bundles at the commit that run recorded rather than from the working tree,
+// so a page about a run made in March shows the code that ran in March.
+import Shell from "../../components/Shell.astro";
+import Distribution from "../../components/Distribution.astro";
+import TestPane from "../../components/TestPane.astro";
+import FamilyPane from "../../components/FamilyPane.astro";
+import "../../styles/framework.css";
+import { permalink, type Part } from "../../lib/bundleview.ts";
+import { chainWith, comparedOf, deltaFor, floorFor, testValue } from "../../lib/delta.ts";
+import { usedSpan } from "../../lib/bins.ts";
+import { familyOf, hostOf, metaOf, rungsOf, testOrder } from "../../lib/run.ts";
+import { site, type FrameworkPage } from "../../lib/site.ts";
+import { unfinished } from "../../lib/views.ts";
+
+export function getStaticPaths() {
+  return site().pages.map((page) => ({ params: { slug: page.slug }, props: { page } }));
+}
+
+const { page } = Astro.props as { page: FrameworkPage };
+const { run, framework: t, rn, view, verdict, unlinked, repo, commit } = page;
+const { wire, routes, factors, families: about, catalog, tests: corpus } = site();
+
+const name = t.framework || t.name;
+const facts = [
+  `${name} ${t.version || "?"}`,
+  t.runtime ?? "",
+  ...(["adapter", "serializer"] as const).filter((k) => metaOf(t, k)).map((k) => `${k} ${metaOf(t, k)}`),
+].filter(Boolean);
+
+/** What the project is and where to read it, from rb.json at the run's commit. */
+const project = view?.project;
+const links: [string, string][] = [
+  ["source", project?.repo],
+  ["docs", project?.docs],
+  ["package", project?.package],
+].filter((l): l is [string, string] => Boolean(l[1]));
+/** github.com/CarterCommunity/Carter reads better in a cell than the scheme does. */
+const trim = (u: string): string => u.replace(/^https:\/\//, "").replace(/\/$/, "");
+
+/** Only for the rate this page opens on, which the Tests hint states. */
+const row = t.rungs[rn];
+
+const order = testOrder(run);
+const own = t.tests ?? {};
+const snips = view?.snippets ?? {};
+const host = hostOf(run);
+const exemplars = wire[`${t.language}-${t.name}@${host}`]?.tests ?? {};
+// Every percentile the performance table can show, so each can be read against the base's.
+const PCTS = ["p50Us", "p90Us", "p95Us", "p99Us", "p999Us"];
+const chainsAt = (id: string, rn: string) => {
+  const links = comparedOf(id, routes);
+  return Object.fromEntries(PCTS.map((m) => [m, chainWith(links, (e) => testValue(t, e, rn, m), floorFor)]));
+};
+const sizeOf = (id: string): number | null => exemplars[id]?.sbz ?? null;
+/** The test a pane compares with, when this run measured it: a root has none. */
+const againstOf = (id: string): string | null => {
+  const links = comparedOf(id, routes);
+  const base = links[links.length - 1]?.base;
+  return base && own[base] ? base : null;
+};
+
+// One registration often answers a whole family. Naming the rest on the pane is what keeps the
+// same block under six tests from reading as six separate answers.
+const handlerAt = (id: string): string | null => {
+  const h = snips[id]?.handler;
+  return h ? `${h.path}:${h.startLine}-${h.endLine}` : null;
+};
+const serves = new Map<string, string[]>();
+for (const id of order) {
+  const at = handlerAt(id);
+  if (at) serves.set(at, [...(serves.get(at) ?? []), id]);
+}
+const alsoFor = (id: string): string[] => {
+  const at = handlerAt(id);
+  return at ? (serves.get(at) ?? []).filter((o) => o !== id) : [];
+};
+
+// Wiring is keyed by family, so every test of a family renders the same support parts. Naming
+// the rest is what keeps six identical sections from reading as six separate answers.
+const wiredWith = (id: string): string =>
+  (snips[id]?.support ?? []).map((p) => `${p.path}:${p.startLine}-${p.endLine}`).join(" ");
+const shares = new Map<string, string[]>();
+for (const id of order) {
+  const at = wiredWith(id);
+  if (!snips[id] || !at) continue;
+  shares.set(at, [...(shares.get(at) ?? []), id]);
+}
+const alsoWired = (id: string): string[] => (shares.get(wiredWith(id)) ?? []).filter((o) => o !== id);
+
+/** Parts with their own permalinks: they come from other files than the handler. */
+const linked = (parts: Part[]): { part: Part; link: string | null }[] =>
+  parts.map((part) => ({
+    part,
+    link: verdict.linkable && repo ? permalink(repo, commit, part.path, part.startLine, part.endLine) : null,
+  }));
+
+const groups: [string, string[]][] = [];
+for (const id of order) {
+  const fam = own[id]?.family || familyOf(run, id);
+  const last = groups[groups.length - 1];
+  if (!last || last[0] !== fam) groups.push([fam, [id]]);
+  else last[1].push(id);
+}
+// Keyed by name rather than read off groups, which are runs of the order: a family split
+// across it would otherwise get two panes.
+const families = new Map<string, string[]>();
+for (const [fam, ids] of groups) if (fam) families.set(fam, [...(families.get(fam) ?? []), ...ids]);
+
+// A framework that did not complete the rate has no histogram to draw, and the page renders
+// without one rather than as an empty grid.
+const grid = run.binGrid;
+
+// Every rate the run recorded for this framework, not just the one the page opens on. The
+// reader flips between them in the browser, so all are rendered and one is shown; fetching on
+// demand would be a second data path for a page that is already a static file.
+const rates = rungsOf(run)
+  .filter((r) => t.rungs[r])
+  .map((r) => ({
+    rn: r,
+    label: `${(t.rungs[r]?.rps ?? 0).toLocaleString()} rps`,
+    span: usedSpan(own, order, r),
+    shown: r === rn,
+    // A rate the framework did not complete publishes what it achieved and dropped instead of
+    // a latency, so its button is greyed out and says why rather than opening empty panes.
+    why: unfinished(name, t.rungs[r]),
+  }));
+const hasBins = Boolean(grid) && rates.some((r) => r.span);
+
+// Every other framework in this run, which measured the same tests on the same machine in the
+// same window. Their numbers are not in the page: every page carrying every other framework's
+// would grow with the run. Once a reader picks one, the browser reads them from the run's
+// document in the data directory, the same file the explorer reads.
+const dataFile = (file: string | undefined): string => (file ? `../data/${file}` : "");
+const runFile = dataFile(catalog.runs.find((e) => e.id === run.runId)?.file);
+const peers = runFile
+  ? run.frameworks
+      .filter((o) => o.id !== t.id)
+      .map((o) => ({
+        id: `${o.language}-${o.name}`,
+        name: o.framework || o.name,
+        language: o.language,
+        version: o.version ?? "",
+        wire: dataFile(catalog.wire[`${o.language}-${o.name}@${host}`]?.file),
+      }))
+  : [];
+const peerGroups = [...new Set(peers.map((p) => p.language))]
+  .sort()
+  .map((lang): [string, typeof peers] => [
+    lang,
+    peers.filter((p) => p.language === lang).sort((a, b) => a.name.localeCompare(b.name)),
+  ]);
+const hasBase = order.some((id) => againstOf(id));
+const comparable = peers.length > 0 || hasBase;
+
+const famRungs = (fam: string, ids: string[]) =>
+  rates.map((r) => ({
+    rn: r.rn,
+    stats: t.families?.[r.rn]?.[fam],
+    tests: ids.map((id) => ({
+      id,
+      stats: own[id]?.rungs?.[r.rn],
+      chain: deltaFor(t, id, r.rn, routes, "p50Us"),
+    })),
+    shown: r.shown,
+  }));
+
+const missing = order.filter((id) => !snips[id]?.handler);
+/** What the matcher said about a test it located no handler for, without the ids it opens with. */
+const unlocatedOf = (id: string): string[] => {
+  const lead = `${t.id} ${id} `;
+  return (view?.problems ?? []).filter((p) => p.startsWith(lead)).map((p) => p.slice(lead.length));
+};
+const note = Object.keys(snips).length && missing.length ? ` No handler located for ${missing.join(", ")}.` : "";
+const rate = row ? (row.rps ?? 0).toLocaleString() : "?";
+const linkFor = (id: string): string | null => {
+  const h = snips[id]?.handler;
+  if (!h || !verdict.linkable || !repo) return null;
+  return permalink(repo, commit, h.path, h.startLine, h.endLine);
+};
+
+// The corpus's own test, at the same commit. It is the question, so it is shown whole.
+const testsLinkable = Boolean(corpus?.verdict.linkable && repo);
+const files = new Set(corpus?.view.bundle.files.map((f) => f.path) ?? []);
+const testOf = (id: string) => {
+  const tv = corpus?.view.tests[id];
+  if (!tv) return undefined;
+  return {
+    path: tv.source.path,
+    text: tv.source.text,
+    link: testsLinkable ? permalink(repo, commit, tv.source.path) : null,
+    // A payload with a committed file links to it. A computed one, such as a row or the bind
+    // answer, has no file and is named alone.
+    payloads: tv.payloads.map((p) => {
+      const file = [`tests/payloads/${p}`, `tests/payloads/${p}.json`].find((f) => files.has(f));
+      return { name: p, href: file && testsLinkable ? permalink(repo, commit, file) : null };
+    }),
+  };
+};
+
+/** Why the code on this page carries no links, once however many bundles share the reason. */
+const bothFromTree = page.from === "worktree" && corpus?.from === "worktree" && verdict.verified === corpus.verdict.verified;
+const unlinkedNotes = bothFromTree
+  ? [
+      verdict.verified
+        ? "The framework's files and the tests' are read from the working tree, which hashes to the bundles this run " +
+          "recorded. No commit holds them, so nothing links to them."
+        : "The framework's files and the tests' are read from the working tree, which has changed since this run, so " +
+          "they may differ from what ran. No commit holds them, so nothing links to them.",
+    ]
+  : [...new Set([unlinked, corpus?.unlinked].filter((x): x is string => Boolean(x)))];
+/** The first line: an error from a boot carries the end of the framework's log after it. */
+const error = t.error?.split("\n")[0];
+---
+
+<Shell
+  title={`${name} · RequestBench`}
+  footerLeft="github.com/ipjohnson/RequestBench"
+  footerLeftHref="../index.html"
+  footerRight={`run ${run.runId}`}
+>
+  <p class="crumb"><a id="back" href="../index.html">&larr; results</a></p>
+  <div class="ident">
+    <div class="mono-mark">{name[0]?.toUpperCase()}</div>
+    <h1>{name}</h1>
+  </div>
+  <p class="factline">{facts.join(" · ")}</p>
+  {
+    project && (
+      <table class="ident-table">
+        <thead>
+          <tr>
+            <th class="l">project</th>
+            <th class="l">licence</th>
+            {links.map(([label]) => (
+              <th class="l">{label}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="l">{name}</td>
+            <td class="l">{project.licence}</td>
+            {links.map(([, href]) => (
+              <td class="l">
+                <a href={href}>{trim(href)}</a>
+              </td>
+            ))}
+          </tr>
+        </tbody>
+      </table>
+    )
+  }
+  {
+    run.recorded !== true && (
+      <div class="note">
+        <strong>Not recorded.</strong> This run does not enter the published series
+        {run.notRecorded?.length ? `: ${run.notRecorded.join("; ")}.` : "."}
+      </div>
+    )
+  }
+  {error && <div class="note">{`${name} has no measurement in this run: ${error}`}</div>}
+
+  {
+    !order.length ? (
+      <div class="note">This run measured no tests, so there is nothing to explore.</div>
+    ) : (
+      <div class="panel">
+        <h2>Tests</h2>
+        <p class="hint">
+          {order.length} tests in {families.size} families, on the {host} host
+          {rates.length > 1 ? ", at the rate picked on the right" : ` at ${rate} offered rps`}.{note}
+        </p>
+        {unlinkedNotes.map((n) => <p class="hint">{n}</p>)}
+        {((hasBins && grid) || rates.length > 1 || comparable) && (
+          <div class="eptabs">
+            {hasBins && grid && (
+              <div role="tablist" aria-label="How to read these tests">
+                <button type="button" role="tab" id="tab-info" aria-controls="view-info" aria-selected="true">
+                  Info
+                </button>
+                <button type="button" role="tab" id="tab-dist" aria-controls="view-dist" aria-selected="false">
+                  Distribution
+                </button>
+              </div>
+            )}
+            <div class="epread">
+              {comparable && (
+                <div class="cmp" data-run={runFile || undefined} hidden>
+                  <span class="cmplabel" id="cmp-label">
+                    vs
+                  </span>
+                  <span class="cmpchips" role="group" aria-labelledby="cmp-label" />
+                  <select class="cmpadd" aria-label="Compare with">
+                    <option value="">add&hellip;</option>
+                    {hasBase && (
+                      <option
+                        value="base"
+                        data-name="base"
+                        title={`Each test's base: the same request to ${name} with one factor taken away`}
+                      >
+                        base
+                      </option>
+                    )}
+                    {peerGroups.map(([lang, ps]) => (
+                      <optgroup label={lang}>
+                        {ps.map((p) => (
+                          <option
+                            value={p.id}
+                            data-name={p.name}
+                            data-wire={p.wire || undefined}
+                            title={`${p.name} ${p.version}, measured in the same run on the same machine`}
+                          >
+                            {p.name}
+                          </option>
+                        ))}
+                      </optgroup>
+                    ))}
+                  </select>
+                  <span class="cmpstatus" role="status" />
+                </div>
+              )}
+              {rates.length > 1 && (
+                <div class="eprates" role="group" aria-label="Offered rate" data-host={host}>
+                  {rates.map((r) => (
+                    <button
+                      type="button"
+                      class="eprate-pick"
+                      data-rung={r.rn}
+                      aria-pressed={r.shown}
+                      aria-disabled={r.why ? "true" : undefined}
+                      title={r.why ?? undefined}
+                    >
+                      {r.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+        {hasBins && grid && (
+          <div class="epdist" id="view-dist" role="tabpanel" aria-labelledby="tab-dist" hidden>
+            <p class="hint">
+              Where each test's requests landed, as a share of what that test served. The percentiles
+              on its pane are read from this same histogram. Pick a row to open it.
+            </p>
+            {rates.map((r) => (
+              <Distribution grid={grid} groups={groups} tests={own} rn={r.rn} shown={r.shown} />
+            ))}
+          </div>
+        )}
+        <div class="explorer" id="view-info" role="tabpanel" aria-labelledby="tab-info">
+          <nav class="eptree">
+            <ul>
+              {groups.map(([fam, ids]) => (
+                <li class="epfam">
+                  {fam ? (
+                    <a class="epfamname" href={`#${fam}`} data-fam={fam}>
+                      {fam}
+                    </a>
+                  ) : (
+                    <span class="epfamname" />
+                  )}
+                  <ul>
+                    {ids.map((id) => (
+                      <li>
+                        <a class="eplink" href={`#${id}`} data-ep={id} aria-current={id === order[0] ? "true" : undefined}>
+                          <span class="epid">{id}</span>
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </li>
+              ))}
+            </ul>
+          </nav>
+          <div class="eppanes">
+            {order.map((id) => {
+              const against = againstOf(id);
+              return (
+                <TestPane
+                  id={id}
+                  route={routes[id]}
+                  rungs={rates.map((r) => ({
+                    rn: r.rn,
+                    stats: own[id]?.rungs?.[r.rn],
+                    base: against ? own[against]?.rungs?.[r.rn] : undefined,
+                    chains: chainsAt(id, r.rn),
+                    span: r.span,
+                    shown: r.shown,
+                  }))}
+                  grid={grid}
+                  snippet={snips[id]}
+                  also={alsoFor(id)}
+                  link={linkFor(id)}
+                  support={linked(snips[id]?.support ?? [])}
+                  tests={linked(snips[id]?.test ?? [])}
+                  alsoWired={alsoWired(id)}
+                  mechanism={view?.mechanisms[id.split(".")[0] ?? ""]}
+                  unlocated={unlocatedOf(id)}
+                  test={testOf(id)}
+                  exchange={exemplars[id]}
+                  against={against}
+                  baseExchange={against ? exemplars[against] : undefined}
+                  size={chainWith(comparedOf(id, routes), sizeOf, () => 0)}
+                  factors={factors}
+                  first={id === order[0]}
+                />
+              );
+            })}
+            {[...families].map(([fam, ids]) => (
+              <FamilyPane fam={fam} size={ids.length} about={about[fam]?.about} routes={routes} rungs={famRungs(fam, ids)} />
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  <script>
+    import { startTree } from "../../client/test-tree.ts";
+    import { backHref } from "../../client/state.ts";
+
+    // Opened from a row, the query is the explorer view that row was in.
+    const back = document.getElementById("back");
+    if (back && location.search) back.setAttribute("href", backHref(back.getAttribute("href") ?? "", location.search));
+    startTree();
+  </script>
+</Shell>

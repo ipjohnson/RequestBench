@@ -1,381 +1,85 @@
 {
- "source": "spec/expected.json in github.com/ipjohnson/RequestBench at 9939f4c, with the corpus's own names in camelCase",
- "agreedBy": [
-  "go:gin",
-  "node:fastify",
-  "python:fastapi",
-  "rust:axum"
- ],
- "statuses": [
-  422
- ],
- "fieldErrors": [
-  [
-   "customerId",
-   "int"
-  ],
-  [
-   "status",
-   "string"
-  ],
-  [
-   "lines",
-   "array"
-  ]
- ],
+ "source": "Rewritten on 2026-09-21, when order.invalid became a body that binds and breaks every rule orderRequest states. Upstream's captures answered the old body, which had a value of the wrong type in each field, and stay in spec/expected.json in github.com/ipjohnson/RequestBench at 9939f4c.",
  "request": "POST /body/validate/small",
  "frameworks": {
-  "dotnet:aspnet-mvc": {
-   "status": 400,
-   "class": "json",
-   "shape": [
-    "errors.$.customerId[]:string",
-    "errors.body[]:string",
-    "status:number",
-    "title:string",
-    "traceId:string",
-    "type:string"
-   ]
-  },
   "dotnet:carter": {
-   "status": 400,
-   "class": "json",
-   "shape": [
-    "status:number",
-    "title:string",
-    "type:string"
-   ],
+   "status": 422,
    "body": {
-    "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
-    "title": "Bad Request",
-    "status": 400
+    "type": "https://tools.ietf.org/html/rfc4918#section-11.2",
+    "title": "Unprocessable Entity",
+    "status": 422,
+    "errors": [
+     {
+      "propertyName": "CustomerId",
+      "errorMessage": "'Customer Id' must be greater than '0'."
+     },
+     {
+      "propertyName": "Status",
+      "errorMessage": "'Status' must not be empty."
+     },
+     {
+      "propertyName": "Lines",
+      "errorMessage": "'Lines' must not be empty."
+     }
+    ]
    },
-   "bodyFrom": "captured"
-  },
-  "dotnet:fastendpoints": {
-   "status": 400,
-   "class": "json",
-   "shape": [
-    "errors.customerId[]:string",
-    "message:string",
-    "status_code:number"
-   ]
-  },
-  "dotnet:minimal-apis": {
-   "status": 400,
-   "class": "json",
-   "shape": [
-    "status:number",
-    "title:string",
-    "type:string"
-   ]
-  },
-  "dotnet:wolverine-http": {
-   "status": 400,
-   "class": "json",
-   "shape": [
-    "bytePositionInLine:number",
-    "detail:string",
-    "instance:string",
-    "lineNumber:number",
-    "status:number",
-    "title:string",
-    "type:string"
-   ]
-  },
-  "go:chi": {
-   "status": 422,
-   "class": "json",
-   "shape": [
-    "error:string",
-    "errors[].field:string",
-    "errors[].rule:string"
-   ]
-  },
-  "go:echo": {
-   "status": 400,
-   "class": "json",
-   "shape": [
-    "detail:string",
-    "error:string"
-   ]
-  },
-  "go:fiber": {
-   "status": 400,
-   "class": "json",
-   "shape": [
-    "detail:string",
-    "error:string"
-   ]
-  },
-  "go:gin": {
-   "status": 400,
-   "class": "json",
-   "shape": [
-    "detail:string",
-    "error:string"
-   ]
-  },
-  "go:gorilla-mux": {
-   "status": 422,
-   "class": "json",
-   "shape": [
-    "error:string",
-    "errors[].field:string",
-    "errors[].rule:string"
-   ]
-  },
-  "java:helidon-se": {
-   "status": 422,
-   "class": "json",
-   "shape": [
-    "error:string",
-    "errors[].field:string",
-    "errors[].rule:string"
-   ]
-  },
-  "java:javalin": {
-   "status": 400,
-   "class": "json",
-   "shape": [
-    "error:string",
-    "errors[].field:string",
-    "errors[].message:string"
-   ]
-  },
-  "java:micronaut": {
-   "status": 400,
-   "class": "json",
-   "shape": [
-    "_embedded.errors[]._embedded{}",
-    "_embedded.errors[]._links{}",
-    "_embedded.errors[].logref:null",
-    "_embedded.errors[].message:string",
-    "_embedded.errors[].path:null",
-    "_links.self.deprecation:null",
-    "_links.self.href:string",
-    "_links.self.hreflang:null",
-    "_links.self.name:null",
-    "_links.self.profile:null",
-    "_links.self.templated:bool",
-    "_links.self.title:null",
-    "_links.self.type:null",
-    "logref:null",
-    "message:string",
-    "path:null"
-   ]
-  },
-  "java:quarkus": {
-   "status": 400,
-   "class": "json",
-   "shape": [
-    "detail:string",
-    "error:string"
-   ]
-  },
-  "java:spring-boot": {
-   "status": 400,
-   "class": "json",
-   "shape": [
-    "detail:string",
-    "error:string"
-   ]
-  },
-  "java:vertx": {
-   "status": 400,
-   "class": "json",
-   "shape": [
-    "detail:string",
-    "error:string"
-   ]
-  },
-  "node:express": {
-   "status": 422,
-   "class": "json",
-   "shape": [
-    "error:string",
-    "errors[].field:string",
-    "errors[].rule:string"
-   ]
+   "bodyFrom": "captured from frameworks/dotnet/carter/Implementation, without the traceId ASP.NET Core adds to each answer"
   },
   "node:fastify": {
    "status": 400,
-   "class": "json",
-   "shape": [
-    "code:string",
-    "error:string",
-    "message:string",
-    "statusCode:number"
-   ],
    "body": {
     "statusCode": 400,
     "code": "FST_ERR_VALIDATION",
     "error": "Bad Request",
-    "message": "body/customerId must be integer"
+    "message": "body/customerId must be > 0"
    },
-   "bodyFrom": "captured, with the corpus's own names in camelCase"
-  },
-  "node:h3": {
-   "status": 422,
-   "class": "json",
-   "shape": [
-    "error:string",
-    "errors[].field:string",
-    "errors[].rule:string"
-   ]
-  },
-  "node:hono": {
-   "status": 422,
-   "class": "json",
-   "shape": [
-    "error:string",
-    "errors[].field:string",
-    "errors[].rule:string"
-   ]
-  },
-  "node:koa": {
-   "status": 422,
-   "class": "json",
-   "shape": [
-    "error:string",
-    "errors[].field:string",
-    "errors[].rule:string"
-   ]
-  },
-  "python:django-asgi": {
-   "status": 422,
-   "class": "json",
-   "shape": [
-    "error:string",
-    "errors[].field:string",
-    "errors[].rule:string"
-   ]
+   "bodyFrom": "derived: ajv's message for the first rule orderRequest's JSON Schema breaks, exclusiveMinimum 0 on customerId, in Fastify's validation envelope. Not captured, because the rewrite has no Fastify implementation yet"
   },
   "python:fastapi": {
    "status": 422,
-   "class": "json",
-   "shape": [
-    "detail[].input:number",
-    "detail[].input:string",
-    "detail[].loc[]:string",
-    "detail[].msg:string",
-    "detail[].type:string"
-   ],
    "body": {
     "detail": [
      {
-      "type": "int_parsing",
+      "type": "greater_than",
       "loc": [
        "body",
        "customerId"
       ],
-      "msg": "Input should be a valid integer, unable to parse string as an integer",
-      "input": "not-an-int"
+      "msg": "Input should be greater than 0",
+      "input": 0,
+      "ctx": {
+       "gt": 0
+      }
      },
      {
-      "type": "string_type",
+      "type": "string_too_short",
       "loc": [
        "body",
        "status"
       ],
-      "msg": "Input should be a valid string",
-      "input": 42
+      "msg": "String should have at least 1 character",
+      "input": "",
+      "ctx": {
+       "min_length": 1
+      }
      },
      {
-      "type": "list_type",
+      "type": "too_short",
       "loc": [
        "body",
        "lines"
       ],
-      "msg": "Input should be a valid list",
-      "input": "nope"
+      "msg": "List should have at least 1 item after validation, not 0",
+      "input": [],
+      "ctx": {
+       "field_type": "List",
+       "min_length": 1,
+       "actual_length": 0
+      }
      }
     ]
    },
-   "bodyFrom": "captured, with the corpus's own names in camelCase"
-  },
-  "python:flask": {
-   "status": 422,
-   "class": "json",
-   "shape": [
-    "error:string",
-    "errors[].field:string",
-    "errors[].rule:string"
-   ]
-  },
-  "python:litestar": {
-   "status": 400,
-   "class": "json",
-   "shape": [
-    "detail:string",
-    "extra[].key:string",
-    "extra[].message:string",
-    "extra[].source:string",
-    "status_code:number"
-   ]
-  },
-  "python:sanic": {
-   "status": 422,
-   "class": "json",
-   "shape": [
-    "error:string",
-    "errors[].field:string",
-    "errors[].rule:string"
-   ]
-  },
-  "python:starlette": {
-   "status": 422,
-   "class": "json",
-   "shape": [
-    "error:string",
-    "errors[].field:string",
-    "errors[].rule:string"
-   ]
-  },
-  "rust:actix-web": {
-   "status": 400,
-   "class": "text",
-   "shape": [
-    ":string"
-   ]
-  },
-  "rust:axum": {
-   "status": 422,
-   "class": "text",
-   "shape": [
-    ":string"
-   ]
-  },
-  "rust:poem": {
-   "status": 400,
-   "class": "text",
-   "shape": [
-    ":string"
-   ]
-  },
-  "rust:rocket": {
-   "status": 422,
-   "class": "json",
-   "shape": [
-    "detail:string",
-    "error:string"
-   ]
-  },
-  "rust:salvo": {
-   "status": 400,
-   "class": "json",
-   "shape": [
-    "detail:string",
-    "error:string"
-   ]
-  },
-  "rust:warp": {
-   "status": 400,
-   "class": "json",
-   "shape": [
-    "detail:string",
-    "error:string"
-   ]
+   "bodyFrom": "derived: Pydantic's messages for orderRequest's three rules, gt 0, min_length 1 and min_length 1. Not captured, because the rewrite has no FastAPI implementation yet"
   }
  }
 }

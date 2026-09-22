@@ -6,6 +6,8 @@ const path = "/items/{draw.item}";
 export default performanceTest({
   id: { family: "items", name: "replace" },
   path,
+  base: "items.create",
+  varies: "method",
   about:
     "A whole item put at an id and answered with the item under that id. Read " +
     "against items.create, the difference is the id coming from the path " +

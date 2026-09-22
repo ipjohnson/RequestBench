@@ -7,6 +7,8 @@ const path = "/headers/bind";
 export default performanceTest({
   id: { family: "headers", name: "bind_many" },
   path,
+  base: "headers.bind_few",
+  varies: "header_count",
   about:
     "Three headers bound out of thirty instead of out of five. Read against " +
     "headers.bind_few, the difference is whether a framework's binder pays " +

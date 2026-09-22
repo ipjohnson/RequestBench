@@ -1,0 +1,77 @@
+# Carter
+
+Carter 10.0.0 on ASP.NET Core 10, answering the RequestBench corpus. The contract every
+route follows is [`frameworks/openapi.json`](../../openapi.json).
+
+Carter adds modules and FluentValidation-backed validation to ASP.NET Core minimal APIs. Every
+other feature a family reaches for is ASP.NET Core's, which is what a Carter application
+uses.
+
+## Layout
+
+| Path | What it is |
+| --- | --- |
+| `Implementation/` | The application. One Carter module per corpus family under `Routes/`. |
+| `UnitTests/` | xunit tests of the wiring, booting the Implementation in process with `WebApplicationFactory`. |
+| `client-exception/` | How the corpus reads Carter's error bodies. |
+| `solution.slnx` | Both projects. |
+| `global.json` | SDK 10, rolling forward to the newest 10.0 feature band installed. |
+| `nuget.config` | nuget.org and no other feed. |
+
+There is no client project, because Carter emits no client.
+
+## Building, running and testing
+
+```sh
+dotnet build solution.slnx -c Release
+RB_PAYLOADS=../../../tests/payloads PORT=8080 dotnet Implementation/bin/Release/net10.0/Implementation.dll
+dotnet test solution.slnx
+```
+
+`RB_PAYLOADS` names the payload directory, which the Implementation loads before it starts
+listening. `PORT` defaults to 8080. Each project restores against its committed
+`packages.lock.json`.
+
+## How each family is wired
+
+| Family | Mechanism | Whose |
+| --- | --- | --- |
+| baseline | `Results.Text` | minimal APIs |
+| json | The handler returns the payload object, and System.Text.Json writes it with source-generated metadata. | minimal APIs |
+| middleware | No-op endpoint filters on the route. | minimal APIs |
+| parameters, query, headers | Handler parameters, with `[FromHeader]` naming a header. | minimal APIs |
+| body | Minimal APIs bind the order. `MapPost<T>` runs the FluentValidation validator for `T` and answers 422 with the failed rules. | Carter |
+| authorized | `RequireAuthorization` with a policy that compares a claim. ASP.NET Core has no scheme for an opaque token, so `BearerToken` reads the header into that claim. | ASP.NET Core, and a scheme by hand |
+| cache | Output caching, with `SetVaryByHeader` on the vary routes. | ASP.NET Core |
+| compressed | Response compression on the whole application, gzip at its default level. | ASP.NET Core |
+| etag | An endpoint filter hashes the serialised body with SHA-1 and answers 304 when `If-None-Match` names it. | by hand |
+| template | A Razor component rendered with `RazorComponentResult`. | ASP.NET Core |
+| items | One route per method. `MapMethods` names HEAD beside GET, because a GET route does not answer HEAD. | minimal APIs |
+| errors | Routing's 404 and 405, the binder's 400 and the handler's `NotFound`, written as ProblemDetails. | ASP.NET Core |
+| cors | The CORS feature on the `/cors` route group. | ASP.NET Core |
+| forms | Form binding with `[FromForm]` and `IFormFile`. | minimal APIs |
+| stream | `Results.Stream`, writing and flushing one row per line. | minimal APIs |
+| sse | `TypedResults.ServerSentEvents`, new in ASP.NET Core 10, writing and flushing each row as the data of one event. | minimal APIs |
+| static | The static-file feature over the payload directory at `/static`. | ASP.NET Core |
+
+Choices a reader might not expect:
+
+- ASP.NET Core computes no ETag for a dynamic answer, and Carter adds none, so that family is
+  the one wired by hand.
+- With one authentication scheme registered, ASP.NET Core would authenticate every request with
+  it. `Program.cs` turns that off with the `SuppressAutoDefaultScheme` switch, so only
+  `/authorized` pays for the scheme.
+- A CORS policy that lists exactly one origin sends no `Vary: Origin`. The policy decides by
+  predicate instead, which always sends it.
+- Form binding requires an antiforgery token by default. The two form routes turn that off,
+  because the corpus is not a browser session.
+- settings.json sizes the cache in entries, and output caching sizes it in bytes. Its default of
+  100 MB holds every key the cache family stores.
+
+## Refusals
+
+Every refusal is what ASP.NET Core or Carter writes, as ProblemDetails. Nothing reshapes it.
+`order.invalid` binds and breaks every rule, so Carter's validation filter refuses it with 422
+and lists each failed rule under `errors`. The route that stops at the first bad field lists one.
+A body the binder cannot read never reaches the filter. The binder refuses it with a 400 that
+names no field, which is how `errors.malformed` is answered.

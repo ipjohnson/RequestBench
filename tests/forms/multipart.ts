@@ -29,6 +29,8 @@ function multipart(run: RunValues): string {
 export default performanceTest({
   id: { family: "forms", name: "multipart" },
   path,
+  base: "forms.urlencoded",
+  varies: "multipart",
   about:
     "A multipart/form-data upload of two fields and a 32 KB text file. The " +
     "handler echoes the fields and answers the file's name and byte count, so " +

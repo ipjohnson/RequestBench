@@ -6,6 +6,8 @@ const path = "/body/validate/first-error";
 export default performanceTest({
   id: { family: "body", name: "rejected_first" },
   path,
+  base: "body.rejected_all",
+  varies: "error_contract",
   about:
     "The same body against a route that stops at the first bad field. Read " +
     "against body.rejected_all, the difference is the two error contracts: " +

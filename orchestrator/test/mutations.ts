@@ -59,9 +59,12 @@ function lastLeaf(v: Json): Json {
   return other(v);
 }
 
-/** Every mention of a field, in a value or inside a sentence, named something else. */
+/**
+ * Every mention of a field, in a value or inside a sentence, named something else. A mention
+ * with its first letter capitalised counts, because that is how a CLR property path writes it.
+ */
 function rename(v: Json, from: string, to: string): Json {
-  if (typeof v === "string") return v.split(from).join(to);
+  if (typeof v === "string") return [from, from.charAt(0).toUpperCase() + from.slice(1)].reduce((s, f) => s.split(f).join(to), v);
   if (Array.isArray(v)) return v.map((x) => rename(x, from, to));
   if (v !== null && typeof v === "object") return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, rename(x, from, to)]));
   return v;
@@ -165,6 +168,21 @@ function bodyMistakes(payload: Payload, options: BodyOptions): Mistake[] {
     }
     case "lines":
       return [{ breaks, what: "the last line is missing", apply: (r) => withText(r, (t) => t.replace(/[^\n]*\n?$/, "")) }];
+    case "events":
+      return [
+        // The data line is still whole, so only a reader that waits for the blank line drops the event.
+        { breaks, what: "the last event is never ended by a blank line", apply: (r) => withText(r, (t) => t.replace(/(?:\r\n|\r|\n)$/, "")) },
+        {
+          breaks,
+          what: "the last value in the last event differs",
+          apply: (r) =>
+            withText(r, (t) =>
+              t.replace(/data: (.*)((?:\r\n|\r|\n){2})$/, (_, data: string, end: string) => `data: ${JSON.stringify(lastLeaf(JSON.parse(data) as Json))}${end}`),
+            ),
+        },
+        { breaks, what: "every event carries an id", apply: (r) => withText(r, (t) => t.replace(/^data: /gm, "id: 1\ndata: ")) },
+        { breaks, what: "every event is named item", apply: (r) => withText(r, (t) => t.replace(/^data: /gm, "event: item\ndata: ")) },
+      ];
     case "text":
       return [
         {

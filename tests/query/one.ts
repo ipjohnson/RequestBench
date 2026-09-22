@@ -6,6 +6,8 @@ const path = "/query/one?page={run.page}";
 export default performanceTest({
   id: { family: "query", name: "one" },
   path,
+  base: "json.small",
+  varies: "query_params",
   about:
     "One query parameter parsed, coerced to an integer and written back. Read " +
     "against json.small, the difference is the query string being parsed at " +

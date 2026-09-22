@@ -10,6 +10,8 @@ const LISTS = new RegExp(`(^|,)\\s*${cors.header}\\s*(,|$)`, "i");
 export default performanceTest({
   id: { family: "cors", name: "preflight" },
   path,
+  base: "baseline.plaintext",
+  varies: "preflight",
   about:
     "The question a browser asks before a cross-origin request with a custom " +
     "header, answered by the CORS feature before any handler runs. The " +

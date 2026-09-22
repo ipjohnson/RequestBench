@@ -6,6 +6,8 @@ const path = "/middleware/sixteen";
 export default performanceTest({
   id: { family: "middleware", name: "sixteen" },
   path,
+  base: "middleware.none",
+  varies: "layers",
   about:
     "Sixteen no-op layers in front of a handler that serialises the small " +
     "payload. Sixteen layers, which is where a per-layer cost that looked " +

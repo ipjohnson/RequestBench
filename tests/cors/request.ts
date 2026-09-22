@@ -7,6 +7,8 @@ const cors = settings.value.cors;
 export default performanceTest({
   id: { family: "cors", name: "request" },
   path,
+  base: "json.small",
+  varies: "cors",
   about:
     "The cross-origin request itself, with the origin and the custom header " +
     "the preflight asked about. The feature adds its header and lets the " +

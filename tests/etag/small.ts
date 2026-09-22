@@ -6,6 +6,8 @@ const path = "/etag/small";
 export default performanceTest({
   id: { family: "etag", name: "small" },
   path,
+  base: "json.small",
+  varies: "validators",
   about:
     "The framework hashing the body it is about to send and writing the " +
     "validator it computed onto the response. Read against json.small, the " +

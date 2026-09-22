@@ -6,6 +6,8 @@ const path = "/stream/items";
 export default performanceTest({
   id: { family: "stream", name: "ndjson" },
   path,
+  base: "json.medium",
+  varies: "streaming",
   about:
     "items.medium's 89 rows written one per line as application/x-ndjson. " +
     "There is no Content-Length, which is what shows the body left in parts " +

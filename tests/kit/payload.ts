@@ -7,14 +7,16 @@ import type { Json, RunValues, Schema } from "./types.ts";
  *
  * The format says how an answer is compared. `json` compares the parsed value, so
  * key order and a number written 18928 or 18928.0 stop mattering. `lines` is one
- * JSON value per line. `text` is byte for byte. `html` removes whitespace at
+ * JSON value per line. `events` is one JSON value per server-sent event, read the
+ * way a browser's EventSource reads the stream, so comments and how each line ends
+ * stop mattering. `text` is byte for byte. `html` removes whitespace at
  * element boundaries and collapses it inside text, because template engines
  * cannot agree on indentation.
  */
 export interface Payload<T = unknown> {
   /** What the body is, as a failure and the endpoint page name it. */
   readonly name: string;
-  readonly format: "json" | "lines" | "text" | "html";
+  readonly format: "json" | "lines" | "events" | "text" | "html";
   readonly value: T;
   /** The model a json payload matches, which the OpenAPI document gives as the body's schema. */
   readonly model?: Schema<unknown, T> | undefined;
@@ -69,6 +71,11 @@ export function json<T extends Json>(name: string, value: T, made: Made<T> = {})
 /** One JSON value per line. */
 export function lines(name: string, rows: readonly Json[], from?: readonly Payload[]): Payload<readonly Json[]> {
   return { name, format: "lines", value: rows, from };
+}
+
+/** One JSON value per server-sent event. Every event is of type message and carries no id. */
+export function events(name: string, rows: readonly Json[], from?: readonly Payload[]): Payload<readonly Json[]> {
+  return { name, format: "events", value: rows, from };
 }
 
 export function text(name: string, value: string): Payload<string> {

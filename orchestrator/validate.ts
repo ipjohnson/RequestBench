@@ -137,6 +137,46 @@ const ASCII_WS = /[ \t\n\r\f\v]+/g;
 /** Whitespace at an element boundary goes, and a run inside text becomes one space. */
 const page = (html: string) => html.replace(ASCII_WS, " ").replace(/>[ ]+/g, ">").replace(/[ ]+</g, "<").trim();
 
+/** One event as an EventSource hands it to a listener. */
+interface Dispatched {
+  readonly type: string;
+  readonly data: string;
+  readonly lastEventId: string;
+}
+
+/**
+ * The events an EventSource dispatches from a stream, by the HTML standard's rules. A line ends
+ * at CRLF, LF or CR, a line opening with a colon is a comment, and an event is dispatched at a
+ * blank line, so one the stream ends inside is never dispatched. An id stays set for every
+ * event after it.
+ */
+function dispatched(stream: string): Dispatched[] {
+  const out: Dispatched[] = [];
+  let type = "";
+  let data = "";
+  let lastEventId = "";
+  const lines = stream.split(/\r\n|\r|\n/);
+  // Whatever follows the last line ending is not a whole line, and the stream ended inside it.
+  lines.pop();
+  for (const line of lines) {
+    if (line === "") {
+      if (data !== "") out.push({ type: type === "" ? "message" : type, data: data.slice(0, -1), lastEventId });
+      type = "";
+      data = "";
+      continue;
+    }
+    if (line.startsWith(":")) continue;
+    const colon = line.indexOf(":");
+    const field = colon === -1 ? line : line.slice(0, colon);
+    const raw = colon === -1 ? "" : line.slice(colon + 1);
+    const value = raw.startsWith(" ") ? raw.slice(1) : raw;
+    if (field === "event") type = value;
+    else if (field === "data") data += `${value}\n`;
+    else if (field === "id" && !value.includes("\0")) lastEventId = value;
+  }
+  return out;
+}
+
 /** Where two texts first part, with a little of each from there. */
 function parting(actual: string, expected: string): string {
   let i = 0;
@@ -181,6 +221,20 @@ function mismatch(a: Answer, payload: Payload, options: BodyOptions, run: RunVal
         if (d !== null) return `${not} line ${i + 1}, ${d}`;
       }
       return got.length === rows.length ? null : `${not} ${got.length} lines, expected ${rows.length}`;
+    }
+    case "events": {
+      const rows = payload.value as readonly unknown[];
+      const got = dispatched(a.text);
+      for (let i = 0; i < Math.min(got.length, rows.length); i++) {
+        const e = got[i]!;
+        if (e.type !== "message") return `${not} event ${i + 1} is of type ${show(e.type)}, expected message`;
+        if (e.lastEventId !== "") return `${not} event ${i + 1} carries the id ${show(e.lastEventId)}, expected none`;
+        const p = parse(e.data);
+        if (!p.ok) return `event ${i + 1}: ${p.why}`;
+        const d = difference(p.value, rows[i]);
+        if (d !== null) return `${not} event ${i + 1}, ${d}`;
+      }
+      return got.length === rows.length ? null : `${not} ${got.length} events, expected ${rows.length}`;
     }
     case "text": {
       const expected = payload.value as string;

@@ -9,6 +9,8 @@ const LOCATION = new RegExp(`^(https?://[^/]+)?/items/${CREATED}$`);
 export default performanceTest({
   id: { family: "items", name: "create" },
   path,
+  base: "body.bind_small",
+  varies: "creation",
   about:
     "A new item posted as JSON and answered 201, with where it would live and " +
     "what it would hold. Nothing is stored, so the answer is always the id " +

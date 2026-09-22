@@ -7,6 +7,8 @@ const vary = settings.value.cache.vary.many;
 export default performanceTest({
   id: { family: "cache", name: "vary_many" },
   path,
+  base: "cache.vary_one",
+  varies: "cache_key",
   about:
     "The same thing keyed on three headers instead of one. Read against " +
     "cache.vary_one, the difference is eight distinct keys where there were " +

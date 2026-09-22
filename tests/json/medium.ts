@@ -6,6 +6,8 @@ const path = "/json/medium";
 export default performanceTest({
   id: { family: "json", name: "medium" },
   path,
+  base: "json.small",
+  varies: "size",
   about:
     "Eighty-nine rows out, serialised from a body the framework already " +
     "holds. The middle size, where the codec is doing real work and the " +

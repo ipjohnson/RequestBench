@@ -1,0 +1,263 @@
+
+.crumb { font-family: var(--f-mono); font-size: 11.5px; margin: 0 0 18px; }
+.ident { display: flex; gap: 16px; align-items: center; margin: 0 0 6px; }
+.mono-mark { width: 54px; height: 54px; border-radius: 6px; flex: none;
+             background: var(--surface2); border: 1px solid var(--rule2);
+             display: flex; align-items: center; justify-content: center;
+             font-family: var(--f-display); font-size: 26px; font-weight: 600;
+             color: var(--tealtext); }
+.ident h1 { margin: 0; }
+.factline { font-family: var(--f-mono); font-size: 12px; color: var(--ink2);
+            margin: 0 0 4px; display: flex; flex-wrap: wrap; gap: 6px 14px; }
+.verdict { font-family: var(--f-mono); font-size: 11px; letter-spacing: .06em;
+           text-transform: uppercase; padding: 2px 8px; border-radius: 2px; }
+.verdict.ok { background: var(--tealsoft); color: var(--tealtext); }
+.verdict.no { background: var(--surface2); color: var(--amber); }
+.prose > * { max-width: 72ch; }
+.prose > h2:first-child { margin-top: 0; }
+.prose h2 { font-family: var(--f-display); font-size: 19px; margin: 22px 0 6px; }
+.prose p { margin: 0 0 11px; }
+.prose ul { margin: 0 0 11px; padding-left: 20px; }
+.prose code { background: var(--surface2); padding: 1px 4px; border-radius: 2px;
+              font-size: 12.5px; }
+.sniphead { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: baseline;
+            font-family: var(--f-mono); font-size: 11.5px; margin: 0 0 6px; }
+.sniphead .loc { color: var(--ink3); }
+pre.code { font-family: var(--f-mono); font-size: 12px; line-height: 1.55; margin: 0;
+           background: var(--surface); border: 1px solid var(--rule);
+           border-left: 2px solid var(--teal); border-radius: 0 3px 3px 0;
+           padding: 11px 14px; overflow-x: auto; white-space: pre; }
+.how { font-family: var(--f-mono); font-size: 10px; letter-spacing: .08em;
+       text-transform: uppercase; color: var(--ink3); }
+td.path { font-family: var(--f-mono); font-size: 12px; }
+td.h { font-family: var(--f-mono); font-size: 11px; color: var(--ink3); }
+
+/* ---- endpoint explorer: tree picks, pane describes ---- */
+.explorer { display: grid; grid-template-columns: minmax(210px, 264px) 1fr; gap: 26px;
+            align-items: start; }
+@media (max-width: 860px) { .explorer { grid-template-columns: 1fr; } }
+.eptree { position: sticky; top: 16px; max-height: calc(100vh - 32px); overflow-y: auto;
+          border-right: 1px solid var(--rule); padding-right: 14px; }
+@media (max-width: 860px) {
+  .eptree { position: static; max-height: 340px; border-right: none;
+            border-bottom: 1px solid var(--rule); padding: 0 0 12px; } }
+.eptree ul { list-style: none; margin: 0; padding: 0; }
+.eptree .epfam + .epfam { margin-top: 12px; }
+.epfamname { display: block; font-family: var(--f-mono); font-size: 10px;
+             letter-spacing: .1em; text-transform: uppercase; color: var(--ink3);
+             margin: 0 0 4px; }
+/* A family opens its own pane, so its name takes the endpoint's box and the same current
+   state. The case and the size are what keep it reading as the heading of the ones below. */
+a.epfamname { text-decoration: none; padding: 3px 8px; border-radius: 3px;
+              border-left: 2px solid transparent; }
+a.epfamname:hover { background: var(--surface2); color: var(--ink2); }
+a.epfamname[aria-current="true"] { background: var(--tealsoft); border-left-color: var(--teal);
+                                   color: var(--ink); }
+.eplink { display: block; text-decoration: none; color: var(--ink2); padding: 4px 8px;
+          border-radius: 3px; border-left: 2px solid transparent; }
+.eplink:hover { background: var(--surface2); }
+.eplink[aria-current="true"] { background: var(--tealsoft); border-left-color: var(--teal);
+                               color: var(--ink); }
+.epid { display: block; font-family: var(--f-mono); font-size: 12.5px; }
+.eppanes { min-width: 0; }
+.eppane .epname { font-family: var(--f-mono); font-size: 17px; margin: 0; }
+/* .fields draws its hairlines by showing a rule-coloured background through a 1px gap,
+   so an unfilled track at the end of a wrapped row reads as an empty grey cell. Outlines
+   overlap in the gap instead, which leaves the unfilled area the surface colour.
+
+   The narrower track keeps the endpoint's six columns on one row at the page's own widths
+   rather than wrapping samples onto a row by itself. */
+.eppane .fields { margin-bottom: 4px; background: var(--surface); border: none;
+                  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
+.eppane .frow { outline: 1px solid var(--rule); }
+.eppane .fv { white-space: nowrap; }
+
+/* The numbers of whatever the page is compared with, a row per pick under each of the pane's
+   own. Each is inside its own cell rather than in a row of its own, so it stays under its
+   number when the cells wrap; the rule it carries spans the cell and lines up with its
+   neighbours' into a row. They are the values' size so the rows read as columns, and the
+   dotted line marks the ones with a popup. */
+.perfhead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px;
+            margin: 20px 0 8px; }
+.perfhead h3.childcap { margin: 0; }
+.eppane .fb { margin: 6px -12px 0; padding: 6px 12px 0; border-top: 1px solid var(--rule);
+              font-family: var(--f-mono); font-size: 14px; font-variant-numeric: tabular-nums;
+              color: var(--ink2); white-space: nowrap; }
+.eppane .fb[data-slot]::before { content: ""; margin-right: 7px; vertical-align: 1px; }
+.eppane .fb[tabindex] { text-decoration: underline dotted var(--ink3);
+                        text-underline-offset: 4px; }
+.eppane .fb[tabindex]:hover { color: var(--ink); }
+.eppane .fb[tabindex]:focus-visible { outline: 2px solid var(--teal); outline-offset: -2px; }
+
+/* Which row is which. A pick keeps one of --s1 to --s5 for as long as it is picked, and its
+   chip, its entry in each pane's key and each of its numbers carry it. The page's own numbers
+   carry none, and --s0 is the page's own teal. */
+[data-slot="1"] { --pick: var(--s1); }
+[data-slot="2"] { --pick: var(--s2); }
+[data-slot="3"] { --pick: var(--s3); }
+[data-slot="4"] { --pick: var(--s4); }
+[data-slot="5"] { --pick: var(--s5); }
+.cmpchip i, .cmpk i, .eppane .fb[data-slot]::before { display: inline-block; flex: none;
+  width: 8px; height: 8px; border-radius: 2px; background: var(--pick); }
+.cmplabel { font-family: var(--f-mono); font-size: 10px; letter-spacing: .1em;
+            text-transform: uppercase; color: var(--ink3); }
+.cmpkey { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; margin: 0;
+          font-family: var(--f-mono); font-size: 11.5px; color: var(--ink2); }
+.cmpk { display: inline-flex; align-items: center; gap: 6px; }
+.cmpk.none { color: var(--ink3); }
+
+/* The comparison itself: a chip per pick, which removes it, then the list of what else there
+   is. It sits beside the rate because it is picked once for the whole panel as the rate is.
+   The distribution grid does not draw it, so that view hides it without moving the rate. */
+.cmp { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.eptabs[data-view="view-dist"] .cmp { visibility: hidden; }
+.cmpchips { display: flex; flex-wrap: wrap; gap: 6px; }
+.cmpchip { appearance: none; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+           font: inherit; font-family: var(--f-mono); font-size: 11.5px; color: var(--ink);
+           background: var(--surface); border: 1px solid var(--rule); border-radius: 3px;
+           padding: 4px 7px 4px 9px; }
+.cmpchip:hover { background: var(--surface2); }
+.cmpchip:focus-visible { outline: 2px solid var(--teal); outline-offset: 1px; }
+.cmpx { color: var(--ink3); font-size: 13px; line-height: 1; }
+.cmpchip:hover .cmpx { color: var(--ink); }
+select.cmpadd { font-family: var(--f-mono); font-size: 11.5px; color: var(--ink2); min-width: 0;
+                background: var(--surface); border-color: var(--rule); padding: 4px 6px; }
+select.cmpadd:disabled { opacity: .45; cursor: not-allowed; }
+.cmpstatus { font-family: var(--f-mono); font-size: 11px; color: var(--ink3); }
+.cmpstatus:empty { display: none; }
+
+/* The popup, which endpoint-tree.ts fills from a compared number's template and places under
+   it. */
+.basepop { position: absolute; z-index: 20; width: max-content;
+           max-width: min(340px, calc(100vw - 16px)); padding: 10px 12px;
+           background: var(--surface); border: 1px solid var(--rule2); border-radius: 4px;
+           box-shadow: 0 6px 18px rgb(0 0 0 / .14); pointer-events: none;
+           font-size: 12.5px; line-height: 1.45; color: var(--ink2); }
+.basepop p { margin: 0; }
+.basepop .bphead { color: var(--ink); }
+.basepop b { font-family: var(--f-mono); font-weight: 500; }
+.basepop .up { color: var(--amber); }
+.basepop .down { color: var(--tealtext); }
+.basepop .flat, .basepop .bpnote { color: var(--ink3); }
+.basepop .bpstep { margin-top: 7px; padding-top: 7px; border-top: 1px solid var(--rule); }
+.basepop .bpf { display: flex; justify-content: space-between; gap: 16px;
+                font-family: var(--f-mono); font-size: 12px; color: var(--ink);
+                font-variant-numeric: tabular-nums; }
+.eppane pre.code { max-height: 460px; overflow: auto; }
+.famtable td:first-child { font-family: var(--f-mono); font-size: 12.5px; }
+
+/* One head and block per part: the handler, then what the family declares it is wired with
+   and each support part, or the endpoint's tests. A part can come from another file than the
+   handler, so each carries its own location and its own link. The handler's context lines
+   sit directly above its code, because they are the blocks it is nested in. */
+.parts p.mech { margin: 0 0 10px; font-size: 13px; color: var(--ink2); }
+.parts p.mech code { font-family: var(--f-mono); font-size: 12px; color: var(--ink); }
+.parts pre.code + .sniphead, .parts pre.code + p.mech { margin-top: 14px; }
+.parts .ctx { font-family: var(--f-mono); font-size: 11.5px; color: var(--ink3);
+              margin: 0 0 6px; white-space: pre; overflow-x: auto; }
+
+/* Info and Distribution: two readings of one endpoint list, so the tabs sit on the rule
+   the views hang from rather than floating above them. */
+.eptabs { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px;
+          margin: 0 0 14px; border-bottom: 1px solid var(--rule); }
+.eptabs [role="tablist"] { display: flex; gap: 2px; }
+.eptabs [role="tab"] { appearance: none; background: none; border: 0; cursor: pointer;
+  font: inherit; font-size: 13px; color: var(--ink2); padding: 7px 14px;
+  border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.eptabs [role="tab"]:hover { color: var(--ink); }
+.eptabs [role="tab"][aria-selected="true"] { color: var(--ink); font-weight: 600;
+  border-bottom-color: var(--teal); }
+.eptabs [role="tab"]:focus-visible { outline: 2px solid var(--teal); outline-offset: -2px; }
+
+/* The rate and the comparison are properties of the whole panel rather than of either view, so
+   they sit opposite the tabs instead of inside one of them, and on the right when a run
+   without bins has no tabs. Five picks do not fit beside the tabs on a narrow screen, so there
+   they go above the tabs, which keep their place on the rule. */
+.epread { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end;
+          gap: 8px 18px; min-width: 0; margin: 0 0 6px auto; }
+@media (max-width: 720px) {
+  .eptabs { flex-wrap: wrap; }
+  .epread { order: -1; justify-content: flex-start; margin: 0; }
+}
+.eprates { display: inline-flex; border: 1px solid var(--rule); border-radius: 3px;
+           overflow: hidden; }
+.eprate-pick { appearance: none; background: none; border: 0; cursor: pointer; font: inherit;
+               font-family: var(--f-mono); font-size: 11.5px; color: var(--ink2);
+               padding: 4px 10px; }
+.eprate-pick + .eprate-pick { border-left: 1px solid var(--rule); }
+.eprate-pick:hover { background: var(--surface2); color: var(--ink); }
+.eprate-pick[aria-pressed="true"] { background: var(--tealsoft); color: var(--ink);
+                                    font-weight: 500; }
+.eprate-pick:focus-visible { outline: 2px solid var(--teal); outline-offset: -2px; }
+/* A rate the target did not complete. It stays hoverable and focusable so its title can say
+   why. Hovering it does not highlight it. */
+.eprate-pick[aria-disabled="true"] { opacity: .45; cursor: not-allowed; }
+.eprate-pick[aria-disabled="true"]:not([aria-pressed="true"]):hover { background: none;
+                                                                      color: var(--ink2); }
+
+/* The endpoint's own histogram, under the table the percentiles are in. */
+.ephist { margin: 14px 0 0; }
+.ephist svg { display: block; max-width: 100%; height: auto; }
+.ephistbar { fill: var(--teal); }
+.ephistmark { stroke: var(--ink3); stroke-width: 1; stroke-dasharray: 2 2; }
+.ephistmarklabel { font-family: var(--f-mono); font-size: 9.5px; fill: var(--ink3); }
+.ephist figcaption { font-size: 12px; color: var(--ink3); margin-top: 6px; }
+
+/* One target's latency distribution. The grid is wider than the column on a narrow
+   screen, so it scrolls in its own box rather than widening the page. */
+.distscroll { overflow-x: auto; }
+.distsvg { display: block; max-width: 100%; height: auto; }
+.disttick { font-family: var(--f-mono); font-size: 10.5px; fill: var(--ink3); }
+.distlabel { font-family: var(--f-mono); font-size: 11px; fill: var(--ink2); }
+/* The row, not the cell, is the target: a 15px strip is already a small thing to hit and
+   the name is the part a reader aims at. */
+.distrow { cursor: pointer; }
+.disthit { fill: transparent; }
+.distrow:hover .disthit { fill: var(--surface2); }
+.distrow:hover .distlabel { fill: var(--ink); }
+/* A rail and a weight, not a wash: --tealsoft is a step off --heat1, so a selected row
+   filled with it would read as a cell's value rather than as the selection. */
+.distrail { fill: transparent; }
+.distrow[aria-current="true"] .distrail { fill: var(--teal); }
+.distrow[aria-current="true"] .distlabel { fill: var(--ink); font-weight: 500; }
+.distrow:focus-visible { outline: 2px solid var(--teal); outline-offset: -2px; }
+.distgrid { stroke: var(--rule); stroke-width: 1; }
+.distrule { stroke: var(--rule2); stroke-width: 1; }
+.distcell.s1 { fill: var(--heat1); }
+.distcell.s2 { fill: var(--heat2); }
+.distcell.s3 { fill: var(--heat3); }
+.distcell.s4 { fill: var(--heat4); }
+.distcell.s5 { fill: var(--heat5); }
+.distcell.s6 { fill: var(--heat6); }
+.distcell.s7 { fill: var(--heat7); }
+.distkey { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px;
+           margin: 12px 0 0; font-size: 12px; color: var(--ink2); }
+.distramp { display: inline-flex; }
+/* Butted, not gapped: the ramp is one continuous scale and a gap would read as seven
+   categories. The cells in the grid are gapped for the opposite reason. */
+.distramp i { width: 20px; height: 10px; display: block; }
+.distramp i.s1 { background: var(--heat1); }
+.distramp i.s2 { background: var(--heat2); }
+.distramp i.s3 { background: var(--heat3); }
+.distramp i.s4 { background: var(--heat4); }
+.distramp i.s5 { background: var(--heat5); }
+.distramp i.s6 { background: var(--heat6); }
+.distramp i.s7 { background: var(--heat7); }
+.distscale { font-family: var(--f-mono); font-size: 11px; color: var(--ink3); }
+
+/* The identity table: what the project is and where to read it. Two rows, so it is a
+   header and a fact rather than a list, and it sits under the name it describes. */
+.ident-table { border-collapse: collapse; margin: 14px 0 26px; font-size: 13px; }
+.ident-table th, .ident-table td { padding: 5px 22px 5px 0; white-space: nowrap; }
+.ident-table th { font-family: var(--f-mono); font-size: 10px; letter-spacing: .1em;
+                  text-transform: uppercase; color: var(--ink3); font-weight: 400;
+                  border-bottom: 1px solid var(--rule); }
+.ident-table td { font-family: var(--f-mono); font-size: 12px; color: var(--ink2);
+                  padding-top: 8px; }
+.ident-table td a { color: var(--tealtext); }
+@media (max-width: 720px) {
+  .ident-table, .ident-table thead, .ident-table tbody, .ident-table tr { display: block; }
+  .ident-table { min-width: 0; }
+  .ident-table thead { display: none; }
+  .ident-table td { display: block; padding: 2px 0; white-space: normal; overflow-wrap: anywhere; }
+}

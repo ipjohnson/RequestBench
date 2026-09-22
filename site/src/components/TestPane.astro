@@ -1,0 +1,340 @@
+---
+// One test's pane: what it asks, what it cost, the code behind it, what went over the wire,
+// and the tests that hold it.
+import TestHistogram from "./TestHistogram.astro";
+import { baseCell } from "../lib/views.ts";
+import { cell, type Unit } from "../lib/metrics.ts";
+import { esc } from "../lib/html.ts";
+import type { Chain } from "../lib/delta.ts";
+import type { BinGrid, Route, TestRung, WireExchange } from "../lib/types.ts";
+import type { Mechanism, Part, Snippet } from "../lib/bundleview.ts";
+
+/** What this test did at one offered rate. Everything else on the pane is rate-agnostic. */
+export type PaneRung = {
+  rn: string;
+  stats: TestRung | undefined;
+  /** What the base did at the same rate. */
+  base: TestRung | undefined;
+  /** The comparison on each percentile, keyed by the statistic it was taken on. */
+  chains: Readonly<Record<string, Chain | null>>;
+  span: { c0: number; c1: number; n: number } | null;
+  shown: boolean;
+};
+
+/** The corpus's own test: its file, whole, and the payloads it sends or expects. */
+export type PaneTest = {
+  path: string;
+  text: string;
+  link: string | null;
+  payloads: { name: string; href: string | null }[];
+};
+
+type Pct = "p50Us" | "p95Us" | "p99Us" | "p999Us";
+
+/**
+ * One column of the performance table. `base` is null when there is no base row. `m` names the
+ * statistic and `n` is its number, which another framework's row is read against.
+ */
+type Field = {
+  k: string;
+  m: string;
+  n: number | null | undefined;
+  v: string;
+  title?: string | undefined;
+  base: string | null;
+};
+
+type Props = {
+  id: string;
+  route: Route | undefined;
+  rungs: PaneRung[];
+  grid: BinGrid | undefined;
+  snippet: Snippet | undefined;
+  /** Tests the same registration answers, so six panes do not each claim the block. */
+  also: string[];
+  link: string | null;
+  /** The parts that make the family work, each with its own permalink. */
+  support: { part: Part; link: string | null }[];
+  /** Tests the same wiring serves, for the same reason `also` exists. */
+  alsoWired: string[];
+  /** What rb.json says this family is wired with in this framework. */
+  mechanism: Mechanism | undefined;
+  /** What the snippet matcher said about this test when it located no handler. */
+  unlocated: string[];
+  /** The corpus test this pane is for. */
+  test: PaneTest | undefined;
+  /** What holds this framework to the test: its own suite, and its client-exception package. */
+  tests: { part: Part; link: string | null }[];
+  exchange: WireExchange | undefined;
+  /** The test this one is compared with, when the run measured it. */
+  against: string | null;
+  /** The base's captured exchange, for its size. */
+  baseExchange: WireExchange | undefined;
+  /** The captured response body's size against the base's, which no rate changes. */
+  size: Chain | null;
+  factors: Record<string, string>;
+  first: boolean;
+};
+
+const {
+  id,
+  route,
+  rungs,
+  grid,
+  snippet,
+  also,
+  link,
+  support,
+  alsoWired,
+  mechanism,
+  unlocated,
+  test,
+  tests,
+  exchange,
+  against,
+  baseExchange,
+  size,
+  factors,
+  first,
+} = Astro.props;
+
+const measure = (r: PaneRung): { fields: Field[]; measured: boolean } => {
+  const d = r.stats ?? {};
+  const b = r.base ?? {};
+  const under = (v: string, x: Chain | null | undefined, unit: Unit, level: string): string | null =>
+    against ? baseCell(v, x, unit, factors, level) : null;
+  const pct = ([k, m]: [string, Pct]): Field => ({
+    k,
+    m,
+    n: d[m],
+    v: cell(d[m], "us"),
+    base: under(cell(b[m], "us"), r.chains[m], "us", k),
+  });
+  return {
+    measured: Object.keys(d).length > 0,
+    fields: [
+      pct(["p50", "p50Us"]),
+      pct(["p95", "p95Us"]),
+      pct(["p99", "p99Us"]),
+      pct(["p99.9", "p999Us"]),
+      {
+        k: "size",
+        m: "sbz",
+        n: exchange?.sbz,
+        v: cell(exchange?.sbz, "B"),
+        title:
+          exchange &&
+          `The response body as the gate captured it. Its headers add ${exchange.shz.toLocaleString()} B.`,
+        base: under(cell(baseExchange?.sbz, "B"), size, "B", ""),
+      },
+      { k: "samples", m: "count", n: d.count, v: cell(d.count), base: under(cell(b.count), null, "", "") },
+      ...(["errors", "mismatch"] as const)
+        .filter((k) => d[k])
+        .map((k): Field => ({ k, m: k, n: d[k], v: cell(d[k]), base: under(cell(b[k]), null, "", "") })),
+    ],
+  };
+};
+const h = snippet?.handler ?? undefined;
+const where = (p: Part): string => `${p.path}:${p.startLine}${p.endLine === p.startLine ? "" : `-${p.endLine}`}`;
+// The blocks a fragment is nested in, which snippets.ts works out so the gate can tell a
+// handler from a condition. They are not part of the range, because that is what the permalink
+// points at, so they are shown beside it rather than in it.
+const context = h?.context ?? [];
+// Only the tests marked for this test by name. A helper marked for the family or the framework
+// is this benchmark's setup, and most projects would not write it.
+const ownTests = tests.filter(({ part }) => (part.scope ?? "endpoint") === "endpoint");
+// Two kinds of test share the role and are not the same claim. The framework's own suite boots
+// it and holds it to what the corpus asks; a client-exception package reads the error bodies the
+// framework answers with and is run by the gate against the framework. One heading over both
+// would say the wrong thing about whichever came second.
+const contract = ownTests.filter(({ part }) => part.path.includes("/client-exception/"));
+const suite = ownTests.filter(({ part }) => !part.path.includes("/client-exception/"));
+const hdrs = (hs: readonly (readonly [string, string])[]): string =>
+  hs.map(([k, v]) => `<div class='hrow'><span class='hk'>${esc(k)}</span><span class='hv'>${esc(v)}</span></div>`).join("");
+---
+
+<section class="eppane" data-ep={id} data-base={against ?? undefined} hidden={!first}>
+  <h2 class="epname">{id}</h2>
+  <p class="leafroute"><span class="verb">{route?.m ?? ""}</span> {route?.p ?? ""}</p>
+
+  <div class="perfhead">
+    <h3 class="childcap">Performance</h3>
+    <p class="cmpkey" hidden></p>
+  </div>
+  {
+    rungs.map((r) => {
+      const { fields, measured } = measure(r);
+      return (
+        <div class="eprate" data-rung={r.rn} hidden={!r.shown}>
+          {measured ? (
+            <div class="fields">
+              {fields.map((f) => (
+                <div class="frow" data-k={f.m} data-v={f.n ?? undefined}>
+                  <span class="fk">{f.k}</span>
+                  <span class="fv" title={f.title}>{f.v}</span>
+                  {f.base !== null && <Fragment set:html={f.base} />}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p class="empty">Not measured at this rate.</p>
+          )}
+          {grid && r.span && <TestHistogram grid={grid} stats={r.stats} span={r.span} id={id} />}
+        </div>
+      );
+    })
+  }
+
+  <h3 class="childcap">Implementation</h3>
+  <div class="parts">
+    {
+      h ? (
+        <>
+          <div class="sniphead">
+            <span class="loc">{where(h)}</span>
+            <span class="how">{h.how}</span>
+            {link && <a href={link}>open on GitHub &rarr;</a>}
+          </div>
+          {also.length > 0 && <p class="hint">The same registration answers {also.join(", ")}.</p>}
+          {context.length > 0 && (
+            <div class="ctx">
+              {context.map((c) => (
+                <div>
+                  {c.line}: {c.text}
+                </div>
+              ))}
+            </div>
+          )}
+          <pre class="code">{h.text}</pre>
+        </>
+      ) : (
+        <p class="empty">
+          No handler located for this test.
+          {unlocated.map((u) => ` It ${u}.`).join("")}
+          {unlocated.some((u) => u.startsWith("matches in")) && " A route found in more than one place is shown once an rb:handler mark picks one."}
+        </p>
+      )
+    }
+    {
+      mechanism?.mechanism ? (
+        <p class="mech">
+          {mechanism.mechanism}
+          {mechanism.dependency && (
+            <>
+              {" "}
+              &middot; <code>{mechanism.dependency}</code>
+            </>
+          )}
+        </p>
+      ) : (
+        mechanism?.builtin && <p class="mech">{mechanism.builtin}</p>
+      )
+    }
+    {
+      support.map(({ part, link: href }) => (
+        <>
+          <div class="sniphead">
+            <span class="loc">{where(part)}</span>
+            <span class="how">{part.how}</span>
+            {href && <a href={href}>open on GitHub &rarr;</a>}
+          </div>
+          <pre class="code">{part.text}</pre>
+        </>
+      ))
+    }
+    {support.length > 0 && alsoWired.length > 0 && <p class="hint">The same wiring serves {alsoWired.join(", ")}.</p>}
+  </div>
+
+  <h3 class="childcap">On the wire</h3>
+  {
+    exchange ? (
+      <div class="wirecols">
+        <div>
+          <h3>Request</h3>
+          <pre class="wire req">{exchange.m} {exchange.p}</pre>
+          <div class="hdrs" set:html={hdrs(exchange.rh)} />
+          {exchange.rb ? (
+            <pre class="wire">{exchange.rb}{exchange.rbz > 700 ? `\n… ${exchange.rbz.toLocaleString()} bytes total` : ""}</pre>
+          ) : (
+            <p class="empty">no body</p>
+          )}
+        </div>
+        <div>
+          <h3>Response</h3>
+          <pre class="wire res">HTTP {exchange.s}</pre>
+          <div class="hdrs" set:html={hdrs(exchange.sh)} />
+          {exchange.sb ? (
+            <pre class="wire">{exchange.sb}{exchange.tr ? `\n… ${exchange.sbz.toLocaleString()} bytes total` : ""}</pre>
+          ) : (
+            <p class="empty">no body</p>
+          )}
+        </div>
+      </div>
+    ) : (
+      <p class="empty">
+        No captured exchange for this framework. Exemplars are written by <code>npm run rb -- validate --exemplars</code>{" "}
+        and only for the frameworks it has been run against.
+      </p>
+    )
+  }
+
+  {
+    test && (
+      <>
+        <h3 class="childcap">Test</h3>
+        <div class="parts">
+          <div class="sniphead">
+            <span class="loc">{test.path}</span>
+            {test.link && <a href={test.link}>open on GitHub &rarr;</a>}
+          </div>
+          {test.payloads.length > 0 && (
+            <p class="mech">
+              {test.payloads.length === 1 ? "Payload" : "Payloads"}{" "}
+              {test.payloads.map((p, i) => (
+                <>
+                  {i > 0 && ", "}
+                  {p.href ? (
+                    <a href={p.href}>
+                      <code>{p.name}</code>
+                    </a>
+                  ) : (
+                    <code>{p.name}</code>
+                  )}
+                </>
+              ))}
+            </p>
+          )}
+          <pre class="code">{test.text}</pre>
+        </div>
+      </>
+    )
+  }
+
+  {
+    (
+      [
+        ["Suite", suite],
+        ["Contract test", contract],
+      ] as const
+    ).map(
+      ([caption, parts]) =>
+        parts.length > 0 && (
+          <>
+            <h3 class="childcap">{caption}</h3>
+            <div class="parts">
+              {parts.map(({ part, link: href }) => (
+                <>
+                  <div class="sniphead">
+                    <span class="loc">{where(part)}</span>
+                    <span class="how">{part.how}</span>
+                    {href && <a href={href}>open on GitHub &rarr;</a>}
+                  </div>
+                  <pre class="code">{part.text}</pre>
+                </>
+              ))}
+            </div>
+          </>
+        ),
+    )
+  }
+</section>

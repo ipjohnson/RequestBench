@@ -7,6 +7,8 @@ const path = "/headers";
 export default performanceTest({
   id: { family: "headers", name: "many" },
   path,
+  base: "headers.few",
+  varies: "header_count",
   about:
     "Thirty request headers, still read by nothing. Read against headers.few, " +
     "the difference is the cost of materialising twenty-five more that nobody " +

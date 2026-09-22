@@ -6,6 +6,8 @@ const path = "/parameters/{run.one}/segment/literal";
 export default performanceTest({
   id: { family: "parameters", name: "one" },
   path,
+  base: "parameters.static",
+  varies: "captures",
   about:
     "One segment captured, bound as an integer and written back. The value is " +
     "drawn per run, so a framework that answered from a table would have had " +

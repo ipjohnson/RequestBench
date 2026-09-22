@@ -6,6 +6,8 @@ const path = "/cache/large";
 export default performanceTest({
   id: { family: "cache", name: "large" },
   path,
+  base: "json.large",
+  varies: "response_cache",
   about:
     "The handler skipped and a stored answer written back. Read against " +
     "json.large, the difference is the store answering instead of the " +

@@ -6,6 +6,8 @@ const path = "/json/large";
 export default performanceTest({
   id: { family: "json", name: "large" },
   path,
+  base: "json.small",
+  varies: "size",
   about:
     "Fourteen hundred rows out, serialised from a body the framework already " +
     "holds. The size at which the writer stops being free. Read against " +

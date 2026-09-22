@@ -7,6 +7,8 @@ const FIELDS = ["page", "size", "status", "category", "sort", "q", "minPrice", "
 export default performanceTest({
   id: { family: "forms", name: "urlencoded" },
   path,
+  base: "query.many",
+  varies: "form",
   about:
     "query.many's eight fields posted as an application/x-www-form-urlencoded " +
     "body instead of a query string, bound and echoed. The answer is exactly " +

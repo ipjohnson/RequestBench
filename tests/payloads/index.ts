@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import type { z } from "zod";
-import { html, json, lines, payload, text } from "#kit";
+import { events, html, json, lines, payload, text } from "#kit";
 import type { Json, Payload, Schema } from "#kit";
 import { bindEcho } from "#models/bind-echo";
 import { item, itemPatch, newItem } from "#models/item";
@@ -46,7 +46,10 @@ export const items = {
 export const order = {
   small: load("order.small", orderRequest),
   medium: load("order.medium", orderRequest),
-  /** Wrong on all three fields, so it has no model to match. */
+  /**
+   * An order that binds and breaks all three of orderRequest's rules, so a framework's
+   * validator refuses it rather than its parser. It matches no model.
+   */
   invalid: json("order.invalid", JSON.parse(read("order.invalid.json")) as Json),
 };
 
@@ -139,6 +142,9 @@ export const pages = {
 
 /** items.medium's rows, one per line, which stream.ndjson writes. */
 export const stream = lines("items.medium, one row per line", items.medium.value.items, [items.medium]);
+
+/** items.medium's rows, one per event, which sse.medium sends. */
+export const sse = events("items.medium, one row per event", items.medium.value.items, [items.medium]);
 
 /** items.large.json as it is committed, which static.file serves byte for byte. */
 export const file = text("items.large.json", read("items.large.json"));

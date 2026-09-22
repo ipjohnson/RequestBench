@@ -6,6 +6,8 @@ const path = "/compressed/small";
 export default performanceTest({
   id: { family: "compressed", name: "identity_small" },
   path,
+  base: "json.small",
+  varies: "compression_wiring",
   about:
     "The compression middleware installed and declining. The client asks for " +
     "identity, so nothing is compressed and what this row carries is the cost " +

@@ -5,6 +5,8 @@ const path = "/etag/large";
 export default performanceTest({
   id: { family: "etag", name: "match_large" },
   path,
+  base: "etag.large",
+  varies: "conditional",
   about:
     "The only row that cannot be sent until the framework has answered a " +
     "different one: the validator is the framework's to produce. A 304 saves " +

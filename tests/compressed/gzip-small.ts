@@ -6,6 +6,8 @@ const path = "/compressed/small";
 export default performanceTest({
   id: { family: "compressed", name: "gzip_small" },
   path,
+  base: "compressed.identity_small",
+  varies: "compression",
   about:
     "The middleware actually asked to compress, on a body too small to " +
     "benefit. Whether a framework bothers is the point, so this row does not " +

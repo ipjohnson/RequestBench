@@ -231,14 +231,30 @@ export interface Suite {
   readonly families: Readonly<Record<FamilyName, Family>>;
   /** Keyed by `family.name`, which is the key in every result row. */
   readonly tests: Readonly<Record<string, Test>>;
+  /** Every factor a test varies from its base, by name. */
+  readonly factors: Readonly<Record<string, Factor>>;
 }
 
+/**
+ * What a framework's rb.json says one family is wired with: a mechanism and the dependency that
+ * provides it, or, as `builtin`, the reason there is nothing to show.
+ */
+export type Mechanism =
+  | {
+      readonly mechanism: string;
+      readonly dependency?: string | undefined;
+      /** The token the wiring has to contain, where the source spells the dependency differently. */
+      readonly mentions?: string | undefined;
+    }
+  | { readonly builtin: string };
+
+/** A framework as its rb.json declares it, which is what a validation test's `scope` reads. */
 export interface Framework {
   readonly language: string;
   readonly name: string;
   readonly framework: string;
   readonly hosts: Readonly<Record<string, unknown>>;
-  readonly mechanisms: Readonly<Record<string, { readonly kind: string; readonly dependency?: string }>>;
+  readonly mechanisms: Readonly<Record<string, Mechanism>>;
 }
 
 export interface PerformanceTest {
@@ -248,6 +264,19 @@ export interface PerformanceTest {
   readonly path: string;
   readonly about: string;
   readonly request: Body;
+  /**
+   * The test this one is read against: the same question with one factor changed. Walking
+   * `base` to a test that has none gives a chain whose steps add up to the difference from
+   * its root, which is how the site says what gzip or sixteen middleware layers cost.
+   */
+  readonly base?: string;
+  /** The one factor that differs from `base`, named in the suite's factors. */
+  readonly varies?: string;
+}
+
+/** What the difference between a test and its base measures. */
+export interface Factor {
+  readonly reads: string;
 }
 
 export interface ValidationTest {

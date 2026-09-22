@@ -6,6 +6,8 @@ const path = "/cache/medium";
 export default performanceTest({
   id: { family: "cache", name: "medium" },
   path,
+  base: "json.medium",
+  varies: "response_cache",
   about:
     "The handler skipped and a stored answer written back. Read against " +
     "json.medium, the difference is the store answering instead of the " +

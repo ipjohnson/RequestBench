@@ -7,6 +7,8 @@ const BYTES = new TextEncoder().encode(file.value).length;
 export default performanceTest({
   id: { family: "static", name: "file" },
   path,
+  base: "json.large",
+  varies: "static_file",
   about:
     "items.large.json sent by the framework's static-file feature from the " +
     "payload directory, byte for byte, with its length and its modification " +

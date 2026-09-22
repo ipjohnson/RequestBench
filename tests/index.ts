@@ -14,9 +14,11 @@ import json from "./json/index.ts";
 import middleware from "./middleware/index.ts";
 import parameters from "./parameters/index.ts";
 import query from "./query/index.ts";
+import sse from "./sse/index.ts";
 import staticFiles from "./static/index.ts";
 import stream from "./stream/index.ts";
 import template from "./template/index.ts";
+import factors from "./factors.ts";
 
 /**
  * The corpus. Discovery is what decides this list is complete: the loader reads
@@ -40,7 +42,8 @@ export default suite([
   middleware,
   parameters,
   query,
+  sse,
   staticFiles,
   stream,
   template,
-]);
+], factors);

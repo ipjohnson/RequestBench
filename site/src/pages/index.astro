@@ -1,0 +1,108 @@
+---
+// The results explorer.
+//
+// The shell is rendered here and the table is drawn in the browser, because every slice the
+// controls offer is a different table over the same run and building them all at once would
+// ship forty copies of one number.
+import Shell from "../components/Shell.astro";
+import { provenance } from "../lib/catalog.ts";
+import { jsonScript } from "../lib/html.ts";
+import { site } from "../lib/site.ts";
+
+const { pageData, config } = site();
+// What this build knows. A build pointed at another results site knows nothing yet, and the
+// explorer rewrites both of these once that site's catalog arrives.
+const { eyebrow, runs } = provenance(pageData.boot.catalog);
+const built = new Date().toISOString().slice(0, 16).replace("T", " ") + " UTC";
+---
+
+<Shell
+  title="RequestBench Results"
+  description="Sortable, filterable HTTP framework results across languages, hosts and time."
+  dataBase={config.dataBase}
+  footerLeft="github.com/ipjohnson/RequestBench"
+  footerRight={`<span id="nruns">${runs}</span> runs &middot; raw histograms in the run files`}
+>
+  <p class="eyebrow"><span id="provenance">{eyebrow}</span> &middot; built {built}</p>
+  <h1>RequestBench Results</h1>
+  <p class="lede">
+    Every framework in a run shares one machine and one window, so these are real latencies and
+    they rank directly against each other. Nothing here is divided by anything: what a framework
+    took is what is shown.
+  </p>
+
+  <div class="controls">
+    <div class="ctl">
+      <label for="host">Execution host</label>
+      <select id="host"></select>
+    </div>
+    <div class="ctl">
+      <label for="rung">Offered rate</label>
+      <select id="rung"></select>
+    </div>
+    <div class="ctl">
+      <label for="metric">Metric</label>
+      <select id="metric">
+        <option value="p50Us">p50</option>
+        <option value="p90Us">p90</option>
+        <option value="p99Us">p99</option>
+        <option value="p999Us">p99.9</option>
+        <option value="achievedRps">achieved rps</option>
+        <option value="dropped">dropped</option>
+      </select>
+    </div>
+    <div class="ctl">
+      <label>Granularity</label>
+      <div class="seg" role="group" aria-label="Granularity">
+        <button data-gran="blend">Blend</button>
+        <button data-gran="family">Family</button>
+        <button data-gran="test">Test</button>
+      </div>
+    </div>
+    <div class="ctl"><label>Languages</label><div class="chips" id="chips"></div></div>
+    <div class="ctl">
+      <label for="q" id="qlabel">Filter</label>
+      <input type="search" id="q" list="qopts" autocomplete="off" placeholder="test or framework" />
+      <datalist id="qopts"></datalist>
+    </div>
+    <div class="ctl"><label>Columns</label><div class="chips" id="colchips"></div></div>
+    <div class="spacer"></div>
+    <div class="ctl">
+      <label>&nbsp;</label>
+      <div class="seg"><button id="reset" type="button">Reset</button></div>
+    </div>
+  </div>
+
+  <div class="note" id="hostnote" hidden></div>
+  <div class="note" id="runnote" hidden></div>
+  <p class="count" id="meta" style="margin:12px 0 0">Loading the results catalog&hellip;</p>
+
+  <div class="scroll">
+    <table>
+      <thead id="thead"></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+  <p class="count" id="count" style="margin-top:10px"></p>
+
+  <div class="panel">
+    <h2>Over time</h2>
+    <p class="hint">The top six rows of the current ranking, over every run on this host.</p>
+    <div id="time"></div>
+  </div>
+
+  <div class="note">
+    Each row is the time that framework took at the offered rate, on the machine and in the window
+    named above. A framework that could not sustain a rate has no latency at it: percentiles over
+    the requests that survived would flatter the collapse, so what it achieved and what it
+    dropped is shown instead.
+  </div>
+
+  <script id="rb-data" type="application/json" set:html={jsonScript(pageData)} />
+  <script>
+    import { start } from "../client/explorer.ts";
+
+    const raw = document.getElementById("rb-data")?.textContent ?? "{}";
+    void start(JSON.parse(raw));
+  </script>
+</Shell>
