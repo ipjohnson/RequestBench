@@ -3,8 +3,9 @@
 A framework is a directory, `frameworks/<language>/<name>/`, that answers every performance test in
 `tests/` from a container and holds itself to that with its own suite. Its id is
 `<language>:<name>`, taken from the path. Nothing registers it except its entry in
-`frameworks/exceptions.ts`. [`dotnet/carter`](dotnet/carter) is the worked example, and
-[`node/fastify`](node/fastify) is one in TypeScript.
+`frameworks/exceptions.ts`. [`dotnet/carter`](dotnet/carter) is the worked example. There is one in
+each other language: [`node/fastify`](node/fastify), [`python/fastapi`](python/fastapi),
+[`java/spring-boot`](java/spring-boot), [`rust/axum`](rust/axum) and [`go/gin`](go/gin).
 
 Discovery, bundles and marks read git's index, not the directory. Run `git add` on new files before
 any `npm run rb` command, or they do not exist to it.
@@ -22,7 +23,10 @@ any `npm run rb` command, or they do not exist to it.
 | `Client/` | Only for a framework that emits a client of its own. |
 
 The build files the language needs sit at the top of the directory, beside the solution. Carter
-has `solution.slnx`, `global.json`, `nuget.config` and `Directory.Build.props` there.
+has `solution.slnx`, `global.json`, `nuget.config` and `Directory.Build.props` there. Spring Boot
+has an aggregator `pom.xml` over two Maven modules, Implementation and UnitTests. axum has one
+package's `Cargo.toml`, which names each target's path under Implementation/ and UnitTests/, and
+its `Cargo.lock`. Gin has `go.mod` and `go.sum`.
 
 ## What the corpus asks
 
@@ -59,6 +63,13 @@ The orchestrator starts the container with these settings:
 A Node framework runs one process. A Python framework runs two workers, because one Python process
 runs Python on one core at a time. [`python/fastapi`](python/fastapi) starts uvicorn with
 `workers=2`, written as a number, because under a quota Python counts every core the host has.
+A Java, Rust or Go framework runs one process. The JVM, tokio and Go's scheduler each size their
+threads from the container's CPU quota, and each counts 2.
+
+The framework is PID 1 in its container, and the kernel gives PID 1 no default action for SIGTERM.
+The JVM, .NET, uvicorn and the Go runtime install a handler of their own. Node and a Rust binary
+do not, so Fastify and axum stop on SIGTERM themselves. Without that, `docker stop` waits out its
+timeout.
 
 Two routes sit outside the corpus:
 
@@ -113,9 +124,15 @@ written in TypeScript compiles its own source with its own settings.
 The site shows, for every test, the code that answers it, the code that wires its family, and the
 suite's test of it. Most of that is found from the source. A route literal the test's path matches
 is its handler. The method is read from the literal's own line, so keep the literal on the line of
-the call that names the method, or it matches every method. Marks cover the rest. A mark is a comment,
-`rb:<kind> <selector>[,<selector>...]`, and labels the block under it. `rb:end` closes one where
-the block would stop short. A selector is `family.name`, `family.*` or `*`.
+the call that names the method, or it matches every method. A formatter that breaks a call across
+lines separates the two, which is why axum's registrations are not run through rustfmt. Any other
+string that reads as a route matches too, with or without its leading slash, such as Gin's
+`json:"items"` struct tag, a Thymeleaf view named `items` or a `"/items/{}"` format string. Rename
+it or mark the route.
+
+Marks cover the rest. A mark is a comment, `rb:<kind> <selector>[,<selector>...]`, and labels the
+block under it. `rb:end` closes one where the block would stop short. A selector is `family.name`,
+`family.*` or `*`.
 
 `rb:handler`, with a test as the selector, marks the lines that answer the request.
 - Use it where the route literal cannot be found or matches in more than one place.
@@ -135,6 +152,9 @@ those tests.
   `dotnet test --filter corpus=<id>` run it. Fastify starts each test's name with its id, so
   `node --test --test-name-pattern=<id>` runs it. FastAPI puts `@pytest.mark.corpus("<id>")` on
   the test.
+- Spring Boot puts `@Tag("<id>")` on the test, so `mvn test -Dgroups=<id>` runs it. Gin runs each
+  id as a subtest, `t.Run("<id>", ...)`, so `go test ./UnitTests -run '/<id>'` runs it. axum names
+  the ids in the test's doc comment, which the marked block runs through onto the function.
 
 Every performance test needs a marked test in the framework's suite, and `rb check` fails a
 framework that lacks one. The same holds for every other assertion in `orchestrator/marks.ts`.
@@ -146,7 +166,7 @@ There is no allowance.
 | --- | --- |
 | `npm run rb -- check` | Every rb.json, bundle and mark, with 0 problems expected. |
 | `npm run rb -- snippets <id>` | Where the framework answers each test. |
-| `npm run rb -- suite <id>` | rb.json's suite. |
+| `npm run rb -- suite <id>` | rb.json's suite, run on this machine, so the framework's toolchain has to be on PATH. |
 | `npm run rb -- validate <id> --exemplars` | Builds the image, runs the corpus against the container, and writes `results/exemplars/<language>-<name>@container-h1.json`. |
 | `npm run rb -- validate --at <host:port> --framework <id>` | The corpus against a server started by hand. |
 | `npm run rb -- upgrade <id>` | Runs rb.json's `upgrade` and shows what moved. |
