@@ -24,6 +24,8 @@ builder.Logging.ClearProviders();
 
 builder.Services.AddSingleton(payloads);
 builder.Services.AddCarter();
+// The document dotnet build writes to Client/openapi.json. Nothing maps a route to it.
+builder.Services.AddOpenApi();
 // rb:wiring json.*
 builder.Services.ConfigureHttpJsonOptions(options => options.SerializerOptions.TypeInfoResolverChain.Insert(0, JsonContext.Default));
 // An error status written with no body gets ASP.NET Core's ProblemDetails. Carter adds no

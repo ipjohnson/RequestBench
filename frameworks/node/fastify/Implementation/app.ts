@@ -31,9 +31,11 @@ export type Routes = FastifyPluginAsync<{ readonly payloads: Payloads }>;
  * Each family is a plugin. Fastify encapsulates a plugin, so a hook, a body parser or a plugin a
  * family registers applies to that family's routes and to no others. The errors family has no
  * routes: its answers are the router's, the JSON parser's and the items handlers'.
+ *
+ * Client/document.ts passes an instance with @fastify/swagger already registered, because it
+ * collects routes as they are added.
  */
-export async function build(payloads: Payloads): Promise<FastifyInstance> {
-  const app = Fastify();
+export async function build(payloads: Payloads, app: FastifyInstance = Fastify()): Promise<FastifyInstance> {
   // @fastify/sensible decorates every reply with Fastify's HTTP errors, reply.notFound and
   // reply.forbidden among them, which the default error handler writes.
   await app.register(sensible);

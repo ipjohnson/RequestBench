@@ -20,7 +20,7 @@ any `npm run rb` command, or they do not exist to it.
 | `Implementation/` | The application. |
 | `UnitTests/` | The framework's own suite. |
 | `client-exception/index.ts` | How the corpus reads the framework's error bodies. |
-| `Client/` | Only for a framework that emits a client of its own. |
+| `Client/` | The OpenAPI document the framework writes about its own routes, and the client generated from it. See Client below. |
 
 The build files the language needs sit at the top of the directory, beside the solution. Carter
 has `solution.slnx`, `global.json`, `nuget.config` and `Directory.Build.props` there. Spring Boot
@@ -96,6 +96,7 @@ Two routes sit outside the corpus:
 | `hosts` | Per host, the `dockerfile` and optional `buildArgs`. Only `container-h1` exists. |
 | `suite` | `argv` runs the framework's own tests. `paths` are the directories holding them, which the bundle counts as tests. `cwd` and `env` are optional. |
 | `upgrade` | A command that moves the pins within their ranges, or `null` when they move by hand. |
+| `client` | Optional. `document` is the OpenAPI document under `Client/`, `writer` says what writes it, `generator` says what generates the client and at which version, and `argv` rewrites both. `cwd` and `env` are optional. |
 | `skips` | Validation tests the framework does not satisfy, each with the reason. |
 | `noHandler` | Performance tests the framework answers with no handler of its own, each with what answers it. A router's 404 and 405 and a CORS preflight usually are. |
 | `mechanisms` | One entry for every family. `{ "mechanism", "dependency", "mentions" }` names what wires it, or `{ "builtin" }` says why there is nothing to show. |
@@ -118,6 +119,37 @@ the following:
 Register it in `frameworks/exceptions.ts`. Import it, add the id to `FrameworkId`, and add the
 entry. This is the only TypeScript of a framework's that the root typecheck reads. A framework
 written in TypeScript compiles its own source with its own settings.
+
+## Client
+
+`Client/` holds the OpenAPI document a framework writes about its own routes and a client generated
+from that document. Carter, Fastify, FastAPI and Spring Boot have one. axum and Gin do not, because
+neither writes a document without a third-party library.
+
+- The document comes from the framework's own tooling, reading the routes as the corpus has them.
+  The ASP.NET Core frameworks use ASP.NET Core's generation. A Java framework may start its server
+  to read the document, where that is how its tooling runs in CI.
+- The client comes from the generator the framework's documentation recommends. Where it recommends
+  none, the client is Kiota's, when Kiota supports the language well, even through a community
+  plugin. FastAPI's is Hey API's, a TypeScript client, and the other three are Kiota's.
+- Everything that writes the two runs from the framework's directory with its own toolchain, and
+  rb.json `client.argv` runs it. `npm run rb -- client <id>` runs that with `RB_PAYLOADS` set and
+  fails if anything under `Client/` changed.
+- Both are committed. The bundle gives `Client/` the role `client`: it counts in `bundleHash` and
+  not in `codeHash`, and the handler finder does not read it, because every route is in the
+  document a second time.
+- Nothing in `Client/` reaches the image, and writing the document must not change what the image
+  runs. Carter writes it only when `RB_PAYLOADS` is set, and Spring Boot adds springdoc only under a
+  Maven profile.
+- The client's own tests go in the suite, without `rb:test` marks, because they hold the client and
+  not a corpus row. FastAPI's TypeScript client is tested in `Client/` instead, by the client
+  command.
+- The client command needs the framework's toolchain on PATH, as the suite does, and whatever the
+  generator needs beside it. FastAPI's needs uv and Node, Spring Boot's needs a JDK and Maven, and
+  Kiota's Linux binary needs libicu, which a GitHub runner has.
+- Change no route to improve the document. A Fastify body schema would validate a body the bind
+  rows only parse. Options of the tool that writes the document are fine, such as Spring Boot's
+  `application/json` default for answers the controllers do not type.
 
 ## Marks
 
@@ -170,6 +202,7 @@ There is no allowance.
 | `npm run rb -- validate <id> --exemplars` | Builds the image, runs the corpus against the container, and writes `results/exemplars/<language>-<name>@container-h1.json`. |
 | `npm run rb -- validate --at <host:port> --framework <id>` | The corpus against a server started by hand. |
 | `npm run rb -- upgrade <id>` | Runs rb.json's `upgrade` and shows what moved. |
+| `npm run rb -- client <id>` | Runs rb.json's `client` and fails if it changed anything under `Client/`. |
 | `npm run rb -- measure <id> --seconds 10` | A short smoke run. It is never recorded. |
 
 Before committing a framework, work through this list:
@@ -179,4 +212,5 @@ Before committing a framework, work through this list:
 3. `npm run rb -- check` reports 0 problems.
 4. `npm run rb -- suite <id>` passes.
 5. `npm run rb -- validate <id> --exemplars` passes every performance test.
-6. Commit the exemplar with the framework.
+6. `npm run rb -- client <id>` reports `Client/` current, when rb.json declares `client`.
+7. Commit the exemplar with the framework.

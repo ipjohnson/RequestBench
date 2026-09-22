@@ -1,0 +1,30 @@
+{
+  "descriptionHash": "5E4BA8D1B619D22634858A9155B578489BBC2918AB273081A703228ED71A68BA3D7F2268D56ED772B37790557AAFBA0B9891D9C742F6F515EC106C69DC1148B1",
+  "descriptionLocation": "../../../openapi.json",
+  "lockFileVersion": "1.0.0",
+  "kiotaVersion": "1.35.0",
+  "clientClassName": "SpringBootClient",
+  "typeAccessModifier": "Public",
+  "clientNamespaceName": "client.kiota",
+  "language": "Java",
+  "usesBackingStore": false,
+  "excludeBackwardCompatible": true,
+  "includeAdditionalData": true,
+  "disableSSLValidation": false,
+  "serializers": [
+    "none"
+  ],
+  "deserializers": [
+    "none"
+  ],
+  "structuredMimeTypes": [
+    "application/json",
+    "text/plain;q=0.9",
+    "application/x-www-form-urlencoded;q=0.2",
+    "multipart/form-data;q=0.1"
+  ],
+  "includePatterns": [],
+  "excludePatterns": [],
+  "disabledValidationRules": [],
+  "allowedExternalOrigins": []
+}

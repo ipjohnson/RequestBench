@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node --experimental-strip-types --disable-warning=ExperimentalWarning Implementation/server.ts",
     "typecheck": "tsc -p tsconfig.json",
-    "test": "tsc -p tsconfig.json && node --experimental-strip-types --disable-warning=ExperimentalWarning --test \"UnitTests/*.test.ts\""
+    "test": "tsc -p tsconfig.json && node --experimental-strip-types --disable-warning=ExperimentalWarning --test \"UnitTests/*.test.ts\"",
+    "client": "node --experimental-strip-types --disable-warning=ExperimentalWarning Client/document.ts && node --experimental-strip-types --disable-warning=ExperimentalWarning Client/generate.ts"
   },
   "dependencies": {
     "@fastify/compress": "^9.2.0",
@@ -23,6 +24,9 @@
     "fastify": "^5.12.5"
   },
   "devDependencies": {
+    "@fastify/swagger": "^9.9.0",
+    "@microsoft/kiota": "1.35.0",
+    "@microsoft/kiota-bundle": "^1.0.0-preview.106",
     "@types/ejs": "^3.1.5",
     "@types/node": "^26.6.2",
     "typescript": "^5.9.3"

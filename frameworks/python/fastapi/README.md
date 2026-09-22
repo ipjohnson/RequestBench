@@ -14,11 +14,10 @@ converts it before the handler runs. A declared return type is serialized by Pyd
 | --- | --- |
 | `Implementation/` | The application. `server.py` starts uvicorn, `main.py` is what each worker imports, `app.py` builds the application, and `routes/` holds one module per corpus family. |
 | `UnitTests/` | pytest tests of the wiring, sending each request through Starlette's TestClient. |
+| `Client/` | The OpenAPI document FastAPI builds from the routes, and the TypeScript client Hey API generates from it, with its own `package.json`. |
 | `client-exception/` | How the corpus reads FastAPI's error bodies. |
 | `pyproject.toml` | The dependencies, the suite's dependencies, and pytest's settings. |
 | `uv.lock` | What uv resolved, which the image installs. |
-
-There is no client, because FastAPI emits none.
 
 ## Building, running and testing
 
@@ -101,3 +100,31 @@ Every refusal is FastAPI's or Starlette's own, written as `{"detail": ...}`. Not
 - A path no route matches is Starlette's 404, and a method the path has no route for its 405.
 - A missing row is an `HTTPException` with 404, and a wrong token one with 403. A request with no
   bearer token at all is `HTTPBearer`'s own 401.
+
+## Client
+
+`Client/` holds the OpenAPI document FastAPI builds from the routes' type hints and a TypeScript
+client generated from it. FastAPI's "Generating SDKs" page recommends Hey API, which makes a
+TypeScript client, so the client is Hey API's, and `Client/` is a Node package of its own.
+
+- `Client/document.py` builds the application and writes `app.openapi()` to `Client/openapi.json`.
+  The documentation routes are off, which stops FastAPI serving the document and not building it.
+  Nothing listens.
+- FastAPI names the operation of the GET and HEAD route on `/items/{id}` after the first method in a
+  set, and a set's order follows Python's hash seed. `document.py` runs itself again with
+  `PYTHONHASHSEED=0` so the document is the same on every run.
+- `@hey-api/openapi-ts` 0.99.0, pinned exactly because it is below 1.0, writes the client to
+  `Client/HeyApi/` with `.ts` imports, which Node's type stripping loads.
+- `npm run client --prefix Client` installs the package, writes both, typechecks them and runs
+  `Client/client.test.ts`, which starts the Implementation under uvicorn and calls it through the
+  client. `npm run rb -- client python:fastapi` runs it and fails if anything under `Client/`
+  changed. It needs uv and Node.
+
+What the document leaves out:
+
+- The routes on a mounted sub-application, which FastAPI does not document. The compressed and
+  cors families and `/static` are mounted.
+- The 304 the etag family answers, which no route declares.
+
+Every other route in the corpus has its body, parameters and answer typed. A route that validates
+anything also declares the 422 FastAPI's validation writes.

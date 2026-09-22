@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Both modules. Spring Boot's starter parent pins every dependency and plugin through its BOM, so
+  The three modules. Spring Boot's starter parent pins every dependency and plugin through its BOM, so
   the Boot version below is the one number that moves them.
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
@@ -22,6 +22,7 @@
 
   <modules>
     <module>Implementation</module>
+    <module>Client</module>
     <module>UnitTests</module>
   </modules>
 

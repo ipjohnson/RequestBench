@@ -41,6 +41,8 @@ before(() => {
   put(`${dir}/suite/package.json`, "{}\n");
   put(`${dir}/client-exception/index.ts`, "export default {};\n");
   put(`${dir}/handler_test.go`, "package main\n");
+  put(`${dir}/Client/openapi.json`, "{}\n");
+  put(`${dir}/Client/Kiota/client.ts`, "export const client = {};\n");
   put("frameworks/node/other/server.js", "// another framework\n");
   put("tests/index.ts", "export default [];\n");
   put("tests/package.json", "{}\n");
@@ -59,6 +61,8 @@ after(() => rmSync(repo, { recursive: true, force: true }));
 
 test("a framework's files get the roles upstream's bundle.py gives them, and only its own files", () => {
   assert.deepEqual(rolesOf(), {
+    "frameworks/node/demo/Client/Kiota/client.ts": "client",
+    "frameworks/node/demo/Client/openapi.json": "client",
     "frameworks/node/demo/Dockerfile": "host",
     "frameworks/node/demo/README.md": "prose",
     "frameworks/node/demo/client-exception/index.ts": "test",
@@ -78,7 +82,7 @@ test("a rollup is sha256sum's own format over the sorted files", () => {
   const b = frameworkBundle(repo, DEMO);
   const text = b.files.map((f) => `${f.hash.slice(7)}  ${f.path}\n`).join("");
   assert.equal(b.bundleHash, `sha256:${createHash("sha256").update(text).digest("hex")}`);
-  assert.equal(b.codeHash, rollup(b.files.filter((f) => f.role !== "prose" && f.role !== "test")));
+  assert.equal(b.codeHash, rollup(b.files.filter((f) => f.role !== "prose" && f.role !== "test" && f.role !== "client")));
   assert.deepEqual(
     b.files.map((f) => f.path),
     [...b.files.map((f) => f.path)].sort(),
@@ -101,6 +105,15 @@ test("prose and tests move bundleHash and leave codeHash alone", () => {
   const committed = frameworkBundle(repo, DEMO, "HEAD");
   assert.equal(committed.bundleHash, before.bundleHash);
   assert.equal(committed.commit, git("rev-parse", "HEAD"));
+  git("checkout", "--", ".");
+});
+
+test("a regenerated client moves bundleHash and leaves codeHash alone", () => {
+  const before = frameworkBundle(repo, DEMO);
+  put("frameworks/node/demo/Client/openapi.json", '{ "openapi": "3.1.0" }\n');
+  const after = frameworkBundle(repo, DEMO);
+  assert.notEqual(after.bundleHash, before.bundleHash);
+  assert.equal(after.codeHash, before.codeHash);
   git("checkout", "--", ".");
 });
 

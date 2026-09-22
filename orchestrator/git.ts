@@ -85,3 +85,19 @@ export function dirty(root: string, prefix = "."): string[] {
   }
   return out;
 }
+
+/**
+ * Paths under `prefix` whose working-tree bytes differ from the index, and untracked paths. What is
+ * staged counts as settled, so a file rewritten with the bytes the index holds is not listed.
+ */
+export function unstaged(root: string, prefix = "."): string[] {
+  const fields = git(root, ["status", "--porcelain", "-z", "--untracked-files=all", "--", prefix]).split("\0");
+  const out: string[] = [];
+  for (let i = 0; i < fields.length; i++) {
+    const entry = fields[i]!;
+    if (entry.length < 4) continue;
+    if (entry[1] !== " ") out.push(entry.slice(3));
+    if (/[RC]/.test(entry.slice(0, 2))) i++;
+  }
+  return out;
+}

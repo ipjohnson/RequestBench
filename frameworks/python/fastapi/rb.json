@@ -11,6 +11,12 @@
   },
   "suite": { "argv": ["uv", "run", "--locked", "pytest"], "paths": ["UnitTests"] },
   "upgrade": { "argv": ["uv", "lock", "--upgrade"] },
+  "client": {
+    "document": "Client/openapi.json",
+    "writer": "FastAPI 0.141.1's app.openapi(), in Client/document.py",
+    "generator": "@hey-api/openapi-ts 0.99.0, which FastAPI's docs recommend, in Client/package.json",
+    "argv": ["npm", "run", "client", "--prefix", "Client"]
+  },
   "noHandler": {
     "cors.preflight": "Starlette's CORSMiddleware on the /cors sub-application answers the preflight, and no handler runs.",
     "errors.unmatched": "Starlette's router answers a path no route matches with 404.",

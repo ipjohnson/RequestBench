@@ -1,0 +1,187 @@
+{
+  "applicationName": "application",
+  "apiDependencies": {
+    "FastifyClient": {
+      "apiDescriptionUrl": "./openapi.json",
+      "apiDeploymentBaseUrl": "/",
+      "requests": [
+        {
+          "method": "GET",
+          "uriTemplate": "health"
+        },
+        {
+          "method": "GET",
+          "uriTemplate": "__meta"
+        },
+        {
+          "method": "GET",
+          "uriTemplate": "authorized/small"
+        },
+        {
+          "method": "GET",
+          "uriTemplate": "plaintext"
+        },
+        {
+          "method": "POST",
+          "uriTemplate": "body/bind/small"
+        },
+        {
+          "method": "POST",
+          "uriTemplate": "body/bind/medium"
+        },
+        {
+          "method": "POST",
+          "uriTemplate": "body/validate/small"
+        },
+        {
+          "method": "POST",
+          "uriTemplate": "body/validate/medium"
+        },
+        {
+          "method": "POST",
+          "uriTemplate": "body/validate/first-error"
+        },
+        {
+          "method": "GET",
+          "uriTemplate": "cache/small"
+        },
+        {
+          "method": "GET",
+          "uriTemplate": "cache/medium"
+        },
+        {
+          "method": "GET",
+          "uriTemplate": "cache/large"
+        },
+        {
+          "method": "GET",
+          "uriTemplate": "cache/vary/one"
+        },
+        {
+          "method": "GET",
+          "uriTemplate": "cache/vary/many"
+        },
+        {
+          "method": "GET",
+          "uriTemplate": "compressed/small"
+        },
+        {
+          "method": "GET",
+          "uriTemplate": "compressed/large"
+        },
+        {
+          "method": "GET",
+          "uriTemplate": "etag/small"
+        },
+        {
+          "method": "GET",
+          "uriTemplate": "etag/large"
+        },
+        {
+          "method": "POST",
+          "uriTemplate": "forms/urlencoded"
+        },
+        {
+          "method": "POST",
+          "uriTemplate": "forms/multipart"
+        },
+        {
+          "method": "GET",
+          "uriTemplate": "headers/bind"
+        },
+        {
+          "method": "GET",
+          "uriTemplate": "headers"
+        },
+        {
+          "method": "GET",
+          "uriTemplate": "items/{id}"
+        },
+        {
+          "method": "PUT",
+          "uriTemplate": "items/{id}"
+        },
+        {
+          "method": "PATCH",
+          "uriTemplate": "items/{id}"
+        },
+        {
+          "method": "DELETE",
+          "uriTemplate": "items/{id}"
+        },
+        {
+          "method": "POST",
+          "uriTemplate": "items"
+        },
+        {
+          "method": "GET",
+          "uriTemplate": "json/small"
+        },
+        {
+          "method": "GET",
+          "uriTemplate": "json/medium"
+        },
+        {
+          "method": "GET",
+          "uriTemplate": "json/large"
+        },
+        {
+          "method": "GET",
+          "uriTemplate": "middleware/none"
+        },
+        {
+          "method": "GET",
+          "uriTemplate": "middleware/four"
+        },
+        {
+          "method": "GET",
+          "uriTemplate": "middleware/sixteen"
+        },
+        {
+          "method": "GET",
+          "uriTemplate": "parameters/static/segment/literal"
+        },
+        {
+          "method": "GET",
+          "uriTemplate": "parameters/{one}/segment/literal"
+        },
+        {
+          "method": "GET",
+          "uriTemplate": "parameters/{one}/with-second/{two}"
+        },
+        {
+          "method": "GET",
+          "uriTemplate": "query/one"
+        },
+        {
+          "method": "GET",
+          "uriTemplate": "query/many"
+        },
+        {
+          "method": "GET",
+          "uriTemplate": "sse/medium"
+        },
+        {
+          "method": "GET",
+          "uriTemplate": "stream/items"
+        },
+        {
+          "method": "GET",
+          "uriTemplate": "template/small"
+        },
+        {
+          "method": "GET",
+          "uriTemplate": "template/medium"
+        },
+        {
+          "method": "GET",
+          "uriTemplate": "cors/small"
+        }
+      ],
+      "extensions": {
+        "x-ms-kiota-hash": "C68E54B51E0DB0D803BACF82B7C535A5110A9EA18699D078806AAC4F3EC40BD0",
+        "x-ms-kiota-version": "1.35.0"
+      }
+    }
+  }
+}

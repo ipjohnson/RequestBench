@@ -11,6 +11,12 @@
   },
   "suite": { "argv": ["npm", "install-ci-test"], "paths": ["UnitTests"] },
   "upgrade": { "argv": ["npm", "update"] },
+  "client": {
+    "document": "Client/openapi.json",
+    "writer": "@fastify/swagger 9.9.0, from the route schemas, in Client/document.ts",
+    "generator": "Kiota 1.35.0, through @microsoft/kiota in Client/generate.ts, because Fastify recommends no generator",
+    "argv": ["npm", "run", "client"]
+  },
   "noHandler": {
     "cors.preflight": "@fastify/cors answers the preflight in its onRequest hook, and no handler runs.",
     "errors.unmatched": "Fastify's default not-found handler answers a path no route matches with 404.",

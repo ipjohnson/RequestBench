@@ -13,10 +13,9 @@ has one.
 | --- | --- |
 | `Implementation/` | The application, a Maven module. One controller per corpus family under `src/main/java/implementation/routes/`. |
 | `UnitTests/` | JUnit tests of the wiring, a Maven module that boots the Implementation on a random port with `@SpringBootTest`. |
+| `Client/` | The OpenAPI document springdoc serves, and the Kiota client generated from it, a Maven module. |
 | `client-exception/` | How the corpus reads Spring Boot's error bodies. |
-| `pom.xml` | Both modules, under Spring Boot's starter parent, which pins every dependency and plugin. |
-
-There is no client module, because Spring Boot emits no client.
+| `pom.xml` | The three modules, under Spring Boot's starter parent, which pins every dependency and plugin. |
 
 ## Building, running and testing
 
@@ -100,3 +99,37 @@ Every refusal is what Spring writes, and Boot's error page writes every body: `t
 `order.invalid` binds and breaks all three rules, so Bean Validation refuses it and Spring MVC
 answers 400 with an entry per field under `errors`. The first-error route lists one. A body
 Jackson cannot read never reaches the validator, and is refused with a 400 that names no field.
+
+## Client
+
+`Client/` holds the OpenAPI document springdoc serves for the controllers and a Java client
+generated from it. Spring Boot writes no document of its own, and springdoc is the project Spring
+applications use, though not a Spring project. Spring recommends no client generator, so the
+client is Kiota's.
+
+- `mvn -B -Pclient verify -pl Client -am` builds Implementation with the `client` profile, which adds
+  springdoc. `spring-boot:start` runs the application on port 18080 before `integration-test`,
+  springdoc's Maven plugin reads `/v3/api-docs` into `Client/openapi.json`, and `spring-boot:stop`
+  ends it. Only the profile adds springdoc, so the image, built without it, does not change.
+- The same profile runs kiota-community's `kiota-maven-plugin` 0.0.39 in Client, with Kiota 1.35.0
+  named, because the plugin's own default is 1.22.2. It downloads that release from GitHub and
+  checks no hash. Kiota writes `Client/Kiota/`, which a build without the profile compiles as it is.
+- The client registers no serializers, as Kiota's Java quickstart generates it.
+  `microsoft-kiota-bundle`'s `DefaultRequestAdapter` registers them.
+- `npm run rb -- client java:spring-boot` runs the command and fails if anything under `Client/`
+  changed. Kiota's Linux binary needs libicu, which a GitHub runner has.
+- `UnitTests/.../ClientTests.java` calls the Implementation on its random port through the client.
+
+Three springdoc settings apply to the document run alone. The document is pretty-printed and its
+keys ordered, so it reads as a diff. The controllers name no content type for their JSON answers,
+which springdoc writes as `*/*` and Kiota reads as bytes, so the default is `application/json`.
+
+What the document leaves out:
+
+- The CORS preflight and `/static`, which no controller method answers.
+- HEAD on `/items/{id}`, which Spring MVC answers with the GET method.
+- The two template routes, whose handlers return a view name.
+- The forms: the urlencoded body has no schema, and the multipart body is described as JSON.
+- The 201 of `POST /items` and the 304 of the etag family.
+- Under the `application/json` default, the SSE and stream routes are described as JSON objects
+  named `SseEmitter` and `StreamingResponseBody`, the types their handlers return.

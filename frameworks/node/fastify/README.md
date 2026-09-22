@@ -13,12 +13,11 @@ routes registered inside it and to no others. Every family here is a plugin of i
 | --- | --- |
 | `Implementation/` | The application, in TypeScript. `app.ts` builds it, `server.ts` starts it, and `routes/` holds one plugin per corpus family. |
 | `UnitTests/` | node:test tests of the wiring, sending each request through Fastify's `inject()`. |
+| `Client/` | The OpenAPI document @fastify/swagger writes from the route schemas, and the Kiota client generated from it. |
 | `client-exception/` | How the corpus reads Fastify's error bodies. |
-| `package.json` | The dependencies, and the scripts that start, check and test the Implementation. |
+| `package.json` | The dependencies, and the scripts that start, check and test the Implementation and write the client. |
 | `package-lock.json` | What npm resolved, which the image installs. |
 | `tsconfig.json` | How tsc checks the source. |
-
-There is no client, because Fastify emits none.
 
 ## Building, running and testing
 
@@ -91,3 +90,34 @@ reshapes it.
 - A path no route matches, and a method a path has no route for, get the not-found handler's 404,
   such as `Route POST:/items/17 not found`.
 - A missing row is `@fastify/sensible`'s 404, and a wrong token its 403.
+
+## Client
+
+`Client/` holds the OpenAPI document Fastify's route schemas produce and a TypeScript client
+generated from it. Fastify recommends no client generator, so the client is Kiota's.
+
+- `Client/document.ts` registers @fastify/swagger on an instance, passes it to `build`, and writes
+  `app.swagger()` to `Client/openapi.json`. It never listens. @fastify/swagger collects routes as
+  they are added, which is why `build` takes the instance.
+- `Client/generate.ts` runs Kiota 1.35.0 through `@microsoft/kiota`, which downloads that release
+  from GitHub on first use and checks its hash. Kiota writes `Client/Kiota/` and its workspace files
+  to `Client/.kiota/`.
+- Kiota's TypeScript imports `./x/index.js` for `x/index.ts`, which Node's type stripping cannot
+  load, so `generate.ts` rewrites each relative import to name the `.ts` file. tsc rejects the
+  generated root client, because Kiota reserves `query` for the HTTP QUERY method and the corpus has
+  a `/query` family, so each generated file starts with `// @ts-nocheck`. The calls work.
+- `RB_PAYLOADS=../../../tests/payloads npm run client` does both. `npm run rb -- client
+  node:fastify` runs it and fails if anything under `Client/` changed.
+- `UnitTests/kiota.test.ts` calls the Implementation through the client, over `inject()`.
+
+@fastify/swagger, `@microsoft/kiota` and `@microsoft/kiota-bundle` are dev dependencies, so the
+image installs what it did before.
+
+What the document leaves out:
+
+- A route's schema is also its validator. The bind routes, the item writes and the multipart form
+  declare no body schema, so the document gives them no request body. Adding one would make Fastify
+  validate those bodies, which the bind rows do not measure.
+- The CORS preflight and `/static` are answered by plugins, so no route describes them.
+- @fastify/swagger leaves out HEAD routes unless `exposeHeadRoutes` is set.
+- `forms.urlencoded` is described as JSON, because the route sets no `consumes`.

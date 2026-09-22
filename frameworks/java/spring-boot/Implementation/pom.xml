@@ -48,4 +48,74 @@
       </plugin>
     </plugins>
   </build>
+
+  <profiles>
+    <!-- mvn -Pclient verify starts the application, reads the document springdoc serves, and
+         writes it to Client/openapi.json. springdoc is in this profile alone, so the image, which
+         is built without it, does not change. -->
+    <profile>
+      <id>client</id>
+      <properties>
+        <client.port>18080</client.port>
+      </properties>
+      <dependencies>
+        <dependency>
+          <groupId>org.springdoc</groupId>
+          <artifactId>springdoc-openapi-starter-webmvc-api</artifactId>
+          <version>3.1.1</version>
+        </dependency>
+      </dependencies>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>document-start</id>
+                <goals>
+                  <goal>start</goal>
+                </goals>
+                <configuration>
+                  <!-- Pretty and ordered, so the committed document reads as a diff. The controllers
+                       name no content type for their JSON answers, which springdoc writes as */*
+                       and Kiota reads as bytes, so the document says application/json. -->
+                  <arguments>
+                    <argument>--server.port=${client.port}</argument>
+                    <argument>--springdoc.writer-with-default-pretty-printer=true</argument>
+                    <argument>--springdoc.writer-with-order-by-keys=true</argument>
+                    <argument>--springdoc.default-produces-media-type=application/json</argument>
+                  </arguments>
+                </configuration>
+              </execution>
+              <execution>
+                <id>document-stop</id>
+                <goals>
+                  <goal>stop</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-maven-plugin</artifactId>
+            <version>1.5</version>
+            <executions>
+              <execution>
+                <id>document</id>
+                <goals>
+                  <goal>generate</goal>
+                </goals>
+              </execution>
+            </executions>
+            <configuration>
+              <apiDocsUrl>http://localhost:${client.port}/v3/api-docs</apiDocsUrl>
+              <outputDir>${project.basedir}/../Client</outputDir>
+              <outputFileName>openapi.json</outputFileName>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>

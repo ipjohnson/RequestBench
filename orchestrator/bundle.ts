@@ -27,7 +27,7 @@ import { blob, resolveCommit, tracked } from "./git.ts";
 
 export const BUNDLE_VERSION = "bundle-v1";
 
-export type FrameworkRole = "source" | "manifest" | "config" | "host" | "contract" | "prose" | "test";
+export type FrameworkRole = "source" | "manifest" | "config" | "host" | "contract" | "prose" | "test" | "client";
 export type TestsRole = "test" | "family" | "kit" | "model" | "payload" | "snapshot" | "manifest" | "source" | "prose";
 export type Role = FrameworkRole | TestsRole;
 
@@ -135,9 +135,15 @@ const CONTRACT_NAMES = new Set(["openapi.yaml", "openapi.yml", "openapi.json"]);
  * it and the framework never runs it, so it is in the bundle as a test and out of codeHash.
  */
 const CLIENT_EXCEPTION = "client-exception/";
+/**
+ * The OpenAPI document the framework writes about itself and the client generated from it. The
+ * image never reads them, so they stay out of codeHash, and the handler finder never reads them,
+ * because every route literal is in the document a second time.
+ */
+const CLIENT = "Client/";
 /** Go keeps a test beside the code it tests, so it is told apart by name, as `go build` does. */
 const TEST_SUFFIXES = ["_test.go"];
-const FRAMEWORK_NOT_CODE: ReadonlySet<Role> = new Set(["prose", "test"]);
+const FRAMEWORK_NOT_CODE: ReadonlySet<Role> = new Set(["prose", "test", "client"]);
 
 /** A bundle missing any of these did not resolve, and a partial file set hashes as cleanly as a whole one. */
 const FRAMEWORK_REQUIRED: readonly Role[] = ["source", "manifest", "host"];
@@ -154,6 +160,8 @@ export function frameworkRole(rel: string, suitePaths: readonly string[]): Frame
   if (rel.startsWith(CLIENT_EXCEPTION) || suitePaths.some((p) => inside(rel, p)) || TEST_SUFFIXES.some((s) => name.endsWith(s))) {
     return "test";
   }
+  // Before the name rules: Client/openapi.json is what the framework says it serves, not a contract it routes from.
+  if (rel.startsWith(CLIENT)) return "client";
   if (CONTRACT_NAMES.has(name)) return "contract";
   if (name.endsWith(".md")) return "prose";
   if (MANIFEST_NAMES.has(name) || MANIFEST_SUFFIXES.some((s) => name.endsWith(s))) return "manifest";

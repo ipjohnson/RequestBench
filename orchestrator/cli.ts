@@ -14,7 +14,7 @@ import exceptions from "../frameworks/exceptions.ts";
 import { frameworkBundle, frameworkProblems, testsBundle, TESTS_ID, type Bundle, type FrameworkKey } from "./bundle.ts";
 import * as container from "./container.ts";
 import { exemplarFile, FIXED_VALUES, gate, type GateResult } from "./gate.ts";
-import { dirty, git, pushed, repoSlug, resolveCommit, tracked } from "./git.ts";
+import { dirty, git, pushed, repoSlug, resolveCommit, tracked, unstaged } from "./git.ts";
 import { HOSTS, isHostId, type HostId } from "./hosts.ts";
 import { LADDER, phasesOf } from "./ladder.ts";
 import { http1, type Exchange } from "./live.ts";
@@ -50,6 +50,8 @@ const USAGE = [
   "      the run as the site reads it: percentiles and histograms per test, family and rung",
   "  suite <framework>...",
   "      each framework's own tests, as rb.json declares them",
+  "  client <framework>...",
+  "      rewrite each framework's OpenAPI document and client, as rb.json declares, and fail if Client/ changed",
   "  upgrade <framework>...",
   "      move each framework's pins, as rb.json declares, and show what moved",
 ].join("\n");
@@ -396,7 +398,7 @@ function summarizeCommand(args: string[]): number {
   return 0;
 }
 
-// ---- suite, upgrade --------------------------------------------------------------------
+// ---- suite, client, upgrade ------------------------------------------------------------
 
 function runIn(f: LoadedFramework, command: { argv: readonly string[]; cwd?: string | undefined; env?: Readonly<Record<string, string>> | undefined }, env: Record<string, string> = {}): number {
   const cwd = join(ROOT, f.dir, command.cwd ?? ".");
@@ -416,6 +418,29 @@ function suiteCommand(args: string[]): number {
     }
     // The same data a container gets, by a path on this machine.
     if (runIn(f, f.rb.suite, { RB_PAYLOADS: join(ROOT, "tests", "payloads") }) !== 0) failed++;
+  }
+  return failed === 0 ? 0 : 1;
+}
+
+function clientCommand(args: string[]): number {
+  const { positionals } = parse(args, {});
+  let failed = 0;
+  for (const f of frameworks(positionals)) {
+    if (f.rb.client === undefined) {
+      console.log(`${f.id} declares no client`);
+      continue;
+    }
+    // A document step starts the application, which loads the payloads as it does in a container.
+    if (runIn(f, f.rb.client, { RB_PAYLOADS: join(ROOT, "tests", "payloads") }) !== 0) {
+      failed++;
+      continue;
+    }
+    // The index holds the client as committed or staged, so what the command wrote beyond it is drift.
+    const drift = unstaged(ROOT, `${f.dir}/Client/`);
+    if (drift.length > 0) {
+      console.log(`  ${f.id}'s Client/ is not what its generator writes: ${drift.join(", ")}`);
+      failed++;
+    } else console.log(`  ${f.id}'s Client/ is current`);
   }
   return failed === 0 ? 0 : 1;
 }
@@ -463,6 +488,7 @@ const COMMANDS: Record<string, (args: string[]) => number | Promise<number>> = {
   measure: measureCommand,
   summarize: summarizeCommand,
   suite: suiteCommand,
+  client: clientCommand,
   upgrade,
 };
 

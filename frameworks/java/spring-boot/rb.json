@@ -13,6 +13,12 @@
   "upgrade": {
     "argv": ["mvn", "-B", "-N", "versions:update-parent", "-DallowMajorUpdates=false", "-DallowMinorUpdates=false", "-DgenerateBackupPoms=false"]
   },
+  "client": {
+    "document": "Client/openapi.json",
+    "writer": "springdoc-openapi 3.1.1, a third-party project, read from the running application by its Maven plugin under -Pclient",
+    "generator": "Kiota 1.35.0, through kiota-community's kiota-maven-plugin 0.0.39, because Spring recommends no generator",
+    "argv": ["mvn", "-B", "-Pclient", "verify", "-pl", "Client", "-am"]
+  },
   "noHandler": {
     "cors.preflight": "Spring MVC's CORS support answers the preflight for /cors/**, and no handler runs.",
     "errors.unmatched": "DispatcherServlet finds no handler for the path, and Boot's error page answers 404.",

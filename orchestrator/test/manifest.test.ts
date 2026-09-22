@@ -83,6 +83,26 @@ test("every path it names is tracked and inside its directory", () => {
   ]);
 });
 
+test("a client's document is tracked and under Client/, and the command is declared like the others", () => {
+  const client = {
+    document: "Client/openapi.json",
+    writer: "@demo/openapi, from the route schemas",
+    generator: "Kiota 1.35.0",
+    argv: ["npm", "run", "client"],
+  };
+  const tracked = new Set([...FILES, `${DIR}/Client/openapi.json`, `${DIR}/openapi.json`]);
+  assert.deepEqual(problemsOf({ ...GOOD, client }, { tracked }), []);
+  assert.deepEqual(problemsOf({ ...GOOD, client }), [`${MANIFEST}: client.document Client/openapi.json is not tracked`]);
+  assert.deepEqual(problemsOf({ ...GOOD, client: { ...client, document: "openapi.json" } }, { tracked }), [
+    `${MANIFEST}: client.document openapi.json is not under Client/`,
+  ]);
+  assert.deepEqual(problemsOf({ ...GOOD, client: { ...client, output: "Client/Kiota" } }, { tracked }), [
+    `${MANIFEST}: client: Unrecognized key: "output"`,
+  ]);
+  const { generator: _, ...unnamed } = client;
+  assert.equal(problemsOf({ ...GOOD, client: unnamed }, { tracked }).length, 1);
+});
+
 test("a host must be one the benchmark measures on", () => {
   const hosts = { "container-h1": { dockerfile: "Dockerfile" }, "lambda-rie": { dockerfile: "Dockerfile" } };
   assert.deepEqual(problemsOf({ ...GOOD, hosts }), [`${MANIFEST}: hosts.lambda-rie is not a host, only container-h1 are`]);

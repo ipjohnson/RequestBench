@@ -1,0 +1,1893 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "FastAPI",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/plaintext": {
+      "get": {
+        "summary": "Plaintext",
+        "operationId": "plaintext_plaintext_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/json/small": {
+      "get": {
+        "summary": "Small",
+        "operationId": "small_json_small_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/json/medium": {
+      "get": {
+        "summary": "Medium",
+        "operationId": "medium_json_medium_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/json/large": {
+      "get": {
+        "summary": "Large",
+        "operationId": "large_json_large_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/middleware/none": {
+      "get": {
+        "summary": "None",
+        "operationId": "none_middleware_none_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/middleware/four": {
+      "get": {
+        "summary": "Four",
+        "operationId": "four_middleware_four_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/middleware/sixteen": {
+      "get": {
+        "summary": "Sixteen",
+        "operationId": "sixteen_middleware_sixteen_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/parameters/static/segment/literal": {
+      "get": {
+        "summary": "Static",
+        "operationId": "static_parameters_static_segment_literal_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/parameters/{one}/segment/literal": {
+      "get": {
+        "summary": "One",
+        "operationId": "one_parameters__one__segment_literal_get",
+        "parameters": [
+          {
+            "name": "one",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "One"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Echoed_One_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/parameters/{one}/with-second/{two}": {
+      "get": {
+        "summary": "Two",
+        "operationId": "two_parameters__one__with_second__two__get",
+        "parameters": [
+          {
+            "name": "one",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "One"
+            }
+          },
+          {
+            "name": "two",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Two"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Echoed_Two_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/query/one": {
+      "get": {
+        "summary": "One",
+        "operationId": "one_query_one_get",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Page"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Echoed_Page_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/query/many": {
+      "get": {
+        "summary": "Many",
+        "operationId": "many_query_many_get",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Page"
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Size"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Status"
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Category"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sort"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Q"
+            }
+          },
+          {
+            "name": "minPrice",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Minprice"
+            }
+          },
+          {
+            "name": "maxPrice",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Maxprice"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Echoed_Search_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/headers": {
+      "get": {
+        "summary": "Unread",
+        "operationId": "unread_headers_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/headers/bind": {
+      "get": {
+        "summary": "Bind",
+        "operationId": "bind_headers_bind_get",
+        "parameters": [
+          {
+            "name": "x-rb-tenant",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "X-Rb-Tenant"
+            }
+          },
+          {
+            "name": "x-rb-request-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "X-Rb-Request-Id"
+            }
+          },
+          {
+            "name": "x-rb-account",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "X-Rb-Account"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Echoed_HeadersBound_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/body/bind/small": {
+      "post": {
+        "summary": "Bind Small",
+        "operationId": "bind_small_body_bind_small_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Order"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Bound"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/body/bind/medium": {
+      "post": {
+        "summary": "Bind Medium",
+        "operationId": "bind_medium_body_bind_medium_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Order"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Bound"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/body/validate/small": {
+      "post": {
+        "summary": "Validate Small",
+        "operationId": "validate_small_body_validate_small_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckedOrder"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Bound"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/body/validate/medium": {
+      "post": {
+        "summary": "Validate Medium",
+        "operationId": "validate_medium_body_validate_medium_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckedOrder"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Bound"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/body/validate/first-error": {
+      "post": {
+        "summary": "Validate First Error",
+        "operationId": "validate_first_error_body_validate_first_error_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Order"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Bound"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/authorized/small": {
+      "get": {
+        "summary": "Small",
+        "operationId": "small_authorized_small_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/items/{id}": {
+      "get": {
+        "summary": "Read",
+        "operationId": "read_items__id__get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Item"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "head": {
+        "summary": "Read",
+        "operationId": "read_items__id__get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Item"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Replace",
+        "operationId": "replace_items__id__put",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewItem"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Item"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update",
+        "operationId": "update_items__id__patch",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ItemPatch"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Item"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete",
+        "operationId": "delete_items__id__delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/items": {
+      "post": {
+        "summary": "Create",
+        "operationId": "create_items_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewItem"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Item"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cache/small": {
+      "get": {
+        "summary": "Small",
+        "operationId": "small_cache_small_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cache/medium": {
+      "get": {
+        "summary": "Medium",
+        "operationId": "medium_cache_medium_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cache/large": {
+      "get": {
+        "summary": "Large",
+        "operationId": "large_cache_large_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cache/vary/one": {
+      "get": {
+        "summary": "Vary One",
+        "operationId": "vary_one_cache_vary_one_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cache/vary/many": {
+      "get": {
+        "summary": "Vary Many",
+        "operationId": "vary_many_cache_vary_many_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/etag/small": {
+      "get": {
+        "summary": "Small",
+        "operationId": "small_etag_small_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/etag/large": {
+      "get": {
+        "summary": "Large",
+        "operationId": "large_etag_large_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/forms/urlencoded": {
+      "post": {
+        "summary": "Urlencoded",
+        "operationId": "urlencoded_forms_urlencoded_post",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Search"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Echoed_Search_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/forms/multipart": {
+      "post": {
+        "summary": "Multipart",
+        "operationId": "multipart_forms_multipart_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_multipart_forms_multipart_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Uploaded"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/stream/items": {
+      "get": {
+        "summary": "Lines",
+        "operationId": "lines_stream_items_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/x-ndjson": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sse/medium": {
+      "get": {
+        "summary": "Medium",
+        "operationId": "medium_sse_medium_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/event-stream": {
+                "itemSchema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "string",
+                      "contentMediaType": "application/json",
+                      "contentSchema": {
+                        "$ref": "#/components/schemas/Item"
+                      }
+                    },
+                    "event": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "retry": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/template/small": {
+      "get": {
+        "summary": "Small",
+        "operationId": "small_template_small_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/template/medium": {
+      "get": {
+        "summary": "Medium",
+        "operationId": "medium_template_medium_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "Health",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/__meta": {
+      "get": {
+        "summary": "Meta",
+        "operationId": "meta___meta_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  },
+                  "type": "object",
+                  "title": "Response Meta   Meta Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Body_multipart_forms_multipart_post": {
+        "properties": {
+          "tenant": {
+            "type": "string",
+            "title": "Tenant"
+          },
+          "requestId": {
+            "type": "string",
+            "title": "Requestid"
+          },
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tenant",
+          "requestId",
+          "file"
+        ],
+        "title": "Body_multipart_forms_multipart_post"
+      },
+      "Bound": {
+        "properties": {
+          "fields": {
+            "type": "integer",
+            "title": "Fields"
+          },
+          "bytes": {
+            "type": "integer",
+            "title": "Bytes"
+          },
+          "echo": {
+            "$ref": "#/components/schemas/Order"
+          }
+        },
+        "type": "object",
+        "required": [
+          "fields",
+          "bytes",
+          "echo"
+        ],
+        "title": "Bound",
+        "description": "What a bind or validate row answers: the order back, with the leaves the handler found in it\nand the bytes it received."
+      },
+      "CheckedLine": {
+        "properties": {
+          "productId": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Productid"
+          },
+          "qty": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Qty"
+          }
+        },
+        "type": "object",
+        "required": [
+          "productId",
+          "qty"
+        ],
+        "title": "CheckedLine"
+      },
+      "CheckedOrder": {
+        "properties": {
+          "customerId": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Customerid"
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Status"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/CheckedLine"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Lines"
+          }
+        },
+        "type": "object",
+        "required": [
+          "customerId",
+          "status",
+          "lines"
+        ],
+        "title": "CheckedOrder",
+        "description": "The rules orderRequest states. As a route's body parameter, FastAPI validates the body\nagainst it before the handler runs, and answers 422 with every rule the body breaks."
+      },
+      "Echoed_HeadersBound_": {
+        "properties": {
+          "size": {
+            "type": "string",
+            "title": "Size"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Item"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "echo": {
+            "$ref": "#/components/schemas/HeadersBound"
+          }
+        },
+        "type": "object",
+        "required": [
+          "size",
+          "count",
+          "items",
+          "echo"
+        ],
+        "title": "Echoed[HeadersBound]"
+      },
+      "Echoed_One_": {
+        "properties": {
+          "size": {
+            "type": "string",
+            "title": "Size"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Item"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "echo": {
+            "$ref": "#/components/schemas/One"
+          }
+        },
+        "type": "object",
+        "required": [
+          "size",
+          "count",
+          "items",
+          "echo"
+        ],
+        "title": "Echoed[One]"
+      },
+      "Echoed_Page_": {
+        "properties": {
+          "size": {
+            "type": "string",
+            "title": "Size"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Item"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "echo": {
+            "$ref": "#/components/schemas/Page"
+          }
+        },
+        "type": "object",
+        "required": [
+          "size",
+          "count",
+          "items",
+          "echo"
+        ],
+        "title": "Echoed[Page]"
+      },
+      "Echoed_Search_": {
+        "properties": {
+          "size": {
+            "type": "string",
+            "title": "Size"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Item"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "echo": {
+            "$ref": "#/components/schemas/Search"
+          }
+        },
+        "type": "object",
+        "required": [
+          "size",
+          "count",
+          "items",
+          "echo"
+        ],
+        "title": "Echoed[Search]"
+      },
+      "Echoed_Two_": {
+        "properties": {
+          "size": {
+            "type": "string",
+            "title": "Size"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Item"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "echo": {
+            "$ref": "#/components/schemas/Two"
+          }
+        },
+        "type": "object",
+        "required": [
+          "size",
+          "count",
+          "items",
+          "echo"
+        ],
+        "title": "Echoed[Two]"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HeadersBound": {
+        "properties": {
+          "tenant": {
+            "type": "string",
+            "title": "Tenant"
+          },
+          "requestId": {
+            "type": "string",
+            "title": "Requestid"
+          },
+          "account": {
+            "type": "integer",
+            "title": "Account"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tenant",
+          "requestId",
+          "account"
+        ],
+        "title": "HeadersBound"
+      },
+      "Item": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "priceCents": {
+            "type": "integer",
+            "title": "Pricecents"
+          },
+          "inStock": {
+            "type": "boolean",
+            "title": "Instock"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "category",
+          "priceCents",
+          "inStock"
+        ],
+        "title": "Item",
+        "description": "One row of items.large, and of every payload made from it."
+      },
+      "ItemPatch": {
+        "properties": {
+          "priceCents": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pricecents"
+          },
+          "inStock": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Instock"
+          }
+        },
+        "type": "object",
+        "title": "ItemPatch",
+        "description": "The two fields items.update changes."
+      },
+      "Line": {
+        "properties": {
+          "productId": {
+            "type": "integer",
+            "title": "Productid"
+          },
+          "qty": {
+            "type": "integer",
+            "title": "Qty"
+          }
+        },
+        "type": "object",
+        "required": [
+          "productId",
+          "qty"
+        ],
+        "title": "Line"
+      },
+      "NewItem": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "priceCents": {
+            "type": "integer",
+            "title": "Pricecents"
+          },
+          "inStock": {
+            "type": "boolean",
+            "title": "Instock"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "category",
+          "priceCents",
+          "inStock"
+        ],
+        "title": "NewItem",
+        "description": "An item as a client creates or replaces one."
+      },
+      "One": {
+        "properties": {
+          "one": {
+            "type": "integer",
+            "title": "One"
+          }
+        },
+        "type": "object",
+        "required": [
+          "one"
+        ],
+        "title": "One"
+      },
+      "Order": {
+        "properties": {
+          "customerId": {
+            "type": "integer",
+            "title": "Customerid"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/Line"
+            },
+            "type": "array",
+            "title": "Lines"
+          }
+        },
+        "type": "object",
+        "required": [
+          "customerId",
+          "status",
+          "lines"
+        ],
+        "title": "Order",
+        "description": "The body the bind and validate rows send, bound with its types and none of its rules."
+      },
+      "Page": {
+        "properties": {
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          }
+        },
+        "type": "object",
+        "required": [
+          "page"
+        ],
+        "title": "Page"
+      },
+      "Payload": {
+        "properties": {
+          "size": {
+            "type": "string",
+            "title": "Size"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Item"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "size",
+          "count",
+          "items"
+        ],
+        "title": "Payload",
+        "description": "items.small, items.medium or items.large."
+      },
+      "Search": {
+        "properties": {
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "size": {
+            "type": "integer",
+            "title": "Size"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "sort": {
+            "type": "string",
+            "title": "Sort"
+          },
+          "q": {
+            "type": "string",
+            "title": "Q"
+          },
+          "minPrice": {
+            "type": "integer",
+            "title": "Minprice"
+          },
+          "maxPrice": {
+            "type": "integer",
+            "title": "Maxprice"
+          }
+        },
+        "type": "object",
+        "required": [
+          "page",
+          "size",
+          "status",
+          "category",
+          "sort",
+          "q",
+          "minPrice",
+          "maxPrice"
+        ],
+        "title": "Search",
+        "description": "query.many's eight values, which forms.urlencoded posts as a form."
+      },
+      "Two": {
+        "properties": {
+          "one": {
+            "type": "integer",
+            "title": "One"
+          },
+          "two": {
+            "type": "integer",
+            "title": "Two"
+          }
+        },
+        "type": "object",
+        "required": [
+          "one",
+          "two"
+        ],
+        "title": "Two"
+      },
+      "UploadEcho": {
+        "properties": {
+          "tenant": {
+            "type": "string",
+            "title": "Tenant"
+          },
+          "requestId": {
+            "type": "string",
+            "title": "Requestid"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tenant",
+          "requestId"
+        ],
+        "title": "UploadEcho"
+      },
+      "Uploaded": {
+        "properties": {
+          "file": {
+            "$ref": "#/components/schemas/UploadedFile"
+          },
+          "echo": {
+            "$ref": "#/components/schemas/UploadEcho"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file",
+          "echo"
+        ],
+        "title": "Uploaded",
+        "description": "What forms.multipart answers: the file's name and size, and the two fields beside it."
+      },
+      "UploadedFile": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "bytes": {
+            "type": "integer",
+            "title": "Bytes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "bytes"
+        ],
+        "title": "UploadedFile"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    },
+    "securitySchemes": {
+      "HTTPBearer": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  }
+}

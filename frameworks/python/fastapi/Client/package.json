@@ -1,0 +1,16 @@
+{
+  "name": "rb-fastapi-client",
+  "private": true,
+  "type": "module",
+  "comment": "FastAPI's client, written with the Node toolchain because FastAPI's docs recommend Hey API, which makes a TypeScript client. Its own package and lockfile, apart from the repository's and from FastAPI's Python environment. generate writes openapi.json with the suite's uv environment, then runs Hey API. test starts the Implementation under uvicorn, so uv has to be on PATH.",
+  "scripts": {
+    "generate": "uv run --locked --directory .. python Client/document.py && openapi-ts",
+    "test": "tsc -p tsconfig.json && node --experimental-strip-types --disable-warning=ExperimentalWarning --test client.test.ts",
+    "client": "npm ci --no-audit --no-fund && npm run generate && npm test"
+  },
+  "devDependencies": {
+    "@hey-api/openapi-ts": "0.99.0",
+    "@types/node": "^26.6.2",
+    "typescript": "^5.9.3"
+  }
+}

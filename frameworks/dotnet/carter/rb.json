@@ -10,6 +10,12 @@
   },
   "suite": { "argv": ["dotnet", "test", "UnitTests"], "paths": ["UnitTests"] },
   "upgrade": null,
+  "client": {
+    "document": "Client/openapi.json",
+    "writer": "Microsoft.AspNetCore.OpenApi 10.0.12, through Microsoft.Extensions.ApiDescription.Server on dotnet build",
+    "generator": "Kiota 1.35.0, a .NET local tool that Client.csproj runs, because ASP.NET Core recommends no generator of its own",
+    "argv": ["dotnet", "build", "Client"]
+  },
   "noHandler": {
     "cors.preflight": "ASP.NET Core's CORS middleware answers the preflight for the /cors group, and no handler runs.",
     "errors.unmatched": "The router answers a path no route matches with 404, and ProblemDetails writes the body.",

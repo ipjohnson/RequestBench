@@ -13,12 +13,12 @@ uses.
 | --- | --- |
 | `Implementation/` | The application. One Carter module per corpus family under `Routes/`. |
 | `UnitTests/` | xunit tests of the wiring, booting the Implementation in process with `WebApplicationFactory`. |
+| `Client/` | The OpenAPI document Carter's build writes, and the Kiota client generated from it. |
 | `client-exception/` | How the corpus reads Carter's error bodies. |
-| `solution.slnx` | Both projects. |
+| `solution.slnx` | All three projects. |
+| `.config/dotnet-tools.json` | Kiota, as a local tool, which the Client project runs. |
 | `global.json` | SDK 10, rolling forward to the newest 10.0 feature band installed. |
 | `nuget.config` | nuget.org and no other feed. |
-
-There is no client project, because Carter emits no client.
 
 ## Building, running and testing
 
@@ -30,7 +30,8 @@ dotnet test solution.slnx
 
 `RB_PAYLOADS` names the payload directory, which the Implementation loads before it starts
 listening. `PORT` defaults to 8080. Each project restores against its committed
-`packages.lock.json`.
+`packages.lock.json`. A build with `RB_PAYLOADS` set also writes the OpenAPI document, as the
+Client section says.
 
 ## How each family is wired
 
@@ -75,3 +76,29 @@ Every refusal is what ASP.NET Core or Carter writes, as ProblemDetails. Nothing 
 and lists each failed rule under `errors`. The route that stops at the first bad field lists one.
 A body the binder cannot read never reaches the filter. The binder refuses it with a 400 that
 names no field, which is how `errors.malformed` is answered.
+
+## Client
+
+`Client/` holds the OpenAPI document Carter's routes produce and a C# client generated from it.
+ASP.NET Core recommends no generator of its own. Its docs list NSwag, Kiota and OpenAPI Generator
+side by side, so the client is Kiota's.
+
+- Implementation's build writes `Client/openapi.json` through
+  `Microsoft.Extensions.ApiDescription.Server`. That step runs `Program.cs` on a server that never
+  listens and asks `AddOpenApi` for the document. `Program.cs` loads the payloads, so the step runs
+  only when `RB_PAYLOADS` is set, and the image's build leaves it unset.
+- `Client.csproj` builds after Implementation. When `openapi.json` is newer than
+  `Kiota/kiota-lock.json`, it runs Kiota 1.35.0 from `.config/dotnet-tools.json` and compiles what
+  Kiota wrote.
+- `RB_PAYLOADS=../../../tests/payloads dotnet build Client` does both. `npm run rb -- client
+  dotnet:carter` runs it and fails if anything under `Client/` changed.
+- `UnitTests/ClientTests.cs` calls the Implementation in the test host through the client.
+
+What the document leaves out:
+
+- The CORS preflight and `/static` are answered by middleware, so no route describes them.
+- A handler that returns `IResult`, such as `Results.Ok(row)`, states no type. The client returns a
+  `Stream` for `GET`, `POST` and `PATCH` on `/items`, and for the text, stream and template routes.
+- No route declares a refusal, so Carter's 422 reaches the client as Kiota's `ApiException`.
+- Every `int` is written as an integer or a string, because ASP.NET Core's web JSON settings read
+  numbers from strings. Kiota still types them as `int?`.

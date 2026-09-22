@@ -67,6 +67,20 @@ export const rbJsonSchema = z.strictObject({
     .optional(),
   /** Moves the pins in place. null states that they move by hand. */
   upgrade: command.nullable(),
+  /**
+   * The OpenAPI document the framework writes about its own routes, and the client generated from
+   * it, both under Client/. `argv` rewrites the two with the framework's own toolchain.
+   */
+  client: z
+    .strictObject({
+      ...command.shape,
+      document: z.string().min(1),
+      /** What writes the document, and when. */
+      writer: z.string().min(1),
+      /** What generates the client from it, and its version. */
+      generator: z.string().min(1),
+    })
+    .optional(),
   /** Validation tests this framework does not satisfy, each with the reason. */
   skips: z.record(z.string(), z.string().min(1)).optional(),
   /** Performance tests the framework answers with no handler of its own, each with what answers them. */
@@ -141,6 +155,11 @@ function check(f: FrameworkKey & { dir: string; id: string }, rb: RbJson, input:
     if (rb.suite.cwd !== undefined) path("suite.cwd", rb.suite.cwd, false);
   }
   if (rb.upgrade?.cwd !== undefined) path("upgrade.cwd", rb.upgrade.cwd, false);
+  if (rb.client !== undefined) {
+    path("client.document", rb.client.document, true);
+    if (!rb.client.document.startsWith("Client/")) out.push(`${at}: client.document ${rb.client.document} is not under Client/`);
+    if (rb.client.cwd !== undefined) path("client.cwd", rb.client.cwd, false);
+  }
 
   for (const [id, why] of Object.entries(rb.skips ?? {})) {
     const test = input.tests[id];
