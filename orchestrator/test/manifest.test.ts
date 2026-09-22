@@ -95,6 +95,14 @@ test("a skip names a validation test, never a performance test and never nothing
   assert.deepEqual(problemsOf({ ...GOOD, skips: { "cors.nope": "gone" } }), [`${MANIFEST}: skips.cors.nope names no test`]);
 });
 
+test("noHandler names a performance test, never a validation test and never nothing", () => {
+  assert.deepEqual(problemsOf({ ...GOOD, noHandler: { "json.small": "The router answers it." } }), []);
+  assert.deepEqual(problemsOf({ ...GOOD, noHandler: { "cors.scoped": "The router answers it." } }), [
+    `${MANIFEST}: noHandler.cors.scoped is a validation test, which no framework has to locate a handler for`,
+  ]);
+  assert.deepEqual(problemsOf({ ...GOOD, noHandler: { "cors.nope": "gone" } }), [`${MANIFEST}: noHandler.cors.nope names no test`]);
+});
+
 test("every family has a mechanism entry, and no entry names a family that does not exist", () => {
   const missing = { ...GOOD, mechanisms: { json: GOOD.mechanisms.json } };
   assert.deepEqual(problemsOf(missing), [`${MANIFEST}: mechanisms has no entry for cors`]);

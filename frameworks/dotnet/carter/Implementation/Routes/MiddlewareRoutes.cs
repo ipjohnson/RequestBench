@@ -18,6 +18,7 @@ public sealed class MiddlewareRoutes : ICarterModule
         Layers(app.MapGet("/middleware/sixteen", (Payloads p) => p.Small), 16);
     }
 
+    // rb:wiring middleware.*
     private static ValueTask<object?> Noop(EndpointFilterInvocationContext context, EndpointFilterDelegate next) => next(context);
 
     private static void Layers(RouteHandlerBuilder route, int count)
@@ -27,4 +28,5 @@ public sealed class MiddlewareRoutes : ICarterModule
             route.AddEndpointFilter(Noop);
         }
     }
+    // rb:end
 }

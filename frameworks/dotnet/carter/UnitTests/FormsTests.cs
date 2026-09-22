@@ -4,7 +4,9 @@ namespace UnitTests;
 
 public sealed class FormsTests(CarterApp app) : IClassFixture<CarterApp>
 {
+    // rb:test forms.urlencoded
     [Fact]
+    [Trait("corpus", "forms.urlencoded")]
     public async Task A_urlencoded_form_binds_what_the_query_string_binds()
     {
         FormUrlEncodedContent form = new(QueryTests.Search().Select(pair => KeyValuePair.Create(pair.Key, pair.Value!.ToString())));
@@ -14,7 +16,9 @@ public sealed class FormsTests(CarterApp app) : IClassFixture<CarterApp>
         await Answer.Is(Expected.WithEcho("items.small.json", QueryTests.Search()), response);
     }
 
+    // rb:test forms.multipart
     [Fact]
+    [Trait("corpus", "forms.multipart")]
     public async Task A_multipart_upload_binds_two_fields_and_the_whole_file()
     {
         byte[] file = Expected.Bytes("forms.file.txt");

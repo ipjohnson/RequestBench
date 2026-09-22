@@ -6,9 +6,7 @@ import { test } from "node:test";
 
 import {
   assess,
-  belowAllowance,
-  overAllowance,
-  ratchet,
+  failing,
   requirements,
   resolve,
   splitLines,
@@ -357,14 +355,38 @@ test("the declared requirement holds rb.json to what is marked, and every requir
   ]);
 });
 
-test("the allowance fails a count above it, reports one below it, and is rewritten from what is measured", () => {
-  const failed: Failures = { not_only_annotations: ["a", "b", "c", "d", "e"], mentions_dep: [], no_test: ["x"], names_endpoint: [] };
-  assert.deepEqual(overAllowance("x:y", failed, { not_only_annotations: 5, no_test: 2 }), []);
-  assert.deepEqual(overAllowance("x:y", failed, { not_only_annotations: 4 }), [
-    "x:y fails no_test on 1 endpoints, 0 allowed: x",
-    "x:y fails not_only_annotations on 5 endpoints, 4 allowed: a, b, c, d, …",
+test("an endpoint in noHandler derives nothing, keeps its record for its tests, and owes no handler", () => {
+  const endpoints = [
+    ep("items.create", "POST", "/items"),
+    ep("errors.wrong_method", "POST", "/items/{draw.item}"),
+    ep("errors.unmatched", "GET", "/errors/unmatched"),
+  ];
+  const app = src("app.js", ['app.post("/items", create);', "function create(req, res) {", '  res.location("/items/:id");', "}"]);
+  const suite = src("test/app.test.js", ["// rb:test errors.wrong_method", 'test("errors.wrong_method", () => post("/items/17").expect(405));'], "test");
+  const noHandler = new Set(["errors.wrong_method", "errors.unmatched"]);
+  const mechanisms = { items: { builtin: "on its own" }, errors: { builtin: "the router" } };
+  const req = (found: Record<string, SnippetRecord>) =>
+    requirements({ target: "x:y", found, endpoints, required: new Set(endpoints.map((e) => e.id)), mechanisms, manifestText: "", noHandler });
+
+  // Without the declaration, a Location header reads as the route a wrong method is refused on.
+  assert.deepEqual(span(run("node", [app], endpoints).found["errors.wrong_method"]), [3, 3]);
+
+  const { found, problems } = resolve({ target: "x:y", language: "node", files: [app, suite], endpoints, noHandler });
+  assert.deepEqual(problems, []);
+  assert.equal(found["errors.wrong_method"]!.handler, null);
+  assert.equal(found["errors.wrong_method"]!.test.length, 1);
+  assert.equal(found["errors.unmatched"]!.handler, null);
+  assert.deepEqual(req(found), []);
+  assert.deepEqual(assess({ found, endpoints, mechanisms }).no_test, ["errors.unmatched", "items.create"]);
+
+  const marked = src("app.js", ['app.post("/items", create);', "// rb:handler errors.unmatched", "app.use(notFound);"]);
+  assert.deepEqual(req(resolve({ target: "x:y", language: "node", files: [marked], endpoints, noHandler }).found), [
+    "x:y declares no handler for errors.unmatched and marks one (app.js:3)",
   ]);
-  assert.deepEqual(belowAllowance(failed, { no_test: 2, not_only_annotations: 5 }), ["no_test is down to 1 from an allowance of 2: run --ratchet"]);
-  const none: Failures = { not_only_annotations: [], mentions_dep: [], no_test: [], names_endpoint: [] };
-  assert.deepEqual(ratchet({ "x:y": failed, "a:b": none }), { "x:y": { no_test: 1, not_only_annotations: 5 } });
+});
+
+test("every assertion a framework fails is a problem, naming the first few subjects", () => {
+  const failed: Failures = { not_only_annotations: ["a", "b", "c", "d", "e"], mentions_dep: [], no_test: ["x"], names_endpoint: [] };
+  assert.deepEqual(failing("x:y", failed), ["x:y fails no_test on 1: x", "x:y fails not_only_annotations on 5: a, b, c, d, …"]);
+  assert.deepEqual(failing("x:y", { not_only_annotations: [], mentions_dep: [], no_test: [], names_endpoint: [] }), []);
 });

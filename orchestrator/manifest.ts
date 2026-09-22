@@ -69,6 +69,8 @@ export const rbJsonSchema = z.strictObject({
   upgrade: command.nullable(),
   /** Validation tests this framework does not satisfy, each with the reason. */
   skips: z.record(z.string(), z.string().min(1)).optional(),
+  /** Performance tests the framework answers with no handler of its own, each with what answers them. */
+  noHandler: z.record(z.string(), z.string().min(1)).optional(),
   /** Per family, the mechanism that wires it, or why there is nothing to show. */
   mechanisms: z.record(z.string(), mechanism),
 });
@@ -144,6 +146,11 @@ function check(f: FrameworkKey & { dir: string; id: string }, rb: RbJson, input:
     const test = input.tests[id];
     if (test === undefined) out.push(`${at}: skips.${id} names no test`);
     else if (test.kind === "performance") out.push(`${at}: skips.${id} is a performance test, which every framework answers (${why})`);
+  }
+  for (const id of Object.keys(rb.noHandler ?? {})) {
+    const test = input.tests[id];
+    if (test === undefined) out.push(`${at}: noHandler.${id} names no test`);
+    else if (test.kind !== "performance") out.push(`${at}: noHandler.${id} is a validation test, which no framework has to locate a handler for`);
   }
 
   const families = new Set(input.families);

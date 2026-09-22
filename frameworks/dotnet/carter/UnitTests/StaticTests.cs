@@ -2,7 +2,9 @@ namespace UnitTests;
 
 public sealed class StaticTests(CarterApp app) : IClassFixture<CarterApp>
 {
+    // rb:test static.file
     [Fact]
+    [Trait("corpus", "static.file")]
     public async Task The_file_is_sent_as_it_is_with_its_length_and_age()
     {
         using HttpResponseMessage response = await app.CreateClient().GetAsync("/static/items.large.json");

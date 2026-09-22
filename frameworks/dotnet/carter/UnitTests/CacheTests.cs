@@ -2,7 +2,11 @@ namespace UnitTests;
 
 public sealed class CacheTests(CarterApp app) : IClassFixture<CarterApp>
 {
+    // rb:test cache.small,cache.medium,cache.large
     [Theory]
+    [Trait("corpus", "cache.small")]
+    [Trait("corpus", "cache.medium")]
+    [Trait("corpus", "cache.large")]
     [InlineData("small")]
     [InlineData("medium")]
     [InlineData("large")]
@@ -17,7 +21,9 @@ public sealed class CacheTests(CarterApp app) : IClassFixture<CarterApp>
         Assert.Equal(Answer.Serial(first), Answer.Serial(second));
     }
 
+    // rb:test cache.vary_one
     [Fact]
+    [Trait("corpus", "cache.vary_one")]
     public async Task One_vary_header_keys_the_store()
     {
         long alpha = await Serial("/cache/vary/one", ("x-rb-tenant", "alpha"));
@@ -27,7 +33,9 @@ public sealed class CacheTests(CarterApp app) : IClassFixture<CarterApp>
         Assert.NotEqual(alpha, beta);
     }
 
+    // rb:test cache.vary_many
     [Fact]
+    [Trait("corpus", "cache.vary_many")]
     public async Task Each_of_three_vary_headers_keys_the_store()
     {
         (string, string)[] webEuAlpha = [("x-rb-channel", "web"), ("x-rb-region", "eu"), ("x-rb-tenant", "alpha")];

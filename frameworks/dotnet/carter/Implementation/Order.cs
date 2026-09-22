@@ -25,6 +25,7 @@ public sealed class OrderLine
 /// </summary>
 public sealed class FirstErrorOrder : OrderRequest;
 
+// rb:wiring body.*
 /// <summary>The rules orderRequest states, written once for both validators.</summary>
 public abstract class OrderRules<T> : AbstractValidator<T> where T : OrderRequest
 {
@@ -49,3 +50,4 @@ public sealed class FirstErrorValidator : OrderRules<FirstErrorOrder>
 {
     public FirstErrorValidator() => ClassLevelCascadeMode = CascadeMode.Stop;
 }
+// rb:end

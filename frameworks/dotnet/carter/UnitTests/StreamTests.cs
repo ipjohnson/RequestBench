@@ -2,7 +2,9 @@ namespace UnitTests;
 
 public sealed class StreamTests(CarterApp app) : IClassFixture<CarterApp>
 {
+    // rb:test stream.ndjson
     [Fact]
+    [Trait("corpus", "stream.ndjson")]
     public async Task Each_row_is_a_line_and_the_length_is_never_sent()
     {
         using HttpResponseMessage response = await app.CreateClient().GetAsync("/stream/items");

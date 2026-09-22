@@ -8,9 +8,9 @@
 // kind's name, so adding one is an entry here and a section on the page.
 //
 // A kind is required "every" (a framework has to locate one for each required endpoint),
-// "declared" (rb.json says per family whether there is anything to show), "ratchet" (absence is
-// counted against the allowance and never gated) or "never". Assertions are counted against
-// orchestrator/allowance.json rather than gated red, and the allowance only ever goes down.
+// "declared" (rb.json says per family whether there is anything to show), "asserted" (an
+// assertion asks for it, so a record without one is kept and reported) or "never". Every
+// assertion a framework fails is a problem `rb check` reports.
 
 export type KindName = "handler" | "wiring" | "test";
 export type AssertionName = "not_only_annotations" | "mentions_dep" | "no_test" | "names_endpoint";
@@ -18,7 +18,7 @@ export type AssertionName = "not_only_annotations" | "mentions_dep" | "no_test" 
 export interface Kind {
   readonly what: string;
   readonly selects: "endpoint" | "family";
-  readonly required: "every" | "declared" | "ratchet" | "never";
+  readonly required: "every" | "declared" | "asserted" | "never";
   readonly cardinality: "one" | "many";
   /** The record field the parts land in. */
   readonly into: "handler" | "support" | "test";
@@ -53,7 +53,7 @@ export const KINDS: Readonly<Record<KindName, Kind>> = {
   test: {
     what: "a test in the framework's own suite that holds it to an endpoint",
     selects: "endpoint",
-    required: "ratchet",
+    required: "asserted",
     cardinality: "many",
     into: "test",
     derive: false,
@@ -91,7 +91,7 @@ export const ASSERTIONS: Readonly<Record<AssertionName, Assertion>> = {
     label: "endpoint with no test",
     scope: "coverage",
     what: "every endpoint is held by at least one test in its framework's own suite, marked for it by name. A helper marked for a family or for the framework is not a test of it",
-    why: 'required "every" would drop the record of every endpoint with no test and empty the snippet map, so they are counted against the allowance instead',
+    why: 'required "every" would drop the record of every endpoint with no test and empty the snippet map, so it is asked as an assertion instead',
     except: [],
   },
   names_endpoint: {

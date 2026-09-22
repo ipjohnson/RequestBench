@@ -23,10 +23,9 @@ import { loadRepo, type LoadedFramework } from "./manifest.ts";
 import { measure, type Driver, type RunFile } from "./measure.ts";
 import { corpusEndpoints, frameworkView, testsView } from "./siteview.ts";
 import { summarize } from "./summarize.ts";
-import { belowAllowance, covered, located, overAllowance, ratchet, type Allowance, type Failures } from "./snippets.ts";
+import { covered, failing, located } from "./snippets.ts";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
-const ALLOWANCE = join(ROOT, "orchestrator", "allowance.json");
 
 const USAGE = [
   "usage: npm run rb -- <command> [options]",
@@ -37,8 +36,8 @@ const USAGE = [
   "      every rb.json, every framework's bundle, and where each framework answers each test",
   "  bundle [<framework>|tests]... [--all] [--at <commit>] [--summary]",
   "      the files, roles and hashes a run records, from the working tree or at a commit",
-  "  snippets [<framework>]... [--at <commit>] [--summary] [--check] [--ratchet]",
-  "      where each framework answers each test; --ratchet rewrites orchestrator/allowance.json",
+  "  snippets [<framework>]... [--at <commit>] [--summary] [--check]",
+  "      where each framework answers each test",
   "  siteview [--at <commit> | --worktree] [--out <file>]",
   "      everything the site shows about the code and the tests behind a run, at a commit or in the working tree",
   "  validate <framework> [--host <id>] [--commit <rev>] [--exemplars]",
@@ -111,11 +110,10 @@ async function check(args: string[]): Promise<number> {
   parse(args, {});
   const { frameworks: loaded, problems } = loadRepo(ROOT);
   const { endpoints, required } = await corpusEndpoints(suite);
-  const allowance = readAllowance();
   for (const f of loaded) {
     problems.push(...frameworkProblems(frameworkBundle(ROOT, f)));
     const view = frameworkView(ROOT, f, undefined, endpoints, required);
-    problems.push(...view.problems, ...overAllowance(f.id, view.failures, allowance[f.id] ?? {}));
+    problems.push(...view.problems, ...failing(f.id, view.failures));
   }
   for (const p of problems) console.log(p);
   console.log(`${loaded.length} framework(s) loaded, ${problems.length} problem(s)`);
@@ -146,53 +144,37 @@ function bundle(args: string[]): number {
 
 // ---- snippets, siteview ----------------------------------------------------------------
 
-function readAllowance(): Allowance {
-  return JSON.parse(readFileSync(ALLOWANCE, "utf8")) as Allowance;
-}
-
 async function snippets(args: string[]): Promise<number> {
   const { values, positionals } = parse(args, {
     at: { type: "string" },
     summary: { type: "boolean" },
     check: { type: "boolean" },
-    ratchet: { type: "boolean" },
   });
-  const all = frameworks([]);
-  const chosen = positionals.length === 0 ? all : frameworks(positionals);
-  if (values.ratchet && chosen.length !== all.length) throw new UsageError("--ratchet rewrites the whole allowance, so it takes every framework");
+  const chosen = frameworks(positionals);
   const at = atOf(values.at);
   const { endpoints, required } = await corpusEndpoints(suite);
   const families = [...new Set(endpoints.map((e) => e.family))];
-  const allowance = readAllowance();
-  const measured: Record<string, Failures> = {};
   let bad = 0;
 
   for (const f of chosen) {
     const view = frameworkView(ROOT, f, at, endpoints, required);
-    const problems = [...view.problems, ...overAllowance(f.id, view.failures, allowance[f.id] ?? {})];
-    measured[f.id] = view.failures;
+    const problems = [...view.problems, ...failing(f.id, view.failures)];
     bad += problems.length;
     const records = Object.values(view.snippets);
-    if (values.summary || values.check || values.ratchet) {
-      const derived = records.filter((r) => r.handler?.how === "derived").length;
+    if (values.summary || values.check) {
+      const answered = records.filter((r) => required.has(r.endpoint));
+      const how = (h: "derived" | "marker") => answered.filter((r) => r.handler?.how === h).length;
+      const itself = answered.filter((r) => r.handler === null).length;
       const { wired, builtin } = covered(families, view.mechanisms);
       console.log(
-        `${f.id.padEnd(22)} ${records.length}/${required.size} tests (${derived} derived, ${records.length - derived} marked)  ` +
+        `${f.id.padEnd(22)} ${answered.length}/${required.size} tests (${how("derived")} derived, ${how("marker")} marked, ${itself} answered by the framework)  ` +
           `${wired + builtin}/${families.length} families (${wired} wired, ${builtin} built in)` +
           (problems.length > 0 ? `  ${problems.length} PROBLEM(S)` : ""),
       );
     } else {
       console.log(JSON.stringify(records.map(located), null, 2));
     }
-    for (const [name, ids] of Object.entries(view.failures)) if (ids.length > 0) console.log(`  ${ids.length} ${name}`);
     for (const p of problems) console.log(`  ${p}`);
-    for (const note of belowAllowance(view.failures, allowance[f.id] ?? {})) console.log(`  ${note}`);
-  }
-
-  if (values.ratchet) {
-    writeFileSync(ALLOWANCE, `${JSON.stringify(ratchet(measured), null, 2)}\n`);
-    console.log(`wrote ${ALLOWANCE}`);
-    return 0;
   }
   return values.check && bad > 0 ? 1 : 0;
 }

@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace Implementation;
 
+// rb:wiring json.*
 /// <summary>
 /// System.Text.Json's source-generated metadata for every type read or written, first in
 /// minimal APIs' resolver chain, so no type's metadata is built by reflection on a request.

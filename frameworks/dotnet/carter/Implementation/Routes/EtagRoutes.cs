@@ -33,6 +33,7 @@ public sealed class EtagRoutes : ICarterModule
         return payload;
     }
 
+    // rb:wiring etag.*
     private static async ValueTask<object?> Revalidate(EndpointFilterInvocationContext context, EndpointFilterDelegate next, JsonSerializerOptions json)
     {
         object value = await next(context) ?? throw new InvalidOperationException("an etag route answered nothing");

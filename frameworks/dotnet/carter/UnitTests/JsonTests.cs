@@ -2,7 +2,11 @@ namespace UnitTests;
 
 public sealed class JsonTests(CarterApp app) : IClassFixture<CarterApp>
 {
+    // rb:test json.small,json.medium,json.large
     [Theory]
+    [Trait("corpus", "json.small")]
+    [Trait("corpus", "json.medium")]
+    [Trait("corpus", "json.large")]
     [InlineData("small")]
     [InlineData("medium")]
     [InlineData("large")]

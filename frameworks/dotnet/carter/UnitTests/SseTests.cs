@@ -4,7 +4,9 @@ namespace UnitTests;
 
 public sealed class SseTests(CarterApp app) : IClassFixture<CarterApp>
 {
+    // rb:test sse.medium
     [Fact]
+    [Trait("corpus", "sse.medium")]
     public async Task Each_row_is_the_data_of_one_message_event_with_no_id()
     {
         using HttpRequestMessage request = new(HttpMethod.Get, "/sse/medium");

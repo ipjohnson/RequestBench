@@ -2,7 +2,9 @@ namespace UnitTests;
 
 public sealed class BaselineTests(CarterApp app) : IClassFixture<CarterApp>
 {
+    // rb:test baseline.plaintext
     [Fact]
+    [Trait("corpus", "baseline.plaintext")]
     public async Task Plaintext_is_the_literal_as_text()
     {
         using HttpResponseMessage response = await app.CreateClient().GetAsync("/plaintext");

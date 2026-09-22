@@ -11,6 +11,7 @@ public sealed class CorsRoutes : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
+        // rb:wiring cors.*
         RouteGroupBuilder cors = app.MapGroup("/cors").RequireCors(Policies.Cors);
 
         // rb:handler cors.request

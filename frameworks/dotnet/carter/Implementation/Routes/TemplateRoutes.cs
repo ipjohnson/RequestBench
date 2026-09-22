@@ -18,6 +18,7 @@ public sealed class TemplateRoutes : ICarterModule
         app.MapGet("/template/medium", (Payloads p) => Page(p.Medium));
     }
 
+    // rb:wiring template.*
     private static RazorComponentResult<ItemsPage> Page(Payload payload) =>
         new(new Dictionary<string, object?> { [nameof(ItemsPage.Body)] = payload });
 }

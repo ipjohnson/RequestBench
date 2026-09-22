@@ -2,7 +2,11 @@ namespace UnitTests;
 
 public sealed class MiddlewareTests(CarterApp app) : IClassFixture<CarterApp>
 {
+    // rb:test middleware.none,middleware.four,middleware.sixteen
     [Theory]
+    [Trait("corpus", "middleware.none")]
+    [Trait("corpus", "middleware.four")]
+    [Trait("corpus", "middleware.sixteen")]
     [InlineData("none")]
     [InlineData("four")]
     [InlineData("sixteen")]

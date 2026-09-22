@@ -4,7 +4,12 @@ namespace UnitTests;
 
 public sealed class BodyTests(CarterApp app) : IClassFixture<CarterApp>
 {
+    // rb:test body.bind_small,body.bind_medium,body.validate_small,body.validate_medium
     [Theory]
+    [Trait("corpus", "body.bind_small")]
+    [Trait("corpus", "body.bind_medium")]
+    [Trait("corpus", "body.validate_small")]
+    [Trait("corpus", "body.validate_medium")]
     [InlineData("/body/bind/small", "order.small.json")]
     [InlineData("/body/bind/medium", "order.medium.json")]
     [InlineData("/body/validate/small", "order.small.json")]
@@ -25,7 +30,9 @@ public sealed class BodyTests(CarterApp app) : IClassFixture<CarterApp>
         await Answer.Is(bound, response);
     }
 
+    // rb:test body.rejected_all
     [Fact]
+    [Trait("corpus", "body.rejected_all")]
     public async Task Carters_filter_refuses_order_invalid_naming_every_rule_it_breaks()
     {
         using HttpResponseMessage response = await app.CreateClient().PostAsync("/body/validate/small", Json(Expected.Bytes("order.invalid.json")));
@@ -34,7 +41,9 @@ public sealed class BodyTests(CarterApp app) : IClassFixture<CarterApp>
         Assert.Equal(["CustomerId", "Status", "Lines"], Named(await Answer.Json(response)));
     }
 
+    // rb:test body.rejected_first
     [Fact]
+    [Trait("corpus", "body.rejected_first")]
     public async Task The_first_error_route_stops_at_the_first_rule()
     {
         using HttpResponseMessage response = await app.CreateClient().PostAsync("/body/validate/first-error", Json(Expected.Bytes("order.invalid.json")));

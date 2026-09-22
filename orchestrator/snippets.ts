@@ -19,7 +19,7 @@
 // Two location checks, both from upstream: a route matching in more than one place is a problem
 // rather than a first match, because first-match is how a comment or a test gets rendered as the
 // implementation; and a derived snippet must contain the route it claims. The assertions in
-// marks.ts ask what is in a snippet, counted against the allowance.
+// marks.ts ask what is in a snippet, and each one a framework fails is a problem.
 import { ASSERTIONS, KINDS, type AssertionName, type Kind, type KindName } from "./marks.ts";
 
 export interface Endpoint {
@@ -78,9 +78,6 @@ export interface SnippetRecord {
 }
 
 export type Failures = Record<AssertionName, string[]>;
-
-/** Counts per framework per assertion, as orchestrator/allowance.json holds them. */
-export type Allowance = Readonly<Record<string, Readonly<Partial<Record<AssertionName, number>>>>>;
 
 // ---- Python's text rules --------------------------------------------------------------------
 
@@ -601,14 +598,20 @@ const compareSpan = (a: readonly [string, number, number], b: readonly [string, 
  * One record per endpoint this framework answers, and one complaint per problem. Support parts
  * come from other files than the handler, so each part carries its own path, range and hash.
  * They are keyed by family, because six compressed.* endpoints share one gzip.
+ *
+ * An endpoint in `noHandler` is answered by the framework itself, as a router answers a path no
+ * route matches. Nothing is derived for it, because a route literal that matches it belongs to a
+ * neighbour, and its record is kept without a handler so its wiring and its tests still show.
  */
 export function resolve(input: {
   readonly target: string;
   readonly language: string;
   readonly files: readonly SourceFile[];
   readonly endpoints: readonly Endpoint[];
+  readonly noHandler?: ReadonlySet<string>;
 }): { found: Record<string, SnippetRecord>; problems: string[] } {
   const { target, language } = input;
+  const noHandler = input.noHandler ?? new Set<string>();
   const c = corpusOf(input.endpoints);
   const readable = new Set(Object.values(KINDS).flatMap((k) => k.roles));
   const files = new Map<string, Loaded>();
@@ -646,11 +649,12 @@ export function resolve(input: {
     for (const ep of c.endpoints) {
       let hits = [...(claimed.get(kind)!.get(ep.id) ?? [])];
       let via = routeOf(ep);
-      if (hits.length === 0 && spec.derive) hits = derived(language, files, spec.roles, ep);
+      const derives = spec.derive && !noHandler.has(ep.id);
+      if (hits.length === 0 && derives) hits = derived(language, files, spec.roles, ep);
       // An endpoint with no route of its own is served by the parameterised route it is an
       // instance of: /items/999999 is answered by /items/{id}. Only an instance qualifies, because
       // `base` is otherwise a comparison and not an alias.
-      if (hits.length === 0 && spec.derive && ep.base !== undefined && c.byId.has(ep.base)) {
+      if (hits.length === 0 && derives && ep.base !== undefined && c.byId.has(ep.base)) {
         const base = c.byId.get(ep.base)!;
         const baseRoute = routeOf(base);
         if (baseRoute !== via && instanceRegex(baseRoute).test(via)) {
@@ -687,6 +691,10 @@ export function resolve(input: {
     }
   }
 
+  for (const id of noHandler) {
+    if (c.byId.has(id) && !out.has(id)) out.set(id, { endpoint: id, target, handler: null, support: [], test: [] });
+  }
+
   // Family-keyed kinds hang off every endpoint of the family, because the page is per endpoint
   // and the relation is per family.
   for (const [kind, spec] of kinds) {
@@ -698,11 +706,14 @@ export function resolve(input: {
     }
   }
 
-  // A record with no handler is not a located endpoint, whatever else claimed it.
+  // A record with no handler is not a located endpoint, whatever else claimed it, unless rb.json
+  // says the framework answers it itself.
   let located = [...out];
   for (const [, spec] of kinds) {
     if (spec.required !== "every") continue;
-    located = located.filter(([, rec]) => (spec.into === "handler" ? rec.handler !== null : rec[spec.into].length > 0));
+    located = located.filter(([id, rec]) =>
+      spec.into === "handler" ? rec.handler !== null || noHandler.has(id) : rec[spec.into].length > 0,
+    );
   }
   return { found: Object.fromEntries(located), problems };
 }
@@ -736,8 +747,7 @@ function supporting(found: Readonly<Record<string, SnippetRecord>>, byId: Readon
 
 const RECORD_ASSERT: Readonly<Record<Exclude<AssertionName, "mentions_dep">, (rec: SnippetRecord) => boolean>> = {
   not_only_annotations: (rec) => rec.handler !== null && onlyAnnotations(rec.handler.text),
-  // Coverage rather than a claim about a snippet, riding the allowance because that is the
-  // machinery a count that only goes down already has.
+  // Coverage rather than a claim about a snippet. marks.ts says why it is an assertion.
   no_test: (rec) => ownTests(rec).length === 0,
   // Silent where there is no test at all, because no_test counts that.
   names_endpoint: (rec) => {
@@ -750,10 +760,7 @@ const FAMILY_ASSERT: Readonly<Record<"mentions_dep", (parts: readonly Part[], de
   mentions_dep: (parts, decl) => !parts.map((p) => p.text).join("\n").includes(mentioned(decl)),
 };
 
-/**
- * Which subjects fail each assertion. Counted rather than fatal: what they measure can be most of
- * a framework at first, and a gate that went red on it would block every branch fixing it.
- */
+/** Which subjects fail each assertion, as `failing` reports them. */
 export function assess(input: {
   readonly found: Readonly<Record<string, SnippetRecord>>;
   readonly endpoints: readonly Endpoint[];
@@ -793,23 +800,32 @@ export function requirements(input: {
   readonly mechanisms: Readonly<Record<string, Mechanism>>;
   /** Every manifest-role file in the bundle, concatenated. */
   readonly manifestText: string;
+  /** The endpoints rb.json says the framework answers with no handler of its own. */
+  readonly noHandler?: ReadonlySet<string>;
 }): string[] {
   const { target, found, mechanisms } = input;
+  const noHandler = input.noHandler ?? new Set<string>();
   const c = corpusOf(input.endpoints);
   const support = supporting(found, c.byId);
   const out: string[] = [];
   for (const [kind, spec] of Object.entries(KINDS) as [KindName, Kind][]) {
-    // Upstream also held a family with marked tests to a declared suite facility. That
-    // declaration is not part of rb.json yet, so a ratchet kind owes nothing here.
-    if (spec.required === "ratchet") continue;
+    // An asserted kind is held by an assertion in assess(), not here. Upstream also held a family
+    // with marked tests to a declared suite facility, which rb.json does not declare.
+    if (spec.required === "asserted") continue;
     if (spec.required === "every") {
-      const required = c.endpoints.filter((e) => input.required.has(e.id));
+      const exempt = (id: string): boolean => spec.into === "handler" && noHandler.has(id);
+      const required = c.endpoints.filter((e) => input.required.has(e.id) && !exempt(e.id));
       const missing = required.filter((e) => {
         const rec = found[e.id];
         return rec === undefined || (spec.into === "handler" ? rec.handler === null : rec[spec.into].length === 0);
       });
       if (missing.length > 0) {
         out.push(`${target} is conformance-required and locates a ${kind} for only ${required.length - missing.length}/${required.length} endpoints`);
+      }
+      // The declaration says no code of the framework's answers the endpoint, so a marked handler contradicts it.
+      for (const id of [...noHandler].filter(exempt).sort()) {
+        const handler = found[id]?.handler;
+        if (handler) out.push(`${target} declares no ${kind} for ${id} and marks one (${handler.path}:${handler.startLine})`);
       }
     }
     if (spec.required !== "declared") continue;
@@ -842,50 +858,14 @@ export function covered(families: readonly string[], mechanisms: Readonly<Record
   };
 }
 
-// ---- the allowance ----------------------------------------------------------------------------
-
-/** The failures as counts, leaving out assertions nothing fails. */
-export function countsOf(failed: Failures): Partial<Record<AssertionName, number>> {
-  const out: Partial<Record<AssertionName, number>> = {};
-  for (const [name, subjects] of Object.entries(failed) as [AssertionName, string[]][]) if (subjects.length > 0) out[name] = subjects.length;
-  return out;
-}
-
-/** One problem per assertion this framework fails more often than its allowance lets it. */
-export function overAllowance(target: string, failed: Failures, allowed: Readonly<Partial<Record<AssertionName, number>>>): string[] {
-  const counts = countsOf(failed);
-  const names = [...new Set([...Object.keys(counts), ...Object.keys(allowed)])].sort() as AssertionName[];
+/** One problem per assertion this framework fails, naming the first few subjects. */
+export function failing(target: string, failed: Failures): string[] {
   const out: string[] = [];
-  for (const name of names) {
-    const n = counts[name] ?? 0;
-    const was = allowed[name] ?? 0;
-    if (n > was) {
-      const shown = failed[name].slice(0, 4).join(", ") + (n > 4 ? ", …" : "");
-      out.push(`${target} fails ${name} on ${n} endpoints, ${was} allowed: ${shown}`);
-    }
-  }
-  return out;
-}
-
-/** One line per assertion now failing less often than allowed, which the allowance should be lowered to. */
-export function belowAllowance(failed: Failures, allowed: Readonly<Partial<Record<AssertionName, number>>>): string[] {
-  const counts = countsOf(failed);
-  return (Object.keys(allowed).sort() as AssertionName[])
-    .filter((name) => (counts[name] ?? 0) < allowed[name]!)
-    .map((name) => `${name} is down to ${counts[name] ?? 0} from an allowance of ${allowed[name]}: run --ratchet`);
-}
-
-/**
- * The allowance rewritten from what every framework does now. It is only ever lowered in
- * practice, because the check fails on anything above it, so a count can only rise by someone
- * running this on purpose and a reviewer reading the diff.
- */
-export function ratchet(measured: Readonly<Record<string, Failures>>): Allowance {
-  const out: Record<string, Partial<Record<AssertionName, number>>> = {};
-  for (const target of Object.keys(measured).sort()) {
-    const counts = countsOf(measured[target]!);
-    const names = Object.keys(counts).sort() as AssertionName[];
-    if (names.length > 0) out[target] = Object.fromEntries(names.map((n) => [n, counts[n]!]));
+  for (const name of Object.keys(failed).sort() as AssertionName[]) {
+    const subjects = failed[name];
+    if (subjects.length === 0) continue;
+    const shown = subjects.slice(0, 4).join(", ") + (subjects.length > 4 ? ", …" : "");
+    out.push(`${target} fails ${name} on ${subjects.length}: ${shown}`);
   }
   return out;
 }

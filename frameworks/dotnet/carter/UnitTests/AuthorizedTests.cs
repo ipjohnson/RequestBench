@@ -2,7 +2,9 @@ namespace UnitTests;
 
 public sealed class AuthorizedTests(CarterApp app) : IClassFixture<CarterApp>
 {
+    // rb:test authorized.allowed
     [Fact]
+    [Trait("corpus", "authorized.allowed")]
     public async Task The_settings_token_is_let_through()
     {
         using HttpResponseMessage response = await Ask($"Bearer {(string)Expected.Settings["token"]!}");
@@ -10,7 +12,9 @@ public sealed class AuthorizedTests(CarterApp app) : IClassFixture<CarterApp>
         await Answer.Is(Expected.Json("items.small.json"), response);
     }
 
+    // rb:test authorized.denied
     [Fact]
+    [Trait("corpus", "authorized.denied")]
     public async Task A_token_one_character_off_is_forbidden()
     {
         using HttpResponseMessage response = await Ask($"Bearer {(string)Expected.Settings["wrongToken"]!}");

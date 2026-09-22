@@ -5,6 +5,7 @@ using Microsoft.Extensions.Options;
 
 namespace Implementation;
 
+// rb:wiring authorized.*
 /// <summary>
 /// Reads a bearer token into a claim. ASP.NET Core ships no scheme for an opaque token, and
 /// a scheme is where its authorization learns who is asking. The token policy compares the

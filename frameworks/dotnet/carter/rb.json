@@ -10,6 +10,11 @@
   },
   "suite": { "argv": ["dotnet", "test", "UnitTests"], "paths": ["UnitTests"] },
   "upgrade": null,
+  "noHandler": {
+    "cors.preflight": "ASP.NET Core's CORS middleware answers the preflight for the /cors group, and no handler runs.",
+    "errors.unmatched": "The router answers a path no route matches with 404, and ProblemDetails writes the body.",
+    "errors.wrong_method": "The router answers a method the path has no route for with 405, and ProblemDetails writes the body."
+  },
   "mechanisms": {
     "authorized": {
       "mechanism": "ASP.NET Core authorization: a bearer-token authentication scheme of its own, required by a policy on this one route"
@@ -17,7 +22,8 @@
     "baseline": { "builtin": "The handler returns the text." },
     "body": {
       "mechanism": "Carter's MapPost<T> validation filter, which runs the FluentValidation validator declared beside the request type",
-      "dependency": "FluentValidation"
+      "dependency": "FluentValidation",
+      "mentions": "AbstractValidator"
     },
     "cache": {
       "mechanism": "ASP.NET Core output caching, CacheOutput on each route, varied by the request headers a vary row names"

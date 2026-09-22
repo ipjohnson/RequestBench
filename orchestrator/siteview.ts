@@ -47,8 +47,10 @@ export function rbJsonAt(root: string, f: FrameworkKey, at: string | undefined):
 
 export interface FrameworkView {
   readonly bundle: Bundle;
-  /** By test id. A test this framework answers with no located handler has no entry. */
+  /** By test id. A test with no located handler has no entry, unless it is in noHandler. */
   readonly snippets: Readonly<Record<string, SnippetRecord>>;
+  /** The tests rb.json says the framework answers with no handler of its own, and what answers each. */
+  readonly noHandler: Readonly<Record<string, string>>;
   /** Where a snippet could not be located, and what rb.json declared and the code did not bear out. */
   readonly problems: readonly string[];
   /** What each assertion in marks.ts found, by test id or family. */
@@ -70,9 +72,11 @@ export function frameworkView(
 ): FrameworkView {
   const target = frameworkId(f);
   const bundle = frameworkBundle(root, f, at);
-  const { found, problems } = resolve({ target, language: f.language, files: sourcesOf(root, bundle, at), endpoints: eps });
   const rb = rbJsonAt(root, f, at);
   const mechanisms = rb?.mechanisms ?? {};
+  const noHandler = rb?.noHandler ?? {};
+  const unhandled = new Set(Object.keys(noHandler));
+  const { found, problems } = resolve({ target, language: f.language, files: sourcesOf(root, bundle, at), endpoints: eps, noHandler: unhandled });
   // rb.json is a manifest too and names every dependency it declares, so it cannot be what
   // vouches that the framework depends on one.
   const manifestText = sourcesOf(root, bundle, at, new Set(["manifest"]))
@@ -83,7 +87,8 @@ export function frameworkView(
   return {
     bundle,
     snippets: found,
-    problems: [...problems, ...requirements({ target, found, endpoints: eps, required, mechanisms, manifestText })],
+    noHandler,
+    problems: [...problems, ...requirements({ target, found, endpoints: eps, required, mechanisms, manifestText, noHandler: unhandled })],
     failures: assess({ found, endpoints: eps, mechanisms }),
     mechanisms,
     ...(rb === undefined
