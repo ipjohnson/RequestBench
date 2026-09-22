@@ -8,6 +8,7 @@ target/
 __pycache__/
 .pytest_cache/
 results/runs/
+results/summary/
 # The rendered site.
 site/dist/
 site/.astro/
