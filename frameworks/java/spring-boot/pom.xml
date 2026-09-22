@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Both modules. Spring Boot's starter parent pins every dependency and plugin through its BOM, so
+  the Boot version below is the one number that moves them.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>4.1.1</version>
+    <relativePath/>
+  </parent>
+
+  <groupId>dev.requestbench</groupId>
+  <artifactId>spring-boot</artifactId>
+  <version>0.0.0</version>
+  <packaging>pom</packaging>
+
+  <modules>
+    <module>Implementation</module>
+    <module>UnitTests</module>
+  </modules>
+
+  <properties>
+    <java.version>25</java.version>
+  </properties>
+</project>

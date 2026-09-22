@@ -25,6 +25,92 @@
    },
    "bodyFrom": "captured from frameworks/dotnet/carter/Implementation, without the traceId ASP.NET Core adds to each answer"
   },
+  "java:spring-boot": {
+   "status": 400,
+   "body": {
+    "status": 400,
+    "error": "Bad Request",
+    "errors": [
+     {
+      "objectName": "orderRequest",
+      "field": "customerId",
+      "rejectedValue": 0,
+      "codes": [
+       "Positive.orderRequest.customerId",
+       "Positive.customerId",
+       "Positive.int",
+       "Positive"
+      ],
+      "arguments": [
+       {
+        "arguments": null,
+        "code": "customerId",
+        "codes": [
+         "orderRequest.customerId",
+         "customerId"
+        ],
+        "defaultMessage": "customerId"
+       }
+      ],
+      "bindingFailure": false,
+      "code": "Positive",
+      "defaultMessage": "must be greater than 0"
+     },
+     {
+      "objectName": "orderRequest",
+      "field": "lines",
+      "rejectedValue": [],
+      "codes": [
+       "NotEmpty.orderRequest.lines",
+       "NotEmpty.lines",
+       "NotEmpty.java.util.List",
+       "NotEmpty"
+      ],
+      "arguments": [
+       {
+        "arguments": null,
+        "code": "lines",
+        "codes": [
+         "orderRequest.lines",
+         "lines"
+        ],
+        "defaultMessage": "lines"
+       }
+      ],
+      "bindingFailure": false,
+      "code": "NotEmpty",
+      "defaultMessage": "must not be empty"
+     },
+     {
+      "objectName": "orderRequest",
+      "field": "status",
+      "rejectedValue": "",
+      "codes": [
+       "NotEmpty.orderRequest.status",
+       "NotEmpty.status",
+       "NotEmpty.java.lang.String",
+       "NotEmpty"
+      ],
+      "arguments": [
+       {
+        "arguments": null,
+        "code": "status",
+        "codes": [
+         "orderRequest.status",
+         "status"
+        ],
+        "defaultMessage": "status"
+       }
+      ],
+      "bindingFailure": false,
+      "code": "NotEmpty",
+      "defaultMessage": "must not be empty"
+     }
+    ],
+    "path": "/body/validate/small"
+   },
+   "bodyFrom": "captured from frameworks/java/spring-boot/Implementation, without the timestamp Boot's error page adds to each answer"
+  },
   "node:fastify": {
    "status": 400,
    "body": {

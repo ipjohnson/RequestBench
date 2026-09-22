@@ -127,8 +127,16 @@
    "status": 403,
    "class": "json",
    "shape": [
-    "error:string"
-   ]
+    "error:string",
+    "path:string",
+    "status:number"
+   ],
+   "body": {
+    "status": 403,
+    "error": "Forbidden",
+    "path": "/authorized/small"
+   },
+   "bodyFrom": "captured from frameworks/java/spring-boot/Implementation, without the timestamp Boot's error page adds to each answer"
   },
   "java:vertx": {
    "status": 403,

@@ -17,6 +17,42 @@
    },
    "bodyFrom": "captured from frameworks/dotnet/carter/Implementation, without the traceId ASP.NET Core adds to each answer"
   },
+  "java:spring-boot": {
+   "status": 400,
+   "body": {
+    "status": 400,
+    "error": "Bad Request",
+    "errors": [
+     {
+      "objectName": "firstErrorOrder",
+      "field": "customerId",
+      "rejectedValue": 0,
+      "codes": [
+       "Positive.firstErrorOrder.customerId",
+       "Positive.customerId",
+       "Positive.int",
+       "Positive"
+      ],
+      "arguments": [
+       {
+        "arguments": null,
+        "code": "customerId",
+        "codes": [
+         "firstErrorOrder.customerId",
+         "customerId"
+        ],
+        "defaultMessage": "customerId"
+       }
+      ],
+      "bindingFailure": false,
+      "code": "Positive",
+      "defaultMessage": "must be greater than 0"
+     }
+    ],
+    "path": "/body/validate/first-error"
+   },
+   "bodyFrom": "captured from frameworks/java/spring-boot/Implementation, without the timestamp Boot's error page adds to each answer"
+  },
   "node:fastify": {
    "status": 400,
    "body": {
