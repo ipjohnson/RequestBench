@@ -21,9 +21,12 @@
       "node"
     ]
   },
+  // Only the frameworks' error declarations. A framework written in TypeScript compiles its own
+  // source with its own settings and dependencies.
   "include": [
     "tests/**/*.ts",
-    "frameworks/**/*.ts",
+    "frameworks/exceptions.ts",
+    "frameworks/*/*/client-exception/**/*.ts",
     "orchestrator/**/*.ts",
     "traffic-generator/**/*.ts"
   ]
