@@ -149,12 +149,16 @@
    "status": 404,
    "class": "json",
    "shape": [
-    "error:string"
+    "error:string",
+    "message:string",
+    "statusCode:number"
    ],
    "body": {
-    "error": "not_found"
+    "message": "Route GET:/errors/unmatched not found",
+    "error": "Not Found",
+    "statusCode": 404
    },
-   "bodyFrom": "shape"
+   "bodyFrom": "captured from frameworks/node/fastify/Implementation"
   },
   "node:h3": {
    "status": 404,

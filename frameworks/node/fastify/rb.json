@@ -1,0 +1,78 @@
+{
+  "comment": "Fastify 5 on Node 26, one Fastify plugin per family under Implementation/routes, in TypeScript that Node runs without a build step. The suite is UnitTests/, node:test over Fastify's inject(), and never reaches the image. install-ci-test is npm ci then npm test, because the suite needs node_modules and the typechecker. upgrade is npm update, which moves package-lock.json within the ranges package.json states.",
+  "framework": "Fastify",
+  "licence": "MIT",
+  "repo": "https://github.com/fastify/fastify",
+  "package": "https://www.npmjs.com/package/fastify",
+  "docs": "https://fastify.dev/docs/latest/",
+  "lockfile": ["package-lock.json"],
+  "hosts": {
+    "container-h1": { "dockerfile": "Dockerfile" }
+  },
+  "suite": { "argv": ["npm", "install-ci-test"], "paths": ["UnitTests"] },
+  "upgrade": { "argv": ["npm", "update"] },
+  "noHandler": {
+    "cors.preflight": "@fastify/cors answers the preflight in its onRequest hook, and no handler runs.",
+    "errors.unmatched": "Fastify's default not-found handler answers a path no route matches with 404.",
+    "errors.wrong_method": "The router matches the method and the path together, so a method the path has no route for reaches the default not-found handler, which answers 404."
+  },
+  "mechanisms": {
+    "authorized": {
+      "mechanism": "An onRequest hook on the route that compares the bearer token, and refuses any other with @fastify/sensible's 403"
+    },
+    "baseline": { "builtin": "The handler returns the string, which Fastify sends as text/plain." },
+    "body": {
+      "mechanism": "A JSON Schema for the body on each validate route, which Fastify compiles with ajv and runs before the handler, stopping at the first failure"
+    },
+    "cache": {
+      "mechanism": "An onRequest hook that replays a stored answer and an onSend hook that stores one, in the cache family's plugin, keyed by the path and the headers the route's config names"
+    },
+    "compressed": {
+      "mechanism": "@fastify/compress in the compressed family's plugin, at its default threshold and level",
+      "dependency": "@fastify/compress"
+    },
+    "cors": {
+      "mechanism": "@fastify/cors in the plugin mounted under /cors",
+      "dependency": "@fastify/cors"
+    },
+    "errors": {
+      "builtin": "Fastify's default not-found handler answers a miss, its JSON parser refuses a body that is not JSON with 400, and @fastify/sensible writes the items handlers' 404, each as Fastify's error JSON."
+    },
+    "etag": {
+      "mechanism": "@fastify/etag in the etag family's plugin, which hashes the body with SHA-1 and answers a matching If-None-Match with 304",
+      "dependency": "@fastify/etag"
+    },
+    "forms": {
+      "mechanism": "@fastify/formbody and @fastify/multipart in the forms family's plugin, with the form bound by query.many's schema",
+      "dependency": "@fastify/multipart"
+    },
+    "headers": {
+      "mechanism": "A JSON Schema for the headers on the route, which Fastify runs with ajv and which converts the account to an integer"
+    },
+    "items": { "builtin": "One route per method on /items/:id, the id converted by a params schema. Fastify answers HEAD with the GET route." },
+    "json": {
+      "mechanism": "A response schema on each route, which Fastify compiles with fast-json-stringify",
+      "dependency": "fast-json-stringify"
+    },
+    "middleware": { "mechanism": "No-op onRequest hooks on the route, four or sixteen of them" },
+    "parameters": {
+      "mechanism": "A JSON Schema for the params on the route, which Fastify runs with ajv and which converts each capture to an integer"
+    },
+    "query": {
+      "mechanism": "A JSON Schema for the querystring on the route, which Fastify runs with ajv and which converts the numbers to integers"
+    },
+    "sse": {
+      "mechanism": "@fastify/sse in the sse family's plugin, which writes each row as one event",
+      "dependency": "@fastify/sse"
+    },
+    "static": {
+      "mechanism": "@fastify/static over the payload directory, under /static/",
+      "dependency": "@fastify/static"
+    },
+    "stream": { "builtin": "The handler returns a Readable of lines, which Fastify pipes into the response." },
+    "template": {
+      "mechanism": "@fastify/view rendering an EJS template",
+      "dependency": "@fastify/view"
+    }
+  }
+}

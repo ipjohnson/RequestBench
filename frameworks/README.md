@@ -3,7 +3,8 @@
 A framework is a directory, `frameworks/<language>/<name>/`, that answers every performance test in
 `tests/` from a container and holds itself to that with its own suite. Its id is
 `<language>:<name>`, taken from the path. Nothing registers it except its entry in
-`frameworks/exceptions.ts`. [`dotnet/carter`](dotnet/carter) is the worked example.
+`frameworks/exceptions.ts`. [`dotnet/carter`](dotnet/carter) is the worked example, and
+[`node/fastify`](node/fastify) is one in TypeScript.
 
 Discovery, bundles and marks read git's index, not the directory. Run `git add` on new files before
 any `npm run rb` command, or they do not exist to it.
@@ -43,8 +44,8 @@ of that directory at the commit, and a local run builds from its tracked files, 
 never reach the image.
 
 - Pin every `FROM` image by digest.
-- Install from the lockfile inside the image. Carter restores with `--locked-mode`, so the version
-  `/__meta` reports describes the binary.
+- Install from the lockfile inside the image. Carter restores with `--locked-mode` and Fastify runs
+  `npm ci`, so the version `/__meta` reports describes what runs.
 
 The orchestrator starts the container with these settings:
 
@@ -107,7 +108,8 @@ written in TypeScript compiles its own source with its own settings.
 
 The site shows, for every test, the code that answers it, the code that wires its family, and the
 suite's test of it. Most of that is found from the source. A route literal the test's path matches
-is its handler. Marks cover the rest. A mark is a comment,
+is its handler. The method is read from the literal's own line, so keep the literal on the line of
+the call that names the method, or it matches every method. Marks cover the rest. A mark is a comment,
 `rb:<kind> <selector>[,<selector>...]`, and labels the block under it. `rb:end` closes one where
 the block would stop short. A selector is `family.name`, `family.*` or `*`.
 
@@ -126,7 +128,8 @@ and that the route does not name.
 those tests.
 - The marked code has to contain each test's id.
 - Carter puts `[Trait("corpus", "<id>")]` on the test, which also lets
-  `dotnet test --filter corpus=<id>` run it.
+  `dotnet test --filter corpus=<id>` run it. Fastify starts each test's name with its id, so
+  `node --test --test-name-pattern=<id>` runs it.
 
 Every performance test needs a marked test in the framework's suite, and `rb check` fails a
 framework that lacks one. The same holds for every other assertion in `orchestrator/marks.ts`.

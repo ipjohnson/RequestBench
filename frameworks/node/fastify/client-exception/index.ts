@@ -7,7 +7,7 @@ const Envelope = z.object({
   message: z.string(),
 });
 
-/** `body/items/0/qty must be >= 1` -> `items/0/qty` */
+/** `body/lines/0/qty must be > 0` -> `lines/0/qty` */
 const SOURCED = /^(?:body|query|params|headers)\/(\S+)/;
 
 export default exceptions({
@@ -16,7 +16,7 @@ export default exceptions({
     "anywhere in the body, so the field is read off the front of the message. " +
     "ajv also stops at the first failure, so a body with two bad fields names " +
     "one. If a version ever emits a structured list this regex returns nothing " +
-    "and errors.declared fails, which is the intended failure.",
+    "and body.rejected_all fails, which is the intended failure.",
   rejected: 400,
   notFound: 404,
   wrongMethod: 404,

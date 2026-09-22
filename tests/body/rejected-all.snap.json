@@ -33,7 +33,7 @@
     "error": "Bad Request",
     "message": "body/customerId must be > 0"
    },
-   "bodyFrom": "derived: ajv's message for the first rule orderRequest's JSON Schema breaks, exclusiveMinimum 0 on customerId, in Fastify's validation envelope. Not captured, because the rewrite has no Fastify implementation yet"
+   "bodyFrom": "captured from frameworks/node/fastify/Implementation"
   },
   "python:fastapi": {
    "status": 422,

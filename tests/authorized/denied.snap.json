@@ -148,12 +148,16 @@
    "status": 403,
    "class": "json",
    "shape": [
-    "error:string"
+    "error:string",
+    "message:string",
+    "statusCode:number"
    ],
    "body": {
-    "error": "forbidden"
+    "statusCode": 403,
+    "error": "Forbidden",
+    "message": "Forbidden"
    },
-   "bodyFrom": "shape"
+   "bodyFrom": "captured from frameworks/node/fastify/Implementation"
   },
   "node:h3": {
    "status": 403,
