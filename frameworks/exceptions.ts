@@ -1,5 +1,6 @@
 import type { Exceptions } from "@rb/tests/kit";
 
+import axum from "./rust/axum/client-exception/index.ts";
 import carter from "./dotnet/carter/client-exception/index.ts";
 import fastapi from "./python/fastapi/client-exception/index.ts";
 import fastify from "./node/fastify/client-exception/index.ts";
@@ -10,7 +11,7 @@ import springBoot from "./java/spring-boot/client-exception/index.ts";
  * rb.json and no line here is a compile error naming the missing key rather
  * than a run that falls over on the first rejection row.
  */
-export type FrameworkId = "dotnet:carter" | "java:spring-boot" | "node:fastify" | "python:fastapi";
+export type FrameworkId = "dotnet:carter" | "java:spring-boot" | "node:fastify" | "python:fastapi" | "rust:axum";
 
 /**
  * The one central list the contract does not remove. Discovery finds frameworks
@@ -23,4 +24,5 @@ export default {
   "java:spring-boot": springBoot,
   "node:fastify": fastify,
   "python:fastapi": fastapi,
+  "rust:axum": axum,
 } satisfies Record<FrameworkId, Exceptions>;

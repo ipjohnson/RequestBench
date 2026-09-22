@@ -166,6 +166,42 @@
     ]
    },
    "bodyFrom": "captured from frameworks/python/fastapi/Implementation"
+  },
+  "rust:axum": {
+   "status": 400,
+   "body": {
+    "lines": [
+     {
+      "code": "length",
+      "message": null,
+      "params": {
+       "min": 1,
+       "value": []
+      }
+     }
+    ],
+    "status": [
+     {
+      "code": "length",
+      "message": null,
+      "params": {
+       "value": "",
+       "min": 1
+      }
+     }
+    ],
+    "customer_id": [
+     {
+      "code": "range",
+      "message": null,
+      "params": {
+       "value": 0,
+       "min": 1
+      }
+     }
+    ]
+   },
+   "bodyFrom": "captured from frameworks/rust/axum/Implementation"
   }
  }
 }

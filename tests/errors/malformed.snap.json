@@ -311,7 +311,8 @@
    "class": "text",
    "shape": [
     ":string"
-   ]
+   ],
+   "bodyFrom": "captured from frameworks/rust/axum/Implementation, which answers text/plain; charset=utf-8: Failed to parse the request body as JSON: lines: EOF while parsing a list at line 1 column 28"
   },
   "rust:poem": {
    "status": 400,

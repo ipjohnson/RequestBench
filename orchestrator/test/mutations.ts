@@ -60,13 +60,16 @@ function lastLeaf(v: Json): Json {
 }
 
 /**
- * Every mention of a field, in a value or inside a sentence, named something else. A mention
- * with its first letter capitalised counts, because that is how a CLR property path writes it.
+ * Every mention of a field, as a key, in a value or inside a sentence, named something else. A
+ * mention with its first letter capitalised counts, because that is how a CLR property path
+ * writes it, and so does one in snake_case, because that is how a Rust struct writes it.
  */
 function rename(v: Json, from: string, to: string): Json {
-  if (typeof v === "string") return [from, from.charAt(0).toUpperCase() + from.slice(1)].reduce((s, f) => s.split(f).join(to), v);
+  const spellings = [from, from.charAt(0).toUpperCase() + from.slice(1), from.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`)];
+  const renamed = (s: string) => spellings.reduce((t, f) => t.split(f).join(to), s);
+  if (typeof v === "string") return renamed(v);
   if (Array.isArray(v)) return v.map((x) => rename(x, from, to));
-  if (v !== null && typeof v === "object") return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, rename(x, from, to)]));
+  if (v !== null && typeof v === "object") return Object.fromEntries(Object.entries(v).map(([k, x]) => [renamed(k), rename(x, from, to)]));
   return v;
 }
 

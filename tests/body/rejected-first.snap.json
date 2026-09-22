@@ -82,6 +82,22 @@
     ]
    },
    "bodyFrom": "captured from frameworks/python/fastapi/Implementation"
+  },
+  "rust:axum": {
+   "status": 400,
+   "body": {
+    "customer_id": [
+     {
+      "code": "range",
+      "message": null,
+      "params": {
+       "value": 0,
+       "min": 1
+      }
+     }
+    ]
+   },
+   "bodyFrom": "captured from frameworks/rust/axum/Implementation"
   }
  }
 }

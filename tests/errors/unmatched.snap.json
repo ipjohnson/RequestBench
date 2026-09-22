@@ -244,10 +244,9 @@
   },
   "rust:axum": {
    "status": 404,
-   "class": "json",
-   "shape": [
-    "error:string"
-   ]
+   "class": "empty",
+   "shape": [],
+   "bodyFrom": "captured from frameworks/rust/axum/Implementation, which answers with no body"
   },
   "rust:poem": {
    "status": 404,
