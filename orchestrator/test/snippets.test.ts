@@ -100,6 +100,30 @@ test("a Rust lifetime is not an open quote, so the handler's brace is still coun
   assert.deepEqual(span(found["json.small"]), [1, 4]);
 });
 
+test("a Rust raw string is a string and its # opens no comment, so the handler's delimiters still balance", () => {
+  const { found } = run(
+    "rust",
+    [
+      src("src/main.rs", [
+        '#[post("/body/validate/small")]',
+        "async fn validate_small() -> Response {",
+        '    let refused = post(&app(), r#"{"customerId": 1, "lines": ["#).await;',
+        '    let quoted = br##"one " and a {"##;',
+        "    answer(refused, quoted)",
+        "}",
+        "",
+        '#[get("/json/small")]',
+        "fn json_small() -> &'static str {",
+        '    "small"',
+        "}",
+      ]),
+    ],
+    [ep("body.validate_small", "POST", "/body/validate/small"), ep("json.small", "GET", "/json/small")],
+  );
+  assert.deepEqual(span(found["body.validate_small"]), [1, 6]);
+  assert.deepEqual(span(found["json.small"]), [8, 11]);
+});
+
 test("a Python decorator extends onto the async def under it, which ends where the source dedents", () => {
   const { found } = run(
     "python",

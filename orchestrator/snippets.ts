@@ -190,8 +190,21 @@ function instanceRegex(route: string): RegExp {
 
 // ---- reading source ---------------------------------------------------------------------
 
-/** Whether the # at `i` opens a Rust attribute rather than a comment. */
-const attribute = (line: string, i: number): boolean => i + 1 < line.length && "[!".includes(line[i + 1]!);
+/** Whether the # at `i` opens a line comment. Rust has no such comment: it writes attributes, raw strings and raw identifiers with #. */
+const hashComment = (line: string, i: number, syntax: string): boolean => syntax !== "rust" && line.startsWith("#", i);
+
+/**
+ * Where a Rust raw string that opens at `i`, such as `r#"..."#` or `br"..."`, ends, or -1 when none
+ * opens there. Its quotes and backslashes are its own text, so it ends only at a quote followed by
+ * as many #s as opened it. One that runs past the line ends with the line, as any string does here.
+ */
+function rawStringEnd(line: string, i: number): number {
+  if ((line[i] !== "r" && line[i] !== "b") || (i > 0 && /\w/.test(line[i - 1]!))) return -1;
+  const open = /^b?r(#*)"/.exec(line.slice(i));
+  if (open === null) return -1;
+  const close = line.indexOf(`"${open[1]!}`, i + open[0].length);
+  return close === -1 ? line.length : close + 1 + open[1]!.length;
+}
 
 /**
  * Whether the ' at `i` opens a character literal rather than a lifetime. Rust spells both with
@@ -230,13 +243,19 @@ function stripCode(line: string, syntax: string): string {
       i += 1;
       continue;
     }
+    const raw = syntax === "rust" ? rawStringEnd(line, i) : -1;
+    if (raw !== -1) {
+      out += " ".repeat(raw - i);
+      i = raw;
+      continue;
+    }
     if ("\"'`".includes(c)) {
       quote = c;
       out += " ";
       i += 1;
       continue;
     }
-    if (line.startsWith("//", i) || (line.startsWith("#", i) && !attribute(line, i))) break;
+    if (line.startsWith("//", i) || hashComment(line, i, syntax)) break;
     out += c;
     i += 1;
   }
@@ -417,15 +436,14 @@ function commentAt(line: string, syntax: string): number {
       i += 1;
       continue;
     }
+    const raw = syntax === "rust" ? rawStringEnd(line, i) : -1;
+    if (raw !== -1) {
+      i = raw;
+      continue;
+    }
     if ("\"'`".includes(c)) {
       quote = c;
-    } else if (line.startsWith("//", i)) {
-      return i;
-    } else if (line.startsWith("#", i)) {
-      if (attribute(line, i)) {
-        i += 1;
-        continue;
-      }
+    } else if (line.startsWith("//", i) || hashComment(line, i, syntax)) {
       return i;
     }
     i += 1;
