@@ -76,7 +76,7 @@
         "headerBytes": 163,
         "framing": "chunked",
         "bodyBytes": 129,
-        "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.4\",\"title\":\"Forbidden\",\"status\":403,\"traceId\":\"0HNOOUJGJ5TGJ:00000003\"}",
+        "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.4\",\"title\":\"Forbidden\",\"status\":403,\"traceId\":\"0HNOPF4MP1RJM:00000003\"}",
         "truncated": false
       }
     },
@@ -230,7 +230,7 @@
         "headerBytes": 165,
         "framing": "chunked",
         "bodyBytes": 374,
-        "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.1\",\"title\":\"One or more validation errors occurred.\",\"status\":400,\"errors\":{\"Lines\":[\"The field Lines must be a string or array type with a minimum length of '1'.\"],\"Status\":[\"The Status field is required.\"],\"CustomerId\":[\"The field CustomerId must be between 1 and 2147483647.\"]},\"traceId\":\"0HNOOUJGJ5TGJ:0000000B\"}",
+        "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.1\",\"title\":\"One or more validation errors occurred.\",\"status\":400,\"errors\":{\"Lines\":[\"The field Lines must be a string or array type with a minimum length of '1'.\"],\"Status\":[\"The Status field is required.\"],\"CustomerId\":[\"The field CustomerId must be between 1 and 2147483647.\"]},\"traceId\":\"0HNOPF4MP1RJM:0000000B\"}",
         "truncated": false
       }
     },
@@ -270,7 +270,7 @@
         "headerBytes": 165,
         "framing": "chunked",
         "bodyBytes": 242,
-        "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.1\",\"title\":\"One or more validation errors occurred.\",\"status\":400,\"errors\":{\"CustomerId\":[\"The field CustomerId must be between 1 and 2147483647.\"]},\"traceId\":\"0HNOOUJGJ5TGJ:0000000D\"}",
+        "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.1\",\"title\":\"One or more validation errors occurred.\",\"status\":400,\"errors\":{\"CustomerId\":[\"The field CustomerId must be between 1 and 2147483647.\"]},\"traceId\":\"0HNOPF4MP1RJM:0000000D\"}",
         "truncated": false
       }
     },
@@ -1065,7 +1065,7 @@
         "headerBytes": 165,
         "framing": "chunked",
         "bodyBytes": 406,
-        "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.1\",\"title\":\"One or more validation errors occurred.\",\"status\":400,\"errors\":{\"order\":[\"The order field is required.\"],\"$.lines[0]\":[\"Expected depth to be zero at the end of the JSON payload. There is an open JSON object or array that should be closed. Path: $.lines[0] | LineNumber: 0 | BytePositionInLine: 28.\"]},\"traceId\":\"0HNOOUJGJ5TGJ:00000029\"}",
+        "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.1\",\"title\":\"One or more validation errors occurred.\",\"status\":400,\"errors\":{\"order\":[\"The order field is required.\"],\"$.lines[0]\":[\"Expected depth to be zero at the end of the JSON payload. There is an open JSON object or array that should be closed. Path: $.lines[0] | LineNumber: 0 | BytePositionInLine: 28.\"]},\"traceId\":\"0HNOPF4MP1RJM:00000029\"}",
         "truncated": false
       }
     },
@@ -1099,7 +1099,7 @@
         "headerBytes": 163,
         "framing": "chunked",
         "bodyBytes": 129,
-        "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.5\",\"title\":\"Not Found\",\"status\":404,\"traceId\":\"0HNOOUJGJ5TGJ:0000002B\"}",
+        "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.5\",\"title\":\"Not Found\",\"status\":404,\"traceId\":\"0HNOPF4MP1RJM:0000002B\"}",
         "truncated": false
       }
     },
@@ -1133,7 +1133,7 @@
         "headerBytes": 148,
         "framing": "chunked",
         "bodyBytes": 129,
-        "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.5\",\"title\":\"Not Found\",\"status\":404,\"traceId\":\"0HNOOUJGJ5TGJ:0000002D\"}",
+        "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.5\",\"title\":\"Not Found\",\"status\":404,\"traceId\":\"0HNOPF4MP1RJM:0000002D\"}",
         "truncated": false
       }
     },
@@ -1171,7 +1171,7 @@
         "headerBytes": 195,
         "framing": "chunked",
         "bodyBytes": 138,
-        "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.6\",\"title\":\"Method Not Allowed\",\"status\":405,\"traceId\":\"0HNOOUJGJ5TGJ:0000002F\"}",
+        "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.6\",\"title\":\"Method Not Allowed\",\"status\":405,\"traceId\":\"0HNOPF4MP1RJM:0000002F\"}",
         "truncated": false
       }
     },
@@ -1843,7 +1843,7 @@
           ],
           [
             "location",
-            "http://127.0.0.1:60266/items/1426"
+            "http://<request host>/items/1426"
           ],
           [
             "transfer-encoding",
@@ -2484,7 +2484,7 @@
           ],
           [
             "etag",
-            "\"1dd4ad646abcc91\""
+            "\"1dd4b5c46558491\""
           ],
           [
             "last-modified",

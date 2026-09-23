@@ -182,7 +182,7 @@
         "headerBytes": 123,
         "framing": "content-length",
         "bodyBytes": 275,
-        "body": "{\"title\":\"Constraint Violation\",\"status\":400,\"violations\":[{\"field\":\"validateSmall.order.status\",\"message\":\"must not be empty\"},{\"field\":\"validateSmall.order.customerId\",\"message\":\"must be greater than 0\"},{\"field\":\"validateSmall.order.lines\",\"message\":\"must not be empty\"}]}",
+        "body": "{\"title\":\"Constraint Violation\",\"status\":400,\"violations\":[{\"field\":\"validateSmall.order.lines\",\"message\":\"must not be empty\"},{\"field\":\"validateSmall.order.customerId\",\"message\":\"must be greater than 0\"},{\"field\":\"validateSmall.order.status\",\"message\":\"must not be empty\"}]}",
         "truncated": false
       }
     },
@@ -1552,7 +1552,7 @@
           ],
           [
             "location",
-            "http://127.0.0.1:53386/items/1426"
+            "http://<request host>/items/1426"
           ]
         ],
         "headerBytes": 135,

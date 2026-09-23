@@ -7,7 +7,7 @@ import suite from "@rb/tests";
 import { validationTest } from "@rb/tests/kit";
 import type { Suite } from "@rb/tests/kit";
 import exceptions from "../../frameworks/exceptions.ts";
-import { exemplarFile, FIXED_VALUES, gate } from "../gate.ts";
+import { exemplarFile, exemplarOf, FIXED_VALUES, gate } from "../gate.ts";
 import { http1, type Exchange } from "../live.ts";
 import { loadSnapshots } from "../snapshots.ts";
 import type { Transport } from "../validate.ts";
@@ -136,4 +136,26 @@ test("an exemplar is the test's own exchange, with the volatile headers masked",
   const match = file.tests["etag.match_large"]!;
   assert.equal(match.response.status, 304);
   assert.ok(match.request.headers.some(([k]) => k === "if-none-match"));
+  assert.match(result.exchanges.get("json.small")!.hostHeader, /^127\.0\.0\.1:\d+$/);
+});
+
+test("an exemplar shows the Host the request carried as <request host> wherever the answer repeats it", () => {
+  const body = Buffer.from('{"message":"Cannot find any route matching [GET] http://127.0.0.1:63509/items"}');
+  const exchange: Exchange = {
+    request: { method: "POST", target: "/items", headers: {}, body: "{}" },
+    hostHeader: "127.0.0.1:63509",
+    response: {
+      status: 201,
+      statusMessage: "Created",
+      httpVersion: "1.1",
+      rawHeaders: [["Location", "http://127.0.0.1:63509/items/1426"], ["Content-Length", String(body.length)]],
+      body,
+    },
+  };
+
+  const shown = exemplarOf(exchange).response;
+
+  assert.deepEqual(shown.headers, [["location", "http://<request host>/items/1426"], ["content-length", String(body.length)]]);
+  assert.equal(shown.body, '{"message":"Cannot find any route matching [GET] http://<request host>/items"}');
+  assert.equal(shown.bodyBytes, body.length);
 });

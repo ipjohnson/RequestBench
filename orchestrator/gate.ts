@@ -163,6 +163,13 @@ const EXCERPT = 2048;
  */
 const VOLATILE = new Set(["date", "last-modified", "expires", "age"]);
 
+/**
+ * What stands in for the Host header the request carried, wherever the answer repeats it. An
+ * absolute URL on the host the request named, such as a Location, is a valid answer, and the port
+ * the validator reaches a container on changes from one capture to the next.
+ */
+const REQUEST_HOST = "<request host>";
+
 const excerpt = (text: string) => (text.length > EXCERPT ? text.slice(0, EXCERPT) : text);
 
 function framingOf(e: Exchange, headers: ReadonlyMap<string, string>): Exemplar["response"]["framing"] {
@@ -187,7 +194,8 @@ export function exemplarOf(e: Exchange): Exemplar {
       // A coding that does not decode is shown as it came. The gate has already said so.
     }
   }
-  const text = decoded.toString("utf8");
+  const masked = (value: string) => (e.hostHeader === "" ? value : value.replaceAll(e.hostHeader, REQUEST_HOST));
+  const text = masked(decoded.toString("utf8"));
   const requestBody = e.request.body;
   return {
     request: {
@@ -199,7 +207,7 @@ export function exemplarOf(e: Exchange): Exemplar {
     },
     response: {
       status: res.status,
-      headers: res.rawHeaders.map(([k, v]) => [k.toLowerCase(), VOLATILE.has(k.toLowerCase()) ? "<varies>" : v] as const),
+      headers: res.rawHeaders.map(([k, v]) => [k.toLowerCase(), VOLATILE.has(k.toLowerCase()) ? "<varies>" : masked(v)] as const),
       headerBytes,
       framing: framingOf(e, headers),
       bodyBytes: res.body.length,

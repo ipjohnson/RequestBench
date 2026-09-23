@@ -12,6 +12,8 @@ import type { Request, Response, Transport } from "./validate.ts";
 
 export interface Exchange {
   readonly request: Request;
+  /** The Host header the request carried, which Node writes from the address it connected to. */
+  readonly hostHeader: string;
   readonly response: {
     readonly status: number;
     readonly statusMessage: string;
@@ -55,6 +57,7 @@ export function http1(address: { host: string; port: number }, onExchange?: (e: 
             for (let i = 0; i + 1 < res.rawHeaders.length; i += 2) rawHeaders.push([res.rawHeaders[i]!, res.rawHeaders[i + 1]!]);
             onExchange?.({
               request: req,
+              hostHeader: String(outgoing.getHeader("host") ?? ""),
               response: {
                 status: res.statusCode ?? 0,
                 statusMessage: res.statusMessage ?? "",
