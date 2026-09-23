@@ -1,6 +1,7 @@
 # Helidon SE
 
-Helidon SE 4.5.5 on Helidon's own WebServer, running on Java 25, answering the RequestBench corpus.
+Helidon SE 27.0.0 on Helidon's own WebServer, running on Amazon Corretto 27, answering the
+RequestBench corpus.
 The contract every route follows is [`frameworks/openapi.json`](../../openapi.json).
 
 Helidon SE is Helidon's imperative flavour: a WebServer that runs each request on a virtual thread,
@@ -8,9 +9,8 @@ with routes, filters and error handlers registered in code on `HttpRouting`. Eve
 Helidon's own facility where Helidon has one. The cache and etag families are wired by hand,
 because Helidon SE has neither for an answer a handler writes.
 
-Helidon 27.0.0 is the newest release, and its jars are compiled for Java 27. The Temurin 25 images
-this port shares with Spring Boot cannot load them, so the port is on 4.5.5, the newest 4.x
-release.
+Helidon 27's jars are compiled for Java 27. Temurin, which the other Java frameworks run on, has
+published no Java 27 image yet, so this port builds and runs on Amazon Corretto 27.
 
 ## Layout
 
@@ -33,7 +33,7 @@ mvn -B test
 mvn -B test -Dgroups=body.rejected_first
 ```
 
-The build needs JDK 25 and Maven 3.9. `RB_PAYLOADS` names the payload directory, which `Main`
+The build needs JDK 27 and Maven 3.9. `RB_PAYLOADS` names the payload directory, which `Main`
 loads before it starts the server. The tests find `tests/payloads` themselves when it is not set.
 `PORT` defaults to 8080. Each test carries its corpus ids as JUnit tags, so `-Dgroups=<id>` runs
 the tests of one.
@@ -68,7 +68,9 @@ Helidon's service registry.
 
 ## Notes
 
-- Helidon JSON Binding and Helidon Validation are Helidon's own, and both are preview APIs in 4.5.
+- The port runs on Amazon Corretto 27, not on Temurin 25 like the other Java frameworks, because
+  Helidon 27's jars need Java 27 and Temurin has no Java 27 image yet.
+- Helidon JSON Binding and Helidon Validation are Helidon's own, and both were preview APIs in 4.5.
   Helidon 4.4 introduced Helidon JSON, and Helidon 27 uses it throughout its core. Of Helidon's JSON
   media supports it is the one that refuses a body it cannot read with a 400 of its own. The
   Jackson, JSON-B, JSON-P and Gson supports let the parser's exception through, which Helidon
