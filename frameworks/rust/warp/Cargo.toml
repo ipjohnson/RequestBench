@@ -1,0 +1,58 @@
+[package]
+name = "rb-warp"
+version = "0.0.0"
+edition = "2024"
+publish = false
+# The application is in Implementation/ and the suite in UnitTests/, so every target names its
+# path rather than following cargo's src/ and tests/.
+build = "Implementation/build.rs"
+autobins = false
+autotests = false
+
+# The suite is UnitTests/, so the library and the binary build no test harness of their own.
+[lib]
+name = "implementation"
+path = "Implementation/lib.rs"
+test = false
+doctest = false
+
+[[bin]]
+name = "server"
+path = "Implementation/main.rs"
+test = false
+
+[[test]]
+name = "unit"
+path = "UnitTests/main.rs"
+
+[dependencies]
+# warp::serve is behind `server`. compression-gzip is gzip and deflate alone, where the umbrella
+# `compression` feature adds brotli, which nothing here negotiates.
+warp = { version = "0.4.3", features = ["server", "compression-gzip", "multipart"] }
+askama = "0.16.1"
+bytes = "1.12.1"
+# The store axum-response-cache keeps its answers in, so the two ports cache alike.
+cached = { version = "4.0.0", default-features = false, features = ["ahash", "time_stores"] }
+futures-util = "0.3.34"
+http-body-util = "0.1.5"
+# The allocator every Rust framework here runs on, in place of the system one.
+mimalloc = "0.1.52"
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.151"
+sha1 = "0.11.0"
+tokio = { version = "1.53.1", features = ["rt-multi-thread", "macros", "net", "signal"] }
+validator = { version = "0.21.0", features = ["derive"] }
+
+# warp's test module, which drives a filter in process, is behind its `test` feature. A
+# dev-dependency's features reach a test build and no other.
+[dev-dependencies]
+flate2 = "1.1.10"
+# io-util for the one test that writes a request on the wire and reads hyper's answer back.
+tokio = { version = "1.53.1", features = ["rt-multi-thread", "macros", "net", "signal", "io-util"] }
+warp = { version = "0.4.3", features = ["server", "compression-gzip", "multipart", "test"] }
+
+# Whole-program optimisation, as upstream measured every Rust framework. The image build pays for
+# it once, and a service built for speed ships this way.
+[profile.release]
+lto = "fat"
+codegen-units = 1

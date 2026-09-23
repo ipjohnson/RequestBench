@@ -1,5 +1,6 @@
 import type { Exceptions } from "@rb/tests/kit";
 
+import actixWeb from "./rust/actix-web/client-exception/index.ts";
 import aspnetMvc from "./dotnet/aspnet-mvc/client-exception/index.ts";
 import axum from "./rust/axum/client-exception/index.ts";
 import carter from "./dotnet/carter/client-exception/index.ts";
@@ -19,9 +20,13 @@ import javalin from "./java/javalin/client-exception/index.ts";
 import koa from "./node/koa/client-exception/index.ts";
 import micronaut from "./java/micronaut/client-exception/index.ts";
 import minimalApis from "./dotnet/minimal-apis/client-exception/index.ts";
+import poem from "./rust/poem/client-exception/index.ts";
 import quarkus from "./java/quarkus/client-exception/index.ts";
+import rocket from "./rust/rocket/client-exception/index.ts";
+import salvo from "./rust/salvo/client-exception/index.ts";
 import springBoot from "./java/spring-boot/client-exception/index.ts";
 import vertx from "./java/vertx/client-exception/index.ts";
+import warp from "./rust/warp/client-exception/index.ts";
 import wolverineHttp from "./dotnet/wolverine-http/client-exception/index.ts";
 
 /**
@@ -52,7 +57,12 @@ export type FrameworkId =
   | "node:hono"
   | "node:koa"
   | "python:fastapi"
-  | "rust:axum";
+  | "rust:actix-web"
+  | "rust:axum"
+  | "rust:poem"
+  | "rust:rocket"
+  | "rust:salvo"
+  | "rust:warp";
 
 /**
  * The one central list the contract does not remove. Discovery finds frameworks
@@ -83,5 +93,10 @@ export default {
   "node:hono": hono,
   "node:koa": koa,
   "python:fastapi": fastapi,
+  "rust:actix-web": actixWeb,
   "rust:axum": axum,
+  "rust:poem": poem,
+  "rust:rocket": rocket,
+  "rust:salvo": salvo,
+  "rust:warp": warp,
 } satisfies Record<FrameworkId, Exceptions>;

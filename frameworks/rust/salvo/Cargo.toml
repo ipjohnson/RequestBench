@@ -1,0 +1,48 @@
+[package]
+name = "rb-salvo"
+version = "0.0.0"
+edition = "2024"
+publish = false
+# The application is in Implementation/ and the suite in UnitTests/, so every target names its
+# path rather than following cargo's src/ and tests/.
+build = "Implementation/build.rs"
+autobins = false
+autotests = false
+
+# The suite is UnitTests/, so the library and the binary build no test harness of their own.
+[lib]
+name = "implementation"
+path = "Implementation/lib.rs"
+test = false
+doctest = false
+
+[[bin]]
+name = "server"
+path = "Implementation/main.rs"
+test = false
+
+[[test]]
+name = "unit"
+path = "UnitTests/main.rs"
+
+[dependencies]
+askama = "0.16.1"
+futures-util = "0.3.34"
+# The allocator every Rust framework here runs on, in place of the system one.
+mimalloc = "0.1.52"
+# Salvo's default features stay on, and its TestClient, behind the test feature, is one of them.
+# rfc9457 is Salvo's problem-details type, which the validate routes refuse with.
+salvo = { version = "0.96.0", features = ["cache", "caching-headers", "compression", "cors", "rfc9457", "serve-static", "sse"] }
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.151"
+tokio = { version = "1.53.1", features = ["rt-multi-thread", "macros", "net", "signal"] }
+validator = { version = "0.21.0", features = ["derive"] }
+
+[dev-dependencies]
+flate2 = "1.1.10"
+
+# Whole-program optimisation, as upstream measured every Rust framework. The image build pays for
+# it once, and a service built for speed ships this way.
+[profile.release]
+lto = "fat"
+codegen-units = 1

@@ -1,0 +1,4 @@
+# askama looks for templates in templates/ beside Cargo.toml unless told otherwise, and this one
+# lives with the application.
+[general]
+dirs = ["Implementation/templates"]

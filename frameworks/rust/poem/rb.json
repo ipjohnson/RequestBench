@@ -1,0 +1,81 @@
+{
+  "comment": "poem 3.1 on tokio's multi-thread runtime, one module per family under Implementation/routes, each adding its paths to the one Route the application is, with each family's middleware on its own routes. One package: the library and the server binary in Implementation/, the suite in UnitTests/, which drives the Route in process with poem's TestClient and never reaches the image. The release profile is fat LTO with one codegen unit, as upstream measured every Rust framework. poem's JSON is serde_json, its default. Upstream turned on its sonic-rs feature, and it is left off, so poem writes JSON with the serializer axum's port writes with. Plain poem, not poem-openapi, which is a different way of writing routes. Validation is the validator crate, as axum's port uses it, because poem has none outside poem-openapi and no crate joins the two; a refusal is an error type whose as_response writes validator's errors as JSON, as poem's documentation shows for a custom error. The first-error route is wired by hand, because validator cannot stop at the first failure. The template is Tera, the engine poem's own templating example renders with. The cache is by hand, a poem Middleware over cached's LruTtlCache, the store axum-response-cache keeps, because poem ships no response cache. upgrade is cargo update, which moves Cargo.lock within the ranges Cargo.toml states.",
+  "framework": "poem",
+  "licence": "MIT OR Apache-2.0",
+  "repo": "https://github.com/poem-web/poem",
+  "package": "https://crates.io/crates/poem",
+  "docs": "https://docs.rs/poem/3.1.12/poem/",
+  "lockfile": ["Cargo.lock"],
+  "hosts": {
+    "container-h1": { "dockerfile": "Dockerfile" }
+  },
+  "suite": { "argv": ["cargo", "test", "--locked"], "paths": ["UnitTests"] },
+  "upgrade": { "argv": ["cargo", "update"] },
+  "skips": {
+    "cors.vary": "poem's Cors writes Vary: Origin only for an origin it matched by a pattern or a function, never for one it lists, and settings.json names one."
+  },
+  "noHandler": {
+    "cors.preflight": "poem's Cors middleware on the /cors route answers the preflight, and no handler runs.",
+    "errors.unmatched": "poem's Route answers a path no route matches with 404 and its message as text.",
+    "errors.wrong_method": "poem's method router answers a method the path has no endpoint for with 405 and its message as text."
+  },
+  "mechanisms": {
+    "authorized": {
+      "mechanism": "A poem Middleware on the route, written as poem's basic-auth example writes one, which answers 403 unless the bearer token in Authorization is settings.json's",
+      "dependency": "poem",
+      "mentions": "Middleware"
+    },
+    "baseline": { "builtin": "The handler returns the string, which poem sends as text/plain." },
+    "body": {
+      "mechanism": "The validator crate's rules, derived on the order and run by the validate handlers after poem's Json extractor binds the body. A refusal is an error type whose as_response writes validator's errors as JSON. The first-error route checks the rules one field at a time by hand, because validator cannot stop at the first failure",
+      "dependency": "validator",
+      "mentions": "Validate"
+    },
+    "cache": {
+      "mechanism": "A poem Middleware on each cache route that replays a stored answer before the handler, from cached's LruTtlCache keyed by the path and the headers the route varies on",
+      "dependency": "cached",
+      "mentions": "LruTtlCache"
+    },
+    "compressed": {
+      "mechanism": "poem's Compression middleware on the compressed routes, gzip at its fastest level, with no size threshold",
+      "dependency": "poem",
+      "mentions": "Compression"
+    },
+    "cors": {
+      "mechanism": "poem's Cors middleware on the /cors route",
+      "dependency": "poem",
+      "mentions": "Cors"
+    },
+    "errors": {
+      "builtin": "poem's Route answers a miss with 404 and its method router a method a path lacks with 405, each with poem's message as text. Its Json extractor refuses a body that is not JSON with 400 as text, and the items handlers answer a missing row with 404 and no body."
+    },
+    "etag": {
+      "mechanism": "A function middleware, put around the two routes with poem's around, that hashes the answer with SHA-1 and answers a matching If-None-Match with 304",
+      "dependency": "sha1",
+      "mentions": "Sha1::digest"
+    },
+    "forms": { "builtin": "poem's Form extractor binds the urlencoded body, and its Multipart extractor reads the upload part by part." },
+    "headers": { "builtin": "The handler reads the three headers from poem's HeaderMap extractor, the account parsed as an integer." },
+    "items": { "builtin": "One method router on /items/:id, the id bound as an integer by Path. poem answers HEAD with the GET endpoint and drops the body." },
+    "json": {
+      "mechanism": "serde's derived Serialize on the payload types, which poem's Json writes with serde_json",
+      "dependency": "serde_json",
+      "mentions": "Serialize"
+    },
+    "middleware": { "mechanism": "poem's Middleware trait, four or sixteen no-op layers on the route" },
+    "parameters": { "builtin": "poem's Path extractor binds each capture as an integer." },
+    "query": { "builtin": "poem's Query extractor binds the query string into a struct, the numbers as integers." },
+    "sse": { "builtin": "poem's SSE response writes each row, serialised by serde_json, as the data of one event." },
+    "static": {
+      "mechanism": "poem's StaticFilesEndpoint over the payload directory, nested at /static",
+      "dependency": "poem",
+      "mentions": "StaticFilesEndpoint"
+    },
+    "stream": { "builtin": "poem's Body::from_bytes_stream writes each row and its newline as one chunk." },
+    "template": {
+      "mechanism": "A Tera template, compiled into the binary, parsed once and rendered per request from the payload serialised into its context",
+      "dependency": "tera",
+      "mentions": "Tera"
+    }
+  }
+}

@@ -13,8 +13,10 @@ ASP.NET Core beside it: [`dotnet/minimal-apis`](dotnet/minimal-apis),
 [`node/fastify`](node/fastify), [`node/express`](node/express), [`node/koa`](node/koa),
 [`node/hono`](node/hono) and [`node/h3`](node/h3). Five run on Go: [`go/gin`](go/gin),
 [`go/chi`](go/chi), [`go/echo`](go/echo), [`go/fiber`](go/fiber) and
-[`go/gorilla-mux`](go/gorilla-mux). There is one in each other language:
-[`python/fastapi`](python/fastapi) and [`rust/axum`](rust/axum).
+[`go/gorilla-mux`](go/gorilla-mux). Six are written in Rust: [`rust/axum`](rust/axum),
+[`rust/actix-web`](rust/actix-web), [`rust/poem`](rust/poem), [`rust/rocket`](rust/rocket),
+[`rust/salvo`](rust/salvo) and [`rust/warp`](rust/warp). One runs on Python:
+[`python/fastapi`](python/fastapi).
 
 Discovery, bundles and marks read git's index, not the directory. Run `git add` on new files before
 any `npm run rb` command, or they do not exist to it.
@@ -37,9 +39,9 @@ framework has an aggregator `pom.xml` over its Maven modules: Implementation, Un
 where it has one. Spring Boot's, Micronaut's and Helidon SE's sit under their framework's parent
 pom, and Quarkus's, Javalin's and Vert.x's import their framework's BOM and pin every plugin
 themselves. Quarkus has no UnitTests module. Implementation's pom names UnitTests/ as its test
-sources, because `@QuarkusTest` builds the application from the module its tests are in. axum has
-one package's `Cargo.toml`, which names each target's path under Implementation/ and UnitTests/, and
-its `Cargo.lock`. Each Go framework has `go.mod` and `go.sum`. Each Node framework has
+sources, because `@QuarkusTest` builds the application from the module its tests are in. Each Rust
+framework has one package's `Cargo.toml`, which names each target's path under Implementation/ and
+UnitTests/, and its `Cargo.lock`. Each Go framework has `go.mod` and `go.sum`. Each Node framework has
 `package.json`, `package-lock.json` and `tsconfig.json`. Its source is TypeScript, which Node runs
 by stripping the types as it loads each file, so there is no build step and tsc only checks it.
 
@@ -91,12 +93,15 @@ A Node framework runs one process. A Python framework runs two workers, because 
 runs Python on one core at a time. [`python/fastapi`](python/fastapi) starts uvicorn with
 `workers=2`, written as a number, because under a quota Python counts every core the host has.
 A Java, Rust or Go framework runs one process. The JVM, tokio and Go's scheduler each size their
-threads from the container's CPU quota, and each counts 2. [`java/vertx`](java/vertx) deploys one
+threads from the container's CPU quota, and each counts 2. actix-web's server starts one
+single-threaded worker per core it counts, and Rocket sizes its tokio runtime from its `workers`
+setting, whose default counts the cores the same way. [`java/vertx`](java/vertx) deploys one
 server verticle per core the JVM counts, as Vert.x's documentation spreads a server over the cores.
 
 The framework is PID 1 in its container, and the kernel gives PID 1 no default action for SIGTERM.
-The JVM, .NET, uvicorn and the Go runtime install a handler of their own. Node and a Rust binary
-do not, so the Node frameworks and axum stop on SIGTERM themselves. h3's `serve()` starts srvx,
+The JVM, .NET, uvicorn, the Go runtime, actix-web's server and Rocket install a handler of their
+own. Node and the other Rust frameworks do not, so the Node frameworks, axum, poem, Salvo and warp
+stop on SIGTERM themselves. h3's `serve()` starts srvx,
 which stops on SIGTERM when its graceful shutdown is on. srvx turns that off when `CI` or `TEST` is
 set, so h3's `server.ts` turns it on. Without that, `docker stop` waits out its timeout.
 
@@ -152,10 +157,12 @@ written in TypeScript compiles its own source with its own settings.
 ## Client
 
 `Client/` holds the OpenAPI document a framework writes about its own routes and a client generated
-from that document. Every framework has one except axum, the five Go frameworks, Express, Koa, h3,
-Hono, Helidon SE and Vert.x. axum, the Go frameworks, Express and Koa write no document without a
-third-party library, and h3 writes none. Hono documents only routes written with @hono/zod-openapi's
-`createRoute`, and changing a route for the document is ruled out below. Helidon SE's OpenAPI
+from that document. Every framework has one except the six Rust frameworks, the five Go
+frameworks, Express, Koa, h3, Hono, Helidon SE and Vert.x. axum, actix-web, Rocket, warp, the Go
+frameworks, Express and Koa write no document without a third-party library, and h3 writes none.
+Hono documents only routes written with @hono/zod-openapi's `createRoute`, poem only routes written
+as poem-openapi's `#[OpenApi]` impls, and Salvo only handlers written with salvo-oapi's
+`#[endpoint]`, and changing a route for the document is ruled out below. Helidon SE's OpenAPI
 support serves a document the application packages, and Vert.x's OpenAPI modules read a contract, so
 neither writes one from its routes.
 
@@ -205,9 +212,13 @@ and DELETE, so a HEAD or OPTIONS route matches every method. Wolverine's `[Wolve
 chi's `r.Head` route are marked for that reason, and so is the `/cors/small` GET route beside the
 OPTIONS route that Express and Koa give their cors middleware. gorilla/mux names a route's methods
 in `.Methods(...)`, which the finder does not read, so a path that several of its routes share is
-marked. A formatter that breaks a call across lines separates the two, which is why axum's
-registrations are not run through rustfmt. Any other string that reads as a route matches too, with
-or without its leading slash, such as Gin's `json:"items"` struct tag, a Thymeleaf view named
+marked. actix-web's routes on a scope and Salvo's nested routers name a path relative to their
+parent, and warp spells a path as `warp::path!` segments, so the finder reads none of them as the
+corpus's path and their handlers are marked. poem's `#[handler]` functions and Salvo's handler types
+are registered by name, apart from their code, so they are marked too. A formatter that breaks a
+call across lines separates the literal from its method, which is why no Rust framework's code is
+run through rustfmt. Any other string that reads as a route matches too, with or without its
+leading slash, such as Gin's `json:"items"` struct tag, a Thymeleaf view or a Rocket template named
 `items`, a `"/items/{}"` format string or Vert.x's `getJsonArray("items")`. Rename it or mark the
 route.
 
@@ -243,8 +254,8 @@ those tests.
 - The Java frameworks put `@Tag("<id>")` on the test, so `mvn test -Dgroups=<id>` runs it. The Go
   frameworks run each id as a subtest, `t.Run("<id>", ...)`, so `go test ./UnitTests -run '/<id>'`
   runs it.
-  axum names the ids in the test's doc comment, which the marked block runs through onto the
-  function.
+  The Rust frameworks name the ids in the test's doc comment, which the marked block runs through
+  onto the function.
 
 Every performance test needs a marked test in the framework's suite, and `rb check` fails a
 framework that lacks one. The same holds for every other assertion in `orchestrator/marks.ts`.

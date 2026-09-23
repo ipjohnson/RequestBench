@@ -1,0 +1,76 @@
+{
+  "comment": "Salvo 0.96 on tokio's multi-thread runtime, one router per family under Implementation/routes, pushed into one service, with each family's hoops on its own router. Salvo takes a handler as a function or a struct and never a closure, so the handlers that answer a payload are structs holding a &'static reference to it. One package: the library and the server binary in Implementation/, the suite in UnitTests/, which drives the service in process with Salvo's TestClient and never reaches the image. Salvo's default features stay on. The release profile is fat LTO with one codegen unit, as upstream measured every Rust framework. Salvo has no validation of its own, so the validate routes run the validator crate's rules, as axum's port does, and refuse with Salvo's RFC 9457 problem details, the JSON form Salvo's documentation shows a validation failure in. The first-error route is wired by hand, because validator cannot stop at the first failure. Salvo's CORS documentation hoops the handler on the whole service; here it sits on the /cors route with an OPTIONS goal, so the policy covers /cors alone. upgrade is cargo update, which moves Cargo.lock within the ranges Cargo.toml states.",
+  "framework": "Salvo",
+  "licence": "Apache-2.0",
+  "repo": "https://github.com/salvo-rs/salvo",
+  "package": "https://crates.io/crates/salvo",
+  "docs": "https://salvo.rs/guide/",
+  "lockfile": ["Cargo.lock"],
+  "hosts": {
+    "container-h1": { "dockerfile": "Dockerfile" }
+  },
+  "suite": { "argv": ["cargo", "test", "--locked"], "paths": ["UnitTests"] },
+  "upgrade": { "argv": ["cargo", "update"] },
+  "noHandler": {
+    "cors.preflight": "salvo-cors's hoop on /cors/small answers the preflight. The route's OPTIONS goal is Salvo's empty handler, there so that the preflight matches a route.",
+    "errors.unmatched": "Salvo's service answers a path no route matches with 404 and its default error page.",
+    "errors.wrong_method": "Salvo's service answers a method the path has no route for with 405 and its default error page."
+  },
+  "mechanisms": {
+    "authorized": {
+      "mechanism": "A hoop on the route, written by hand because Salvo's basic-auth and jwt-auth hoops refuse with 401, which answers Salvo's 403 StatusError unless Authorization is settings.json's bearer token"
+    },
+    "baseline": { "builtin": "The handler returns the string, which Salvo writes as text/plain." },
+    "body": {
+      "mechanism": "The validator crate's rules, derived on the order and run by the handler once parse_json has bound it, refused with 422 as Salvo's RFC 9457 Problem, validator's errors as its errors member. The first-error route checks the rules one field at a time by hand, because validator cannot stop at the first failure",
+      "dependency": "validator",
+      "mentions": "Validate"
+    },
+    "cache": {
+      "mechanism": "salvo-cache's Cache hoop on each cache route over a MokaStore sized from settings.json, keyed by Salvo's RequestIssuer and, on a vary route, the headers it varies on",
+      "dependency": "salvo-cache",
+      "mentions": "Cache::new"
+    },
+    "compressed": {
+      "mechanism": "Salvo's Compression hoop on the compressed routes, gzip at its fastest level and its default threshold of 1024 bytes",
+      "dependency": "salvo-compression",
+      "mentions": "Compression"
+    },
+    "cors": {
+      "mechanism": "salvo-cors's Cors hoop on the /cors route, with an OPTIONS goal so that a preflight matches the route",
+      "dependency": "salvo-cors",
+      "mentions": "Cors"
+    },
+    "errors": {
+      "builtin": "Salvo answers a miss with 404 and a method a path lacks with 405, each as its default error page, parse_json refuses a body that is not JSON with 400 on the same page, and the items handler answers a missing row with 404."
+    },
+    "etag": {
+      "mechanism": "Salvo's CachingHeaders hoop on the two routes, which hashes the body with xxh3 and answers a matching If-None-Match with 304",
+      "dependency": "salvo_extra",
+      "mentions": "CachingHeaders"
+    },
+    "forms": { "builtin": "Salvo's parse_form binds the urlencoded body, and its form_data reads the upload, writing each file part to a temporary directory." },
+    "headers": { "builtin": "Salvo's parse_headers binds the three headers into a struct, the account as an integer." },
+    "items": { "builtin": "One router on /items/{id} with a goal per method, the id bound as an integer by try_param. The read handler is registered for HEAD as well, and Salvo strips the body of its answer." },
+    "json": {
+      "mechanism": "serde's derived Serialize on the payload types, which Salvo's Json writer writes with serde_json",
+      "dependency": "serde_json",
+      "mentions": "Serialize"
+    },
+    "middleware": { "mechanism": "Salvo hoops, four or sixteen no-op handlers on the route's router" },
+    "parameters": { "builtin": "Salvo's parse_params binds the captures into a struct, each as an integer." },
+    "query": { "builtin": "Salvo's parse_queries binds the query string into a struct, the numbers as integers." },
+    "sse": { "builtin": "Salvo's sse::stream writes each row SseEvent::json serialises as the data of one event." },
+    "static": {
+      "mechanism": "salvo-serve-static's StaticDir over the payload directory, under /static",
+      "dependency": "salvo-serve-static",
+      "mentions": "StaticDir"
+    },
+    "stream": { "builtin": "Response::stream writes each row and its newline as one chunk." },
+    "template": {
+      "mechanism": "An askama template, compiled into the binary and rendered per request",
+      "dependency": "askama",
+      "mentions": "Template"
+    }
+  }
+}

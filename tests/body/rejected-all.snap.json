@@ -516,6 +516,42 @@
    },
    "bodyFrom": "captured from frameworks/python/fastapi/Implementation"
   },
+  "rust:actix-web": {
+   "status": 400,
+   "body": {
+    "customer_id": [
+     {
+      "code": "range",
+      "message": null,
+      "params": {
+       "min": 1,
+       "value": 0
+      }
+     }
+    ],
+    "status": [
+     {
+      "code": "length",
+      "message": null,
+      "params": {
+       "min": 1,
+       "value": ""
+      }
+     }
+    ],
+    "lines": [
+     {
+      "code": "length",
+      "message": null,
+      "params": {
+       "value": [],
+       "min": 1
+      }
+     }
+    ]
+   },
+   "bodyFrom": "captured from frameworks/rust/actix-web/Implementation"
+  },
   "rust:axum": {
    "status": 400,
    "body": {
@@ -551,6 +587,131 @@
     ]
    },
    "bodyFrom": "captured from frameworks/rust/axum/Implementation"
+  },
+  "rust:poem": {
+   "status": 400,
+   "body": {
+    "status": [
+     {
+      "code": "length",
+      "message": null,
+      "params": {
+       "min": 1,
+       "value": ""
+      }
+     }
+    ],
+    "lines": [
+     {
+      "code": "length",
+      "message": null,
+      "params": {
+       "min": 1,
+       "value": []
+      }
+     }
+    ],
+    "customer_id": [
+     {
+      "code": "range",
+      "message": null,
+      "params": {
+       "min": 1,
+       "value": 0
+      }
+     }
+    ]
+   },
+   "bodyFrom": "captured from frameworks/rust/poem/Implementation"
+  },
+  "rust:rocket": {
+   "status": 422,
+   "body": {
+    "code": 422,
+    "message": "Unprocessable Entity. The request was well-formed but was unable to be followed due to semantic errors.",
+    "errors": {
+     "customer_id": [
+      {
+       "code": "range",
+       "message": null,
+       "params": {
+        "min": 1.0,
+        "value": 0
+       }
+      }
+     ],
+     "lines": [
+      {
+       "code": "length",
+       "message": null,
+       "params": {
+        "min": 1,
+        "value": []
+       }
+      }
+     ],
+     "status": [
+      {
+       "code": "length",
+       "message": null,
+       "params": {
+        "min": 1,
+        "value": ""
+       }
+      }
+     ]
+    }
+   },
+   "bodyFrom": "captured from frameworks/rust/rocket/Implementation"
+  },
+  "rust:salvo": {
+   "status": 422,
+   "body": {
+    "type": "about:blank",
+    "title": "Unprocessable Entity",
+    "status": 422,
+    "errors": {
+     "customer_id": [
+      {
+       "code": "range",
+       "message": null,
+       "params": {
+        "min": 1,
+        "value": 0
+       }
+      }
+     ],
+     "lines": [
+      {
+       "code": "length",
+       "message": null,
+       "params": {
+        "min": 1,
+        "value": []
+       }
+      }
+     ],
+     "status": [
+      {
+       "code": "length",
+       "message": null,
+       "params": {
+        "min": 1,
+        "value": ""
+       }
+      }
+     ]
+    }
+   },
+   "bodyFrom": "captured from frameworks/rust/salvo/Implementation"
+  },
+  "rust:warp": {
+   "status": 400,
+   "body": {
+    "code": 400,
+    "message": "lines: Validation error: length [{\"value\": Array [], \"min\": Number(1)}]\ncustomer_id: Validation error: range [{\"min\": Number(1), \"value\": Number(0)}]\nstatus: Validation error: length [{\"min\": Number(1), \"value\": String(\"\")}]"
+   },
+   "bodyFrom": "captured from frameworks/rust/warp/Implementation"
   }
  }
 }

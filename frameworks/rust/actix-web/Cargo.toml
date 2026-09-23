@@ -1,0 +1,59 @@
+[package]
+name = "rb-actix-web"
+version = "0.0.0"
+edition = "2024"
+publish = false
+# The application is in Implementation/ and the suite in UnitTests/, so every target names its
+# path rather than following cargo's src/ and tests/.
+build = "Implementation/build.rs"
+autobins = false
+autotests = false
+
+# The suite is UnitTests/, so the library and the binary build no test harness of their own.
+[lib]
+name = "implementation"
+path = "Implementation/lib.rs"
+test = false
+doctest = false
+
+[[bin]]
+name = "server"
+path = "Implementation/main.rs"
+test = false
+
+[[test]]
+name = "unit"
+path = "UnitTests/main.rs"
+
+[dependencies]
+actix-cors = "0.7.2"
+actix-files = "0.7.0"
+actix-middleware-etag = "0.5.0"
+actix-multipart = "0.8.4"
+actix-web = "4.15.0"
+actix-web-httpauth = "0.8.3"
+actix-web-lab = "0.27.0"
+# validator 0.20, not 0.21: actix-web-validator 7 implements its extractors for validator 0.20's
+# Validate trait.
+actix-web-validator = "7.0.0"
+askama = "0.16.1"
+# The store axum-response-cache keeps its answers in, for the cache middleware written here.
+cached = { version = "4.0.0", default-features = false, features = ["ahash", "time_stores"] }
+futures-util = "0.3.34"
+# The allocator every Rust framework here runs on, in place of the system one.
+mimalloc = "0.1.52"
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.151"
+validator = { version = "0.20.0", features = ["derive"] }
+
+[dev-dependencies]
+# The type actix-web's test utilities hand requests to the application as, which actix-web does not
+# re-export.
+actix-http = "3.13.6"
+flate2 = "1.1.10"
+
+# Whole-program optimisation, as upstream measured every Rust framework. The image build pays for
+# it once, and a service built for speed ships this way.
+[profile.release]
+lto = "fat"
+codegen-units = 1

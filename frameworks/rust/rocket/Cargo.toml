@@ -1,0 +1,54 @@
+[package]
+name = "rb-rocket"
+version = "0.0.0"
+edition = "2024"
+publish = false
+# The application is in Implementation/ and the suite in UnitTests/, so every target names its
+# path rather than following cargo's src/ and tests/.
+build = "Implementation/build.rs"
+autobins = false
+autotests = false
+
+# The suite is UnitTests/, so the library and the binary build no test harness of their own.
+[lib]
+name = "implementation"
+path = "Implementation/lib.rs"
+test = false
+doctest = false
+
+[[bin]]
+name = "server"
+path = "Implementation/main.rs"
+test = false
+
+[[test]]
+name = "unit"
+path = "UnitTests/main.rs"
+
+[dependencies]
+cached = "4.0.0"
+# The weak hasher, so an ETag comes from the crate the If-None-Match guard is built on.
+entity-tag = { version = "0.2.0", features = ["weak-hasher"] }
+httpdate = "1.0.3"
+# The allocator every Rust framework here runs on, in place of the system one.
+mimalloc = "0.1.52"
+rocket = { version = "0.5.1", features = ["json"] }
+rocket_async_compression = "0.6.1"
+rocket_cors = "0.6.0"
+rocket_dyn_templates = { version = "0.2.0", features = ["tera"] }
+rocket-etag-if-none-match = "0.5.0"
+rocket-validation = "0.2.0"
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.151"
+# validator 0.16, not 0.21: rocket-validation 0.2 implements its guard for validator 0.16's
+# Validate trait, and the derive expects the crate at the top level.
+validator = { version = "0.16.1", features = ["derive"] }
+
+[dev-dependencies]
+flate2 = "1.1.10"
+
+# Whole-program optimisation, as upstream measured every Rust framework. The image build pays for
+# it once, and a service built for speed ships this way.
+[profile.release]
+lto = "fat"
+codegen-units = 1

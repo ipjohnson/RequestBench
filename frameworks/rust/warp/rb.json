@@ -1,0 +1,80 @@
+{
+  "comment": "warp 0.4 on hyper 1 and tokio's multi-thread runtime, one filter per family under Implementation/routes, each boxed and combined with or into one application that ends in warp's recover. One package: the library and the server binary in Implementation/, the suite in UnitTests/, which drives the application in process with warp's own test module and never reaches the image. The release profile is fat LTO with one codegen unit, as upstream measured every Rust framework. warp answers a rejection nothing recovers with text or no body, which a rejected row cannot parse, so the validation refusal follows warp's rejections example: a rejection of the application's own, answered by the recover handler with the example's ErrorMessage JSON. The recover handler passes every other rejection along to warp. Validation is the validator crate, as axum's port uses it, and the first-error route is wired by hand, because validator cannot stop at the first failure. warp ships no response cache and no ETag, so both are written here, the cache over cached's LruTtlCache, the store axum-response-cache uses. warp's gzip filter takes no level, so the compressed rows are at async-compression's default, zlib level 6, where the other frameworks compress at their fastest, and it never reads Accept-Encoding, so it wraps a route only when the request lists gzip. warp sets no socket option on the connections it accepts, so main.rs sets TCP_NODELAY on the listening socket, which Linux copies onto each accepted connection. There is no Client/: warp writes no OpenAPI document without a third-party library. upgrade is cargo update, which moves Cargo.lock within the ranges Cargo.toml states.",
+  "framework": "warp",
+  "licence": "MIT",
+  "repo": "https://github.com/seanmonstar/warp",
+  "package": "https://crates.io/crates/warp",
+  "docs": "https://docs.rs/warp/0.4.3/warp/",
+  "lockfile": ["Cargo.lock"],
+  "hosts": {
+    "container-h1": { "dockerfile": "Dockerfile" }
+  },
+  "suite": { "argv": ["cargo", "test", "--locked"], "paths": ["UnitTests"] },
+  "upgrade": { "argv": ["cargo", "update"] },
+  "skips": {
+    "cors.vary": "warp's cors filter writes no Vary: Origin on an answer, whatever origins the policy names."
+  },
+  "noHandler": {
+    "cors.preflight": "warp's cors filter on the /cors route answers the preflight once the path matches, and no handler runs.",
+    "errors.unmatched": "warp answers a request no route's filters take with 404 and no body.",
+    "errors.wrong_method": "warp answers a path whose routes all refuse the method with its own 405, as text and with no Allow header."
+  },
+  "mechanisms": {
+    "authorized": {
+      "mechanism": "A filter on the route, written here, that compares the Authorization header with settings.json's bearer token and rejects any other with a rejection of the application's own, which the recover handler answers with 403. warp's own header::exact answers a value that differs with 400",
+      "mentions": "reject::custom"
+    },
+    "baseline": { "builtin": "The handler returns the string, which warp sends as text/plain." },
+    "body": {
+      "mechanism": "The validator crate's rules, derived on the order and run once warp's json body filter binds it, rejecting the body with a rejection of the application's own, which the recover handler answers with 400 and validator's report in the ErrorMessage of warp's rejections example. The first-error route checks the rules one field at a time by hand, because validator cannot stop at the first failure",
+      "dependency": "validator",
+      "mentions": "Validate"
+    },
+    "cache": {
+      "mechanism": "A store in front of each cache route's handler, written here because warp ships none, over cached's LruTtlCache, the store axum-response-cache uses, keyed by the headers the route varies on",
+      "dependency": "cached",
+      "mentions": "LruTtlCache"
+    },
+    "compressed": {
+      "mechanism": "warp's compression::gzip filter on the compressed routes, at async-compression's default level, zlib's 6, because it takes no level. It never reads Accept-Encoding, so it wraps the route only when the request lists gzip",
+      "mentions": "compression::gzip"
+    },
+    "cors": {
+      "mechanism": "warp's cors filter on the /cors route, after its path",
+      "mentions": "warp::cors"
+    },
+    "errors": {
+      "builtin": "warp answers a request no route takes with 404 and no body, a method the path has no route for with 405 as text, and a body its json filter cannot read with 400 as text, and the items handlers answer a missing row with 404."
+    },
+    "etag": {
+      "mechanism": "A filter after each route's handler that hashes the answer with SHA-1 and answers a matching If-None-Match with 304",
+      "dependency": "sha1",
+      "mentions": "Sha1::digest"
+    },
+    "forms": { "builtin": "warp's body::form filter binds the urlencoded body, and its multipart::form filter hands the upload over part by part." },
+    "headers": { "builtin": "warp's header filter binds each of the three headers with FromStr, the account as an integer." },
+    "items": { "builtin": "One route per method on /items/{id}, the id bound as an integer by warp's path filter. The read route takes GET or HEAD, and hyper writes no body for HEAD." },
+    "json": {
+      "mechanism": "serde's derived Serialize on the payload types, which warp's json reply writes with serde_json",
+      "dependency": "serde_json",
+      "mentions": "Serialize"
+    },
+    "middleware": {
+      "mechanism": "warp's wrap_fn, four or sixteen no-op filters wrapped around the handler after the route's path",
+      "mentions": "wrap_fn"
+    },
+    "parameters": { "builtin": "warp's path filter binds each capture as an integer with FromStr, and a capture that does not convert is a route that does not match." },
+    "query": { "builtin": "warp's query filter binds the query string into a struct, the numbers as integers." },
+    "sse": { "builtin": "warp's sse::reply writes each row serde_json serialises as the data of one event." },
+    "static": {
+      "mechanism": "warp's fs::dir filter over the payload directory, under /static",
+      "mentions": "fs::dir"
+    },
+    "stream": { "builtin": "warp's reply::stream writes each row and its newline as one chunk." },
+    "template": {
+      "mechanism": "An askama template, compiled into the binary and rendered per request",
+      "dependency": "askama",
+      "mentions": "Template"
+    }
+  }
+}

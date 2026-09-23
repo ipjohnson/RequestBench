@@ -1,0 +1,82 @@
+{
+  "comment": "Rocket 0.5.1 on the tokio runtime it builds itself, one stage per family under Implementation/routes, each mounting its routes and what its family needs on one application. One package: the library and the server binary in Implementation/, the suite in UnitTests/, which drives the application in process with Rocket's local client and never reaches the image. The release profile is fat LTO with one codegen unit, as upstream measured every Rust framework. Rocket validates forms but not JSON, so validation is the validator crate behind rocket-validation's Validated guard, the crate that joins the two, which pins validator 0.16. The first-error route is wired by hand, because validator cannot stop at the first failure. Rocket ships no compression, no response cache, no CORS and no conditional answers: compression is rocket_async_compression's Compress responder, CORS is rocket_cors in its request-guard mode, If-None-Match is read by rocket-etag-if-none-match, and the cache is a Handler of this application's own over cached's LruTtlCache. Rocket's FileServer sends no Last-Modified, so its handler is wrapped to add one. upgrade is cargo update, which moves Cargo.lock within the ranges Cargo.toml states.",
+  "framework": "Rocket",
+  "licence": "MIT OR Apache-2.0",
+  "repo": "https://github.com/rwf2/Rocket",
+  "package": "https://crates.io/crates/rocket",
+  "docs": "https://rocket.rs/guide/v0.5/",
+  "lockfile": ["Cargo.lock"],
+  "hosts": {
+    "container-h1": { "dockerfile": "Dockerfile" }
+  },
+  "suite": { "argv": ["cargo", "test", "--locked"], "paths": ["UnitTests"] },
+  "upgrade": { "argv": ["cargo", "update"] },
+  "skips": {
+    "cors.vary": "rocket_cors writes Vary: Origin only when it allows every origin and echoes the one that asked, and settings.json names one."
+  },
+  "noHandler": {
+    "cors.preflight": "rocket_cors's catch-all OPTIONS route, mounted under /cors, answers the preflight, and no handler of this application runs.",
+    "errors.unmatched": "No route matches the path, and Rocket's default catcher answers 404.",
+    "errors.wrong_method": "Rocket routes on the method and the path together, so no route matches a method /items/<id> has no route for, and Rocket's default catcher answers 404."
+  },
+  "mechanisms": {
+    "authorized": {
+      "mechanism": "A request guard on the route, which Rocket resolves before the handler and which fails with 403 unless Authorization is settings.json's bearer token. Rocket's default catcher answers the 403"
+    },
+    "baseline": { "builtin": "The handler returns the string, which Rocket sends as text/plain." },
+    "body": {
+      "mechanism": "The validator crate's rules, derived on the order and run by rocket-validation's Validated guard once Rocket's Json has bound the body. The guard fails with 422, and the crate's catcher answers with validator's errors as JSON. The first-error route checks the rules one field at a time by hand, through the same guard, because validator cannot stop at the first failure",
+      "dependency": "rocket-validation",
+      "mentions": "Validated"
+    },
+    "cache": {
+      "mechanism": "A Handler of this application's own wrapped around each cache route's generated handler, which answers from cached's LruTtlCache before that handler runs and stores a 200 it answers, keyed by the path and the headers the route varies on",
+      "dependency": "cached",
+      "mentions": "LruTtlCache"
+    },
+    "compressed": {
+      "mechanism": "rocket_async_compression's Compress responder around the answer, gzip at its fastest level, whatever the size",
+      "dependency": "rocket_async_compression",
+      "mentions": "Compress"
+    },
+    "cors": {
+      "mechanism": "rocket_cors in its request-guard mode: the Guard on the /cors route adds the policy to its answer, and the crate's catch-all OPTIONS route, mounted under /cors, answers the preflight",
+      "dependency": "rocket_cors",
+      "mentions": "CorsOptions"
+    },
+    "errors": {
+      "builtin": "Rocket routes on the method and the path together, so a path no route matches and a method a path has no route for both reach its default catcher's 404. Its Json guard refuses a body that is not JSON with 400, which the same catcher answers, and the items handlers answer a missing row with None, which Rocket turns into 404. The catcher answers with an HTML page unless the request prefers JSON."
+    },
+    "etag": {
+      "mechanism": "rocket-etag-if-none-match's request guard reads If-None-Match, and the handler hashes the body with entity-tag's XXH3 and answers 304 when the guard's weak comparison matches",
+      "dependency": "rocket-etag-if-none-match",
+      "mentions": "EtagIfNoneMatch"
+    },
+    "forms": { "builtin": "Rocket's Form data guard binds the urlencoded body into query.many's struct through FromForm, and the upload into a struct whose file is a TempFile, which Rocket writes to a temporary file before the handler runs." },
+    "headers": {
+      "mechanism": "A request guard of this application's own reads the three headers, the account parsed as an integer, because Rocket has no header binder"
+    },
+    "items": { "builtin": "One route per method on /items/<id>, the id bound as an integer by FromParam. Rocket answers HEAD with the GET route and strips the body, and uri! builds the created item's Location from the read route." },
+    "json": {
+      "mechanism": "serde's derived Serialize on the payload types, which Rocket's Json writes with serde_json",
+      "dependency": "serde_json",
+      "mentions": "Serialize"
+    },
+    "middleware": {
+      "mechanism": "Four or sixteen no-op request guards on the route, which Rocket resolves one after another before the handler. Rocket's fairings run on every route, and its documentation points per-route work at request guards"
+    },
+    "parameters": { "builtin": "Rocket binds each <segment> of the route as an integer through FromParam." },
+    "query": { "builtin": "The route attribute binds the query: ?<page> as an integer, and ?<search..> into a struct through FromForm, under the names the corpus sends." },
+    "sse": { "builtin": "Rocket's EventStream writes each row serde_json serialises as the data of one event." },
+    "static": {
+      "mechanism": "Rocket's FileServer over the payload directory, mounted at /static, its handler wrapped in one that adds Last-Modified, which FileServer never sends",
+      "mentions": "FileServer"
+    },
+    "stream": { "builtin": "Rocket's ByteStream writes each row and its newline as one item of the body, under the application/x-ndjson type." },
+    "template": {
+      "mechanism": "rocket_dyn_templates, Rocket's own view layer, whose fairing reads Implementation/templates/items-page.html.tera when Rocket ignites and renders it with Tera per request",
+      "dependency": "rocket_dyn_templates",
+      "mentions": "Template"
+    }
+  }
+}

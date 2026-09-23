@@ -1,0 +1,91 @@
+{
+  "comment": "actix-web 4 on actix-rt, one module per family under Implementation/routes, each adding its routes to the App's ServiceConfig, with each family's middleware wrapped around that family's scope or resource alone. HttpServer builds one App per worker thread, so the response cache's stores are made once and every App shares them. One package: the library and the server binary in Implementation/, the suite in UnitTests/, which drives the App in process with actix-web's test utilities and never reaches the image. The release profile is fat LTO with one codegen unit, as upstream measured every Rust framework. Validation is the validator crate, which axum's port uses too, behind actix-web-validator's Json extractor. That crate refuses a broken rule with text, so its JsonConfig's error handler, the hook its documentation shows for a custom answer, answers with validator's errors as JSON. The first-error route is wired by hand, because validator cannot stop at the first failure. actix-web ships no response cache and none written for it is in wide use, so the cache middleware is written by hand over cached's LruTtlCache, the store axum-response-cache uses. The etag family is actix-middleware-etag's, and the sse family is actix-web-lab's, where the actix project tries out what actix-web lacks. upgrade is cargo update, which moves Cargo.lock within the ranges Cargo.toml states.",
+  "framework": "actix-web",
+  "licence": "MIT OR Apache-2.0",
+  "repo": "https://github.com/actix/actix-web",
+  "package": "https://crates.io/crates/actix-web",
+  "docs": "https://docs.rs/actix-web/4.15.0/actix_web/",
+  "lockfile": ["Cargo.lock"],
+  "hosts": {
+    "container-h1": { "dockerfile": "Dockerfile" }
+  },
+  "suite": { "argv": ["cargo", "test", "--locked"], "paths": ["UnitTests"] },
+  "upgrade": { "argv": ["cargo", "update"] },
+  "noHandler": {
+    "cors.preflight": "actix-cors's middleware on the /cors scope answers the preflight, and no handler runs.",
+    "errors.unmatched": "actix-web's App answers a path no route matches with 404 and no body.",
+    "errors.wrong_method": "The /items/{id} resource answers a method it has no route for with 405, an Allow header and no body."
+  },
+  "mechanisms": {
+    "authorized": {
+      "mechanism": "actix-web-httpauth's bearer middleware on the resource, which reads the token before the handler and hands it to a validator that refuses any token but settings.json's with 403",
+      "dependency": "actix-web-httpauth",
+      "mentions": "HttpAuthentication"
+    },
+    "baseline": { "builtin": "The handler returns the string, which actix-web sends as text/plain." },
+    "body": {
+      "mechanism": "The validator crate's rules, derived on the order and run by actix-web-validator's Json extractor before the handler. Its JsonConfig's error handler answers with validator's errors as JSON, because the crate's own refusal is text. The first-error route checks the rules one field at a time by hand, because validator cannot stop at the first failure",
+      "dependency": "validator",
+      "mentions": "Validate"
+    },
+    "cache": {
+      "mechanism": "A from_fn middleware written by hand around each cache route's resource, which answers from the route's store before the handler, keyed by the path and the headers the route varies on, over cached's LruTtlCache",
+      "dependency": "cached",
+      "mentions": "LruTtlCache"
+    },
+    "compressed": {
+      "mechanism": "actix-web's Compress middleware around the /compressed scope, gzip at flate2's fast level, which actix-http fixes, on a body of any size",
+      "mentions": "Compress"
+    },
+    "cors": {
+      "mechanism": "actix-cors's middleware around the /cors scope",
+      "dependency": "actix-cors",
+      "mentions": "Cors"
+    },
+    "errors": {
+      "builtin": "actix-web's App answers a miss with 404, and a resource answers a method it has no route for with 405 and an Allow header, both with no body. actix-web-validator's Json extractor refuses a body that is not JSON with 400 as text, and the items handlers answer a missing row with 404."
+    },
+    "etag": {
+      "mechanism": "actix-middleware-etag's middleware around the /etag scope, which hashes the answer with xxh3 into a weak tag and answers a matching If-None-Match with 304",
+      "dependency": "actix-middleware-etag",
+      "mentions": "Etag"
+    },
+    "forms": {
+      "mechanism": "actix-multipart's derived MultipartForm, which reads the upload's parts into a struct before the handler. actix-web's Form binds the urlencoded body",
+      "dependency": "actix-multipart",
+      "mentions": "MultipartForm"
+    },
+    "headers": {
+      "mechanism": "actix-web's Header extractor, over an implementation of its Header trait for each of the three headers, the account parsed as an integer",
+      "mentions": "impl Header"
+    },
+    "items": { "builtin": "One resource at /items/{id} with a route per method, the id bound as an integer by Path. actix-web runs a route for HEAD only where one names it, so HEAD has a route onto the GET handler, and the HTTP/1 codec leaves its body unwritten." },
+    "json": {
+      "mechanism": "serde's derived Serialize on the payload types, which actix-web's Json responder writes with serde_json",
+      "dependency": "serde_json",
+      "mentions": "Serialize"
+    },
+    "middleware": {
+      "mechanism": "actix-web's from_fn middleware, four or sixteen no-op layers wrapped around the route's resource",
+      "mentions": "from_fn"
+    },
+    "parameters": { "builtin": "actix-web's Path extractor binds the captures into a struct whose fields are named after them, as integers." },
+    "query": { "builtin": "actix-web's Query extractor binds the query string into a struct, the numbers as integers." },
+    "sse": {
+      "mechanism": "actix-web-lab's Sse responder, which writes each row serde_json serialises as the data of one event. actix-web has no response of its own for events",
+      "dependency": "actix-web-lab",
+      "mentions": "Sse"
+    },
+    "static": {
+      "mechanism": "actix-files' Files service over the payload directory, mounted at /static",
+      "dependency": "actix-files",
+      "mentions": "Files"
+    },
+    "stream": { "builtin": "HttpResponseBuilder's streaming body writes each row and its newline as one chunk." },
+    "template": {
+      "mechanism": "An askama template, compiled into the binary and rendered per request",
+      "dependency": "askama",
+      "mentions": "Template"
+    }
+  }
+}

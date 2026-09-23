@@ -288,10 +288,9 @@
   },
   "rust:actix-web": {
    "status": 404,
-   "class": "json",
-   "shape": [
-    "error:string"
-   ]
+   "class": "empty",
+   "shape": [],
+   "bodyFrom": "captured from frameworks/rust/actix-web/Implementation, which answers with no body"
   },
   "rust:axum": {
    "status": 404,
@@ -301,31 +300,33 @@
   },
   "rust:poem": {
    "status": 404,
-   "class": "json",
+   "class": "text",
    "shape": [
-    "error:string"
-   ]
+    ":string"
+   ],
+   "bodyFrom": "captured from frameworks/rust/poem/Implementation, which answers text/plain; charset=utf-8: not found"
   },
   "rust:rocket": {
    "status": 404,
-   "class": "json",
+   "class": "text",
    "shape": [
-    "error:string"
-   ]
+    ":string"
+   ],
+   "bodyFrom": "captured from frameworks/rust/rocket/Implementation, which answers text/html; charset=utf-8: <!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"utf-8\">\n    <meta name=\"color-scheme\" content=\"light dark\">\n    <title>404 Not Found</title>\n</head>\n<body align=\"center\">\n    <div role=\"main\" align=\"center\">\n        <h1>404: Not Found</h1>\n        <p>The requested resource could not be found.</p>\n        <hr />\n    </div>\n    <div role=\"contentinfo\" align=\"center\">\n        <small>Rocket</small>\n    </div>\n</body>\n</html>"
   },
   "rust:salvo": {
    "status": 404,
-   "class": "json",
+   "class": "text",
    "shape": [
-    "error:string"
-   ]
+    ":string"
+   ],
+   "bodyFrom": "captured from frameworks/rust/salvo/Implementation, which answers text/html: <!DOCTYPE html>\n<html>\n<head>\n    <meta charset=\"utf-8\">\n    <meta name=\"viewport\" content=\"width=device-width\">\n    <title>404: Not Found</title>\n    <style>\n    :root {\n        --bg-color: #fff;\n        --text-color: #222;\n    }\n    body {\n        background: var(--bg-color);\n        color: var(--text-color);\n        text-align: center;\n    }\n    pre { text-align: left; padding: 0 1rem; }\n    footer{text-align:center;}\n    @media (prefers-color-scheme: dark) {\n        :root {\n            --bg-color: #222;\n            --text-color: #ddd;\n        }\n        a:link { color: red; }\n        a:visited { color: #a8aeff; }\n        a:hover {color: #a8aeff;}\n        a:active {color: #a8aeff;}\n    }\n    </style>\n</head>\n<body>\n    <div><h1>404: Not Found</h1><h3>The requested resource could not be found.</h3><hr><footer><a href=\"https://salvo.rs\" target=\"_blank\">salvo</a></footer></div>\n</body>\n</html>"
   },
   "rust:warp": {
    "status": 404,
-   "class": "json",
-   "shape": [
-    "error:string"
-   ]
+   "class": "empty",
+   "shape": [],
+   "bodyFrom": "captured from frameworks/rust/warp/Implementation, which answers with no body"
   }
  }
 }

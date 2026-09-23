@@ -1,0 +1,52 @@
+[package]
+name = "rb-poem"
+version = "0.0.0"
+edition = "2024"
+publish = false
+# The application is in Implementation/ and the suite in UnitTests/, so every target names its
+# path rather than following cargo's src/ and tests/.
+build = "Implementation/build.rs"
+autobins = false
+autotests = false
+
+# The suite is UnitTests/, so the library and the binary build no test harness of their own.
+[lib]
+name = "implementation"
+path = "Implementation/lib.rs"
+test = false
+doctest = false
+
+[[bin]]
+name = "server"
+path = "Implementation/main.rs"
+test = false
+
+[[test]]
+name = "unit"
+path = "UnitTests/main.rs"
+
+[dependencies]
+bytes = "1.12.1"
+cached = "4.0.0"
+futures-util = "0.3.34"
+# The allocator every Rust framework here runs on, in place of the system one.
+mimalloc = "0.1.52"
+poem = { version = "3.1.12", features = ["compression", "multipart", "sse", "static-files"] }
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.151"
+sha1 = "0.11.0"
+tera = "2.4.0"
+tokio = { version = "1.53.1", features = ["rt-multi-thread", "macros", "net", "signal"] }
+validator = { version = "0.21.0", features = ["derive"] }
+
+# poem again with its test feature, which is where TestClient lives. A dev-dependency's features
+# reach a test build and no other, so the server binary is built without it.
+[dev-dependencies]
+flate2 = "1.1.10"
+poem = { version = "3.1.12", features = ["compression", "multipart", "sse", "static-files", "test"] }
+
+# Whole-program optimisation, as upstream measured every Rust framework. The image build pays for
+# it once, and a service built for speed ships this way.
+[profile.release]
+lto = "fat"
+codegen-units = 1
