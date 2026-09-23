@@ -5,12 +5,14 @@ import aspnetMvc from "./dotnet/aspnet-mvc/client-exception/index.ts";
 import axum from "./rust/axum/client-exception/index.ts";
 import carter from "./dotnet/carter/client-exception/index.ts";
 import chi from "./go/chi/client-exception/index.ts";
+import djangoAsgi from "./python/django-asgi/client-exception/index.ts";
 import echo from "./go/echo/client-exception/index.ts";
 import express from "./node/express/client-exception/index.ts";
 import fastapi from "./python/fastapi/client-exception/index.ts";
 import fastendpoints from "./dotnet/fastendpoints/client-exception/index.ts";
 import fastify from "./node/fastify/client-exception/index.ts";
 import fiber from "./go/fiber/client-exception/index.ts";
+import flask from "./python/flask/client-exception/index.ts";
 import gin from "./go/gin/client-exception/index.ts";
 import gorillaMux from "./go/gorilla-mux/client-exception/index.ts";
 import h3 from "./node/h3/client-exception/index.ts";
@@ -18,13 +20,16 @@ import helidonSe from "./java/helidon-se/client-exception/index.ts";
 import hono from "./node/hono/client-exception/index.ts";
 import javalin from "./java/javalin/client-exception/index.ts";
 import koa from "./node/koa/client-exception/index.ts";
+import litestar from "./python/litestar/client-exception/index.ts";
 import micronaut from "./java/micronaut/client-exception/index.ts";
 import minimalApis from "./dotnet/minimal-apis/client-exception/index.ts";
 import poem from "./rust/poem/client-exception/index.ts";
 import quarkus from "./java/quarkus/client-exception/index.ts";
 import rocket from "./rust/rocket/client-exception/index.ts";
 import salvo from "./rust/salvo/client-exception/index.ts";
+import sanic from "./python/sanic/client-exception/index.ts";
 import springBoot from "./java/spring-boot/client-exception/index.ts";
+import starlette from "./python/starlette/client-exception/index.ts";
 import vertx from "./java/vertx/client-exception/index.ts";
 import warp from "./rust/warp/client-exception/index.ts";
 import wolverineHttp from "./dotnet/wolverine-http/client-exception/index.ts";
@@ -56,7 +61,12 @@ export type FrameworkId =
   | "node:h3"
   | "node:hono"
   | "node:koa"
+  | "python:django-asgi"
   | "python:fastapi"
+  | "python:flask"
+  | "python:litestar"
+  | "python:sanic"
+  | "python:starlette"
   | "rust:actix-web"
   | "rust:axum"
   | "rust:poem"
@@ -92,7 +102,12 @@ export default {
   "node:h3": h3,
   "node:hono": hono,
   "node:koa": koa,
+  "python:django-asgi": djangoAsgi,
   "python:fastapi": fastapi,
+  "python:flask": flask,
+  "python:litestar": litestar,
+  "python:sanic": sanic,
+  "python:starlette": starlette,
   "rust:actix-web": actixWeb,
   "rust:axum": axum,
   "rust:poem": poem,

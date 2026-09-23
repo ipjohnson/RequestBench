@@ -1,0 +1,2023 @@
+{
+  "components": {
+    "schemas": {
+      "Bound": {
+        "description": "What a bind or validate row answers, as the document states it.",
+        "properties": {
+          "bytes": {
+            "title": "Bytes",
+            "type": "integer"
+          },
+          "echo": {
+            "$ref": "#/components/schemas/Order"
+          },
+          "fields": {
+            "title": "Fields",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "fields",
+          "bytes",
+          "echo"
+        ],
+        "title": "Bound",
+        "type": "object"
+      },
+      "CheckedLine": {
+        "properties": {
+          "productId": {
+            "exclusiveMinimum": 0,
+            "title": "Productid",
+            "type": "integer"
+          },
+          "qty": {
+            "exclusiveMinimum": 0,
+            "title": "Qty",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "productId",
+          "qty"
+        ],
+        "title": "CheckedLine",
+        "type": "object"
+      },
+      "CheckedOrder": {
+        "description": "The order, with the rules orderRequest states.",
+        "properties": {
+          "customerId": {
+            "exclusiveMinimum": 0,
+            "title": "Customerid",
+            "type": "integer"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/CheckedLine"
+            },
+            "minItems": 1,
+            "title": "Lines",
+            "type": "array"
+          },
+          "status": {
+            "minLength": 1,
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "customerId",
+          "status",
+          "lines"
+        ],
+        "title": "CheckedOrder",
+        "type": "object"
+      },
+      "EchoedHeaders": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "echo": {
+            "$ref": "#/components/schemas/HeadersBound"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Item"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "size": {
+            "title": "Size",
+            "type": "string"
+          }
+        },
+        "required": [
+          "size",
+          "count",
+          "items",
+          "echo"
+        ],
+        "title": "EchoedHeaders",
+        "type": "object"
+      },
+      "EchoedOne": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "echo": {
+            "$ref": "#/components/schemas/One"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Item"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "size": {
+            "title": "Size",
+            "type": "string"
+          }
+        },
+        "required": [
+          "size",
+          "count",
+          "items",
+          "echo"
+        ],
+        "title": "EchoedOne",
+        "type": "object"
+      },
+      "EchoedPage": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "echo": {
+            "$ref": "#/components/schemas/Page"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Item"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "size": {
+            "title": "Size",
+            "type": "string"
+          }
+        },
+        "required": [
+          "size",
+          "count",
+          "items",
+          "echo"
+        ],
+        "title": "EchoedPage",
+        "type": "object"
+      },
+      "EchoedSearch": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "echo": {
+            "$ref": "#/components/schemas/Search"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Item"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "size": {
+            "title": "Size",
+            "type": "string"
+          }
+        },
+        "required": [
+          "size",
+          "count",
+          "items",
+          "echo"
+        ],
+        "title": "EchoedSearch",
+        "type": "object"
+      },
+      "EchoedTwo": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "echo": {
+            "$ref": "#/components/schemas/Two"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Item"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "size": {
+            "title": "Size",
+            "type": "string"
+          }
+        },
+        "required": [
+          "size",
+          "count",
+          "items",
+          "echo"
+        ],
+        "title": "EchoedTwo",
+        "type": "object"
+      },
+      "HeadersBound": {
+        "properties": {
+          "account": {
+            "title": "Account",
+            "type": "integer"
+          },
+          "requestId": {
+            "title": "Requestid",
+            "type": "string"
+          },
+          "tenant": {
+            "title": "Tenant",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tenant",
+          "requestId",
+          "account"
+        ],
+        "title": "HeadersBound",
+        "type": "object"
+      },
+      "Item": {
+        "description": "One row of items.large.",
+        "properties": {
+          "category": {
+            "title": "Category",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "inStock": {
+            "title": "Instock",
+            "type": "boolean"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "priceCents": {
+            "title": "Pricecents",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "category",
+          "priceCents",
+          "inStock"
+        ],
+        "title": "Item",
+        "type": "object"
+      },
+      "ItemPatch": {
+        "description": "The two fields items.update changes.",
+        "properties": {
+          "inStock": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Instock"
+          },
+          "priceCents": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Pricecents"
+          }
+        },
+        "title": "ItemPatch",
+        "type": "object"
+      },
+      "Line": {
+        "properties": {
+          "productId": {
+            "title": "Productid",
+            "type": "integer"
+          },
+          "qty": {
+            "title": "Qty",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "productId",
+          "qty"
+        ],
+        "title": "Line",
+        "type": "object"
+      },
+      "NewItem": {
+        "description": "An item as a client creates or replaces one.",
+        "properties": {
+          "category": {
+            "title": "Category",
+            "type": "string"
+          },
+          "inStock": {
+            "title": "Instock",
+            "type": "boolean"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "priceCents": {
+            "title": "Pricecents",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "name",
+          "category",
+          "priceCents",
+          "inStock"
+        ],
+        "title": "NewItem",
+        "type": "object"
+      },
+      "One": {
+        "properties": {
+          "one": {
+            "title": "One",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "one"
+        ],
+        "title": "One",
+        "type": "object"
+      },
+      "Order": {
+        "description": "The body the bind and validate rows send, bound with its types and none of its rules.",
+        "properties": {
+          "customerId": {
+            "title": "Customerid",
+            "type": "integer"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/Line"
+            },
+            "title": "Lines",
+            "type": "array"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "customerId",
+          "status",
+          "lines"
+        ],
+        "title": "Order",
+        "type": "object"
+      },
+      "Page": {
+        "properties": {
+          "page": {
+            "title": "Page",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "page"
+        ],
+        "title": "Page",
+        "type": "object"
+      },
+      "Payload": {
+        "description": "items.small, items.medium or items.large.",
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Item"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "size": {
+            "title": "Size",
+            "type": "string"
+          }
+        },
+        "required": [
+          "size",
+          "count",
+          "items"
+        ],
+        "title": "Payload",
+        "type": "object"
+      },
+      "Refusal": {
+        "description": "Sanic's error JSON, as a route whose handler answers with json() writes it.",
+        "properties": {
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "description",
+          "status",
+          "message"
+        ],
+        "title": "Refusal",
+        "type": "object"
+      },
+      "Search": {
+        "description": "query.many's eight values, which forms.urlencoded posts as a form.",
+        "properties": {
+          "category": {
+            "title": "Category",
+            "type": "string"
+          },
+          "maxPrice": {
+            "title": "Maxprice",
+            "type": "integer"
+          },
+          "minPrice": {
+            "title": "Minprice",
+            "type": "integer"
+          },
+          "page": {
+            "title": "Page",
+            "type": "integer"
+          },
+          "q": {
+            "title": "Q",
+            "type": "string"
+          },
+          "size": {
+            "title": "Size",
+            "type": "integer"
+          },
+          "sort": {
+            "title": "Sort",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "page",
+          "size",
+          "status",
+          "category",
+          "sort",
+          "q",
+          "minPrice",
+          "maxPrice"
+        ],
+        "title": "Search",
+        "type": "object"
+      },
+      "Two": {
+        "properties": {
+          "one": {
+            "title": "One",
+            "type": "integer"
+          },
+          "two": {
+            "title": "Two",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "one",
+          "two"
+        ],
+        "title": "Two",
+        "type": "object"
+      },
+      "Upload": {
+        "description": "What forms.multipart posts, as the document states it.",
+        "properties": {
+          "file": {
+            "format": "binary",
+            "title": "File",
+            "type": "string"
+          },
+          "requestId": {
+            "title": "Requestid",
+            "type": "string"
+          },
+          "tenant": {
+            "title": "Tenant",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tenant",
+          "requestId",
+          "file"
+        ],
+        "title": "Upload",
+        "type": "object"
+      },
+      "UploadEcho": {
+        "properties": {
+          "requestId": {
+            "title": "Requestid",
+            "type": "string"
+          },
+          "tenant": {
+            "title": "Tenant",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tenant",
+          "requestId"
+        ],
+        "title": "UploadEcho",
+        "type": "object"
+      },
+      "Uploaded": {
+        "description": "What forms.multipart answers: the file's name and size, and the two fields beside it.",
+        "properties": {
+          "echo": {
+            "$ref": "#/components/schemas/UploadEcho"
+          },
+          "file": {
+            "$ref": "#/components/schemas/UploadedFile"
+          }
+        },
+        "required": [
+          "file",
+          "echo"
+        ],
+        "title": "Uploaded",
+        "type": "object"
+      },
+      "UploadedFile": {
+        "properties": {
+          "bytes": {
+            "title": "Bytes",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "bytes"
+        ],
+        "title": "UploadedFile",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "contact": {},
+    "title": "Sanic",
+    "version": "25.12.1"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/__meta": {
+      "get": {
+        "operationId": "get~contract.meta",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "clear": {
+                      "type": "object"
+                    },
+                    "copy": {
+                      "type": "object"
+                    },
+                    "fromkeys": {
+                      "type": "object"
+                    },
+                    "get": {
+                      "type": "object"
+                    },
+                    "items": {
+                      "type": "object"
+                    },
+                    "keys": {
+                      "type": "object"
+                    },
+                    "pop": {
+                      "type": "object"
+                    },
+                    "popitem": {
+                      "type": "object"
+                    },
+                    "setdefault": {
+                      "type": "object"
+                    },
+                    "update": {
+                      "type": "object"
+                    },
+                    "values": {
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "What runs"
+          }
+        },
+        "summary": "Meta",
+        "tags": [
+          "contract"
+        ]
+      }
+    },
+    "/authorized/small": {
+      "get": {
+        "operationId": "get~authorized.small",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            },
+            "description": "items.small"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Refusal"
+                }
+              }
+            },
+            "description": "Sanic's Forbidden, for any token but the accepted one"
+          }
+        },
+        "summary": "Small",
+        "tags": [
+          "authorized"
+        ]
+      }
+    },
+    "/body/bind/medium": {
+      "post": {
+        "operationId": "post~body.bind_medium",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Order"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Bound"
+                }
+              }
+            },
+            "description": "The order back, with its leaves and length"
+          }
+        },
+        "summary": "Binds the order and checks no rule.",
+        "tags": [
+          "body"
+        ]
+      }
+    },
+    "/body/bind/small": {
+      "post": {
+        "operationId": "post~body.bind_small",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Order"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Bound"
+                }
+              }
+            },
+            "description": "The order back, with its leaves and length"
+          }
+        },
+        "summary": "Binds the order and checks no rule.",
+        "tags": [
+          "body"
+        ]
+      }
+    },
+    "/body/validate/first-error": {
+      "post": {
+        "operationId": "post~body.validate_first_error",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckedOrder"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Bound"
+                }
+              }
+            },
+            "description": "The order back, with its leaves and length"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Refusal"
+                }
+              }
+            },
+            "description": "sanic-ext's refusal, naming the first rule the order breaks"
+          }
+        },
+        "summary": "Checks orderRequest's rules one field at a time and stops at the first that fails.",
+        "tags": [
+          "body"
+        ]
+      }
+    },
+    "/body/validate/medium": {
+      "post": {
+        "operationId": "post~body.validate_medium",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckedOrder"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Bound"
+                }
+              }
+            },
+            "description": "The order back, with its leaves and length"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Refusal"
+                }
+              }
+            },
+            "description": "sanic-ext's refusal, naming every rule the order breaks"
+          }
+        },
+        "summary": "Binds the order and checks orderRequest's rules.",
+        "tags": [
+          "body"
+        ]
+      }
+    },
+    "/body/validate/small": {
+      "post": {
+        "operationId": "post~body.validate_small",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckedOrder"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Bound"
+                }
+              }
+            },
+            "description": "The order back, with its leaves and length"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Refusal"
+                }
+              }
+            },
+            "description": "sanic-ext's refusal, naming every rule the order breaks"
+          }
+        },
+        "summary": "Binds the order and checks orderRequest's rules.",
+        "tags": [
+          "body"
+        ]
+      }
+    },
+    "/cache/large": {
+      "get": {
+        "operationId": "get~cache.large",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            },
+            "description": "items.large"
+          }
+        },
+        "summary": "Large",
+        "tags": [
+          "cache"
+        ]
+      }
+    },
+    "/cache/medium": {
+      "get": {
+        "operationId": "get~cache.medium",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            },
+            "description": "items.medium"
+          }
+        },
+        "summary": "Medium",
+        "tags": [
+          "cache"
+        ]
+      }
+    },
+    "/cache/small": {
+      "get": {
+        "operationId": "get~cache.small",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            },
+            "description": "items.small"
+          }
+        },
+        "summary": "Small",
+        "tags": [
+          "cache"
+        ]
+      }
+    },
+    "/cache/vary/many": {
+      "get": {
+        "operationId": "get~cache.vary_many",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            },
+            "description": "items.small"
+          }
+        },
+        "summary": "Vary Many",
+        "tags": [
+          "cache"
+        ]
+      }
+    },
+    "/cache/vary/one": {
+      "get": {
+        "operationId": "get~cache.vary_one",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            },
+            "description": "items.small"
+          }
+        },
+        "summary": "Vary One",
+        "tags": [
+          "cache"
+        ]
+      }
+    },
+    "/compressed/large": {
+      "get": {
+        "operationId": "get~compressed.large",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            },
+            "description": "items.large"
+          }
+        },
+        "summary": "Large",
+        "tags": [
+          "compressed"
+        ]
+      }
+    },
+    "/compressed/small": {
+      "get": {
+        "operationId": "get~compressed.small",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            },
+            "description": "items.small"
+          }
+        },
+        "summary": "Small",
+        "tags": [
+          "compressed"
+        ]
+      }
+    },
+    "/cors/small": {
+      "get": {
+        "operationId": "get~cors.small",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            },
+            "description": "items.small"
+          }
+        },
+        "summary": "Small",
+        "tags": [
+          "cors"
+        ]
+      }
+    },
+    "/etag/large": {
+      "get": {
+        "operationId": "get~etag.large",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            },
+            "description": "items.large"
+          }
+        },
+        "summary": "Large",
+        "tags": [
+          "etag"
+        ]
+      }
+    },
+    "/etag/small": {
+      "get": {
+        "operationId": "get~etag.small",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            },
+            "description": "items.small"
+          }
+        },
+        "summary": "Small",
+        "tags": [
+          "etag"
+        ]
+      }
+    },
+    "/forms/multipart": {
+      "post": {
+        "operationId": "post~forms.multipart",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Upload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Uploaded"
+                }
+              }
+            },
+            "description": "The file's name and size, and the two fields"
+          }
+        },
+        "summary": "Reads the upload and the two fields beside it.",
+        "tags": [
+          "forms"
+        ]
+      }
+    },
+    "/forms/urlencoded": {
+      "post": {
+        "operationId": "post~forms.urlencoded",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Search"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EchoedSearch"
+                }
+              }
+            },
+            "description": "items.small, with the eight values"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Refusal"
+                }
+              }
+            },
+            "description": "sanic-ext's refusal of a value the model cannot bind"
+          }
+        },
+        "summary": "Binds query.many's eight values from a form.",
+        "tags": [
+          "forms"
+        ]
+      }
+    },
+    "/headers": {
+      "get": {
+        "operationId": "get~headers.unread",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            },
+            "description": "items.small"
+          }
+        },
+        "summary": "Unread",
+        "tags": [
+          "headers"
+        ]
+      }
+    },
+    "/headers/bind": {
+      "get": {
+        "operationId": "get~headers.bind",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-rb-account",
+            "required": true,
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-rb-request-id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-rb-tenant",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EchoedHeaders"
+                }
+              }
+            },
+            "description": "items.small, with the three headers"
+          }
+        },
+        "summary": "Bind",
+        "tags": [
+          "headers"
+        ]
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "get~contract.health",
+        "responses": {
+          "200": {
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "ok, once the worker has loaded the payloads"
+          }
+        },
+        "summary": "Health",
+        "tags": [
+          "contract"
+        ]
+      }
+    },
+    "/items": {
+      "post": {
+        "operationId": "post~items.create",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewItem"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Item"
+                }
+              }
+            },
+            "description": "The row as it would be created"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Refusal"
+                }
+              }
+            },
+            "description": "sanic-ext's refusal of a body the model cannot bind"
+          }
+        },
+        "summary": "Answers as if the row after the last had been created.",
+        "tags": [
+          "items"
+        ]
+      }
+    },
+    "/items/{id}": {
+      "delete": {
+        "operationId": "delete~items.delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No content"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Refusal"
+                }
+              }
+            },
+            "description": "Sanic's NotFound, for an id with no row"
+          }
+        },
+        "summary": "Answers as if the row had been deleted.",
+        "tags": [
+          "items"
+        ]
+      },
+      "get": {
+        "operationId": "get~items.read",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Item"
+                }
+              }
+            },
+            "description": "The row"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Refusal"
+                }
+              }
+            },
+            "description": "Sanic's NotFound, for an id with no row"
+          }
+        },
+        "summary": "Read",
+        "tags": [
+          "items"
+        ]
+      },
+      "patch": {
+        "operationId": "patch~items.update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ItemPatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Item"
+                }
+              }
+            },
+            "description": "The row as it would be updated"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Refusal"
+                }
+              }
+            },
+            "description": "sanic-ext's refusal of a body the model cannot bind"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Refusal"
+                }
+              }
+            },
+            "description": "Sanic's NotFound, for an id with no row"
+          }
+        },
+        "summary": "Answers as if the patch had been merged onto the row.",
+        "tags": [
+          "items"
+        ]
+      },
+      "put": {
+        "operationId": "put~items.replace",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewItem"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Item"
+                }
+              }
+            },
+            "description": "The row as it would be replaced"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Refusal"
+                }
+              }
+            },
+            "description": "sanic-ext's refusal of a body the model cannot bind"
+          }
+        },
+        "summary": "Answers as if the row had been replaced.",
+        "tags": [
+          "items"
+        ]
+      }
+    },
+    "/json/large": {
+      "get": {
+        "operationId": "get~json.large",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            },
+            "description": "items.large"
+          }
+        },
+        "summary": "Large",
+        "tags": [
+          "json"
+        ]
+      }
+    },
+    "/json/medium": {
+      "get": {
+        "operationId": "get~json.medium",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            },
+            "description": "items.medium"
+          }
+        },
+        "summary": "Medium",
+        "tags": [
+          "json"
+        ]
+      }
+    },
+    "/json/small": {
+      "get": {
+        "operationId": "get~json.small",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            },
+            "description": "items.small"
+          }
+        },
+        "summary": "Small",
+        "tags": [
+          "json"
+        ]
+      }
+    },
+    "/middleware/four": {
+      "get": {
+        "operationId": "get~middleware_four.four_layers",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            },
+            "description": "items.small"
+          }
+        },
+        "summary": "Four Layers",
+        "tags": [
+          "middleware_four"
+        ]
+      }
+    },
+    "/middleware/none": {
+      "get": {
+        "operationId": "get~middleware_none.unlayered",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            },
+            "description": "items.small"
+          }
+        },
+        "summary": "Unlayered",
+        "tags": [
+          "middleware_none"
+        ]
+      }
+    },
+    "/middleware/sixteen": {
+      "get": {
+        "operationId": "get~middleware_sixteen.sixteen_layers",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            },
+            "description": "items.small"
+          }
+        },
+        "summary": "Sixteen Layers",
+        "tags": [
+          "middleware_sixteen"
+        ]
+      }
+    },
+    "/parameters/static/segment/literal": {
+      "get": {
+        "operationId": "get~parameters.static",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            },
+            "description": "items.small"
+          }
+        },
+        "summary": "Static",
+        "tags": [
+          "parameters"
+        ]
+      }
+    },
+    "/parameters/{one}/segment/literal": {
+      "get": {
+        "operationId": "get~parameters.one",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "one",
+            "required": true,
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EchoedOne"
+                }
+              }
+            },
+            "description": "items.small, with the capture"
+          }
+        },
+        "summary": "One",
+        "tags": [
+          "parameters"
+        ]
+      }
+    },
+    "/parameters/{one}/with-second/{two}": {
+      "get": {
+        "operationId": "get~parameters.two",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "one",
+            "required": true,
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "two",
+            "required": true,
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EchoedTwo"
+                }
+              }
+            },
+            "description": "items.small, with both captures"
+          }
+        },
+        "summary": "Two",
+        "tags": [
+          "parameters"
+        ]
+      }
+    },
+    "/plaintext": {
+      "get": {
+        "operationId": "get~baseline.plaintext",
+        "responses": {
+          "200": {
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "The string"
+          }
+        },
+        "summary": "Plaintext",
+        "tags": [
+          "baseline"
+        ]
+      }
+    },
+    "/query/many": {
+      "get": {
+        "operationId": "get~query.many",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": true,
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "size",
+            "required": true,
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "category",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sort",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "minPrice",
+            "required": true,
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "maxPrice",
+            "required": true,
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EchoedSearch"
+                }
+              }
+            },
+            "description": "items.small, with the eight values"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Refusal"
+                }
+              }
+            },
+            "description": "sanic-ext's refusal of a value the model cannot bind"
+          }
+        },
+        "summary": "Many",
+        "tags": [
+          "query"
+        ]
+      }
+    },
+    "/query/one": {
+      "get": {
+        "operationId": "get~query.one",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": true,
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EchoedPage"
+                }
+              }
+            },
+            "description": "items.small, with the page"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Refusal"
+                }
+              }
+            },
+            "description": "sanic-ext's refusal of a value the model cannot bind"
+          }
+        },
+        "summary": "One",
+        "tags": [
+          "query"
+        ]
+      }
+    },
+    "/sse/medium": {
+      "get": {
+        "operationId": "get~sse.medium",
+        "responses": {
+          "200": {
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "items.medium's rows, one per event"
+          }
+        },
+        "summary": "Medium",
+        "tags": [
+          "sse"
+        ]
+      }
+    },
+    "/stream/items": {
+      "get": {
+        "operationId": "get~stream.lines",
+        "responses": {
+          "200": {
+            "content": {
+              "application/x-ndjson": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "items.medium's rows, one per line"
+          }
+        },
+        "summary": "Lines",
+        "tags": [
+          "stream"
+        ]
+      }
+    },
+    "/template/medium": {
+      "get": {
+        "operationId": "get~template.medium",
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "items.medium as a page"
+          }
+        },
+        "summary": "Medium",
+        "tags": [
+          "template"
+        ]
+      }
+    },
+    "/template/small": {
+      "get": {
+        "operationId": "get~template.small",
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "items.small as a page"
+          }
+        },
+        "summary": "Small",
+        "tags": [
+          "template"
+        ]
+      }
+    }
+  },
+  "security": [],
+  "servers": [],
+  "tags": [
+    {
+      "name": "baseline"
+    },
+    {
+      "name": "json"
+    },
+    {
+      "name": "parameters"
+    },
+    {
+      "name": "query"
+    },
+    {
+      "name": "headers"
+    },
+    {
+      "name": "body"
+    },
+    {
+      "name": "authorized"
+    },
+    {
+      "name": "items"
+    },
+    {
+      "name": "cache"
+    },
+    {
+      "name": "compressed"
+    },
+    {
+      "name": "etag"
+    },
+    {
+      "name": "cors"
+    },
+    {
+      "name": "forms"
+    },
+    {
+      "name": "stream"
+    },
+    {
+      "name": "sse"
+    },
+    {
+      "name": "template"
+    },
+    {
+      "name": "contract"
+    },
+    {
+      "name": "middleware_none"
+    },
+    {
+      "name": "middleware_four"
+    },
+    {
+      "name": "middleware_sixteen"
+    }
+  ]
+}

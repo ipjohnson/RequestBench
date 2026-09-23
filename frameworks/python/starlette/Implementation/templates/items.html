@@ -1,0 +1,25 @@
+{# page is a dict, and page.items would be the dict's own method, so the rows are page["items"]. #}
+<!doctype html>
+<html>
+  <head><title>items</title></head>
+  <body>
+    <h1>{{ page.size }}</h1>
+    <table>
+      <thead>
+        <tr><th>id</th><th>name</th><th>category</th><th>price</th><th>stock</th></tr>
+      </thead>
+      <tbody>
+        {% for it in page["items"] %}
+        <tr>
+          <td>{{ it.id }}</td>
+          <td>{{ it.name }}</td>
+          <td>{{ it.category }}</td>
+          <td>{{ it.priceCents }}</td>
+          <td>{{ "yes" if it.inStock else "no" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <p>{{ page.count }} rows</p>
+  </body>
+</html>

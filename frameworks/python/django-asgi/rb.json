@@ -1,0 +1,52 @@
+{
+  "comment": "Django over ASGI with async views, one module of views per family under Implementation/views, routed by urls.py. uvicorn runs two worker processes, because one Python process runs Python on one core at a time and the container has two. Django's ASGI deployment docs list Daphne, Hypercorn and Uvicorn, and Daphne has no worker count of its own. settings.py keeps two of the seven middleware classes startproject installs: CorsMiddleware for the cors family and CommonMiddleware, which writes Content-Length. The suite is UnitTests/, pytest over Django's AsyncClient, and never reaches the image. The suite and upgrade run through uv, which has to be installed.",
+  "framework": "Django",
+  "licence": "BSD-3-Clause",
+  "repo": "https://github.com/django/django",
+  "package": "https://pypi.org/project/Django/",
+  "docs": "https://docs.djangoproject.com/",
+  "lockfile": ["uv.lock"],
+  "hosts": {
+    "container-h1": { "dockerfile": "Dockerfile" }
+  },
+  "suite": { "argv": ["uv", "run", "--locked", "pytest"], "paths": ["UnitTests"] },
+  "upgrade": { "argv": ["uv", "lock", "--upgrade"] },
+  "noHandler": {
+    "cors.preflight": "django-cors-headers' CorsMiddleware answers the preflight before the URLconf is consulted, and no view runs.",
+    "errors.unmatched": "Django's URL resolver finds no pattern, and Django answers with its default 404 page.",
+    "errors.wrong_method": "The items View has no post handler, and its http_method_not_allowed answers 405."
+  },
+  "mechanisms": {
+    "authorized": {
+      "mechanism": "A view decorator that reads the bearer token and raises Django's PermissionDenied for any but settings.json's, which Django answers with its own 403 before the view runs"
+    },
+    "baseline": { "builtin": "The view returns an HttpResponse holding the string." },
+    "body": {
+      "mechanism": "A django.forms.Form holding orderRequest's rules, with a form per line, on the validate routes, answered with JsonResponse(form.errors, status=400) when it fails. The view parses the JSON, because Django parses none. The first-error route holds the order to the form one field at a time, because a form cannot stop at the first failure"
+    },
+    "cache": {
+      "mechanism": "cache_page, which is CacheMiddleware scoped to the view, over LocMemCache, one store in each worker. vary_on_headers names the headers each vary row is keyed on"
+    },
+    "compressed": { "mechanism": "gzip_page, which is GZipMiddleware scoped to the view, at its fixed threshold of 200 bytes and at gzip level 6, which Django hard-codes" },
+    "cors": {
+      "mechanism": "django-cors-headers' CorsMiddleware, kept to /cors/ by CORS_URLS_REGEX",
+      "dependency": "django-cors-headers",
+      "mentions": "corsheaders"
+    },
+    "errors": {
+      "builtin": "Django's URL resolver answers a path no pattern matches with its default 404 page, and Http404 from the items view gets the same page. The items View answers a method it has no handler for with 405, and a body that is not JSON raises BadRequest, which Django answers with its default 400 page."
+    },
+    "etag": { "mechanism": "ConditionalGetMiddleware, scoped to the two views with decorator_from_middleware. It hashes the body with MD5 and answers a matching If-None-Match with 304" },
+    "forms": { "builtin": "Django parses both bodies into request.POST and request.FILES, and a django.forms.Form binds the fields and the upload." },
+    "headers": { "builtin": "The view reads request.headers by name and converts the account with int(), because Django binds no header." },
+    "items": { "builtin": "A class-based View on /items/<int:id> with a handler per method, which answers HEAD with get and a method it lacks with 405, and a require_POST view on /items." },
+    "json": { "builtin": "JsonResponse, Django's own JSON answer, which serializes the payload with json and DjangoJSONEncoder on every request." },
+    "middleware": { "mechanism": "A no-op middleware whose process_request returns None, made a view decorator with decorator_from_middleware, four or sixteen times on the view" },
+    "parameters": { "builtin": "The <int:...> path converter, which matches digits and hands the view an int." },
+    "query": { "builtin": "A django.forms.Form over request.GET, which binds and converts each value." },
+    "sse": { "builtin": "StreamingHttpResponse typed text/event-stream, over an async generator that frames each row as one event, because Django has no event stream of its own." },
+    "static": { "mechanism": "django.views.static.serve over the payload directory" },
+    "stream": { "builtin": "StreamingHttpResponse typed application/x-ndjson, over an async generator that yields each row's line." },
+    "template": { "mechanism": "Django's own template language, rendered by render() through the DjangoTemplates backend the TEMPLATES setting configures" }
+  }
+}

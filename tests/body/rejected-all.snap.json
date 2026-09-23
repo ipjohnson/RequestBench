@@ -470,6 +470,21 @@
    },
    "bodyFrom": "captured from frameworks/node/koa/Implementation"
   },
+  "python:django-asgi": {
+   "status": 400,
+   "body": {
+    "customerId": [
+     "Ensure this value is greater than or equal to 1."
+    ],
+    "status": [
+     "This field is required."
+    ],
+    "lines": [
+     "This field is required."
+    ]
+   },
+   "bodyFrom": "captured from frameworks/python/django-asgi/Implementation"
+  },
   "python:fastapi": {
    "status": 422,
    "body": {
@@ -515,6 +530,111 @@
     ]
    },
    "bodyFrom": "captured from frameworks/python/fastapi/Implementation"
+  },
+  "python:flask": {
+   "status": 400,
+   "body": {
+    "validation_error": {
+     "body_params": [
+      {
+       "ctx": {
+        "gt": 0
+       },
+       "input": 0,
+       "loc": [
+        "customerId"
+       ],
+       "msg": "Input should be greater than 0",
+       "type": "greater_than",
+       "url": "https://errors.pydantic.dev/2.13/v/greater_than"
+      },
+      {
+       "ctx": {
+        "min_length": 1
+       },
+       "input": "",
+       "loc": [
+        "status"
+       ],
+       "msg": "String should have at least 1 character",
+       "type": "string_too_short",
+       "url": "https://errors.pydantic.dev/2.13/v/string_too_short"
+      },
+      {
+       "ctx": {
+        "actual_length": 0,
+        "field_type": "List",
+        "min_length": 1
+       },
+       "input": [],
+       "loc": [
+        "lines"
+       ],
+       "msg": "List should have at least 1 item after validation, not 0",
+       "type": "too_short",
+       "url": "https://errors.pydantic.dev/2.13/v/too_short"
+      }
+     ]
+    }
+   },
+   "bodyFrom": "captured from frameworks/python/flask/Implementation"
+  },
+  "python:litestar": {
+   "status": 400,
+   "body": {
+    "status_code": 400,
+    "detail": "Validation failed for POST /body/validate/small",
+    "extra": [
+     {
+      "message": "Expected `int` >= 1",
+      "key": "customerId",
+      "source": "body"
+     }
+    ]
+   },
+   "bodyFrom": "captured from frameworks/python/litestar/Implementation"
+  },
+  "python:sanic": {
+   "status": 400,
+   "body": {
+    "description": "Bad Request",
+    "status": 400,
+    "message": "Invalid request body: CheckedOrder. Error: 3 validation errors for CheckedOrder\ncustomerId\n  Input should be greater than 0 [type=greater_than, input_value=0, input_type=int]\n    For further information visit https://errors.pydantic.dev/2.13/v/greater_than\nstatus\n  String should have at least 1 character [type=string_too_short, input_value='', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.13/v/string_too_short\nlines\n  List should have at least 1 item after validation, not 0 [type=too_short, input_value=[], input_type=list]\n    For further information visit https://errors.pydantic.dev/2.13/v/too_short"
+   },
+   "bodyFrom": "captured from frameworks/python/sanic/Implementation"
+  },
+  "python:starlette": {
+   "status": 422,
+   "body": [
+    {
+     "type": "greater_than",
+     "loc": [
+      "customerId"
+     ],
+     "msg": "Input should be greater than 0",
+     "input": 0,
+     "url": "https://errors.pydantic.dev/2.13/v/greater_than"
+    },
+    {
+     "type": "string_too_short",
+     "loc": [
+      "status"
+     ],
+     "msg": "String should have at least 1 character",
+     "input": "",
+     "url": "https://errors.pydantic.dev/2.13/v/string_too_short"
+    },
+    {
+     "type": "too_short",
+     "loc": [
+      "lines"
+     ],
+     "msg": "List should have at least 1 item after validation, not 0",
+     "input": [],
+     "url": "https://errors.pydantic.dev/2.13/v/too_short"
+    }
+   ],
+   "bodyFrom": "captured from frameworks/python/starlette/Implementation"
   },
   "rust:actix-web": {
    "status": 400,

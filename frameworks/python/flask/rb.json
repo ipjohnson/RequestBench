@@ -1,0 +1,63 @@
+{
+  "comment": "Flask on gunicorn, one blueprint per family under Implementation/routes. gunicorn runs two worker processes, because one Python process runs Python on one core at a time and the container has two, with the gthread worker, because the sync worker closes the connection after every answer. No framework document or client: Flask writes no OpenAPI document without a third-party library. The suite is UnitTests/, pytest over Flask's test client, and never reaches the image. The suite and upgrade run through uv, which has to be installed.",
+  "framework": "Flask",
+  "licence": "BSD-3-Clause",
+  "repo": "https://github.com/pallets/flask",
+  "package": "https://pypi.org/project/Flask/",
+  "docs": "https://flask.palletsprojects.com/",
+  "lockfile": ["uv.lock"],
+  "hosts": {
+    "container-h1": { "dockerfile": "Dockerfile" }
+  },
+  "suite": { "argv": ["uv", "run", "--locked", "pytest"], "paths": ["UnitTests"] },
+  "upgrade": { "argv": ["uv", "lock", "--upgrade"] },
+  "skips": {
+    "cors.vary": "Flask-CORS writes Vary: Origin only when the policy allows more than one origin or a pattern, and settings.json names one origin."
+  },
+  "noHandler": {
+    "cors.preflight": "Flask answers OPTIONS itself on every route, and Flask-CORS on the cors blueprint adds the policy to that answer. No view runs.",
+    "errors.unmatched": "Werkzeug's router answers a path no route matches with 404.",
+    "errors.wrong_method": "Werkzeug's router answers a method the path has no route for with 405."
+  },
+  "mechanisms": {
+    "authorized": {
+      "mechanism": "A before_request hook on the family's blueprint, which compares the bearer token Werkzeug parsed from the Authorization header and aborts with 403"
+    },
+    "baseline": { "builtin": "The view returns the string with a text/plain content type." },
+    "body": {
+      "mechanism": "Flask-Pydantic's validate decorator, which binds the body to a Pydantic model before the view runs: types alone on the bind routes and orderRequest's rules on the validate routes. The first-error route's model checks the rules one field at a time, because Pydantic cannot stop at the first failure",
+      "dependency": "flask-pydantic",
+      "mentions": "flask_pydantic"
+    },
+    "cache": {
+      "mechanism": "Flask-Caching's cached decorator over a SimpleCache in each worker, which stores the response the view returned, keyed on the path and, for the vary rows, the headers the route varies on",
+      "dependency": "flask-caching",
+      "mentions": "flask_caching"
+    },
+    "compressed": {
+      "mechanism": "Flask-Compress's compressed decorator on the two views, at gzip's fastest level and Flask-Compress's default threshold",
+      "dependency": "flask-compress",
+      "mentions": "flask_compress"
+    },
+    "cors": {
+      "mechanism": "Flask-CORS on the cors blueprint",
+      "dependency": "flask-cors",
+      "mentions": "flask_cors"
+    },
+    "errors": {
+      "builtin": "Werkzeug's router answers a miss with 404 and a method a path lacks with 405, Flask refuses a body that is not JSON with 400, and the items views abort with 404, each as Werkzeug's HTML error page."
+    },
+    "etag": { "mechanism": "An after_request hook on the etag blueprint, which calls Werkzeug's add_etag and make_conditional on the response" },
+    "forms": { "builtin": "Werkzeug parses the form and the upload, and the view reads each value by name, converting the numbers as it reads them." },
+    "headers": { "builtin": "Werkzeug's Headers, read by name, the account converted by get's type argument." },
+    "items": { "builtin": "One view per method on /items/<int:id>, which Flask also answers HEAD with the GET view. Flask-Pydantic binds the bodies." },
+    "json": { "builtin": "A view that returns a dict is answered by Flask's DefaultJSONProvider, over the standard library's json." },
+    "middleware": { "mechanism": "One nested blueprint per layer count, each with that many no-op before_request hooks" },
+    "parameters": { "builtin": "Werkzeug's int converter on each capture." },
+    "query": { "builtin": "Werkzeug's MultiDict.get, reading each value by name and converting the numbers." },
+    "sse": { "builtin": "A generator of event text in a Response typed text/event-stream. Flask has no helper for server-sent events." },
+    "static": { "builtin": "Flask's own static route, /static/<path:filename>, over the payload directory, which the application names as its static folder." },
+    "stream": { "builtin": "A generator in a Response typed application/x-ndjson, which gunicorn sends chunked." },
+    "template": { "builtin": "Flask's render_template, with the Jinja2 environment Flask builds for the application." }
+  }
+}

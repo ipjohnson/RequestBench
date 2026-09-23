@@ -1,0 +1,30 @@
+# The application's dependencies, and the suite's. uv.lock beside it is what uv resolved, which
+# the image installs with --locked. Ranges move patch releases alone for 0.x packages, and minor
+# releases too for the rest.
+[project]
+name = "rb-litestar"
+version = "0"
+requires-python = ">=3.14"
+dependencies = [
+  # The template engine litestar[standard] installs.
+  "jinja2~=3.1",
+  "litestar~=2.24",
+  # Litestar's own serializer, which the models are written in.
+  "msgspec~=0.21.1",
+  # The server litestar[standard] installs. uvloop and httptools, which uvicorn picks when they are
+  # installed, come with standard.
+  "uvicorn[standard]~=0.53.0",
+]
+
+[dependency-groups]
+# Litestar's TestClient sends through httpx, which Litestar already depends on.
+dev = ["pytest~=9.1"]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["UnitTests"]
+pythonpath = ["Implementation"]
+addopts = "--strict-markers"
+markers = ["corpus(*ids): the corpus tests this test holds the framework to"]

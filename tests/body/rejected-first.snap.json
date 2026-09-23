@@ -300,6 +300,15 @@
    },
    "bodyFrom": "captured from frameworks/node/koa/Implementation"
   },
+  "python:django-asgi": {
+   "status": 400,
+   "body": {
+    "customerId": [
+     "Ensure this value is greater than or equal to 1."
+    ]
+   },
+   "bodyFrom": "captured from frameworks/python/django-asgi/Implementation"
+  },
   "python:fastapi": {
    "status": 422,
    "body": {
@@ -319,6 +328,67 @@
     ]
    },
    "bodyFrom": "captured from frameworks/python/fastapi/Implementation"
+  },
+  "python:flask": {
+   "status": 400,
+   "body": {
+    "validation_error": {
+     "body_params": [
+      {
+       "ctx": {
+        "gt": 0
+       },
+       "input": 0,
+       "loc": [
+        "customerId"
+       ],
+       "msg": "Input should be greater than 0",
+       "type": "greater_than",
+       "url": "https://errors.pydantic.dev/2.13/v/greater_than"
+      }
+     ]
+    }
+   },
+   "bodyFrom": "captured from frameworks/python/flask/Implementation"
+  },
+  "python:litestar": {
+   "status": 400,
+   "body": {
+    "status_code": 400,
+    "detail": "Validation failed for POST /body/validate/first-error",
+    "extra": [
+     {
+      "message": "Expected `int` >= 1",
+      "key": "customerId",
+      "source": "body"
+     }
+    ]
+   },
+   "bodyFrom": "captured from frameworks/python/litestar/Implementation"
+  },
+  "python:sanic": {
+   "status": 400,
+   "body": {
+    "description": "Bad Request",
+    "status": 400,
+    "message": "Invalid request body: CheckedOrder. Error: 1 validation error for CheckedOrder\ncustomerId\n  Input should be greater than 0 [type=greater_than, input_value=0, input_type=int]\n    For further information visit https://errors.pydantic.dev/2.13/v/greater_than"
+   },
+   "bodyFrom": "captured from frameworks/python/sanic/Implementation"
+  },
+  "python:starlette": {
+   "status": 422,
+   "body": [
+    {
+     "type": "greater_than",
+     "loc": [
+      "customerId"
+     ],
+     "msg": "Input should be greater than 0",
+     "input": 0,
+     "url": "https://errors.pydantic.dev/2.13/v/greater_than"
+    }
+   ],
+   "bodyFrom": "captured from frameworks/python/starlette/Implementation"
   },
   "rust:actix-web": {
    "status": 400,

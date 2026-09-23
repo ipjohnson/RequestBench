@@ -1,0 +1,1608 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "RequestBench Starlette",
+    "version": "1.0.0"
+  },
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    },
+    "responses": {
+      "NotFound": {
+        "description": "No row has the id. Starlette's 404, as text.",
+        "content": {
+          "text/plain": {
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "Refused": {
+        "description": "SpecTree's 422, with Pydantic's failures, or with error_msg for a body that is not JSON.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/Failures"
+                },
+                {
+                  "$ref": "#/components/schemas/Unparsed"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "Item": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "category",
+          "priceCents",
+          "inStock"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "priceCents": {
+            "type": "integer"
+          },
+          "inStock": {
+            "type": "boolean"
+          }
+        }
+      },
+      "Payload": {
+        "type": "object",
+        "required": [
+          "size",
+          "count",
+          "items"
+        ],
+        "properties": {
+          "size": {
+            "type": "string"
+          },
+          "count": {
+            "type": "integer"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Item"
+            }
+          }
+        }
+      },
+      "EchoedOne": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Payload"
+          },
+          {
+            "type": "object",
+            "required": [
+              "echo"
+            ],
+            "properties": {
+              "echo": {
+                "type": "object",
+                "required": [
+                  "one"
+                ],
+                "properties": {
+                  "one": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "EchoedTwo": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Payload"
+          },
+          {
+            "type": "object",
+            "required": [
+              "echo"
+            ],
+            "properties": {
+              "echo": {
+                "type": "object",
+                "required": [
+                  "one",
+                  "two"
+                ],
+                "properties": {
+                  "one": {
+                    "type": "integer"
+                  },
+                  "two": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "EchoedPage": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Payload"
+          },
+          {
+            "type": "object",
+            "required": [
+              "echo"
+            ],
+            "properties": {
+              "echo": {
+                "type": "object",
+                "required": [
+                  "page"
+                ],
+                "properties": {
+                  "page": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "EchoedSearch": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Payload"
+          },
+          {
+            "type": "object",
+            "required": [
+              "echo"
+            ],
+            "properties": {
+              "echo": {
+                "$ref": "#/components/schemas/Search"
+              }
+            }
+          }
+        ]
+      },
+      "EchoedHeaders": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Payload"
+          },
+          {
+            "type": "object",
+            "required": [
+              "echo"
+            ],
+            "properties": {
+              "echo": {
+                "type": "object",
+                "required": [
+                  "tenant",
+                  "requestId",
+                  "account"
+                ],
+                "properties": {
+                  "tenant": {
+                    "type": "string"
+                  },
+                  "requestId": {
+                    "type": "string"
+                  },
+                  "account": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "Search": {
+        "type": "object",
+        "required": [
+          "page",
+          "size",
+          "status",
+          "category",
+          "sort",
+          "q",
+          "minPrice",
+          "maxPrice"
+        ],
+        "properties": {
+          "page": {
+            "type": "integer"
+          },
+          "size": {
+            "type": "integer"
+          },
+          "status": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "sort": {
+            "type": "string"
+          },
+          "q": {
+            "type": "string"
+          },
+          "minPrice": {
+            "type": "integer"
+          },
+          "maxPrice": {
+            "type": "integer"
+          }
+        }
+      },
+      "Line": {
+        "type": "object",
+        "required": [
+          "productId",
+          "qty"
+        ],
+        "properties": {
+          "productId": {
+            "type": "integer"
+          },
+          "qty": {
+            "type": "integer"
+          }
+        }
+      },
+      "Order": {
+        "type": "object",
+        "required": [
+          "customerId",
+          "status",
+          "lines"
+        ],
+        "properties": {
+          "customerId": {
+            "type": "integer"
+          },
+          "status": {
+            "type": "string"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Line"
+            }
+          }
+        }
+      },
+      "CheckedLine": {
+        "type": "object",
+        "required": [
+          "productId",
+          "qty"
+        ],
+        "properties": {
+          "productId": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "qty": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          }
+        }
+      },
+      "CheckedOrder": {
+        "type": "object",
+        "required": [
+          "customerId",
+          "status",
+          "lines"
+        ],
+        "properties": {
+          "customerId": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "lines": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/CheckedLine"
+            }
+          }
+        }
+      },
+      "Bound": {
+        "type": "object",
+        "required": [
+          "fields",
+          "bytes",
+          "echo"
+        ],
+        "properties": {
+          "fields": {
+            "type": "integer"
+          },
+          "bytes": {
+            "type": "integer"
+          },
+          "echo": {
+            "$ref": "#/components/schemas/Order"
+          }
+        }
+      },
+      "NewItem": {
+        "type": "object",
+        "required": [
+          "name",
+          "category",
+          "priceCents",
+          "inStock"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "priceCents": {
+            "type": "integer"
+          },
+          "inStock": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ItemPatch": {
+        "type": "object",
+        "properties": {
+          "priceCents": {
+            "type": "integer"
+          },
+          "inStock": {
+            "type": "boolean"
+          }
+        }
+      },
+      "Upload": {
+        "type": "object",
+        "required": [
+          "tenant",
+          "requestId",
+          "file"
+        ],
+        "properties": {
+          "tenant": {
+            "type": "string"
+          },
+          "requestId": {
+            "type": "string"
+          },
+          "file": {
+            "type": "string",
+            "format": "binary"
+          }
+        }
+      },
+      "Uploaded": {
+        "type": "object",
+        "required": [
+          "file",
+          "echo"
+        ],
+        "properties": {
+          "file": {
+            "type": "object",
+            "required": [
+              "name",
+              "bytes"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "bytes": {
+                "type": "integer"
+              }
+            }
+          },
+          "echo": {
+            "type": "object",
+            "required": [
+              "tenant",
+              "requestId"
+            ],
+            "properties": {
+              "tenant": {
+                "type": "string"
+              },
+              "requestId": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "Failures": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "type",
+            "loc",
+            "msg"
+          ],
+          "properties": {
+            "type": {
+              "type": "string"
+            },
+            "loc": {
+              "type": "array",
+              "items": {
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "integer"
+                  }
+                ]
+              }
+            },
+            "msg": {
+              "type": "string"
+            },
+            "input": {},
+            "url": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "Unparsed": {
+        "type": "object",
+        "required": [
+          "error_msg"
+        ],
+        "properties": {
+          "error_msg": {
+            "type": "string"
+          }
+        }
+      },
+      "Meta": {
+        "type": "object",
+        "required": [
+          "framework",
+          "version",
+          "runtime",
+          "adapter",
+          "serializer",
+          "workers"
+        ],
+        "properties": {
+          "framework": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "runtime": {
+            "type": "string"
+          },
+          "adapter": {
+            "type": "string"
+          },
+          "serializer": {
+            "type": "string"
+          },
+          "workers": {
+            "type": "integer"
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/plaintext": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "The string",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/json/small": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "items.small",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/json/medium": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "items.medium",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/json/large": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "items.large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/middleware/none": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "items.small",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/middleware/four": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "items.small",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/middleware/sixteen": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "items.small",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/parameters/static/segment/literal": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "items.small",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/parameters/{one}/segment/literal": {
+      "get": {
+        "parameters": [
+          {
+            "name": "one",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "items.small and the capture",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EchoedOne"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/parameters/{one}/with-second/{two}": {
+      "get": {
+        "parameters": [
+          {
+            "name": "one",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "two",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "items.small and both captures",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EchoedTwo"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/query/one": {
+      "get": {
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "items.small and the page",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EchoedPage"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/Refused"
+          }
+        }
+      }
+    },
+    "/query/many": {
+      "get": {
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "minPrice",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "maxPrice",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "items.small and the eight values",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EchoedSearch"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/Refused"
+          }
+        }
+      }
+    },
+    "/headers": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "items.small",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/headers/bind": {
+      "get": {
+        "parameters": [
+          {
+            "name": "x-rb-tenant",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-rb-request-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-rb-account",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "items.small and the three headers",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EchoedHeaders"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/Refused"
+          }
+        }
+      }
+    },
+    "/body/bind/small": {
+      "post": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Order"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The order bound",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Bound"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/Refused"
+          }
+        }
+      }
+    },
+    "/body/bind/medium": {
+      "post": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Order"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The order bound",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Bound"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/Refused"
+          }
+        }
+      }
+    },
+    "/body/validate/small": {
+      "post": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckedOrder"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The order bound and checked",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Bound"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/Refused"
+          }
+        }
+      }
+    },
+    "/body/validate/medium": {
+      "post": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckedOrder"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The order bound and checked",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Bound"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/Refused"
+          }
+        }
+      }
+    },
+    "/body/validate/first-error": {
+      "post": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckedOrder"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The order bound and checked",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Bound"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/Refused"
+          }
+        }
+      }
+    },
+    "/authorized/small": {
+      "get": {
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "items.small",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Any other token or none",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/items": {
+      "post": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewItem"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The item with the id after the last row",
+            "headers": {
+              "location": {
+                "required": true,
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Item"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/Refused"
+          }
+        }
+      }
+    },
+    "/items/{id}": {
+      "get": {
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The row",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Item"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "put": {
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewItem"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The item with the id in the path",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Item"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/Refused"
+          }
+        }
+      },
+      "patch": {
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ItemPatch"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The row with the patch merged onto it",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Item"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/Refused"
+          }
+        }
+      },
+      "delete": {
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/cache/small": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "items.small from the store after the first request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cache/medium": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "items.medium from the store after the first request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cache/large": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "items.large from the store after the first request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cache/vary/one": {
+      "get": {
+        "parameters": [
+          {
+            "name": "x-rb-tenant",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "items.small stored per tenant",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cache/vary/many": {
+      "get": {
+        "parameters": [
+          {
+            "name": "x-rb-channel",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-rb-region",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-rb-tenant",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "items.small stored per channel and region and tenant",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/etag/small": {
+      "get": {
+        "parameters": [
+          {
+            "name": "if-none-match",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "items.small with its ETag",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "If-None-Match names the ETag"
+          }
+        }
+      }
+    },
+    "/etag/large": {
+      "get": {
+        "parameters": [
+          {
+            "name": "if-none-match",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "items.large with its ETag",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "If-None-Match names the ETag"
+          }
+        }
+      }
+    },
+    "/compressed/small": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "items.small",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/compressed/large": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "items.large gzipped when the request asks",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cors/small": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "items.small",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/forms/urlencoded": {
+      "post": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Search"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "items.small and the eight values",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EchoedSearch"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/Refused"
+          }
+        }
+      }
+    },
+    "/forms/multipart": {
+      "post": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Upload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The file's name and size and the two fields",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Uploaded"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/stream/items": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "One row of items.medium per line",
+            "content": {
+              "application/x-ndjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/Item"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sse/medium": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "One event per row of items.medium",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/template/small": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "items.small rendered",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/template/medium": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "items.medium rendered",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "The worker is ready",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/__meta": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "What runs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Meta"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

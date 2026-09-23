@@ -15,8 +15,10 @@ ASP.NET Core beside it: [`dotnet/minimal-apis`](dotnet/minimal-apis),
 [`go/chi`](go/chi), [`go/echo`](go/echo), [`go/fiber`](go/fiber) and
 [`go/gorilla-mux`](go/gorilla-mux). Six are written in Rust: [`rust/axum`](rust/axum),
 [`rust/actix-web`](rust/actix-web), [`rust/poem`](rust/poem), [`rust/rocket`](rust/rocket),
-[`rust/salvo`](rust/salvo) and [`rust/warp`](rust/warp). One runs on Python:
-[`python/fastapi`](python/fastapi).
+[`rust/salvo`](rust/salvo) and [`rust/warp`](rust/warp). Six run on Python:
+[`python/fastapi`](python/fastapi), [`python/django-asgi`](python/django-asgi),
+[`python/flask`](python/flask), [`python/litestar`](python/litestar), [`python/sanic`](python/sanic)
+and [`python/starlette`](python/starlette).
 
 Discovery, bundles and marks read git's index, not the directory. Run `git add` on new files before
 any `npm run rb` command, or they do not exist to it.
@@ -41,7 +43,8 @@ pom, and Quarkus's, Javalin's and Vert.x's import their framework's BOM and pin 
 themselves. Quarkus has no UnitTests module. Implementation's pom names UnitTests/ as its test
 sources, because `@QuarkusTest` builds the application from the module its tests are in. Each Rust
 framework has one package's `Cargo.toml`, which names each target's path under Implementation/ and
-UnitTests/, and its `Cargo.lock`. Each Go framework has `go.mod` and `go.sum`. Each Node framework has
+UnitTests/, and its `Cargo.lock`. Each Go framework has `go.mod` and `go.sum`. Each Python framework
+has `pyproject.toml` and the `uv.lock` its image installs from. Each Node framework has
 `package.json`, `package-lock.json` and `tsconfig.json`. Its source is TypeScript, which Node runs
 by stripping the types as it loads each file, so there is no build step and tsc only checks it.
 
@@ -89,9 +92,11 @@ The orchestrator starts the container with these settings:
 | `RB_PAYLOADS` | `/rb/payloads`, a read-only mount of `tests/payloads`. |
 | CPUs | 2 by quota, or the cores `RB_SUT_CPUS` names. |
 
-A Node framework runs one process. A Python framework runs two workers, because one Python process
-runs Python on one core at a time. [`python/fastapi`](python/fastapi) starts uvicorn with
-`workers=2`, written as a number, because under a quota Python counts every core the host has.
+A Node framework runs one process. A Python framework runs two worker processes, because one Python
+process runs Python on one core at a time. FastAPI, Starlette, Litestar and Django start uvicorn
+with `workers=2`. Flask starts gunicorn with two gthread workers, and Sanic starts two workers of
+its own server. Each writes the count as a number, because under a quota Python counts every core
+the host has.
 A Java, Rust or Go framework runs one process. The JVM, tokio and Go's scheduler each size their
 threads from the container's CPU quota, and each counts 2. actix-web's server starts one
 single-threaded worker per core it counts, and Rocket sizes its tokio runtime from its `workers`
@@ -99,11 +104,11 @@ setting, whose default counts the cores the same way. [`java/vertx`](java/vertx)
 server verticle per core the JVM counts, as Vert.x's documentation spreads a server over the cores.
 
 The framework is PID 1 in its container, and the kernel gives PID 1 no default action for SIGTERM.
-The JVM, .NET, uvicorn, the Go runtime, actix-web's server and Rocket install a handler of their
-own. Node and the other Rust frameworks do not, so the Node frameworks, axum, poem, Salvo and warp
-stop on SIGTERM themselves. h3's `serve()` starts srvx,
-which stops on SIGTERM when its graceful shutdown is on. srvx turns that off when `CI` or `TEST` is
-set, so h3's `server.ts` turns it on. Without that, `docker stop` waits out its timeout.
+The JVM, .NET, uvicorn, gunicorn, Sanic, the Go runtime, actix-web's server and Rocket install a
+handler of their own. Node and the other Rust frameworks do not, so the Node frameworks, axum, poem,
+Salvo and warp stop on SIGTERM themselves. h3's `serve()` starts srvx, which stops on SIGTERM when
+its graceful shutdown is on. srvx turns that off when `CI` or `TEST` is set, so h3's `server.ts`
+turns it on. Without that, `docker stop` waits out its timeout.
 
 Two routes sit outside the corpus:
 
@@ -158,13 +163,13 @@ written in TypeScript compiles its own source with its own settings.
 
 `Client/` holds the OpenAPI document a framework writes about its own routes and a client generated
 from that document. Every framework has one except the six Rust frameworks, the five Go
-frameworks, Express, Koa, h3, Hono, Helidon SE and Vert.x. axum, actix-web, Rocket, warp, the Go
-frameworks, Express and Koa write no document without a third-party library, and h3 writes none.
-Hono documents only routes written with @hono/zod-openapi's `createRoute`, poem only routes written
-as poem-openapi's `#[OpenApi]` impls, and Salvo only handlers written with salvo-oapi's
-`#[endpoint]`, and changing a route for the document is ruled out below. Helidon SE's OpenAPI
-support serves a document the application packages, and Vert.x's OpenAPI modules read a contract, so
-neither writes one from its routes.
+frameworks, Express, Koa, h3, Hono, Helidon SE, Vert.x, Django and Flask. axum, actix-web, Rocket,
+warp, the Go frameworks, Express, Koa, Django and Flask write no document without a third-party
+library, and h3 writes none. Hono documents only routes written with @hono/zod-openapi's
+`createRoute`, poem only routes written as poem-openapi's `#[OpenApi]` impls, and Salvo only
+handlers written with salvo-oapi's `#[endpoint]`, and changing a route for the document is ruled
+out below. Helidon SE's OpenAPI support serves a document the application packages, and Vert.x's
+OpenAPI modules read a contract, so neither writes one from its routes.
 
 - The document comes from the framework's own tooling, reading the routes as the corpus has them.
   The ASP.NET Core frameworks use ASP.NET Core's generation, FastEndpoints through its own
@@ -173,14 +178,21 @@ neither writes one from its routes.
   on a free port, as its documentation describes. Micronaut and Javalin write theirs through an
   annotation processor while Implementation compiles, and Quarkus through SmallRye OpenAPI while it
   builds the application, so none of the three starts a server. javalin-openapi reads `@OpenApi`
-  annotations, which Javalin's handlers carry for the document.
+  annotations, which Javalin's handlers carry for the document. FastAPI and Litestar build theirs
+  from the handlers' types without listening. Starlette's `SchemaGenerator` reads a YAML docstring,
+  which every Starlette endpoint carries for the document. Sanic's document is sanic-ext's, built
+  as the application starts in process under sanic-testing, from the routes, non-wrapping
+  `@openapi` decorators and YAML docstrings for the bodies.
 - The client comes from the generator the framework's documentation recommends. Where it recommends
   none, the client is Kiota's, when Kiota supports the language well, even through a community
-  plugin. FastAPI's is Hey API's, a TypeScript client. FastEndpoints recommends Kiota and runs it
-  inside the application through its own FastEndpoints.OpenApi.Kiota. Quarkus's is a REST Client
-  from the Quarkiverse OpenAPI Generator, Micronaut's is the declarative client
+  plugin. FastAPI's is Hey API's, a TypeScript client. Litestar's is Hey API's too, at the version
+  litestar-vite, the Litestar organization's client tooling, installs. FastEndpoints recommends
+  Kiota and runs it inside the application through its own FastEndpoints.OpenApi.Kiota. Quarkus's
+  is a REST Client from the Quarkiverse OpenAPI Generator, Micronaut's is the declarative client
   micronaut-maven-plugin generates, and Javalin's is OpenAPI Generator's java client, as Javalin's
-  OpenAPI tutorial makes one. The rest run Kiota themselves.
+  OpenAPI tutorial makes one. The rest run Kiota themselves. Sanic and Starlette each download
+  Kiota's release in `Client/generate.py` and check it against the SHA-256 that @microsoft/kiota
+  pins for that version, because no Kiota generator is published on PyPI.
 - Everything that writes the two runs from the framework's directory with its own toolchain, and
   rb.json `client.argv` runs it. `npm run rb -- client <id>` runs that with `RB_PAYLOADS` set and
   fails if anything under `Client/` changed.
@@ -192,12 +204,14 @@ neither writes one from its routes.
   runs. Carter writes it only when `RB_PAYLOADS` is set. Spring Boot, Micronaut, Javalin and
   Quarkus add what writes it only under a Maven profile named `client`. FastEndpoints writes both
   only when started with `--generateclients true`, which its build passes when `RB_PAYLOADS` is set.
+  Litestar and Sanic serve no document, and each turns its own on only in `Client/document.py`.
 - The client's own tests go in the suite, without `rb:test` marks, because they hold the client and
-  not a corpus row. FastAPI's TypeScript client is tested in `Client/` instead, by the client
-  command.
+  not a corpus row. FastAPI's and Litestar's TypeScript clients are tested in `Client/` instead, by
+  the client command.
 - The client command needs the framework's toolchain on PATH, as the suite does, and whatever the
-  generator needs beside it. FastAPI's needs uv and Node, a Java framework's needs a JDK and Maven,
-  and Kiota's Linux binary needs libicu, which a GitHub runner has.
+  generator needs beside it. FastAPI's and Litestar's need uv and Node, Sanic's and Starlette's need
+  uv, a Java framework's needs a JDK and Maven, and Kiota's Linux binary needs libicu, which a
+  GitHub runner has.
 - Change no route to improve the document. A Fastify body schema would validate a body the bind
   rows only parse. Options of the tool that writes the document are fine, such as Spring Boot's
   `application/json` default for answers the controllers do not type.
@@ -249,8 +263,8 @@ those tests.
   lets `dotnet test --filter corpus=<id>` run it. FastEndpoints' suite runs on xunit.v3 under
   Microsoft.Testing.Platform, where it is `dotnet test --project UnitTests --filter-trait
   "corpus=<id>"`. The Node frameworks start each test's name with its id, so
-  `node --test --test-name-pattern=<id>` runs it. FastAPI puts `@pytest.mark.corpus("<id>")` on the
-  test.
+  `node --test --test-name-pattern=<id>` runs it. The Python frameworks put
+  `@pytest.mark.corpus("<id>")` on the test.
 - The Java frameworks put `@Tag("<id>")` on the test, so `mvn test -Dgroups=<id>` runs it. The Go
   frameworks run each id as a subtest, `t.Run("<id>", ...)`, so `go test ./UnitTests -run '/<id>'`
   runs it.

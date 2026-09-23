@@ -1,0 +1,73 @@
+{
+  "comment": "Starlette on uvicorn, one module of routes per family under Implementation/routes. Starlette validates nothing itself, so SpecTree, the request validation Starlette's third-party packages page lists, binds bodies, query strings, headers and forms with Pydantic and answers 422 itself. uvicorn runs two worker processes, because one Python process runs Python on one core at a time and the container has two. The suite is UnitTests/, pytest over Starlette's TestClient, and never reaches the image. The suite and upgrade run through uv, which has to be installed.",
+  "framework": "Starlette",
+  "licence": "BSD-3-Clause",
+  "repo": "https://github.com/Kludex/starlette",
+  "package": "https://pypi.org/project/starlette/",
+  "docs": "https://starlette.dev/",
+  "lockfile": ["uv.lock"],
+  "hosts": {
+    "container-h1": { "dockerfile": "Dockerfile" }
+  },
+  "suite": { "argv": ["uv", "run", "--locked", "pytest"], "paths": ["UnitTests"] },
+  "upgrade": { "argv": ["uv", "lock", "--upgrade"] },
+  "client": {
+    "document": "Client/openapi.json",
+    "writer": "Starlette 1.7.0's SchemaGenerator, from the YAML in each endpoint's docstring, in Client/document.py",
+    "generator": "Kiota 1.35.0's Python client, from the release Client/generate.py downloads and checks against its SHA-256, because Starlette's docs recommend no generator",
+    "argv": ["uv", "run", "--locked", "python", "Client/generate.py"]
+  },
+  "noHandler": {
+    "cors.preflight": "Starlette's CORSMiddleware on the /cors Mount answers the preflight, and no endpoint runs.",
+    "errors.unmatched": "Starlette's router answers a path no route matches with 404.",
+    "errors.wrong_method": "Starlette's HTTPEndpoint on /items/{id:int} answers a method it has no function for with 405."
+  },
+  "mechanisms": {
+    "authorized": {
+      "mechanism": "Starlette's AuthenticationMiddleware on the route, with a backend that authenticates settings.json's bearer token, and requires, which refuses any other request with 403"
+    },
+    "baseline": { "builtin": "The endpoint returns a PlainTextResponse." },
+    "body": {
+      "mechanism": "SpecTree validates the body against Pydantic models before the endpoint runs, with types alone on the bind routes and orderRequest's rules on the validate routes. The first-error route's model checks the rules one field at a time, because Pydantic cannot stop at the first failure",
+      "dependency": "spectree"
+    },
+    "cache": {
+      "mechanism": "A decorator on each endpoint that answers from a cachetools TTLCache before the endpoint runs and stores what the endpoint answered, one store in each worker",
+      "dependency": "cachetools"
+    },
+    "compressed": { "mechanism": "Starlette's GZipMiddleware on each of the family's routes, at its default threshold and gzip's fastest level" },
+    "cors": { "mechanism": "Starlette's CORSMiddleware on a Mount at /cors" },
+    "errors": {
+      "builtin": "Starlette's router answers a miss with 404, HTTPEndpoint answers a method it has no function for with 405, and the items endpoint raises HTTPException for a missing row, each as text. SpecTree refuses a body that is not JSON with 422."
+    },
+    "etag": { "mechanism": "A decorator on each endpoint that hashes the body with SHA-1 and answers a matching If-None-Match with 304" },
+    "forms": {
+      "mechanism": "SpecTree binds the urlencoded form to the model query.many uses, and the upload is read with request.form(), both parsed by python-multipart",
+      "dependency": "spectree"
+    },
+    "headers": {
+      "mechanism": "SpecTree binds the three headers to a Pydantic model, each read by its header name, the account as an int",
+      "dependency": "spectree"
+    },
+    "items": { "builtin": "Starlette's HTTPEndpoint on /items/{id:int}, one function per method, with HEAD answered by get. SpecTree binds the bodies." },
+    "json": { "builtin": "Each endpoint answers the payload dict through JSONResponse, which serializes it with the standard library's json." },
+    "middleware": { "mechanism": "No-op pure ASGI middleware on the route, four or sixteen of them, which Starlette wraps around that route's endpoint alone" },
+    "parameters": { "builtin": "Path captures with Starlette's int convertor, which matches digits alone and converts them." },
+    "query": {
+      "mechanism": "SpecTree binds the query string to a Pydantic model, which converts it",
+      "dependency": "spectree"
+    },
+    "sse": {
+      "mechanism": "sse-starlette's EventSourceResponse, which writes each row the endpoint yields as one event",
+      "dependency": "sse-starlette",
+      "mentions": "sse_starlette"
+    },
+    "static": { "mechanism": "Starlette's StaticFiles over the payload directory, mounted at /static" },
+    "stream": { "builtin": "The endpoint yields each row's JSON line into a StreamingResponse typed application/x-ndjson." },
+    "template": {
+      "mechanism": "Jinja2Templates rendering a Jinja2 template",
+      "dependency": "jinja2",
+      "mentions": "Jinja2Templates"
+    }
+  }
+}

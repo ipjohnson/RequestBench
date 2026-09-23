@@ -322,11 +322,11 @@
   },
   "python:django-asgi": {
    "status": 400,
-   "class": "json",
+   "class": "html",
    "shape": [
-    "detail:string",
-    "error:string"
-   ]
+    ":string"
+   ],
+   "bodyFrom": "captured from frameworks/python/django-asgi/Implementation, which answers text/html; charset=utf-8: \n<!doctype html>\n<html lang=\"en\">\n<head>\n  <title>Bad Request (400)</title>\n</head>\n<body>\n  <h1>Bad Request (400)</h1><p></p>\n</body>\n</html>\n"
   },
   "python:fastapi": {
    "status": 422,
@@ -359,11 +359,11 @@
   },
   "python:flask": {
    "status": 400,
-   "class": "json",
+   "class": "html",
    "shape": [
-    "detail:string",
-    "error:string"
-   ]
+    ":string"
+   ],
+   "bodyFrom": "captured from frameworks/python/flask/Implementation, which answers text/html; charset=utf-8: <!doctype html>\n<html lang=en>\n<title>400 Bad Request</title>\n<h1>Bad Request</h1>\n<p>The browser (or proxy) sent a request that this server could not understand.</p>\n"
   },
   "python:litestar": {
    "status": 400,
@@ -371,23 +371,38 @@
    "shape": [
     "detail:string",
     "status_code:number"
-   ]
+   ],
+   "body": {
+    "status_code": 400,
+    "detail": "Input data was truncated"
+   },
+   "bodyFrom": "captured from frameworks/python/litestar/Implementation"
   },
   "python:sanic": {
    "status": 400,
    "class": "json",
    "shape": [
-    "detail:string",
-    "error:string"
-   ]
+    "description:string",
+    "message:string",
+    "status:number"
+   ],
+   "body": {
+    "description": "Bad Request",
+    "status": 400,
+    "message": "Failed when parsing body as json"
+   },
+   "bodyFrom": "captured from frameworks/python/sanic/Implementation"
   },
   "python:starlette": {
-   "status": 400,
+   "status": 422,
    "class": "json",
    "shape": [
-    "detail:string",
-    "error:string"
-   ]
+    "error_msg:string"
+   ],
+   "body": {
+    "error_msg": "Expecting value: line 1 column 29 (char 28)"
+   },
+   "bodyFrom": "captured from frameworks/python/starlette/Implementation"
   },
   "rust:actix-web": {
    "status": 400,

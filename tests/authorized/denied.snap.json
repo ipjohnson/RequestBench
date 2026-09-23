@@ -238,10 +238,11 @@
   },
   "python:django-asgi": {
    "status": 403,
-   "class": "json",
+   "class": "html",
    "shape": [
-    "error:string"
-   ]
+    ":string"
+   ],
+   "bodyFrom": "captured from frameworks/python/django-asgi/Implementation, which answers text/html; charset=utf-8: \n<!doctype html>\n<html lang=\"en\">\n<head>\n  <title>403 Forbidden</title>\n</head>\n<body>\n  <h1>403 Forbidden</h1><p></p>\n</body>\n</html>\n"
   },
   "python:fastapi": {
    "status": 403,
@@ -256,31 +257,47 @@
   },
   "python:flask": {
    "status": 403,
-   "class": "json",
+   "class": "html",
    "shape": [
-    "error:string"
-   ]
+    ":string"
+   ],
+   "bodyFrom": "captured from frameworks/python/flask/Implementation, which answers text/html; charset=utf-8: <!doctype html>\n<html lang=en>\n<title>403 Forbidden</title>\n<h1>Forbidden</h1>\n<p>You don&#39;t have the permission to access the requested resource. It is either read-protected or not readable by the server.</p>\n"
   },
   "python:litestar": {
    "status": 403,
    "class": "json",
    "shape": [
-    "error:string"
-   ]
+    "detail:string",
+    "status_code:number"
+   ],
+   "body": {
+    "status_code": 403,
+    "detail": "Forbidden"
+   },
+   "bodyFrom": "captured from frameworks/python/litestar/Implementation"
   },
   "python:sanic": {
    "status": 403,
    "class": "json",
    "shape": [
-    "error:string"
-   ]
+    "description:string",
+    "message:string",
+    "status:number"
+   ],
+   "body": {
+    "description": "Forbidden",
+    "status": 403,
+    "message": "Forbidden"
+   },
+   "bodyFrom": "captured from frameworks/python/sanic/Implementation"
   },
   "python:starlette": {
    "status": 403,
-   "class": "json",
+   "class": "text",
    "shape": [
-    "error:string"
-   ]
+    ":string"
+   ],
+   "bodyFrom": "captured from frameworks/python/starlette/Implementation, which answers text/plain; charset=utf-8: Forbidden"
   },
   "rust:actix-web": {
    "status": 403,

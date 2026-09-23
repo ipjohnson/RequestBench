@@ -1,0 +1,65 @@
+{
+  "comment": "Litestar on uvicorn, one Router per family under Implementation/routes, with a family's middleware on its Router. The models are msgspec Structs, which Litestar converts bodies to and encodes answers from. uvicorn runs two worker processes, because one Python process runs Python on one core at a time and the container has two. The suite is UnitTests/, pytest over Litestar's TestClient, and never reaches the image. The suite and upgrade run through uv, which has to be installed. cors.scoped is skipped because Litestar takes CORS on the application alone.",
+  "framework": "Litestar",
+  "licence": "MIT",
+  "repo": "https://github.com/litestar-org/litestar",
+  "package": "https://pypi.org/project/litestar/",
+  "docs": "https://docs.litestar.dev/",
+  "lockfile": ["uv.lock"],
+  "hosts": {
+    "container-h1": { "dockerfile": "Dockerfile" }
+  },
+  "suite": { "argv": ["uv", "run", "--locked", "pytest"], "paths": ["UnitTests"] },
+  "upgrade": { "argv": ["uv", "lock", "--upgrade"] },
+  "client": {
+    "document": "Client/openapi.json",
+    "writer": "Litestar 2.24.0's app.openapi_schema, in Client/document.py",
+    "generator": "@hey-api/openapi-ts 0.98.2, which litestar-vite runs and scaffolds at that version, in Client/package.json",
+    "argv": ["npm", "run", "client", "--prefix", "Client"]
+  },
+  "skips": {
+    "cors.scoped": "Litestar takes CORS as the application's cors_config alone, and the CORS middleware left its public API in 2.9, so the policy covers every route and /json/small answers the allowed origin too."
+  },
+  "noHandler": {
+    "cors.preflight": "Litestar's CORS middleware wraps the application and answers the preflight before the router runs, and no handler runs.",
+    "errors.unmatched": "Litestar's router answers a path no route matches with 404.",
+    "errors.wrong_method": "Litestar's router answers a method the path has no handler for with 405."
+  },
+  "mechanisms": {
+    "authorized": {
+      "mechanism": "A guard on the route that compares the authorization header and raises PermissionDeniedException, which Litestar answers with 403"
+    },
+    "baseline": { "builtin": "The handler returns the string, and media_type TEXT writes it as text/plain." },
+    "body": {
+      "mechanism": "msgspec Structs as the data parameter, with types alone on the bind routes and orderRequest's rules as msgspec Meta constraints on the validate routes. msgspec stops at the first failure, so the first-error route uses the validate routes' Struct",
+      "dependency": "msgspec"
+    },
+    "cache": {
+      "mechanism": "Litestar's response cache, turned on per route with cache=True, expiring after ttlSeconds by the application's ResponseCacheConfig, over its default MemoryStore in each worker, with a key builder for the vary routes"
+    },
+    "compressed": { "mechanism": "Litestar's CompressionMiddleware on the family's Router, at its default minimum size and gzip's fastest level" },
+    "cors": { "mechanism": "Litestar's CORSConfig, as the application's cors_config" },
+    "errors": {
+      "builtin": "Litestar's router answers a miss with 404 and a method a path lacks with 405, a body that is not JSON is a 400 ValidationException, and the items handlers raise NotFoundException for a missing row, each written by Litestar's default exception handler."
+    },
+    "etag": { "mechanism": "An ASGIMiddleware on the family's Router that hashes the body with SHA-1 and answers a matching If-None-Match with 304" },
+    "forms": { "builtin": "Litestar parses a urlencoded and a multipart body into the data parameter's Struct, the upload as an UploadFile." },
+    "headers": { "builtin": "HeaderParameter names each header, and Litestar converts the account to an int." },
+    "items": { "builtin": "One handler per method on /items/{id:int}, with GET and HEAD on the read route." },
+    "json": {
+      "mechanism": "A returned Struct, which Litestar encodes with msgspec straight to JSON bytes",
+      "dependency": "msgspec"
+    },
+    "middleware": { "mechanism": "No-op ASGIMiddleware layers on the route, four or sixteen of them" },
+    "parameters": { "builtin": "Path parameters typed int in the path and declared FromPath, which Litestar converts." },
+    "query": { "builtin": "Handler parameters declared FromQuery, or with QueryParameter where the key differs, which Litestar converts." },
+    "sse": { "builtin": "Litestar's ServerSentEvent, which writes each row the handler's async generator yields, encoded by msgspec, as one event." },
+    "static": { "mechanism": "Litestar's static files router over the payload directory, at /static" },
+    "stream": { "builtin": "Litestar's Stream typed application/x-ndjson, over an async generator of each row's bytes." },
+    "template": {
+      "mechanism": "The application's TemplateConfig with Litestar's JinjaTemplateEngine, rendering a Jinja2 template",
+      "dependency": "jinja2",
+      "mentions": "JinjaTemplateEngine"
+    }
+  }
+}

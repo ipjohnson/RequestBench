@@ -1,0 +1,41 @@
+"""The committed payloads, read from the directory RB_PAYLOADS names as each worker imports the
+application, so a missing or broken file stops the boot rather than failing a request. Sanic has no
+model of an answer, so each payload is kept as the dictionary json.loads makes of it, and Sanic's
+json() serializes it on every request."""
+import json
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
+
+type Json = dict[str, Any]
+
+
+@dataclass(frozen=True)
+class Payloads:
+    directory: Path
+    small: Json
+    medium: Json
+    large: Json
+    settings: Json
+    rows: dict[int, Json]
+
+    def row(self, id: int) -> Json | None:
+        """The row of items.large with this id, or None when there is none."""
+        return self.rows.get(id)
+
+
+def load(directory: str) -> Payloads:
+    root = Path(directory).resolve()
+
+    def read(name: str) -> Json:
+        return json.loads((root / name).read_bytes())
+
+    large = read("items.large.json")
+    return Payloads(
+        directory=root,
+        small=read("items.small.json"),
+        medium=read("items.medium.json"),
+        large=large,
+        settings=read("settings.json"),
+        rows={row["id"]: row for row in large["items"]},
+    )

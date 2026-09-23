@@ -1,0 +1,2415 @@
+{
+  "info": {
+    "title": "Litestar",
+    "version": "1.0.0"
+  },
+  "openapi": "3.1.0",
+  "servers": [
+    {
+      "url": "/"
+    }
+  ],
+  "paths": {
+    "/plaintext": {
+      "get": {
+        "summary": "Plaintext",
+        "operationId": "PlaintextPlaintext",
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/json/small": {
+      "get": {
+        "summary": "Small",
+        "operationId": "JsonSmallSmall",
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/json/medium": {
+      "get": {
+        "summary": "Medium",
+        "operationId": "JsonMediumMedium",
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/json/large": {
+      "get": {
+        "summary": "Large",
+        "operationId": "JsonLargeLarge",
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/middleware/none": {
+      "get": {
+        "summary": "None",
+        "operationId": "MiddlewareNoneNone",
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/middleware/four": {
+      "get": {
+        "summary": "Four",
+        "operationId": "MiddlewareFourFour",
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/middleware/sixteen": {
+      "get": {
+        "summary": "Sixteen",
+        "operationId": "MiddlewareSixteenSixteen",
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/parameters/static/segment/literal": {
+      "get": {
+        "summary": "Static",
+        "operationId": "ParametersStaticSegmentLiteralStatic",
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/parameters/{one}/segment/literal": {
+      "get": {
+        "summary": "One",
+        "operationId": "ParametersOneSegmentLiteralOne",
+        "parameters": [
+          {
+            "name": "one",
+            "in": "path",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Echoed_routes.parameters.One_"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/parameters/{one}/with-second/{two}": {
+      "get": {
+        "summary": "Two",
+        "operationId": "ParametersOneWithSecondTwoTwo",
+        "parameters": [
+          {
+            "name": "one",
+            "in": "path",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "two",
+            "in": "path",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Echoed_routes.parameters.Two_"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/query/one": {
+      "get": {
+        "summary": "One",
+        "operationId": "QueryOneOne",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true,
+            "deprecated": false,
+            "allowEmptyValue": false,
+            "allowReserved": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Echoed_routes.query.Page_"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/query/many": {
+      "get": {
+        "summary": "Many",
+        "operationId": "QueryManyMany",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true,
+            "deprecated": false,
+            "allowEmptyValue": false,
+            "allowReserved": false
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true,
+            "deprecated": false,
+            "allowEmptyValue": false,
+            "allowReserved": false
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "deprecated": false,
+            "allowEmptyValue": false,
+            "allowReserved": false
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "deprecated": false,
+            "allowEmptyValue": false,
+            "allowReserved": false
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "deprecated": false,
+            "allowEmptyValue": false,
+            "allowReserved": false
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "deprecated": false,
+            "allowEmptyValue": false,
+            "allowReserved": false
+          },
+          {
+            "name": "minPrice",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true,
+            "deprecated": false,
+            "allowEmptyValue": false,
+            "allowReserved": false
+          },
+          {
+            "name": "maxPrice",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true,
+            "deprecated": false,
+            "allowEmptyValue": false,
+            "allowReserved": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Echoed_routes.query.Search_"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/headers": {
+      "get": {
+        "summary": "Unread",
+        "operationId": "HeadersUnread",
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/headers/bind": {
+      "get": {
+        "summary": "Bind",
+        "operationId": "HeadersBindBind",
+        "parameters": [
+          {
+            "name": "x-rb-tenant",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "x-rb-request-id",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "x-rb-account",
+            "in": "header",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Echoed_routes.headers.HeadersBound_"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/body/bind/small": {
+      "post": {
+        "summary": "BindSmall",
+        "operationId": "BodyBindSmallBindSmall",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Order"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Bound_routes.body.Order_"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/body/bind/medium": {
+      "post": {
+        "summary": "BindMedium",
+        "operationId": "BodyBindMediumBindMedium",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Order"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Bound_routes.body.Order_"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/body/validate/small": {
+      "post": {
+        "summary": "ValidateSmall",
+        "operationId": "BodyValidateSmallValidateSmall",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckedOrder"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Bound_routes.body.CheckedOrder_"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/body/validate/medium": {
+      "post": {
+        "summary": "ValidateMedium",
+        "operationId": "BodyValidateMediumValidateMedium",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckedOrder"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Bound_routes.body.CheckedOrder_"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/body/validate/first-error": {
+      "post": {
+        "summary": "ValidateFirstError",
+        "operationId": "BodyValidateFirstErrorValidateFirstError",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckedOrder"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Bound_routes.body.CheckedOrder_"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/authorized/small": {
+      "get": {
+        "summary": "Small",
+        "operationId": "AuthorizedSmallSmall",
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/items/{id}": {
+      "get": {
+        "summary": "Read",
+        "operationId": "ItemsIdGetRead",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Item"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false
+      },
+      "put": {
+        "summary": "Replace",
+        "operationId": "ItemsIdReplace",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewItem"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Item"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false
+      },
+      "delete": {
+        "summary": "Remove",
+        "operationId": "ItemsIdRemove",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Request fulfilled, nothing follows",
+            "headers": {}
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false
+      },
+      "head": {
+        "summary": "Read",
+        "operationId": "ItemsIdHeadRead",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Item"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false
+      },
+      "patch": {
+        "summary": "Update",
+        "operationId": "ItemsIdUpdate",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ItemPatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Item"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/items": {
+      "post": {
+        "summary": "Create",
+        "operationId": "ItemsCreate",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewItem"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Document created, URL follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Item"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/cache/small": {
+      "get": {
+        "summary": "Small",
+        "operationId": "CacheSmallSmall",
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/cache/medium": {
+      "get": {
+        "summary": "Medium",
+        "operationId": "CacheMediumMedium",
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/cache/large": {
+      "get": {
+        "summary": "Large",
+        "operationId": "CacheLargeLarge",
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/cache/vary/one": {
+      "get": {
+        "summary": "VaryOne",
+        "operationId": "CacheVaryOneVaryOne",
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/cache/vary/many": {
+      "get": {
+        "summary": "VaryMany",
+        "operationId": "CacheVaryManyVaryMany",
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/compressed/small": {
+      "get": {
+        "summary": "Small",
+        "operationId": "CompressedSmallSmall",
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/compressed/large": {
+      "get": {
+        "summary": "Large",
+        "operationId": "CompressedLargeLarge",
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/etag/small": {
+      "get": {
+        "summary": "Small",
+        "operationId": "EtagSmallSmall",
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/etag/large": {
+      "get": {
+        "summary": "Large",
+        "operationId": "EtagLargeLarge",
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/cors/small": {
+      "get": {
+        "summary": "Small",
+        "operationId": "CorsSmallSmall",
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/forms/urlencoded": {
+      "post": {
+        "summary": "Urlencoded",
+        "operationId": "FormsUrlencodedUrlencoded",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Search"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Echoed_routes.query.Search_"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/forms/multipart": {
+      "post": {
+        "summary": "Multipart",
+        "operationId": "FormsMultipartMultipart",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Upload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Uploaded"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/stream/items": {
+      "get": {
+        "summary": "Lines",
+        "operationId": "StreamItemsLines",
+        "responses": {
+          "200": {
+            "description": "Stream Response",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/sse/medium": {
+      "get": {
+        "summary": "Medium",
+        "operationId": "SseMediumMedium",
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/template/small": {
+      "get": {
+        "summary": "Small",
+        "operationId": "TemplateSmallSmall",
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/template/medium": {
+      "get": {
+        "summary": "Medium",
+        "operationId": "TemplateMediumMedium",
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "Health",
+        "operationId": "HealthHealth",
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/__meta": {
+      "get": {
+        "summary": "Meta",
+        "operationId": "MetaMeta",
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "oneOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  },
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Bound_routes.body.CheckedOrder_": {
+        "properties": {
+          "fields": {
+            "type": "integer"
+          },
+          "bytes": {
+            "type": "integer"
+          },
+          "echo": {
+            "$ref": "#/components/schemas/CheckedOrder"
+          }
+        },
+        "type": "object",
+        "required": [
+          "bytes",
+          "echo",
+          "fields"
+        ],
+        "title": "Bound[CheckedOrder]"
+      },
+      "Bound_routes.body.Order_": {
+        "properties": {
+          "fields": {
+            "type": "integer"
+          },
+          "bytes": {
+            "type": "integer"
+          },
+          "echo": {
+            "$ref": "#/components/schemas/Order"
+          }
+        },
+        "type": "object",
+        "required": [
+          "bytes",
+          "echo",
+          "fields"
+        ],
+        "title": "Bound[Order]"
+      },
+      "CheckedLine": {
+        "properties": {
+          "productId": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0
+          },
+          "qty": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0
+          }
+        },
+        "type": "object",
+        "required": [
+          "productId",
+          "qty"
+        ],
+        "title": "CheckedLine"
+      },
+      "CheckedOrder": {
+        "properties": {
+          "customerId": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/CheckedLine"
+            },
+            "type": "array",
+            "minItems": 1
+          }
+        },
+        "type": "object",
+        "required": [
+          "customerId",
+          "lines",
+          "status"
+        ],
+        "title": "CheckedOrder"
+      },
+      "Echoed_routes.headers.HeadersBound_": {
+        "properties": {
+          "size": {
+            "type": "string"
+          },
+          "count": {
+            "type": "integer"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Item"
+            },
+            "type": "array"
+          },
+          "echo": {
+            "$ref": "#/components/schemas/HeadersBound"
+          }
+        },
+        "type": "object",
+        "required": [
+          "count",
+          "echo",
+          "items",
+          "size"
+        ],
+        "title": "Echoed[HeadersBound]"
+      },
+      "Echoed_routes.parameters.One_": {
+        "properties": {
+          "size": {
+            "type": "string"
+          },
+          "count": {
+            "type": "integer"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Item"
+            },
+            "type": "array"
+          },
+          "echo": {
+            "$ref": "#/components/schemas/One"
+          }
+        },
+        "type": "object",
+        "required": [
+          "count",
+          "echo",
+          "items",
+          "size"
+        ],
+        "title": "Echoed[One]"
+      },
+      "Echoed_routes.parameters.Two_": {
+        "properties": {
+          "size": {
+            "type": "string"
+          },
+          "count": {
+            "type": "integer"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Item"
+            },
+            "type": "array"
+          },
+          "echo": {
+            "$ref": "#/components/schemas/Two"
+          }
+        },
+        "type": "object",
+        "required": [
+          "count",
+          "echo",
+          "items",
+          "size"
+        ],
+        "title": "Echoed[Two]"
+      },
+      "Echoed_routes.query.Page_": {
+        "properties": {
+          "size": {
+            "type": "string"
+          },
+          "count": {
+            "type": "integer"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Item"
+            },
+            "type": "array"
+          },
+          "echo": {
+            "$ref": "#/components/schemas/Page"
+          }
+        },
+        "type": "object",
+        "required": [
+          "count",
+          "echo",
+          "items",
+          "size"
+        ],
+        "title": "Echoed[Page]"
+      },
+      "Echoed_routes.query.Search_": {
+        "properties": {
+          "size": {
+            "type": "string"
+          },
+          "count": {
+            "type": "integer"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Item"
+            },
+            "type": "array"
+          },
+          "echo": {
+            "$ref": "#/components/schemas/Search"
+          }
+        },
+        "type": "object",
+        "required": [
+          "count",
+          "echo",
+          "items",
+          "size"
+        ],
+        "title": "Echoed[Search]"
+      },
+      "HeadersBound": {
+        "properties": {
+          "tenant": {
+            "type": "string"
+          },
+          "requestId": {
+            "type": "string"
+          },
+          "account": {
+            "type": "integer"
+          }
+        },
+        "type": "object",
+        "required": [
+          "account",
+          "requestId",
+          "tenant"
+        ],
+        "title": "HeadersBound"
+      },
+      "Item": {
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "priceCents": {
+            "type": "integer"
+          },
+          "inStock": {
+            "type": "boolean"
+          }
+        },
+        "type": "object",
+        "required": [
+          "category",
+          "id",
+          "inStock",
+          "name",
+          "priceCents"
+        ],
+        "title": "Item"
+      },
+      "ItemPatch": {
+        "properties": {
+          "priceCents": {
+            "oneOf": [
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "inStock": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [],
+        "title": "ItemPatch"
+      },
+      "Line": {
+        "properties": {
+          "productId": {
+            "type": "integer"
+          },
+          "qty": {
+            "type": "integer"
+          }
+        },
+        "type": "object",
+        "required": [
+          "productId",
+          "qty"
+        ],
+        "title": "Line"
+      },
+      "NewItem": {
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "priceCents": {
+            "type": "integer"
+          },
+          "inStock": {
+            "type": "boolean"
+          }
+        },
+        "type": "object",
+        "required": [
+          "category",
+          "inStock",
+          "name",
+          "priceCents"
+        ],
+        "title": "NewItem"
+      },
+      "One": {
+        "properties": {
+          "one": {
+            "type": "integer"
+          }
+        },
+        "type": "object",
+        "required": [
+          "one"
+        ],
+        "title": "One"
+      },
+      "Order": {
+        "properties": {
+          "customerId": {
+            "type": "integer"
+          },
+          "status": {
+            "type": "string"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/Line"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object",
+        "required": [
+          "customerId",
+          "lines",
+          "status"
+        ],
+        "title": "Order"
+      },
+      "Page": {
+        "properties": {
+          "page": {
+            "type": "integer"
+          }
+        },
+        "type": "object",
+        "required": [
+          "page"
+        ],
+        "title": "Page"
+      },
+      "Payload": {
+        "properties": {
+          "size": {
+            "type": "string"
+          },
+          "count": {
+            "type": "integer"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Item"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object",
+        "required": [
+          "count",
+          "items",
+          "size"
+        ],
+        "title": "Payload"
+      },
+      "Search": {
+        "properties": {
+          "page": {
+            "type": "integer"
+          },
+          "size": {
+            "type": "integer"
+          },
+          "status": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "sort": {
+            "type": "string"
+          },
+          "q": {
+            "type": "string"
+          },
+          "minPrice": {
+            "type": "integer"
+          },
+          "maxPrice": {
+            "type": "integer"
+          }
+        },
+        "type": "object",
+        "required": [
+          "category",
+          "maxPrice",
+          "minPrice",
+          "page",
+          "q",
+          "size",
+          "sort",
+          "status"
+        ],
+        "title": "Search"
+      },
+      "Two": {
+        "properties": {
+          "one": {
+            "type": "integer"
+          },
+          "two": {
+            "type": "integer"
+          }
+        },
+        "type": "object",
+        "required": [
+          "one",
+          "two"
+        ],
+        "title": "Two"
+      },
+      "Upload": {
+        "properties": {
+          "tenant": {
+            "type": "string"
+          },
+          "requestId": {
+            "type": "string"
+          },
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "contentMediaType": "application/octet-stream"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file",
+          "requestId",
+          "tenant"
+        ],
+        "title": "Upload"
+      },
+      "UploadEcho": {
+        "properties": {
+          "tenant": {
+            "type": "string"
+          },
+          "requestId": {
+            "type": "string"
+          }
+        },
+        "type": "object",
+        "required": [
+          "requestId",
+          "tenant"
+        ],
+        "title": "UploadEcho"
+      },
+      "Uploaded": {
+        "properties": {
+          "file": {
+            "$ref": "#/components/schemas/UploadedFile"
+          },
+          "echo": {
+            "$ref": "#/components/schemas/UploadEcho"
+          }
+        },
+        "type": "object",
+        "required": [
+          "echo",
+          "file"
+        ],
+        "title": "Uploaded"
+      },
+      "UploadedFile": {
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "bytes": {
+            "type": "integer"
+          }
+        },
+        "type": "object",
+        "required": [
+          "bytes",
+          "name"
+        ],
+        "title": "UploadedFile"
+      }
+    }
+  }
+}

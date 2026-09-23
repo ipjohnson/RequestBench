@@ -1,0 +1,38 @@
+# The application's dependencies, and the suite's. uv.lock beside it is what uv resolved, which
+# the image installs with --locked. Ranges move patch releases alone for 0.x packages, and minor
+# releases too for the rest. Sanic and sanic-ext are versioned year.month, so ~=25.12 moves within
+# the December 2025 release.
+[project]
+name = "rb-sanic"
+version = "0"
+requires-python = ">=3.14"
+dependencies = [
+  "cachetools~=7.2",
+  # sanic-ext's templating renders with Jinja2 when it is installed.
+  "jinja2~=3.1",
+  "pydantic~=2.13",
+  # uvloop, httptools and ujson, which Sanic uses when they are installed, are its own dependencies.
+  "sanic~=25.12",
+  "sanic-ext~=25.12",
+]
+
+[dependency-groups]
+# microsoft-kiota-bundle is the runtime of the Kiota client in Client/, which the suite calls.
+dev = ["microsoft-kiota-bundle~=1.14", "pytest~=9.1", "sanic-testing~=24.6"]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["UnitTests"]
+# Client/ holds the Kiota package the client tests import.
+pythonpath = ["Implementation", "Client"]
+addopts = "--strict-markers"
+markers = ["corpus(*ids): the corpus tests this test holds the framework to"]
+# Raised as Sanic imports websockets, and as Kiota's generated client is imported, which the suite
+# does not change.
+filterwarnings = [
+  "ignore:websockets.legacy is deprecated:DeprecationWarning",
+  "ignore:This class is deprecated. Please use the generic RequestConfiguration class:DeprecationWarning",
+  "ignore:GetQueryParameters is deprecated:DeprecationWarning",
+]

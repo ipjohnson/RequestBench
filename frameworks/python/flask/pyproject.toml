@@ -1,0 +1,28 @@
+# The application's dependencies, and the suite's. uv.lock beside it is what uv resolved, which
+# the image installs with --locked. Ranges move patch releases alone for 0.x packages, and minor
+# releases too for the rest.
+[project]
+name = "rb-flask"
+version = "0"
+requires-python = ">=3.14"
+dependencies = [
+  "flask~=3.1",
+  "flask-caching~=2.5",
+  "flask-compress~=1.25",
+  "flask-cors~=6.0",
+  "flask-pydantic~=0.14.0",
+  "gunicorn~=26.2",
+  "pydantic~=2.13",
+]
+
+[dependency-groups]
+dev = ["pytest~=9.1"]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["UnitTests"]
+pythonpath = ["Implementation"]
+addopts = "--strict-markers"
+markers = ["corpus(*ids): the corpus tests this test holds the framework to"]
