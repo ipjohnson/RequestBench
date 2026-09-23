@@ -257,22 +257,42 @@ export class Pool {
   }
 
   send(request: Request, done: (answer: Answer) => void, failed: (error: Error) => void): void {
-    // A connection lost since the last instance is replaced as it dies, so this finds a live one
-    // unless the replacement is still being made.
+    // A connection an answer closed was replaced before that answer was counted, so this finds
+    // one free unless the framework closed one without saying so.
     const connection = this.#free.shift() ?? this.#make();
     connection.send(
       request,
       (answer) => {
-        // A connection the answer said ends with it is dropped here, and replaced by its close.
-        if (connection.reusable) this.#free.push(connection);
-        else connection.destroy();
-        done(answer);
+        if (connection.reusable) {
+          this.#free.push(connection);
+          return done(answer);
+        }
+        // The answer closed its connection. Its replacement is opened now and the answer is
+        // counted once the replacement is up, so the handshake is charged to the test whose
+        // answer cost it, and not to whichever instance next finds no connection free. A
+        // replacement that cannot be made leaves the answer counted, and the next instance
+        // that needs a connection opens one.
+        connection.destroy();
+        if (this.#stopped) return done(answer);
+        const replacement = this.#make();
+        replacement.ready.then(
+          () => {
+            this.#free.push(replacement);
+            done(answer);
+          },
+          () => done(answer),
+        );
       },
       (error) => {
         connection.destroy();
         failed(error);
       },
     );
+  }
+
+  /** The connections open and waiting for a request. */
+  get idle(): number {
+    return this.#free.length;
   }
 
   destroy(): void {
@@ -289,11 +309,12 @@ export class Pool {
   }
 
   /**
-   * A framework closes a connection when it answers with `connection: close`, when its keep-alive
-   * idles out, and when it has served as many requests on one as it will. The one that goes is
-   * forgotten here and opened again at the next phase, or by the instance that needs it first.
-   * Opening one the moment it goes would instead chase a framework whose keep-alive idles out,
-   * making a new connection every time it closes one that the load is not using.
+   * A framework closes a connection when it answers with `connection: close`, when it frames a
+   * body by the close, when its keep-alive idles out, and when it has served as many requests on
+   * one as it will. One an answer closed was replaced in `send`. Any other is forgotten here and
+   * opened again at the next phase, or by the instance that needs it first. Opening one the moment
+   * it goes would instead chase a framework whose keep-alive idles out, making a new connection
+   * every time it closes one that the load is not using.
    */
   #lost(dead: Connection): void {
     if (!this.#live.delete(dead)) return;

@@ -222,6 +222,22 @@ test("an answer that is not the length it was primed with is counted as a mismat
   assert.equal(small.firstMismatch, "GET /json/small answered 13 bytes, expected 2");
 });
 
+test("a framework that closes the connection with an answer still gets every instance", async () => {
+  // Micronaut answers every HEAD with connection: close, as this stub does here.
+  answering = stub((route) => (route.startsWith("HEAD /items/") ? [200, { connection: "close" }] : undefined));
+  delay = 0;
+  const { code, result } = await generate(
+    load([{ name: "regular", rps: 200, seconds: 2 }], { workers: 1, connections: 4, only: ["items.head", "items.read"] }),
+  );
+  answering = stub();
+  assert.equal(code, 0);
+  const { recorded } = result.phases[0];
+  assert.equal(recorded.completed, recorded.scheduled);
+  assert.equal(recorded.errors, 0);
+  assert.equal(recorded.mismatch, 0);
+  for (const t of recorded.tests) assert.ok(t.count > 0, `${t.id} ran no instance`);
+});
+
 test("an instance due while the in-flight limit is reached is dropped, not sent", async () => {
   answering = stub();
   delay = 300;

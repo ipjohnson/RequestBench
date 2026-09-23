@@ -47,9 +47,10 @@ export const loadSchema = z.strictObject({
   workers: z.number().int().positive().default(4),
   /**
    * The connections the load holds, across every thread. They are opened before the first phase
-   * and each carries one request at a time, so no instance pays for a handshake and every
-   * framework is offered the same shape. An instance due while all of them are busy is dropped,
-   * which is what the drop count and abortDropFraction are about.
+   * and each carries one request at a time, so no instance pays for a handshake unless its own
+   * answer closed its connection, and every framework is offered the same shape. An instance due
+   * while all of them are busy is dropped, which is what the drop count and abortDropFraction are
+   * about.
    */
   connections: z.number().int().positive().default(256),
   /**

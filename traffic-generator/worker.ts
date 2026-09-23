@@ -4,7 +4,8 @@
 // the coordinated-omission correction: a backlog in the generator or the framework shows up as
 // latency instead of quietly vanishing. The instance is a request prepare.ts built before the
 // load began, so the thread writes bytes and reads an answer, and the time runs until its last
-// byte arrives.
+// byte arrives. An answer that closed its connection is timed until the connection replacing it
+// is open, so a framework's close is charged to the test that caused it.
 import { parentPort, workerData } from "node:worker_threads";
 
 import { bucketOf } from "./histogram.ts";
