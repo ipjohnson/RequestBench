@@ -52,32 +52,32 @@ import client.JSON;
 /**
  * Echoed
  */
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.25.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.25.0")
 public class Echoed {
   public static final String SERIALIZED_NAME_SIZE = "size";
   @SerializedName(SERIALIZED_NAME_SIZE)
-  @javax.annotation.Nullable
+  @jakarta.annotation.Nullable
   private String size;
 
   public static final String SERIALIZED_NAME_COUNT = "count";
   @SerializedName(SERIALIZED_NAME_COUNT)
-  @javax.annotation.Nonnull
+  @jakarta.annotation.Nonnull
   private Integer count;
 
   public static final String SERIALIZED_NAME_ITEMS = "items";
   @SerializedName(SERIALIZED_NAME_ITEMS)
-  @javax.annotation.Nullable
+  @jakarta.annotation.Nullable
   private List<Item> items = new ArrayList<>();
 
   public static final String SERIALIZED_NAME_ECHO = "echo";
   @SerializedName(SERIALIZED_NAME_ECHO)
-  @javax.annotation.Nullable
+  @jakarta.annotation.Nullable
   private Object echo;
 
   public Echoed() {
   }
 
-  public Echoed size(@javax.annotation.Nullable String size) {
+  public Echoed size(@jakarta.annotation.Nullable String size) {
     this.size = size;
     return this;
   }
@@ -86,17 +86,17 @@ public class Echoed {
    * Get size
    * @return size
    */
-  @javax.annotation.Nullable
+  @jakarta.annotation.Nullable
   public String getSize() {
     return size;
   }
 
-  public void setSize(@javax.annotation.Nullable String size) {
+  public void setSize(@jakarta.annotation.Nullable String size) {
     this.size = size;
   }
 
 
-  public Echoed count(@javax.annotation.Nonnull Integer count) {
+  public Echoed count(@jakarta.annotation.Nonnull Integer count) {
     this.count = count;
     return this;
   }
@@ -105,17 +105,17 @@ public class Echoed {
    * Get count
    * @return count
    */
-  @javax.annotation.Nonnull
+  @jakarta.annotation.Nonnull
   public Integer getCount() {
     return count;
   }
 
-  public void setCount(@javax.annotation.Nonnull Integer count) {
+  public void setCount(@jakarta.annotation.Nonnull Integer count) {
     this.count = count;
   }
 
 
-  public Echoed items(@javax.annotation.Nullable List<Item> items) {
+  public Echoed items(@jakarta.annotation.Nullable List<Item> items) {
     this.items = items;
     return this;
   }
@@ -132,17 +132,17 @@ public class Echoed {
    * Get items
    * @return items
    */
-  @javax.annotation.Nullable
+  @jakarta.annotation.Nullable
   public List<Item> getItems() {
     return items;
   }
 
-  public void setItems(@javax.annotation.Nullable List<Item> items) {
+  public void setItems(@jakarta.annotation.Nullable List<Item> items) {
     this.items = items;
   }
 
 
-  public Echoed echo(@javax.annotation.Nullable Object echo) {
+  public Echoed echo(@jakarta.annotation.Nullable Object echo) {
     this.echo = echo;
     return this;
   }
@@ -151,12 +151,12 @@ public class Echoed {
    * Get echo
    * @return echo
    */
-  @javax.annotation.Nullable
+  @jakarta.annotation.Nullable
   public Object getEcho() {
     return echo;
   }
 
-  public void setEcho(@javax.annotation.Nullable Object echo) {
+  public void setEcho(@jakarta.annotation.Nullable Object echo) {
     this.echo = echo;
   }
 

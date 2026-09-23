@@ -47,7 +47,7 @@
       <groupId>com.google.code.findbugs</groupId>
       <artifactId>jsr305</artifactId>
     </dependency>
-    <!-- javax.annotation.Generated, which the sources name. -->
+    <!-- jakarta.annotation.Generated, which the sources name. -->
     <dependency>
       <groupId>jakarta.annotation</groupId>
       <artifactId>jakarta.annotation-api</artifactId>
@@ -94,6 +94,9 @@
               <configOptions>
                 <!-- The date otherwise goes into every file, and the client would change on every run. -->
                 <hideGenerationTimestamp>true</hideGenerationTimestamp>
+                <!-- jakarta.annotation.Generated rather than javax, which jakarta.annotation-api 2 and
+                     later no longer carry. -->
+                <useJakartaEe>true</useJakartaEe>
               </configOptions>
             </configuration>
           </plugin>

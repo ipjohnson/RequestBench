@@ -49,22 +49,22 @@ import client.JSON;
 /**
  * UploadedPart
  */
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.25.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.25.0")
 public class UploadedPart {
   public static final String SERIALIZED_NAME_NAME = "name";
   @SerializedName(SERIALIZED_NAME_NAME)
-  @javax.annotation.Nullable
+  @jakarta.annotation.Nullable
   private String name;
 
   public static final String SERIALIZED_NAME_BYTES = "bytes";
   @SerializedName(SERIALIZED_NAME_BYTES)
-  @javax.annotation.Nonnull
+  @jakarta.annotation.Nonnull
   private Long bytes;
 
   public UploadedPart() {
   }
 
-  public UploadedPart name(@javax.annotation.Nullable String name) {
+  public UploadedPart name(@jakarta.annotation.Nullable String name) {
     this.name = name;
     return this;
   }
@@ -73,17 +73,17 @@ public class UploadedPart {
    * Get name
    * @return name
    */
-  @javax.annotation.Nullable
+  @jakarta.annotation.Nullable
   public String getName() {
     return name;
   }
 
-  public void setName(@javax.annotation.Nullable String name) {
+  public void setName(@jakarta.annotation.Nullable String name) {
     this.name = name;
   }
 
 
-  public UploadedPart bytes(@javax.annotation.Nonnull Long bytes) {
+  public UploadedPart bytes(@jakarta.annotation.Nonnull Long bytes) {
     this.bytes = bytes;
     return this;
   }
@@ -92,12 +92,12 @@ public class UploadedPart {
    * Get bytes
    * @return bytes
    */
-  @javax.annotation.Nonnull
+  @jakarta.annotation.Nonnull
   public Long getBytes() {
     return bytes;
   }
 
-  public void setBytes(@javax.annotation.Nonnull Long bytes) {
+  public void setBytes(@jakarta.annotation.Nonnull Long bytes) {
     this.bytes = bytes;
   }
 
