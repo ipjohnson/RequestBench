@@ -1,0 +1,72 @@
+{
+  "comment": "h3 v2 on Node 26, served by h3's serve(), which runs srvx's Node adapter, in TypeScript that Node runs without a build step. npm's latest h3 is 2.0.1-rc.32, a release candidate of v2, and the range admits later candidates and the release. One module per family under Implementation/routes registers its routes and gives each route its middleware in the route's options, because h3 runs middleware registered with app.use() on every request. The suite is UnitTests/, node:test over app.request(), and never reaches the image. install-ci-test is npm ci then npm test, because the suite needs node_modules and the typechecker. upgrade is npm update, which moves package-lock.json within the ranges package.json states. There is no Client/, because h3 writes no OpenAPI document.",
+  "framework": "h3",
+  "licence": "MIT",
+  "repo": "https://github.com/h3js/h3",
+  "package": "https://www.npmjs.com/package/h3",
+  "docs": "https://h3.dev/",
+  "lockfile": ["package-lock.json"],
+  "hosts": {
+    "container-h1": { "dockerfile": "Dockerfile" }
+  },
+  "suite": { "argv": ["npm", "install-ci-test"], "paths": ["UnitTests"] },
+  "upgrade": { "argv": ["npm", "update"] },
+  "noHandler": {
+    "errors.unmatched": "h3's router finds no route for the path, and h3 answers the miss with its 404.",
+    "errors.wrong_method": "The router matches the method and the path together, so a method the path has no route for is a miss, which h3 answers with the same 404."
+  },
+  "mechanisms": {
+    "authorized": {
+      "mechanism": "Middleware in the route's options that compares the bearer token and throws h3's HTTPError with 403 for any other"
+    },
+    "baseline": { "builtin": "The handler returns the string, which h3 sends as text/plain." },
+    "body": {
+      "mechanism": "A zod schema that readValidatedBody runs on the validate routes, reporting every field that fails, and one-field schemas piped one into the next on the first-error route",
+      "dependency": "zod"
+    },
+    "cache": {
+      "mechanism": "ocache's defineCachedHandler around each cache route's handler, keyed by the path and the headers the route varies on. h3's own cache rule is built on it, and runs on every request",
+      "dependency": "ocache"
+    },
+    "compressed": {
+      "mechanism": "Middleware written for the two routes through h3's onResponse, which gzips a body of 1 KB or more with node:zlib at its fastest level, because h3 ships no compression"
+    },
+    "cors": {
+      "mechanism": "h3's handleCors, called by the route's handler, which answers a preflight itself and adds its headers to any other request"
+    },
+    "errors": {
+      "builtin": "h3's router answers a miss with its 404, readBody refuses a body that is not JSON with 400, and the items handlers throw h3's HTTPError with 404, each written as h3's error JSON."
+    },
+    "etag": {
+      "mechanism": "h3's handleCacheHeaders, which writes the tag and answers a match with 304, given a SHA-1 of the serialised body that the handler computes, because h3 hashes nothing"
+    },
+    "forms": {
+      "builtin": "readBody parses a urlencoded body by its content type, and a multipart one when the handler asks for formData. readValidatedBody binds the urlencoded form with query.many's schema."
+    },
+    "headers": {
+      "mechanism": "The handler reads the three headers from the request and converts the account, because h3 binds no headers"
+    },
+    "items": { "builtin": "One route per method on /items/:id, the id converted by a zod schema through getValidatedRouterParams. h3 answers HEAD with the GET route." },
+    "json": { "builtin": "The handler returns the payload, which h3 writes with JSON.stringify." },
+    "middleware": { "mechanism": "No-op middleware in the route's options, four or sixteen of them" },
+    "parameters": {
+      "mechanism": "A zod schema that getValidatedRouterParams runs on the captures, converting each to an integer",
+      "dependency": "zod"
+    },
+    "query": {
+      "mechanism": "A zod schema that getValidatedQuery runs on the query string, converting the numbers to integers",
+      "dependency": "zod"
+    },
+    "sse": {
+      "mechanism": "h3's EventStream, which the handler returns and which writes each row pushed to it as one event"
+    },
+    "static": {
+      "mechanism": "h3's serveStatic on a /static/** route, over the payload directory"
+    },
+    "stream": { "builtin": "The handler returns h3's iterable over a generator of lines, which h3 sends as each is yielded." },
+    "template": {
+      "mechanism": "An EJS template compiled once and rendered by the handler, answered through h3's html and raw",
+      "dependency": "ejs"
+    }
+  }
+}

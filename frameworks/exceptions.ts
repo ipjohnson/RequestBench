@@ -3,12 +3,16 @@ import type { Exceptions } from "@rb/tests/kit";
 import aspnetMvc from "./dotnet/aspnet-mvc/client-exception/index.ts";
 import axum from "./rust/axum/client-exception/index.ts";
 import carter from "./dotnet/carter/client-exception/index.ts";
+import express from "./node/express/client-exception/index.ts";
 import fastapi from "./python/fastapi/client-exception/index.ts";
 import fastendpoints from "./dotnet/fastendpoints/client-exception/index.ts";
 import fastify from "./node/fastify/client-exception/index.ts";
 import gin from "./go/gin/client-exception/index.ts";
+import h3 from "./node/h3/client-exception/index.ts";
 import helidonSe from "./java/helidon-se/client-exception/index.ts";
+import hono from "./node/hono/client-exception/index.ts";
 import javalin from "./java/javalin/client-exception/index.ts";
+import koa from "./node/koa/client-exception/index.ts";
 import micronaut from "./java/micronaut/client-exception/index.ts";
 import minimalApis from "./dotnet/minimal-apis/client-exception/index.ts";
 import quarkus from "./java/quarkus/client-exception/index.ts";
@@ -34,7 +38,11 @@ export type FrameworkId =
   | "java:quarkus"
   | "java:spring-boot"
   | "java:vertx"
+  | "node:express"
   | "node:fastify"
+  | "node:h3"
+  | "node:hono"
+  | "node:koa"
   | "python:fastapi"
   | "rust:axum";
 
@@ -57,7 +65,11 @@ export default {
   "java:quarkus": quarkus,
   "java:spring-boot": springBoot,
   "java:vertx": vertx,
+  "node:express": express,
   "node:fastify": fastify,
+  "node:h3": h3,
+  "node:hono": hono,
+  "node:koa": koa,
   "python:fastapi": fastapi,
   "rust:axum": axum,
 } satisfies Record<FrameworkId, Exceptions>;

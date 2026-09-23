@@ -183,10 +183,11 @@
   },
   "node:express": {
    "status": 404,
-   "class": "json",
+   "class": "html",
    "shape": [
-    "error:string"
-   ]
+    ":string"
+   ],
+   "bodyFrom": "captured from frameworks/node/express/Implementation, which answers text/html; charset=utf-8: <!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<title>Error</title>\n</head>\n<body>\n<pre>Cannot GET /errors/unmatched</pre>\n</body>\n</html>\n"
   },
   "node:fastify": {
    "status": 404,
@@ -207,22 +208,30 @@
    "status": 404,
    "class": "json",
    "shape": [
-    "error:string"
-   ]
+    "message:string",
+    "status:number"
+   ],
+   "body": {
+    "status": 404,
+    "message": "Cannot find any route matching [GET] http://<request host>/errors/unmatched"
+   },
+   "bodyFrom": "captured from frameworks/node/h3/Implementation, with the Host the request carried shown as <request host>, as the exemplars show it, because h3 names the URL the request reached"
   },
   "node:hono": {
    "status": 404,
-   "class": "json",
+   "class": "text",
    "shape": [
-    "error:string"
-   ]
+    ":string"
+   ],
+   "bodyFrom": "captured from frameworks/node/hono/Implementation, which answers text/plain: 404 Not Found"
   },
   "node:koa": {
    "status": 404,
-   "class": "json",
+   "class": "text",
    "shape": [
-    "error:string"
-   ]
+    ":string"
+   ],
+   "bodyFrom": "captured from frameworks/node/koa/Implementation, which answers text/plain; charset=utf-8: Not Found"
   },
   "python:django-asgi": {
    "status": 404,

@@ -1,0 +1,69 @@
+{
+  "comment": "Koa 3 on Node 26, with @koa/router and the Koa organisation's middleware as route middleware in front of each family's handlers, in TypeScript that Node runs without a build step. The suite is UnitTests/, node:test with supertest over app.callback(), and never reaches the image. install-ci-test is npm ci then npm test, because the suite needs node_modules and the typechecker. upgrade is npm update, which moves package-lock.json within the ranges package.json states. app.silent is set, so Koa writes no error to stderr.",
+  "framework": "Koa",
+  "licence": "MIT",
+  "repo": "https://github.com/koajs/koa",
+  "package": "https://www.npmjs.com/package/koa",
+  "docs": "https://koajs.com/",
+  "lockfile": ["package-lock.json"],
+  "hosts": {
+    "container-h1": { "dockerfile": "Dockerfile" }
+  },
+  "suite": { "argv": ["npm", "install-ci-test"], "paths": ["UnitTests"] },
+  "upgrade": { "argv": ["npm", "update"] },
+  "noHandler": {
+    "errors.unmatched": "Koa answers a request no middleware answered with 404 and the status message, as text.",
+    "errors.wrong_method": "@koa/router's allowedMethods() answers a method the path has no route for with 405, an Allow header and the status message, as text."
+  },
+  "mechanisms": {
+    "authorized": {
+      "mechanism": "Route middleware that compares the bearer token with ctx.assert, which throws Koa's 403 for any other"
+    },
+    "baseline": { "builtin": "The handler sets the string as the body, which Koa sends as text/plain." },
+    "body": {
+      "mechanism": "@koa/bodyparser parses every route's body, and koa-parameter's verifyParams checks the validate routes' against the parameter library's rules, its middleware answering a failure with 422",
+      "dependency": "koa-parameter"
+    },
+    "cache": {
+      "mechanism": "koa-cash as route middleware over an lru-cache store, keyed by the path and the headers each vary route names, with the serial kept beside each stored answer",
+      "dependency": "koa-cash"
+    },
+    "compressed": {
+      "mechanism": "koa-compress as route middleware, at its default threshold and zlib's fastest level",
+      "dependency": "koa-compress"
+    },
+    "cors": {
+      "mechanism": "@koa/cors as route middleware on an OPTIONS route and on the GET route, allowing settings.json's origin by a function",
+      "dependency": "@koa/cors"
+    },
+    "errors": {
+      "builtin": "Koa answers a request nothing answered with 404, @koa/router's allowedMethods() a method the path lacks with 405, and Koa's error handling writes the body parser's 400 and ctx.throw's 404 for a missing row, each as the status message in text."
+    },
+    "etag": {
+      "mechanism": "@koa/etag as route middleware, which hashes the body with SHA-1, behind koa-conditional-get, which answers a matching If-None-Match with 304",
+      "dependency": "@koa/etag"
+    },
+    "forms": {
+      "mechanism": "@koa/bodyparser reads the urlencoded body and @koa/multer the upload, each as route middleware",
+      "dependency": "@koa/multer"
+    },
+    "headers": { "builtin": "The handler reads the three headers with ctx.get and converts the account with Number(). Koa binds nothing." },
+    "items": { "builtin": "One route per method on /items/:id, the id converted by router.param. @koa/router answers HEAD with the GET route." },
+    "json": { "builtin": "The handler sets the payload object as the body, which Koa writes with JSON.stringify." },
+    "middleware": { "mechanism": "No-op async middleware in front of the route's handler, four or sixteen of them" },
+    "parameters": {
+      "mechanism": "router.param, @koa/router's hook for a named capture, which converts each capture to a number before the route's middleware runs"
+    },
+    "query": { "builtin": "Koa parses the query string into ctx.query, and the handler converts the numbers with Number(). Koa binds nothing." },
+    "sse": { "builtin": "Koa has no helper for server-sent events. The handler sets text/event-stream and gives Koa a Readable of data lines, which Koa pipes into the response, as the Koa organisation's stream-server-side-events example does." },
+    "static": {
+      "mechanism": "@koa/send on one /static/:name route over the payload directory",
+      "dependency": "@koa/send"
+    },
+    "stream": { "builtin": "The handler sets a Readable of lines as the body, which Koa pipes into the response." },
+    "template": {
+      "mechanism": "@koa/ejs rendering an EJS template through ctx.render",
+      "dependency": "@koa/ejs"
+    }
+  }
+}

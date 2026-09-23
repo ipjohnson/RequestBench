@@ -177,10 +177,11 @@
   },
   "node:express": {
    "status": 403,
-   "class": "json",
+   "class": "text",
    "shape": [
-    "error:string"
-   ]
+    ":string"
+   ],
+   "bodyFrom": "captured from frameworks/node/express/Implementation, which answers text/plain; charset=utf-8: Forbidden"
   },
   "node:fastify": {
    "status": 403,
@@ -201,22 +202,32 @@
    "status": 403,
    "class": "json",
    "shape": [
-    "error:string"
-   ]
+    "message:string",
+    "status:number",
+    "statusText:string"
+   ],
+   "body": {
+    "status": 403,
+    "statusText": "Forbidden",
+    "message": "Forbidden"
+   },
+   "bodyFrom": "captured from frameworks/node/h3/Implementation"
   },
   "node:hono": {
    "status": 403,
-   "class": "json",
+   "class": "text",
    "shape": [
-    "error:string"
-   ]
+    ":string"
+   ],
+   "bodyFrom": "captured from frameworks/node/hono/Implementation, which answers text/plain: Forbidden"
   },
   "node:koa": {
    "status": 403,
-   "class": "json",
+   "class": "text",
    "shape": [
-    "error:string"
-   ]
+    ":string"
+   ],
+   "bodyFrom": "captured from frameworks/node/koa/Implementation, which answers text/plain; charset=utf-8: Forbidden"
   },
   "python:django-asgi": {
    "status": 403,

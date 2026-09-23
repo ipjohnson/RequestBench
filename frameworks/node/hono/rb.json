@@ -1,0 +1,87 @@
+{
+  "comment": "Hono 4 on Node 26 through @hono/node-server, one module per family under Implementation/routes, each registering its routes on one application, in TypeScript that Node runs without a build step. The suite is UnitTests/, node:test over Hono's app.request(), and never reaches the image. install-ci-test is npm ci then npm test, because the suite needs node_modules and the typechecker. upgrade is npm update, which moves package-lock.json within the ranges package.json states. hono/compress gzips through CompressionStream, which takes no level, so the compressed rows are at zlib's default level, 6, where the other frameworks compress at their fastest. There is no Client/: Hono writes an OpenAPI document only for routes written with @hono/zod-openapi's createRoute.",
+  "framework": "Hono",
+  "licence": "MIT",
+  "repo": "https://github.com/honojs/hono",
+  "package": "https://www.npmjs.com/package/hono",
+  "docs": "https://hono.dev/docs/",
+  "lockfile": ["package-lock.json"],
+  "hosts": {
+    "container-h1": { "dockerfile": "Dockerfile" }
+  },
+  "suite": { "argv": ["npm", "install-ci-test"], "paths": ["UnitTests"] },
+  "upgrade": { "argv": ["npm", "update"] },
+  "noHandler": {
+    "cors.preflight": "hono/cors answers the preflight itself on every path under /cors, and no handler runs.",
+    "errors.unmatched": "Hono's default not-found handler answers a path no route matches with 404.",
+    "errors.wrong_method": "The router matches the method and the path together, so a method the path has no route for reaches the default not-found handler, which answers 404."
+  },
+  "mechanisms": {
+    "authorized": {
+      "mechanism": "Middleware on the route that compares the bearer token, and refuses any other by throwing Hono's HTTPException with 403",
+      "mentions": "HTTPException"
+    },
+    "baseline": { "builtin": "The handler returns c.text(), which Hono sends as text/plain." },
+    "body": {
+      "mechanism": "zValidator from @hono/zod-validator on each validate route, which runs a zod schema on the parsed body before the handler. The first-error route runs it one field at a time",
+      "dependency": "@hono/zod-validator",
+      "mentions": "zValidator"
+    },
+    "cache": {
+      "mechanism": "hono/cache on each route, over the part of the Web Cache API it calls, written for Node as a Map that holds settings.json's capacity for its TTL",
+      "mentions": "hono/cache"
+    },
+    "compressed": {
+      "mechanism": "hono/compress on each route, at its default threshold. It gzips through CompressionStream, which takes no level, so at zlib's default level, 6",
+      "mentions": "hono/compress"
+    },
+    "cors": {
+      "mechanism": "hono/cors on every path under /cors",
+      "mentions": "hono/cors"
+    },
+    "errors": {
+      "builtin": "Hono's default not-found handler answers a miss and the items handlers' c.notFound() with 404, and its default error handler writes the validator's HTTPException for a body that is not JSON with 400, each as text/plain."
+    },
+    "etag": {
+      "mechanism": "hono/etag on each route, which hashes the body with SHA-1 and answers a matching If-None-Match with 304",
+      "mentions": "hono/etag"
+    },
+    "forms": {
+      "mechanism": "zValidator's form target binds the urlencoded body by query.many's schema, and c.req.parseBody() reads the upload",
+      "dependency": "@hono/zod-validator",
+      "mentions": "zValidator"
+    },
+    "headers": {
+      "mechanism": "zValidator's header target, with a zod schema that converts the account to an integer",
+      "dependency": "@hono/zod-validator",
+      "mentions": "zValidator"
+    },
+    "items": { "builtin": "One route per method on /items/:id, the id converted by zValidator's param target. Hono answers HEAD with the GET route." },
+    "json": { "builtin": "The handler returns c.json(), which Hono writes with JSON.stringify." },
+    "middleware": { "mechanism": "No-op middleware given on the route before its handler, four or sixteen of them" },
+    "parameters": {
+      "mechanism": "zValidator's param target, with a zod schema that converts each capture to an integer",
+      "dependency": "@hono/zod-validator",
+      "mentions": "zValidator"
+    },
+    "query": {
+      "mechanism": "zValidator's query target, with a zod schema that converts the numbers to integers",
+      "dependency": "@hono/zod-validator",
+      "mentions": "zValidator"
+    },
+    "sse": {
+      "mechanism": "streamSSE from hono/streaming, which writes each row as one event",
+      "mentions": "streamSSE"
+    },
+    "static": {
+      "mechanism": "serveStatic from @hono/node-server over the payload directory, under /static/",
+      "dependency": "@hono/node-server",
+      "mentions": "serveStatic"
+    },
+    "stream": { "builtin": "The handler writes each line through stream() from hono/streaming, and the answer goes out chunked." },
+    "template": {
+      "mechanism": "html from hono/html, a tagged template that escapes what it interpolates, sent by c.html()",
+      "mentions": "hono/html"
+    }
+  }
+}

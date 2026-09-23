@@ -255,11 +255,11 @@
   },
   "node:express": {
    "status": 400,
-   "class": "json",
+   "class": "html",
    "shape": [
-    "detail:string",
-    "error:string"
-   ]
+    ":string"
+   ],
+   "bodyFrom": "captured from frameworks/node/express/Implementation, which answers text/html; charset=utf-8: <!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<title>Error</title>\n</head>\n<body>\n<pre>Bad Request</pre>\n</body>\n</html>\n"
   },
   "node:fastify": {
    "status": 400,
@@ -282,25 +282,32 @@
    "status": 400,
    "class": "json",
    "shape": [
-    "detail:string",
-    "error:string"
-   ]
+    "message:string",
+    "status:number",
+    "statusText:string"
+   ],
+   "body": {
+    "status": 400,
+    "statusText": "Bad Request",
+    "message": "Invalid JSON body"
+   },
+   "bodyFrom": "captured from frameworks/node/h3/Implementation"
   },
   "node:hono": {
    "status": 400,
-   "class": "json",
+   "class": "text",
    "shape": [
-    "detail:string",
-    "error:string"
-   ]
+    ":string"
+   ],
+   "bodyFrom": "captured from frameworks/node/hono/Implementation, which answers text/plain: Malformed JSON in request body"
   },
   "node:koa": {
    "status": 400,
-   "class": "json",
+   "class": "text",
    "shape": [
-    "detail:string",
-    "error:string"
-   ]
+    ":string"
+   ],
+   "bodyFrom": "captured from frameworks/node/koa/Implementation, which answers text/plain; charset=utf-8: Bad Request"
   },
   "python:django-asgi": {
    "status": 400,

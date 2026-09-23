@@ -1,0 +1,66 @@
+{
+  "comment": "Express 5 on Node 26, one module per family under Implementation/routes, in TypeScript that Node runs without a build step. The suite is UnitTests/, node:test through supertest, and never reaches the image. install-ci-test is npm ci then npm test, because the suite needs node_modules and the typechecker. upgrade is npm update, which moves package-lock.json within the ranges package.json states. Express has no validation and its documentation names no library, so the validate routes run express-validator, the one written for Express, and answer its errors as its guide does. Express ships no response cache, so the cache family's middleware is written for it.",
+  "framework": "Express",
+  "licence": "MIT",
+  "repo": "https://github.com/expressjs/express",
+  "package": "https://www.npmjs.com/package/express",
+  "docs": "https://expressjs.com/",
+  "lockfile": ["package-lock.json"],
+  "hosts": {
+    "container-h1": { "dockerfile": "Dockerfile" }
+  },
+  "suite": { "argv": ["npm", "install-ci-test"], "paths": ["UnitTests"] },
+  "upgrade": { "argv": ["npm", "update"] },
+  "noHandler": {
+    "errors.unmatched": "Express's final handler answers a path no route matches with 404.",
+    "errors.wrong_method": "The router matches the method and the path together, so a method the path has no route for falls through to the final handler, which answers 404."
+  },
+  "mechanisms": {
+    "authorized": {
+      "mechanism": "Middleware in the route's handler list that compares the bearer token, and refuses any other with res.sendStatus(403)"
+    },
+    "baseline": { "builtin": "res.send writes the string, with the type set to text/plain, because Express sends a string as text/html." },
+    "body": {
+      "mechanism": "express.json() in each body route's handler list, and on the validate routes an express-validator schema whose chains run as middleware before the handler. The first-error route runs the chains one at a time and stops at the first that fails",
+      "dependency": "express-validator"
+    },
+    "cache": {
+      "mechanism": "Middleware written for the family in each cache route's handler list, which replays a stored answer or wraps res.send to store one, keyed by the URL and the headers the route names"
+    },
+    "compressed": {
+      "mechanism": "compression, the expressjs middleware, in the handler lists of the compressed routes, at its default threshold and zlib's fastest level",
+      "dependency": "compression"
+    },
+    "cors": {
+      "mechanism": "cors, the expressjs middleware, in the handler lists of the OPTIONS and GET routes for /cors/small",
+      "dependency": "cors"
+    },
+    "errors": {
+      "builtin": "Express's final handler answers a path or a method with no route with 404, and a body express.json() cannot parse with 400, each as an HTML page. The items handlers refuse a missing row with res.sendStatus(404)."
+    },
+    "etag": {
+      "mechanism": "Express's etag setting, on in a sub-application mounted at /etag and off in the application, so res.send hashes the body with SHA-1 and answers a matching If-None-Match with 304"
+    },
+    "forms": {
+      "mechanism": "express.urlencoded() in the urlencoded route's handler list, with the form converted as query.many is, and multer's memory storage in the multipart route's",
+      "dependency": "multer"
+    },
+    "headers": { "builtin": "Express binds no header. The handler reads each with req.get and converts the account with Number()." },
+    "items": { "builtin": "One route per method on /items/:id, with express.json() in the write routes' handler lists. Express answers HEAD with the GET route." },
+    "json": { "builtin": "res.json serialises the payload with JSON.stringify." },
+    "middleware": { "mechanism": "No-op middleware functions in the route's handler list, four or sixteen of them" },
+    "parameters": { "builtin": "Express's router captures each segment as a string, and the handler converts it with Number()." },
+    "query": { "builtin": "Express 5's simple query parser, Node's querystring, gives strings, and the handler converts the numbers with Number()." },
+    "sse": { "builtin": "Express has no support for server-sent events, so the handler sets text/event-stream and pipes a Readable of events into the response." },
+    "static": {
+      "mechanism": "express.static over the payload directory, mounted at /static",
+      "dependency": "serve-static",
+      "mentions": "express.static"
+    },
+    "stream": { "builtin": "The handler pipes a Readable of lines into the response, which is Node's." },
+    "template": {
+      "mechanism": "Express's view layer: res.render, with Pug as the view engine",
+      "dependency": "pug"
+    }
+  }
+}

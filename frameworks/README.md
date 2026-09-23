@@ -9,9 +9,10 @@ ASP.NET Core beside it: [`dotnet/minimal-apis`](dotnet/minimal-apis),
 [`dotnet/wolverine-http`](dotnet/wolverine-http). Six run on the JVM:
 [`java/spring-boot`](java/spring-boot), [`java/quarkus`](java/quarkus),
 [`java/micronaut`](java/micronaut), [`java/javalin`](java/javalin),
-[`java/helidon-se`](java/helidon-se) and [`java/vertx`](java/vertx). There is one in each other
-language: [`node/fastify`](node/fastify), [`python/fastapi`](python/fastapi),
-[`rust/axum`](rust/axum) and [`go/gin`](go/gin).
+[`java/helidon-se`](java/helidon-se) and [`java/vertx`](java/vertx). Five run on Node:
+[`node/fastify`](node/fastify), [`node/express`](node/express), [`node/koa`](node/koa),
+[`node/hono`](node/hono) and [`node/h3`](node/h3). There is one in each other language:
+[`python/fastapi`](python/fastapi), [`rust/axum`](rust/axum) and [`go/gin`](go/gin).
 
 Discovery, bundles and marks read git's index, not the directory. Run `git add` on new files before
 any `npm run rb` command, or they do not exist to it.
@@ -36,7 +37,9 @@ pom, and Quarkus's, Javalin's and Vert.x's import their framework's BOM and pin 
 themselves. Quarkus has no UnitTests module. Implementation's pom names UnitTests/ as its test
 sources, because `@QuarkusTest` builds the application from the module its tests are in. axum has
 one package's `Cargo.toml`, which names each target's path under Implementation/ and UnitTests/,
-and its `Cargo.lock`. Gin has `go.mod` and `go.sum`.
+and its `Cargo.lock`. Gin has `go.mod` and `go.sum`. Each Node framework has `package.json`,
+`package-lock.json` and `tsconfig.json`. Its source is TypeScript, which Node runs by stripping the
+types as it loads each file, so there is no build step and tsc only checks it.
 
 ## Notes
 
@@ -91,8 +94,9 @@ server verticle per core the JVM counts, as Vert.x's documentation spreads a ser
 
 The framework is PID 1 in its container, and the kernel gives PID 1 no default action for SIGTERM.
 The JVM, .NET, uvicorn and the Go runtime install a handler of their own. Node and a Rust binary
-do not, so Fastify and axum stop on SIGTERM themselves. Without that, `docker stop` waits out its
-timeout.
+do not, so the Node frameworks and axum stop on SIGTERM themselves. h3's `serve()` starts srvx,
+which stops on SIGTERM when its graceful shutdown is on. srvx turns that off when `CI` or `TEST` is
+set, so h3's `server.ts` turns it on. Without that, `docker stop` waits out its timeout.
 
 Two routes sit outside the corpus:
 
@@ -146,8 +150,10 @@ written in TypeScript compiles its own source with its own settings.
 ## Client
 
 `Client/` holds the OpenAPI document a framework writes about its own routes and a client generated
-from that document. Every framework has one except axum, Gin, Helidon SE and Vert.x. axum and Gin
-write no document without a third-party library. Helidon SE's OpenAPI support serves a document the
+from that document. Every framework has one except axum, Gin, Express, Koa, h3, Hono, Helidon SE and
+Vert.x. axum, Gin, Express and Koa write no document without a third-party library, and h3 writes
+none. Hono documents only routes written with @hono/zod-openapi's `createRoute`, and changing a
+route for the document is ruled out below. Helidon SE's OpenAPI support serves a document the
 application packages, and Vert.x's OpenAPI modules read a contract, so neither writes one from its
 routes.
 
@@ -193,8 +199,9 @@ The site shows, for every test, the code that answers it, the code that wires it
 suite's test of it. Most of that is found from the source. A route literal the test's path matches
 is its handler. The method is read from the literal's own line, so keep the literal on the line of
 the call that names the method, or it matches every method. The finder knows GET, POST, PUT, PATCH
-and DELETE, so a HEAD route such as Wolverine's `[WolverineHead]` matches every method and is
-marked. A formatter that breaks a call across lines separates the two, which is why axum's
+and DELETE, so a HEAD or OPTIONS route matches every method. Wolverine's `[WolverineHead]` route is
+marked for that reason, and so is the `/cors/small` GET route beside the OPTIONS route that Express
+and Koa give their cors middleware. A formatter that breaks a call across lines separates the two, which is why axum's
 registrations are not run through rustfmt. Any other string that reads as a route matches too,
 with or without its leading slash, such as Gin's `json:"items"` struct tag, a Thymeleaf view named
 `items`, a `"/items/{}"` format string or Vert.x's `getJsonArray("items")`. Rename it or mark the
@@ -226,7 +233,7 @@ those tests.
 - Carter and the other .NET frameworks put `[Trait("corpus", "<id>")]` on the test, which also
   lets `dotnet test --filter corpus=<id>` run it. FastEndpoints' suite runs on xunit.v3 under
   Microsoft.Testing.Platform, where it is `dotnet test --project UnitTests --filter-trait
-  "corpus=<id>"`. Fastify starts each test's name with its id, so
+  "corpus=<id>"`. The Node frameworks start each test's name with its id, so
   `node --test --test-name-pattern=<id>` runs it. FastAPI puts `@pytest.mark.corpus("<id>")` on the
   test.
 - The Java frameworks put `@Tag("<id>")` on the test, so `mvn test -Dgroups=<id>` runs it. Gin

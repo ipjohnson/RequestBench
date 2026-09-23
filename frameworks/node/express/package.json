@@ -1,0 +1,29 @@
+{
+  "name": "rb-express",
+  "private": true,
+  "type": "module",
+  "comment": "Its own package and lockfile, never a workspace of the repository's, so the versions /__meta reports are the ones this lockfile resolved. The source is TypeScript that Node runs as it is, so there is no build step and tsc only checks it. The scripts pass --experimental-strip-types because Node 22 needs it. Node 26, which the image runs, accepts it.",
+  "scripts": {
+    "start": "node --experimental-strip-types --disable-warning=ExperimentalWarning Implementation/server.ts",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "tsc -p tsconfig.json && node --experimental-strip-types --disable-warning=ExperimentalWarning --test \"UnitTests/*.test.ts\""
+  },
+  "dependencies": {
+    "compression": "^1.8.2",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "express-validator": "^7.3.2",
+    "multer": "^2.4.0",
+    "pug": "^3.0.4"
+  },
+  "devDependencies": {
+    "@types/compression": "^1.8.1",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/multer": "^2.2.0",
+    "@types/node": "^26.6.2",
+    "@types/supertest": "^7.2.1",
+    "supertest": "^7.3.0",
+    "typescript": "^5.9.3"
+  }
+}

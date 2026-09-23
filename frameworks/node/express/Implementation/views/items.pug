@@ -1,0 +1,24 @@
+//- Pug writes `doctype html` as <!DOCTYPE html>, in capitals, so the doctype is a line of plain text.
+| <!doctype html>
+html
+  head
+    title items
+  body
+    h1= size
+    table
+      thead
+        tr
+          th id
+          th name
+          th category
+          th price
+          th stock
+      tbody
+        each it in items
+          tr
+            td= it.id
+            td= it.name
+            td= it.category
+            td= it.priceCents
+            td= it.inStock ? "yes" : "no"
+    p #{count} rows
