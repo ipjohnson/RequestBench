@@ -1,12 +1,16 @@
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
-use axum::body::Body;
+use axum::body::{Body, Bytes, to_bytes};
+use axum::extract::{Request, State};
 use axum::http::header::VARY;
-use axum::http::{HeaderName, HeaderValue, Request, Uri};
+use axum::http::response::Parts;
+use axum::http::{HeaderName, HeaderValue, StatusCode, Uri};
+use axum::middleware::{Next, from_fn_with_state};
+use axum::response::{IntoResponse, Response};
 use axum::routing::get;
 use axum::{Json, Router};
-use axum_response_cache::{CacheLayer, CachedResponse, Keyer};
-use cached::LruTtlCache;
+use cached::{Cached, LruTtlCache};
 
 use crate::Payloads;
 use crate::payloads::CacheSettings;
@@ -25,25 +29,55 @@ pub fn router(p: &'static Payloads) -> Router {
     let vary_many = listed(&many);
 
     Router::new()
-        .route("/cache/small", get(move || async move { (serial::fresh(), Json(&p.small)) }).layer(stored(settings, vec![])))
-        .route("/cache/medium", get(move || async move { (serial::fresh(), Json(&p.medium)) }).layer(stored(settings, vec![])))
-        .route("/cache/large", get(move || async move { (serial::fresh(), Json(&p.large)) }).layer(stored(settings, vec![])))
+        .route("/cache/small", get(move || async move { (serial::fresh(), Json(&p.small)) }).layer(from_fn_with_state(store(settings, vec![]), replay)))
+        .route("/cache/medium", get(move || async move { (serial::fresh(), Json(&p.medium)) }).layer(from_fn_with_state(store(settings, vec![]), replay)))
+        .route("/cache/large", get(move || async move { (serial::fresh(), Json(&p.large)) }).layer(from_fn_with_state(store(settings, vec![]), replay)))
         // The Vary header tells a cache in front of the framework what the answer depends on. The
         // store keys on the route's own list, not on this header.
-        .route("/cache/vary/one", get(move || async move { (serial::fresh(), [(VARY, vary_one)], Json(&p.small)) }).layer(stored(settings, one)))
-        .route("/cache/vary/many", get(move || async move { (serial::fresh(), [(VARY, vary_many)], Json(&p.small)) }).layer(stored(settings, many)))
+        .route("/cache/vary/one", get(move || async move { (serial::fresh(), [(VARY, vary_one)], Json(&p.small)) }).layer(from_fn_with_state(store(settings, one), replay)))
+        .route("/cache/vary/many", get(move || async move { (serial::fresh(), [(VARY, vary_many)], Json(&p.small)) }).layer(from_fn_with_state(store(settings, many), replay)))
 }
 
 // rb:wiring cache.*
-/// axum-response-cache's layer in front of one route. It answers from its store before the handler
-/// runs, and stores a 2xx the handler answers, with settings.json's capacity in entries and its
-/// time to live.
-fn stored(settings: &CacheSettings, on: Vec<HeaderName>) -> CacheLayer<LruTtlCache<Key, CachedResponse>, impl Keyer<Key = Key>> {
-    let keyer = move |request: &Request<Body>| -> Key {
-        (request.uri().clone(), on.iter().map(|name| request.headers().get(name).cloned()).collect())
+/// An answer as the store keeps it.
+#[derive(Clone)]
+struct Stored {
+    parts: Parts,
+    body: Bytes,
+}
+
+/// One route's store: cached's LruTtlCache, holding settings.json's capacity in entries for its time
+/// to live, and the headers the route varies on.
+#[derive(Clone)]
+struct Store {
+    entries: Arc<Mutex<LruTtlCache<Key, Stored>>>,
+    on: Arc<[HeaderName]>,
+}
+
+fn store(settings: &CacheSettings, on: Vec<HeaderName>) -> Store {
+    let entries = LruTtlCache::new(settings.capacity, Duration::from_secs(settings.ttl_seconds));
+    Store { entries: Arc::new(Mutex::new(entries)), on: on.into() }
+}
+
+/// A from_fn layer in front of one route, because axum ships no response cache. It answers from the
+/// store before the handler runs, and stores a 2xx the handler answers.
+async fn replay(State(store): State<Store>, request: Request, next: Next) -> Response {
+    let key: Key = (request.uri().clone(), store.on.iter().map(|name| request.headers().get(name).cloned()).collect());
+    let hit = store.entries.lock().expect("no thread panicked holding the store").cache_get(&key).cloned();
+    if let Some(hit) = hit {
+        return Response::from_parts(hit.parts, Body::from(hit.body));
+    }
+    let response = next.run(request).await;
+    if !response.status().is_success() {
+        return response;
+    }
+    let (parts, body) = response.into_parts();
+    let Ok(body) = to_bytes(body, usize::MAX).await else {
+        return StatusCode::INTERNAL_SERVER_ERROR.into_response();
     };
-    let store = LruTtlCache::with_size_and_ttl(settings.capacity, Duration::from_secs(settings.ttl_seconds));
-    CacheLayer::with_cache_and_keyer(store, keyer)
+    let kept = Stored { parts: parts.clone(), body: body.clone() };
+    store.entries.lock().expect("no thread panicked holding the store").cache_set(key, kept);
+    Response::from_parts(parts, Body::from(body))
 }
 // rb:end
 

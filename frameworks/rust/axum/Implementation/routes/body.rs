@@ -1,16 +1,18 @@
 use axum::extract::rejection::JsonRejection;
-use axum::http::HeaderMap;
+use axum::extract::{FromRequest, Request};
 use axum::http::header::CONTENT_LENGTH;
+use axum::http::{HeaderMap, StatusCode};
+use axum::response::{IntoResponse, Response};
 use axum::routing::post;
 use axum::{Json, Router};
-use axum_valid::{Valid, ValidRejection};
+use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use validator::{Validate, ValidationErrors};
 
 // rb:wiring body.*
 /// The body the bind and validate rows send, and the rules orderRequest states. The bind routes
 /// take it through axum's Json and never run the rules. The validate routes take it through
-/// axum-valid's Valid, which runs them before the handler and refuses the body with every error
+/// ValidatedJson, which runs them before the handler and refuses the body with every error
 /// validator reports, as JSON.
 #[derive(Deserialize, Serialize, Validate)]
 #[serde(rename_all = "camelCase")]
@@ -30,6 +32,30 @@ struct Line {
     product_id: i64,
     #[validate(range(min = 1))]
     qty: i64,
+}
+
+/// axum's Json, then validator's rules, in an extractor like the one axum's validator example
+/// writes for a form. A body Json refuses keeps Json's rejection. A body that breaks a rule is
+/// refused with 400 and validator's errors as JSON, which is how axum-valid answers.
+struct ValidatedJson<T>(T);
+
+impl<T, S> FromRequest<S> for ValidatedJson<T>
+where
+    T: DeserializeOwned + Validate,
+    S: Send + Sync,
+    Json<T>: FromRequest<S, Rejection = JsonRejection>,
+{
+    type Rejection = Response;
+
+    async fn from_request(request: Request, state: &S) -> Result<Self, Response> {
+        let Json(value) = Json::<T>::from_request(request, state).await.map_err(IntoResponse::into_response)?;
+        value.validate().map_err(refused)?;
+        Ok(ValidatedJson(value))
+    }
+}
+
+fn refused(errors: ValidationErrors) -> Response {
+    (StatusCode::BAD_REQUEST, Json(errors)).into_response()
 }
 
 // validator runs every rule a struct declares and has no way to stop at the first, so the
@@ -53,15 +79,15 @@ struct Lines<'a> {
     lines: &'a [Line],
 }
 
-/// validator's errors for the first field that breaks its rule, refused as axum-valid refuses
+/// validator's errors for the first field that breaks its rule, refused as ValidatedJson refuses
 /// the validate routes.
-fn stop_at_first(order: &Order) -> Result<(), ValidRejection<JsonRejection>> {
+fn stop_at_first(order: &Order) -> Result<(), Response> {
     let first = || -> Result<(), ValidationErrors> {
         CustomerId { customer_id: order.customer_id }.validate()?;
         Status { status: &order.status }.validate()?;
         Lines { lines: &order.lines }.validate()
     };
-    first().map_err(ValidRejection::Valid)
+    first().map_err(refused)
 }
 // rb:end
 
@@ -88,10 +114,10 @@ pub fn router() -> Router {
     Router::new()
         .route("/body/bind/small", post(|headers: HeaderMap, Json(order): Json<Order>| async move { Json(Bound::of(order, &headers)) }))
         .route("/body/bind/medium", post(|headers: HeaderMap, Json(order): Json<Order>| async move { Json(Bound::of(order, &headers)) }))
-        .route("/body/validate/small", post(|headers: HeaderMap, Valid(Json(order)): Valid<Json<Order>>| async move {
+        .route("/body/validate/small", post(|headers: HeaderMap, ValidatedJson(order): ValidatedJson<Order>| async move {
             Json(Bound::of(order, &headers))
         }))
-        .route("/body/validate/medium", post(|headers: HeaderMap, Valid(Json(order)): Valid<Json<Order>>| async move {
+        .route("/body/validate/medium", post(|headers: HeaderMap, ValidatedJson(order): ValidatedJson<Order>| async move {
             Json(Bound::of(order, &headers))
         }))
         .route("/body/validate/first-error", post(|headers: HeaderMap, Json(order): Json<Order>| async move {
