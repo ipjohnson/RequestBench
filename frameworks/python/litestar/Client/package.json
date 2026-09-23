@@ -9,7 +9,7 @@
     "client": "npm ci --no-audit --no-fund && npm run generate && npm test"
   },
   "devDependencies": {
-    "@hey-api/openapi-ts": "0.98.2",
+    "@hey-api/openapi-ts": "0.99.0",
     "@types/node": "^26.6.2",
     "typescript": "^5.9.3"
   }
