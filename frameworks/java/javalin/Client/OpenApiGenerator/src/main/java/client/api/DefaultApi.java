@@ -95,7 +95,7 @@ public class DefaultApi {
         <tr><td> 403 </td><td> Forbidden </td><td>  -  </td></tr>
      </table>
      */
-    public okhttp3.Call authorizedSmallGetCall(@javax.annotation.Nonnull String authorization, final ApiCallback _callback) throws ApiException {
+    public okhttp3.Call authorizedSmallGetCall(@jakarta.annotation.Nonnull String authorization, final ApiCallback _callback) throws ApiException {
         String basePath = null;
         // Operation Servers
         String[] localBasePaths = new String[] {  };
@@ -145,7 +145,7 @@ public class DefaultApi {
     }
 
     @SuppressWarnings("rawtypes")
-    private okhttp3.Call authorizedSmallGetValidateBeforeCall(@javax.annotation.Nonnull String authorization, final ApiCallback _callback) throws ApiException {
+    private okhttp3.Call authorizedSmallGetValidateBeforeCall(@jakarta.annotation.Nonnull String authorization, final ApiCallback _callback) throws ApiException {
         // verify the required parameter 'authorization' is set
         if (authorization == null) {
             throw new ApiException("Missing the required parameter 'authorization' when calling authorizedSmallGet(Async)");
@@ -169,7 +169,7 @@ public class DefaultApi {
         <tr><td> 403 </td><td> Forbidden </td><td>  -  </td></tr>
      </table>
      */
-    public Payload authorizedSmallGet(@javax.annotation.Nonnull String authorization) throws ApiException {
+    public Payload authorizedSmallGet(@jakarta.annotation.Nonnull String authorization) throws ApiException {
         ApiResponse<Payload> localVarResp = authorizedSmallGetWithHttpInfo(authorization);
         return localVarResp.getData();
     }
@@ -188,7 +188,7 @@ public class DefaultApi {
         <tr><td> 403 </td><td> Forbidden </td><td>  -  </td></tr>
      </table>
      */
-    public ApiResponse<Payload> authorizedSmallGetWithHttpInfo(@javax.annotation.Nonnull String authorization) throws ApiException {
+    public ApiResponse<Payload> authorizedSmallGetWithHttpInfo(@jakarta.annotation.Nonnull String authorization) throws ApiException {
         okhttp3.Call localVarCall = authorizedSmallGetValidateBeforeCall(authorization, null);
         Type localVarReturnType = new TypeToken<Payload>(){}.getType();
         return localVarApiClient.execute(localVarCall, localVarReturnType);
@@ -209,7 +209,7 @@ public class DefaultApi {
         <tr><td> 403 </td><td> Forbidden </td><td>  -  </td></tr>
      </table>
      */
-    public okhttp3.Call authorizedSmallGetAsync(@javax.annotation.Nonnull String authorization, final ApiCallback<Payload> _callback) throws ApiException {
+    public okhttp3.Call authorizedSmallGetAsync(@jakarta.annotation.Nonnull String authorization, final ApiCallback<Payload> _callback) throws ApiException {
 
         okhttp3.Call localVarCall = authorizedSmallGetValidateBeforeCall(authorization, _callback);
         Type localVarReturnType = new TypeToken<Payload>(){}.getType();
@@ -229,7 +229,7 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public okhttp3.Call bodyBindMediumPostCall(@javax.annotation.Nonnull OrderRequest orderRequest, final ApiCallback _callback) throws ApiException {
+    public okhttp3.Call bodyBindMediumPostCall(@jakarta.annotation.Nonnull OrderRequest orderRequest, final ApiCallback _callback) throws ApiException {
         String basePath = null;
         // Operation Servers
         String[] localBasePaths = new String[] {  };
@@ -275,7 +275,7 @@ public class DefaultApi {
     }
 
     @SuppressWarnings("rawtypes")
-    private okhttp3.Call bodyBindMediumPostValidateBeforeCall(@javax.annotation.Nonnull OrderRequest orderRequest, final ApiCallback _callback) throws ApiException {
+    private okhttp3.Call bodyBindMediumPostValidateBeforeCall(@jakarta.annotation.Nonnull OrderRequest orderRequest, final ApiCallback _callback) throws ApiException {
         // verify the required parameter 'orderRequest' is set
         if (orderRequest == null) {
             throw new ApiException("Missing the required parameter 'orderRequest' when calling bodyBindMediumPost(Async)");
@@ -298,7 +298,7 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public Bound bodyBindMediumPost(@javax.annotation.Nonnull OrderRequest orderRequest) throws ApiException {
+    public Bound bodyBindMediumPost(@jakarta.annotation.Nonnull OrderRequest orderRequest) throws ApiException {
         ApiResponse<Bound> localVarResp = bodyBindMediumPostWithHttpInfo(orderRequest);
         return localVarResp.getData();
     }
@@ -316,7 +316,7 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public ApiResponse<Bound> bodyBindMediumPostWithHttpInfo(@javax.annotation.Nonnull OrderRequest orderRequest) throws ApiException {
+    public ApiResponse<Bound> bodyBindMediumPostWithHttpInfo(@jakarta.annotation.Nonnull OrderRequest orderRequest) throws ApiException {
         okhttp3.Call localVarCall = bodyBindMediumPostValidateBeforeCall(orderRequest, null);
         Type localVarReturnType = new TypeToken<Bound>(){}.getType();
         return localVarApiClient.execute(localVarCall, localVarReturnType);
@@ -336,7 +336,7 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public okhttp3.Call bodyBindMediumPostAsync(@javax.annotation.Nonnull OrderRequest orderRequest, final ApiCallback<Bound> _callback) throws ApiException {
+    public okhttp3.Call bodyBindMediumPostAsync(@jakarta.annotation.Nonnull OrderRequest orderRequest, final ApiCallback<Bound> _callback) throws ApiException {
 
         okhttp3.Call localVarCall = bodyBindMediumPostValidateBeforeCall(orderRequest, _callback);
         Type localVarReturnType = new TypeToken<Bound>(){}.getType();
@@ -356,7 +356,7 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public okhttp3.Call bodyBindSmallPostCall(@javax.annotation.Nonnull OrderRequest orderRequest, final ApiCallback _callback) throws ApiException {
+    public okhttp3.Call bodyBindSmallPostCall(@jakarta.annotation.Nonnull OrderRequest orderRequest, final ApiCallback _callback) throws ApiException {
         String basePath = null;
         // Operation Servers
         String[] localBasePaths = new String[] {  };
@@ -402,7 +402,7 @@ public class DefaultApi {
     }
 
     @SuppressWarnings("rawtypes")
-    private okhttp3.Call bodyBindSmallPostValidateBeforeCall(@javax.annotation.Nonnull OrderRequest orderRequest, final ApiCallback _callback) throws ApiException {
+    private okhttp3.Call bodyBindSmallPostValidateBeforeCall(@jakarta.annotation.Nonnull OrderRequest orderRequest, final ApiCallback _callback) throws ApiException {
         // verify the required parameter 'orderRequest' is set
         if (orderRequest == null) {
             throw new ApiException("Missing the required parameter 'orderRequest' when calling bodyBindSmallPost(Async)");
@@ -425,7 +425,7 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public Bound bodyBindSmallPost(@javax.annotation.Nonnull OrderRequest orderRequest) throws ApiException {
+    public Bound bodyBindSmallPost(@jakarta.annotation.Nonnull OrderRequest orderRequest) throws ApiException {
         ApiResponse<Bound> localVarResp = bodyBindSmallPostWithHttpInfo(orderRequest);
         return localVarResp.getData();
     }
@@ -443,7 +443,7 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public ApiResponse<Bound> bodyBindSmallPostWithHttpInfo(@javax.annotation.Nonnull OrderRequest orderRequest) throws ApiException {
+    public ApiResponse<Bound> bodyBindSmallPostWithHttpInfo(@jakarta.annotation.Nonnull OrderRequest orderRequest) throws ApiException {
         okhttp3.Call localVarCall = bodyBindSmallPostValidateBeforeCall(orderRequest, null);
         Type localVarReturnType = new TypeToken<Bound>(){}.getType();
         return localVarApiClient.execute(localVarCall, localVarReturnType);
@@ -463,7 +463,7 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public okhttp3.Call bodyBindSmallPostAsync(@javax.annotation.Nonnull OrderRequest orderRequest, final ApiCallback<Bound> _callback) throws ApiException {
+    public okhttp3.Call bodyBindSmallPostAsync(@jakarta.annotation.Nonnull OrderRequest orderRequest, final ApiCallback<Bound> _callback) throws ApiException {
 
         okhttp3.Call localVarCall = bodyBindSmallPostValidateBeforeCall(orderRequest, _callback);
         Type localVarReturnType = new TypeToken<Bound>(){}.getType();
@@ -484,7 +484,7 @@ public class DefaultApi {
         <tr><td> 400 </td><td> Bad Request </td><td>  -  </td></tr>
      </table>
      */
-    public okhttp3.Call bodyValidateFirstErrorPostCall(@javax.annotation.Nonnull OrderRequest orderRequest, final ApiCallback _callback) throws ApiException {
+    public okhttp3.Call bodyValidateFirstErrorPostCall(@jakarta.annotation.Nonnull OrderRequest orderRequest, final ApiCallback _callback) throws ApiException {
         String basePath = null;
         // Operation Servers
         String[] localBasePaths = new String[] {  };
@@ -530,7 +530,7 @@ public class DefaultApi {
     }
 
     @SuppressWarnings("rawtypes")
-    private okhttp3.Call bodyValidateFirstErrorPostValidateBeforeCall(@javax.annotation.Nonnull OrderRequest orderRequest, final ApiCallback _callback) throws ApiException {
+    private okhttp3.Call bodyValidateFirstErrorPostValidateBeforeCall(@jakarta.annotation.Nonnull OrderRequest orderRequest, final ApiCallback _callback) throws ApiException {
         // verify the required parameter 'orderRequest' is set
         if (orderRequest == null) {
             throw new ApiException("Missing the required parameter 'orderRequest' when calling bodyValidateFirstErrorPost(Async)");
@@ -554,7 +554,7 @@ public class DefaultApi {
         <tr><td> 400 </td><td> Bad Request </td><td>  -  </td></tr>
      </table>
      */
-    public Bound bodyValidateFirstErrorPost(@javax.annotation.Nonnull OrderRequest orderRequest) throws ApiException {
+    public Bound bodyValidateFirstErrorPost(@jakarta.annotation.Nonnull OrderRequest orderRequest) throws ApiException {
         ApiResponse<Bound> localVarResp = bodyValidateFirstErrorPostWithHttpInfo(orderRequest);
         return localVarResp.getData();
     }
@@ -573,7 +573,7 @@ public class DefaultApi {
         <tr><td> 400 </td><td> Bad Request </td><td>  -  </td></tr>
      </table>
      */
-    public ApiResponse<Bound> bodyValidateFirstErrorPostWithHttpInfo(@javax.annotation.Nonnull OrderRequest orderRequest) throws ApiException {
+    public ApiResponse<Bound> bodyValidateFirstErrorPostWithHttpInfo(@jakarta.annotation.Nonnull OrderRequest orderRequest) throws ApiException {
         okhttp3.Call localVarCall = bodyValidateFirstErrorPostValidateBeforeCall(orderRequest, null);
         Type localVarReturnType = new TypeToken<Bound>(){}.getType();
         return localVarApiClient.execute(localVarCall, localVarReturnType);
@@ -594,7 +594,7 @@ public class DefaultApi {
         <tr><td> 400 </td><td> Bad Request </td><td>  -  </td></tr>
      </table>
      */
-    public okhttp3.Call bodyValidateFirstErrorPostAsync(@javax.annotation.Nonnull OrderRequest orderRequest, final ApiCallback<Bound> _callback) throws ApiException {
+    public okhttp3.Call bodyValidateFirstErrorPostAsync(@jakarta.annotation.Nonnull OrderRequest orderRequest, final ApiCallback<Bound> _callback) throws ApiException {
 
         okhttp3.Call localVarCall = bodyValidateFirstErrorPostValidateBeforeCall(orderRequest, _callback);
         Type localVarReturnType = new TypeToken<Bound>(){}.getType();
@@ -615,7 +615,7 @@ public class DefaultApi {
         <tr><td> 400 </td><td> Bad Request </td><td>  -  </td></tr>
      </table>
      */
-    public okhttp3.Call bodyValidateMediumPostCall(@javax.annotation.Nonnull OrderRequest orderRequest, final ApiCallback _callback) throws ApiException {
+    public okhttp3.Call bodyValidateMediumPostCall(@jakarta.annotation.Nonnull OrderRequest orderRequest, final ApiCallback _callback) throws ApiException {
         String basePath = null;
         // Operation Servers
         String[] localBasePaths = new String[] {  };
@@ -661,7 +661,7 @@ public class DefaultApi {
     }
 
     @SuppressWarnings("rawtypes")
-    private okhttp3.Call bodyValidateMediumPostValidateBeforeCall(@javax.annotation.Nonnull OrderRequest orderRequest, final ApiCallback _callback) throws ApiException {
+    private okhttp3.Call bodyValidateMediumPostValidateBeforeCall(@jakarta.annotation.Nonnull OrderRequest orderRequest, final ApiCallback _callback) throws ApiException {
         // verify the required parameter 'orderRequest' is set
         if (orderRequest == null) {
             throw new ApiException("Missing the required parameter 'orderRequest' when calling bodyValidateMediumPost(Async)");
@@ -685,7 +685,7 @@ public class DefaultApi {
         <tr><td> 400 </td><td> Bad Request </td><td>  -  </td></tr>
      </table>
      */
-    public Bound bodyValidateMediumPost(@javax.annotation.Nonnull OrderRequest orderRequest) throws ApiException {
+    public Bound bodyValidateMediumPost(@jakarta.annotation.Nonnull OrderRequest orderRequest) throws ApiException {
         ApiResponse<Bound> localVarResp = bodyValidateMediumPostWithHttpInfo(orderRequest);
         return localVarResp.getData();
     }
@@ -704,7 +704,7 @@ public class DefaultApi {
         <tr><td> 400 </td><td> Bad Request </td><td>  -  </td></tr>
      </table>
      */
-    public ApiResponse<Bound> bodyValidateMediumPostWithHttpInfo(@javax.annotation.Nonnull OrderRequest orderRequest) throws ApiException {
+    public ApiResponse<Bound> bodyValidateMediumPostWithHttpInfo(@jakarta.annotation.Nonnull OrderRequest orderRequest) throws ApiException {
         okhttp3.Call localVarCall = bodyValidateMediumPostValidateBeforeCall(orderRequest, null);
         Type localVarReturnType = new TypeToken<Bound>(){}.getType();
         return localVarApiClient.execute(localVarCall, localVarReturnType);
@@ -725,7 +725,7 @@ public class DefaultApi {
         <tr><td> 400 </td><td> Bad Request </td><td>  -  </td></tr>
      </table>
      */
-    public okhttp3.Call bodyValidateMediumPostAsync(@javax.annotation.Nonnull OrderRequest orderRequest, final ApiCallback<Bound> _callback) throws ApiException {
+    public okhttp3.Call bodyValidateMediumPostAsync(@jakarta.annotation.Nonnull OrderRequest orderRequest, final ApiCallback<Bound> _callback) throws ApiException {
 
         okhttp3.Call localVarCall = bodyValidateMediumPostValidateBeforeCall(orderRequest, _callback);
         Type localVarReturnType = new TypeToken<Bound>(){}.getType();
@@ -746,7 +746,7 @@ public class DefaultApi {
         <tr><td> 400 </td><td> Bad Request </td><td>  -  </td></tr>
      </table>
      */
-    public okhttp3.Call bodyValidateSmallPostCall(@javax.annotation.Nonnull OrderRequest orderRequest, final ApiCallback _callback) throws ApiException {
+    public okhttp3.Call bodyValidateSmallPostCall(@jakarta.annotation.Nonnull OrderRequest orderRequest, final ApiCallback _callback) throws ApiException {
         String basePath = null;
         // Operation Servers
         String[] localBasePaths = new String[] {  };
@@ -792,7 +792,7 @@ public class DefaultApi {
     }
 
     @SuppressWarnings("rawtypes")
-    private okhttp3.Call bodyValidateSmallPostValidateBeforeCall(@javax.annotation.Nonnull OrderRequest orderRequest, final ApiCallback _callback) throws ApiException {
+    private okhttp3.Call bodyValidateSmallPostValidateBeforeCall(@jakarta.annotation.Nonnull OrderRequest orderRequest, final ApiCallback _callback) throws ApiException {
         // verify the required parameter 'orderRequest' is set
         if (orderRequest == null) {
             throw new ApiException("Missing the required parameter 'orderRequest' when calling bodyValidateSmallPost(Async)");
@@ -816,7 +816,7 @@ public class DefaultApi {
         <tr><td> 400 </td><td> Bad Request </td><td>  -  </td></tr>
      </table>
      */
-    public Bound bodyValidateSmallPost(@javax.annotation.Nonnull OrderRequest orderRequest) throws ApiException {
+    public Bound bodyValidateSmallPost(@jakarta.annotation.Nonnull OrderRequest orderRequest) throws ApiException {
         ApiResponse<Bound> localVarResp = bodyValidateSmallPostWithHttpInfo(orderRequest);
         return localVarResp.getData();
     }
@@ -835,7 +835,7 @@ public class DefaultApi {
         <tr><td> 400 </td><td> Bad Request </td><td>  -  </td></tr>
      </table>
      */
-    public ApiResponse<Bound> bodyValidateSmallPostWithHttpInfo(@javax.annotation.Nonnull OrderRequest orderRequest) throws ApiException {
+    public ApiResponse<Bound> bodyValidateSmallPostWithHttpInfo(@jakarta.annotation.Nonnull OrderRequest orderRequest) throws ApiException {
         okhttp3.Call localVarCall = bodyValidateSmallPostValidateBeforeCall(orderRequest, null);
         Type localVarReturnType = new TypeToken<Bound>(){}.getType();
         return localVarApiClient.execute(localVarCall, localVarReturnType);
@@ -856,7 +856,7 @@ public class DefaultApi {
         <tr><td> 400 </td><td> Bad Request </td><td>  -  </td></tr>
      </table>
      */
-    public okhttp3.Call bodyValidateSmallPostAsync(@javax.annotation.Nonnull OrderRequest orderRequest, final ApiCallback<Bound> _callback) throws ApiException {
+    public okhttp3.Call bodyValidateSmallPostAsync(@jakarta.annotation.Nonnull OrderRequest orderRequest, final ApiCallback<Bound> _callback) throws ApiException {
 
         okhttp3.Call localVarCall = bodyValidateSmallPostValidateBeforeCall(orderRequest, _callback);
         Type localVarReturnType = new TypeToken<Bound>(){}.getType();
@@ -1229,7 +1229,7 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public okhttp3.Call cacheVaryManyGetCall(@javax.annotation.Nullable String xRbChannel, @javax.annotation.Nullable String xRbRegion, @javax.annotation.Nullable String xRbTenant, final ApiCallback _callback) throws ApiException {
+    public okhttp3.Call cacheVaryManyGetCall(@jakarta.annotation.Nullable String xRbChannel, @jakarta.annotation.Nullable String xRbRegion, @jakarta.annotation.Nullable String xRbTenant, final ApiCallback _callback) throws ApiException {
         String basePath = null;
         // Operation Servers
         String[] localBasePaths = new String[] {  };
@@ -1289,7 +1289,7 @@ public class DefaultApi {
     }
 
     @SuppressWarnings("rawtypes")
-    private okhttp3.Call cacheVaryManyGetValidateBeforeCall(@javax.annotation.Nullable String xRbChannel, @javax.annotation.Nullable String xRbRegion, @javax.annotation.Nullable String xRbTenant, final ApiCallback _callback) throws ApiException {
+    private okhttp3.Call cacheVaryManyGetValidateBeforeCall(@jakarta.annotation.Nullable String xRbChannel, @jakarta.annotation.Nullable String xRbRegion, @jakarta.annotation.Nullable String xRbTenant, final ApiCallback _callback) throws ApiException {
         return cacheVaryManyGetCall(xRbChannel, xRbRegion, xRbTenant, _callback);
 
     }
@@ -1309,7 +1309,7 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public Payload cacheVaryManyGet(@javax.annotation.Nullable String xRbChannel, @javax.annotation.Nullable String xRbRegion, @javax.annotation.Nullable String xRbTenant) throws ApiException {
+    public Payload cacheVaryManyGet(@jakarta.annotation.Nullable String xRbChannel, @jakarta.annotation.Nullable String xRbRegion, @jakarta.annotation.Nullable String xRbTenant) throws ApiException {
         ApiResponse<Payload> localVarResp = cacheVaryManyGetWithHttpInfo(xRbChannel, xRbRegion, xRbTenant);
         return localVarResp.getData();
     }
@@ -1329,7 +1329,7 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public ApiResponse<Payload> cacheVaryManyGetWithHttpInfo(@javax.annotation.Nullable String xRbChannel, @javax.annotation.Nullable String xRbRegion, @javax.annotation.Nullable String xRbTenant) throws ApiException {
+    public ApiResponse<Payload> cacheVaryManyGetWithHttpInfo(@jakarta.annotation.Nullable String xRbChannel, @jakarta.annotation.Nullable String xRbRegion, @jakarta.annotation.Nullable String xRbTenant) throws ApiException {
         okhttp3.Call localVarCall = cacheVaryManyGetValidateBeforeCall(xRbChannel, xRbRegion, xRbTenant, null);
         Type localVarReturnType = new TypeToken<Payload>(){}.getType();
         return localVarApiClient.execute(localVarCall, localVarReturnType);
@@ -1351,7 +1351,7 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public okhttp3.Call cacheVaryManyGetAsync(@javax.annotation.Nullable String xRbChannel, @javax.annotation.Nullable String xRbRegion, @javax.annotation.Nullable String xRbTenant, final ApiCallback<Payload> _callback) throws ApiException {
+    public okhttp3.Call cacheVaryManyGetAsync(@jakarta.annotation.Nullable String xRbChannel, @jakarta.annotation.Nullable String xRbRegion, @jakarta.annotation.Nullable String xRbTenant, final ApiCallback<Payload> _callback) throws ApiException {
 
         okhttp3.Call localVarCall = cacheVaryManyGetValidateBeforeCall(xRbChannel, xRbRegion, xRbTenant, _callback);
         Type localVarReturnType = new TypeToken<Payload>(){}.getType();
@@ -1371,7 +1371,7 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public okhttp3.Call cacheVaryOneGetCall(@javax.annotation.Nullable String xRbTenant, final ApiCallback _callback) throws ApiException {
+    public okhttp3.Call cacheVaryOneGetCall(@jakarta.annotation.Nullable String xRbTenant, final ApiCallback _callback) throws ApiException {
         String basePath = null;
         // Operation Servers
         String[] localBasePaths = new String[] {  };
@@ -1421,7 +1421,7 @@ public class DefaultApi {
     }
 
     @SuppressWarnings("rawtypes")
-    private okhttp3.Call cacheVaryOneGetValidateBeforeCall(@javax.annotation.Nullable String xRbTenant, final ApiCallback _callback) throws ApiException {
+    private okhttp3.Call cacheVaryOneGetValidateBeforeCall(@jakarta.annotation.Nullable String xRbTenant, final ApiCallback _callback) throws ApiException {
         return cacheVaryOneGetCall(xRbTenant, _callback);
 
     }
@@ -1439,7 +1439,7 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public Payload cacheVaryOneGet(@javax.annotation.Nullable String xRbTenant) throws ApiException {
+    public Payload cacheVaryOneGet(@jakarta.annotation.Nullable String xRbTenant) throws ApiException {
         ApiResponse<Payload> localVarResp = cacheVaryOneGetWithHttpInfo(xRbTenant);
         return localVarResp.getData();
     }
@@ -1457,7 +1457,7 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public ApiResponse<Payload> cacheVaryOneGetWithHttpInfo(@javax.annotation.Nullable String xRbTenant) throws ApiException {
+    public ApiResponse<Payload> cacheVaryOneGetWithHttpInfo(@jakarta.annotation.Nullable String xRbTenant) throws ApiException {
         okhttp3.Call localVarCall = cacheVaryOneGetValidateBeforeCall(xRbTenant, null);
         Type localVarReturnType = new TypeToken<Payload>(){}.getType();
         return localVarApiClient.execute(localVarCall, localVarReturnType);
@@ -1477,7 +1477,7 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public okhttp3.Call cacheVaryOneGetAsync(@javax.annotation.Nullable String xRbTenant, final ApiCallback<Payload> _callback) throws ApiException {
+    public okhttp3.Call cacheVaryOneGetAsync(@jakarta.annotation.Nullable String xRbTenant, final ApiCallback<Payload> _callback) throws ApiException {
 
         okhttp3.Call localVarCall = cacheVaryOneGetValidateBeforeCall(xRbTenant, _callback);
         Type localVarReturnType = new TypeToken<Payload>(){}.getType();
@@ -2088,7 +2088,7 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public okhttp3.Call formsMultipartPostCall(@javax.annotation.Nullable String tenant, @javax.annotation.Nullable String requestId, @javax.annotation.Nullable File _file, final ApiCallback _callback) throws ApiException {
+    public okhttp3.Call formsMultipartPostCall(@jakarta.annotation.Nullable String tenant, @jakarta.annotation.Nullable String requestId, @jakarta.annotation.Nullable File _file, final ApiCallback _callback) throws ApiException {
         String basePath = null;
         // Operation Servers
         String[] localBasePaths = new String[] {  };
@@ -2146,7 +2146,7 @@ public class DefaultApi {
     }
 
     @SuppressWarnings("rawtypes")
-    private okhttp3.Call formsMultipartPostValidateBeforeCall(@javax.annotation.Nullable String tenant, @javax.annotation.Nullable String requestId, @javax.annotation.Nullable File _file, final ApiCallback _callback) throws ApiException {
+    private okhttp3.Call formsMultipartPostValidateBeforeCall(@jakarta.annotation.Nullable String tenant, @jakarta.annotation.Nullable String requestId, @jakarta.annotation.Nullable File _file, final ApiCallback _callback) throws ApiException {
         return formsMultipartPostCall(tenant, requestId, _file, _callback);
 
     }
@@ -2166,7 +2166,7 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public Uploaded formsMultipartPost(@javax.annotation.Nullable String tenant, @javax.annotation.Nullable String requestId, @javax.annotation.Nullable File _file) throws ApiException {
+    public Uploaded formsMultipartPost(@jakarta.annotation.Nullable String tenant, @jakarta.annotation.Nullable String requestId, @jakarta.annotation.Nullable File _file) throws ApiException {
         ApiResponse<Uploaded> localVarResp = formsMultipartPostWithHttpInfo(tenant, requestId, _file);
         return localVarResp.getData();
     }
@@ -2186,7 +2186,7 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public ApiResponse<Uploaded> formsMultipartPostWithHttpInfo(@javax.annotation.Nullable String tenant, @javax.annotation.Nullable String requestId, @javax.annotation.Nullable File _file) throws ApiException {
+    public ApiResponse<Uploaded> formsMultipartPostWithHttpInfo(@jakarta.annotation.Nullable String tenant, @jakarta.annotation.Nullable String requestId, @jakarta.annotation.Nullable File _file) throws ApiException {
         okhttp3.Call localVarCall = formsMultipartPostValidateBeforeCall(tenant, requestId, _file, null);
         Type localVarReturnType = new TypeToken<Uploaded>(){}.getType();
         return localVarApiClient.execute(localVarCall, localVarReturnType);
@@ -2208,7 +2208,7 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public okhttp3.Call formsMultipartPostAsync(@javax.annotation.Nullable String tenant, @javax.annotation.Nullable String requestId, @javax.annotation.Nullable File _file, final ApiCallback<Uploaded> _callback) throws ApiException {
+    public okhttp3.Call formsMultipartPostAsync(@jakarta.annotation.Nullable String tenant, @jakarta.annotation.Nullable String requestId, @jakarta.annotation.Nullable File _file, final ApiCallback<Uploaded> _callback) throws ApiException {
 
         okhttp3.Call localVarCall = formsMultipartPostValidateBeforeCall(tenant, requestId, _file, _callback);
         Type localVarReturnType = new TypeToken<Uploaded>(){}.getType();
@@ -2235,7 +2235,7 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public okhttp3.Call formsUrlencodedPostCall(@javax.annotation.Nonnull Integer page, @javax.annotation.Nonnull Integer size, @javax.annotation.Nonnull Integer minPrice, @javax.annotation.Nonnull Integer maxPrice, @javax.annotation.Nullable String status, @javax.annotation.Nullable String category, @javax.annotation.Nullable String sort, @javax.annotation.Nullable String q, final ApiCallback _callback) throws ApiException {
+    public okhttp3.Call formsUrlencodedPostCall(@jakarta.annotation.Nonnull Integer page, @jakarta.annotation.Nonnull Integer size, @jakarta.annotation.Nonnull Integer minPrice, @jakarta.annotation.Nonnull Integer maxPrice, @jakarta.annotation.Nullable String status, @jakarta.annotation.Nullable String category, @jakarta.annotation.Nullable String sort, @jakarta.annotation.Nullable String q, final ApiCallback _callback) throws ApiException {
         String basePath = null;
         // Operation Servers
         String[] localBasePaths = new String[] {  };
@@ -2313,7 +2313,7 @@ public class DefaultApi {
     }
 
     @SuppressWarnings("rawtypes")
-    private okhttp3.Call formsUrlencodedPostValidateBeforeCall(@javax.annotation.Nonnull Integer page, @javax.annotation.Nonnull Integer size, @javax.annotation.Nonnull Integer minPrice, @javax.annotation.Nonnull Integer maxPrice, @javax.annotation.Nullable String status, @javax.annotation.Nullable String category, @javax.annotation.Nullable String sort, @javax.annotation.Nullable String q, final ApiCallback _callback) throws ApiException {
+    private okhttp3.Call formsUrlencodedPostValidateBeforeCall(@jakarta.annotation.Nonnull Integer page, @jakarta.annotation.Nonnull Integer size, @jakarta.annotation.Nonnull Integer minPrice, @jakarta.annotation.Nonnull Integer maxPrice, @jakarta.annotation.Nullable String status, @jakarta.annotation.Nullable String category, @jakarta.annotation.Nullable String sort, @jakarta.annotation.Nullable String q, final ApiCallback _callback) throws ApiException {
         // verify the required parameter 'page' is set
         if (page == null) {
             throw new ApiException("Missing the required parameter 'page' when calling formsUrlencodedPost(Async)");
@@ -2358,7 +2358,7 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public Echoed formsUrlencodedPost(@javax.annotation.Nonnull Integer page, @javax.annotation.Nonnull Integer size, @javax.annotation.Nonnull Integer minPrice, @javax.annotation.Nonnull Integer maxPrice, @javax.annotation.Nullable String status, @javax.annotation.Nullable String category, @javax.annotation.Nullable String sort, @javax.annotation.Nullable String q) throws ApiException {
+    public Echoed formsUrlencodedPost(@jakarta.annotation.Nonnull Integer page, @jakarta.annotation.Nonnull Integer size, @jakarta.annotation.Nonnull Integer minPrice, @jakarta.annotation.Nonnull Integer maxPrice, @jakarta.annotation.Nullable String status, @jakarta.annotation.Nullable String category, @jakarta.annotation.Nullable String sort, @jakarta.annotation.Nullable String q) throws ApiException {
         ApiResponse<Echoed> localVarResp = formsUrlencodedPostWithHttpInfo(page, size, minPrice, maxPrice, status, category, sort, q);
         return localVarResp.getData();
     }
@@ -2383,7 +2383,7 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public ApiResponse<Echoed> formsUrlencodedPostWithHttpInfo(@javax.annotation.Nonnull Integer page, @javax.annotation.Nonnull Integer size, @javax.annotation.Nonnull Integer minPrice, @javax.annotation.Nonnull Integer maxPrice, @javax.annotation.Nullable String status, @javax.annotation.Nullable String category, @javax.annotation.Nullable String sort, @javax.annotation.Nullable String q) throws ApiException {
+    public ApiResponse<Echoed> formsUrlencodedPostWithHttpInfo(@jakarta.annotation.Nonnull Integer page, @jakarta.annotation.Nonnull Integer size, @jakarta.annotation.Nonnull Integer minPrice, @jakarta.annotation.Nonnull Integer maxPrice, @jakarta.annotation.Nullable String status, @jakarta.annotation.Nullable String category, @jakarta.annotation.Nullable String sort, @jakarta.annotation.Nullable String q) throws ApiException {
         okhttp3.Call localVarCall = formsUrlencodedPostValidateBeforeCall(page, size, minPrice, maxPrice, status, category, sort, q, null);
         Type localVarReturnType = new TypeToken<Echoed>(){}.getType();
         return localVarApiClient.execute(localVarCall, localVarReturnType);
@@ -2410,7 +2410,7 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public okhttp3.Call formsUrlencodedPostAsync(@javax.annotation.Nonnull Integer page, @javax.annotation.Nonnull Integer size, @javax.annotation.Nonnull Integer minPrice, @javax.annotation.Nonnull Integer maxPrice, @javax.annotation.Nullable String status, @javax.annotation.Nullable String category, @javax.annotation.Nullable String sort, @javax.annotation.Nullable String q, final ApiCallback<Echoed> _callback) throws ApiException {
+    public okhttp3.Call formsUrlencodedPostAsync(@jakarta.annotation.Nonnull Integer page, @jakarta.annotation.Nonnull Integer size, @jakarta.annotation.Nonnull Integer minPrice, @jakarta.annotation.Nonnull Integer maxPrice, @jakarta.annotation.Nullable String status, @jakarta.annotation.Nullable String category, @jakarta.annotation.Nullable String sort, @jakarta.annotation.Nullable String q, final ApiCallback<Echoed> _callback) throws ApiException {
 
         okhttp3.Call localVarCall = formsUrlencodedPostValidateBeforeCall(page, size, minPrice, maxPrice, status, category, sort, q, _callback);
         Type localVarReturnType = new TypeToken<Echoed>(){}.getType();
@@ -2432,7 +2432,7 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public okhttp3.Call headersBindGetCall(@javax.annotation.Nonnull String xRbTenant, @javax.annotation.Nonnull String xRbRequestId, @javax.annotation.Nonnull Integer xRbAccount, final ApiCallback _callback) throws ApiException {
+    public okhttp3.Call headersBindGetCall(@jakarta.annotation.Nonnull String xRbTenant, @jakarta.annotation.Nonnull String xRbRequestId, @jakarta.annotation.Nonnull Integer xRbAccount, final ApiCallback _callback) throws ApiException {
         String basePath = null;
         // Operation Servers
         String[] localBasePaths = new String[] {  };
@@ -2492,7 +2492,7 @@ public class DefaultApi {
     }
 
     @SuppressWarnings("rawtypes")
-    private okhttp3.Call headersBindGetValidateBeforeCall(@javax.annotation.Nonnull String xRbTenant, @javax.annotation.Nonnull String xRbRequestId, @javax.annotation.Nonnull Integer xRbAccount, final ApiCallback _callback) throws ApiException {
+    private okhttp3.Call headersBindGetValidateBeforeCall(@jakarta.annotation.Nonnull String xRbTenant, @jakarta.annotation.Nonnull String xRbRequestId, @jakarta.annotation.Nonnull Integer xRbAccount, final ApiCallback _callback) throws ApiException {
         // verify the required parameter 'xRbTenant' is set
         if (xRbTenant == null) {
             throw new ApiException("Missing the required parameter 'xRbTenant' when calling headersBindGet(Async)");
@@ -2527,7 +2527,7 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public Echoed headersBindGet(@javax.annotation.Nonnull String xRbTenant, @javax.annotation.Nonnull String xRbRequestId, @javax.annotation.Nonnull Integer xRbAccount) throws ApiException {
+    public Echoed headersBindGet(@jakarta.annotation.Nonnull String xRbTenant, @jakarta.annotation.Nonnull String xRbRequestId, @jakarta.annotation.Nonnull Integer xRbAccount) throws ApiException {
         ApiResponse<Echoed> localVarResp = headersBindGetWithHttpInfo(xRbTenant, xRbRequestId, xRbAccount);
         return localVarResp.getData();
     }
@@ -2547,7 +2547,7 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public ApiResponse<Echoed> headersBindGetWithHttpInfo(@javax.annotation.Nonnull String xRbTenant, @javax.annotation.Nonnull String xRbRequestId, @javax.annotation.Nonnull Integer xRbAccount) throws ApiException {
+    public ApiResponse<Echoed> headersBindGetWithHttpInfo(@jakarta.annotation.Nonnull String xRbTenant, @jakarta.annotation.Nonnull String xRbRequestId, @jakarta.annotation.Nonnull Integer xRbAccount) throws ApiException {
         okhttp3.Call localVarCall = headersBindGetValidateBeforeCall(xRbTenant, xRbRequestId, xRbAccount, null);
         Type localVarReturnType = new TypeToken<Echoed>(){}.getType();
         return localVarApiClient.execute(localVarCall, localVarReturnType);
@@ -2569,7 +2569,7 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public okhttp3.Call headersBindGetAsync(@javax.annotation.Nonnull String xRbTenant, @javax.annotation.Nonnull String xRbRequestId, @javax.annotation.Nonnull Integer xRbAccount, final ApiCallback<Echoed> _callback) throws ApiException {
+    public okhttp3.Call headersBindGetAsync(@jakarta.annotation.Nonnull String xRbTenant, @jakarta.annotation.Nonnull String xRbRequestId, @jakarta.annotation.Nonnull Integer xRbAccount, final ApiCallback<Echoed> _callback) throws ApiException {
 
         okhttp3.Call localVarCall = headersBindGetValidateBeforeCall(xRbTenant, xRbRequestId, xRbAccount, _callback);
         Type localVarReturnType = new TypeToken<Echoed>(){}.getType();
@@ -2824,7 +2824,7 @@ public class DefaultApi {
         <tr><td> 404 </td><td> Not Found </td><td>  -  </td></tr>
      </table>
      */
-    public okhttp3.Call itemsIdDeleteCall(@javax.annotation.Nonnull Integer id, final ApiCallback _callback) throws ApiException {
+    public okhttp3.Call itemsIdDeleteCall(@jakarta.annotation.Nonnull Integer id, final ApiCallback _callback) throws ApiException {
         String basePath = null;
         // Operation Servers
         String[] localBasePaths = new String[] {  };
@@ -2869,7 +2869,7 @@ public class DefaultApi {
     }
 
     @SuppressWarnings("rawtypes")
-    private okhttp3.Call itemsIdDeleteValidateBeforeCall(@javax.annotation.Nonnull Integer id, final ApiCallback _callback) throws ApiException {
+    private okhttp3.Call itemsIdDeleteValidateBeforeCall(@jakarta.annotation.Nonnull Integer id, final ApiCallback _callback) throws ApiException {
         // verify the required parameter 'id' is set
         if (id == null) {
             throw new ApiException("Missing the required parameter 'id' when calling itemsIdDelete(Async)");
@@ -2892,7 +2892,7 @@ public class DefaultApi {
         <tr><td> 404 </td><td> Not Found </td><td>  -  </td></tr>
      </table>
      */
-    public void itemsIdDelete(@javax.annotation.Nonnull Integer id) throws ApiException {
+    public void itemsIdDelete(@jakarta.annotation.Nonnull Integer id) throws ApiException {
         itemsIdDeleteWithHttpInfo(id);
     }
 
@@ -2910,7 +2910,7 @@ public class DefaultApi {
         <tr><td> 404 </td><td> Not Found </td><td>  -  </td></tr>
      </table>
      */
-    public ApiResponse<Void> itemsIdDeleteWithHttpInfo(@javax.annotation.Nonnull Integer id) throws ApiException {
+    public ApiResponse<Void> itemsIdDeleteWithHttpInfo(@jakarta.annotation.Nonnull Integer id) throws ApiException {
         okhttp3.Call localVarCall = itemsIdDeleteValidateBeforeCall(id, null);
         return localVarApiClient.execute(localVarCall);
     }
@@ -2930,7 +2930,7 @@ public class DefaultApi {
         <tr><td> 404 </td><td> Not Found </td><td>  -  </td></tr>
      </table>
      */
-    public okhttp3.Call itemsIdDeleteAsync(@javax.annotation.Nonnull Integer id, final ApiCallback<Void> _callback) throws ApiException {
+    public okhttp3.Call itemsIdDeleteAsync(@jakarta.annotation.Nonnull Integer id, final ApiCallback<Void> _callback) throws ApiException {
 
         okhttp3.Call localVarCall = itemsIdDeleteValidateBeforeCall(id, _callback);
         localVarApiClient.executeAsync(localVarCall, _callback);
@@ -2950,7 +2950,7 @@ public class DefaultApi {
         <tr><td> 404 </td><td> Not Found </td><td>  -  </td></tr>
      </table>
      */
-    public okhttp3.Call itemsIdGetCall(@javax.annotation.Nonnull Integer id, final ApiCallback _callback) throws ApiException {
+    public okhttp3.Call itemsIdGetCall(@jakarta.annotation.Nonnull Integer id, final ApiCallback _callback) throws ApiException {
         String basePath = null;
         // Operation Servers
         String[] localBasePaths = new String[] {  };
@@ -2996,7 +2996,7 @@ public class DefaultApi {
     }
 
     @SuppressWarnings("rawtypes")
-    private okhttp3.Call itemsIdGetValidateBeforeCall(@javax.annotation.Nonnull Integer id, final ApiCallback _callback) throws ApiException {
+    private okhttp3.Call itemsIdGetValidateBeforeCall(@jakarta.annotation.Nonnull Integer id, final ApiCallback _callback) throws ApiException {
         // verify the required parameter 'id' is set
         if (id == null) {
             throw new ApiException("Missing the required parameter 'id' when calling itemsIdGet(Async)");
@@ -3020,7 +3020,7 @@ public class DefaultApi {
         <tr><td> 404 </td><td> Not Found </td><td>  -  </td></tr>
      </table>
      */
-    public Item itemsIdGet(@javax.annotation.Nonnull Integer id) throws ApiException {
+    public Item itemsIdGet(@jakarta.annotation.Nonnull Integer id) throws ApiException {
         ApiResponse<Item> localVarResp = itemsIdGetWithHttpInfo(id);
         return localVarResp.getData();
     }
@@ -3039,7 +3039,7 @@ public class DefaultApi {
         <tr><td> 404 </td><td> Not Found </td><td>  -  </td></tr>
      </table>
      */
-    public ApiResponse<Item> itemsIdGetWithHttpInfo(@javax.annotation.Nonnull Integer id) throws ApiException {
+    public ApiResponse<Item> itemsIdGetWithHttpInfo(@jakarta.annotation.Nonnull Integer id) throws ApiException {
         okhttp3.Call localVarCall = itemsIdGetValidateBeforeCall(id, null);
         Type localVarReturnType = new TypeToken<Item>(){}.getType();
         return localVarApiClient.execute(localVarCall, localVarReturnType);
@@ -3060,7 +3060,7 @@ public class DefaultApi {
         <tr><td> 404 </td><td> Not Found </td><td>  -  </td></tr>
      </table>
      */
-    public okhttp3.Call itemsIdGetAsync(@javax.annotation.Nonnull Integer id, final ApiCallback<Item> _callback) throws ApiException {
+    public okhttp3.Call itemsIdGetAsync(@jakarta.annotation.Nonnull Integer id, final ApiCallback<Item> _callback) throws ApiException {
 
         okhttp3.Call localVarCall = itemsIdGetValidateBeforeCall(id, _callback);
         Type localVarReturnType = new TypeToken<Item>(){}.getType();
@@ -3081,7 +3081,7 @@ public class DefaultApi {
         <tr><td> 404 </td><td> Not Found </td><td>  -  </td></tr>
      </table>
      */
-    public okhttp3.Call itemsIdHeadCall(@javax.annotation.Nonnull Integer id, final ApiCallback _callback) throws ApiException {
+    public okhttp3.Call itemsIdHeadCall(@jakarta.annotation.Nonnull Integer id, final ApiCallback _callback) throws ApiException {
         String basePath = null;
         // Operation Servers
         String[] localBasePaths = new String[] {  };
@@ -3126,7 +3126,7 @@ public class DefaultApi {
     }
 
     @SuppressWarnings("rawtypes")
-    private okhttp3.Call itemsIdHeadValidateBeforeCall(@javax.annotation.Nonnull Integer id, final ApiCallback _callback) throws ApiException {
+    private okhttp3.Call itemsIdHeadValidateBeforeCall(@jakarta.annotation.Nonnull Integer id, final ApiCallback _callback) throws ApiException {
         // verify the required parameter 'id' is set
         if (id == null) {
             throw new ApiException("Missing the required parameter 'id' when calling itemsIdHead(Async)");
@@ -3149,7 +3149,7 @@ public class DefaultApi {
         <tr><td> 404 </td><td> Not Found </td><td>  -  </td></tr>
      </table>
      */
-    public void itemsIdHead(@javax.annotation.Nonnull Integer id) throws ApiException {
+    public void itemsIdHead(@jakarta.annotation.Nonnull Integer id) throws ApiException {
         itemsIdHeadWithHttpInfo(id);
     }
 
@@ -3167,7 +3167,7 @@ public class DefaultApi {
         <tr><td> 404 </td><td> Not Found </td><td>  -  </td></tr>
      </table>
      */
-    public ApiResponse<Void> itemsIdHeadWithHttpInfo(@javax.annotation.Nonnull Integer id) throws ApiException {
+    public ApiResponse<Void> itemsIdHeadWithHttpInfo(@jakarta.annotation.Nonnull Integer id) throws ApiException {
         okhttp3.Call localVarCall = itemsIdHeadValidateBeforeCall(id, null);
         return localVarApiClient.execute(localVarCall);
     }
@@ -3187,7 +3187,7 @@ public class DefaultApi {
         <tr><td> 404 </td><td> Not Found </td><td>  -  </td></tr>
      </table>
      */
-    public okhttp3.Call itemsIdHeadAsync(@javax.annotation.Nonnull Integer id, final ApiCallback<Void> _callback) throws ApiException {
+    public okhttp3.Call itemsIdHeadAsync(@jakarta.annotation.Nonnull Integer id, final ApiCallback<Void> _callback) throws ApiException {
 
         okhttp3.Call localVarCall = itemsIdHeadValidateBeforeCall(id, _callback);
         localVarApiClient.executeAsync(localVarCall, _callback);
@@ -3208,7 +3208,7 @@ public class DefaultApi {
         <tr><td> 404 </td><td> Not Found </td><td>  -  </td></tr>
      </table>
      */
-    public okhttp3.Call itemsIdPatchCall(@javax.annotation.Nonnull Integer id, @javax.annotation.Nonnull ItemPatch itemPatch, final ApiCallback _callback) throws ApiException {
+    public okhttp3.Call itemsIdPatchCall(@jakarta.annotation.Nonnull Integer id, @jakarta.annotation.Nonnull ItemPatch itemPatch, final ApiCallback _callback) throws ApiException {
         String basePath = null;
         // Operation Servers
         String[] localBasePaths = new String[] {  };
@@ -3255,7 +3255,7 @@ public class DefaultApi {
     }
 
     @SuppressWarnings("rawtypes")
-    private okhttp3.Call itemsIdPatchValidateBeforeCall(@javax.annotation.Nonnull Integer id, @javax.annotation.Nonnull ItemPatch itemPatch, final ApiCallback _callback) throws ApiException {
+    private okhttp3.Call itemsIdPatchValidateBeforeCall(@jakarta.annotation.Nonnull Integer id, @jakarta.annotation.Nonnull ItemPatch itemPatch, final ApiCallback _callback) throws ApiException {
         // verify the required parameter 'id' is set
         if (id == null) {
             throw new ApiException("Missing the required parameter 'id' when calling itemsIdPatch(Async)");
@@ -3285,7 +3285,7 @@ public class DefaultApi {
         <tr><td> 404 </td><td> Not Found </td><td>  -  </td></tr>
      </table>
      */
-    public Item itemsIdPatch(@javax.annotation.Nonnull Integer id, @javax.annotation.Nonnull ItemPatch itemPatch) throws ApiException {
+    public Item itemsIdPatch(@jakarta.annotation.Nonnull Integer id, @jakarta.annotation.Nonnull ItemPatch itemPatch) throws ApiException {
         ApiResponse<Item> localVarResp = itemsIdPatchWithHttpInfo(id, itemPatch);
         return localVarResp.getData();
     }
@@ -3305,7 +3305,7 @@ public class DefaultApi {
         <tr><td> 404 </td><td> Not Found </td><td>  -  </td></tr>
      </table>
      */
-    public ApiResponse<Item> itemsIdPatchWithHttpInfo(@javax.annotation.Nonnull Integer id, @javax.annotation.Nonnull ItemPatch itemPatch) throws ApiException {
+    public ApiResponse<Item> itemsIdPatchWithHttpInfo(@jakarta.annotation.Nonnull Integer id, @jakarta.annotation.Nonnull ItemPatch itemPatch) throws ApiException {
         okhttp3.Call localVarCall = itemsIdPatchValidateBeforeCall(id, itemPatch, null);
         Type localVarReturnType = new TypeToken<Item>(){}.getType();
         return localVarApiClient.execute(localVarCall, localVarReturnType);
@@ -3327,7 +3327,7 @@ public class DefaultApi {
         <tr><td> 404 </td><td> Not Found </td><td>  -  </td></tr>
      </table>
      */
-    public okhttp3.Call itemsIdPatchAsync(@javax.annotation.Nonnull Integer id, @javax.annotation.Nonnull ItemPatch itemPatch, final ApiCallback<Item> _callback) throws ApiException {
+    public okhttp3.Call itemsIdPatchAsync(@jakarta.annotation.Nonnull Integer id, @jakarta.annotation.Nonnull ItemPatch itemPatch, final ApiCallback<Item> _callback) throws ApiException {
 
         okhttp3.Call localVarCall = itemsIdPatchValidateBeforeCall(id, itemPatch, _callback);
         Type localVarReturnType = new TypeToken<Item>(){}.getType();
@@ -3348,7 +3348,7 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public okhttp3.Call itemsIdPutCall(@javax.annotation.Nonnull Integer id, @javax.annotation.Nonnull NewItem newItem, final ApiCallback _callback) throws ApiException {
+    public okhttp3.Call itemsIdPutCall(@jakarta.annotation.Nonnull Integer id, @jakarta.annotation.Nonnull NewItem newItem, final ApiCallback _callback) throws ApiException {
         String basePath = null;
         // Operation Servers
         String[] localBasePaths = new String[] {  };
@@ -3395,7 +3395,7 @@ public class DefaultApi {
     }
 
     @SuppressWarnings("rawtypes")
-    private okhttp3.Call itemsIdPutValidateBeforeCall(@javax.annotation.Nonnull Integer id, @javax.annotation.Nonnull NewItem newItem, final ApiCallback _callback) throws ApiException {
+    private okhttp3.Call itemsIdPutValidateBeforeCall(@jakarta.annotation.Nonnull Integer id, @jakarta.annotation.Nonnull NewItem newItem, final ApiCallback _callback) throws ApiException {
         // verify the required parameter 'id' is set
         if (id == null) {
             throw new ApiException("Missing the required parameter 'id' when calling itemsIdPut(Async)");
@@ -3424,7 +3424,7 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public Item itemsIdPut(@javax.annotation.Nonnull Integer id, @javax.annotation.Nonnull NewItem newItem) throws ApiException {
+    public Item itemsIdPut(@jakarta.annotation.Nonnull Integer id, @jakarta.annotation.Nonnull NewItem newItem) throws ApiException {
         ApiResponse<Item> localVarResp = itemsIdPutWithHttpInfo(id, newItem);
         return localVarResp.getData();
     }
@@ -3443,7 +3443,7 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public ApiResponse<Item> itemsIdPutWithHttpInfo(@javax.annotation.Nonnull Integer id, @javax.annotation.Nonnull NewItem newItem) throws ApiException {
+    public ApiResponse<Item> itemsIdPutWithHttpInfo(@jakarta.annotation.Nonnull Integer id, @jakarta.annotation.Nonnull NewItem newItem) throws ApiException {
         okhttp3.Call localVarCall = itemsIdPutValidateBeforeCall(id, newItem, null);
         Type localVarReturnType = new TypeToken<Item>(){}.getType();
         return localVarApiClient.execute(localVarCall, localVarReturnType);
@@ -3464,7 +3464,7 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public okhttp3.Call itemsIdPutAsync(@javax.annotation.Nonnull Integer id, @javax.annotation.Nonnull NewItem newItem, final ApiCallback<Item> _callback) throws ApiException {
+    public okhttp3.Call itemsIdPutAsync(@jakarta.annotation.Nonnull Integer id, @jakarta.annotation.Nonnull NewItem newItem, final ApiCallback<Item> _callback) throws ApiException {
 
         okhttp3.Call localVarCall = itemsIdPutValidateBeforeCall(id, newItem, _callback);
         Type localVarReturnType = new TypeToken<Item>(){}.getType();
@@ -3484,7 +3484,7 @@ public class DefaultApi {
         <tr><td> 201 </td><td> Created </td><td>  -  </td></tr>
      </table>
      */
-    public okhttp3.Call itemsPostCall(@javax.annotation.Nonnull NewItem newItem, final ApiCallback _callback) throws ApiException {
+    public okhttp3.Call itemsPostCall(@jakarta.annotation.Nonnull NewItem newItem, final ApiCallback _callback) throws ApiException {
         String basePath = null;
         // Operation Servers
         String[] localBasePaths = new String[] {  };
@@ -3530,7 +3530,7 @@ public class DefaultApi {
     }
 
     @SuppressWarnings("rawtypes")
-    private okhttp3.Call itemsPostValidateBeforeCall(@javax.annotation.Nonnull NewItem newItem, final ApiCallback _callback) throws ApiException {
+    private okhttp3.Call itemsPostValidateBeforeCall(@jakarta.annotation.Nonnull NewItem newItem, final ApiCallback _callback) throws ApiException {
         // verify the required parameter 'newItem' is set
         if (newItem == null) {
             throw new ApiException("Missing the required parameter 'newItem' when calling itemsPost(Async)");
@@ -3553,7 +3553,7 @@ public class DefaultApi {
         <tr><td> 201 </td><td> Created </td><td>  -  </td></tr>
      </table>
      */
-    public Item itemsPost(@javax.annotation.Nonnull NewItem newItem) throws ApiException {
+    public Item itemsPost(@jakarta.annotation.Nonnull NewItem newItem) throws ApiException {
         ApiResponse<Item> localVarResp = itemsPostWithHttpInfo(newItem);
         return localVarResp.getData();
     }
@@ -3571,7 +3571,7 @@ public class DefaultApi {
         <tr><td> 201 </td><td> Created </td><td>  -  </td></tr>
      </table>
      */
-    public ApiResponse<Item> itemsPostWithHttpInfo(@javax.annotation.Nonnull NewItem newItem) throws ApiException {
+    public ApiResponse<Item> itemsPostWithHttpInfo(@jakarta.annotation.Nonnull NewItem newItem) throws ApiException {
         okhttp3.Call localVarCall = itemsPostValidateBeforeCall(newItem, null);
         Type localVarReturnType = new TypeToken<Item>(){}.getType();
         return localVarApiClient.execute(localVarCall, localVarReturnType);
@@ -3591,7 +3591,7 @@ public class DefaultApi {
         <tr><td> 201 </td><td> Created </td><td>  -  </td></tr>
      </table>
      */
-    public okhttp3.Call itemsPostAsync(@javax.annotation.Nonnull NewItem newItem, final ApiCallback<Item> _callback) throws ApiException {
+    public okhttp3.Call itemsPostAsync(@jakarta.annotation.Nonnull NewItem newItem, final ApiCallback<Item> _callback) throws ApiException {
 
         okhttp3.Call localVarCall = itemsPostValidateBeforeCall(newItem, _callback);
         Type localVarReturnType = new TypeToken<Item>(){}.getType();
@@ -4430,7 +4430,7 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public okhttp3.Call parametersOneSegmentLiteralGetCall(@javax.annotation.Nonnull Integer one, final ApiCallback _callback) throws ApiException {
+    public okhttp3.Call parametersOneSegmentLiteralGetCall(@jakarta.annotation.Nonnull Integer one, final ApiCallback _callback) throws ApiException {
         String basePath = null;
         // Operation Servers
         String[] localBasePaths = new String[] {  };
@@ -4476,7 +4476,7 @@ public class DefaultApi {
     }
 
     @SuppressWarnings("rawtypes")
-    private okhttp3.Call parametersOneSegmentLiteralGetValidateBeforeCall(@javax.annotation.Nonnull Integer one, final ApiCallback _callback) throws ApiException {
+    private okhttp3.Call parametersOneSegmentLiteralGetValidateBeforeCall(@jakarta.annotation.Nonnull Integer one, final ApiCallback _callback) throws ApiException {
         // verify the required parameter 'one' is set
         if (one == null) {
             throw new ApiException("Missing the required parameter 'one' when calling parametersOneSegmentLiteralGet(Async)");
@@ -4499,7 +4499,7 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public Echoed parametersOneSegmentLiteralGet(@javax.annotation.Nonnull Integer one) throws ApiException {
+    public Echoed parametersOneSegmentLiteralGet(@jakarta.annotation.Nonnull Integer one) throws ApiException {
         ApiResponse<Echoed> localVarResp = parametersOneSegmentLiteralGetWithHttpInfo(one);
         return localVarResp.getData();
     }
@@ -4517,7 +4517,7 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public ApiResponse<Echoed> parametersOneSegmentLiteralGetWithHttpInfo(@javax.annotation.Nonnull Integer one) throws ApiException {
+    public ApiResponse<Echoed> parametersOneSegmentLiteralGetWithHttpInfo(@jakarta.annotation.Nonnull Integer one) throws ApiException {
         okhttp3.Call localVarCall = parametersOneSegmentLiteralGetValidateBeforeCall(one, null);
         Type localVarReturnType = new TypeToken<Echoed>(){}.getType();
         return localVarApiClient.execute(localVarCall, localVarReturnType);
@@ -4537,7 +4537,7 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public okhttp3.Call parametersOneSegmentLiteralGetAsync(@javax.annotation.Nonnull Integer one, final ApiCallback<Echoed> _callback) throws ApiException {
+    public okhttp3.Call parametersOneSegmentLiteralGetAsync(@jakarta.annotation.Nonnull Integer one, final ApiCallback<Echoed> _callback) throws ApiException {
 
         okhttp3.Call localVarCall = parametersOneSegmentLiteralGetValidateBeforeCall(one, _callback);
         Type localVarReturnType = new TypeToken<Echoed>(){}.getType();
@@ -4558,7 +4558,7 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public okhttp3.Call parametersOneWithSecondTwoGetCall(@javax.annotation.Nonnull Integer one, @javax.annotation.Nonnull Integer two, final ApiCallback _callback) throws ApiException {
+    public okhttp3.Call parametersOneWithSecondTwoGetCall(@jakarta.annotation.Nonnull Integer one, @jakarta.annotation.Nonnull Integer two, final ApiCallback _callback) throws ApiException {
         String basePath = null;
         // Operation Servers
         String[] localBasePaths = new String[] {  };
@@ -4605,7 +4605,7 @@ public class DefaultApi {
     }
 
     @SuppressWarnings("rawtypes")
-    private okhttp3.Call parametersOneWithSecondTwoGetValidateBeforeCall(@javax.annotation.Nonnull Integer one, @javax.annotation.Nonnull Integer two, final ApiCallback _callback) throws ApiException {
+    private okhttp3.Call parametersOneWithSecondTwoGetValidateBeforeCall(@jakarta.annotation.Nonnull Integer one, @jakarta.annotation.Nonnull Integer two, final ApiCallback _callback) throws ApiException {
         // verify the required parameter 'one' is set
         if (one == null) {
             throw new ApiException("Missing the required parameter 'one' when calling parametersOneWithSecondTwoGet(Async)");
@@ -4634,7 +4634,7 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public Echoed parametersOneWithSecondTwoGet(@javax.annotation.Nonnull Integer one, @javax.annotation.Nonnull Integer two) throws ApiException {
+    public Echoed parametersOneWithSecondTwoGet(@jakarta.annotation.Nonnull Integer one, @jakarta.annotation.Nonnull Integer two) throws ApiException {
         ApiResponse<Echoed> localVarResp = parametersOneWithSecondTwoGetWithHttpInfo(one, two);
         return localVarResp.getData();
     }
@@ -4653,7 +4653,7 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public ApiResponse<Echoed> parametersOneWithSecondTwoGetWithHttpInfo(@javax.annotation.Nonnull Integer one, @javax.annotation.Nonnull Integer two) throws ApiException {
+    public ApiResponse<Echoed> parametersOneWithSecondTwoGetWithHttpInfo(@jakarta.annotation.Nonnull Integer one, @jakarta.annotation.Nonnull Integer two) throws ApiException {
         okhttp3.Call localVarCall = parametersOneWithSecondTwoGetValidateBeforeCall(one, two, null);
         Type localVarReturnType = new TypeToken<Echoed>(){}.getType();
         return localVarApiClient.execute(localVarCall, localVarReturnType);
@@ -4674,7 +4674,7 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public okhttp3.Call parametersOneWithSecondTwoGetAsync(@javax.annotation.Nonnull Integer one, @javax.annotation.Nonnull Integer two, final ApiCallback<Echoed> _callback) throws ApiException {
+    public okhttp3.Call parametersOneWithSecondTwoGetAsync(@jakarta.annotation.Nonnull Integer one, @jakarta.annotation.Nonnull Integer two, final ApiCallback<Echoed> _callback) throws ApiException {
 
         okhttp3.Call localVarCall = parametersOneWithSecondTwoGetValidateBeforeCall(one, two, _callback);
         Type localVarReturnType = new TypeToken<Echoed>(){}.getType();
@@ -4935,7 +4935,7 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public okhttp3.Call queryManyGetCall(@javax.annotation.Nonnull Integer page, @javax.annotation.Nonnull Integer size, @javax.annotation.Nonnull String status, @javax.annotation.Nonnull String category, @javax.annotation.Nonnull String sort, @javax.annotation.Nonnull String q, @javax.annotation.Nonnull Integer minPrice, @javax.annotation.Nonnull Integer maxPrice, final ApiCallback _callback) throws ApiException {
+    public okhttp3.Call queryManyGetCall(@jakarta.annotation.Nonnull Integer page, @jakarta.annotation.Nonnull Integer size, @jakarta.annotation.Nonnull String status, @jakarta.annotation.Nonnull String category, @jakarta.annotation.Nonnull String sort, @jakarta.annotation.Nonnull String q, @jakarta.annotation.Nonnull Integer minPrice, @jakarta.annotation.Nonnull Integer maxPrice, final ApiCallback _callback) throws ApiException {
         String basePath = null;
         // Operation Servers
         String[] localBasePaths = new String[] {  };
@@ -5012,7 +5012,7 @@ public class DefaultApi {
     }
 
     @SuppressWarnings("rawtypes")
-    private okhttp3.Call queryManyGetValidateBeforeCall(@javax.annotation.Nonnull Integer page, @javax.annotation.Nonnull Integer size, @javax.annotation.Nonnull String status, @javax.annotation.Nonnull String category, @javax.annotation.Nonnull String sort, @javax.annotation.Nonnull String q, @javax.annotation.Nonnull Integer minPrice, @javax.annotation.Nonnull Integer maxPrice, final ApiCallback _callback) throws ApiException {
+    private okhttp3.Call queryManyGetValidateBeforeCall(@jakarta.annotation.Nonnull Integer page, @jakarta.annotation.Nonnull Integer size, @jakarta.annotation.Nonnull String status, @jakarta.annotation.Nonnull String category, @jakarta.annotation.Nonnull String sort, @jakarta.annotation.Nonnull String q, @jakarta.annotation.Nonnull Integer minPrice, @jakarta.annotation.Nonnull Integer maxPrice, final ApiCallback _callback) throws ApiException {
         // verify the required parameter 'page' is set
         if (page == null) {
             throw new ApiException("Missing the required parameter 'page' when calling queryManyGet(Async)");
@@ -5077,7 +5077,7 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public Echoed queryManyGet(@javax.annotation.Nonnull Integer page, @javax.annotation.Nonnull Integer size, @javax.annotation.Nonnull String status, @javax.annotation.Nonnull String category, @javax.annotation.Nonnull String sort, @javax.annotation.Nonnull String q, @javax.annotation.Nonnull Integer minPrice, @javax.annotation.Nonnull Integer maxPrice) throws ApiException {
+    public Echoed queryManyGet(@jakarta.annotation.Nonnull Integer page, @jakarta.annotation.Nonnull Integer size, @jakarta.annotation.Nonnull String status, @jakarta.annotation.Nonnull String category, @jakarta.annotation.Nonnull String sort, @jakarta.annotation.Nonnull String q, @jakarta.annotation.Nonnull Integer minPrice, @jakarta.annotation.Nonnull Integer maxPrice) throws ApiException {
         ApiResponse<Echoed> localVarResp = queryManyGetWithHttpInfo(page, size, status, category, sort, q, minPrice, maxPrice);
         return localVarResp.getData();
     }
@@ -5102,7 +5102,7 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public ApiResponse<Echoed> queryManyGetWithHttpInfo(@javax.annotation.Nonnull Integer page, @javax.annotation.Nonnull Integer size, @javax.annotation.Nonnull String status, @javax.annotation.Nonnull String category, @javax.annotation.Nonnull String sort, @javax.annotation.Nonnull String q, @javax.annotation.Nonnull Integer minPrice, @javax.annotation.Nonnull Integer maxPrice) throws ApiException {
+    public ApiResponse<Echoed> queryManyGetWithHttpInfo(@jakarta.annotation.Nonnull Integer page, @jakarta.annotation.Nonnull Integer size, @jakarta.annotation.Nonnull String status, @jakarta.annotation.Nonnull String category, @jakarta.annotation.Nonnull String sort, @jakarta.annotation.Nonnull String q, @jakarta.annotation.Nonnull Integer minPrice, @jakarta.annotation.Nonnull Integer maxPrice) throws ApiException {
         okhttp3.Call localVarCall = queryManyGetValidateBeforeCall(page, size, status, category, sort, q, minPrice, maxPrice, null);
         Type localVarReturnType = new TypeToken<Echoed>(){}.getType();
         return localVarApiClient.execute(localVarCall, localVarReturnType);
@@ -5129,7 +5129,7 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public okhttp3.Call queryManyGetAsync(@javax.annotation.Nonnull Integer page, @javax.annotation.Nonnull Integer size, @javax.annotation.Nonnull String status, @javax.annotation.Nonnull String category, @javax.annotation.Nonnull String sort, @javax.annotation.Nonnull String q, @javax.annotation.Nonnull Integer minPrice, @javax.annotation.Nonnull Integer maxPrice, final ApiCallback<Echoed> _callback) throws ApiException {
+    public okhttp3.Call queryManyGetAsync(@jakarta.annotation.Nonnull Integer page, @jakarta.annotation.Nonnull Integer size, @jakarta.annotation.Nonnull String status, @jakarta.annotation.Nonnull String category, @jakarta.annotation.Nonnull String sort, @jakarta.annotation.Nonnull String q, @jakarta.annotation.Nonnull Integer minPrice, @jakarta.annotation.Nonnull Integer maxPrice, final ApiCallback<Echoed> _callback) throws ApiException {
 
         okhttp3.Call localVarCall = queryManyGetValidateBeforeCall(page, size, status, category, sort, q, minPrice, maxPrice, _callback);
         Type localVarReturnType = new TypeToken<Echoed>(){}.getType();
@@ -5149,7 +5149,7 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public okhttp3.Call queryOneGetCall(@javax.annotation.Nonnull Integer page, final ApiCallback _callback) throws ApiException {
+    public okhttp3.Call queryOneGetCall(@jakarta.annotation.Nonnull Integer page, final ApiCallback _callback) throws ApiException {
         String basePath = null;
         // Operation Servers
         String[] localBasePaths = new String[] {  };
@@ -5198,7 +5198,7 @@ public class DefaultApi {
     }
 
     @SuppressWarnings("rawtypes")
-    private okhttp3.Call queryOneGetValidateBeforeCall(@javax.annotation.Nonnull Integer page, final ApiCallback _callback) throws ApiException {
+    private okhttp3.Call queryOneGetValidateBeforeCall(@jakarta.annotation.Nonnull Integer page, final ApiCallback _callback) throws ApiException {
         // verify the required parameter 'page' is set
         if (page == null) {
             throw new ApiException("Missing the required parameter 'page' when calling queryOneGet(Async)");
@@ -5221,7 +5221,7 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public Echoed queryOneGet(@javax.annotation.Nonnull Integer page) throws ApiException {
+    public Echoed queryOneGet(@jakarta.annotation.Nonnull Integer page) throws ApiException {
         ApiResponse<Echoed> localVarResp = queryOneGetWithHttpInfo(page);
         return localVarResp.getData();
     }
@@ -5239,7 +5239,7 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public ApiResponse<Echoed> queryOneGetWithHttpInfo(@javax.annotation.Nonnull Integer page) throws ApiException {
+    public ApiResponse<Echoed> queryOneGetWithHttpInfo(@jakarta.annotation.Nonnull Integer page) throws ApiException {
         okhttp3.Call localVarCall = queryOneGetValidateBeforeCall(page, null);
         Type localVarReturnType = new TypeToken<Echoed>(){}.getType();
         return localVarApiClient.execute(localVarCall, localVarReturnType);
@@ -5259,7 +5259,7 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public okhttp3.Call queryOneGetAsync(@javax.annotation.Nonnull Integer page, final ApiCallback<Echoed> _callback) throws ApiException {
+    public okhttp3.Call queryOneGetAsync(@jakarta.annotation.Nonnull Integer page, final ApiCallback<Echoed> _callback) throws ApiException {
 
         okhttp3.Call localVarCall = queryOneGetValidateBeforeCall(page, _callback);
         Type localVarReturnType = new TypeToken<Echoed>(){}.getType();

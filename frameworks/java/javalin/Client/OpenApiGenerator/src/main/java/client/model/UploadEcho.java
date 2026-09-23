@@ -49,22 +49,22 @@ import client.JSON;
 /**
  * UploadEcho
  */
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.25.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.25.0")
 public class UploadEcho {
   public static final String SERIALIZED_NAME_TENANT = "tenant";
   @SerializedName(SERIALIZED_NAME_TENANT)
-  @javax.annotation.Nullable
+  @jakarta.annotation.Nullable
   private String tenant;
 
   public static final String SERIALIZED_NAME_REQUEST_ID = "requestId";
   @SerializedName(SERIALIZED_NAME_REQUEST_ID)
-  @javax.annotation.Nullable
+  @jakarta.annotation.Nullable
   private String requestId;
 
   public UploadEcho() {
   }
 
-  public UploadEcho tenant(@javax.annotation.Nullable String tenant) {
+  public UploadEcho tenant(@jakarta.annotation.Nullable String tenant) {
     this.tenant = tenant;
     return this;
   }
@@ -73,17 +73,17 @@ public class UploadEcho {
    * Get tenant
    * @return tenant
    */
-  @javax.annotation.Nullable
+  @jakarta.annotation.Nullable
   public String getTenant() {
     return tenant;
   }
 
-  public void setTenant(@javax.annotation.Nullable String tenant) {
+  public void setTenant(@jakarta.annotation.Nullable String tenant) {
     this.tenant = tenant;
   }
 
 
-  public UploadEcho requestId(@javax.annotation.Nullable String requestId) {
+  public UploadEcho requestId(@jakarta.annotation.Nullable String requestId) {
     this.requestId = requestId;
     return this;
   }
@@ -92,12 +92,12 @@ public class UploadEcho {
    * Get requestId
    * @return requestId
    */
-  @javax.annotation.Nullable
+  @jakarta.annotation.Nullable
   public String getRequestId() {
     return requestId;
   }
 
-  public void setRequestId(@javax.annotation.Nullable String requestId) {
+  public void setRequestId(@jakarta.annotation.Nullable String requestId) {
     this.requestId = requestId;
   }
 

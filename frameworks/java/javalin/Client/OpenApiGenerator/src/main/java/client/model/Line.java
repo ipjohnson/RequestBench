@@ -49,22 +49,22 @@ import client.JSON;
 /**
  * Line
  */
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.25.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.25.0")
 public class Line {
   public static final String SERIALIZED_NAME_PRODUCT_ID = "productId";
   @SerializedName(SERIALIZED_NAME_PRODUCT_ID)
-  @javax.annotation.Nonnull
+  @jakarta.annotation.Nonnull
   private Integer productId;
 
   public static final String SERIALIZED_NAME_QTY = "qty";
   @SerializedName(SERIALIZED_NAME_QTY)
-  @javax.annotation.Nonnull
+  @jakarta.annotation.Nonnull
   private Integer qty;
 
   public Line() {
   }
 
-  public Line productId(@javax.annotation.Nonnull Integer productId) {
+  public Line productId(@jakarta.annotation.Nonnull Integer productId) {
     this.productId = productId;
     return this;
   }
@@ -73,17 +73,17 @@ public class Line {
    * Get productId
    * @return productId
    */
-  @javax.annotation.Nonnull
+  @jakarta.annotation.Nonnull
   public Integer getProductId() {
     return productId;
   }
 
-  public void setProductId(@javax.annotation.Nonnull Integer productId) {
+  public void setProductId(@jakarta.annotation.Nonnull Integer productId) {
     this.productId = productId;
   }
 
 
-  public Line qty(@javax.annotation.Nonnull Integer qty) {
+  public Line qty(@jakarta.annotation.Nonnull Integer qty) {
     this.qty = qty;
     return this;
   }
@@ -92,12 +92,12 @@ public class Line {
    * Get qty
    * @return qty
    */
-  @javax.annotation.Nonnull
+  @jakarta.annotation.Nonnull
   public Integer getQty() {
     return qty;
   }
 
-  public void setQty(@javax.annotation.Nonnull Integer qty) {
+  public void setQty(@jakarta.annotation.Nonnull Integer qty) {
     this.qty = qty;
   }
 

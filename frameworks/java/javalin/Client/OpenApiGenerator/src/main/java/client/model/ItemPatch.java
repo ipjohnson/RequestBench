@@ -49,22 +49,22 @@ import client.JSON;
 /**
  * ItemPatch
  */
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.25.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.25.0")
 public class ItemPatch {
   public static final String SERIALIZED_NAME_PRICE_CENTS = "priceCents";
   @SerializedName(SERIALIZED_NAME_PRICE_CENTS)
-  @javax.annotation.Nullable
+  @jakarta.annotation.Nullable
   private Integer priceCents;
 
   public static final String SERIALIZED_NAME_IN_STOCK = "inStock";
   @SerializedName(SERIALIZED_NAME_IN_STOCK)
-  @javax.annotation.Nullable
+  @jakarta.annotation.Nullable
   private Boolean inStock;
 
   public ItemPatch() {
   }
 
-  public ItemPatch priceCents(@javax.annotation.Nullable Integer priceCents) {
+  public ItemPatch priceCents(@jakarta.annotation.Nullable Integer priceCents) {
     this.priceCents = priceCents;
     return this;
   }
@@ -73,17 +73,17 @@ public class ItemPatch {
    * Get priceCents
    * @return priceCents
    */
-  @javax.annotation.Nullable
+  @jakarta.annotation.Nullable
   public Integer getPriceCents() {
     return priceCents;
   }
 
-  public void setPriceCents(@javax.annotation.Nullable Integer priceCents) {
+  public void setPriceCents(@jakarta.annotation.Nullable Integer priceCents) {
     this.priceCents = priceCents;
   }
 
 
-  public ItemPatch inStock(@javax.annotation.Nullable Boolean inStock) {
+  public ItemPatch inStock(@jakarta.annotation.Nullable Boolean inStock) {
     this.inStock = inStock;
     return this;
   }
@@ -92,12 +92,12 @@ public class ItemPatch {
    * Get inStock
    * @return inStock
    */
-  @javax.annotation.Nullable
+  @jakarta.annotation.Nullable
   public Boolean getInStock() {
     return inStock;
   }
 
-  public void setInStock(@javax.annotation.Nullable Boolean inStock) {
+  public void setInStock(@jakarta.annotation.Nullable Boolean inStock) {
     this.inStock = inStock;
   }
 

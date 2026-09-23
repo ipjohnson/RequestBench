@@ -52,27 +52,27 @@ import client.JSON;
 /**
  * OrderRequest
  */
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.25.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.25.0")
 public class OrderRequest {
   public static final String SERIALIZED_NAME_CUSTOMER_ID = "customerId";
   @SerializedName(SERIALIZED_NAME_CUSTOMER_ID)
-  @javax.annotation.Nonnull
+  @jakarta.annotation.Nonnull
   private Integer customerId;
 
   public static final String SERIALIZED_NAME_STATUS = "status";
   @SerializedName(SERIALIZED_NAME_STATUS)
-  @javax.annotation.Nullable
+  @jakarta.annotation.Nullable
   private String status;
 
   public static final String SERIALIZED_NAME_LINES = "lines";
   @SerializedName(SERIALIZED_NAME_LINES)
-  @javax.annotation.Nullable
+  @jakarta.annotation.Nullable
   private List<Line> lines = new ArrayList<>();
 
   public OrderRequest() {
   }
 
-  public OrderRequest customerId(@javax.annotation.Nonnull Integer customerId) {
+  public OrderRequest customerId(@jakarta.annotation.Nonnull Integer customerId) {
     this.customerId = customerId;
     return this;
   }
@@ -81,17 +81,17 @@ public class OrderRequest {
    * Get customerId
    * @return customerId
    */
-  @javax.annotation.Nonnull
+  @jakarta.annotation.Nonnull
   public Integer getCustomerId() {
     return customerId;
   }
 
-  public void setCustomerId(@javax.annotation.Nonnull Integer customerId) {
+  public void setCustomerId(@jakarta.annotation.Nonnull Integer customerId) {
     this.customerId = customerId;
   }
 
 
-  public OrderRequest status(@javax.annotation.Nullable String status) {
+  public OrderRequest status(@jakarta.annotation.Nullable String status) {
     this.status = status;
     return this;
   }
@@ -100,17 +100,17 @@ public class OrderRequest {
    * Get status
    * @return status
    */
-  @javax.annotation.Nullable
+  @jakarta.annotation.Nullable
   public String getStatus() {
     return status;
   }
 
-  public void setStatus(@javax.annotation.Nullable String status) {
+  public void setStatus(@jakarta.annotation.Nullable String status) {
     this.status = status;
   }
 
 
-  public OrderRequest lines(@javax.annotation.Nullable List<Line> lines) {
+  public OrderRequest lines(@jakarta.annotation.Nullable List<Line> lines) {
     this.lines = lines;
     return this;
   }
@@ -127,12 +127,12 @@ public class OrderRequest {
    * Get lines
    * @return lines
    */
-  @javax.annotation.Nullable
+  @jakarta.annotation.Nullable
   public List<Line> getLines() {
     return lines;
   }
 
-  public void setLines(@javax.annotation.Nullable List<Line> lines) {
+  public void setLines(@jakarta.annotation.Nullable List<Line> lines) {
     this.lines = lines;
   }
 

@@ -50,27 +50,27 @@ import client.JSON;
 /**
  * Bound
  */
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.25.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.25.0")
 public class Bound {
   public static final String SERIALIZED_NAME_FIELDS = "fields";
   @SerializedName(SERIALIZED_NAME_FIELDS)
-  @javax.annotation.Nonnull
+  @jakarta.annotation.Nonnull
   private Integer fields;
 
   public static final String SERIALIZED_NAME_BYTES = "bytes";
   @SerializedName(SERIALIZED_NAME_BYTES)
-  @javax.annotation.Nonnull
+  @jakarta.annotation.Nonnull
   private Long bytes;
 
   public static final String SERIALIZED_NAME_ECHO = "echo";
   @SerializedName(SERIALIZED_NAME_ECHO)
-  @javax.annotation.Nullable
+  @jakarta.annotation.Nullable
   private OrderRequest echo;
 
   public Bound() {
   }
 
-  public Bound fields(@javax.annotation.Nonnull Integer fields) {
+  public Bound fields(@jakarta.annotation.Nonnull Integer fields) {
     this.fields = fields;
     return this;
   }
@@ -79,17 +79,17 @@ public class Bound {
    * Get fields
    * @return fields
    */
-  @javax.annotation.Nonnull
+  @jakarta.annotation.Nonnull
   public Integer getFields() {
     return fields;
   }
 
-  public void setFields(@javax.annotation.Nonnull Integer fields) {
+  public void setFields(@jakarta.annotation.Nonnull Integer fields) {
     this.fields = fields;
   }
 
 
-  public Bound bytes(@javax.annotation.Nonnull Long bytes) {
+  public Bound bytes(@jakarta.annotation.Nonnull Long bytes) {
     this.bytes = bytes;
     return this;
   }
@@ -98,17 +98,17 @@ public class Bound {
    * Get bytes
    * @return bytes
    */
-  @javax.annotation.Nonnull
+  @jakarta.annotation.Nonnull
   public Long getBytes() {
     return bytes;
   }
 
-  public void setBytes(@javax.annotation.Nonnull Long bytes) {
+  public void setBytes(@jakarta.annotation.Nonnull Long bytes) {
     this.bytes = bytes;
   }
 
 
-  public Bound echo(@javax.annotation.Nullable OrderRequest echo) {
+  public Bound echo(@jakarta.annotation.Nullable OrderRequest echo) {
     this.echo = echo;
     return this;
   }
@@ -117,12 +117,12 @@ public class Bound {
    * Get echo
    * @return echo
    */
-  @javax.annotation.Nullable
+  @jakarta.annotation.Nullable
   public OrderRequest getEcho() {
     return echo;
   }
 
-  public void setEcho(@javax.annotation.Nullable OrderRequest echo) {
+  public void setEcho(@jakarta.annotation.Nullable OrderRequest echo) {
     this.echo = echo;
   }
 

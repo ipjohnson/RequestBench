@@ -51,22 +51,22 @@ import client.JSON;
 /**
  * Uploaded
  */
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.25.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.25.0")
 public class Uploaded {
   public static final String SERIALIZED_NAME_FILE = "file";
   @SerializedName(SERIALIZED_NAME_FILE)
-  @javax.annotation.Nullable
+  @jakarta.annotation.Nullable
   private UploadedPart _file;
 
   public static final String SERIALIZED_NAME_ECHO = "echo";
   @SerializedName(SERIALIZED_NAME_ECHO)
-  @javax.annotation.Nullable
+  @jakarta.annotation.Nullable
   private UploadEcho echo;
 
   public Uploaded() {
   }
 
-  public Uploaded _file(@javax.annotation.Nullable UploadedPart _file) {
+  public Uploaded _file(@jakarta.annotation.Nullable UploadedPart _file) {
     this._file = _file;
     return this;
   }
@@ -75,17 +75,17 @@ public class Uploaded {
    * Get _file
    * @return _file
    */
-  @javax.annotation.Nullable
+  @jakarta.annotation.Nullable
   public UploadedPart getFile() {
     return _file;
   }
 
-  public void setFile(@javax.annotation.Nullable UploadedPart _file) {
+  public void setFile(@jakarta.annotation.Nullable UploadedPart _file) {
     this._file = _file;
   }
 
 
-  public Uploaded echo(@javax.annotation.Nullable UploadEcho echo) {
+  public Uploaded echo(@jakarta.annotation.Nullable UploadEcho echo) {
     this.echo = echo;
     return this;
   }
@@ -94,12 +94,12 @@ public class Uploaded {
    * Get echo
    * @return echo
    */
-  @javax.annotation.Nullable
+  @jakarta.annotation.Nullable
   public UploadEcho getEcho() {
     return echo;
   }
 
-  public void setEcho(@javax.annotation.Nullable UploadEcho echo) {
+  public void setEcho(@jakarta.annotation.Nullable UploadEcho echo) {
     this.echo = echo;
   }
 

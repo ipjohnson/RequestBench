@@ -49,42 +49,42 @@ import client.JSON;
 /**
  * Meta
  */
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.25.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.25.0")
 public class Meta {
   public static final String SERIALIZED_NAME_FRAMEWORK = "framework";
   @SerializedName(SERIALIZED_NAME_FRAMEWORK)
-  @javax.annotation.Nullable
+  @jakarta.annotation.Nullable
   private String framework;
 
   public static final String SERIALIZED_NAME_VERSION = "version";
   @SerializedName(SERIALIZED_NAME_VERSION)
-  @javax.annotation.Nullable
+  @jakarta.annotation.Nullable
   private String version;
 
   public static final String SERIALIZED_NAME_RUNTIME = "runtime";
   @SerializedName(SERIALIZED_NAME_RUNTIME)
-  @javax.annotation.Nullable
+  @jakarta.annotation.Nullable
   private String runtime;
 
   public static final String SERIALIZED_NAME_ADAPTER = "adapter";
   @SerializedName(SERIALIZED_NAME_ADAPTER)
-  @javax.annotation.Nullable
+  @jakarta.annotation.Nullable
   private String adapter;
 
   public static final String SERIALIZED_NAME_SERIALIZER = "serializer";
   @SerializedName(SERIALIZED_NAME_SERIALIZER)
-  @javax.annotation.Nullable
+  @jakarta.annotation.Nullable
   private String serializer;
 
   public static final String SERIALIZED_NAME_BOOT_MS = "bootMs";
   @SerializedName(SERIALIZED_NAME_BOOT_MS)
-  @javax.annotation.Nullable
+  @jakarta.annotation.Nullable
   private Long bootMs;
 
   public Meta() {
   }
 
-  public Meta framework(@javax.annotation.Nullable String framework) {
+  public Meta framework(@jakarta.annotation.Nullable String framework) {
     this.framework = framework;
     return this;
   }
@@ -93,17 +93,17 @@ public class Meta {
    * Get framework
    * @return framework
    */
-  @javax.annotation.Nullable
+  @jakarta.annotation.Nullable
   public String getFramework() {
     return framework;
   }
 
-  public void setFramework(@javax.annotation.Nullable String framework) {
+  public void setFramework(@jakarta.annotation.Nullable String framework) {
     this.framework = framework;
   }
 
 
-  public Meta version(@javax.annotation.Nullable String version) {
+  public Meta version(@jakarta.annotation.Nullable String version) {
     this.version = version;
     return this;
   }
@@ -112,17 +112,17 @@ public class Meta {
    * Get version
    * @return version
    */
-  @javax.annotation.Nullable
+  @jakarta.annotation.Nullable
   public String getVersion() {
     return version;
   }
 
-  public void setVersion(@javax.annotation.Nullable String version) {
+  public void setVersion(@jakarta.annotation.Nullable String version) {
     this.version = version;
   }
 
 
-  public Meta runtime(@javax.annotation.Nullable String runtime) {
+  public Meta runtime(@jakarta.annotation.Nullable String runtime) {
     this.runtime = runtime;
     return this;
   }
@@ -131,17 +131,17 @@ public class Meta {
    * Get runtime
    * @return runtime
    */
-  @javax.annotation.Nullable
+  @jakarta.annotation.Nullable
   public String getRuntime() {
     return runtime;
   }
 
-  public void setRuntime(@javax.annotation.Nullable String runtime) {
+  public void setRuntime(@jakarta.annotation.Nullable String runtime) {
     this.runtime = runtime;
   }
 
 
-  public Meta adapter(@javax.annotation.Nullable String adapter) {
+  public Meta adapter(@jakarta.annotation.Nullable String adapter) {
     this.adapter = adapter;
     return this;
   }
@@ -150,17 +150,17 @@ public class Meta {
    * Get adapter
    * @return adapter
    */
-  @javax.annotation.Nullable
+  @jakarta.annotation.Nullable
   public String getAdapter() {
     return adapter;
   }
 
-  public void setAdapter(@javax.annotation.Nullable String adapter) {
+  public void setAdapter(@jakarta.annotation.Nullable String adapter) {
     this.adapter = adapter;
   }
 
 
-  public Meta serializer(@javax.annotation.Nullable String serializer) {
+  public Meta serializer(@jakarta.annotation.Nullable String serializer) {
     this.serializer = serializer;
     return this;
   }
@@ -169,17 +169,17 @@ public class Meta {
    * Get serializer
    * @return serializer
    */
-  @javax.annotation.Nullable
+  @jakarta.annotation.Nullable
   public String getSerializer() {
     return serializer;
   }
 
-  public void setSerializer(@javax.annotation.Nullable String serializer) {
+  public void setSerializer(@jakarta.annotation.Nullable String serializer) {
     this.serializer = serializer;
   }
 
 
-  public Meta bootMs(@javax.annotation.Nullable Long bootMs) {
+  public Meta bootMs(@jakarta.annotation.Nullable Long bootMs) {
     this.bootMs = bootMs;
     return this;
   }
@@ -188,12 +188,12 @@ public class Meta {
    * Get bootMs
    * @return bootMs
    */
-  @javax.annotation.Nullable
+  @jakarta.annotation.Nullable
   public Long getBootMs() {
     return bootMs;
   }
 
-  public void setBootMs(@javax.annotation.Nullable Long bootMs) {
+  public void setBootMs(@jakarta.annotation.Nullable Long bootMs) {
     this.bootMs = bootMs;
   }
 

@@ -49,37 +49,37 @@ import client.JSON;
 /**
  * Item
  */
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.25.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.25.0")
 public class Item {
   public static final String SERIALIZED_NAME_ID = "id";
   @SerializedName(SERIALIZED_NAME_ID)
-  @javax.annotation.Nonnull
+  @jakarta.annotation.Nonnull
   private Integer id;
 
   public static final String SERIALIZED_NAME_NAME = "name";
   @SerializedName(SERIALIZED_NAME_NAME)
-  @javax.annotation.Nullable
+  @jakarta.annotation.Nullable
   private String name;
 
   public static final String SERIALIZED_NAME_CATEGORY = "category";
   @SerializedName(SERIALIZED_NAME_CATEGORY)
-  @javax.annotation.Nullable
+  @jakarta.annotation.Nullable
   private String category;
 
   public static final String SERIALIZED_NAME_PRICE_CENTS = "priceCents";
   @SerializedName(SERIALIZED_NAME_PRICE_CENTS)
-  @javax.annotation.Nonnull
+  @jakarta.annotation.Nonnull
   private Integer priceCents;
 
   public static final String SERIALIZED_NAME_IN_STOCK = "inStock";
   @SerializedName(SERIALIZED_NAME_IN_STOCK)
-  @javax.annotation.Nonnull
+  @jakarta.annotation.Nonnull
   private Boolean inStock;
 
   public Item() {
   }
 
-  public Item id(@javax.annotation.Nonnull Integer id) {
+  public Item id(@jakarta.annotation.Nonnull Integer id) {
     this.id = id;
     return this;
   }
@@ -88,17 +88,17 @@ public class Item {
    * Get id
    * @return id
    */
-  @javax.annotation.Nonnull
+  @jakarta.annotation.Nonnull
   public Integer getId() {
     return id;
   }
 
-  public void setId(@javax.annotation.Nonnull Integer id) {
+  public void setId(@jakarta.annotation.Nonnull Integer id) {
     this.id = id;
   }
 
 
-  public Item name(@javax.annotation.Nullable String name) {
+  public Item name(@jakarta.annotation.Nullable String name) {
     this.name = name;
     return this;
   }
@@ -107,17 +107,17 @@ public class Item {
    * Get name
    * @return name
    */
-  @javax.annotation.Nullable
+  @jakarta.annotation.Nullable
   public String getName() {
     return name;
   }
 
-  public void setName(@javax.annotation.Nullable String name) {
+  public void setName(@jakarta.annotation.Nullable String name) {
     this.name = name;
   }
 
 
-  public Item category(@javax.annotation.Nullable String category) {
+  public Item category(@jakarta.annotation.Nullable String category) {
     this.category = category;
     return this;
   }
@@ -126,17 +126,17 @@ public class Item {
    * Get category
    * @return category
    */
-  @javax.annotation.Nullable
+  @jakarta.annotation.Nullable
   public String getCategory() {
     return category;
   }
 
-  public void setCategory(@javax.annotation.Nullable String category) {
+  public void setCategory(@jakarta.annotation.Nullable String category) {
     this.category = category;
   }
 
 
-  public Item priceCents(@javax.annotation.Nonnull Integer priceCents) {
+  public Item priceCents(@jakarta.annotation.Nonnull Integer priceCents) {
     this.priceCents = priceCents;
     return this;
   }
@@ -145,17 +145,17 @@ public class Item {
    * Get priceCents
    * @return priceCents
    */
-  @javax.annotation.Nonnull
+  @jakarta.annotation.Nonnull
   public Integer getPriceCents() {
     return priceCents;
   }
 
-  public void setPriceCents(@javax.annotation.Nonnull Integer priceCents) {
+  public void setPriceCents(@jakarta.annotation.Nonnull Integer priceCents) {
     this.priceCents = priceCents;
   }
 
 
-  public Item inStock(@javax.annotation.Nonnull Boolean inStock) {
+  public Item inStock(@jakarta.annotation.Nonnull Boolean inStock) {
     this.inStock = inStock;
     return this;
   }
@@ -164,12 +164,12 @@ public class Item {
    * Get inStock
    * @return inStock
    */
-  @javax.annotation.Nonnull
+  @jakarta.annotation.Nonnull
   public Boolean getInStock() {
     return inStock;
   }
 
-  public void setInStock(@javax.annotation.Nonnull Boolean inStock) {
+  public void setInStock(@jakarta.annotation.Nonnull Boolean inStock) {
     this.inStock = inStock;
   }
 
