@@ -33,9 +33,6 @@ actix-multipart = "0.8.4"
 actix-web = "4.15.0"
 actix-web-httpauth = "0.8.3"
 actix-web-lab = "0.27.0"
-# validator 0.20, not 0.21: actix-web-validator 7 implements its extractors for validator 0.20's
-# Validate trait.
-actix-web-validator = "7.0.0"
 askama = "0.16.1"
 # The store axum-response-cache keeps its answers in, for the cache middleware written here.
 cached = { version = "4.0.0", default-features = false, features = ["ahash", "time_stores"] }

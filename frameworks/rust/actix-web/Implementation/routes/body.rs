@@ -1,15 +1,17 @@
-use actix_web::error::InternalError;
+use actix_web::dev::{JsonBody, Payload};
+use actix_web::error::{InternalError, JsonPayloadError};
 use actix_web::http::header::CONTENT_LENGTH;
 use actix_web::web::{self, ServiceConfig};
-use actix_web::{HttpRequest, HttpResponse};
-use actix_web_validator::JsonConfig;
+use actix_web::{FromRequest, HttpRequest, HttpResponse};
+use futures_util::future::LocalBoxFuture;
+use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use validator::{Validate, ValidationErrors};
 
 // rb:wiring body.*
 /// The body the bind and validate rows send, and the rules orderRequest states. The bind routes
 /// take it through actix-web's Json and never run the rules. The validate routes take it through
-/// actix-web-validator's Json, which runs them before the handler.
+/// `Valid`, which runs them before the handler.
 #[derive(Deserialize, Serialize, Validate)]
 #[serde(rename_all = "camelCase")]
 struct Order {
@@ -30,20 +32,35 @@ struct Line {
     qty: i64,
 }
 
-/// validator's errors, as JSON, with 400. actix-web-validator answers a broken rule with the same
-/// errors written as lines of text, so its JsonConfig's error handler answers with the errors
-/// themselves, the custom answer its documentation shows the handler for.
+/// validator's errors, as JSON, with 400.
 fn refusal(errors: ValidationErrors) -> actix_web::Error {
     let answer = HttpResponse::BadRequest().json(&errors);
     InternalError::from_response(errors, answer).into()
 }
 
-/// The error handler: a broken rule is answered by `refusal`, and anything else, such as a body
-/// that is not JSON, as actix-web-validator answers it.
-fn refused(error: actix_web_validator::Error, _: &HttpRequest) -> actix_web::Error {
-    match error {
-        actix_web_validator::Error::Validate(errors) => refusal(errors),
-        other => other.into(),
+/// A body that does not parse, refused with 400 and the parser's error as text, with no
+/// Content-Type.
+fn malformed(error: JsonPayloadError) -> actix_web::Error {
+    let answer = HttpResponse::BadRequest().body(format!("Payload error: {error}"));
+    InternalError::from_response(error, answer).into()
+}
+
+/// A JSON body that has passed its rules. actix-web validates nothing itself, so this extractor
+/// parses the body with actix-web's JsonBody, up to 32 KiB, and runs validator's rules before the
+/// handler sees it.
+struct Valid<T>(T);
+
+impl<T: DeserializeOwned + Validate + 'static> FromRequest for Valid<T> {
+    type Error = actix_web::Error;
+    type Future = LocalBoxFuture<'static, Result<Self, actix_web::Error>>;
+
+    fn from_request(request: &HttpRequest, payload: &mut Payload) -> Self::Future {
+        let body = JsonBody::<T>::new(request, payload, None, false).limit(32 * 1024);
+        Box::pin(async move {
+            let value = body.await.map_err(malformed)?;
+            value.validate().map_err(refusal)?;
+            Ok(Valid(value))
+        })
     }
 }
 
@@ -101,17 +118,10 @@ impl Bound {
 /// rules on the validate routes. A body that is not JSON is refused by the extractor before any
 /// rule runs.
 pub fn configure(cfg: &mut ServiceConfig) {
-    // rb:wiring body.*
-    let rules = JsonConfig::default().error_handler(refused);
-
     cfg.route("/body/bind/small", web::post().to(|request: HttpRequest, order: web::Json<Order>| async move { Bound::of(order.into_inner(), &request) }))
         .route("/body/bind/medium", web::post().to(|request: HttpRequest, order: web::Json<Order>| async move { Bound::of(order.into_inner(), &request) }))
-        .service(web::resource("/body/validate/small").app_data(rules.clone()).route(web::post().to(|request: HttpRequest, order: actix_web_validator::Json<Order>| async move {
-            Bound::of(order.into_inner(), &request)
-        })))
-        .service(web::resource("/body/validate/medium").app_data(rules).route(web::post().to(|request: HttpRequest, order: actix_web_validator::Json<Order>| async move {
-            Bound::of(order.into_inner(), &request)
-        })))
+        .route("/body/validate/small", web::post().to(|request: HttpRequest, order: Valid<Order>| async move { Bound::of(order.0, &request) }))
+        .route("/body/validate/medium", web::post().to(|request: HttpRequest, order: Valid<Order>| async move { Bound::of(order.0, &request) }))
         .route("/body/validate/first-error", web::post().to(|request: HttpRequest, order: web::Json<Order>| async move {
             stop_at_first(&order).map(|()| Bound::of(order.into_inner(), &request))
         }));

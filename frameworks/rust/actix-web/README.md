@@ -53,7 +53,7 @@ App from the function `routes` returns.
 | middleware | `from_fn` no-op middleware wrapped around the route's resource, four or sixteen times. | actix-web |
 | parameters, query | The `Path` and `Query` extractors, which bind into a struct and convert the numbers to integers. | actix-web |
 | headers | The `Header` extractor, over an implementation of actix-web's `Header` trait for each of the three headers. | actix-web |
-| body | `Json` binds the order. On the validate routes, actix-web-validator's `Json` runs the validator crate's rules first, and its error handler refuses with 400 and validator's errors as JSON. | actix-web-validator and validator |
+| body | `Json` binds the order. On the validate routes, an extractor written here parses it with actix-web's `JsonBody` and runs the validator crate's rules first, refusing with 400 and validator's errors as JSON. | validator, and an extractor by hand |
 | authorized | actix-web-httpauth's bearer middleware on the resource, whose validator answers 403 unless the token is settings.json's. | actix-web-httpauth |
 | cache | A `from_fn` middleware written here, around each cache route's resource, over a `cached` LRU with a time to live, keyed by the path and the headers the route varies on. | by hand |
 | compressed | `Compress` around the /compressed scope, gzip at flate2's fast level. | actix-web |
@@ -86,18 +86,15 @@ App from the function `routes` returns.
   method guard on the resource, so a method no route has falls through to the App's 404.
   `/items/{id}` is one resource with a route per method, which answers such a method with 405 and
   an Allow header instead.
-- actix-web-validator refuses a broken rule with text, `Validation errors in fields:` and a line per
-  field, and no Content-Type. Its JsonConfig's error handler answers with validator's errors as
-  JSON instead, the hook the crate's documentation shows for a custom answer, and leaves every
-  other refusal, a body that is not JSON among them, as the crate writes it.
+- actix-web has no validation of its own. actix-web-validator, the crate that adds it, needs
+  validator 0.20 in its newest release, 7.0.0, so the validate routes use an extractor written here
+  over validator 0.21.
 - validator cannot stop at the first failing rule, so the first-error route is wired by hand. It
   binds the order with actix-web's own `Json`, checks the fields one at a time, in the order the
   order declares them, each against its rule in a struct of its own, and refuses as the validate
   routes refuse.
-- validator 0.20, not 0.21: actix-web-validator 7.0.0 implements its extractors for validator
-  0.20's trait.
-- actix-web-validator's `Json` takes a body of up to 32 KiB unless its JsonConfig says otherwise,
-  where actix-web's own `Json` takes 2 MiB. The largest order the corpus sends is under 9 KB.
+- The validate routes' extractor takes a body of up to 32 KiB, where actix-web's own `Json` on the
+  bind routes takes 2 MiB. The largest order the corpus sends is under 9 KB.
 - actix-web's `Path` extractor answers a capture that does not convert with 404, and its `Header`
   extractor answers a header that does not parse with 400.
 - actix-web-httpauth's bearer middleware refuses a request with no Authorization header itself,
@@ -135,13 +132,13 @@ App from the function `routes` returns.
 
 ## Refusals
 
-Every refusal but one is what actix-web or the middleware on the route writes. The exception is a
-broken rule. actix-web-validator writes its errors as text, and a rejected row reads a refusal as
-JSON, so the error handler its JsonConfig takes answers 400 with validator's `ValidationErrors` as
-JSON. That is an object keyed by each field's Rust name, such as `customer_id`, holding the rules
-it broke, with a list entry's errors under its index. `order.invalid` binds and breaks every rule, so
-it is refused naming all three fields. The first-error route answers the same way, naming the
-first field alone. A body that is not JSON never reaches the rules. The extractor refuses it with a
-400 whose body is text and carries no Content-Type, which is how `errors.malformed` is answered. A
+Every refusal but those of the validate routes is what actix-web or the middleware on the route
+writes. actix-web has no validation of its own, so the extractor written for those routes answers a
+broken rule with 400 and validator's `ValidationErrors` as JSON. That is an object keyed by each
+field's Rust name, such as `customer_id`, holding the rules it broke, with a list entry's errors
+under its index. `order.invalid` binds and breaks every rule, so it is refused naming all three
+fields. The first-error route answers the same way, naming the first field alone. A body that is not
+JSON never reaches the rules. The extractor refuses it with a 400 whose body is `Payload error:` and
+actix-web's message as text, with no Content-Type, which is how `errors.malformed` is answered. A
 missing row and a path with no route are answered with 404 and no body, a method `/items/{id}` has
 no route for with 405, and a wrong bearer token with 403 and a line of text.
