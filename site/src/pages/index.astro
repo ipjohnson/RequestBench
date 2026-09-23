@@ -95,8 +95,18 @@ const built = new Date().toISOString().slice(0, 16).replace("T", " ") + " UTC";
   <div class="note" id="runnote" hidden></div>
 
   <div class="panel">
-    <h2>Over time</h2>
-    <p class="hint">The top six rows of the current ranking, over every run on this host.</p>
+    <div class="panelhead">
+      <h2>Over time</h2>
+      <div class="ctl">
+        <label for="machine">Machine</label>
+        <select id="machine"></select>
+      </div>
+    </div>
+    <p class="hint">
+      The top six rows of the current ranking, over the runs on one machine with the newest run's
+      rate ladder and corpus. The same framework on another CPU can take twice as long, so two
+      machines never share a chart.
+    </p>
     <div id="time"></div>
   </div>
 

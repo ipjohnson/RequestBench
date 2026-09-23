@@ -8,7 +8,7 @@ import { provenance } from "../lib/catalog.ts";
 import { esc } from "../lib/html.ts";
 import { cell, METRICS, type Unit } from "../lib/metrics.ts";
 import type { PageData } from "../lib/page-data.ts";
-import { DEFAULT_HOST, familyOf, famsAt, hostOf, metaOf, rungsOf, testOrder } from "../lib/run.ts";
+import { DEFAULT_HOST, familyOf, famsAt, hostOf, machineOf, machinesFor, metaOf, rungsOf, testOrder, timeline } from "../lib/run.ts";
 import { SERIES_DARK, SERIES_LIGHT } from "../lib/series.ts";
 import type { Run } from "../lib/types.ts";
 import { deltaCell } from "../lib/views.ts";
@@ -174,6 +174,7 @@ class Explorer {
       el("thead").innerHTML = "";
       el("tbody").innerHTML = "";
       el("time").innerHTML = '<p class="empty">No data.</p>';
+      el("machine").innerHTML = "";
       this.pushHash();
       return;
     }
@@ -357,15 +358,28 @@ class Explorer {
       });
       return;
     }
-    const runs = this.runsForHost();
+    const newest = this.latest();
+    if (!newest) return;
+    const machines = machinesFor(this.runsForHost(), newest);
+    const machine = machines.find((m) => m.machine === this.st.machine)?.machine ?? machineOf(newest);
+    el("machine").innerHTML = machines
+      .map(
+        (m) =>
+          `<option value="${esc(m.machine)}"${m.machine === machine ? " selected" : ""}>` +
+          `${esc(m.machine)} · ${m.runs} run${m.runs === 1 ? "" : "s"}</option>`,
+      )
+      .join("");
+    const runs = timeline(this.runsForHost(), newest, machine);
     if (runs.length < 2) {
-      box.innerHTML = '<p class="empty">One run on this host so far. The time axis fills in as runs accumulate.</p>';
+      box.innerHTML = '<p class="empty">One run on this machine so far. The time axis fills in as runs accumulate.</p>';
       return;
     }
     const keys = rs.slice(0, 6).map((r) => r.key);
     const cols = series();
-    const series_ = new Map<string, { date: string; v: number; ver: string; adapter: string }[]>();
-    for (const run of runs) {
+    // Each point keeps its run's place on the axis, so a run a framework is missing from leaves a
+    // gap rather than moving its later points under earlier dates.
+    const series_ = new Map<string, { i: number; date: string; v: number; ver: string; adapter: string }[]>();
+    for (const [i, run] of runs.entries()) {
       const rn = (this.st.rung && rungsOf(run).includes(this.st.rung) ? this.st.rung : pickRung(run, null)) ?? "";
       const blend = blendIn(this.st);
       const weights = blend !== "all" ? weightsOf(run, blend, this.st.pick) : null;
@@ -378,7 +392,7 @@ class Explorer {
           const v = !det ? blendValue(f, rn, this.st.metric, weights) : typeof raw === "number" ? raw : null;
           if (v == null) continue;
           if (!series_.has(k)) series_.set(k, []);
-          series_.get(k)?.push({ date: run.date ?? "", v, ver: f.version ?? "", adapter: metaOf(f, "adapter") });
+          series_.get(k)?.push({ i, date: run.date ?? "", v, ver: f.version ?? "", adapter: metaOf(f, "adapter") });
         }
       }
     }
@@ -395,7 +409,7 @@ class Explorer {
     const all = live.flatMap(([, pts]) => pts.map((x) => x.v));
     const lo = Math.min(...all) * 0.92;
     const hi = Math.max(...all) * 1.08;
-    const n = Math.max(...live.map(([, pts]) => pts.length));
+    const n = runs.length;
     const X = (i: number): number => P + (W - P - R) * (n < 2 ? 0.5 : i / (n - 1));
     const Y = (v: number): number => H - 44 - (H - 62) * ((v - lo) / (hi - lo || 1));
     const unit = METRICS[this.st.metric].unit;
@@ -408,10 +422,11 @@ class Explorer {
     }
     live.forEach(([, pts], idx) => {
       const c = cols[idx % cols.length] ?? cols[0] ?? "#000";
-      g += `<path d="${pts.map((pt, i) => `${i ? "L" : "M"} ${X(i).toFixed(1)} ${Y(pt.v).toFixed(1)}`).join(" ")}" fill="none" stroke="${c}" stroke-width="2" stroke-linejoin="round"/>`;
+      g += `<path d="${pts.map((pt, j) => `${j ? "L" : "M"} ${X(pt.i).toFixed(1)} ${Y(pt.v).toFixed(1)}`).join(" ")}" fill="none" stroke="${c}" stroke-width="2" stroke-linejoin="round"/>`;
       let prev: string | null = null;
       let prevAd: string | null = null;
-      pts.forEach((pt, i) => {
+      pts.forEach((pt) => {
+        const i = pt.i;
         const newVer = prev !== null && Boolean(pt.ver) && pt.ver !== prev;
         const newAd = prevAd !== null && pt.adapter !== prevAd;
         const changed = newVer || newAd;
@@ -425,7 +440,7 @@ class Explorer {
       });
     });
     const step = Math.max(1, Math.ceil(n / 8));
-    runs.slice(0, n).forEach((run, i) => {
+    runs.forEach((run, i) => {
       if (i % step && i !== n - 1) return;
       const anchor = i === 0 ? "start" : i === n - 1 ? "end" : "middle";
       g += `<text x="${X(i).toFixed(1)}" y="${H - 16}" fill="var(--ink3)" font-size="10" font-family="var(--f-mono)" text-anchor="${anchor}">${esc((run.date ?? "").slice(5))}</text>`;
@@ -449,8 +464,13 @@ class Explorer {
     el<HTMLSelectElement>("host").onchange = async (e): Promise<void> => {
       this.st.host = (e.target as HTMLSelectElement).value;
       this.st.rung = null;
+      this.st.machine = null;
       this.render();
       if (await this.data.fetchHost(this.st.host)) this.render();
+    };
+    el<HTMLSelectElement>("machine").onchange = (e): void => {
+      this.st.machine = (e.target as HTMLSelectElement).value;
+      this.render();
     };
     el<HTMLSelectElement>("rung").onchange = (e): void => {
       this.st.rung = (e.target as HTMLSelectElement).value;

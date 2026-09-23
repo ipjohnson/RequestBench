@@ -66,3 +66,17 @@ describe("a row's framework page", () => {
     assert.equal(backHref("../index.html", "?vs=node-fastify"), "../index.html");
   });
 });
+
+describe("the time axis's machine", () => {
+  test("rides in the hash, so a link opens on the same machine", () => {
+    const st = initialState("container-h1", langs);
+    st.machine = "AMD EPYC 7763 64-Core Processor, 4 cores";
+    const back = initialState("container-h1", langs);
+    readHash(back, writeHash(st, langs));
+    assert.equal(back.machine, st.machine);
+  });
+
+  test("is left out of the hash when it follows the newest run", () => {
+    assert.ok(!writeHash(initialState("container-h1", langs), langs).includes("machine="));
+  });
+});
