@@ -34,15 +34,23 @@ public final class BodyRoutes {
     // rb:wiring body.*
     // orderRequest's rules, one schema per field. Each schema is named with alias(), so the
     // locations a refusal reports read the same from one start to the next. The DSL otherwise
-    // names each schema with a random UUID.
-    private static final NumberSchemaBuilder CUSTOMER_ID = intSchema().with(minimum(1)).alias("customerId");
+    // names each schema with a random UUID. Each call builds new builders: every verticle builds
+    // its router at the same time on its own thread, and two of them turning one shared builder
+    // into JSON at once failed the deployment.
+    private static NumberSchemaBuilder customerId() {
+        return intSchema().with(minimum(1)).alias("customerId");
+    }
 
-    private static final StringSchemaBuilder STATUS = stringSchema().with(minLength(1)).alias("status");
+    private static StringSchemaBuilder status() {
+        return stringSchema().with(minLength(1)).alias("status");
+    }
 
-    private static final ArraySchemaBuilder LINES = arraySchema().with(minItems(1)).items(objectSchema()
-            .requiredProperty("productId", intSchema().with(minimum(1)).alias("productId"))
-            .requiredProperty("qty", intSchema().with(minimum(1)).alias("qty"))
-            .alias("line")).alias("lines");
+    private static ArraySchemaBuilder lines() {
+        return arraySchema().with(minItems(1)).items(objectSchema()
+                .requiredProperty("productId", intSchema().with(minimum(1)).alias("productId"))
+                .requiredProperty("qty", intSchema().with(minimum(1)).alias("qty"))
+                .alias("line")).alias("lines");
+    }
     // rb:end
 
     private BodyRoutes() {}
@@ -62,9 +70,9 @@ public final class BodyRoutes {
         router.post("/body/validate/medium").handler(body).handler(order).handler(BodyRoutes::validated);
 
         router.post("/body/validate/first-error").handler(body)
-                .handler(field(oneAtATime, "customerId", CUSTOMER_ID))
-                .handler(field(oneAtATime, "status", STATUS))
-                .handler(field(oneAtATime, "lines", LINES))
+                .handler(field(oneAtATime, "customerId", customerId()))
+                .handler(field(oneAtATime, "status", status()))
+                .handler(field(oneAtATime, "lines", lines()))
                 .handler(BodyRoutes::validated);
 
         // rb:wiring body.*
@@ -85,9 +93,9 @@ public final class BodyRoutes {
     private static ValidationHandler order(SchemaRepository schemas) {
         return ValidationHandlerBuilder.create(schemas)
                 .body(Bodies.json(objectSchema()
-                        .requiredProperty("customerId", CUSTOMER_ID)
-                        .requiredProperty("status", STATUS)
-                        .requiredProperty("lines", LINES)
+                        .requiredProperty("customerId", customerId())
+                        .requiredProperty("status", status())
+                        .requiredProperty("lines", lines())
                         .alias("orderRequest")))
                 .build();
     }
