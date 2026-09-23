@@ -331,9 +331,10 @@ says so in its README. Its numbers compare across every framework.
 ### static
 
 `static` measures the framework's static-file feature. It serves `items.large.json` from the
-payload directory byte for byte, with its length and `Last-Modified`. The `json` family serializes
-the same rows, so the difference is a file sent as it is against rows serialized. This is the one
-family where serving a file's bytes is the point. `Last-Modified` is checked rather than an ETag,
+payload directory, with its `Last-Modified`, to a request that accepts gzip as a browser's does.
+The body is compared byte for byte after decoding, so the file may go out as it is or compressed.
+The `json` family serializes the same rows, so the difference is a file served against rows
+serialized. This is the one family where serving a file's bytes is the point. `Last-Modified` is checked rather than an ETag,
 because Go's file server sends no ETag. Its numbers compare across every framework.
 
 ### stream
