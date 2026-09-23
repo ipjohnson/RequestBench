@@ -57,7 +57,7 @@ reads the cgroup's CPU quota, so the container runs two workers under its two-CP
 | middleware | Four or sixteen no-op request guards, which Rocket resolves one after another before the handler. | Rocket |
 | parameters, query | `<segment>` captures bound by `FromParam`, `?<page>` bound as an integer and `?<search..>` bound into a struct by `FromForm`. | Rocket |
 | headers | A request guard of this application's own reads the three headers, because Rocket has no header binder. | by hand |
-| body | `Json` binds the order. On the validate routes, rocket-validation's `Validated` guard runs the validator crate's rules after `Json` has bound the body, fails with 422, and its catcher answers with validator's errors as JSON. | rocket-validation and validator |
+| body | `Json` binds the order. On the validate routes, a `Validated` data guard of this application's own runs the validator crate's rules after `Json` has bound the body and fails with 422, and a catcher on `/body` answers with validator's errors as JSON. | by hand, over validator |
 | authorized | A request guard that fails with 403 unless Authorization is settings.json's bearer token. | Rocket |
 | cache | A `Handler` wrapped around each cache route's own, which answers from an LRU with a time to live before that handler runs, keyed by the path and the headers the route varies on. | by hand, over cached |
 | compressed | rocket_async_compression's `Compress` responder around the answer, gzip at its fastest level. | rocket_async_compression |
@@ -82,8 +82,11 @@ reads the cgroup's CPU quota, so the container runs two workers under its two-CP
 - Nothing in Rocket can answer before a handler except another handler, so the cache wraps the
   handler each cache route's attribute generates in a `Handler` of its own. It has to read a
   fresh answer's body to store it and write it back.
-- rocket-validation 0.2, the crate that joins validator to Rocket, pins validator 0.16. That
-  validator keys an error by a field's Rust name, `customer_id`, unless the field has a serde
+- Rocket validates forms but not JSON. rocket-validation 0.2, the crate that joins validator to
+  Rocket, pins validator 0.16 and has not released since February 2024, so the `Validated` guard
+  and the catcher on `/body` are this application's own, over validator 0.21. The catcher answers
+  in the shape rocket-validation's catcher writes.
+- validator keys an error by a field's Rust name, `customer_id`, unless the field has a serde
   rename of its own, and never reads the struct's `rename_all`. validator cannot stop at the
   first failing rule, so the first-error route's body implements `Validate` by hand, one field
   at a time, and goes through the same `Validated` guard.
@@ -123,9 +126,11 @@ reads the cgroup's CPU quota, so the container runs two workers under its two-CP
 
 ## Refusals
 
-Every refusal is what Rocket or the crate on the route writes. Nothing reshapes it. `order.invalid`
-binds and breaks every rule, so rocket-validation's guard fails with 422 and its catcher answers
-`{"code":422,"message":...,"errors":...}`, where `errors` is validator's `ValidationErrors`: an
+Every refusal is what Rocket writes, except the validator's. Rocket has no JSON validation, so the
+application's own catcher on `/body` writes that one, in the shape rocket-validation's catcher
+writes. `order.invalid` binds and breaks every rule, so the `Validated` guard fails with 422 and
+the catcher answers `{"code":422,"message":...,"errors":...}`, where `errors` is validator's
+`ValidationErrors`: an
 object keyed by each field's Rust name, such as `customer_id`, holding the rules it broke, with a
 list entry's errors under its index. The first-error route answers the same way, naming the first
 field alone. A body that is not JSON never reaches the rules. `Json` fails it with 400, and Rocket's
