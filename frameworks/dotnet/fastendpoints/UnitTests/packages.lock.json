@@ -716,7 +716,7 @@
           "FastEndpoints.OpenApi": "[8.3.0, )",
           "FastEndpoints.OpenApi.Kiota": "[8.3.0, )",
           "Microsoft.AspNetCore.OpenApi": "[10.0.12, )",
-          "Microsoft.Kiota.Bundle": "[1.22.2, )"
+          "Microsoft.Kiota.Bundle": "[2.1.2, )"
         }
       }
     }
