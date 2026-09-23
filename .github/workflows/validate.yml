@@ -8,12 +8,14 @@ name: validate
 
 on:
   pull_request:
+  # dotnet-locks.yml starts this on a branch it has pushed to, because its push starts nothing.
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: validate-${{ github.event.pull_request.number }}
+  group: validate-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -44,6 +46,7 @@ jobs:
         env:
           BASE: ${{ github.event.pull_request.base.sha }}
         run: |
+          base=${BASE:-$(git merge-base origin/main HEAD)}
           every=false
           changed=""
           while IFS= read -r path; do
@@ -55,7 +58,7 @@ jobs:
               tests/* | orchestrator/* | frameworks/exceptions.ts | package.json | package-lock.json | tsconfig.json | .github/workflows/validate.yml)
                 every=true ;;
             esac
-          done < <(git diff --name-only "$BASE"...HEAD)
+          done < <(git diff --name-only "$base"...HEAD)
 
           ids=()
           while IFS= read -r manifest; do
