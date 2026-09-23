@@ -1,0 +1,101 @@
+# Every pull request runs the repository's checks, then `rb validate` for each framework it can
+# change. A framework is validated when a file in its directory changes, other than prose. Every
+# framework is validated when something they all depend on changes: the tests, the orchestrator,
+# the root npm manifests, frameworks/exceptions.ts or this file.
+#
+# Nothing here measures, because a shared runner's timings would be noise.
+name: validate
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run rb -- check
+
+  frameworks:
+    name: frameworks to validate
+    runs-on: ubuntu-latest
+    outputs:
+      ids: ${{ steps.pick.outputs.ids }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - id: pick
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          every=false
+          changed=""
+          while IFS= read -r path; do
+            case "$path" in
+              *.md) ;;
+              frameworks/*/*/*)
+                IFS=/ read -r _ language name _ <<< "$path"
+                changed+="$language:$name"$'\n' ;;
+              tests/* | orchestrator/* | frameworks/exceptions.ts | package.json | package-lock.json | tsconfig.json | .github/workflows/validate.yml)
+                every=true ;;
+            esac
+          done < <(git diff --name-only "$BASE"...HEAD)
+
+          ids=()
+          while IFS= read -r manifest; do
+            IFS=/ read -r _ language name _ <<< "$manifest"
+            if [ "$every" = true ] || grep -qxF "$language:$name" <<< "$changed"; then ids+=("$language:$name"); fi
+          done < <(git ls-files -- ':(glob)frameworks/*/*/rb.json')
+
+          json=$(printf '%s\n' "${ids[@]}" | jq -Rnc '[inputs | select(test("^[a-z0-9-]+:[a-z0-9.-]+$"))]')
+          echo "ids=$json" >> "$GITHUB_OUTPUT"
+          echo "Frameworks to validate: $json"
+
+  validate:
+    name: validate ${{ matrix.id }}
+    needs: frameworks
+    if: needs.frameworks.outputs.ids != '[]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        id: ${{ fromJSON(needs.frameworks.outputs.ids) }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - env:
+          ID: ${{ matrix.id }}
+        run: npm run rb -- validate "$ID"
+
+  # One result for the whole run, which a ruleset can require. A skipped validate job means the
+  # pull request changes no framework.
+  validated:
+    name: validated
+    if: always()
+    needs: [checks, frameworks, validate]
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          NEEDS: ${{ toJSON(needs) }}
+        run: echo "$NEEDS" | jq -e 'all(.[]; .result == "success" or .result == "skipped")'
