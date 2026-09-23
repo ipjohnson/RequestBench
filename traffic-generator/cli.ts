@@ -16,17 +16,16 @@
 // The full result, histograms included, goes to --out after every phase.
 import { randomInt } from "node:crypto";
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
-import http from "node:http";
 import { dirname } from "node:path";
 import { parseArgs } from "node:util";
 import { Worker } from "node:worker_threads";
 import suite from "@rb/tests";
 import { idOf } from "@rb/tests/kit";
 import type { PerformanceTest } from "@rb/tests/kit";
-import { drawFrom, drawRunValues } from "@rb/tests/models/parameters";
+import { drawRunValues } from "@rb/tests/models/parameters";
 import exceptions, { type FrameworkId } from "../frameworks/exceptions.ts";
-import { MeasuredClient, NOTHING_SENT, Once, describe, xorshift, type Shared, type Statuses } from "./client.ts";
 import { BUCKETS, addInto, countOf, percentile } from "./histogram.ts";
+import { PrepareError, prepare, type Compiled, type Statuses } from "./prepare.ts";
 import {
   addressOf,
   loadSchema,
@@ -44,7 +43,6 @@ import type { FromWorker, Job, Report, Schedule, ToWorker } from "./worker.ts";
 const USAGE = "usage: node traffic-generator/cli.ts <load, as JSON or a file> [--out <file>]";
 
 class UsageError extends Error {}
-class PrimingError extends Error {}
 
 interface Options {
   readonly load: ResolvedLoad;
@@ -137,36 +135,6 @@ function select(only: readonly string[] | undefined): PerformanceTest[] {
 /** Seeds for the worker threads, and one past them for this thread. */
 const seedOf = (i: number): number => Math.imul(0x9e3779b9, i + 1) >>> 0;
 
-type Base = Omit<Shared, "agent" | "once">;
-
-/**
- * Every test once, in turn on one connection, before anything is timed. This makes each once()
- * value, so the load never has to, and it refuses a test that cannot be sent at all before a
- * phase is spent finding that out in every instance.
- */
-async function prime(tests: readonly PerformanceTest[], base: Base): Promise<[string, unknown][]> {
-  const agent = new http.Agent({ keepAlive: true, maxSockets: 1 });
-  const once = new Once([]);
-  try {
-    for (const test of tests) {
-      const id = idOf(test.id);
-      const client = new MeasuredClient({ ...base, agent, once });
-      try {
-        await test.request(client);
-      } catch (error) {
-        throw new PrimingError(`priming ${id}: ${describe(error)}`);
-      }
-      if (client.sent === 0) throw new PrimingError(`priming ${id}: ${NOTHING_SENT}`);
-      // A wrong status is the framework's answer, not a test that cannot be sent, so the load
-      // goes on and counts it in every instance.
-      if (client.mismatch !== undefined) console.log(`  ${id}: ${client.mismatch}`);
-    }
-    return await once.values();
-  } finally {
-    agent.destroy();
-  }
-}
-
 function next<K extends FromWorker["kind"]>(worker: Worker, kind: K): Promise<Extract<FromWorker, { kind: K }>> {
   return new Promise((resolve, reject) => {
     const onMessage = (message: FromWorker) => {
@@ -194,21 +162,17 @@ function next<K extends FromWorker["kind"]>(worker: Worker, kind: K): Promise<Ex
 }
 
 /** The threads that time every phase, started once so each keeps its connections from one phase to the next. */
-async function spawn(o: Options, once: [string, unknown][]): Promise<Worker[]> {
-  const tests = o.tests.map((test) => idOf(test.id));
-  const { workers, maxInflight, values } = o.load;
+async function spawn(o: Options, compiled: Compiled[]): Promise<Worker[]> {
+  const { workers, connections } = o.load;
   const threads = Array.from({ length: workers }, (_, index) => {
     const job: Job = {
       host: o.host,
       port: o.port,
-      tests,
+      tests: compiled,
       index,
       workers,
-      inflight: Math.ceil(maxInflight / workers),
+      connections: Math.ceil(connections / workers),
       seed: seedOf(index),
-      statuses: o.statuses,
-      run: values,
-      once,
     };
     return new Worker(new URL("./worker.ts", import.meta.url), { workerData: job });
   });
@@ -263,7 +227,7 @@ const base64 = (hist: Uint32Array): string =>
 function settleSummary(seconds: number, scheduled: number, reports: readonly Report[]): SettleSummary {
   const t = newTally();
   for (const report of reports) mergeTally(t, report.settle);
-  const completed = t.count + t.unrecorded;
+  const completed = t.count;
   return {
     seconds,
     scheduled,
@@ -297,8 +261,7 @@ function recordedSummary(
   const overall = new Uint32Array(BUCKETS);
   for (const tally of tallies) addInto(overall, tally.hist);
   const sum = (field: (tally: Tally) => number) => tallies.reduce((s, tally) => s + field(tally), 0);
-  const unrecorded = sum((t) => t.unrecorded);
-  const completed = countOf(overall) + unrecorded;
+  const completed = countOf(overall);
   const elapsed = last > from ? Number(last - from) / 1e9 : seconds;
 
   return {
@@ -310,7 +273,6 @@ function recordedSummary(
     dropped: sum((t) => t.dropped),
     errors: sum((t) => t.errors),
     mismatch: sum((t) => t.mismatch),
-    unrecorded,
     overall: { count: countOf(overall), ...percentiles(overall) },
     tests: tests.map((test, i) => {
       const t = tallies[i]!;
@@ -321,7 +283,6 @@ function recordedSummary(
         errors: t.errors,
         mismatch: t.mismatch,
         dropped: t.dropped,
-        unrecorded: t.unrecorded,
         ...percentiles(t.hist),
         ...(t.firstMismatch === undefined ? {} : { firstMismatch: t.firstMismatch }),
         ...(t.firstError === undefined ? {} : { firstError: t.firstError }),
@@ -405,13 +366,21 @@ function write(out: string, result: LoadResult): void {
 
 async function main(args: string[]): Promise<number> {
   const o = options(args);
-  const draw = drawFrom(xorshift(seedOf(o.load.workers)));
-  const base: Base = { host: o.host, port: o.port, statuses: o.statuses, run: o.load.values, draw };
 
   console.log(`priming ${o.tests.length} tests against ${o.load.framework} at ${o.load.target}`);
-  const once = await prime(o.tests, base);
+  const compiled = await prepare({
+    host: o.host,
+    port: o.port,
+    tests: o.tests,
+    statuses: o.statuses,
+    run: o.load.values,
+    instances: o.load.instances,
+    log: (line) => console.log(line),
+  });
+  const requests = compiled.reduce((n, test) => n + test.instances.length, 0);
+  console.log(`  ${requests} requests prepared, at most ${Math.max(...compiled.map((test) => test.instances.length))} for one test`);
 
-  const threads = await spawn(o, once);
+  const threads = await spawn(o, compiled);
   const phases: PhaseResult[] = [];
   try {
     for (const phase of o.load.phases) {
@@ -436,7 +405,7 @@ try {
   if (error instanceof UsageError) {
     console.error(`${USAGE}\ntraffic-generator: ${error.message}`);
     process.exitCode = 2;
-  } else if (error instanceof PrimingError) {
+  } else if (error instanceof PrepareError) {
     console.error(`traffic-generator: ${error.message}`);
     process.exitCode = 1;
   } else {

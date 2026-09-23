@@ -16,7 +16,7 @@ function hist(at: Record<number, number>): string {
 
 const testRow = (id: string, family: string, at: Record<number, number>): TestSummary => {
   const count = Object.values(at).reduce((a, b) => a + b, 0);
-  return { id, family, count, errors: 0, mismatch: 0, dropped: 0, unrecorded: 0, p50Us: 0, p90Us: 0, p99Us: 0, p999Us: 0, histB64: hist(at) };
+  return { id, family, count, errors: 0, mismatch: 0, dropped: 0, p50Us: 0, p90Us: 0, p99Us: 0, p999Us: 0, histB64: hist(at) };
 };
 
 const recorded = (tests: TestSummary[], dropped = 0) => ({
@@ -54,7 +54,8 @@ const load: LoadResult = {
     framework: "node:fastify",
     values: {} as LoadResult["load"]["values"],
     workers: 1,
-    maxInflight: 8,
+    instances: 1,
+    connections: 8,
     phases: [
       { name: "warmup", rps: 1000, settle: 1 },
       { name: "regular", rps: 100, seconds: 1 },

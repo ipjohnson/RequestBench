@@ -2,32 +2,28 @@
 //
 // An instance is timed from its scheduled moment rather than from when it was sent, which is
 // the coordinated-omission correction: a backlog in the generator or the framework shows up as
-// latency instead of quietly vanishing. The test is the unit, so the time runs until the
-// test's closure settles, however many calls it made.
-import http from "node:http";
+// latency instead of quietly vanishing. The instance is a request prepare.ts built before the
+// load began, so the thread writes bytes and reads an answer, and the time runs until its last
+// byte arrives.
 import { parentPort, workerData } from "node:worker_threads";
-import suite from "@rb/tests";
-import type { RunValues } from "@rb/tests/kit";
-import { drawFrom } from "@rb/tests/models/parameters";
-import { MeasuredClient, NOTHING_SENT, Once, describe, xorshift, type Statuses } from "./client.ts";
+
 import { bucketOf } from "./histogram.ts";
+import type { Compiled, Prepared } from "./prepare.ts";
 import { newTally, type Tally } from "./tally.ts";
+import { Pool, describe, type Answer } from "./wire.ts";
 
 /** What the main thread hands each worker once, for every phase. */
 export interface Job {
   readonly host: string;
   readonly port: number;
-  /** The ids of the tests offered, in the order the report lists them. */
-  readonly tests: readonly string[];
+  /** Each test's requests, in the order the report lists the tests. */
+  readonly tests: readonly Compiled[];
   /** This thread takes every `workers`-th instance of a phase, settle and recorded alike, starting at this one. */
   readonly index: number;
   readonly workers: number;
-  /** This thread's share of the in-flight limit, which is also its connection limit. */
-  readonly inflight: number;
+  /** This thread's share of the load's connections, which is also its in-flight limit. */
+  readonly connections: number;
   readonly seed: number;
-  readonly statuses: Statuses;
-  readonly run: RunValues;
-  readonly once: readonly (readonly [string, unknown])[];
 }
 
 /** One phase, counted in instances across every thread. */
@@ -65,25 +61,12 @@ if (parentPort === null) throw new Error("worker.ts runs as a worker thread, sta
 const port = parentPort;
 
 const job = workerData as Job;
-const tests = job.tests.map((id) => suite.tests[id]!);
+const tests = job.tests;
 const random = xorshift(job.seed);
-// noDelay reaches net.createConnection through the agent, though AgentOptions does not list it.
-const connections: http.AgentOptions & { noDelay: boolean } = {
-  keepAlive: true,
-  maxSockets: job.inflight,
-  maxFreeSockets: job.inflight,
-  scheduling: "fifo",
-  noDelay: true,
-};
-const shared = {
-  host: job.host,
-  port: job.port,
-  agent: new http.Agent(connections),
-  statuses: job.statuses,
-  run: job.run,
-  draw: drawFrom(random),
-  once: new Once(job.once),
-};
+const pool = new Pool(job.host, job.port);
+// Opened before the thread says it is ready, so the first instance of the first phase finds a
+// connection waiting rather than paying for one inside its own time.
+await pool.open(job.connections);
 
 /** Not reset between phases, because an instance the drain gave up on still holds its connection. */
 let inflight = 0;
@@ -134,39 +117,36 @@ function fire(p: Phase, k: number, at: bigint): void {
   const t = Math.floor(random() * tests.length);
   // A settle instance counts toward the settle alone, and toward no test's row.
   const tally = k < p.schedule.settle ? p.settle : p.tallies[t]!;
-  if (inflight >= job.inflight) {
+  if (inflight >= job.connections) {
     // Dropped by never being sent, so it enters no histogram. A rate with drops is reported
     // with its drop count, because percentiles over the survivors flatter a collapse.
     tally.dropped++;
     return;
   }
+  const instances = tests[t]!.instances;
+  const request = instances[Math.floor(random() * instances.length)]!;
   inflight++;
-  const client = new MeasuredClient(shared);
-  let settled: unknown;
-  try {
-    settled = tests[t]!.request(client);
-  } catch (error) {
-    failed(tally, error);
-    return;
-  }
-  Promise.resolve(settled).then(
-    () => (client.sent === 0 ? failed(tally, new Error(NOTHING_SENT)) : succeeded(p, tally, at, client)),
-    (error: unknown) => failed(tally, error),
+  pool.send(
+    request,
+    (answer) => answered(p, tally, at, request, answer),
+    (error) => failed(tally, error),
   );
 }
 
-function succeeded(p: Phase, tally: Tally, at: bigint, client: MeasuredClient): void {
+function answered(p: Phase, tally: Tally, at: bigint, request: Prepared, answer: Answer): void {
+  const end = process.hrtime.bigint();
   inflight--;
-  p.last = process.hrtime.bigint();
-  if (client.mismatch !== undefined) {
+  p.last = end;
+  if (!request.accepted.includes(answer.status)) {
     tally.mismatch++;
-    tally.firstMismatch ??= client.mismatch;
+    tally.firstMismatch ??= `${request.target} answered ${answer.status}, expected ${request.accepted.join(" or ")}`;
+  } else if (request.bodyBytes !== undefined && answer.bodyBytes !== request.bodyBytes) {
+    // The body this request answered with at priming is the one it answers with under load. A
+    // framework that starts answering something else is not serving what is being measured.
+    tally.mismatch++;
+    tally.firstMismatch ??= `${request.target} answered ${answer.bodyBytes} bytes, expected ${request.bodyBytes}`;
   }
-  if (client.untimed) {
-    tally.unrecorded++;
-    return;
-  }
-  tally.hist[bucketOf(Number(p.last - at) / 1000)]!++;
+  tally.hist[bucketOf(Number(end - at) / 1000)]!++;
   tally.count++;
 }
 
@@ -190,12 +170,26 @@ function report(p: Phase): void {
   port.postMessage(done);
 }
 
-port.on("message", (message: ToWorker) => {
+/** xorshift32, so each thread walks the tests and their instances its own way, and every run the same way. */
+function xorshift(seed: number): () => number {
+  let s = seed >>> 0 || 1;
+  return () => {
+    s ^= s << 13;
+    s ^= s >>> 17;
+    s ^= s << 5;
+    return (s >>> 0) / 4294967296;
+  };
+}
+
+port.on("message", async (message: ToWorker) => {
   if (message.kind === "stop") {
     if (phase !== undefined) phase.stopped = true;
     return;
   }
   const { schedule, start } = message;
+  // The phase begins with the connections the load declared, however many the framework closed
+  // during the one before it. The start is far enough ahead that this lands before it.
+  await pool.open(job.connections);
   phase = {
     schedule,
     start,

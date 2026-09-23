@@ -32,7 +32,7 @@ const VALUES = {
 const ETAG = '"stub"';
 const { token, cors } = settings.value;
 
-type Answer = number | readonly [number, Record<string, string>];
+type Answer = number | readonly [number, Record<string, string>] | readonly [number, Record<string, string>, string];
 type Route = readonly [RegExp, (m: RegExpExecArray, req: http.IncomingMessage, url: URL, body: string) => Answer];
 
 const id = (text: string | undefined): number => Number(text);
@@ -134,8 +134,8 @@ before(async () => {
     req.on("data", (chunk: string) => (body += chunk));
     req.on("end", () => {
       const answer = answering(req, body);
-      const [status, headers] = typeof answer === "number" ? [answer, {}] : answer;
-      const payload = status === 204 || status === 304 ? undefined : "{}";
+      const [status, headers, sent] = typeof answer === "number" ? [answer, {}, undefined] : answer;
+      const payload = status === 204 || status === 304 ? undefined : (sent ?? "{}");
       setTimeout(() => res.writeHead(status, headers).end(payload), delay);
     });
   });
@@ -209,11 +209,24 @@ test("a wrong status is counted against the test that received it and still time
   assert.equal(recorded.mismatch, small.mismatch);
 });
 
+test("an answer that is not the length it was primed with is counted as a mismatch", async () => {
+  // Priming sees the body the row is measured against, and every answer after it has grown.
+  let seen = 0;
+  answering = stub((route) => (route === "GET /json/small" && seen++ > 0 ? [200, {}, '{"grew":true}'] : undefined));
+  delay = 0;
+  const { code, result } = await generate(load([{ name: "regular", rps: 300, seconds: 2 }], { only: ["json.small"] }));
+  assert.equal(code, 0);
+  const { recorded } = result.phases[0];
+  const small = recorded.tests.find((t: { id: string }) => t.id === "json.small");
+  assert.equal(small.mismatch, small.count);
+  assert.equal(small.firstMismatch, "GET /json/small answered 13 bytes, expected 2");
+});
+
 test("an instance due while the in-flight limit is reached is dropped, not sent", async () => {
   answering = stub();
   delay = 300;
   const { code, result } = await generate(
-    load([{ name: "regular", rps: 100, seconds: 1 }], { workers: 1, maxInflight: 5, only: ["baseline.plaintext"] }),
+    load([{ name: "regular", rps: 100, seconds: 1 }], { workers: 1, connections: 5, only: ["baseline.plaintext"] }),
   );
   delay = 0;
   assert.equal(code, 0);
@@ -262,7 +275,7 @@ test("a settle that drops more than it may ends the load, and the phases after i
         { name: "raised", rps: 100, settle: 1, abortDropFraction: 0.05, seconds: 30 },
         { name: "peak", rps: 200, settle: 1, seconds: 30 },
       ],
-      { workers: 1, maxInflight: 5, only: ["baseline.plaintext"] },
+      { workers: 1, connections: 5, only: ["baseline.plaintext"] },
     ),
   );
   delay = 0;

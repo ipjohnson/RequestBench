@@ -8,8 +8,6 @@ export interface Tally {
   mismatch: number;
   /** Never sent, because the in-flight limit was reached at their scheduled moment. */
   dropped: number;
-  /** Finished without being timed, because they waited on a `once` value being made. */
-  unrecorded: number;
   readonly hist: Uint32Array;
   firstError: string | undefined;
   firstMismatch: string | undefined;
@@ -20,7 +18,6 @@ export const newTally = (): Tally => ({
   errors: 0,
   mismatch: 0,
   dropped: 0,
-  unrecorded: 0,
   hist: new Uint32Array(BUCKETS),
   firstError: undefined,
   firstMismatch: undefined,
@@ -31,7 +28,6 @@ export function mergeTally(into: Tally, from: Tally): void {
   into.errors += from.errors;
   into.mismatch += from.mismatch;
   into.dropped += from.dropped;
-  into.unrecorded += from.unrecorded;
   addInto(into.hist, from.hist);
   into.firstError ??= from.firstError;
   into.firstMismatch ??= from.firstMismatch;

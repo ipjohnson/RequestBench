@@ -45,8 +45,18 @@ export const loadSchema = z.strictObject({
   /** The run's values, so every client in a run sends the same ones. Drawn by the generator when absent. */
   values: runValuesSchema.optional(),
   workers: z.number().int().positive().default(4),
-  /** In flight across every thread, which is also the connection limit. */
-  maxInflight: z.number().int().positive().default(1024),
+  /**
+   * The connections the load holds, across every thread. They are opened before the first phase
+   * and each carries one request at a time, so no instance pays for a handshake and every
+   * framework is offered the same shape. An instance due while all of them are busy is dropped,
+   * which is what the drop count and abortDropFraction are about.
+   */
+  connections: z.number().int().positive().default(256),
+  /**
+   * The most requests compiled per test, spread over the values its closure draws. Upstream's
+   * plan held 512 of each, which is what makes precomputing every answer impractical.
+   */
+  instances: z.number().int().positive().default(512),
   /** Test ids or family names. Absent means every performance test. */
   only: z.array(z.string().min(1)).min(1).optional(),
   /** Run in order, on the same threads and connections. */
@@ -100,7 +110,6 @@ export interface TestSummary extends Percentiles {
   readonly errors: number;
   readonly mismatch: number;
   readonly dropped: number;
-  readonly unrecorded: number;
   readonly firstMismatch?: string;
   readonly firstError?: string;
   /** The test's histogram in the layout histogram.ts describes, as base64. */
@@ -117,7 +126,6 @@ export interface RecordedSummary {
   readonly dropped: number;
   readonly errors: number;
   readonly mismatch: number;
-  readonly unrecorded: number;
   readonly overall: Percentiles & { readonly count: number };
   readonly tests: readonly TestSummary[];
 }
