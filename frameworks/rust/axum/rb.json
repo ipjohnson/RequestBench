@@ -1,5 +1,5 @@
 {
-  "comment": "axum 0.8 on tokio's multi-thread runtime, one router per family under Implementation/routes, merged into one application, with each family's features as tower layers on its own router. One package: the library and the server binary in Implementation/, the suite in UnitTests/, which drives the router in process with tower's oneshot and never reaches the image. The release profile is fat LTO with one codegen unit, as upstream measured every Rust framework. Validation is the validator crate, which axum's own validator example uses, behind axum-valid's extractor, which packages that example. The first-error route is wired by hand, because validator cannot stop at the first failure. The cache is axum-response-cache, a package chosen for axum, which ships none. upgrade is cargo update, which moves Cargo.lock within the ranges Cargo.toml states.",
+  "comment": "axum 0.8 on tokio's multi-thread runtime, one router per family under Implementation/routes, merged into one application, with each family's features as tower layers on its own router. One package: the library and the server binary in Implementation/, the suite in UnitTests/, which drives the router in process with tower's oneshot and never reaches the image. The release profile is fat LTO with one codegen unit, as upstream measured every Rust framework. Validation is the validator crate, which axum's own validator example uses, behind an extractor of the port's own like that example's. axum-valid, which packages the example, has no release for validator 0.21. The first-error route is wired by hand, because validator cannot stop at the first failure. The cache is a from_fn layer of the port's own over cached's LruTtlCache, because axum ships none and axum-response-cache has no release for cached 4. upgrade is cargo update, which moves Cargo.lock within the ranges Cargo.toml states.",
   "framework": "axum",
   "licence": "MIT",
   "repo": "https://github.com/tokio-rs/axum",
@@ -24,14 +24,14 @@
     },
     "baseline": { "builtin": "The handler returns the string, which axum sends as text/plain." },
     "body": {
-      "mechanism": "The validator crate's rules, derived on the order and run by axum-valid's Valid extractor before the handler, which refuses the body with validator's errors as JSON. The first-error route checks the rules one field at a time by hand, because validator cannot stop at the first failure",
+      "mechanism": "The validator crate's rules, derived on the order and run by ValidatedJson, an extractor of the port's own over axum's Json, before the handler. It refuses the body with 400 and validator's errors as JSON, as axum-valid does. The first-error route checks the rules one field at a time by hand, because validator cannot stop at the first failure",
       "dependency": "validator",
       "mentions": "Validate"
     },
     "cache": {
-      "mechanism": "axum-response-cache's CacheLayer on each cache route, which replays a stored answer before the handler, keyed by the path and the headers the route varies on",
-      "dependency": "axum-response-cache",
-      "mentions": "CacheLayer"
+      "mechanism": "A from_fn layer of the port's own on each cache route, over cached's LruTtlCache, which replays a stored answer before the handler, keyed by the path and the headers the route varies on",
+      "dependency": "cached",
+      "mentions": "LruTtlCache"
     },
     "compressed": {
       "mechanism": "tower-http's CompressionLayer on the compressed routes, gzip at its fastest level and the default threshold",

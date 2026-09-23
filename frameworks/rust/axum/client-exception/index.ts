@@ -35,11 +35,11 @@ function broke(errors: Errors, at: readonly string[] = []): [string, readonly Br
 
 export default exceptions({
   about:
-    "axum-valid runs the validator crate's rules before the handler and refuses the body with 400 and " +
-    "validator's ValidationErrors as JSON. A field is keyed by its Rust name, which serde writes in " +
-    "camelCase on the wire, and a nested struct or a list entry by its index holds errors of its own. " +
-    "A body that is not JSON never reaches the rules: axum's Json extractor refuses it with a 400 " +
-    "whose body is text.",
+    "The port's ValidatedJson extractor runs the validator crate's rules before the handler and " +
+    "refuses the body with 400 and validator's ValidationErrors as JSON, as axum-valid does. A " +
+    "field is keyed by its Rust name, which serde writes in camelCase on the wire, and a nested " +
+    "struct or a list entry by its index holds errors of its own. A body that is not JSON never " +
+    "reaches the rules: axum's Json extractor refuses it with a 400 whose body is text.",
   rejected: 400,
   malformed: 400,
   notFound: 404,

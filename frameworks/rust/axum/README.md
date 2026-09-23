@@ -49,9 +49,9 @@ container runs two workers under its two-CPU budget, whichever way the budget is
 | middleware | `from_fn` no-op layers on the route, four or sixteen of them. | axum |
 | parameters, query | The `Path` and `Query` extractors, which convert the numbers to integers. | axum |
 | headers | The handler reads the three headers from the `HeaderMap` extractor, because axum has no header binder. | axum |
-| body | `Json` binds the order. On the validate routes, axum-valid's `Valid` runs the validator crate's rules first and refuses with 400 and validator's errors as JSON. | axum-valid and validator |
+| body | `Json` binds the order. On the validate routes, `ValidatedJson`, an extractor of the port's own, runs the validator crate's rules first and refuses with 400 and validator's errors as JSON. | validator, and an extractor by hand |
 | authorized | `ValidateRequestHeaderLayer::has_header_value` on the route, which answers 403 unless Authorization is settings.json's bearer token. | tower-http |
-| cache | axum-response-cache's `CacheLayer` on each cache route, over an LRU with a time to live, keyed by the path and the headers the route varies on. | axum-response-cache |
+| cache | A `from_fn` layer on each cache route, over cached's `LruTtlCache`, an LRU with a time to live, keyed by the path and the headers the route varies on. | cached, and a layer by hand |
 | compressed | `CompressionLayer` on the compressed routes, gzip at its fastest level and the default threshold. | tower-http |
 | etag | A `from_fn` layer on the two routes that hashes the answer with SHA-1 and answers 304 when If-None-Match names it. | by hand |
 | template | An askama template, compiled into the binary. | askama |
@@ -73,8 +73,13 @@ container runs two workers under its two-CPU budget, whichever way the budget is
   through rustfmt.
 - validator cannot stop at the first failing rule, so the first-error route is wired by hand. It
   checks the order's fields one at a time, in the order the order declares them, each against its
-  rule in a struct of its own, and refuses with axum-valid's rejection.
-- validator 0.20, not 0.21: axum-valid 0.25 implements its extractor for validator 0.20's trait.
+  rule in a struct of its own, and refuses as the validate routes do.
+- axum-valid 0.25, the newest release, implements its extractor for validator 0.20 alone. The
+  validate routes run validator 0.21 through `ValidatedJson`, an extractor like the one axum's
+  validator example writes for a form, which refuses exactly as axum-valid does.
+- axum ships no response cache, and axum-response-cache 0.5, the newest release, needs cached 1.
+  Each cache route has a `from_fn` layer of its own over cached 4's `LruTtlCache`, which answers
+  from the store before the handler runs and stores a 2xx the handler answers.
 - `AllowOrigin::exact` writes its origin on every answer, to any origin, and makes the layer send
   no `Vary: Origin`. The CORS layer lists its one origin instead.
 - The Location header of a created item is built from the request's path. A `"/items/{}"` format
@@ -90,10 +95,10 @@ container runs two workers under its two-CPU budget, whichever way the budget is
 
 ## Refusals
 
-Every refusal is what axum or the layer on the route writes. Nothing reshapes it. `order.invalid`
-binds and breaks every rule, so axum-valid refuses it with 400 and validator's `ValidationErrors`:
-an object keyed by each field's Rust name, such as `customer_id`, holding the rules it broke, with
-a list entry's errors under its index. The first-error route answers the same way, naming the first
-field alone. A body that is not JSON never reaches the rules. `Json` refuses it with a 400 whose body
-is text, which is how `errors.malformed` is answered. A missing row, a path with no route and a
-wrong bearer token are answered with a status and no body.
+Every refusal is what axum, the layer on the route or validator writes. Nothing reshapes it.
+`order.invalid` binds and breaks every rule, so `ValidatedJson` refuses it with 400 and validator's
+`ValidationErrors`: an object keyed by each field's Rust name, such as `customer_id`, holding the
+rules it broke, with a list entry's errors under its index. The first-error route answers the same
+way, naming the first field alone. A body that is not JSON never reaches the rules. `Json` refuses
+it with a 400 whose body is text, which is how `errors.malformed` is answered. A missing row, a path
+with no route and a wrong bearer token are answered with a status and no body.

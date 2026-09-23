@@ -33,9 +33,10 @@ async fn an_order_is_answered_with_its_leaves_its_length_and_itself() {
 }
 
 // rb:test body.rejected_all
-/// body.rejected_all: order.invalid breaks all three rules, and axum-valid refuses it naming each.
+/// body.rejected_all: order.invalid breaks all three rules, and the validate route refuses it naming
+/// each.
 #[tokio::test]
-async fn axum_valid_refuses_order_invalid_naming_every_rule_it_breaks() {
+async fn the_validate_route_refuses_order_invalid_naming_every_rule_it_breaks() {
     let response = post(&app(), "/body/validate/small", "application/json", file("order.invalid.json")).await;
 
     assert_eq!(response.status(), StatusCode::BAD_REQUEST);
