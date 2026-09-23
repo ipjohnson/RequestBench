@@ -9,7 +9,7 @@
     <!-- FastEndpoints.OpenApi.Kiota pins Kiota.Builder 1.29.1, which asks for this bundle at 1.20.1
          or later. NuGet's audit refuses 1.20.1 for GHSA-7j59-v9qr-6fq9, fixed in 1.22.0, so the
          newest release of that major is named here. -->
-    <PackageReference Include="Microsoft.Kiota.Bundle" Version="1.22.2" />
+    <PackageReference Include="Microsoft.Kiota.Bundle" Version="2.1.2" />
   </ItemGroup>
   <!-- With RB_PAYLOADS set, a build runs what it built with generateclients set to true, as
        FastEndpoints documents for writing clients at build time. PORT=0 lets it listen on any
