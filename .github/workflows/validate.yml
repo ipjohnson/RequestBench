@@ -117,11 +117,24 @@ jobs:
         with:
           go-version-file: ${{ matrix.framework.dir }}/go.mod
           cache-dependency-path: ${{ matrix.framework.dir }}/go.sum
+      # The JDK the framework's image runs on, read from its last FROM line.
+      - if: matrix.framework.language == 'java'
+        id: java
+        env:
+          DIR: ${{ matrix.framework.dir }}
+        run: |
+          image=$(grep -E '^FROM (eclipse-temurin|amazoncorretto):' "$DIR/Dockerfile" | tail -1 | awk '{print $2}')
+          case "$image" in
+            eclipse-temurin:*) echo "distribution=temurin" >> "$GITHUB_OUTPUT" ;;
+            amazoncorretto:*) echo "distribution=corretto" >> "$GITHUB_OUTPUT" ;;
+          esac
+          version=${image#*:}
+          echo "version=${version%%[!0-9]*}" >> "$GITHUB_OUTPUT"
       - if: matrix.framework.language == 'java'
         uses: actions/setup-java@v6
         with:
-          distribution: temurin
-          java-version: "25"
+          distribution: ${{ steps.java.outputs.distribution }}
+          java-version: ${{ steps.java.outputs.version }}
           cache: maven
           cache-dependency-path: ${{ matrix.framework.dir }}/**/pom.xml
       - if: matrix.framework.language == 'python'
