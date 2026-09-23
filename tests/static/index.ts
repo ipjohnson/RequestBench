@@ -8,7 +8,7 @@ export default family({
     "payload directory.",
   comparable:
     "Across every framework. The file is items.large.json, so read against " +
-    "json.large the difference is a file sent as it is against the same rows " +
+    "json.large the difference is the file served against the same rows " +
     "serialised.",
 
   tests: [file],
