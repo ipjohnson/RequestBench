@@ -1,0 +1,66 @@
+# Restores the lock files of each .NET framework a Dependabot pull request changes, with the SDK in
+# that framework's own image, and pushes them to the pull request. Dependabot's updater runs its own
+# SDK, which records the implicit Microsoft.AspNetCore.App.Internal.Assets package at its own
+# version, and the image's locked-mode restore then refuses the lock file. A push made with this
+# workflow's token starts no other workflow, so this starts validate.yml on the branch itself.
+name: dotnet-locks
+
+on:
+  pull_request:
+    paths:
+      - frameworks/dotnet/**
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: The branch whose .NET lock files to restore
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: dotnet-locks-${{ github.head_ref || inputs.branch }}
+  cancel-in-progress: true
+
+jobs:
+  locks:
+    name: restore .NET lock files
+    if: github.event_name == 'workflow_dispatch' || (github.actor == 'dependabot[bot]' && github.event.pull_request.user.login == 'dependabot[bot]')
+    runs-on: ubuntu-latest
+    env:
+      BRANCH: ${{ github.head_ref || inputs.branch }}
+      BASE: ${{ github.event.pull_request.base.sha }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.head_ref || inputs.branch }}
+          fetch-depth: 0
+      - name: Restore with each framework's image SDK
+        run: |
+          base=${BASE:-$(git merge-base origin/main HEAD)}
+          for dir in $(git diff --name-only "$base"...HEAD -- frameworks/dotnet | cut -d/ -f1-3 | sort -u); do
+            [ -f "$dir/Dockerfile" ] || continue
+            sdk=$(grep -m1 '^FROM mcr.microsoft.com/dotnet/sdk' "$dir/Dockerfile" | awk '{print $2}')
+            for lock in $(git ls-files -- "$dir" | grep '/packages.lock.json$'); do
+              project=$(cd "$(dirname "$lock")" && ls ./*.csproj)
+              echo "$dir: restoring $(dirname "${lock#"$dir/"}")/${project#./} with $sdk"
+              docker run --rm -v "$PWD/$dir:/src" -w /src "$sdk" \
+                dotnet restore "$(dirname "${lock#"$dir/"}")/${project#./}" --force-evaluate
+            done
+            sudo chown -R "$(id -u):$(id -g)" "$dir"
+          done
+          git status --short
+      - name: Push them and validate the branch
+        run: |
+          if git diff --quiet; then
+            echo "Every lock file already matches its image's SDK."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "Restore .NET lock files with each image's SDK"
+          git push origin "HEAD:$BRANCH"
+          gh workflow run validate.yml --ref "$BRANCH"
