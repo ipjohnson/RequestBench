@@ -123,6 +123,11 @@ A run is recorded only when it was made on Linux, from a clean working tree, at 
 over the whole corpus at full length. The site shows only recorded runs unless it is built with
 `--unrecorded`.
 
+[`measure.yml`](.github/workflows/measure.yml) measures every framework each night on one
+GitHub-hosted runner, with the framework on cores 0 and 1 and the generator on cores 2 and 3. It
+adds the run's summary to the `results` branch, under `runs/`, and
+[`pages.yml`](.github/workflows/pages.yml) then publishes the site from every summary there.
+
 ## Commands
 
 `npm run rb` with no command prints this list with every option.
