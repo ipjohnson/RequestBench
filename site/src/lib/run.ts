@@ -10,6 +10,34 @@ export const DEFAULT_HOST = "container-h1";
 
 export const hostOf = (run: Run): string => run.host || DEFAULT_HOST;
 
+/** The machine a run was measured on, as the explorer names it: its CPU model and core count. */
+export const machineOf = (run: Run): string => `${run.machine?.cpu || "unknown CPU"}, ${run.machine?.cores ?? "?"} cores`;
+
+/**
+ * The runs a time axis may join with `newest`: measured on `machine`, on the same rate ladder and
+ * against the same corpus version. The same framework on another CPU can differ by twice, and a
+ * run on another ladder or corpus measured something else.
+ */
+export function timeline(runs: readonly Run[], newest: Run, machine: string): Run[] {
+  return runs.filter(
+    (r) => machineOf(r) === machine && r.ladder === newest.ladder && r.corpusVersion === newest.corpusVersion,
+  );
+}
+
+/** Each machine with runs `newest` can be read against, and how many: the newest run's first, then the most runs. */
+export function machinesFor(runs: readonly Run[], newest: Run): { machine: string; runs: number }[] {
+  const counts = new Map<string, number>();
+  for (const r of runs) {
+    if (r.ladder !== newest.ladder || r.corpusVersion !== newest.corpusVersion) continue;
+    const m = machineOf(r);
+    counts.set(m, (counts.get(m) ?? 0) + 1);
+  }
+  const own = machineOf(newest);
+  return [...counts]
+    .map(([machine, n]) => ({ machine, runs: n }))
+    .sort((a, b) => Number(b.machine === own) - Number(a.machine === own) || b.runs - a.runs || (a.machine < b.machine ? -1 : 1));
+}
+
 /**
  * The rungs in the order the ladder offered them. A summary writes each framework's rungs in
  * phase order, so the first framework to name a rung places it. A framework that failed before

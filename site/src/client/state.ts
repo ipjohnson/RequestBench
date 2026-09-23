@@ -1,8 +1,9 @@
 // What the explorer is showing, and the columns it can show it in.
 //
 // Every field here is carried in the URL hash, so a view is a link: the host, the rate, the
-// metric, the granularity, the languages, the filter, a custom blend's picks, the columns and the
-// sort. A framework page opened from a row carries the same fields in its query, for its link back.
+// metric, the granularity, the languages, the filter, a custom blend's picks, the columns, the sort
+// and the machine the time axis shows. A framework page opened from a row carries the same fields in
+// its query, for its link back.
 import { blendNamed, type BlendId, type CustomBlend } from "../lib/blends.ts";
 import type { Chain } from "../lib/delta.ts";
 import { isMetric, type MetricId } from "../lib/metrics.ts";
@@ -75,6 +76,8 @@ export type State = {
   sort: { col: string; dir: number };
   q: string;
   cols: Set<string>;
+  /** The machine the time axis draws, as machineOf names it. Null follows the newest run's. */
+  machine: string | null;
 };
 
 export const initialState = (host: string, langs: string[]): State => ({
@@ -87,6 +90,7 @@ export const initialState = (host: string, langs: string[]): State => ({
   sort: { col: "value", dir: 1 },
   q: "",
   cols: defaultCols(),
+  machine: null,
 });
 
 /**
@@ -122,6 +126,8 @@ export function readHash(st: State, hash: string): void {
   if (q) st.q = q;
   const cols = p.get("cols");
   if (cols) st.cols = new Set(cols.split(","));
+  const machine = p.get("machine");
+  if (machine) st.machine = machine;
   const sort = p.get("sort");
   if (sort) {
     const [col, dir] = sort.split(":");
@@ -142,6 +148,7 @@ function viewParams(st: State, allLangs: string[]): URLSearchParams {
   if (st.q) p.set("q", st.q);
   p.set("cols", [...st.cols].join(","));
   p.set("sort", `${st.sort.col}:${st.sort.dir}`);
+  if (st.machine) p.set("machine", st.machine);
   return p;
 }
 
