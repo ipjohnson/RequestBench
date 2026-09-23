@@ -6,11 +6,13 @@ WORKDIR /src
 
 # The poms first, on their own layer, so a change to the code does not download the dependencies
 # again. The parent pins every version, which is what makes the image the versions /__meta reports.
+# go-offline leaves out some of what the Kotlin standard library under Javalin resolves to, so the
+# package step is not offline.
 COPY pom.xml ./
 COPY Implementation/pom.xml Implementation/
 RUN mvn -B -q -f Implementation/pom.xml dependency:go-offline
 COPY Implementation/src Implementation/src
-RUN mvn -B -q -o -f Implementation/pom.xml package -DskipTests
+RUN mvn -B -q -f Implementation/pom.xml package -DskipTests
 
 FROM eclipse-temurin:25-jre@sha256:bb036ed6cfdc57e3da7c22634d15f1b840d2caf76183861c80e81ca4b5104abb
 COPY --from=build /src/Implementation/target/implementation-0.0.0-exec.jar /app/server.jar
