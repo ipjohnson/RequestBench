@@ -63,10 +63,15 @@
         <type>pom</type>
         <scope>import</scope>
       </dependency>
+      <!-- jackson-databind with the jackson-annotations it was released with. openapi-specification
+           names an older jackson-annotations, and dependency:go-offline fetches that one's jar
+           unless the version is managed, so the offline package in the Dockerfile finds no jar. -->
       <dependency>
-        <groupId>com.fasterxml.jackson.core</groupId>
-        <artifactId>jackson-databind</artifactId>
+        <groupId>com.fasterxml.jackson</groupId>
+        <artifactId>jackson-bom</artifactId>
         <version>${jackson.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
       </dependency>
       <!-- The API at the binding's version. Javalin's pom names an older one. -->
       <dependency>
