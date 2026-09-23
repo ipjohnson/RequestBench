@@ -21,7 +21,8 @@ Results: https://ipjohnson.github.io/RequestBench/
 5. The run file records the latencies, the machine, the commit and a hash of each framework's
    files. `npm run rb -- summarize` turns it into the summary the site reads.
 6. The site in [`site/`](site) shows each test's latency, its cost against the test it is read
-   against, and the code that answered it.
+   against, and the code that answered it. A blend is a set of tests read together off their
+   merged histograms: every test, the Web or API tests, or a set the reader picks.
 
 ## Principles
 

@@ -22,6 +22,7 @@ export const Rung = z.looseObject({
   errors: z.number().optional(),
   mismatch: z.number().optional(),
   p50Us: z.number().nullable().optional(),
+  p90Us: z.number().nullable().optional(),
   p99Us: z.number().nullable().optional(),
   p999Us: z.number().nullable().optional(),
 });
@@ -36,6 +37,20 @@ export const BinGrid = z.object({
 });
 export type BinGrid = z.infer<typeof BinGrid>;
 
+/** The generator's grid, which `hist` is counted on: bucket i starts at growth^i µs. */
+export const HistGrid = z.object({
+  growth: z.number(),
+  count: z.number(),
+});
+export type HistGrid = z.infer<typeof HistGrid>;
+
+/** A histogram on the summary's `histGrid` with its empty ends cut off: `counts[0]` is bucket `first`. */
+export const Hist = z.object({
+  first: z.number(),
+  counts: z.array(z.number()),
+});
+export type Hist = z.infer<typeof Hist>;
+
 /** One test's statistics at one rung. The keys are narrower than a rung's. */
 export const TestRung = z.looseObject({
   count: z.number().optional(),
@@ -48,6 +63,8 @@ export const TestRung = z.looseObject({
   p999Us: z.number().nullable().optional(),
   /** The test's latency histogram on the summary's `binGrid`, counts per bin. */
   bins: z.array(z.number()).optional(),
+  /** The same on `histGrid`, fine enough to read a blend's percentiles from. */
+  hist: Hist.optional(),
 });
 export type TestRung = z.infer<typeof TestRung>;
 
@@ -106,6 +123,7 @@ export const Run = z.looseObject({
   tests: z.looseObject({ bundleHash: z.string().optional(), codeHash: z.string().optional() }).optional(),
   machine: z.looseObject({ cpu: z.string().optional(), cores: z.number().optional() }).optional(),
   binGrid: BinGrid.optional(),
+  histGrid: HistGrid.optional(),
   frameworks: z.array(Framework).default([]),
 });
 export type Run = z.infer<typeof Run>;

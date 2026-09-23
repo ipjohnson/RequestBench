@@ -3,17 +3,18 @@
 // Everything that decides what a row says is in select.ts and lib/; this writes the result
 // into the page and wires the controls. The one rule it keeps is that a render is a function
 // of the state and nothing else, so the hash reproduces the view exactly.
+import { blendNamed, entriesOf, isBlend, labelOf, sharesOf, testsOfPick, weightsOf, type BlendId } from "../lib/blends.ts";
 import { provenance } from "../lib/catalog.ts";
 import { esc } from "../lib/html.ts";
 import { cell, METRICS, type Unit } from "../lib/metrics.ts";
 import type { PageData } from "../lib/page-data.ts";
-import { DEFAULT_HOST, famsAt, hostOf, metaOf, rungsOf } from "../lib/run.ts";
+import { DEFAULT_HOST, familyOf, famsAt, hostOf, metaOf, rungsOf, testOrder } from "../lib/run.ts";
 import { SERIES_DARK, SERIES_LIGHT } from "../lib/series.ts";
 import type { Run } from "../lib/types.ts";
 import { deltaCell } from "../lib/views.ts";
 import { Data, resolveSource } from "./source.ts";
-import { choicesAt, filterFor, pickRung, rateLabel, rows, wireKeyFor } from "./select.ts";
-import { COLS, defaultCols, initialState, pageHref, readHash, writeHash, type Col, type Row, type State } from "./state.ts";
+import { blendValue, choicesAt, filterFor, pickRung, rateLabel, rows, wireKeyFor } from "./select.ts";
+import { blendIn, COLS, defaultCols, initialState, pageHref, readHash, writeHash, type Col, type Row, type State } from "./state.ts";
 
 const el = <T extends HTMLElement>(id: string): T => document.getElementById(id) as T;
 
@@ -49,6 +50,15 @@ class Explorer {
   private ownHash = "";
   /** The filter's suggestions as last written. */
   private qopts = "";
+  /** The custom picker as last written, so a render that changes nothing in it leaves it alone. */
+  private pickHtml = "";
+  /** The families whose tests the custom picker has open. Not part of the view, so not in the hash. */
+  private readonly openFams = new Set<string>();
+  /**
+   * The last blend other than custom that the filter named. Typing "Custom" passes through text
+   * that names none, so the blend the filter held a keystroke ago is not the one custom was chosen from.
+   */
+  private fromBlend: BlendId = "all";
 
   constructor(rb: PageData, data: Data) {
     this.rb = rb;
@@ -62,6 +72,8 @@ class Explorer {
   start(): void {
     this.wire();
     readHash(this.st, location.hash);
+    // The blend view opens on All, which the filter shows, as the others open on a family or test.
+    if (this.st.gran === "blend") this.st.q = filterFor(this.latest(), "blend", null, this.st.q);
     this.render();
     void this.data.fetchHost(this.st.host).then((got) => {
       if (got) this.render();
@@ -145,8 +157,7 @@ class Explorer {
       .join("");
     const q = el<HTMLInputElement>("q");
     q.value = this.st.q;
-    q.placeholder = `${this.st.gran === "family" ? "family" : "test"} or framework`;
-    for (const id of ["q", "qlabel"]) el(id).style.display = this.st.gran === "blend" ? "none" : "";
+    q.placeholder = `${this.st.gran} or framework`;
     // Written only when the names change, so typing in the filter does not rebuild the list
     // it is suggesting from.
     const opts = choicesAt(run, this.st.gran, rn)
@@ -156,6 +167,7 @@ class Explorer {
 
     this.renderHostNote();
     this.renderRunNote(run);
+    this.renderBlend(run);
 
     if (!run) {
       el("meta").textContent = this.data.missing(this.st.host) ? "loading this host…" : "no runs for this host yet";
@@ -167,6 +179,7 @@ class Explorer {
     }
 
     el("meta").textContent =
+      this.blendStatus(run) +
       `${run.date ?? ""} · ${run.machine?.cpu ?? "?"}, ${run.machine?.cores ?? "?"} cores · ${hostOf(run)}` +
       ` · ${run.ladder ?? "rate ladder"} · ${rs.length} rows · click a row for its framework page`;
     this.fetchWire(run);
@@ -215,7 +228,6 @@ class Explorer {
       <td class="sub l">${esc(r.detail || r.language)}</td>${tds}</tr>`;
         })
         .join("") || `<tr><td colspan="${vc.length + 3}" class="empty">Nothing matches those filters.</td></tr>`;
-    el("count").textContent = `${rs.length} rows`;
 
     this.renderTime(rs);
     this.pushHash();
@@ -241,6 +253,70 @@ class Explorer {
       box.innerHTML =
         `<strong>Not recorded.</strong> This run does not enter the published series` +
         (why.length ? `: ${why.map(esc).join("; ")}.` : ".");
+  }
+
+  /* ---- the blend ---- */
+
+  /** The custom picker, and the histograms any blend but All is read from. */
+  private renderBlend(run: Run | null): void {
+    const blend = blendIn(this.st);
+    el("picker").hidden = !run || blend !== "custom";
+    if (!run) return;
+    if (blend === "custom") this.renderPicker(run, weightsOf(run, blend, this.st.pick));
+    // The time axis reads every run on this host, so every loaded run's histograms are fetched.
+    if (blend !== "all" && this.data.histMissing(this.st.host)) {
+      void this.data.fetchHist(this.st.host).then((got) => {
+        if (got) this.render();
+      });
+    }
+  }
+
+  /** Why a blend other than All shows no latency yet, or at all, as the start of the line under the table. */
+  private blendStatus(run: Run): string {
+    const b = blendIn(this.st);
+    if (b === "all") return "";
+    if (!this.data.hasHist(run.runId)) return `${labelOf(b)} is read from each test's histogram, and this run's summary has none · `;
+    return this.data.histMissing(this.st.host) ? `loading the histograms ${labelOf(b)} is read from… · ` : "";
+  }
+
+  /**
+   * The custom blend's families, each with how many of its tests are taken, its weight and its
+   * share. A family opens to its tests.
+   */
+  private renderPicker(run: Run, weights: ReadonlyMap<string, number>): void {
+    const shares = sharesOf(run, weights);
+    const taken = new Set(testsOfPick(run, this.st.pick.entries));
+    const byFamily = new Map<string, string[]>();
+    for (const id of testOrder(run)) {
+      const fam = familyOf(run, id);
+      byFamily.set(fam, [...(byFamily.get(fam) ?? []), id]);
+    }
+    const html = [...byFamily]
+      .map(([fam, ids]) => {
+        const n = ids.filter((id) => taken.has(id)).length;
+        const open = this.openFams.has(fam);
+        const share = shares.get(fam);
+        const tests = open
+          ? `<div class="picktests">${ids
+              .map(
+                (id) =>
+                  `<label><input type="checkbox" data-test="${esc(id)}"${taken.has(id) ? " checked" : ""}>` +
+                  `${esc(id.slice(fam.length + 1))}</label>`,
+              )
+              .join("")}</div>`
+          : "";
+        return (
+          `<div class="pickfam"><label class="famck"><input type="checkbox" data-fam="${esc(fam)}"` +
+          `${n === ids.length ? " checked" : ""}${n > 0 && n < ids.length ? ' data-partial=""' : ""}>${esc(fam)}</label>` +
+          `<button type="button" class="chip sm" data-open="${esc(fam)}" aria-expanded="${open}" title="tests taken">${n} of ${ids.length}</button>` +
+          `<label class="wt">weight <input type="number" min="0" step="0.5" value="${this.st.pick.weights[fam] ?? 1}" data-wt="${esc(fam)}"></label>` +
+          `<span class="share">${share ? `${Math.round(share * 100)}%` : "—"}</span>${tests}</div>`
+        );
+      })
+      .join("");
+    const box = el("pickfams");
+    if (html !== this.pickHtml) box.innerHTML = this.pickHtml = html;
+    box.querySelectorAll<HTMLInputElement>("input[data-partial]").forEach((i) => (i.indeterminate = true));
   }
 
   /* ---- what a row opens ---- */
@@ -291,13 +367,15 @@ class Explorer {
     const series_ = new Map<string, { date: string; v: number; ver: string; adapter: string }[]>();
     for (const run of runs) {
       const rn = (this.st.rung && rungsOf(run).includes(this.st.rung) ? this.st.rung : pickRung(run, null)) ?? "";
+      const blend = blendIn(this.st);
+      const weights = blend !== "all" ? weightsOf(run, blend, this.st.pick) : null;
       for (const f of run.frameworks) {
         for (const k of keys) {
           const [kb, det] = k.split("|");
           if (kb !== f.id) continue;
-          const at = !det ? f.rungs[rn] : f.tests?.[det] ? f.tests[det]?.rungs?.[rn] : famsAt(f, rn)[det];
+          const at = !det ? undefined : f.tests?.[det] ? f.tests[det]?.rungs?.[rn] : famsAt(f, rn)[det];
           const raw = (at as Record<string, unknown> | undefined)?.[this.st.metric];
-          const v = typeof raw === "number" ? raw : null;
+          const v = !det ? blendValue(f, rn, this.st.metric, weights) : typeof raw === "number" ? raw : null;
           if (v == null) continue;
           if (!series_.has(k)) series_.set(k, []);
           series_.get(k)?.push({ date: run.date ?? "", v, ver: f.version ?? "", adapter: metaOf(f, "adapter") });
@@ -384,7 +462,13 @@ class Explorer {
       this.render();
     };
     el<HTMLInputElement>("q").oninput = (e): void => {
+      const was = this.st.gran === "blend" ? blendNamed(this.st.q) : null;
+      if (was && was !== "custom") this.fromBlend = was;
       this.st.q = (e.target as HTMLInputElement).value;
+      // Custom opens on the blend it was chosen from, until something has been picked.
+      const run = this.latest();
+      if (blendIn(this.st) === "custom" && !this.st.pick.entries.length && run)
+        this.st.pick.entries = entriesOf(run, weightsOf(run, this.fromBlend, this.st.pick).keys());
       this.render();
     };
     document.querySelectorAll<HTMLButtonElement>(".seg button[data-gran]").forEach((b) => {
@@ -398,6 +482,46 @@ class Explorer {
         this.render();
       };
     });
+    el("picker").onclick = (e): void => {
+      const t = e.target as HTMLElement;
+      const open = t.closest<HTMLElement>("[data-open]")?.dataset["open"];
+      if (open !== undefined) {
+        if (this.openFams.has(open)) this.openFams.delete(open);
+        else this.openFams.add(open);
+        this.render();
+        return;
+      }
+      const from = t.closest<HTMLElement>("[data-from]")?.dataset["from"];
+      const run = this.latest();
+      if (from === undefined || !run) return;
+      this.st.pick.entries = isBlend(from) ? entriesOf(run, weightsOf(run, from, this.st.pick).keys()) : [];
+      this.render();
+    };
+    el("picker").onchange = (e): void => {
+      const t = e.target as HTMLInputElement;
+      const run = this.latest();
+      if (!run) return;
+      const { fam, test, wt } = t.dataset;
+      if (wt !== undefined) {
+        const n = Number(t.value);
+        if (Number.isFinite(n) && n >= 0) {
+          if (n === 1) delete this.st.pick.weights[wt];
+          else this.st.pick.weights[wt] = n;
+        }
+        this.render();
+        return;
+      }
+      const taken = new Set(testsOfPick(run, this.st.pick.entries));
+      const flip = (id: string): void => {
+        if (t.checked) taken.add(id);
+        else taken.delete(id);
+      };
+      if (fam !== undefined) testOrder(run).filter((id) => familyOf(run, id) === fam).forEach(flip);
+      else if (test !== undefined) flip(test);
+      else return;
+      this.st.pick.entries = entriesOf(run, taken);
+      this.render();
+    };
     el("chips").onclick = (e): void => {
       const b = (e.target as HTMLElement).closest<HTMLElement>("[data-lang]");
       const l = b?.dataset["lang"];

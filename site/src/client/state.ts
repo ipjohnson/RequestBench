@@ -1,8 +1,9 @@
 // What the explorer is showing, and the columns it can show it in.
 //
 // Every field here is carried in the URL hash, so a view is a link: the host, the rate, the
-// metric, the granularity, the languages, the filter, the columns and the sort. A framework
-// page opened from a row carries the same fields in its query, for its link back.
+// metric, the granularity, the languages, the filter, a custom blend's picks, the columns and the
+// sort. A framework page opened from a row carries the same fields in its query, for its link back.
+import { blendNamed, type BlendId, type CustomBlend } from "../lib/blends.ts";
 import type { Chain } from "../lib/delta.ts";
 import { isMetric, type MetricId } from "../lib/metrics.ts";
 import type { WireExchange } from "../lib/types.ts";
@@ -69,6 +70,8 @@ export type State = {
   rung: string | null;
   metric: MetricId;
   gran: Gran;
+  /** Kept when another blend is chosen, so going back to custom finds it as it was left. */
+  pick: CustomBlend;
   sort: { col: string; dir: number };
   q: string;
   cols: Set<string>;
@@ -80,10 +83,17 @@ export const initialState = (host: string, langs: string[]): State => ({
   rung: null,
   metric: "p50Us",
   gran: "blend",
+  pick: { entries: [], weights: {} },
   sort: { col: "value", dir: 1 },
   q: "",
   cols: defaultCols(),
 });
+
+/**
+ * The blend on screen. At blend granularity the filter names one, as it names a family or a test
+ * at theirs, and a filter that names none is a framework's name read over All.
+ */
+export const blendIn = (st: State): BlendId => (st.gran === "blend" ? (blendNamed(st.q) ?? "all") : "all");
 
 export function readHash(st: State, hash: string): void {
   const p = new URLSearchParams(hash.slice(1));
@@ -97,6 +107,17 @@ export function readHash(st: State, hash: string): void {
   if (metric && isMetric(metric)) st.metric = metric;
   const gran = p.get("gran");
   if (gran && isGran(gran)) st.gran = gran;
+  const pick = p.get("pick");
+  if (pick) st.pick.entries = pick.split(",").filter(Boolean);
+  const wt = p.get("wt");
+  if (wt) {
+    st.pick.weights = {};
+    for (const pair of wt.split(",")) {
+      const [fam, w] = pair.split(":");
+      const n = Number(w);
+      if (fam && w !== undefined && Number.isFinite(n) && n >= 0) st.pick.weights[fam] = n;
+    }
+  }
   const q = p.get("q");
   if (q) st.q = q;
   const cols = p.get("cols");
@@ -113,6 +134,9 @@ function viewParams(st: State, allLangs: string[]): URLSearchParams {
   p.set("host", st.host);
   p.set("metric", st.metric);
   p.set("gran", st.gran);
+  if (st.pick.entries.length) p.set("pick", st.pick.entries.join(","));
+  const wt = Object.entries(st.pick.weights).map(([fam, w]) => `${fam}:${w}`);
+  if (wt.length) p.set("wt", wt.join(","));
   if (st.rung) p.set("rung", st.rung);
   if (st.langs.size !== allLangs.length) p.set("langs", [...st.langs].join(","));
   if (st.q) p.set("q", st.q);

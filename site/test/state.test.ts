@@ -39,6 +39,21 @@ describe("a row's framework page", () => {
     assert.deepEqual(round, st);
   });
 
+  test("a custom blend's picks and weights ride in the link", () => {
+    const st = initialState("container-h1", langs);
+    st.q = "Custom";
+    st.pick = { entries: ["json", "static.file"], weights: { json: 2, template: 0 } };
+    const round = initialState("container-h1", langs);
+    readHash(round, writeHash(st, langs));
+    assert.deepEqual(round, st);
+  });
+
+  test("a weight that is not a number is dropped", () => {
+    const st = initialState("container-h1", langs);
+    readHash(st, "#gran=blend&q=Custom&pick=json&wt=json:x,static:-1,template:2");
+    assert.deepEqual(st.pick, { entries: ["json"], weights: { template: 2 } });
+  });
+
   test("a page opened on its own links back to the default view", () => {
     assert.equal(backHref("../index.html", ""), "../index.html");
   });

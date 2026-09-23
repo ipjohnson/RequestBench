@@ -16,6 +16,7 @@
 // `Access-Control-Allow-Origin: *`, so a results repo published on Pages works as it stands.
 import type { CodeEntry } from "../lib/bundleview.ts";
 import { Catalog } from "../lib/catalog.ts";
+import { attachHist, type HistDoc } from "../lib/hist.ts";
 import type { Boot } from "../lib/page-data.ts";
 import type { Run, WireDoc } from "../lib/types.ts";
 import { fetchJson } from "./fetch-json.ts";
@@ -51,6 +52,8 @@ export class Data {
   private readonly runs = new Map<string, Run>();
   private readonly inflight = new Map<string, Promise<unknown>>();
   private readonly wire = new Map<string, WireDoc | null>();
+  /** Runs whose histograms were asked for, by run id. */
+  private readonly hist = new Map<string, HistDoc | null>();
   private readonly code = new Map<string, CodeDoc | null>();
 
   constructor(source: Source, catalog: Catalog, runs: Run[] = []) {
@@ -124,6 +127,36 @@ export class Data {
             })
             .catch(() => undefined),
         ),
+      ),
+    );
+    return true;
+  }
+
+  /** Whether this run's catalog entry names a histogram document. */
+  hasHist(runId: string): boolean {
+    return this.manifest.some((m) => m.id === runId && m.hist !== "");
+  }
+
+  /** Whether a loaded run on this host has histograms that were never asked for. */
+  histMissing(host: string): boolean {
+    return this.manifest.some((m) => m.host === host && m.hist !== "" && this.runs.has(m.id) && !this.hist.has(m.id));
+  }
+
+  /**
+   * The histograms of every loaded run on a host, put back into those runs. A run fetched later
+   * needs another call. Resolves to whether anything new arrived.
+   */
+  async fetchHist(host: string): Promise<boolean> {
+    const want = this.manifest.filter((m) => m.host === host && m.hist !== "" && this.runs.has(m.id) && !this.hist.has(m.id));
+    if (!want.length) return false;
+    await Promise.all(
+      want.map((m) =>
+        this.once(`hist:${m.id}`, async () => {
+          const doc = await fetchJson<HistDoc>(this.url(m.hist)).catch(() => null);
+          this.hist.set(m.id, doc);
+          const run = this.runs.get(m.id);
+          if (run && doc) attachHist(run, doc);
+        }),
       ),
     );
     return true;

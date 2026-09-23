@@ -2,10 +2,12 @@
 //
 // All of it pure, so what the table shows can be tested rather than looked at. The DOM half
 // is in explorer.ts and does nothing but write what these return.
+import { blendNamed, blendStats, BLENDS, labelOf, weightsOf } from "../lib/blends.ts";
 import { deltaFor } from "../lib/delta.ts";
+import type { MetricId } from "../lib/metrics.ts";
 import { familyOf, famsAt, metaOf, rungsOf, testOrder } from "../lib/run.ts";
-import type { Route, Run, WireDoc } from "../lib/types.ts";
-import { COLS, type Gran, type Row, type State } from "./state.ts";
+import type { Framework, Route, Run, WireDoc } from "../lib/types.ts";
+import { blendIn, COLS, type Gran, type Row, type State } from "./state.ts";
 
 const COLS_BY_ID = Object.fromEntries(COLS.map((c) => [c.id, c]));
 
@@ -30,11 +32,12 @@ export function pickRung(run: Run | null, want: string | null): string | null {
 }
 
 /**
- * The names the filter offers at a granularity: the run's families or its test ids, in the
- * order the run lists them.
+ * The names the filter offers at a granularity: the blends, or the run's families or its test
+ * ids in the order the run lists them.
  */
 export function choicesAt(run: Run | null, gran: Gran, rn: string | null): string[] {
-  if (!run || gran === "blend") return [];
+  if (!run) return [];
+  if (gran === "blend") return BLENDS.map(labelOf);
   const order = testOrder(run);
   if (gran === "test") return order;
   const fams = order.length
@@ -44,21 +47,29 @@ export function choicesAt(run: Run | null, gran: Gran, rn: string | null): strin
 }
 
 /**
- * The filter after the granularity changes to `gran`, so a family or test view opens on one
- * family or test rather than on every row of every framework. A test becomes its family and a
- * family its first test. A filter that still matches is kept, which is how "carter" stays
- * every carter row. Anything else becomes the run's first name.
+ * The filter after the granularity changes to `gran`, so a view opens on one blend, family or
+ * test rather than on every row of every framework. The blend view opens on All, a test becomes
+ * its family and a family its first test. A filter that still matches is kept, which is how
+ * "carter" stays every carter row. Anything else becomes the first name the view offers.
  */
 export function filterFor(run: Run | null, gran: Gran, rn: string | null, q: string): string {
-  if (!run || gran === "blend") return q;
+  const want = q.trim().toLowerCase();
+  const hit = (s: string): boolean => s.toLowerCase().includes(want);
+  const aFramework = want !== "" && run !== null && run.frameworks.some((f) => hit(f.name));
+  if (gran === "blend") {
+    // With no run to read the framework names from, a filter is kept as it was given.
+    const keep = blendNamed(q) !== null || aFramework || (run === null && want !== "");
+    return keep ? q : labelOf("all");
+  }
+  if (!run) return q;
   const order = testOrder(run);
+  const names = choicesAt(run, gran, rn);
+  // A blend's name is no family or test, and "all" is part of test ids such as json.small.
+  if (blendNamed(q)) return names[0] ?? "";
   if (gran === "family" && order.includes(q)) return familyOf(run, q);
   const first = gran === "test" ? order.find((id) => familyOf(run, id) === q) : undefined;
   if (first) return first;
-  const names = choicesAt(run, gran, rn);
-  const want = q.trim().toLowerCase();
-  const hit = (s: string): boolean => s.toLowerCase().includes(want);
-  if (want && (names.some(hit) || run.frameworks.some((f) => hit(f.name)))) return q;
+  if (want && (names.some(hit) || aFramework)) return q;
   return names[0] ?? q;
 }
 
@@ -66,6 +77,22 @@ const numberAt = (rec: Record<string, unknown> | undefined, metric: string): num
   const v = rec?.[metric];
   return typeof v === "number" ? v : null;
 };
+
+type Latency = "p50Us" | "p90Us" | "p99Us" | "p999Us";
+const isLatency = (m: MetricId): m is Latency => m === "p50Us" || m === "p90Us" || m === "p99Us" || m === "p999Us";
+
+/**
+ * A framework's number at blend granularity. What it achieved and dropped belongs to the whole
+ * mix, so every blend shows the rate's own. A latency is the rate's own for All, which `weights`
+ * leaves null. For another blend it is read off the merged histograms of the blend's tests, and
+ * a rate the framework did not complete has none.
+ */
+export function blendValue(f: Framework, rn: string, metric: MetricId, weights: ReadonlyMap<string, number> | null): number | null {
+  const d = f.rungs[rn];
+  if (!weights || !isLatency(metric)) return numberAt(d, metric);
+  if (!d?.completed) return null;
+  return blendStats(f, rn, weights)?.[metric] ?? null;
+}
 
 /**
  * Exemplars are keyed <language>-<name>@<host>: the same framework on two hosts puts different
@@ -76,14 +103,24 @@ export function wireKeyFor(language: string, name: string, host: string, index: 
   return index[key] ? key : null;
 }
 
-/** What this row put on the wire, merged to whatever granularity is on screen. */
-export function wireFor(doc: WireDoc | null | undefined, gran: Gran, detail: string): Pick<Row, "hdrz" | "bodyz" | "framing" | "ex"> {
+/**
+ * What this row put on the wire, merged to whatever granularity is on screen. `only` is a blend's
+ * tests, where the blend is not All.
+ */
+export function wireFor(
+  doc: WireDoc | null | undefined,
+  gran: Gran,
+  detail: string,
+  only?: ReadonlySet<string>,
+): Pick<Row, "hdrz" | "bodyz" | "framing" | "ex"> {
   if (!doc) return {};
   if (gran === "test") {
     const e = doc.tests[detail];
     return e ? { hdrz: e.shz, bodyz: e.sbz, framing: e.fr, ex: e } : {};
   }
-  const exs = Object.values(doc.tests).filter((e) => gran === "blend" || e.family === detail);
+  const exs = Object.entries(doc.tests)
+    .filter(([id, e]) => (gran === "blend" ? !only || only.has(id) : e.family === detail))
+    .map(([, e]) => e);
   if (!exs.length) return {};
   const frames = [...new Set(exs.map((e) => e.fr))];
   return {
@@ -107,6 +144,11 @@ export function rows({ run, st, routes, wireOf }: RowsInput): { rn: string | nul
   const out: Row[] = [];
   const q = st.q.trim().toLowerCase();
   const order = testOrder(run);
+  const blend = blendIn(st);
+  const weights = blend !== "all" ? weightsOf(run, blend, st.pick) : null;
+  // At blend granularity a filter that names no blend is a framework's name.
+  const byName = st.gran === "blend" && !blendNamed(st.q) ? q : "";
+  const only = weights ? new Set(weights.keys()) : undefined;
 
   for (const f of run.frameworks) {
     if (!st.langs.has(f.language)) continue;
@@ -121,18 +163,18 @@ export function rows({ run, st, routes, wireOf }: RowsInput): { rn: string | nul
     };
     const push = (o: Omit<Row, keyof typeof base>): void => {
       const r: Row = { ...base, ...o };
-      Object.assign(r, wireFor(doc, st.gran, r.detail));
+      Object.assign(r, wireFor(doc, st.gran, r.detail, only));
       out.push(r);
     };
 
     if (st.gran === "blend") {
       const d = f.rungs[rn];
-      if (!d) continue;
+      if (!d || (byName && !f.name.toLowerCase().includes(byName))) continue;
       push({
         key: f.id,
         label: f.name,
         detail: "",
-        value: numberAt(d, st.metric),
+        value: blendValue(f, rn, st.metric, weights),
         dead: !d.completed,
         n: d.achievedRps ?? null,
       });

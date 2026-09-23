@@ -62,6 +62,7 @@ const catalog = (id: string): Catalog => ({
     {
       id,
       file: `${id}.json.gz`,
+      hist: "",
       date: "2026-09-21",
       languages: ["dotnet"],
       host: "container-h1",
@@ -140,6 +141,32 @@ describe("Data", () => {
       data.manifest.map((m) => m.id),
       ["r3"],
     );
+  });
+
+  test("a blend's histograms are read once, from the document the catalog names, into the run", async () => {
+    const c = catalog("r1");
+    c.runs[0]!.hist = "r1.hist.json.gz";
+    const r: Run = {
+      runId: "r1",
+      host: "container-h1",
+      frameworks: [
+        { id: "dotnet:carter", language: "dotnet", name: "carter", rungs: {}, families: {}, tests: { "json.small": { family: "json", rungs: { regular: { count: 1 } } } } },
+      ],
+    };
+    served.set("https://ipjohnson.github.io/RequestBench/data/r1.hist.json.gz", { "dotnet:carter": { "json.small": { regular: { first: 3, counts: [1] } } } });
+    const data = await Data.open({ catalog: c, runs: [r] }, resolveSource(doc(), loc(page)));
+    assert.equal(data.histMissing("container-h1"), true);
+    await Promise.all([data.fetchHist("container-h1"), data.fetchHist("container-h1")]);
+    assert.equal(fetchMock.mock.callCount(), 1);
+    assert.deepEqual(data.loadedRuns("container-h1")[0]?.frameworks[0]?.tests["json.small"]?.rungs?.["regular"]?.hist, { first: 3, counts: [1] });
+    assert.equal(data.histMissing("container-h1"), false);
+  });
+
+  test("a run whose summary has no histograms asks for none", async () => {
+    const data = await Data.open({ catalog: catalog("r1"), runs: [run("r1")] }, resolveSource(doc(), loc(page)));
+    assert.equal(data.hasHist("r1"), false);
+    assert.equal(data.histMissing("container-h1"), false);
+    assert.equal(await data.fetchHist("container-h1"), false);
   });
 
   test("one fetch per document, however many callers ask", async () => {

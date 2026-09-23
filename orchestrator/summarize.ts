@@ -1,11 +1,11 @@
 // A run file collapsed into what the site reads and keeps: per test and per rung the
-// percentiles and a coarse histogram, per family the same merged, and per rung what was offered,
-// achieved and dropped. A port of upstream's harness/summarize.py.
+// percentiles, a coarse histogram and the generator's own histogram, per family the same merged,
+// and per rung what was offered, achieved and dropped. A port of upstream's harness/summarize.py.
 //
 // Nothing is divided by anything. A rung a framework did not complete publishes what it
 // achieved and dropped and no latency: the generator drops by never sending, so percentiles
 // over what survived would flatter the frameworks that collapse hardest.
-import { BUCKETS, LOG_GROWTH } from "../traffic-generator/histogram.ts";
+import { BUCKETS, GROWTH, LOG_GROWTH, pct } from "../traffic-generator/histogram.ts";
 import type { PhaseResult } from "../traffic-generator/load.ts";
 import type { FrameworkRun, RunFile } from "./measure.ts";
 
@@ -16,6 +16,13 @@ import type { FrameworkRun, RunFile } from "./measure.ts";
  */
 export const BIN_GRID = { loUs: 80, perDecade: 8, count: 31 } as const;
 
+/**
+ * The generator's grid, which each test's `hist` is counted on: bucket i starts at growth^i µs.
+ * A page merges these histograms to read the percentiles of a blend of tests, so the grid is
+ * written into every summary like BIN_GRID.
+ */
+export const HIST_GRID = { growth: GROWTH, count: BUCKETS } as const;
+
 /** A rung that dropped more than this is serving less than it was offered. */
 const SATURATION = 0.01;
 
@@ -24,35 +31,6 @@ export function decode(b64: string): Uint32Array {
   const out = new Uint32Array(bytes.length / 4);
   for (let i = 0; i < out.length; i++) out[i] = bytes.readUInt32LE(i * 4);
   return out;
-}
-
-/** Python's round, which takes a half to the even side, as upstream's summaries were written. */
-const roundHalfEven = (x: number): number => {
-  const r = Math.round(x);
-  return Math.abs(x % 1) === 0.5 && r % 2 !== 0 ? r - 1 : r;
-};
-
-/**
- * The p-th percentile, placed inside its bucket rather than at its middle. A midpoint puts every
- * percentile on a grid 2% apart, which is invisible in one number and decides the answer as
- * soon as two are subtracted, as every delta on a framework page is.
- */
-export function pct(counts: ArrayLike<number>, p: number): number {
-  let total = 0;
-  for (let i = 0; i < counts.length; i++) total += counts[i]!;
-  if (total === 0) return 0;
-  const want = (p / 100) * total;
-  let seen = 0;
-  for (let i = 0; i < counts.length; i++) {
-    const c = counts[i]!;
-    if (c > 0 && seen + c >= want) {
-      const lo = Math.exp(i * LOG_GROWTH);
-      const hi = Math.exp((i + 1) * LOG_GROWTH);
-      return roundHalfEven(lo + (hi - lo) * Math.min(1, Math.max(0, (want - seen) / c)));
-    }
-    seen += c;
-  }
-  return 0;
 }
 
 /** The histogram on BIN_GRID. A request outside the grid is folded into its edge column, so the bins sum to the count. */
@@ -65,6 +43,21 @@ export function rebin(counts: ArrayLike<number>): number[] {
     out[Math.min(BIN_GRID.count - 1, Math.max(0, j))]! += c;
   }
   return out;
+}
+
+/** A histogram on HIST_GRID with its empty ends cut off, so `counts[0]` is bucket `first`. */
+export interface Hist {
+  readonly first: number;
+  readonly counts: readonly number[];
+}
+
+export function trim(counts: ArrayLike<number>): Hist {
+  let first = 0;
+  while (first < counts.length && counts[first] === 0) first++;
+  if (first === counts.length) return { first: 0, counts: [] };
+  let last = counts.length - 1;
+  while (counts[last] === 0) last--;
+  return { first, counts: Array.from({ length: last - first + 1 }, (_, i) => counts[first + i]!) };
 }
 
 const stats = (h: ArrayLike<number>) => ({ p50Us: pct(h, 50), p90Us: pct(h, 90), p95Us: pct(h, 95), p99Us: pct(h, 99), p999Us: pct(h, 99.9) });
@@ -80,6 +73,7 @@ export interface RungSummary {
   readonly errors: number;
   readonly mismatch: number;
   readonly p50Us: number | null;
+  readonly p90Us: number | null;
   readonly p99Us: number | null;
   readonly p999Us: number | null;
 }
@@ -89,6 +83,7 @@ export interface TestRung extends ReturnType<typeof stats> {
   readonly errors: number;
   readonly mismatch: number;
   readonly bins: readonly number[];
+  readonly hist: Hist;
 }
 
 function summarizeFramework(f: FrameworkRun) {
@@ -103,7 +98,7 @@ function summarizeFramework(f: FrameworkRun) {
     const declared = f.load!.load.phases[i]!;
     if (declared.seconds === undefined) continue;
     if (phase.status === "notRun") {
-      rungs[phase.name] = { rps: phase.rps, status: "notRun", completed: false, saturated: false, achievedRps: 0, dropped: 0, errors: 0, mismatch: 0, p50Us: null, p99Us: null, p999Us: null };
+      rungs[phase.name] = { rps: phase.rps, status: "notRun", completed: false, saturated: false, achievedRps: 0, dropped: 0, errors: 0, mismatch: 0, p50Us: null, p90Us: null, p99Us: null, p999Us: null };
       continue;
     }
     const r = phase.recorded;
@@ -125,6 +120,7 @@ function summarizeFramework(f: FrameworkRun) {
           mismatch: t.mismatch,
           ...stats(h),
           bins: rebin(h),
+          hist: trim(h),
         };
       }
       families[phase.name] = Object.fromEntries(
@@ -144,6 +140,7 @@ function summarizeFramework(f: FrameworkRun) {
       errors: r?.errors ?? phase.settle?.errors ?? 0,
       mismatch: r?.mismatch ?? phase.settle?.mismatch ?? 0,
       p50Us: completed ? pct(overall, 50) : null,
+      p90Us: completed ? pct(overall, 90) : null,
       p99Us: completed ? pct(overall, 99) : null,
       p999Us: completed ? pct(overall, 99.9) : null,
     };
@@ -187,6 +184,7 @@ export function summarize(run: RunFile) {
     machine: run.machine,
     budget: run.budget,
     binGrid: BIN_GRID,
+    histGrid: HIST_GRID,
     frameworks: run.frameworks.map(summarizeFramework),
   };
 }

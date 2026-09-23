@@ -1,6 +1,7 @@
 // What the catalog says about each run, and what the page says the catalog holds.
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
+import { BUCKETS, GROWTH } from "../../traffic-generator/histogram.ts";
 import { buildCatalog, newestPerHost, provenance, runEntry } from "../src/lib/catalog.ts";
 import type { Run } from "../src/lib/types.ts";
 
@@ -23,6 +24,7 @@ describe("runEntry", () => {
     assert.deepEqual(runEntry(run("2026-09-21T2331Z.container-h1.5d0c44", "container-h1")), {
       id: "2026-09-21T2331Z.container-h1.5d0c44",
       file: "2026-09-21T2331Z.container-h1.5d0c44.json.gz",
+      hist: "",
       date: "2026-09-21",
       languages: ["dotnet", "python"],
       host: "container-h1",
@@ -40,6 +42,14 @@ describe("runEntry", () => {
 
   test("a summary with no host was measured on the only host there has been", () => {
     assert.equal(runEntry(run("r")).host, "container-h1");
+  });
+
+  test("a summary whose tests carry histograms names the document they are published in", () => {
+    const measured = run("2026-09-21T2331Z.x");
+    measured.frameworks[0]!.tests = { "json.small": { family: "json", rungs: { regular: { hist: { first: 240, counts: [1] } } } } };
+    assert.equal(runEntry(measured).hist, "");
+    measured.histGrid = { growth: GROWTH, count: BUCKETS };
+    assert.equal(runEntry(measured).hist, "2026-09-21T2331Z.x.hist.json.gz");
   });
 });
 

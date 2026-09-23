@@ -2,10 +2,10 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { BUCKETS, bucketOf } from "../../traffic-generator/histogram.ts";
+import { BUCKETS, bucketOf, pct } from "../../traffic-generator/histogram.ts";
 import type { LoadResult, PhaseResult, TestSummary } from "../../traffic-generator/load.ts";
 import type { RunFile } from "../measure.ts";
-import { BIN_GRID, pct, rebin, summarize } from "../summarize.ts";
+import { BIN_GRID, HIST_GRID, rebin, summarize, trim } from "../summarize.ts";
 
 /** A histogram with `n` answers at each latency given, as the generator encodes one. */
 function hist(at: Record<number, number>): string {
@@ -106,6 +106,27 @@ test("a completed rung publishes every test's percentiles and histogram, and the
   assert.deepEqual(small.bins, rebin(decoded));
   assert.equal(f.rungs["regular"]!.completed, true);
   assert.equal(f.families["regular"]!["json"]!.count, 100);
+});
+
+test("each test carries the generator's histogram with its empty ends cut off", () => {
+  const s = summarize(run);
+  assert.deepEqual(s.histGrid, HIST_GRID);
+  const hist = s.frameworks[0]!.tests["json.small"]!.rungs["regular"]!.hist;
+  assert.equal(hist.first, bucketOf(150));
+  assert.equal(hist.counts.length, bucketOf(200) - bucketOf(150) + 1);
+  assert.deepEqual([hist.counts[0], hist.counts.at(-1), hist.counts.reduce((a, b) => a + b, 0)], [60, 20, 80]);
+  assert.deepEqual(trim(new Uint32Array(BUCKETS)), { first: 0, counts: [] });
+});
+
+test("the tests' histograms merged give the rung's own percentiles", () => {
+  const f = summarize(run).frameworks[0]!;
+  const merged = new Array<number>(BUCKETS).fill(0);
+  for (const t of Object.values(f.tests)) {
+    const h = t.rungs["regular"]?.hist;
+    h?.counts.forEach((c, i) => (merged[h.first + i]! += c));
+  }
+  const rung = f.rungs["regular"]!;
+  assert.deepEqual([rung.p50Us, rung.p90Us, rung.p99Us], [pct(merged, 50), pct(merged, 90), pct(merged, 99)]);
 });
 
 test("a rung with drops, an aborted rung and a rung never run publish no latency", () => {
