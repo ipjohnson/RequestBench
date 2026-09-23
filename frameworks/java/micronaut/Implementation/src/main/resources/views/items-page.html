@@ -1,0 +1,22 @@
+<!doctype html>
+<html>
+  <head><title>items</title></head>
+  <body>
+    <h1 th:text="${size}"></h1>
+    <table>
+      <thead>
+        <tr><th>id</th><th>name</th><th>category</th><th>price</th><th>stock</th></tr>
+      </thead>
+      <tbody>
+        <tr th:each="it : ${items}">
+          <td th:text="${it.id}"></td>
+          <td th:text="${it.name}"></td>
+          <td th:text="${it.category}"></td>
+          <td th:text="${it.priceCents}"></td>
+          <td th:text="${it.inStock} ? 'yes' : 'no'"></td>
+        </tr>
+      </tbody>
+    </table>
+    <p th:text="|${count} rows|"></p>
+  </body>
+</html>

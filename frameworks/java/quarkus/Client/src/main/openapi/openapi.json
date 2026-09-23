@@ -1,0 +1,1571 @@
+{
+  "components" : {
+    "schemas" : {
+      "Bound" : {
+        "type" : "object",
+        "properties" : {
+          "tenant" : {
+            "type" : "string"
+          },
+          "requestId" : {
+            "type" : "string"
+          },
+          "account" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        }
+      },
+      "BoundFirstErrorOrder" : {
+        "type" : "object",
+        "properties" : {
+          "fields" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "bytes" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "echo" : {
+            "$ref" : "#/components/schemas/FirstErrorOrder"
+          }
+        }
+      },
+      "BoundOrderRequest" : {
+        "type" : "object",
+        "properties" : {
+          "fields" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "bytes" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "echo" : {
+            "$ref" : "#/components/schemas/OrderRequest"
+          }
+        }
+      },
+      "EchoedBound" : {
+        "type" : "object",
+        "properties" : {
+          "size" : {
+            "type" : "string"
+          },
+          "count" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Item"
+            }
+          },
+          "echo" : {
+            "$ref" : "#/components/schemas/Bound"
+          }
+        }
+      },
+      "EchoedOne" : {
+        "type" : "object",
+        "properties" : {
+          "size" : {
+            "type" : "string"
+          },
+          "count" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Item"
+            }
+          },
+          "echo" : {
+            "$ref" : "#/components/schemas/One"
+          }
+        }
+      },
+      "EchoedOne1" : {
+        "type" : "object",
+        "properties" : {
+          "size" : {
+            "type" : "string"
+          },
+          "count" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Item"
+            }
+          },
+          "echo" : {
+            "$ref" : "#/components/schemas/One1"
+          }
+        }
+      },
+      "EchoedSearch" : {
+        "type" : "object",
+        "properties" : {
+          "size" : {
+            "type" : "string"
+          },
+          "count" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Item"
+            }
+          },
+          "echo" : {
+            "$ref" : "#/components/schemas/Search"
+          }
+        }
+      },
+      "EchoedSearch1" : {
+        "type" : "object",
+        "properties" : {
+          "size" : {
+            "type" : "string"
+          },
+          "count" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Item"
+            }
+          },
+          "echo" : {
+            "$ref" : "#/components/schemas/Search1"
+          }
+        }
+      },
+      "EchoedTwo" : {
+        "type" : "object",
+        "properties" : {
+          "size" : {
+            "type" : "string"
+          },
+          "count" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Item"
+            }
+          },
+          "echo" : {
+            "$ref" : "#/components/schemas/Two"
+          }
+        }
+      },
+      "FirstErrorOrder" : {
+        "type" : "object",
+        "properties" : {
+          "customerId" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "status" : {
+            "type" : "string"
+          },
+          "lines" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Line"
+            }
+          }
+        }
+      },
+      "Item" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "category" : {
+            "type" : "string"
+          },
+          "priceCents" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "inStock" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "ItemPatch" : {
+        "type" : "object",
+        "properties" : {
+          "priceCents" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "inStock" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "Line" : {
+        "type" : "object",
+        "properties" : {
+          "productId" : {
+            "format" : "int32",
+            "minimum" : 0,
+            "exclusiveMinimum" : true,
+            "type" : "integer"
+          },
+          "qty" : {
+            "format" : "int32",
+            "minimum" : 0,
+            "exclusiveMinimum" : true,
+            "type" : "integer"
+          }
+        }
+      },
+      "Meta" : {
+        "type" : "object",
+        "properties" : {
+          "framework" : {
+            "type" : "string"
+          },
+          "version" : {
+            "type" : "string"
+          },
+          "runtime" : {
+            "type" : "string"
+          },
+          "adapter" : {
+            "type" : "string"
+          },
+          "serializer" : {
+            "type" : "string"
+          },
+          "bootMs" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        }
+      },
+      "NewItem" : {
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "category" : {
+            "type" : "string"
+          },
+          "priceCents" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "inStock" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "One" : {
+        "type" : "object",
+        "properties" : {
+          "one" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        }
+      },
+      "One1" : {
+        "type" : "object",
+        "properties" : {
+          "page" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        }
+      },
+      "OrderRequest" : {
+        "required" : [ "status", "lines" ],
+        "type" : "object",
+        "properties" : {
+          "customerId" : {
+            "format" : "int32",
+            "minimum" : 0,
+            "exclusiveMinimum" : true,
+            "type" : "integer"
+          },
+          "status" : {
+            "minLength" : 1,
+            "type" : "string"
+          },
+          "lines" : {
+            "minItems" : 1,
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Line"
+            }
+          }
+        }
+      },
+      "Payload" : {
+        "type" : "object",
+        "properties" : {
+          "size" : {
+            "type" : "string"
+          },
+          "count" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Item"
+            }
+          }
+        }
+      },
+      "Search" : {
+        "type" : "object",
+        "properties" : {
+          "page" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "size" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "status" : {
+            "type" : "string"
+          },
+          "category" : {
+            "type" : "string"
+          },
+          "sort" : {
+            "type" : "string"
+          },
+          "q" : {
+            "type" : "string"
+          },
+          "minPrice" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "maxPrice" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        }
+      },
+      "Search1" : {
+        "type" : "object",
+        "properties" : {
+          "page" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "size" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "status" : {
+            "type" : "string"
+          },
+          "category" : {
+            "type" : "string"
+          },
+          "sort" : {
+            "type" : "string"
+          },
+          "q" : {
+            "type" : "string"
+          },
+          "minPrice" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "maxPrice" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        }
+      },
+      "Two" : {
+        "type" : "object",
+        "properties" : {
+          "one" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "two" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        }
+      },
+      "UploadEcho" : {
+        "type" : "object",
+        "properties" : {
+          "tenant" : {
+            "type" : "string"
+          },
+          "requestId" : {
+            "type" : "string"
+          }
+        }
+      },
+      "Uploaded" : {
+        "type" : "object",
+        "properties" : {
+          "file" : {
+            "$ref" : "#/components/schemas/UploadedFile"
+          },
+          "echo" : {
+            "$ref" : "#/components/schemas/UploadEcho"
+          }
+        }
+      },
+      "UploadedFile" : {
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "bytes" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        }
+      },
+      "io.quarkus.qute.TemplateInstance" : {
+        "type" : "string"
+      }
+    }
+  },
+  "openapi" : "3.0.3",
+  "paths" : {
+    "/__meta" : {
+      "get" : {
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Meta"
+                }
+              }
+            }
+          }
+        },
+        "summary" : "Meta",
+        "tags" : [ "Contract Routes" ]
+      }
+    },
+    "/authorized/small" : {
+      "get" : {
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        },
+        "summary" : "Small",
+        "tags" : [ "Authorized Routes" ]
+      }
+    },
+    "/body/bind/medium" : {
+      "post" : {
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/OrderRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/BoundOrderRequest"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Bad Request"
+          }
+        },
+        "summary" : "Bind Medium",
+        "tags" : [ "Body Routes" ]
+      }
+    },
+    "/body/bind/small" : {
+      "post" : {
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/OrderRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/BoundOrderRequest"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Bad Request"
+          }
+        },
+        "summary" : "Bind Small",
+        "tags" : [ "Body Routes" ]
+      }
+    },
+    "/body/validate/first-error" : {
+      "post" : {
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/FirstErrorOrder"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/BoundFirstErrorOrder"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Bad Request"
+          }
+        },
+        "summary" : "Validate First Error",
+        "tags" : [ "Body Routes" ]
+      }
+    },
+    "/body/validate/medium" : {
+      "post" : {
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/OrderRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/BoundOrderRequest"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Bad Request"
+          }
+        },
+        "summary" : "Validate Medium",
+        "tags" : [ "Body Routes" ]
+      }
+    },
+    "/body/validate/small" : {
+      "post" : {
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/OrderRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/BoundOrderRequest"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Bad Request"
+          }
+        },
+        "summary" : "Validate Small",
+        "tags" : [ "Body Routes" ]
+      }
+    },
+    "/cache/large" : {
+      "get" : {
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        },
+        "summary" : "Large",
+        "tags" : [ "Cache Routes" ]
+      }
+    },
+    "/cache/medium" : {
+      "get" : {
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        },
+        "summary" : "Medium",
+        "tags" : [ "Cache Routes" ]
+      }
+    },
+    "/cache/small" : {
+      "get" : {
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        },
+        "summary" : "Small",
+        "tags" : [ "Cache Routes" ]
+      }
+    },
+    "/cache/vary/many" : {
+      "get" : {
+        "parameters" : [ {
+          "name" : "x-rb-channel",
+          "in" : "header",
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "x-rb-region",
+          "in" : "header",
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "x-rb-tenant",
+          "in" : "header",
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        },
+        "summary" : "Vary Many",
+        "tags" : [ "Cache Routes" ]
+      }
+    },
+    "/cache/vary/one" : {
+      "get" : {
+        "parameters" : [ {
+          "name" : "x-rb-tenant",
+          "in" : "header",
+          "schema" : {
+            "default" : "",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        },
+        "summary" : "Vary One",
+        "tags" : [ "Cache Routes" ]
+      }
+    },
+    "/compressed/large" : {
+      "get" : {
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        },
+        "summary" : "Large",
+        "tags" : [ "Compressed Routes" ]
+      }
+    },
+    "/compressed/small" : {
+      "get" : {
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        },
+        "summary" : "Small",
+        "tags" : [ "Compressed Routes" ]
+      }
+    },
+    "/cors/small" : {
+      "get" : {
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        },
+        "summary" : "Small",
+        "tags" : [ "Cors Routes" ]
+      }
+    },
+    "/etag/large" : {
+      "get" : {
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : { }
+              }
+            }
+          }
+        },
+        "summary" : "Large",
+        "tags" : [ "Etag Routes" ]
+      }
+    },
+    "/etag/small" : {
+      "get" : {
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : { }
+              }
+            }
+          }
+        },
+        "summary" : "Small",
+        "tags" : [ "Etag Routes" ]
+      }
+    },
+    "/forms/multipart" : {
+      "post" : {
+        "requestBody" : {
+          "content" : {
+            "application/x-www-form-urlencoded" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : {
+                  "tenant" : {
+                    "type" : "string"
+                  },
+                  "requestId" : {
+                    "type" : "string"
+                  },
+                  "file" : {
+                    "format" : "binary",
+                    "type" : "string"
+                  }
+                }
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Uploaded"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Bad Request"
+          }
+        },
+        "summary" : "Multipart",
+        "tags" : [ "Forms Routes" ]
+      }
+    },
+    "/forms/urlencoded" : {
+      "post" : {
+        "requestBody" : {
+          "content" : {
+            "application/x-www-form-urlencoded" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : {
+                  "page" : {
+                    "format" : "int32",
+                    "type" : "integer"
+                  },
+                  "size" : {
+                    "format" : "int32",
+                    "type" : "integer"
+                  },
+                  "status" : {
+                    "type" : "string"
+                  },
+                  "category" : {
+                    "type" : "string"
+                  },
+                  "sort" : {
+                    "type" : "string"
+                  },
+                  "q" : {
+                    "type" : "string"
+                  },
+                  "minPrice" : {
+                    "format" : "int32",
+                    "type" : "integer"
+                  },
+                  "maxPrice" : {
+                    "format" : "int32",
+                    "type" : "integer"
+                  }
+                }
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/EchoedSearch"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Bad Request"
+          }
+        },
+        "summary" : "Urlencoded",
+        "tags" : [ "Forms Routes" ]
+      }
+    },
+    "/headers" : {
+      "get" : {
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        },
+        "summary" : "Headers",
+        "tags" : [ "Headers Routes" ]
+      }
+    },
+    "/headers/bind" : {
+      "get" : {
+        "parameters" : [ {
+          "name" : "x-rb-account",
+          "in" : "header",
+          "schema" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        }, {
+          "name" : "x-rb-request-id",
+          "in" : "header",
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "x-rb-tenant",
+          "in" : "header",
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/EchoedBound"
+                }
+              }
+            }
+          }
+        },
+        "summary" : "Bind",
+        "tags" : [ "Headers Routes" ]
+      }
+    },
+    "/health" : {
+      "get" : {
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "text/plain" : {
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            }
+          }
+        },
+        "summary" : "Health",
+        "tags" : [ "Contract Routes" ]
+      }
+    },
+    "/items" : {
+      "post" : {
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/NewItem"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Item"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Bad Request"
+          }
+        },
+        "summary" : "Create",
+        "tags" : [ "Items Routes" ]
+      }
+    },
+    "/items/{id}" : {
+      "patch" : {
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ItemPatch"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Item"
+                }
+              }
+            }
+          }
+        },
+        "summary" : "Update",
+        "tags" : [ "Items Routes" ]
+      },
+      "put" : {
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/NewItem"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Item"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Bad Request"
+          }
+        },
+        "summary" : "Replace",
+        "tags" : [ "Items Routes" ]
+      },
+      "get" : {
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Item"
+                }
+              }
+            }
+          }
+        },
+        "summary" : "Read",
+        "tags" : [ "Items Routes" ]
+      },
+      "delete" : {
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        },
+        "summary" : "Delete",
+        "tags" : [ "Items Routes" ]
+      }
+    },
+    "/json/large" : {
+      "get" : {
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        },
+        "summary" : "Large",
+        "tags" : [ "Json Routes" ]
+      }
+    },
+    "/json/medium" : {
+      "get" : {
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        },
+        "summary" : "Medium",
+        "tags" : [ "Json Routes" ]
+      }
+    },
+    "/json/small" : {
+      "get" : {
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        },
+        "summary" : "Small",
+        "tags" : [ "Json Routes" ]
+      }
+    },
+    "/middleware/four" : {
+      "get" : {
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        },
+        "summary" : "Four",
+        "tags" : [ "Middleware Routes" ]
+      }
+    },
+    "/middleware/none" : {
+      "get" : {
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        },
+        "summary" : "None",
+        "tags" : [ "Middleware Routes" ]
+      }
+    },
+    "/middleware/sixteen" : {
+      "get" : {
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        },
+        "summary" : "Sixteen",
+        "tags" : [ "Middleware Routes" ]
+      }
+    },
+    "/parameters/static/segment/literal" : {
+      "get" : {
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        },
+        "summary" : "Literal",
+        "tags" : [ "Parameters Routes" ]
+      }
+    },
+    "/parameters/{one}/segment/literal" : {
+      "get" : {
+        "parameters" : [ {
+          "name" : "one",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/EchoedOne"
+                }
+              }
+            }
+          }
+        },
+        "summary" : "One",
+        "tags" : [ "Parameters Routes" ]
+      }
+    },
+    "/parameters/{one}/with-second/{two}" : {
+      "get" : {
+        "parameters" : [ {
+          "name" : "one",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        }, {
+          "name" : "two",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/EchoedTwo"
+                }
+              }
+            }
+          }
+        },
+        "summary" : "Two",
+        "tags" : [ "Parameters Routes" ]
+      }
+    },
+    "/plaintext" : {
+      "get" : {
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "text/plain" : {
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            }
+          }
+        },
+        "summary" : "Plaintext",
+        "tags" : [ "Baseline Routes" ]
+      }
+    },
+    "/query/many" : {
+      "get" : {
+        "parameters" : [ {
+          "name" : "category",
+          "in" : "query",
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "maxPrice",
+          "in" : "query",
+          "schema" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        }, {
+          "name" : "minPrice",
+          "in" : "query",
+          "schema" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        }, {
+          "name" : "page",
+          "in" : "query",
+          "schema" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        }, {
+          "name" : "q",
+          "in" : "query",
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "size",
+          "in" : "query",
+          "schema" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        }, {
+          "name" : "sort",
+          "in" : "query",
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "status",
+          "in" : "query",
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/EchoedSearch1"
+                }
+              }
+            }
+          }
+        },
+        "summary" : "Many",
+        "tags" : [ "Query Routes" ]
+      }
+    },
+    "/query/one" : {
+      "get" : {
+        "parameters" : [ {
+          "name" : "page",
+          "in" : "query",
+          "schema" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/EchoedOne1"
+                }
+              }
+            }
+          }
+        },
+        "summary" : "One",
+        "tags" : [ "Query Routes" ]
+      }
+    },
+    "/sse/medium" : {
+      "get" : {
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "text/event-stream" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Item"
+                }
+              }
+            }
+          }
+        },
+        "summary" : "Medium",
+        "tags" : [ "Sse Routes" ]
+      }
+    },
+    "/stream/items" : {
+      "get" : {
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/x-ndjson" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/Item"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary" : "Items",
+        "tags" : [ "Stream Routes" ]
+      }
+    },
+    "/template/medium" : {
+      "get" : {
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "text/html" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/io.quarkus.qute.TemplateInstance"
+                }
+              }
+            }
+          }
+        },
+        "summary" : "Medium",
+        "tags" : [ "Template Routes" ]
+      }
+    },
+    "/template/small" : {
+      "get" : {
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "text/html" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/io.quarkus.qute.TemplateInstance"
+                }
+              }
+            }
+          }
+        },
+        "summary" : "Small",
+        "tags" : [ "Template Routes" ]
+      }
+    }
+  },
+  "info" : {
+    "title" : "implementation API",
+    "version" : "0.0.0"
+  }
+}

@@ -1,0 +1,78 @@
+{
+  "comment": "Javalin 7.2 on Jetty 12, one class per family under Implementation/src/main/java/implementation/routes, each adding its routes to the config Javalin.create hands it. The suite is UnitTests/, JUnit over the application javalin-testtools starts on a random port, and never reaches the image. Maven has no lockfile: the aggregator pom pins every dependency and plugin, Javalin's own artifacts through javalin-bom, and nothing resolves a range, so the two poms the image is built from are what pin it. upgrade moves each version property the aggregator's dependency and plugin management use to its newest patch release. Javalin's validator runs every check it holds, so the first-error route checks one rule at a time by hand, with Javalin's Validator. Javalin ships no response cache, so the cache family's store is written for it, and it sends no Last-Modified for a static file, so an after handler adds it. Every handler is marked, because each route literal is in its @OpenApi annotation as well as in its registration.",
+  "framework": "Javalin",
+  "licence": "Apache-2.0",
+  "repo": "https://github.com/javalin/javalin",
+  "package": "https://central.sonatype.com/artifact/io.javalin/javalin",
+  "docs": "https://javalin.io/documentation",
+  "lockfile": ["pom.xml", "Implementation/pom.xml"],
+  "hosts": {
+    "container-h1": { "dockerfile": "Dockerfile" }
+  },
+  "suite": { "argv": ["mvn", "-B", "test"], "paths": ["UnitTests"] },
+  "upgrade": {
+    "argv": ["mvn", "-B", "-N", "versions:update-properties", "-DallowMajorUpdates=false", "-DallowMinorUpdates=false", "-DgenerateBackupPoms=false"]
+  },
+  "client": {
+    "document": "Client/openapi.json",
+    "writer": "javalin-openapi 7.2.3's annotation processor, which writes the document the @OpenApi annotations on the handlers describe while Implementation compiles under -Pclient",
+    "generator": "OpenAPI Generator 7.25.0's java generator with its default library, okhttp-gson, through openapi-generator-maven-plugin, as Javalin's OpenAPI tutorial generates a client",
+    "argv": ["mvn", "-B", "-Pclient", "clean", "verify", "-pl", "Client", "-am"]
+  },
+  "noHandler": {
+    "cors.preflight": "Javalin's CORS plugin answers the preflight on /cors/*: its before handler writes the headers, and its after handler turns the router's 404 for an OPTIONS request into 200.",
+    "errors.unmatched": "Javalin's router finds no route for the path and answers 404 with its own text.",
+    "errors.wrong_method": "Javalin's router matches the method and the path together, so a method the path has no route for gets the same 404 as a path it does not know."
+  },
+  "mechanisms": {
+    "authorized": {
+      "mechanism": "A beforeMatched handler on /authorized/*, the hook Javalin's documentation manages access with, which compares the bearer token and throws ForbiddenResponse for any other, which Javalin answers with 403",
+      "mentions": "beforeMatched"
+    },
+    "baseline": { "builtin": "ctx.result writes the string under Javalin's default content type, text/plain." },
+    "body": {
+      "mechanism": "Javalin's validator: ctx.bodyValidator with orderRequest's rules as checks, each filed under the field it is about, and Javalin's own 400 for the ValidationException a failed check throws. The first-error route gives each rule a Validator of its own, one at a time, because Javalin's validator runs every check it holds",
+      "mentions": "bodyValidator"
+    },
+    "cache": {
+      "mechanism": "A before handler on /cache/* that replays a stored answer and skips the rest of the request, and an after handler that stores what the route answered, keyed by the path and the route's vary headers, one store per process, because Javalin ships no response cache",
+      "mentions": "skipRemainingHandlers"
+    },
+    "compressed": {
+      "mechanism": "Javalin's compression, which covers the whole application, set to gzip at its fastest level",
+      "mentions": "compressionStrategy"
+    },
+    "cors": {
+      "mechanism": "Javalin's bundled CORS plugin, with one rule whose path is /cors/*",
+      "mentions": "enableCors"
+    },
+    "errors": {
+      "builtin": "Javalin's router answers a path no route matches, and a method a path has no route for, with 404 and its own text. A body the JSON mapper cannot read fails ctx.bodyValidator, which Javalin answers with 400, and the items handlers throw NotFoundResponse for a missing row, which Javalin answers with 404."
+    },
+    "etag": {
+      "mechanism": "Javalin's ETag generator, the one config.http.generateEtags runs on every GET answer, called by an after handler on /etag/* alone. It writes an Adler-32 checksum of the body as the ETag, and Javalin's writer answers a matching If-None-Match with 304",
+      "mentions": "ETagGenerator"
+    },
+    "forms": { "builtin": "ctx.formParamAsClass reads the urlencoded fields into query.many's record, and the multipart fields and ctx.uploadedFile read the parts Jetty parses." },
+    "headers": { "builtin": "ctx.headerAsClass reads each header, the account converted to an Integer." },
+    "items": { "builtin": "One route per method on /items/{id}, the id read with ctx.pathParamAsClass. A HEAD route runs the GET handler, because Javalin answers HEAD on a GET route itself without running it." },
+    "json": { "builtin": "ctx.json writes the payload with Javalin's default JSON mapper, JavalinJackson, which is Jackson 2." },
+    "middleware": {
+      "mechanism": "No-op before handlers, four or sixteen of them, each registered for its route's path alone",
+      "mentions": "routes.before"
+    },
+    "parameters": { "builtin": "ctx.pathParamAsClass reads each capture, converted to an Integer." },
+    "query": { "builtin": "ctx.queryParamAsClass reads each value, the numbers converted to Integers." },
+    "sse": { "builtin": "config.routes.sse hands the handler an SseClient, whose sendData writes each row with the JSON mapper as the data of one event, and flushes it." },
+    "static": {
+      "mechanism": "Javalin's static-file handler over the payload directory under /static, with precompressMaxSize set so it sends a file with its length, and an after handler on /static/* that adds Last-Modified, which Javalin never sends",
+      "mentions": "staticFiles"
+    },
+    "stream": { "builtin": "The handler writes each row and a newline to ctx.outputStream and flushes the servlet response under it." },
+    "template": {
+      "mechanism": "Javalin's rendering with JavalinMustache as the file renderer, which ctx.render hands the template and the model",
+      "dependency": "javalin-rendering-mustache",
+      "mentions": "JavalinMustache"
+    }
+  }
+}

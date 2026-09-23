@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  The REST Client generated from the document Implementation writes under -Pclient, by the
+  Quarkiverse OpenAPI Generator. It is a Quarkus code generator: every build runs it in
+  quarkus:generate-code, and it writes the client under target/generated-sources, so only the
+  document is committed.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>dev.requestbench</groupId>
+    <artifactId>quarkus</artifactId>
+    <version>0.0.0</version>
+  </parent>
+
+  <artifactId>client</artifactId>
+
+  <properties>
+    <!-- SmallRye OpenAPI writes the document as openapi.json and openapi.yaml, and the generator
+         would otherwise make a client of each. -->
+    <quarkus.openapi-generator.codegen.include>openapi.json</quarkus.openapi-generator.codegen.include>
+    <quarkus.openapi-generator.codegen.spec.openapi_json.base-package>client.openapi</quarkus.openapi-generator.codegen.spec.openapi_json.base-package>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>io.quarkiverse.openapi.generator</groupId>
+      <artifactId>quarkus-openapi-generator</artifactId>
+      <version>2.23.0</version>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-rest-client-jackson</artifactId>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>${quarkus.platform.group-id}</groupId>
+        <artifactId>quarkus-maven-plugin</artifactId>
+        <version>${quarkus.platform.version}</version>
+        <extensions>true</extensions>
+        <executions>
+          <execution>
+            <goals>
+              <goal>generate-code</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>

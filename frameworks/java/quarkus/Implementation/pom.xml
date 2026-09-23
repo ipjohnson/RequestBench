@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  The application, and the suite in UnitTests/ as its tests. @QuarkusTest builds the application
+  from the module its tests are in, and Quarkus REST treats only that module's classes as the
+  application's, so a separate test module would test an application built differently from the
+  image.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>dev.requestbench</groupId>
+    <artifactId>quarkus</artifactId>
+    <version>0.0.0</version>
+  </parent>
+
+  <artifactId>implementation</artifactId>
+  <packaging>quarkus</packaging>
+
+  <dependencies>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-arc</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-rest</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-rest-jackson</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-rest-qute</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-hibernate-validator</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-cache</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-security</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-junit</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.rest-assured</groupId>
+      <artifactId>rest-assured</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <testSourceDirectory>../UnitTests/src/test/java</testSourceDirectory>
+    <testResources>
+      <testResource>
+        <directory>../UnitTests/src/test/resources</directory>
+      </testResource>
+    </testResources>
+    <plugins>
+      <plugin>
+        <groupId>${quarkus.platform.group-id}</groupId>
+        <artifactId>quarkus-maven-plugin</artifactId>
+        <version>${quarkus.platform.version}</version>
+        <extensions>true</extensions>
+      </plugin>
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>${surefire-plugin.version}</version>
+        <configuration>
+          <systemPropertyVariables>
+            <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
+            <maven.home>${maven.home}</maven.home>
+          </systemPropertyVariables>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+  <profiles>
+    <!-- The suite's client tests call the application through the REST Client that the Client
+         module builds. The image is built from this module alone, with no Client/ beside it, and
+         there the profile is off. -->
+    <profile>
+      <id>suite</id>
+      <activation>
+        <file>
+          <exists>${basedir}/../Client/pom.xml</exists>
+        </file>
+      </activation>
+      <dependencies>
+        <dependency>
+          <groupId>dev.requestbench</groupId>
+          <artifactId>client</artifactId>
+          <version>${project.version}</version>
+          <scope>test</scope>
+        </dependency>
+      </dependencies>
+    </profile>
+    <!-- mvn -P client,!suite package writes the document SmallRye OpenAPI builds from the routes
+         into Client/src/main/openapi while Quarkus builds the application. The extension is in this
+         profile alone, so the image, which is built without it, serves no /q/openapi. -->
+    <profile>
+      <id>client</id>
+      <!-- The generator's OpenAPI 3.1 support is in beta and copies each referenced schema inline,
+           so the document is 3.0.3. The servers SmallRye OpenAPI would add come from the build's
+           port setting. -->
+      <properties>
+        <quarkus.smallrye-openapi.store-schema-directory>${project.basedir}/../Client/src/main/openapi</quarkus.smallrye-openapi.store-schema-directory>
+        <quarkus.smallrye-openapi.open-api-version>3.0.3</quarkus.smallrye-openapi.open-api-version>
+        <quarkus.smallrye-openapi.auto-add-server>false</quarkus.smallrye-openapi.auto-add-server>
+      </properties>
+      <dependencies>
+        <dependency>
+          <groupId>io.quarkus</groupId>
+          <artifactId>quarkus-smallrye-openapi</artifactId>
+        </dependency>
+      </dependencies>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>${quarkus.platform.group-id}</groupId>
+            <artifactId>quarkus-maven-plugin</artifactId>
+            <!-- A Qute TemplateInstance is described as the string it renders rather than as
+                 Qute's internals. The plugin passes its own properties to the build, and a
+                 project property only when its name starts with quarkus. -->
+            <configuration>
+              <properties>
+                <mp.openapi.schema.io.quarkus.qute.TemplateInstance>{"type": "string"}</mp.openapi.schema.io.quarkus.qute.TemplateInstance>
+              </properties>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+</project>

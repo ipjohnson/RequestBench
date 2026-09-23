@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  The two modules. Helidon's SE application parent imports Helidon's dependency management and pins
+  the build plugins, so the Helidon version below moves every Helidon module with it. Thymeleaf is
+  the one dependency it does not manage.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>io.helidon.applications</groupId>
+    <artifactId>helidon-se</artifactId>
+    <version>4.5.5</version>
+    <relativePath/>
+  </parent>
+
+  <groupId>dev.requestbench</groupId>
+  <artifactId>helidon-se</artifactId>
+  <version>0.0.0</version>
+  <packaging>pom</packaging>
+
+  <modules>
+    <module>Implementation</module>
+    <module>UnitTests</module>
+  </modules>
+
+  <properties>
+    <maven.compiler.source>25</maven.compiler.source>
+    <thymeleaf.version>3.1.5.RELEASE</thymeleaf.version>
+  </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.thymeleaf</groupId>
+        <artifactId>thymeleaf</artifactId>
+        <version>${thymeleaf.version}</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+</project>

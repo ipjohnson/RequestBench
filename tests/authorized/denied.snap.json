@@ -105,31 +105,52 @@
   },
   "java:helidon-se": {
    "status": 403,
-   "class": "json",
-   "shape": [
-    "error:string"
-   ]
+   "class": "empty",
+   "shape": [],
+   "bodyFrom": "captured from frameworks/java/helidon-se/Implementation, which answers with no body"
   },
   "java:javalin": {
    "status": 403,
-   "class": "json",
+   "class": "text",
    "shape": [
-    "error:string"
-   ]
+    ":string"
+   ],
+   "bodyFrom": "captured from frameworks/java/javalin/Implementation, which answers text/plain: Forbidden"
   },
   "java:micronaut": {
    "status": 403,
    "class": "json",
    "shape": [
-    "error:string"
-   ]
+    "_embedded.errors[].message:string",
+    "_links.self[].href:string",
+    "_links.self[].templated:bool",
+    "message:string"
+   ],
+   "body": {
+    "_links": {
+     "self": [
+      {
+       "href": "/authorized/small",
+       "templated": false
+      }
+     ]
+    },
+    "_embedded": {
+     "errors": [
+      {
+       "message": "Forbidden"
+      }
+     ]
+    },
+    "message": "Forbidden"
+   },
+   "bodyFrom": "captured from frameworks/java/micronaut/Implementation"
   },
   "java:quarkus": {
    "status": 403,
-   "class": "json",
-   "shape": [
-    "error:string"
-   ]
+   "class": "empty",
+   "shape": [],
+   "bodyFrom": "captured from frameworks/java/quarkus/Implementation, which answers with no body"
   },
   "java:spring-boot": {
    "status": 403,
@@ -148,10 +169,11 @@
   },
   "java:vertx": {
    "status": 403,
-   "class": "json",
+   "class": "text",
    "shape": [
-    "error:string"
-   ]
+    ":string"
+   ],
+   "bodyFrom": "captured from frameworks/java/vertx/Implementation, which answers text/plain: Error 403: Forbidden"
   },
   "node:express": {
    "status": 403,

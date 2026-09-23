@@ -6,9 +6,12 @@ A framework is a directory, `frameworks/<language>/<name>/`, that answers every 
 `frameworks/exceptions.ts`. [`dotnet/carter`](dotnet/carter) is the worked example. Four more run on
 ASP.NET Core beside it: [`dotnet/minimal-apis`](dotnet/minimal-apis),
 [`dotnet/aspnet-mvc`](dotnet/aspnet-mvc), [`dotnet/fastendpoints`](dotnet/fastendpoints) and
-[`dotnet/wolverine-http`](dotnet/wolverine-http). There is one in each other language:
-[`node/fastify`](node/fastify), [`python/fastapi`](python/fastapi),
-[`java/spring-boot`](java/spring-boot), [`rust/axum`](rust/axum) and [`go/gin`](go/gin).
+[`dotnet/wolverine-http`](dotnet/wolverine-http). Six run on the JVM:
+[`java/spring-boot`](java/spring-boot), [`java/quarkus`](java/quarkus),
+[`java/micronaut`](java/micronaut), [`java/javalin`](java/javalin),
+[`java/helidon-se`](java/helidon-se) and [`java/vertx`](java/vertx). There is one in each other
+language: [`node/fastify`](node/fastify), [`python/fastapi`](python/fastapi),
+[`rust/axum`](rust/axum) and [`go/gin`](go/gin).
 
 Discovery, bundles and marks read git's index, not the directory. Run `git add` on new files before
 any `npm run rb` command, or they do not exist to it.
@@ -26,10 +29,14 @@ any `npm run rb` command, or they do not exist to it.
 | `Client/` | The OpenAPI document the framework writes about its own routes, and the client generated from it. See Client below. |
 
 The build files the language needs sit at the top of the directory, beside the solution. Carter
-has `solution.slnx`, `global.json`, `nuget.config` and `Directory.Build.props` there. Spring Boot
-has an aggregator `pom.xml` over two Maven modules, Implementation and UnitTests. axum has one
-package's `Cargo.toml`, which names each target's path under Implementation/ and UnitTests/, and
-its `Cargo.lock`. Gin has `go.mod` and `go.sum`.
+has `solution.slnx`, `global.json`, `nuget.config` and `Directory.Build.props` there. Each Java
+framework has an aggregator `pom.xml` over its Maven modules: Implementation, UnitTests, and Client
+where it has one. Spring Boot's, Micronaut's and Helidon SE's sit under their framework's parent
+pom, and Quarkus's, Javalin's and Vert.x's import their framework's BOM and pin every plugin
+themselves. Quarkus has no UnitTests module. Implementation's pom names UnitTests/ as its test
+sources, because `@QuarkusTest` builds the application from the module its tests are in. axum has
+one package's `Cargo.toml`, which names each target's path under Implementation/ and UnitTests/,
+and its `Cargo.lock`. Gin has `go.mod` and `go.sum`.
 
 ## What the corpus asks
 
@@ -67,7 +74,8 @@ A Node framework runs one process. A Python framework runs two workers, because 
 runs Python on one core at a time. [`python/fastapi`](python/fastapi) starts uvicorn with
 `workers=2`, written as a number, because under a quota Python counts every core the host has.
 A Java, Rust or Go framework runs one process. The JVM, tokio and Go's scheduler each size their
-threads from the container's CPU quota, and each counts 2.
+threads from the container's CPU quota, and each counts 2. [`java/vertx`](java/vertx) deploys one
+server verticle per core the JVM counts, as Vert.x's documentation spreads a server over the cores.
 
 The framework is PID 1 in its container, and the kernel gives PID 1 no default action for SIGTERM.
 The JVM, .NET, uvicorn and the Go runtime install a handler of their own. Node and a Rust binary
@@ -126,34 +134,43 @@ written in TypeScript compiles its own source with its own settings.
 ## Client
 
 `Client/` holds the OpenAPI document a framework writes about its own routes and a client generated
-from that document. Every framework has one except axum and Gin, because neither writes a document
-without a third-party library.
+from that document. Every framework has one except axum, Gin, Helidon SE and Vert.x. axum and Gin
+write no document without a third-party library. Helidon SE's OpenAPI support serves a document the
+application packages, and Vert.x's OpenAPI modules read a contract, so neither writes one from its
+routes.
 
 - The document comes from the framework's own tooling, reading the routes as the corpus has them.
   The ASP.NET Core frameworks use ASP.NET Core's generation, FastEndpoints through its own
   FastEndpoints.OpenApi, which builds on it. A Java framework may start its server to read the
   document, where that is how its tooling runs in CI. FastEndpoints' export starts the application
-  on a free port, as its documentation describes.
+  on a free port, as its documentation describes. Micronaut and Javalin write theirs through an
+  annotation processor while Implementation compiles, and Quarkus through SmallRye OpenAPI while it
+  builds the application, so none of the three starts a server. javalin-openapi reads `@OpenApi`
+  annotations, which Javalin's handlers carry for the document.
 - The client comes from the generator the framework's documentation recommends. Where it recommends
   none, the client is Kiota's, when Kiota supports the language well, even through a community
   plugin. FastAPI's is Hey API's, a TypeScript client. FastEndpoints recommends Kiota and runs it
-  inside the application through its own FastEndpoints.OpenApi.Kiota. The rest run Kiota themselves.
+  inside the application through its own FastEndpoints.OpenApi.Kiota. Quarkus's is a REST Client
+  from the Quarkiverse OpenAPI Generator, Micronaut's is the declarative client
+  micronaut-maven-plugin generates, and Javalin's is OpenAPI Generator's java client, as Javalin's
+  OpenAPI tutorial makes one. The rest run Kiota themselves.
 - Everything that writes the two runs from the framework's directory with its own toolchain, and
   rb.json `client.argv` runs it. `npm run rb -- client <id>` runs that with `RB_PAYLOADS` set and
   fails if anything under `Client/` changed.
 - Both are committed. The bundle gives `Client/` the role `client`: it counts in `bundleHash` and
   not in `codeHash`, and the handler finder does not read it, because every route is in the
-  document a second time.
+  document a second time. Quarkus commits the document alone. Its generator is a Quarkus code
+  generator, which writes the client under `target/` on every build of the Client module.
 - Nothing in `Client/` reaches the image, and writing the document must not change what the image
-  runs. Carter writes it only when `RB_PAYLOADS` is set, and Spring Boot adds springdoc only under a
-  Maven profile. FastEndpoints writes both only when started with `--generateclients true`, which
-  its build passes when `RB_PAYLOADS` is set.
+  runs. Carter writes it only when `RB_PAYLOADS` is set. Spring Boot, Micronaut, Javalin and
+  Quarkus add what writes it only under a Maven profile named `client`. FastEndpoints writes both
+  only when started with `--generateclients true`, which its build passes when `RB_PAYLOADS` is set.
 - The client's own tests go in the suite, without `rb:test` marks, because they hold the client and
   not a corpus row. FastAPI's TypeScript client is tested in `Client/` instead, by the client
   command.
 - The client command needs the framework's toolchain on PATH, as the suite does, and whatever the
-  generator needs beside it. FastAPI's needs uv and Node, Spring Boot's needs a JDK and Maven, and
-  Kiota's Linux binary needs libicu, which a GitHub runner has.
+  generator needs beside it. FastAPI's needs uv and Node, a Java framework's needs a JDK and Maven,
+  and Kiota's Linux binary needs libicu, which a GitHub runner has.
 - Change no route to improve the document. A Fastify body schema would validate a body the bind
   rows only parse. Options of the tool that writes the document are fine, such as Spring Boot's
   `application/json` default for answers the controllers do not type.
@@ -168,7 +185,8 @@ and DELETE, so a HEAD route such as Wolverine's `[WolverineHead]` matches every 
 marked. A formatter that breaks a call across lines separates the two, which is why axum's
 registrations are not run through rustfmt. Any other string that reads as a route matches too,
 with or without its leading slash, such as Gin's `json:"items"` struct tag, a Thymeleaf view named
-`items` or a `"/items/{}"` format string. Rename it or mark the route.
+`items`, a `"/items/{}"` format string or Vert.x's `getJsonArray("items")`. Rename it or mark the
+route.
 
 Marks cover the rest. A mark is a comment, `rb:<kind> <selector>[,<selector>...]`, and labels the
 block under it. `rb:end` closes one where the block would stop short. A selector is `family.name`,
@@ -178,6 +196,9 @@ block under it. `rb:end` closes one where the block would stop short. A selector
 - Use it where the route literal cannot be found or matches in more than one place.
 - Use it where the literal sits apart from the code that answers. A FastEndpoints endpoint names its
   route in `Configure()`, and the finder would show that line alone, so each class is marked.
+  A Quarkus resource method names its path and its method on separate annotations, and Javalin
+  names each route in its `@OpenApi` annotation as well as in its registration, so every handler of
+  theirs is marked too.
 - Every performance test needs a handler, except those in `noHandler`.
 
 `rb:wiring`, with a family as the selector (`family.*`), marks the code that makes a family work
@@ -196,9 +217,10 @@ those tests.
   "corpus=<id>"`. Fastify starts each test's name with its id, so
   `node --test --test-name-pattern=<id>` runs it. FastAPI puts `@pytest.mark.corpus("<id>")` on the
   test.
-- Spring Boot puts `@Tag("<id>")` on the test, so `mvn test -Dgroups=<id>` runs it. Gin runs each
-  id as a subtest, `t.Run("<id>", ...)`, so `go test ./UnitTests -run '/<id>'` runs it. axum names
-  the ids in the test's doc comment, which the marked block runs through onto the function.
+- The Java frameworks put `@Tag("<id>")` on the test, so `mvn test -Dgroups=<id>` runs it. Gin
+  runs each id as a subtest, `t.Run("<id>", ...)`, so `go test ./UnitTests -run '/<id>'` runs it.
+  axum names the ids in the test's doc comment, which the marked block runs through onto the
+  function.
 
 Every performance test needs a marked test in the framework's suite, and `rb check` fails a
 framework that lacks one. The same holds for every other assertion in `orchestrator/marks.ts`.

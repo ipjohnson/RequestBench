@@ -1,0 +1,85 @@
+{
+  "comment": "Micronaut 5.1 on its Netty server, one controller per family under Implementation/src/main/java/implementation/routes. The suite is UnitTests/, JUnit with @MicronautTest over the application on a random port, and never reaches the image. Maven has no lockfile: micronaut-parent imports the Micronaut platform's BOM, which pins every dependency and plugin, and nothing resolves a range, so the two poms the image is built from are what pin it. upgrade moves the parent to its newest patch release, because update-parent with minor and major updates off moves nothing else, and names the versions plugin's version, which micronaut-parent does not manage. /__meta reports micronaut-core's version, which platform 5.1.5 resolves to 5.1.15, so package names micronaut-core. Refusals are Micronaut's default error body. micronaut-validation cannot stop at the first failure, so the first-error route's record orders its rules with a group sequence. Micronaut computes no ETag for an answer a handler returns, so the etag family's filter is written for it. Micronaut's CORS configuration has no path, so it covers every route and cors.scoped is skipped.",
+  "framework": "Micronaut",
+  "licence": "Apache-2.0",
+  "repo": "https://github.com/micronaut-projects/micronaut-core",
+  "package": "https://central.sonatype.com/artifact/io.micronaut/micronaut-core",
+  "docs": "https://docs.micronaut.io/latest/guide/",
+  "lockfile": ["pom.xml", "Implementation/pom.xml"],
+  "hosts": {
+    "container-h1": { "dockerfile": "Dockerfile" }
+  },
+  "suite": { "argv": ["mvn", "-B", "test"], "paths": ["UnitTests"] },
+  "upgrade": {
+    "argv": ["mvn", "-B", "-N", "org.codehaus.mojo:versions-maven-plugin:2.22.0:update-parent", "-DallowMajorUpdates=false", "-DallowMinorUpdates=false", "-DgenerateBackupPoms=false"]
+  },
+  "client": {
+    "document": "Client/openapi.yml",
+    "writer": "micronaut-openapi 7.1.3, Micronaut's annotation processor for OpenAPI, which reads the controllers at compile time under -Pclient",
+    "generator": "micronaut-openapi-generator 7.0.0, Micronaut's OpenAPI Generator templates, through micronaut-maven-plugin 5.0.2's generate-openapi-client goal",
+    "argv": ["mvn", "-B", "-Pclient", "clean", "compile", "-pl", "Client", "-am"]
+  },
+  "skips": {
+    "cors.scoped": "Micronaut's CORS configuration names origins and no path, so the policy covers every route. The per-route @CrossOrigin takes its policy as annotation constants, which would copy settings.json's policy into the source."
+  },
+  "noHandler": {
+    "cors.preflight": "Micronaut's CorsFilter answers the preflight before the router runs, and no handler runs.",
+    "errors.unmatched": "Micronaut's router finds no route for the path and answers 404 with its default error body.",
+    "errors.wrong_method": "Micronaut's router answers a method the path has no route for with 405 and its default error body.",
+    "static.file": "Micronaut's static resource router serves the file from the payload directory application.properties maps to /static/**, and no handler runs."
+  },
+  "mechanisms": {
+    "authorized": {
+      "mechanism": "micronaut-security, with its filter scoped to /authorized in application.properties. A TokenValidator gives settings.json's bearer token the role @Secured asks for and any other token none, and micronaut-security answers an authenticated request that @Secured refuses with 403",
+      "dependency": "micronaut-security",
+      "mentions": "TokenValidator"
+    },
+    "baseline": { "builtin": "The handler returns the string, which Micronaut writes as text/plain, the type its @Get produces." },
+    "body": {
+      "mechanism": "Bean Validation constraints on the order record, which micronaut-validation's processor compiles into the record's introspection and its interceptor runs for a parameter marked @Valid. The first-error route's record orders its rules with a group sequence, which stops at the first group that fails",
+      "dependency": "micronaut-validation",
+      "mentions": "jakarta.validation"
+    },
+    "cache": {
+      "mechanism": "micronaut-cache over Caffeine: @Cacheable on a bean's methods, which return the payload and the serial the handler answers with, and one cache per route, sized and aged by settings.json",
+      "dependency": "micronaut-cache-caffeine",
+      "mentions": "Cacheable"
+    },
+    "compressed": {
+      "mechanism": "The Netty server's compression on the whole server, at gzip's fastest level, set in application.properties",
+      "mentions": "compression-level"
+    },
+    "cors": {
+      "mechanism": "Micronaut's CorsFilter, with a configuration built from settings.json when the server's CORS configuration is created. The configuration covers every route",
+      "mentions": "CorsOriginConfiguration"
+    },
+    "errors": {
+      "builtin": "Micronaut's router answers a path with no route with 404 and a method the path lacks with 405, and a body the parser cannot read is a 400. A handler that returns null for a missing row is a 404. Micronaut's default error processor writes each body."
+    },
+    "etag": {
+      "mechanism": "A response filter on /etag/** that serialises the body the handler returned, hashes it with SHA-1 and answers a matching If-None-Match with 304",
+      "mentions": "ResponseFilter"
+    },
+    "forms": { "builtin": "Micronaut binds the urlencoded body to the record query.many binds, and the multipart parts to the handler's parameters, the file part as a CompletedFileUpload." },
+    "headers": { "builtin": "@Header parameters, the account converted to an int." },
+    "items": { "builtin": "One handler per method on /items/{id}, the id an int. @Get registers a HEAD route beside the GET, and the read handler names its content type, which Micronaut's answer to HEAD otherwise lacks." },
+    "json": { "builtin": "The handler returns the record, and Micronaut Serialization writes it with the serializer its processor generated at compile time." },
+    "middleware": {
+      "mechanism": "No-op @RequestFilter methods, four or sixteen of them, each a filter of its own, in a @ServerFilter class whose pattern is its route's path",
+      "mentions": "ServerFilter"
+    },
+    "parameters": { "builtin": "@PathVariable parameters, converted to ints." },
+    "query": { "builtin": "A @QueryValue for the one value, and a record bound as a @RequestBean for the eight." },
+    "sse": { "builtin": "The handler returns a Publisher of Event, and Micronaut writes each one's data as JSON, as one event." },
+    "static": {
+      "mechanism": "Micronaut's static resource router over the payload directory, mapped to /static/** in application.properties",
+      "mentions": "static-resources"
+    },
+    "stream": { "builtin": "The handler returns a Publisher of each row's JSON and a newline, and Micronaut writes each one as a chunk of the body." },
+    "template": {
+      "mechanism": "Micronaut Views with Thymeleaf: the handler returns a ModelAndView, which micronaut-views' body writer renders",
+      "dependency": "micronaut-views-thymeleaf",
+      "mentions": "ModelAndView"
+    }
+  }
+}

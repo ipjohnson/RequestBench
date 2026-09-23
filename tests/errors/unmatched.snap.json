@@ -107,31 +107,56 @@
   },
   "java:helidon-se": {
    "status": 404,
-   "class": "json",
+   "class": "text",
    "shape": [
-    "error:string"
-   ]
+    ":string"
+   ],
+   "bodyFrom": "captured from frameworks/java/helidon-se/Implementation, which answers text/plain: Endpoint not found"
   },
   "java:javalin": {
    "status": 404,
-   "class": "json",
+   "class": "text",
    "shape": [
-    "error:string"
-   ]
+    ":string"
+   ],
+   "bodyFrom": "captured from frameworks/java/javalin/Implementation, which answers text/plain: Endpoint GET /errors/unmatched not found"
   },
   "java:micronaut": {
    "status": 404,
    "class": "json",
    "shape": [
-    "error:string"
-   ]
+    "_embedded.errors[].message:string",
+    "_links.self[].href:string",
+    "_links.self[].templated:bool",
+    "message:string"
+   ],
+   "body": {
+    "_links": {
+     "self": [
+      {
+       "href": "/errors/unmatched",
+       "templated": false
+      }
+     ]
+    },
+    "_embedded": {
+     "errors": [
+      {
+       "message": "Page Not Found"
+      }
+     ]
+    },
+    "message": "Not Found"
+   },
+   "bodyFrom": "captured from frameworks/java/micronaut/Implementation"
   },
   "java:quarkus": {
    "status": 404,
-   "class": "json",
+   "class": "html",
    "shape": [
-    "error:string"
-   ]
+    ":string"
+   ],
+   "bodyFrom": "captured from frameworks/java/quarkus/Implementation, which answers text/html; charset=utf-8: <html><body><h1>Resource not found</h1></body></html>"
   },
   "java:spring-boot": {
    "status": 404,
@@ -150,10 +175,11 @@
   },
   "java:vertx": {
    "status": 404,
-   "class": "json",
+   "class": "html",
    "shape": [
-    "error:string"
-   ]
+    ":string"
+   ],
+   "bodyFrom": "captured from frameworks/java/vertx/Implementation, which answers text/html; charset=utf-8: <html><body><h1>Resource not found</h1></body></html>"
   },
   "node:express": {
    "status": 404,

@@ -1,0 +1,84 @@
+{
+  "comment": "Quarkus 3.39 with Quarkus REST on Vert.x, one resource class per family under Implementation/src/main/java/implementation/routes. The suite is UnitTests/, @QuarkusTest classes driven with REST Assured, which Implementation's pom compiles as its own tests because @QuarkusTest builds the application from the module its tests are in. It never reaches the image. Maven has no lockfile: the Quarkus platform BOM pins every extension and library and nothing resolves a range, so the two poms the image is built from are what pin it. upgrade moves quarkus.platform.version, which names the BOM and the Maven plugin, to its newest patch release. The client command turns the suite profile off so that Implementation writes the document before Client generates from it, and skips the tests, whose client tests need that profile.",
+  "framework": "Quarkus",
+  "licence": "Apache-2.0",
+  "repo": "https://github.com/quarkusio/quarkus",
+  "package": "https://central.sonatype.com/artifact/io.quarkus/quarkus-core",
+  "docs": "https://quarkus.io/guides/",
+  "lockfile": ["pom.xml", "Implementation/pom.xml"],
+  "hosts": {
+    "container-h1": { "dockerfile": "Dockerfile" }
+  },
+  "suite": { "argv": ["mvn", "-B", "test"], "paths": ["UnitTests"] },
+  "upgrade": {
+    "argv": ["mvn", "-B", "-N", "org.codehaus.mojo:versions-maven-plugin:2.22.0:update-property", "-Dproperty=quarkus.platform.version", "-DallowMajorUpdates=false", "-DallowMinorUpdates=false", "-DgenerateBackupPoms=false"]
+  },
+  "client": {
+    "document": "Client/src/main/openapi/openapi.json",
+    "writer": "SmallRye OpenAPI 4.3.5, through quarkus-smallrye-openapi, which writes the document while Quarkus builds the application under -Pclient",
+    "generator": "The Quarkiverse OpenAPI Generator 2.23.0, the REST Client generator in Quarkus's extension catalog, which generates a Quarkus REST Client from the document on every build of the Client module",
+    "argv": ["mvn", "-B", "-P", "client,!suite", "package", "-Dmaven.test.skip=true"]
+  },
+  "skips": {
+    "cors.scoped": "Quarkus's CORS filter is one filter for the whole HTTP server, run before routing, with no setting that narrows it to a path, so /json/small answers the allowed origin too."
+  },
+  "noHandler": {
+    "cors.preflight": "Quarkus's CORS filter answers the preflight before routing, and no handler runs.",
+    "errors.unmatched": "Quarkus REST matches no resource and passes the request on, and Vert.x's router answers 404 with its own page.",
+    "errors.wrong_method": "Quarkus REST finds resource methods for the path and none for the method, and answers 405 with no body."
+  },
+  "mechanisms": {
+    "authorized": {
+      "mechanism": "Quarkus's HTTP security: a permission in application.properties that puts /authorized/* under a named HttpSecurityPolicy, which permits settings.json's bearer token and denies any other. With no authentication mechanism installed, Quarkus answers the denial with 403",
+      "dependency": "quarkus-security",
+      "mentions": "HttpSecurityPolicy"
+    },
+    "baseline": { "builtin": "The resource method returns the string, and Quarkus REST writes it as text/plain." },
+    "body": {
+      "mechanism": "Bean Validation constraints on the order record, which quarkus-hibernate-validator runs through Hibernate Validator for a resource method parameter marked @Valid. The first-error route's record orders its rules with a group sequence, which stops at the first group that fails",
+      "dependency": "quarkus-hibernate-validator",
+      "mentions": "jakarta.validation"
+    },
+    "cache": {
+      "mechanism": "Quarkus's cache: @CacheResult on each resource method, which returns a Uni of the whole answer with the x-rb-serial it was written with, keyed by the method's arguments, over the extension's default Caffeine caches",
+      "dependency": "quarkus-cache",
+      "mentions": "CacheResult"
+    },
+    "compressed": {
+      "mechanism": "Quarkus's HTTP compression, turned on for the whole server in application.properties at gzip's fastest level, 1. Vert.x compresses an answer whose type is in quarkus.http.compress-media-types when the request asks for gzip",
+      "mentions": "quarkus.http.enable-compression"
+    },
+    "cors": {
+      "mechanism": "Quarkus's CORS filter, configured from settings.json through the HttpSecurity event, on every path because the filter cannot be narrowed",
+      "mentions": "CORS"
+    },
+    "errors": {
+      "builtin": "Quarkus REST answers a method the path lacks with 405 and a body Jackson cannot read with 400, neither with a body, and Vert.x's router answers a path no resource matches with its 404 page. The items handlers throw NotFoundException for a missing row, which Quarkus REST answers with 404 and no body."
+    },
+    "etag": {
+      "mechanism": "Jakarta REST's Request.evaluatePreconditions, which compares an entity tag with If-None-Match and builds the 304. Neither Jakarta REST nor Quarkus computes a tag, so the handler serialises the payload and hashes it with SHA-1",
+      "mentions": "evaluatePreconditions"
+    },
+    "forms": { "builtin": "@RestForm binds the urlencoded fields into a record as a @BeanParam, and the multipart file part arrives as a FileUpload." },
+    "headers": { "builtin": "@RestHeader parameters, the account converted to an int." },
+    "items": { "builtin": "One resource method per HTTP method on /items/{id}, the id an int. Jakarta REST answers HEAD with the GET method." },
+    "json": { "builtin": "The resource method returns the record, and Quarkus REST's Jackson writer serialises it." },
+    "middleware": {
+      "mechanism": "No-op @ServerRequestFilter methods, four or sixteen, each bound to its route by a @NameBinding annotation",
+      "mentions": "ServerRequestFilter"
+    },
+    "parameters": { "builtin": "@RestPath parameters, converted to ints." },
+    "query": { "builtin": "A @RestQuery parameter for the one value, and a record of eight @RestQuery components as a @BeanParam for the eight." },
+    "sse": { "builtin": "Quarkus REST sends each item of a Multi as the data of one event, for a method that produces text/event-stream." },
+    "static": {
+      "mechanism": "Vert.x's StaticHandler over the payload directory under /static/, installed on Quarkus's router by a StartupEvent observer, as Quarkus's HTTP reference shows",
+      "mentions": "StaticHandler"
+    },
+    "stream": { "builtin": "Quarkus REST writes each item of a Multi as a line of JSON for a method that produces application/x-ndjson, and sends it as it comes." },
+    "template": {
+      "mechanism": "Qute, Quarkus's own template engine, through quarkus-rest-qute, with a type-safe @CheckedTemplate",
+      "dependency": "quarkus-rest-qute",
+      "mentions": "CheckedTemplate"
+    }
+  }
+}

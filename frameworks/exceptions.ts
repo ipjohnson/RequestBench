@@ -7,8 +7,13 @@ import fastapi from "./python/fastapi/client-exception/index.ts";
 import fastendpoints from "./dotnet/fastendpoints/client-exception/index.ts";
 import fastify from "./node/fastify/client-exception/index.ts";
 import gin from "./go/gin/client-exception/index.ts";
+import helidonSe from "./java/helidon-se/client-exception/index.ts";
+import javalin from "./java/javalin/client-exception/index.ts";
+import micronaut from "./java/micronaut/client-exception/index.ts";
 import minimalApis from "./dotnet/minimal-apis/client-exception/index.ts";
+import quarkus from "./java/quarkus/client-exception/index.ts";
 import springBoot from "./java/spring-boot/client-exception/index.ts";
+import vertx from "./java/vertx/client-exception/index.ts";
 import wolverineHttp from "./dotnet/wolverine-http/client-exception/index.ts";
 
 /**
@@ -23,7 +28,12 @@ export type FrameworkId =
   | "dotnet:minimal-apis"
   | "dotnet:wolverine-http"
   | "go:gin"
+  | "java:helidon-se"
+  | "java:javalin"
+  | "java:micronaut"
+  | "java:quarkus"
   | "java:spring-boot"
+  | "java:vertx"
   | "node:fastify"
   | "python:fastapi"
   | "rust:axum";
@@ -41,7 +51,12 @@ export default {
   "dotnet:minimal-apis": minimalApis,
   "dotnet:wolverine-http": wolverineHttp,
   "go:gin": gin,
+  "java:helidon-se": helidonSe,
+  "java:javalin": javalin,
+  "java:micronaut": micronaut,
+  "java:quarkus": quarkus,
   "java:spring-boot": springBoot,
+  "java:vertx": vertx,
   "node:fastify": fastify,
   "python:fastapi": fastapi,
   "rust:axum": axum,

@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  The Java client OpenAPI Generator writes from the document Implementation writes under -Pclient.
+  Javalin's OpenAPI tutorial generates its client with OpenAPI Generator's Maven plugin, naming only
+  the language, so this is the java generator with its default library, okhttp-gson. The generated
+  sources are committed, and a build without the profile compiles them as they are.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>dev.requestbench</groupId>
+    <artifactId>javalin</artifactId>
+    <version>0.0.0</version>
+  </parent>
+
+  <artifactId>client</artifactId>
+
+  <dependencies>
+    <!-- Not used by the client. It puts Implementation, which writes openapi.json, first in the
+         reactor, and lets mvn -pl Client -am build it. -->
+    <dependency>
+      <groupId>dev.requestbench</groupId>
+      <artifactId>implementation</artifactId>
+      <version>${project.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.squareup.okhttp3</groupId>
+      <artifactId>okhttp</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.squareup.okhttp3</groupId>
+      <artifactId>logging-interceptor</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.google.code.gson</groupId>
+      <artifactId>gson</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.gsonfire</groupId>
+      <artifactId>gson-fire</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.google.code.findbugs</groupId>
+      <artifactId>jsr305</artifactId>
+    </dependency>
+    <!-- javax.annotation.Generated, which the sources name. -->
+    <dependency>
+      <groupId>jakarta.annotation</groupId>
+      <artifactId>jakarta.annotation-api</artifactId>
+      <version>${jakarta-annotation.version}</version>
+      <scope>provided</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <sourceDirectory>OpenApiGenerator/src/main/java</sourceDirectory>
+  </build>
+
+  <profiles>
+    <profile>
+      <id>client</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.openapitools</groupId>
+            <artifactId>openapi-generator-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>generate</goal>
+                </goals>
+              </execution>
+            </executions>
+            <configuration>
+              <inputSpec>${project.basedir}/openapi.json</inputSpec>
+              <generatorName>java</generatorName>
+              <output>${project.basedir}/OpenApiGenerator</output>
+              <cleanupOutput>true</cleanupOutput>
+              <!-- Keeps the Java sources and leaves out the files of a project of their own, such as
+                   its pom and its Gradle build. -->
+              <ignoreFileOverride>${project.basedir}/.openapi-generator-ignore</ignoreFileOverride>
+              <invokerPackage>client</invokerPackage>
+              <apiPackage>client.api</apiPackage>
+              <modelPackage>client.model</modelPackage>
+              <addCompileSourceRoot>false</addCompileSourceRoot>
+              <generateApiTests>false</generateApiTests>
+              <generateModelTests>false</generateModelTests>
+              <generateApiDocumentation>false</generateApiDocumentation>
+              <generateModelDocumentation>false</generateModelDocumentation>
+              <configOptions>
+                <!-- The date otherwise goes into every file, and the client would change on every run. -->
+                <hideGenerationTimestamp>true</hideGenerationTimestamp>
+              </configOptions>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+</project>

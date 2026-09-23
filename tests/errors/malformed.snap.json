@@ -155,50 +155,67 @@
   },
   "java:helidon-se": {
    "status": 400,
-   "class": "json",
+   "class": "text",
    "shape": [
-    "detail:string",
-    "error:string"
-   ]
+    ":string"
+   ],
+   "bodyFrom": "captured from frameworks/java/helidon-se/Implementation, which answers text/plain: Failed to deserialize JSON request entity"
   },
   "java:javalin": {
    "status": 400,
    "class": "json",
    "shape": [
-    "error:string",
-    "errors[].field:string",
-    "errors[].message:string"
-   ]
+    "REQUEST_BODY[].args{}",
+    "REQUEST_BODY[].message:string",
+    "REQUEST_BODY[].value:string"
+   ],
+   "body": {
+    "REQUEST_BODY": [
+     {
+      "message": "DESERIALIZATION_FAILED",
+      "args": {},
+      "value": "{\"customerId\": 1, \"lines\": ["
+     }
+    ]
+   },
+   "bodyFrom": "captured from frameworks/java/javalin/Implementation"
   },
   "java:micronaut": {
    "status": 400,
    "class": "json",
    "shape": [
-    "_embedded.errors[]._embedded{}",
-    "_embedded.errors[]._links{}",
-    "_embedded.errors[].logref:null",
     "_embedded.errors[].message:string",
-    "_embedded.errors[].path:null",
-    "_links.self.deprecation:null",
-    "_links.self.href:string",
-    "_links.self.hreflang:null",
-    "_links.self.name:null",
-    "_links.self.profile:null",
-    "_links.self.templated:bool",
-    "_links.self.title:null",
-    "_links.self.type:null",
-    "logref:null",
-    "message:string",
-    "path:null"
-   ]
+    "_embedded.errors[].path:string",
+    "_links.self[].href:string",
+    "_links.self[].templated:bool",
+    "message:string"
+   ],
+   "body": {
+    "_links": {
+     "self": [
+      {
+       "href": "/body/validate/small",
+       "templated": false
+      }
+     ]
+    },
+    "_embedded": {
+     "errors": [
+      {
+       "message": "Failed to convert argument [order] for value [null] due to: Error decoding property [List<Line E> lines] of type [class implementation.OrderRequest]: Unexpected end-of-input: expected close marker for Array (start marker at [Source: REDACTED (`StreamReadFeature.INCLUDE_SOURCE_IN_LOCATION` disabled); byte offset: #UNKNOWN])\n at [Source: REDACTED (`StreamReadFeature.INCLUDE_SOURCE_IN_LOCATION` disabled); byte offset: #28]",
+       "path": "/order"
+      }
+     ]
+    },
+    "message": "Bad Request"
+   },
+   "bodyFrom": "captured from frameworks/java/micronaut/Implementation"
   },
   "java:quarkus": {
    "status": 400,
-   "class": "json",
-   "shape": [
-    "detail:string",
-    "error:string"
-   ]
+   "class": "empty",
+   "shape": [],
+   "bodyFrom": "captured from frameworks/java/quarkus/Implementation, which answers with no body"
   },
   "java:spring-boot": {
    "status": 400,
@@ -219,9 +236,22 @@
    "status": 400,
    "class": "json",
    "shape": [
-    "detail:string",
-    "error:string"
-   ]
+    "actualContentType:string",
+    "causeMessage:string",
+    "causeType:string",
+    "errorType:string",
+    "message:string",
+    "type:string"
+   ],
+   "body": {
+    "type": "BodyProcessorException",
+    "message": "[Bad Request] Json body application/json parsing error: Unexpected end-of-input: expected close marker for Array (start marker at [Source: REDACTED (`StreamReadFeature.INCLUDE_SOURCE_IN_LOCATION` disabled); line: 1, column: 28])\n at [Source: REDACTED (`StreamReadFeature.INCLUDE_SOURCE_IN_LOCATION` disabled); line: 1, column: 29]",
+    "causeType": "DecodeException",
+    "causeMessage": "Unexpected end-of-input: expected close marker for Array (start marker at [Source: REDACTED (`StreamReadFeature.INCLUDE_SOURCE_IN_LOCATION` disabled); line: 1, column: 28])\n at [Source: REDACTED (`StreamReadFeature.INCLUDE_SOURCE_IN_LOCATION` disabled); line: 1, column: 29]",
+    "actualContentType": "application/json",
+    "errorType": "PARSING_ERROR"
+   },
+   "bodyFrom": "captured from frameworks/java/vertx/Implementation"
   },
   "node:express": {
    "status": 400,

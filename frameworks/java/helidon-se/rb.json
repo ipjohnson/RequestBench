@@ -1,0 +1,75 @@
+{
+  "comment": "Helidon SE 4.5 on Helidon's own WebServer, one HttpFeature per family under Implementation/src/main/java/implementation/routes, which Main registers beside three server features, for CORS, security and static files. Helidon 27.0.0 is newer, but its jars are compiled for Java 27, which the Temurin 25 images shared with Spring Boot cannot load, so this is 4.5.5, the newest 4.x release. The suite is UnitTests/, JUnit under Helidon's @ServerTest, which starts the server on a random port, and never reaches the image. JSON is Helidon JSON Binding and validation is Helidon Validation, both preview APIs in 4.5, with converters and validators written by Helidon's annotation processors. Helidon writes no JSON for a refused body, so the routing's error handler answers a ValidationException as Helidon's SE quickstart answers a body it refuses, with 400 and the message under error. The first-error route asks Helidon Validation about one record component at a time, because it reports every rule an object breaks. The cache and the ETag are wired by hand, because Helidon SE has neither for an answer a handler writes. Maven has no lockfile: Helidon's SE application parent pins every Helidon module and plugin through its BOM, the aggregator pom pins Thymeleaf, and nothing resolves a range, so the two poms the image is built from are what pin it. upgrade moves the Helidon parent to its newest patch release and Thymeleaf to its newest within its minor line.",
+  "framework": "Helidon SE",
+  "licence": "Apache-2.0",
+  "repo": "https://github.com/helidon-io/helidon",
+  "package": "https://central.sonatype.com/artifact/io.helidon.webserver/helidon-webserver",
+  "docs": "https://helidon.io/docs/v4/se/introduction",
+  "lockfile": ["pom.xml", "Implementation/pom.xml"],
+  "hosts": {
+    "container-h1": { "dockerfile": "Dockerfile" }
+  },
+  "suite": { "argv": ["mvn", "-B", "test"], "paths": ["UnitTests"] },
+  "upgrade": {
+    "argv": ["mvn", "-B", "-N", "org.codehaus.mojo:versions-maven-plugin:2.22.0:update-parent", "org.codehaus.mojo:versions-maven-plugin:2.22.0:update-properties", "-DincludeProperties=thymeleaf.version", "-DallowMajorUpdates=false", "-DallowMinorUpdates=false", "-DgenerateBackupPoms=false"]
+  },
+  "noHandler": {
+    "cors.preflight": "Helidon's CorsFeature answers the preflight from an OPTIONS route of its own, and no handler of the port's runs.",
+    "errors.unmatched": "Helidon's router finds no route for the path and answers 404 with text/plain.",
+    "errors.wrong_method": "Helidon's router matches the method and the path together, so a method the path has no route for gets the same 404."
+  },
+  "mechanisms": {
+    "authorized": {
+      "mechanism": "Helidon Security in front of the route through SecurityFeature.secure(). HeaderAtnProvider takes the bearer token as the user, and an authorization provider of the port's permits settings.json's token alone, which Helidon Security answers with 403 when it denies",
+      "dependency": "helidon-webserver-security",
+      "mentions": "SecurityFeature"
+    },
+    "baseline": { "builtin": "The handler sends the string, which Helidon's string media support writes as text/plain." },
+    "body": {
+      "mechanism": "Helidon Validation constraints on the order record, which the validate routes check through TypeValidation, and a routing error handler that answers the ValidationException with 400 and its message. The first-error route checks one record component at a time, because Helidon Validation reports every rule an object breaks",
+      "dependency": "helidon-validation",
+      "mentions": "io.helidon.validation"
+    },
+    "cache": {
+      "mechanism": "A store and a replay written for the family, because Helidon SE has no response cache. The first request for a key stores the answer's body with its x-rb-serial, keyed by the path and the route's vary headers, and later ones are answered from the store"
+    },
+    "compressed": {
+      "mechanism": "Helidon's content encoding on the server's listener, which covers every route, with gzip alone at the fastest level. GzipEncoding has no setting for the level, so a ContentEncoding of the port's wraps it and deflates at Deflater.BEST_SPEED",
+      "dependency": "helidon-http-encoding-gzip",
+      "mentions": "GzipEncoding"
+    },
+    "cors": {
+      "mechanism": "Helidon's CorsFeature with its one policy on /cors/* and its default policy for every path turned off",
+      "dependency": "helidon-webserver-cors",
+      "mentions": "CorsFeature"
+    },
+    "errors": {
+      "builtin": "Helidon's router answers a path with no route, and a method the path has no route for, with 404 and text/plain. Helidon JSON Binding refuses a body it cannot read with a 400 of its own, and the items handlers throw NotFoundException for a missing row, which Helidon answers with 404."
+    },
+    "etag": {
+      "mechanism": "A revalidation written for the family, because Helidon SE computes a validator for a static file alone. The handler hashes the JSON it is about to send with SHA-1 into the ETag and answers a matching If-None-Match with 304"
+    },
+    "forms": { "builtin": "Helidon's media support reads the urlencoded body into Parameters, the type the query string is parsed into, and the multipart body part by part." },
+    "headers": { "builtin": "The handler reads three headers by name, the account converted to an int by Helidon's mapper." },
+    "items": { "builtin": "One route per method on /items/{id}, the id converted to an int by Helidon's mapper, and a HEAD route of its own, because Helidon answers HEAD only where a route names it." },
+    "json": { "builtin": "The handler sends the record, and Helidon JSON Binding writes it with the converter Helidon's annotation processor generated for it." },
+    "middleware": {
+      "mechanism": "No-op routes, four or sixteen of them, each registered for its path ahead of the handler and passing the request on with res.next()",
+      "mentions": "res.next()"
+    },
+    "parameters": { "builtin": "The handler reads each capture from the matched path's parameters, converted to an int by Helidon's mapper." },
+    "query": { "builtin": "The handler reads each value from the parsed query by name, the numbers converted to ints by Helidon's mapper." },
+    "sse": { "builtin": "Helidon's SseSink writes each row with the JSON media support as the data of one event and flushes it." },
+    "static": {
+      "mechanism": "Helidon's StaticContentFeature over the payload directory, under /static",
+      "dependency": "helidon-webserver-static-content",
+      "mentions": "StaticContentFeature"
+    },
+    "stream": { "builtin": "The handler writes each row and a newline to the response's output stream and flushes it." },
+    "template": {
+      "mechanism": "Thymeleaf's own engine, run by the handler, because Helidon SE has no view layer",
+      "dependency": "thymeleaf",
+      "mentions": "TemplateEngine"
+    }
+  }
+}

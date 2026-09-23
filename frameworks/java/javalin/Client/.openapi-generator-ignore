@@ -1,0 +1,18 @@
+# The Java sources alone. Client/pom.xml builds them, so the build of a project of their own, which
+# the generator writes beside them, is left out. Paths are from this file's directory.
+OpenApiGenerator/.github/**
+OpenApiGenerator/.openapi-generator-ignore
+OpenApiGenerator/.gitignore
+OpenApiGenerator/.travis.yml
+OpenApiGenerator/README.md
+OpenApiGenerator/api/**
+OpenApiGenerator/build.gradle
+OpenApiGenerator/build.sbt
+OpenApiGenerator/git_push.sh
+OpenApiGenerator/gradle/**
+OpenApiGenerator/gradle.properties
+OpenApiGenerator/gradlew
+OpenApiGenerator/gradlew.bat
+OpenApiGenerator/pom.xml
+OpenApiGenerator/settings.gradle
+OpenApiGenerator/src/main/AndroidManifest.xml

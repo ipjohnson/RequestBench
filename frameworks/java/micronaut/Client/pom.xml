@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  The declarative client that micronaut-maven-plugin's generate-openapi-client goal generates under
+  -Pclient, with Micronaut's OpenAPI generator, from the document Implementation writes. Its output
+  is committed, and a build without the profile compiles it as it is.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>dev.requestbench</groupId>
+    <artifactId>micronaut</artifactId>
+    <version>0.0.0</version>
+  </parent>
+
+  <artifactId>client</artifactId>
+
+  <dependencies>
+    <!-- Not used by the client. It puts Implementation, which writes openapi.yml, first in the
+         reactor, and lets mvn -pl Client -am build it. -->
+    <dependency>
+      <groupId>dev.requestbench</groupId>
+      <artifactId>implementation</artifactId>
+      <version>${project.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.micronaut</groupId>
+      <artifactId>micronaut-http-client</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.micronaut.reactor</groupId>
+      <artifactId>micronaut-reactor</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.micronaut.serde</groupId>
+      <artifactId>micronaut-serde-jackson</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.micronaut.validation</groupId>
+      <artifactId>micronaut-validation</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>jakarta.validation</groupId>
+      <artifactId>jakarta.validation-api</artifactId>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <sourceDirectory>Generated/src/main/java</sourceDirectory>
+  </build>
+
+  <profiles>
+    <profile>
+      <id>client</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>io.micronaut.maven</groupId>
+            <artifactId>micronaut-maven-plugin</artifactId>
+            <!-- The goal alone. As an extension the plugin would also bring its packaging
+                 lifecycle, which shades the jar. -->
+            <extensions>false</extensions>
+            <executions>
+              <execution>
+                <id>client</id>
+                <goals>
+                  <goal>generate-openapi-client</goal>
+                </goals>
+              </execution>
+            </executions>
+            <configuration>
+              <enabled>true</enabled>
+              <definitionFile>${project.basedir}/openapi.yml</definitionFile>
+              <outputDirectory>${project.basedir}/Generated</outputDirectory>
+              <invokerPackageName>client</invokerPackageName>
+              <apiPackageName>client.api</apiPackageName>
+              <modelPackageName>client.model</modelPackageName>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+</project>

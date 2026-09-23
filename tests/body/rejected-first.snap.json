@@ -79,6 +79,66 @@
    },
    "bodyFrom": "captured from frameworks/go/gin/Implementation"
   },
+  "java:helidon-se": {
+   "status": 400,
+   "body": {
+    "error": "Constraint validation failed: 0 is not positive at RECORD_COMPONENT(customerId)"
+   },
+   "bodyFrom": "captured from frameworks/java/helidon-se/Implementation"
+  },
+  "java:javalin": {
+   "status": 400,
+   "body": {
+    "customerId": [
+     {
+      "message": "must be greater than 0",
+      "args": {},
+      "value": {
+       "customerId": 0,
+       "status": "",
+       "lines": []
+      }
+     }
+    ]
+   },
+   "bodyFrom": "captured from frameworks/java/javalin/Implementation"
+  },
+  "java:micronaut": {
+   "status": 400,
+   "body": {
+    "_links": {
+     "self": [
+      {
+       "href": "/body/validate/first-error",
+       "templated": false
+      }
+     ]
+    },
+    "_embedded": {
+     "errors": [
+      {
+       "message": "order.customerId: must be greater than 0"
+      }
+     ]
+    },
+    "message": "Bad Request"
+   },
+   "bodyFrom": "captured from frameworks/java/micronaut/Implementation"
+  },
+  "java:quarkus": {
+   "status": 400,
+   "body": {
+    "title": "Constraint Violation",
+    "status": 400,
+    "violations": [
+     {
+      "field": "validateFirstError.order.customerId",
+      "message": "must be greater than 0"
+     }
+    ]
+   },
+   "bodyFrom": "captured from frameworks/java/quarkus/Implementation"
+  },
   "java:spring-boot": {
    "status": 400,
    "body": {
@@ -114,6 +174,18 @@
     "path": "/body/validate/first-error"
    },
    "bodyFrom": "captured from frameworks/java/spring-boot/Implementation, without the timestamp Boot's error page adds to each answer"
+  },
+  "java:vertx": {
+   "status": 400,
+   "body": {
+    "type": "BodyProcessorException",
+    "message": "[Bad Request] Validation error for body application/json: null: { errors: [{\"absoluteKeywordLocation\":\"urn:vertxschemas:orderRequest-customerId#/properties\",\"keywordLocation\":\"#/properties\",\"instanceLocation\":\"#/customerId\",\"error\":\"Property \\\"customerId\\\" does not match schema\",\"errorType\":\"INVALID_VALUE\"}, {\"absoluteKeywordLocation\":\"urn:vertxschemas:customerId#/properties/customerId/minimum\",\"keywordLocation\":\"#/properties/customerId/minimum\",\"instanceLocation\":\"#/customerId\",\"error\":\"0 is less than 1.0\",\"errorType\":\"INVALID_VALUE\"}], annotations: []}",
+    "causeType": "",
+    "causeMessage": "null: { errors: [{\"absoluteKeywordLocation\":\"urn:vertxschemas:orderRequest-customerId#/properties\",\"keywordLocation\":\"#/properties\",\"instanceLocation\":\"#/customerId\",\"error\":\"Property \\\"customerId\\\" does not match schema\",\"errorType\":\"INVALID_VALUE\"}, {\"absoluteKeywordLocation\":\"urn:vertxschemas:customerId#/properties/customerId/minimum\",\"keywordLocation\":\"#/properties/customerId/minimum\",\"instanceLocation\":\"#/customerId\",\"error\":\"0 is less than 1.0\",\"errorType\":\"INVALID_VALUE\"}], annotations: []}",
+    "actualContentType": "application/json",
+    "errorType": "VALIDATION_ERROR"
+   },
+   "bodyFrom": "captured from frameworks/java/vertx/Implementation"
   },
   "node:fastify": {
    "status": 400,

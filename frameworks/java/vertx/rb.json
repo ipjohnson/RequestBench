@@ -1,0 +1,90 @@
+{
+  "comment": "Vert.x Web 5.2 on Vert.x core's HTTP server, one class per family under Implementation/src/main/java/implementation/routes, each adding its routes to the router every server verticle builds for itself. Application deploys one server verticle per core. The suite is UnitTests/, JUnit with vertx-junit5 over the server verticle deployed on a random port, and never reaches the image. Maven has no lockfile: Vert.x's stack BOM pins every Vert.x module and what they depend on, the aggregator pom pins that BOM, JUnit's BOM and every plugin, and nothing resolves a range, so the two poms the image is built from are what pin it. upgrade moves each of those pins to its newest patch release. The parameters, the validated bodies and the forms are bound by vertx-web-validation, whose refusal the router's error handler for 400 writes as the exception's own toJson(). The first-error route chains one ValidationHandler per field, because vertx-json-schema cannot stop at the first failure and still name it. The response cache and the server-sent events are written by hand, because Vert.x ships neither.",
+  "framework": "Vert.x Web",
+  "licence": "EPL-2.0 OR Apache-2.0",
+  "repo": "https://github.com/vert-x3/vertx-web",
+  "package": "https://central.sonatype.com/artifact/io.vertx/vertx-web",
+  "docs": "https://vertx.io/docs/vertx-web/java/",
+  "lockfile": ["pom.xml", "Implementation/pom.xml"],
+  "hosts": {
+    "container-h1": { "dockerfile": "Dockerfile" }
+  },
+  "suite": { "argv": ["mvn", "-B", "test"], "paths": ["UnitTests"] },
+  "upgrade": {
+    "argv": ["mvn", "-B", "-N", "versions:update-properties", "-DallowMajorUpdates=false", "-DallowMinorUpdates=false", "-DgenerateBackupPoms=false"]
+  },
+  "noHandler": {
+    "cors.preflight": "Vert.x Web's CorsHandler on /cors/* answers the preflight with 204, and no handler runs.",
+    "errors.unmatched": "Vert.x Web's router finds no route for the path and answers 404 with its own HTML page.",
+    "errors.wrong_method": "Vert.x Web's router finds routes for the path and none for the method, and answers 405 with an Allow header and no body."
+  },
+  "mechanisms": {
+    "authorized": {
+      "mechanism": "Vert.x Web's SimpleAuthenticationHandler and AuthorizationHandler on /authorized/*. The bearer token becomes the user, and an AuthorizationProvider grants the permission the route requires to settings.json's token alone, so any other token is refused with 403. Vert.x Web's ErrorHandler writes the route's failures",
+      "dependency": "vertx-auth-common",
+      "mentions": "AuthorizationHandler"
+    },
+    "baseline": { "builtin": "The handler ends the response with the string, as text/plain." },
+    "body": {
+      "mechanism": "vertx-web-validation's ValidationHandler on the validate routes, which parses the body and checks it against orderRequest's rules as a vertx-json-schema schema before the handler runs. The repository's Basic output lists every rule a body breaks, and the router's error handler for 400 writes the refusal as the exception's toJson(). The first-error route chains one ValidationHandler per field, because the validator cannot stop at the first failure and name it",
+      "dependency": "vertx-web-validation",
+      "mentions": "ValidationHandler"
+    },
+    "cache": {
+      "mechanism": "A handler in front of each cache route that replays a stored answer and otherwise lets the route's handler build one and keep it, keyed by the path and the route's vary headers, in a local map of Vert.x's shared data that every server verticle uses",
+      "mentions": "getLocalMap"
+    },
+    "compressed": {
+      "mechanism": "The HTTP server's own compression, on every connection, gzip at level 1, the fastest",
+      "mentions": "setCompressionLevel"
+    },
+    "cors": {
+      "mechanism": "Vert.x Web's CorsHandler on /cors/*, with the origin given as a pattern so that it sends Vary: Origin",
+      "mentions": "CorsHandler"
+    },
+    "errors": {
+      "builtin": "Vert.x Web's router answers a path no route matches with 404 and its HTML page, and a method the path lacks with 405 and an Allow header. The ValidationHandler refuses a body that is not JSON with 400, which the router's error handler writes as the exception's toJson(). The items handlers answer a missing row with 404 and no body."
+    },
+    "etag": {
+      "mechanism": "The handler hashes the encoded body with SHA-1 and hands the tag to RoutingContext.etag, and RoutingContext.isFresh answers a matching If-None-Match with 304",
+      "mentions": "isFresh"
+    },
+    "forms": {
+      "mechanism": "BodyHandler parses the urlencoded and the multipart body and streams the file part to a file, and a ValidationHandler binds the form fields, each parsed to its schema's type",
+      "dependency": "vertx-web-validation",
+      "mentions": "formUrlEncoded"
+    },
+    "headers": {
+      "mechanism": "A ValidationHandler that declares the three headers, the account with an integer schema",
+      "dependency": "vertx-web-validation",
+      "mentions": "headerParameter"
+    },
+    "items": { "builtin": "One route per method on /items/:id, the id bound as an integer by a ValidationHandler. The GET route names HEAD as well, because a route answers only the methods it names, and Vert.x writes no body for HEAD." },
+    "json": { "builtin": "RoutingContext.json encodes the payload, a JsonObject, with Jackson's streaming generator." },
+    "middleware": {
+      "mechanism": "No-op handlers chained on the route ahead of the handler, four or sixteen of them",
+      "mentions": "RoutingContext::next"
+    },
+    "parameters": {
+      "mechanism": "A ValidationHandler that declares each capture with an integer schema",
+      "dependency": "vertx-web-validation",
+      "mentions": "pathParameter"
+    },
+    "query": {
+      "mechanism": "A ValidationHandler that declares each query value with its type's schema",
+      "dependency": "vertx-web-validation",
+      "mentions": "queryParameter"
+    },
+    "sse": { "builtin": "Vert.x has no support for server-sent events, so the handler writes each row as the data of one event on a chunked response." },
+    "static": {
+      "mechanism": "Vert.x Web's StaticHandler over the payload directory, under /static/*",
+      "mentions": "StaticHandler"
+    },
+    "stream": { "builtin": "HttpServerResponse.write sends each row and its newline on a chunked response." },
+    "template": {
+      "mechanism": "Handlebars, through vertx-web-templ-handlebars' HandlebarsTemplateEngine",
+      "dependency": "vertx-web-templ-handlebars",
+      "mentions": "HandlebarsTemplateEngine"
+    }
+  }
+}
