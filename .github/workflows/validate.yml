@@ -1,7 +1,7 @@
-# Every pull request runs the repository's checks, then `rb validate` for each framework it can
-# change. A framework is validated when a file in its directory changes, other than prose. Every
-# framework is validated when something they all depend on changes: the tests, the orchestrator,
-# the root npm manifests, frameworks/exceptions.ts or this file.
+# Every pull request runs the repository's checks, then, for each framework it can change,
+# `rb validate` and the framework's own suite. A framework is picked when a file in its directory
+# changes, other than prose. Every framework is picked when something they all depend on changes:
+# the tests, the orchestrator, the root npm manifests, frameworks/exceptions.ts or this file.
 #
 # Nothing here measures, because a shared runner's timings would be noise.
 name: validate
@@ -35,7 +35,7 @@ jobs:
     name: frameworks to validate
     runs-on: ubuntu-latest
     outputs:
-      ids: ${{ steps.pick.outputs.ids }}
+      frameworks: ${{ steps.pick.outputs.frameworks }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -63,20 +63,21 @@ jobs:
             if [ "$every" = true ] || grep -qxF "$language:$name" <<< "$changed"; then ids+=("$language:$name"); fi
           done < <(git ls-files -- ':(glob)frameworks/*/*/rb.json')
 
-          json=$(printf '%s\n' "${ids[@]}" | jq -Rnc '[inputs | select(test("^[a-z0-9-]+:[a-z0-9.-]+$"))]')
-          echo "ids=$json" >> "$GITHUB_OUTPUT"
-          echo "Frameworks to validate: $json"
+          json=$(printf '%s\n' "${ids[@]}" | jq -Rnc '[inputs | select(test("^[a-z0-9-]+:[a-z0-9.-]+$"))
+            | split(":") as [$language, $name] | {id: ., language: $language, dir: "frameworks/\($language)/\($name)"}]')
+          echo "frameworks=$json" >> "$GITHUB_OUTPUT"
+          echo "Frameworks to validate: $(jq -c 'map(.id)' <<< "$json")"
 
   validate:
-    name: validate ${{ matrix.id }}
+    name: validate ${{ matrix.framework.id }}
     needs: frameworks
-    if: needs.frameworks.outputs.ids != '[]'
+    if: needs.frameworks.outputs.frameworks != '[]'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
-        id: ${{ fromJSON(needs.frameworks.outputs.ids) }}
+        framework: ${{ fromJSON(needs.frameworks.outputs.frameworks) }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -85,15 +86,62 @@ jobs:
           cache: npm
       - run: npm ci --no-audit --no-fund
       - env:
-          ID: ${{ matrix.id }}
+          ID: ${{ matrix.framework.id }}
         run: npm run rb -- validate "$ID"
 
-  # One result for the whole run, which a ruleset can require. A skipped validate job means the
-  # pull request changes no framework.
+  # The framework's own tests, with the toolchain its language needs. A test-only dependency never
+  # reaches the image, so this is the only job that exercises it.
+  suite:
+    name: suite ${{ matrix.framework.id }}
+    needs: frameworks
+    if: needs.frameworks.outputs.frameworks != '[]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        framework: ${{ fromJSON(needs.frameworks.outputs.frameworks) }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - if: matrix.framework.language == 'dotnet'
+        uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: ${{ matrix.framework.dir }}/global.json
+      - if: matrix.framework.language == 'go'
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: ${{ matrix.framework.dir }}/go.mod
+          cache-dependency-path: ${{ matrix.framework.dir }}/go.sum
+      - if: matrix.framework.language == 'java'
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: maven
+          cache-dependency-path: ${{ matrix.framework.dir }}/**/pom.xml
+      - if: matrix.framework.language == 'python'
+        uses: astral-sh/setup-uv@v6
+      - if: matrix.framework.language == 'rust'
+        uses: dtolnay/rust-toolchain@stable
+      - if: matrix.framework.language == 'rust'
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: ${{ matrix.framework.dir }}
+      - env:
+          ID: ${{ matrix.framework.id }}
+        run: npm run rb -- suite "$ID"
+
+  # One result for the whole run, which a ruleset can require. Skipped validate and suite jobs mean
+  # the pull request changes no framework.
   validated:
     name: validated
     if: always()
-    needs: [checks, frameworks, validate]
+    needs: [checks, frameworks, validate, suite]
     runs-on: ubuntu-latest
     steps:
       - env:

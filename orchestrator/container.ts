@@ -71,7 +71,7 @@ function buildFrom(producer: { cmd: string; args: string[]; cwd: string; input?:
     tar.stdin.end(producer.input ?? "");
     let pending = 2;
     const done = (what: string) => (code: number | null) => {
-      if (code !== 0) reject(new Error(`${what} exited ${code}: ${err.trim().split("\n").slice(-15).join("\n")}`));
+      if (code !== 0) reject(new Error(`${what} exited ${code}: ${err.trim().split("\n").slice(-100).join("\n")}`));
       else if (--pending === 0) resolve();
     };
     tar.on("close", done(producer.cmd));
@@ -92,7 +92,9 @@ export async function build(
 ): Promise<Built> {
   const dir = frameworkDir(f);
   const tag = tagOf(f, host);
-  const args = ["-q", "-f", entry.dockerfile, "-t", tag, "--label", `rb.framework=${frameworkId(f)}`];
+  // Plain progress rather than -q, so a failed build's output ends with the failing step's own
+  // errors, such as the compiler's.
+  const args = ["--progress=plain", "-f", entry.dockerfile, "-t", tag, "--label", `rb.framework=${frameworkId(f)}`];
   for (const [k, v] of Object.entries(entry.buildArgs ?? {})) args.push("--build-arg", `${k}=${v}`);
   if (at !== undefined) {
     await buildFrom({ cmd: "git", args: ["archive", "--format=tar", `${at}:${dir}`], cwd: root }, args);
