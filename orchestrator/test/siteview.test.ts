@@ -55,7 +55,7 @@ before(() => {
       },
     }),
   );
-  put(`${DIR}/README.md`, "# Demo\n\nWired by hand.\n");
+  put(`${DIR}/README.md`, "# Demo\n\nWired by hand.\n\n## Notes\n\n- Demo answers HEAD\n  from the GET route.\n");
   put(`${DIR}/Dockerfile`, "FROM node:26\n");
   put(`${DIR}/package-lock.json`, '{ "packages": { "node_modules/@demo/compress": {} } }\n');
   put(
@@ -96,7 +96,8 @@ test("each test is located at the commit, and the declaration and README come fr
   assert.equal(view.snippets["errors.not_found"]!.handler!.startLine, 7);
   assert.deepEqual(view.snippets["compressed.gzip_small"]!.support.map((p) => [p.how, p.startLine]), [["marker", 12]]);
   assert.equal(view.mechanisms["compressed"] && "dependency" in view.mechanisms["compressed"] ? view.mechanisms["compressed"].dependency : "", "@demo/compress");
-  assert.equal(view.readme, "# Demo\n\nWired by hand.\n");
+  assert.equal(view.readme, "# Demo\n\nWired by hand.\n\n## Notes\n\n- Demo answers HEAD\n  from the GET route.\n");
+  assert.deepEqual(view.notes, ["Demo answers HEAD from the GET route."]);
   assert.deepEqual(view.project, { framework: "Demo", licence: "MIT", repo: "https://example.com/demo", package: "https://example.com/demo/package" });
   assert.equal(view.bundle.commit, head);
   assert.equal(view.pushed, false);

@@ -57,7 +57,7 @@ Client section says.
 | sse | The action returns `TypedResults.ServerSentEvents`, new in ASP.NET Core 10, which MVC runs as an `IResult`. | ASP.NET Core |
 | static | The static-file feature over the payload directory at `/static`. | ASP.NET Core |
 
-Choices a reader might not expect:
+## Notes
 
 - The first-error route is wired by hand. DataAnnotations has no mode that stops at the first
   failure. MVC's `MaxModelValidationErrors` holds for every action, and once it is reached MVC

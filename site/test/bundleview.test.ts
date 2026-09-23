@@ -137,6 +137,7 @@ describe("snippetDoc", () => {
     },
     problems: [],
     mechanisms: { json: { builtin: "The handler returns the object." } },
+    notes: [],
     pushed: true,
   };
 

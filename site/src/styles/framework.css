@@ -18,6 +18,7 @@
 .prose h2 { font-family: var(--f-display); font-size: 19px; margin: 22px 0 6px; }
 .prose p { margin: 0 0 11px; }
 .prose ul { margin: 0 0 11px; padding-left: 20px; }
+.prose li + li { margin-top: 6px; }
 .prose code { background: var(--surface2); padding: 1px 4px; border-radius: 2px;
               font-size: 12.5px; }
 .sniphead { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: baseline;

@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import { describe, test } from "node:test";
 import { fileURLToPath } from "node:url";
-import { esc, jsonScript } from "../src/lib/html.ts";
+import { esc, jsonScript, proseHtml } from "../src/lib/html.ts";
 import { SERIES_DARK, SERIES_LIGHT } from "../src/lib/series.ts";
 
 describe("esc", () => {
@@ -17,6 +17,26 @@ describe("jsonScript", () => {
     const out = jsonScript({ body: "</script><img src=x>" });
     assert.ok(!out.includes("</script"));
     assert.deepEqual(JSON.parse(out), { body: "</script><img src=x>" });
+  });
+});
+
+describe("proseHtml", () => {
+  test("a code span is code, and what is in it is not read as markup", () => {
+    assert.equal(proseHtml("sets it to `/authorized/**` alone"), "sets it to <code>/authorized/**</code> alone");
+    assert.equal(proseHtml("`[a](https://x.test)` and `<b>`"), "<code>[a](https://x.test)</code> and <code>&lt;b&gt;</code>");
+  });
+
+  test("text is escaped, an absolute link is a link, and a relative one is its text", () => {
+    assert.equal(proseHtml("a <b> & c"), "a &lt;b&gt; &amp; c");
+    assert.equal(
+      proseHtml("see [issue 3685](https://github.com/micronaut-projects/micronaut-core/issues/3685)."),
+      'see <a href="https://github.com/micronaut-projects/micronaut-core/issues/3685">issue 3685</a>.',
+    );
+    assert.equal(proseHtml("see [the guide](../../README.md)"), "see the guide");
+  });
+
+  test("a lone backtick stays text", () => {
+    assert.equal(proseHtml("a ` b"), "a ` b");
   });
 });
 

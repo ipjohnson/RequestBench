@@ -20,3 +20,25 @@ export function esc(s: unknown): string {
 export function jsonScript(value: unknown): string {
   return JSON.stringify(value).replaceAll("<", "\\u003c");
 }
+
+/**
+ * A line of a README's prose as HTML: its code spans, and its links to an absolute URL. A relative
+ * link reads as its text, because the page does not sit where the README does.
+ */
+export function proseHtml(text: string): string {
+  return text
+    .split(/(`[^`]+`)/)
+    .map((part) => (/^`[^`]+`$/.test(part) ? `<code>${esc(part.slice(1, -1))}</code>` : linked(part)))
+    .join("");
+}
+
+function linked(text: string): string {
+  let out = "";
+  let at = 0;
+  for (const m of text.matchAll(/\[([^\]]+)\]\(([^)\s]+)\)/g)) {
+    const [whole, label, href] = m as unknown as [string, string, string];
+    out += esc(text.slice(at, m.index)) + (/^https?:\/\//.test(href) ? `<a href="${esc(href)}">${esc(label)}</a>` : esc(label));
+    at = m.index! + whole.length;
+  }
+  return out + esc(text.slice(at));
+}

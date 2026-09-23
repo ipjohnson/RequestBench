@@ -25,11 +25,13 @@ const GOOD = {
 
 const FILES = [MANIFEST, `${DIR}/README.md`, `${DIR}/Dockerfile`, `${DIR}/package-lock.json`, `${DIR}/suite/app.test.js`];
 
-function input(manifest: unknown, over: Partial<LoadInput> = {}): LoadInput {
+const README = "# Demo\n\n## Notes\n\n- Demo answers HEAD without running the GET route.\n";
+
+function input(manifest: unknown, over: Partial<LoadInput> = {}, readme = README): LoadInput {
   return {
     manifests: [MANIFEST],
     tracked: new Set(FILES),
-    read: () => (typeof manifest === "string" ? manifest : JSON.stringify(manifest)),
+    read: (path) => (path.endsWith("README.md") ? readme : typeof manifest === "string" ? manifest : JSON.stringify(manifest)),
     registry: ["node:demo"],
     tests: { "json.small": { kind: "performance" }, "cors.scoped": { kind: "validation" } },
     families: ["json", "cors"],
@@ -80,6 +82,15 @@ test("every path it names is tracked and inside its directory", () => {
   assert.deepEqual(problemsOf(suite), [`${MANIFEST}: suite.paths tests is not tracked`]);
   assert.deepEqual(problemsOf(GOOD, { tracked: new Set(FILES.filter((f) => !f.endsWith("README.md"))) }), [
     `${MANIFEST}: there is no README.md beside it`,
+  ]);
+});
+
+test("the README has a Notes section that is a list of at least one item", () => {
+  const readmeOf = (readme: string) => loadFrameworks(input(GOOD, {}, readme)).problems;
+  assert.deepEqual(readmeOf("# Demo\n\nWired by hand.\n"), [`${DIR}/README.md: there is no ## Notes section`]);
+  assert.deepEqual(readmeOf("# Demo\n\n## Notes\n\n## Client\n\n- Not a note.\n"), [`${DIR}/README.md: ## Notes lists nothing`]);
+  assert.deepEqual(readmeOf("# Demo\n\n## Notes\n\n- A note that\n  runs on.\n\nA paragraph.\n"), [
+    `${DIR}/README.md:8: a line under ## Notes that is not part of its list`,
   ]);
 });
 

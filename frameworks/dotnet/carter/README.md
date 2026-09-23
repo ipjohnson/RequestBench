@@ -55,7 +55,7 @@ Client section says.
 | sse | `TypedResults.ServerSentEvents`, new in ASP.NET Core 10, writing and flushing each row as the data of one event. | minimal APIs |
 | static | The static-file feature over the payload directory at `/static`. | ASP.NET Core |
 
-Choices a reader might not expect:
+## Notes
 
 - ASP.NET Core computes no ETag for a dynamic answer, and Carter adds none, so that family is
   the one wired by hand.

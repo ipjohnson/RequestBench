@@ -61,7 +61,7 @@ Each test the corpus measures carries `[Trait("corpus", "<id>")]`, so `--filter-
 | sse | `Send.EventStreamAsync`, writing and flushing each row as the data of one event. | FastEndpoints |
 | static | The static-file feature over the payload directory at `/static`. | ASP.NET Core |
 
-Choices a reader might not expect:
+## Notes
 
 - FastEndpoints secures every endpoint by default. `Endpoints.Configurator` in `Program.cs` makes
   every endpoint that names no policy anonymous, so `AllowAnonymous()` is said once.

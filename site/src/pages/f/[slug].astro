@@ -12,6 +12,7 @@ import { permalink, type Part } from "../../lib/bundleview.ts";
 import { chainWith, comparedOf, deltaFor, floorFor, testValue } from "../../lib/delta.ts";
 import { usedSpan } from "../../lib/bins.ts";
 import { familyOf, hostOf, metaOf, rungsOf, testOrder } from "../../lib/run.ts";
+import { proseHtml } from "../../lib/html.ts";
 import { site, type FrameworkPage } from "../../lib/site.ts";
 import { unfinished } from "../../lib/views.ts";
 
@@ -416,6 +417,20 @@ const error = t.error?.split("\n")[0];
             ))}
           </div>
         </div>
+      </div>
+    )
+  }
+
+  {
+    view !== null && view !== undefined && view.notes.length > 0 && (
+      <div class="panel prose">
+        <h2>Notes</h2>
+        <p class="hint">What porting {name} found it doing that a reader would not expect, from its README at this run's commit.</p>
+        <ul>
+          {view.notes.map((note) => (
+            <li set:html={proseHtml(note)} />
+          ))}
+        </ul>
       </div>
     )
   }

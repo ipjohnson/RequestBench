@@ -20,7 +20,7 @@ any `npm run rb` command, or they do not exist to it.
 
 | Path | What it is |
 | --- | --- |
-| `README.md` | Required. What the framework is, how to build, run and test it, how each family is wired, and anything a reader would not expect. Carter's README is the model. |
+| `README.md` | Required. What the framework is, how to build, run and test it, how each family is wired, and its Notes, described below. Carter's README is the model. |
 | `rb.json` | Required. What the framework declares about itself, described below. |
 | `Dockerfile` | How the image is built. |
 | `Implementation/` | The application. |
@@ -37,6 +37,18 @@ themselves. Quarkus has no UnitTests module. Implementation's pom names UnitTest
 sources, because `@QuarkusTest` builds the application from the module its tests are in. axum has
 one package's `Cargo.toml`, which names each target's path under Implementation/ and UnitTests/,
 and its `Cargo.lock`. Gin has `go.mod` and `go.sum`.
+
+## Notes
+
+A framework's README has a `## Notes` section: a list of what porting it found the framework doing
+that a reader would not expect. A connection closed after an answer, a header it never sends and a
+setting that covers the whole application are each one item. The framework's page on the site ends
+with the list, read from the README at the run's commit, so it says why a row reads as it does.
+
+- `rb check` fails a README with no `## Notes`, with an empty one, or with a line under it that is
+  neither an item, an item's indented continuation, nor blank.
+- An item is plain text with inline code. A link shows as a link only to an absolute URL, such as a
+  framework's issue that records what the item describes.
 
 ## What the corpus asks
 

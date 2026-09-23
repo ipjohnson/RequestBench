@@ -63,7 +63,7 @@ container runs two workers under its two-CPU budget, whichever way the budget is
 | sse | The `Sse` response, one event per row. | axum |
 | static | `ServeDir` over the payload directory, nested at `/static`. | tower-http |
 
-Choices a reader might not expect:
+## Notes
 
 - The routes capture the payloads in their closures rather than reading them from axum's `State`.
   The payloads are loaded once and kept for the life of the process, so each handler holds a

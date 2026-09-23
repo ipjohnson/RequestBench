@@ -92,7 +92,7 @@ this Mac, against about 280 ms through `app.Run()`, because it finds its command
 | sse | `TypedResults.ServerSentEvents`, new in ASP.NET Core 10, writing and flushing each row as the data of one event. | ASP.NET Core |
 | static | The static-file feature over the payload directory at `/static`. | ASP.NET Core |
 
-Choices a reader might not expect:
+## Notes
 
 - Wolverine puts its FluentValidation middleware on every endpoint whose request type has a
   validator. The bind endpoints read `OrderRequest`, which has none. The validate endpoints read

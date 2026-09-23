@@ -66,7 +66,7 @@ per core, so two of the four serve.
 | sse | The handler writes each row as the data of one event, a write of its own, on a chunked answer. | by hand |
 | static | `StaticHandler` over the payload directory, under `/static/`. | Vert.x Web |
 
-Choices a reader might not expect:
+## Notes
 
 - Each server verticle builds its own router, because Vert.x Web's handlers keep state for the
   event loop that runs them. The payloads, the serial counter, the response cache and the compiled

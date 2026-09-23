@@ -66,7 +66,7 @@ Helidon's service registry.
 | sse | `SseSink`, one event per row. | Helidon |
 | static | `StaticContentFeature` over the payload directory, under `/static`. | Helidon |
 
-Choices a reader might not expect:
+## Notes
 
 - Helidon JSON Binding and Helidon Validation are Helidon's own, and both are preview APIs in 4.5.
   Helidon 4.4 introduced Helidon JSON, and Helidon 27 uses it throughout its core. Of Helidon's JSON

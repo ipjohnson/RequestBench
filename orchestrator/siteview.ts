@@ -13,6 +13,7 @@ import { endpoints, isPayload, recordAll, subjectOf } from "./corpus.ts";
 import { blob, pushed } from "./git.ts";
 import { KINDS } from "./marks.ts";
 import { rbJsonSchema, type RbJson } from "./manifest.ts";
+import { notesOf } from "./notes.ts";
 import type { Recording } from "./record.ts";
 import { assess, requirements, resolve, type Endpoint, type Failures, type Mechanism, type SnippetRecord, type SourceFile } from "./snippets.ts";
 
@@ -59,6 +60,8 @@ export interface FrameworkView {
   /** What rb.json says the project is and where to read it. Absent where rb.json did not parse. */
   readonly project?: Pick<RbJson, "framework" | "licence" | "repo" | "package" | "docs">;
   readonly readme: string;
+  /** The items of the README's `## Notes`, which the framework's page ends with. */
+  readonly notes: readonly string[];
   /** Whether a link to the commit can open. A commit nobody pushed is a 404. */
   readonly pushed: boolean;
 }
@@ -84,6 +87,7 @@ export function frameworkView(
     .map((s) => s.text)
     .join("\n");
   const readmePath = `${frameworkDir(f)}/README.md`;
+  const readme = bundle.files.some((x) => x.path === readmePath) ? blob(root, readmePath, at).toString("utf8") : "";
   return {
     bundle,
     snippets: found,
@@ -94,7 +98,8 @@ export function frameworkView(
     ...(rb === undefined
       ? {}
       : { project: { framework: rb.framework, licence: rb.licence, repo: rb.repo, package: rb.package, ...(rb.docs === undefined ? {} : { docs: rb.docs }) } }),
-    readme: bundle.files.some((x) => x.path === readmePath) ? blob(root, readmePath, at).toString("utf8") : "",
+    readme,
+    notes: notesOf(readme)?.items ?? [],
     pushed: at === undefined ? false : pushed(root, at),
   };
 }

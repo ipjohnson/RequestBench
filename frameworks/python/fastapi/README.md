@@ -68,7 +68,7 @@ the worker that accepted it, and the gate sends each test's two requests on one 
 | sse | `EventSourceResponse`, which serializes each row the handler yields as one event. | FastAPI |
 | static | `StaticFiles` over the payload directory, mounted at `/static`. | Starlette |
 
-Choices a reader might not expect:
+## Notes
 
 - FastAPI has no middleware on a route or a router. A mounted sub-application is how it scopes
   one, so compressed and cors are sub-applications with a middleware each, and every other route

@@ -57,7 +57,7 @@ beside the plain jar under the `exec` classifier, because UnitTests compiles aga
 | sse | `config.routes.sse`, and `SseClient.sendData` for each row, one event per row. | Javalin |
 | static | Javalin's static-file handler over the payload directory, under `/static`, and an after handler that adds Last-Modified. | Javalin |
 
-Choices a reader might not expect:
+## Notes
 
 - Javalin matches a request against its routes one at a time, in the order they were added. It
   checks the path against every before and after handler the same way. A pattern that is not the

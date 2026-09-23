@@ -56,7 +56,7 @@ corpus id it covers, so `go test ./UnitTests -run '/json.small'` runs one.
 | sse | `c.SSEvent` inside `c.Stream`, writing and flushing each row as the data of one event. | Gin |
 | static | `Static` over the payload directory, which hands each file to net/http's `FileServer`. | Gin, net/http |
 
-Choices a reader might not expect:
+## Notes
 
 - The engine is `gin.New()` with `gin.Recovery()`, which is `gin.Default()` without its request
   logger. The logger writes a line for every request.

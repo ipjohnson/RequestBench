@@ -16,6 +16,7 @@ import exceptions from "../frameworks/exceptions.ts";
 import { frameworkDir, frameworkId, type FrameworkKey } from "./bundle.ts";
 import { discover, tracked } from "./discover.ts";
 import { HOSTS, isHostId } from "./hosts.ts";
+import { NOTES_HEADING, notesOf } from "./notes.ts";
 
 /** A command run on the machine with the language's toolchain. argv, never a shell string. */
 const command = z.strictObject({
@@ -144,7 +145,14 @@ function check(f: FrameworkKey & { dir: string; id: string }, rb: RbJson, input:
     else if (file ? !input.tracked.has(full) : !trackedUnder(input.tracked, full)) out.push(`${at}: ${what} ${rel} is not tracked`);
   };
 
-  if (!input.tracked.has(`${f.dir}/README.md`)) out.push(`${at}: there is no README.md beside it`);
+  const readme = `${f.dir}/README.md`;
+  if (!input.tracked.has(readme)) out.push(`${at}: there is no README.md beside it`);
+  else {
+    const notes = notesOf(input.read(readme));
+    if (notes === null) out.push(`${readme}: there is no ${NOTES_HEADING} section`);
+    else if (notes.items.length === 0) out.push(`${readme}: ${NOTES_HEADING} lists nothing`);
+    for (const line of notes?.stray ?? []) out.push(`${readme}:${line}: a line under ${NOTES_HEADING} that is not part of its list`);
+  }
   for (const lock of rb.lockfile ?? []) path("lockfile", lock, true);
   for (const [host, entry] of Object.entries(rb.hosts)) {
     if (!isHostId(host)) out.push(`${at}: hosts.${host} is not a host, only ${Object.keys(HOSTS).join(", ")} are`);

@@ -57,7 +57,7 @@ into `implementation-0.0.0.jar`, which the image runs. It keeps the plain jar as
 | sse | The handler returns a `Publisher` of `Event`, and Micronaut writes each one's data as JSON, as one event. | Micronaut |
 | static | Micronaut's static resource router over the payload directory, mapped to `/static/**` in `application.properties`. | Micronaut |
 
-Choices a reader might not expect:
+## Notes
 
 - micronaut-security refuses every route no rule allows, and its filter runs on every path unless
   `micronaut.security.filter.pattern` names others. `application.properties` sets it to
@@ -72,7 +72,10 @@ Choices a reader might not expect:
 - Micronaut answers HEAD from the `@Get` route and drops the body before it is encoded, so the
   answer has no Content-Type unless the handler sets one, and the read handler does. It has no
   Content-Length either, and Micronaut closes the connection after an answer with neither a length
-  nor chunked encoding, so items.head pays for a reconnect each time under load.
+  nor chunked encoding, so items.head pays for a reconnect each time under load. The load charges
+  that reconnect to items.head.
+  [micronaut-core issue 3685](https://github.com/micronaut-projects/micronaut-core/issues/3685)
+  reports the missing length.
 - Micronaut writes to a response while it answers with it, so one stored response cannot answer
   several requests. The cache stores the payload and the serial it was written with, and each cache
   handler builds its answer from them. Without a configuration, micronaut-cache creates a cache the

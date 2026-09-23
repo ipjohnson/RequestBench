@@ -78,6 +78,8 @@ export const FrameworkView = z.object({
   problems: z.array(z.string()),
   mechanisms: z.record(z.string(), Mechanism).default({}),
   project: Project.optional(),
+  /** The items of the README's `## Notes`, which the page ends with. */
+  notes: z.array(z.string()).default([]),
   pushed: z.boolean(),
 });
 export type FrameworkView = z.infer<typeof FrameworkView>;

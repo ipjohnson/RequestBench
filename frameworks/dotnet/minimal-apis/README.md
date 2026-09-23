@@ -58,7 +58,7 @@ Client section says.
 | sse | `TypedResults.ServerSentEvents`, new in ASP.NET Core 10, writing and flushing each row as the data of one event. | minimal APIs |
 | static | The static-file feature over the payload directory at `/static`. | ASP.NET Core |
 
-Choices a reader might not expect:
+## Notes
 
 - The builder is `WebApplication.CreateBuilder`, as Carter's is. Upstream used `CreateSlimBuilder`,
   which would make the two applications differ in more than Carter.

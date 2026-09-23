@@ -56,7 +56,7 @@ listening. `PORT` defaults to 8080.
 | sse | `@fastify/sse` writes each row as the data of one event. | @fastify/sse |
 | static | `@fastify/static` over the payload directory at `/static/`. | @fastify/static |
 
-Choices a reader might not expect:
+## Notes
 
 - Every plugin a family uses is registered inside that family's plugin. On the root,
   `@fastify/compress` and `@fastify/etag` would run an `onSend` hook on every route, including

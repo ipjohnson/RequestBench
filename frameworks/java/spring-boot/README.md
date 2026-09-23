@@ -56,7 +56,7 @@ plain jar that UnitTests compiles against.
 | sse | `SseEmitter`, one event per row. | Spring MVC |
 | static | Spring MVC's resource handling over the payload directory, under `/static/`. | Spring MVC |
 
-Choices a reader might not expect:
+## Notes
 
 - Spring Boot registers Spring Security's filter for every path and has no setting that narrows
   it. `Application` excludes that registration, and `AuthorizedSecurity` registers the filter for

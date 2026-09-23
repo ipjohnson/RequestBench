@@ -63,7 +63,7 @@ copies it.
 | sse | A `Multi` of the rows from a method that produces `text/event-stream`, sent as one event per row. | Quarkus REST |
 | static | Vert.x's `StaticHandler` over the payload directory under `/static/`, installed on Quarkus's router by a `StartupEvent` observer. | Vert.x, through Quarkus |
 
-Choices a reader might not expect:
+## Notes
 
 - `RestApplication` is annotated `@NonBlocking`, which makes the Vert.x I/O thread that read a
   request the default for every resource method. Quarkus REST would otherwise run a method that
