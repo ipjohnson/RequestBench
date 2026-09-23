@@ -42,7 +42,7 @@ serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.151"
 # validator 0.16, not 0.21: rocket-validation 0.2 implements its guard for validator 0.16's
 # Validate trait, and the derive expects the crate at the top level.
-validator = { version = "0.16.1", features = ["derive"] }
+validator = { version = "0.21.0", features = ["derive"] }
 
 [dev-dependencies]
 flate2 = "1.1.10"
