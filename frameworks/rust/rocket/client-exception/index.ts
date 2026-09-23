@@ -21,8 +21,9 @@ interface Errors {
 const Errors: z.ZodType<Errors> = z.lazy(() => z.record(z.string(), z.union([z.array(Broken).min(1), Errors])));
 
 /**
- * rocket-validation's catcher for 422. `errors` is null when the 422 did not come from its guard,
- * such as a body of the wrong type, which Rocket's Json guard refuses with 422 of its own.
+ * The catcher the application registers on /body for 422, in the shape rocket-validation's catcher
+ * writes. `errors` is null when the 422 did not come from the Validated guard, such as a body of the
+ * wrong type, which Rocket's Json guard refuses with 422 of its own.
  */
 const Envelope = z.object({
   code: z.literal(422),
@@ -49,8 +50,8 @@ const refused = (b: Envelope) => (b.errors === null ? [] : broke(b.errors));
 
 export default exceptions({
   about:
-    "rocket-validation's Validated guard runs the validator crate's rules after Rocket's Json guard " +
-    "has bound the body, and fails with 422. Its catcher answers with a code, a message and " +
+    "The application's own Validated guard runs the validator crate's rules after Rocket's Json guard " +
+    "has bound the body, and fails with 422. Its catcher on /body answers with a code, a message and " +
     "validator's ValidationErrors under errors. A field is keyed by its Rust name, which serde writes " +
     "in camelCase on the wire, and a nested struct or a list entry by its index holds errors of its " +
     "own. A body that is not JSON never reaches the rules: Rocket's Json guard refuses it with 400, " +

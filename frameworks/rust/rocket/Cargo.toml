@@ -37,11 +37,10 @@ rocket_async_compression = "0.6.1"
 rocket_cors = "0.6.0"
 rocket_dyn_templates = { version = "0.2.0", features = ["tera"] }
 rocket-etag-if-none-match = "0.5.0"
-rocket-validation = "0.2.0"
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.151"
-# validator 0.16, not 0.21: rocket-validation 0.2 implements its guard for validator 0.16's
-# Validate trait, and the derive expects the crate at the top level.
+# The body family's rules, run by a data guard of this application's own, because Rocket validates
+# forms but not JSON.
 validator = { version = "0.21.0", features = ["derive"] }
 
 [dev-dependencies]

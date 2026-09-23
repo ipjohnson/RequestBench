@@ -34,8 +34,7 @@ fn an_order_is_answered_with_its_leaves_its_length_and_itself() {
 }
 
 // rb:test body.rejected_all
-/// body.rejected_all: order.invalid breaks all three rules, and rocket-validation's catcher names
-/// each.
+/// body.rejected_all: order.invalid breaks all three rules, and the catcher on /body names each.
 #[test]
 fn the_validated_guard_refuses_order_invalid_naming_every_rule_it_breaks() {
     let client = client();
