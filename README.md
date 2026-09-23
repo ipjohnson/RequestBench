@@ -6,6 +6,8 @@ expects, then measures latency at fixed request rates. Most tests are read again
 so a result says what one feature costs, such as validating a body, compressing a response or
 adding a middleware layer.
 
+Results: https://ipjohnson.github.io/RequestBench/
+
 ## How it works
 
 1. Each test in [`tests/`](tests) sends one request and states the answer it must get. A family
