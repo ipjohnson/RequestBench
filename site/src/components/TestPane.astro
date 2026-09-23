@@ -21,12 +21,13 @@ export type PaneRung = {
   shown: boolean;
 };
 
-/** The corpus's own test: its file, whole, and the payloads it sends or expects. */
+/** The corpus's own test: its file, whole, the payloads it sends or expects, and its tests page. */
 export type PaneTest = {
   path: string;
   text: string;
   link: string | null;
   payloads: { name: string; href: string | null }[];
+  page: string | null;
 };
 
 type Pct = "p50Us" | "p95Us" | "p99Us" | "p999Us";
@@ -286,6 +287,7 @@ const hdrs = (hs: readonly (readonly [string, string])[]): string =>
           <div class="sniphead">
             <span class="loc">{test.path}</span>
             {test.link && <a href={test.link}>open on GitHub &rarr;</a>}
+            {test.page && <a href={test.page}>its request and expected answer &rarr;</a>}
           </div>
           {test.payloads.length > 0 && (
             <p class="mech">

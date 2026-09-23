@@ -21,11 +21,13 @@ type Props = {
   size: number;
   /** What the corpus says the family is. */
   about: string | undefined;
+  /** The family's tests page, with every test's request and expected answer. */
+  page: string | null;
   routes: Record<string, Route | undefined>;
   rungs: FamilyRung[];
 };
 
-const { fam, size, about, routes, rungs } = Astro.props;
+const { fam, size, about, page, routes, rungs } = Astro.props;
 
 // Cut here rather than in CSS: the table is auto-layout, so a max-width on a cell is advisory
 // and query.many's eight parameters would widen the whole pane.
@@ -38,6 +40,12 @@ const clip = (s: string, n: number): string => (s.length > n ? `${s.slice(0, n -
   <p class="hint">
     {size} {size === 1 ? "test" : "tests"}. The family's percentiles are read from its tests' histograms merged
     into one.
+    {page && (
+      <>
+        {" "}
+        Each test's request and expected answer are on the <a href={page}>{fam} tests page</a>.
+      </>
+    )}
   </p>
 
   <div class="perfhead">

@@ -22,7 +22,8 @@ Results: https://ipjohnson.github.io/RequestBench/
    files. `npm run rb -- summarize` turns it into the summary the site reads.
 6. The site in [`site/`](site) shows each test's latency, its cost against the test it is read
    against, and the code that answered it. A blend is a set of tests read together off their
-   merged histograms: every test, the Web or API tests, or a set the reader picks.
+   merged histograms: every test, the Web or API tests, or a set the reader picks. The tests
+   pages show each family, and each test's request and the checks its answer has to pass.
 
 ## Principles
 

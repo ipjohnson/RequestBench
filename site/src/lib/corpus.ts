@@ -37,3 +37,50 @@ export const factorsOf = (tests: TestsView | null): Record<string, string> =>
 /** What a host is, from the orchestrator's own record of it. */
 export const hostNotes = (): Record<string, HostNote> =>
   Object.fromEntries(Object.values(HOSTS).map((h) => [h.id, { note: h.about }]));
+
+/** A family as the tests pages list it: its tests in reading order, and how many are measured. */
+export type FamilyEntry = { name: string; about: string; comparable: string; ids: string[]; measured: number };
+
+/**
+ * Every family in the corpus's order, each with its tests in reading order: a test comes after
+ * the test it is read against when that one is in the same family, siblings by id. A page read
+ * top to bottom then reaches each base before the tests that name it.
+ */
+export function familiesOf(tests: TestsView): FamilyEntry[] {
+  const ids = Object.keys(tests.tests).sort();
+  return Object.entries(tests.families).map(([name, f]) => {
+    const own = ids.filter((id) => tests.tests[id]?.family === name);
+    const inFamily = new Set(own);
+    const under = new Map<string, string[]>();
+    const roots: string[] = [];
+    for (const id of own) {
+      const base = tests.tests[id]?.base;
+      if (base !== undefined && inFamily.has(base)) under.set(base, [...(under.get(base) ?? []), id]);
+      else roots.push(id);
+    }
+    const order: string[] = [];
+    const visit = (id: string): void => {
+      if (order.includes(id)) return;
+      order.push(id);
+      for (const next of under.get(id) ?? []) visit(next);
+    };
+    // The suite refuses a loop of bases, so the roots reach every test. The second pass is for a
+    // corpus that has one anyway, which would otherwise lose its tests from the page.
+    for (const id of [...roots, ...own]) visit(id);
+    const measured = order.filter((id) => tests.tests[id]?.kind === "performance").length;
+    return { name, about: f.about, comparable: f.comparable, ids: order, measured };
+  });
+}
+
+/** Each test that others are read against, and those others, by id. */
+export function readAgainst(tests: TestsView): Map<string, string[]> {
+  const out = new Map<string, string[]>();
+  for (const [id, t] of Object.entries(tests.tests).sort(([a], [b]) => (a < b ? -1 : 1))) {
+    if (t.base !== undefined) out.set(t.base, [...(out.get(t.base) ?? []), id]);
+  }
+  return out;
+}
+
+/** Where a family's page is, from a page at the site's root or from one a directory below it. */
+export const familyPage = (family: string, from: "root" | "below"): string =>
+  `${from === "root" ? "" : "../"}tests/${family}.html`;

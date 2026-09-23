@@ -13,6 +13,7 @@ import { chainWith, comparedOf, deltaFor, floorFor, testValue } from "../../lib/
 import { usedSpan } from "../../lib/bins.ts";
 import { familyOf, hostOf, metaOf, rungsOf, testOrder } from "../../lib/run.ts";
 import { proseHtml } from "../../lib/html.ts";
+import { familyPage } from "../../lib/corpus.ts";
 import { site, type FrameworkPage } from "../../lib/site.ts";
 import { unfinished } from "../../lib/views.ts";
 
@@ -22,7 +23,7 @@ export function getStaticPaths() {
 
 const { page } = Astro.props as { page: FrameworkPage };
 const { run, framework: t, rn, view, verdict, unlinked, repo, commit } = page;
-const { wire, routes, factors, families: about, catalog, tests: corpus } = site();
+const { wire, routes, factors, families: about, catalog, tests: corpus, corpus: described } = site();
 
 const name = t.framework || t.name;
 const facts = [
@@ -198,6 +199,7 @@ const testOf = (id: string) => {
       const file = [`tests/payloads/${p}`, `tests/payloads/${p}.json`].find((f) => files.has(f));
       return { name: p, href: file && testsLinkable ? permalink(repo, commit, file) : null };
     }),
+    page: described?.view.tests[id] ? `${familyPage(tv.family, "below")}#${id}` : null,
   };
 };
 
@@ -413,7 +415,14 @@ const error = t.error?.split("\n")[0];
               );
             })}
             {[...families].map(([fam, ids]) => (
-              <FamilyPane fam={fam} size={ids.length} about={about[fam]?.about} routes={routes} rungs={famRungs(fam, ids)} />
+              <FamilyPane
+                fam={fam}
+                size={ids.length}
+                about={about[fam]?.about}
+                page={described?.view.families[fam] ? familyPage(fam, "below") : null}
+                routes={routes}
+                rungs={famRungs(fam, ids)}
+              />
             ))}
           </div>
         </div>

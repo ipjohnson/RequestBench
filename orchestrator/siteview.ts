@@ -9,6 +9,7 @@
 // imported as it stood at another commit.
 import type { Factor, Suite } from "@rb/tests/kit";
 import { frameworkBundle, frameworkDir, frameworkId, testFiles, testsBundle, type Bundle, type FrameworkKey } from "./bundle.ts";
+import { callView, primeView, type CallView, type PrimeView } from "./callview.ts";
 import { endpoints, isPayload, recordAll, subjectOf } from "./corpus.ts";
 import { blob, pushed } from "./git.ts";
 import { KINDS } from "./marks.ts";
@@ -107,6 +108,7 @@ export function frameworkView(
 export interface TestView {
   readonly kind: "performance" | "validation";
   readonly family: string;
+  readonly about: string;
   /** What the call the test is about sends. A test declares its path and leaves the method inside its closure. */
   readonly method?: string;
   readonly path?: string;
@@ -116,6 +118,10 @@ export interface TestView {
   readonly source: { readonly path: string; readonly hash: string; readonly text: string };
   /** The payloads it sends or expects, by name, so a page can link the committed files. */
   readonly payloads: readonly string[];
+  /** Each call it sends outside `once`, and what it checks on the answer. */
+  readonly calls: readonly CallView[];
+  /** Each call it makes inside `once`, which is sent before the others and not measured. */
+  readonly primes: readonly PrimeView[];
 }
 
 export interface TestsView {
@@ -151,15 +157,19 @@ export function testsView(root: string, at: string | undefined, s: Suite, record
     const t = s.tests[id]!;
     const file = files.get(id);
     if (file === undefined) continue;
-    const method = subjectOf(recordings.get(id)!)?.method;
+    const recording = recordings.get(id)!;
+    const method = subjectOf(recording)?.method;
     tests[id] = {
       kind: t.kind,
       family: t.id.family,
+      about: t.about,
       ...(method === undefined ? {} : { method }),
       ...(t.path === undefined ? {} : { path: t.path }),
       ...(t.kind === "performance" && t.base !== undefined ? { base: t.base, varies: t.varies! } : {}),
       source: { path: file.path, hash: file.hash, text: blob(root, file.path, at).toString("utf8") },
-      payloads: payloadsIn(recordings.get(id)!),
+      payloads: payloadsIn(recording),
+      calls: recording.calls.filter((c) => !c.priming).map((c) => callView(c, recording)),
+      primes: recording.calls.filter((c) => c.priming).map(primeView),
     };
   }
   const families = Object.fromEntries(Object.values(s.families).map((f) => [f.name, { about: f.about, comparable: f.comparable }]));

@@ -165,10 +165,10 @@ function runValueOf(text: string): keyof RunValues | undefined {
 const echoOf = (call: RecordedCall): ReadonlySet<string> =>
   new Set(call.asserts.flatMap((a) => (a.kind === "bodyIs" ? (a.options.echo ?? []) : [])));
 
-const list = (xs: readonly string[], word: string) =>
+export const list = (xs: readonly string[], word: string) =>
   xs.length <= 1 ? (xs[0] ?? "") : `${xs.slice(0, -1).join(", ")} ${word} ${xs.at(-1)!}`;
 
-const code = (s: string) => `\`${s}\``;
+export const code = (s: string) => `\`${s}\``;
 
 const BY_FORMAT: Readonly<Record<Payload["format"], string>> = {
   json: "application/json",
@@ -178,7 +178,7 @@ const BY_FORMAT: Readonly<Record<Payload["format"], string>> = {
   html: "text/html",
 };
 
-const COMPARED: Readonly<Record<Payload["format"], string>> = {
+export const COMPARED: Readonly<Record<Payload["format"], string>> = {
   json: "Compared as parsed JSON, so key order and how a number is written do not matter.",
   lines: "Compared line by line, each line as parsed JSON.",
   events: "Compared event by event as an EventSource dispatches them: each of type message with no id, and its data as parsed JSON.",
@@ -195,7 +195,7 @@ function mediaType(format: Payload["format"], match: string | RegExp | undefined
   return BY_FORMAT[format];
 }
 
-const describeMatch = (m: string | RegExp | undefined) =>
+export const describeMatch = (m: string | RegExp | undefined) =>
   m === undefined ? "is present" : typeof m === "string" ? `is ${code(m)}` : `matches ${code(String(m))}`;
 
 const METHODS: readonly Method[] = ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"];

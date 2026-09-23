@@ -92,6 +92,11 @@ export function placeholders(text: string): string {
   return out;
 }
 
+/** Each sentinel in `text`, as the placeholder it stands for and the value the stub answered with. */
+export function sentinelsIn(text: string): [placeholder: string, value: string][] {
+  return [...SENTINEL].filter(([value]) => text.includes(String(value))).map(([value, placeholder]) => [placeholder, String(value)]);
+}
+
 /**
  * The route and query a call actually sent, with every sentinel put back as the
  * placeholder it stands for. This is what a declared `path` is compared against.

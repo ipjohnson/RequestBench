@@ -1,5 +1,4 @@
 
-.crumb { font-family: var(--f-mono); font-size: 11.5px; margin: 0 0 18px; }
 .ident { display: flex; gap: 16px; align-items: center; margin: 0 0 6px; }
 .mono-mark { width: 54px; height: 54px; border-radius: 6px; flex: none;
              background: var(--surface2); border: 1px solid var(--rule2);
