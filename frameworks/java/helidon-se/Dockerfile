@@ -1,7 +1,7 @@
 # Built from this directory alone, so nothing outside it reaches the image. The suite in
 # UnitTests/ is never copied in: Maven builds Implementation's pom with the parent above it and
 # does not look for the parent's other modules.
-FROM maven:3.9.16-eclipse-temurin-25@sha256:dd8e01b3be719853578c07b57ff8d9bbbbfe746f802226f05b19689420815221 AS build
+FROM maven:3-eclipse-temurin-26@sha256:c30718f442eb39c55b2d45440bb849d8755ad8d9d6ef67aadefcce150267116f AS build
 WORKDIR /src
 
 # The poms first, on their own layer, so a change to the code does not download the dependencies
