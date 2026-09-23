@@ -31,7 +31,7 @@ axum-response-cache = "0.5.0"
 # validator 0.20, not 0.21: axum-valid 0.25 implements Valid for validator 0.20's Validate trait.
 axum-valid = { version = "0.25.0", default-features = false, features = ["validator", "into_json"] }
 askama = "0.16.1"
-cached = "1.1.0"
+cached = "4.0.0"
 futures-util = "0.3.34"
 # The allocator every Rust framework here runs on, in place of the system one.
 mimalloc = "0.1.52"
