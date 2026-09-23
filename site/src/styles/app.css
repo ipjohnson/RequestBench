@@ -149,6 +149,28 @@ pre.code { font-family: var(--f-mono); font-size: 12px; line-height: 1.55; margi
            padding: 11px 14px; overflow-x: auto; white-space: pre; }
 .how { font-family: var(--f-mono); font-size: 10px; letter-spacing: .08em;
        text-transform: uppercase; color: var(--ink3); }
+/* ---------- custom blend ---------- */
+/* A row of its own inside the controls, because it is part of the selector. */
+.controls .picker { flex-basis: 100%; }
+.picker .from { display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+                margin: 0 0 6px; font-size: 13px; color: var(--ink2); }
+.picker .from span { margin-left: 8px; color: var(--ink3); font-size: 12px; }
+/* Three columns on a wide page, so nineteen families do not push the table off the screen. */
+#pickfams { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(330px, 100%), 1fr));
+            column-gap: 28px; align-items: start; }
+.pickfam { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px;
+           padding: 7px 0; border-top: 1px solid var(--rule); font-size: 13.5px; }
+.pickfam .famck { display: flex; align-items: center; gap: 7px; min-width: 104px;
+                  font-family: var(--f-mono); }
+.pickfam .wt { display: flex; align-items: center; gap: 6px; color: var(--ink3); font-size: 12px; }
+.pickfam input[type=number] { font: inherit; font-size: 13px; width: 4.5em; color: var(--ink);
+                              background: var(--ground); border: 1px solid var(--rule2);
+                              border-radius: 3px; padding: 3px 6px; }
+.pickfam .share { margin-left: auto; font-family: var(--f-mono); font-size: 12px;
+                  color: var(--ink3); font-variant-numeric: tabular-nums; }
+.picktests { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 6px 16px;
+             padding: 4px 0 2px 24px; font-family: var(--f-mono); font-size: 12.5px; }
+.picktests label { display: flex; align-items: center; gap: 6px; }
 .note { border-left: 2px solid var(--amber); background: var(--surface);
         padding: 13px 17px; border-radius: 0 3px 3px 0; margin-top: 22px;
         font-size: 13.5px; color: var(--ink2); }

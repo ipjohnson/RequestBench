@@ -2,7 +2,8 @@
 // a histogram published by either reads the same.
 
 /** Each bucket is 2% wider than the one before it, so a percentile read off one is within 2%. */
-export const LOG_GROWTH = Math.log(1.02);
+export const GROWTH = 1.02;
+export const LOG_GROWTH = Math.log(GROWTH);
 
 /** 1.02^920 is about 80 seconds, and anything slower lands in the last bucket. */
 export const BUCKETS = 920;
@@ -32,4 +33,36 @@ export function percentile(hist: Uint32Array, p: number): number {
 
 export function addInto(into: Uint32Array, from: Uint32Array): void {
   for (let i = 0; i < into.length; i++) into[i] = into[i]! + from[i]!;
+}
+
+/** Python's round, which takes a half to the even side, as upstream's summaries were written. */
+const roundHalfEven = (x: number): number => {
+  const r = Math.round(x);
+  return Math.abs(x % 1) === 0.5 && r % 2 !== 0 ? r - 1 : r;
+};
+
+/**
+ * The p-th percentile, placed inside its bucket rather than at its middle. A midpoint puts every
+ * percentile on a grid 2% apart, which is invisible in one number and decides the answer as
+ * soon as two are subtracted, as every delta on a framework page is.
+ *
+ * The summary and the site's blends both read percentiles with this, so a blend of every test
+ * gives the rung's own number.
+ */
+export function pct(counts: ArrayLike<number>, p: number): number {
+  let total = 0;
+  for (let i = 0; i < counts.length; i++) total += counts[i]!;
+  if (total === 0) return 0;
+  const want = (p / 100) * total;
+  let seen = 0;
+  for (let i = 0; i < counts.length; i++) {
+    const c = counts[i]!;
+    if (c > 0 && seen + c >= want) {
+      const lo = Math.exp(i * LOG_GROWTH);
+      const hi = Math.exp((i + 1) * LOG_GROWTH);
+      return roundHalfEven(lo + (hi - lo) * Math.min(1, Math.max(0, (want - seen) / c)));
+    }
+    seen += c;
+  }
+  return 0;
 }

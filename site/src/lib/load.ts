@@ -33,7 +33,9 @@ export type LoadReport = {
    *
    * What the site publishes is the summary, not this build's reading of it. A parse reorders
    * keys and drops what it was not told about, and republishing that would make the file a
-   * reader downloads differ from the file the run wrote.
+   * reader downloads differ from the file the run wrote. The one change is that the per-test
+   * histograms are published in a document of their own, so that a page showing no blend does
+   * not download them.
    */
   raw: Map<string, unknown>;
   rejected: Rejected[];

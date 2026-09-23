@@ -5,6 +5,7 @@
 // controls offer is a different table over the same run and building them all at once would
 // ship forty copies of one number.
 import Shell from "../components/Shell.astro";
+import { BLENDS, labelOf } from "../lib/blends.ts";
 import { provenance } from "../lib/catalog.ts";
 import { jsonScript } from "../lib/html.ts";
 import { site } from "../lib/site.ts";
@@ -71,11 +72,17 @@ const built = new Date().toISOString().slice(0, 16).replace("T", " ") + " UTC";
       <label>&nbsp;</label>
       <div class="seg"><button id="reset" type="button">Reset</button></div>
     </div>
+    <div class="ctl picker" id="picker" hidden>
+      <label>Custom blend</label>
+      <div class="from">
+        Start from
+        {BLENDS.filter((b) => b !== "custom").map((b) => <button type="button" class="chip sm" data-from={b}>{labelOf(b)}</button>)}
+        <button type="button" class="chip sm" data-from="none">None</button>
+        <span>Each test counts once, times its family's weight.</span>
+      </div>
+      <div id="pickfams"></div>
+    </div>
   </div>
-
-  <div class="note" id="hostnote" hidden></div>
-  <div class="note" id="runnote" hidden></div>
-  <p class="count" id="meta" style="margin:12px 0 0">Loading the results catalog&hellip;</p>
 
   <div class="scroll">
     <table>
@@ -83,7 +90,9 @@ const built = new Date().toISOString().slice(0, 16).replace("T", " ") + " UTC";
       <tbody id="tbody"></tbody>
     </table>
   </div>
-  <p class="count" id="count" style="margin-top:10px"></p>
+  <p class="count" id="meta" style="margin-top:10px">Loading the results catalog&hellip;</p>
+  <div class="note" id="hostnote" hidden></div>
+  <div class="note" id="runnote" hidden></div>
 
   <div class="panel">
     <h2>Over time</h2>

@@ -25,6 +25,8 @@ looked at with:
       run.ts          the rungs, tests and languages a summary lists without saying so
       load.ts         reading the two input directories
       catalog.ts      what results exist and where each document is
+      blends.ts       the named blends, and a blend read off its tests' merged histograms
+      hist.ts         the per-test histograms, published beside a run rather than in it
       delta.ts        the base chain: one implementation, used by both kinds of page
       views.ts        the delta cell, likewise, and the base's row on a pane
       corpus.ts       routes and factors from the corpus, host notes from orchestrator/hosts.ts

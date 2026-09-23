@@ -18,6 +18,7 @@ import {
 import { buildCatalog, newestPerHost, type Catalog } from "./catalog.ts";
 import { buildConfig, type BuildConfig } from "./config.ts";
 import { factorsOf, hostNotes, routesOf } from "./corpus.ts";
+import { withoutHist } from "./hist.ts";
 import { loadExemplars, loadRuns, staleExemplars } from "./load.ts";
 import type { PageData } from "./page-data.ts";
 import { DEFAULT_HOST, hostOf, rungsOf } from "./run.ts";
@@ -185,7 +186,7 @@ function read(): Site {
   }
 
   const catalog = buildCatalog(runs, wire, Object.keys(code), new Date().toISOString());
-  const embedded = newestPerHost(runs);
+  const embedded = newestPerHost(runs).map(withoutHist);
 
   return {
     config,

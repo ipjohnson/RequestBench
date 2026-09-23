@@ -1,6 +1,7 @@
 // What the table shows. Every function here is pure, which is what makes it checkable at all.
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
+import { BUCKETS, bucketOf, pct } from "../../traffic-generator/histogram.ts";
 import { choicesAt, filterFor, pickRung, rateLabel, rows, wireFor, wireKeyFor } from "../src/client/select.ts";
 import { initialState } from "../src/client/state.ts";
 import type { Framework, Route, Run, WireDoc } from "../src/lib/types.ts";
@@ -158,6 +159,81 @@ describe("rows", () => {
   });
 });
 
+describe("a blend other than All", () => {
+  /** One test's histogram, `n` answers at one latency. */
+  const one = (us: number, n: number) => ({ count: n, hist: { first: bucketOf(us), counts: [n] } });
+  const at = (us: number, n: number): number[] => {
+    const h = new Array<number>(BUCKETS).fill(0);
+    h[bucketOf(us)] = n;
+    return h;
+  };
+  const withHist: Run = {
+    ...run,
+    frameworks: [
+      {
+        ...carter,
+        tests: {
+          "json.small": { family: "json", rungs: { regular: one(150, 10) } },
+          "template.small": { family: "template", rungs: { regular: one(900, 10) } },
+        },
+      },
+      fastify,
+    ],
+  };
+
+  test("is read off the histograms of the tests it names", () => {
+    const s = st();
+    s.q = "Web";
+    const carterRow = rows({ run: withHist, st: s, routes, wireOf: () => undefined }).rows.find((r) => r.label === "carter");
+    assert.equal(carterRow?.value, pct(at(900, 10), 50));
+    s.q = "api";
+    assert.equal(rows({ run: withHist, st: s, routes, wireOf: () => undefined }).rows.find((r) => r.label === "carter")?.value, pct(at(150, 10), 50));
+  });
+
+  test("keeps the whole mix's achieved rate, which no blend changes", () => {
+    const s = st();
+    s.q = "Web";
+    s.metric = "achievedRps";
+    assert.equal(rows({ run: withHist, st: s, routes, wireOf: () => undefined }).rows.find((r) => r.label === "carter")?.value, 500);
+  });
+
+  test("has no latency where the framework has no histograms", () => {
+    const s = st();
+    s.q = "API";
+    const fastifyRow = rows({ run: withHist, st: s, routes, wireOf: () => undefined }).rows.find((r) => r.label === "fastify");
+    assert.equal(fastifyRow?.value, null);
+    assert.equal(fastifyRow?.dead, false);
+  });
+
+  test("has no latency at a rate the framework did not complete", () => {
+    const s = st();
+    s.q = "Custom";
+    s.pick = { entries: ["json"], weights: {} };
+    s.rung = "raised";
+    const carterRow = rows({ run: withHist, st: s, routes, wireOf: () => undefined }).rows.find((r) => r.label === "carter");
+    assert.deepEqual([carterRow?.value, carterRow?.dead], [null, true]);
+  });
+
+  test("is chosen only at blend granularity", () => {
+    const s = st();
+    s.gran = "family";
+    s.q = "Web";
+    assert.deepEqual(rows({ run: withHist, st: s, routes, wireOf: () => undefined }).rows, []);
+  });
+});
+
+describe("the filter at blend granularity", () => {
+  test("a filter that names no blend is a framework's name, read over All", () => {
+    const s = st();
+    s.q = "cart";
+    const { rows: rs } = rows({ run, st: s, routes, wireOf: () => undefined });
+    assert.deepEqual(
+      rs.map((r) => [r.label, r.value]),
+      [["carter", 185]],
+    );
+  });
+});
+
 describe("the filter at family and test granularity", () => {
   const two: Run = {
     ...run,
@@ -176,7 +252,7 @@ describe("the filter at family and test granularity", () => {
   test("offers the run's families or its test ids, in id order", () => {
     assert.deepEqual(choicesAt(two, "family", "regular"), ["baseline", "json"]);
     assert.deepEqual(choicesAt(two, "test", "regular"), ["baseline.plaintext", "json.medium", "json.small"]);
-    assert.deepEqual(choicesAt(two, "blend", "regular"), []);
+    assert.deepEqual(choicesAt(two, "blend", "regular"), ["All", "Web", "API", "Custom"]);
   });
 
   test("opens on the run's first family or test when the filter names nothing", () => {
@@ -196,8 +272,16 @@ describe("the filter at family and test granularity", () => {
     assert.equal(filterFor(two, "test", "regular", "medium"), "medium");
   });
 
-  test("leaves the blend's filter alone", () => {
-    assert.equal(filterFor(two, "blend", "regular", ""), "");
+  test("opens the blend view on All, keeping a blend or a framework the filter names", () => {
+    assert.equal(filterFor(two, "blend", "regular", ""), "All");
+    assert.equal(filterFor(two, "blend", "regular", "json"), "All");
+    assert.equal(filterFor(two, "blend", "regular", "Web"), "Web");
+    assert.equal(filterFor(two, "blend", "regular", "carter"), "carter");
+  });
+
+  test("a blend's name opens a family or test view on its first name", () => {
+    assert.equal(filterFor(two, "family", "regular", "All"), "baseline");
+    assert.equal(filterFor(two, "test", "regular", "All"), "baseline.plaintext");
   });
 
   test("a name from the list selects that test alone", () => {
@@ -234,6 +318,10 @@ describe("wire captures", () => {
 
   test("a blend sums the bytes and says mixed when the framing is not one thing", () => {
     assert.deepEqual(wireFor(doc, "blend", ""), { hdrz: 210, bodyz: 440, framing: "mixed" });
+  });
+
+  test("a blend other than All sums only its own tests", () => {
+    assert.deepEqual(wireFor(doc, "blend", "", new Set(["json.medium"])), { hdrz: 110, bodyz: 400, framing: "chunked" });
   });
 
   test("a test carries its own exchange", () => {

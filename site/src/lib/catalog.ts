@@ -8,6 +8,7 @@
 // It lists the runs the site shows and no others. The build decides which those are, recorded
 // runs unless it was asked for the rest, so a page never has to.
 import { z } from "zod";
+import { hasHist, histUsable } from "./hist.ts";
 import { DEFAULT_HOST, hostOf, languagesOf } from "./run.ts";
 import type { Run, WireDoc } from "./types.ts";
 
@@ -17,6 +18,8 @@ export const CATALOG_NAME = "catalog.json";
 export const RunEntry = z.object({
   id: z.string(),
   file: z.string(),
+  /** The run's per-test histograms, which a blend other than All reads. Empty when its summary has none. */
+  hist: z.string().default(""),
   date: z.string().default(""),
   languages: z.array(z.string()).default([]),
   host: z.string().default(DEFAULT_HOST),
@@ -45,6 +48,7 @@ export const slug = (runId: string): string => runId.replaceAll(":", "").replace
 export const runEntry = (r: Run): RunEntry => ({
   id: r.runId,
   file: `${slug(r.runId)}.json.gz`,
+  hist: hasHist(r) && histUsable(r) ? `${slug(r.runId)}.hist.json.gz` : "",
   date: r.date ?? "",
   languages: languagesOf(r),
   host: hostOf(r),
