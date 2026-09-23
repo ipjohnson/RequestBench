@@ -96,7 +96,7 @@ performance tests at the rates set in [`orchestrator/ladder.ts`](orchestrator/la
 | Phase | Requests per second | Length |
 | --- | --- | --- |
 | warmup | 1,000 | 30 seconds, not recorded |
-| regular | 500 | A 15-second settle, then 60 seconds |
+| regular | 1,000 | A 15-second settle, then 60 seconds |
 | raised | 2,500 | A 15-second settle, then 60 seconds |
 | peak | 5,000 | A 15-second settle, then 60 seconds |
 
@@ -122,6 +122,11 @@ cores are isolated. Nothing requires a particular state yet.
 A run is recorded only when it was made on Linux, from a clean working tree, at a pushed commit,
 over the whole corpus at full length. The site shows only recorded runs unless it is built with
 `--unrecorded`.
+
+[`measure.yml`](.github/workflows/measure.yml) measures every framework each night on one
+GitHub-hosted runner, with the framework on cores 0 and 1 and the generator on cores 2 and 3. It
+adds the run's summary to the `results` branch, under `runs/`, and
+[`pages.yml`](.github/workflows/pages.yml) then publishes the site from every summary there.
 
 ## Commands
 

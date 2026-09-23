@@ -1,0 +1,72 @@
+# Publishes the results site from every summary on the results branch, under runs/. It runs when
+# measure.yml finishes, when main changes something the site is built from, and by hand. Until a
+# summary is recorded there is nothing to publish, and the site already deployed stays.
+name: pages
+
+on:
+  workflow_run:
+    workflows: [measure]
+    types: [completed]
+  push:
+    branches: [main]
+    paths:
+      - site/**
+      - orchestrator/**
+      - tests/**
+      - results/exemplars/**
+      - package.json
+      - package-lock.json
+      - .github/workflows/pages.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      runs: ${{ steps.runs.outputs.count }}
+    steps:
+      # A framework page reads the framework's files out of history at the commit its run recorded.
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/checkout@v7
+        with:
+          ref: results
+          path: _results
+      - id: runs
+        run: echo "count=$(find _results/runs -name '*.json' 2>/dev/null | wc -l)" >> "$GITHUB_OUTPUT"
+      - if: steps.runs.outputs.count != '0'
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: npm
+      - if: steps.runs.outputs.count != '0'
+        run: npm ci --no-audit --no-fund
+      - if: steps.runs.outputs.count != '0'
+        run: npm run site -- --summaries _results/runs --exemplars results/exemplars --out site/dist
+      - if: steps.runs.outputs.count != '0'
+        uses: actions/configure-pages@v6
+      - if: steps.runs.outputs.count != '0'
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: site/dist
+
+  deploy:
+    needs: build
+    if: needs.build.outputs.runs != '0'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5
