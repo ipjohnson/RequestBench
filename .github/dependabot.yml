@@ -1,0 +1,89 @@
+# Weekly updates for everything the repository pins: the workflow actions, each framework's base
+# images and packages, and the root npm workspace. validate.yml checks every pull request this opens.
+#
+# A framework's packages come as one pull request per framework, with its minor and patch updates
+# grouped. A base image's minor and patch updates come as one pull request for every framework
+# built on it. Each major update comes on its own. global.json is not updated, because it names
+# only the lowest SDK a build accepts, and the SDK comes from the framework's image.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
+
+  - package-ecosystem: docker
+    directories:
+      - /frameworks/*/*
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    groups:
+      base-images:
+        group-by: dependency-name
+        update-types: [minor, patch]
+
+  - package-ecosystem: npm
+    directories:
+      - /
+      - /frameworks/node/*
+      - /frameworks/python/*/Client
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: nuget
+    directories:
+      - /frameworks/dotnet/*
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: maven
+    directories:
+      - /frameworks/java/*
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: cargo
+    directories:
+      - /frameworks/rust/*
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: gomod
+    directories:
+      - /frameworks/go/*
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: uv
+    directories:
+      - /frameworks/python/*
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
