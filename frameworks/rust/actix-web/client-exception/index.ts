@@ -35,11 +35,10 @@ function broke(errors: Errors, at: readonly string[] = []): [string, readonly Br
 
 export default exceptions({
   about:
-    "actix-web-validator's Json extractor runs the validator crate's rules before the handler. The " +
-    "crate refuses a broken rule with text, so its JsonConfig's error handler answers 400 with " +
-    "validator's ValidationErrors as JSON, the custom answer the crate's documentation shows the " +
-    "handler for. A field is keyed by its Rust name, which serde writes in camelCase on the wire, " +
-    "and a nested struct or a list entry by its index holds errors of its own. A body that is not " +
+    "An extractor written in the port runs the validator crate's rules before the handler, because " +
+    "actix-web has no validation of its own. It answers a broken rule with 400 and validator's " +
+    "ValidationErrors as JSON. A field is keyed by its Rust name, which serde writes in camelCase on " +
+    "the wire, and a nested struct or a list entry by its index holds errors of its own. A body that is not " +
     "JSON never reaches the rules: the extractor refuses it with a 400 whose body is text. The " +
     "router answers a path with no route with 404, and a method the resource has no route for with " +
     "405, both with no body.",

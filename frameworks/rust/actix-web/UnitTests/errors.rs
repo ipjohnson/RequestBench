@@ -41,8 +41,8 @@ async fn a_method_a_route_registered_on_its_own_lacks_falls_through_to_404() {
 }
 
 // rb:test errors.malformed
-/// errors.malformed: a body that is not JSON is refused by actix-web-validator's Json extractor
-/// with 400, as text, before any rule runs.
+/// errors.malformed: a body that is not JSON is refused by the validate routes' extractor with 400,
+/// as text, before any rule runs.
 #[actix_web::test]
 async fn a_body_that_is_not_json_is_400_from_the_extractor() {
     let response = app().await.post("/body/validate/small", "application/json", r#"{"customerId": 1, "lines": ["#).await;

@@ -1,5 +1,5 @@
 {
-  "comment": "actix-web 4 on actix-rt, one module per family under Implementation/routes, each adding its routes to the App's ServiceConfig, with each family's middleware wrapped around that family's scope or resource alone. HttpServer builds one App per worker thread, so the response cache's stores are made once and every App shares them. One package: the library and the server binary in Implementation/, the suite in UnitTests/, which drives the App in process with actix-web's test utilities and never reaches the image. The release profile is fat LTO with one codegen unit, as upstream measured every Rust framework. Validation is the validator crate, which axum's port uses too, behind actix-web-validator's Json extractor. That crate refuses a broken rule with text, so its JsonConfig's error handler, the hook its documentation shows for a custom answer, answers with validator's errors as JSON. The first-error route is wired by hand, because validator cannot stop at the first failure. actix-web ships no response cache and none written for it is in wide use, so the cache middleware is written by hand over cached's LruTtlCache, the store axum-response-cache uses. The etag family is actix-middleware-etag's, and the sse family is actix-web-lab's, where the actix project tries out what actix-web lacks. upgrade is cargo update, which moves Cargo.lock within the ranges Cargo.toml states.",
+  "comment": "actix-web 4 on actix-rt, one module per family under Implementation/routes, each adding its routes to the App's ServiceConfig, with each family's middleware wrapped around that family's scope or resource alone. HttpServer builds one App per worker thread, so the response cache's stores are made once and every App shares them. One package: the library and the server binary in Implementation/, the suite in UnitTests/, which drives the App in process with actix-web's test utilities and never reaches the image. The release profile is fat LTO with one codegen unit, as upstream measured every Rust framework. Validation is the validator crate, which axum's port uses too, run by an extractor written here. actix-web has no validation of its own, and actix-web-validator 7, the crate that adds it, needs validator 0.20. The first-error route is wired by hand, because validator cannot stop at the first failure. actix-web ships no response cache and none written for it is in wide use, so the cache middleware is written by hand over cached's LruTtlCache, the store axum-response-cache uses. The etag family is actix-middleware-etag's, and the sse family is actix-web-lab's, where the actix project tries out what actix-web lacks. upgrade is cargo update, which moves Cargo.lock within the ranges Cargo.toml states.",
   "framework": "actix-web",
   "licence": "MIT OR Apache-2.0",
   "repo": "https://github.com/actix/actix-web",
@@ -24,7 +24,7 @@
     },
     "baseline": { "builtin": "The handler returns the string, which actix-web sends as text/plain." },
     "body": {
-      "mechanism": "The validator crate's rules, derived on the order and run by actix-web-validator's Json extractor before the handler. Its JsonConfig's error handler answers with validator's errors as JSON, because the crate's own refusal is text. The first-error route checks the rules one field at a time by hand, because validator cannot stop at the first failure",
+      "mechanism": "The validator crate's rules, derived on the order and run before the handler by an extractor written here, which parses the body with actix-web's JsonBody. A broken rule is answered with validator's errors as JSON. The first-error route checks the rules one field at a time by hand, because validator cannot stop at the first failure",
       "dependency": "validator",
       "mentions": "Validate"
     },
@@ -43,7 +43,7 @@
       "mentions": "Cors"
     },
     "errors": {
-      "builtin": "actix-web's App answers a miss with 404, and a resource answers a method it has no route for with 405 and an Allow header, both with no body. actix-web-validator's Json extractor refuses a body that is not JSON with 400 as text, and the items handlers answer a missing row with 404."
+      "builtin": "actix-web's App answers a miss with 404, and a resource answers a method it has no route for with 405 and an Allow header, both with no body. The validate routes' extractor refuses a body that is not JSON with 400 as text, and the items handlers answer a missing row with 404."
     },
     "etag": {
       "mechanism": "actix-middleware-etag's middleware around the /etag scope, which hashes the answer with xxh3 into a weak tag and answers a matching If-None-Match with 304",
