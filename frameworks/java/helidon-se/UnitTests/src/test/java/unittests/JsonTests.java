@@ -1,6 +1,6 @@
 package unittests;
 
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.helidon.webserver.WebServer;
@@ -22,8 +22,8 @@ class JsonTests extends HelidonApp {
     }
 
     @Test
-    void theAnswerIsChunkedAndTheSocketSendsItsLastChunkAtOnce(WebServer server) throws Exception {
-        assertNull(Answer.header(get("/json/small"), "content-length"));
+    void theAnswerCarriesItsLengthAndTheSocketSendsWithoutDelay(WebServer server) throws Exception {
+        assertNotNull(Answer.header(get("/json/small"), "content-length"));
         assertTrue(server.prototype().connectionOptions().tcpNoDelay());
     }
 }

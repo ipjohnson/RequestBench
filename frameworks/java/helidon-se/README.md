@@ -79,10 +79,8 @@ Helidon's service registry.
 - Helidon JSON Binding's annotation processor writes a converter for a generic record that does not
   compile. `Echoed` holds its echo as an `Object`, which the binding writes with the converter of
   its runtime type.
-- Helidon JSON Binding writes an entity to the response's output stream, so every JSON answer goes
-  out chunked, with no Content-Length.
 - Helidon leaves TCP_NODELAY off, and writes the last chunk of a chunked answer in a write of its
-  own. With Nagle's algorithm on, the end of every JSON answer waits for the client to acknowledge
+  own. With Nagle's algorithm on, the end of every chunked answer waits for the client to acknowledge
   the data before it, which a delayed acknowledgement puts off by about 40 ms. `Main` turns
   TCP_NODELAY on through `connectionOptions`, which Helidon's performance guide names for such
   workloads.
