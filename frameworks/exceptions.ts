@@ -3,11 +3,15 @@ import type { Exceptions } from "@rb/tests/kit";
 import aspnetMvc from "./dotnet/aspnet-mvc/client-exception/index.ts";
 import axum from "./rust/axum/client-exception/index.ts";
 import carter from "./dotnet/carter/client-exception/index.ts";
+import chi from "./go/chi/client-exception/index.ts";
+import echo from "./go/echo/client-exception/index.ts";
 import express from "./node/express/client-exception/index.ts";
 import fastapi from "./python/fastapi/client-exception/index.ts";
 import fastendpoints from "./dotnet/fastendpoints/client-exception/index.ts";
 import fastify from "./node/fastify/client-exception/index.ts";
+import fiber from "./go/fiber/client-exception/index.ts";
 import gin from "./go/gin/client-exception/index.ts";
+import gorillaMux from "./go/gorilla-mux/client-exception/index.ts";
 import h3 from "./node/h3/client-exception/index.ts";
 import helidonSe from "./java/helidon-se/client-exception/index.ts";
 import hono from "./node/hono/client-exception/index.ts";
@@ -31,7 +35,11 @@ export type FrameworkId =
   | "dotnet:fastendpoints"
   | "dotnet:minimal-apis"
   | "dotnet:wolverine-http"
+  | "go:chi"
+  | "go:echo"
+  | "go:fiber"
   | "go:gin"
+  | "go:gorilla-mux"
   | "java:helidon-se"
   | "java:javalin"
   | "java:micronaut"
@@ -58,7 +66,11 @@ export default {
   "dotnet:fastendpoints": fastendpoints,
   "dotnet:minimal-apis": minimalApis,
   "dotnet:wolverine-http": wolverineHttp,
+  "go:chi": chi,
+  "go:echo": echo,
+  "go:fiber": fiber,
   "go:gin": gin,
+  "go:gorilla-mux": gorillaMux,
   "java:helidon-se": helidonSe,
   "java:javalin": javalin,
   "java:micronaut": micronaut,

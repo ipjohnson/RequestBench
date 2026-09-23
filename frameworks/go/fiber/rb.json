@@ -1,0 +1,68 @@
+{
+  "comment": "Fiber 3.5 on Go 1.27 and fasthttp, one function per family registering its routes in the implementation package under Implementation/, and the server's main package in Implementation/cmd/server. The suite is UnitTests/, go test over the app served on a loopback port, and never reaches the image. c.Bind() runs go-playground's validator, registered as the app's StructValidator as Fiber's validation guide registers it, and a validation failure is answered as the guide's step 4 answers one. Any other bind failure is returned to Fiber's default error handler, as the guide returns it, which answers a BindError with 500. The first-error route is wired by hand, because go-playground cannot stop at the first failure. The lockfile is go.mod, which records every module version the build selects, and go.sum, which holds their hashes. upgrade is go get -u ./..., which moves every module to its newest release within its major version.",
+  "framework": "Fiber",
+  "licence": "MIT",
+  "repo": "https://github.com/gofiber/fiber",
+  "package": "https://pkg.go.dev/github.com/gofiber/fiber/v3",
+  "docs": "https://docs.gofiber.io/",
+  "lockfile": ["go.mod", "go.sum"],
+  "hosts": {
+    "container-h1": { "dockerfile": "Dockerfile" }
+  },
+  "suite": { "argv": ["go", "test", "./..."], "paths": ["UnitTests"] },
+  "upgrade": { "argv": ["go", "get", "-u", "./..."] },
+  "noHandler": {
+    "cors.preflight": "Fiber's cors middleware on the /cors group answers the preflight with 204. Fiber lets a preflight reach the group's middleware although no route has OPTIONS.",
+    "errors.unmatched": "Fiber's router answers a path no route matches with ErrNotFound, which its default error handler writes as 404 and the status text.",
+    "errors.wrong_method": "Fiber's router answers a method the path has no route for with ErrMethodNotAllowed, which its default error handler writes as 405, with an Allow header naming the methods the path has."
+  },
+  "mechanisms": {
+    "authorized": {
+      "mechanism": "A middleware on the route that compares the bearer token and returns fiber.ErrForbidden for any other, because Fiber's keyauth middleware answers a wrong key with 401"
+    },
+    "baseline": { "builtin": "c.SendString writes the text, as text/plain by fasthttp's default." },
+    "body": {
+      "mechanism": "c.Bind().Body decodes the order by its Content-Type and runs the app's StructValidator, the go-playground adapter from Fiber's validation guide, over the validate tags. The first-error route binds with SkipValidation and runs the validator over one field at a time, because go-playground cannot stop at the first failure",
+      "dependency": "github.com/go-playground/validator/v10",
+      "mentions": "validator.New"
+    },
+    "cache": {
+      "mechanism": "Fiber's cache middleware in front of each cache route, one store for the process, keeping the response's headers and partitioning each entry on the request headers its Vary names",
+      "dependency": "github.com/gofiber/fiber/v3",
+      "mentions": "cache.New"
+    },
+    "compressed": {
+      "mechanism": "Fiber's compress middleware on the two /compressed routes, at its fastest level",
+      "dependency": "github.com/gofiber/fiber/v3",
+      "mentions": "compress.New"
+    },
+    "cors": {
+      "mechanism": "Fiber's cors middleware on the /cors group, which a preflight reaches with no OPTIONS route",
+      "dependency": "github.com/gofiber/fiber/v3",
+      "mentions": "cors.New"
+    },
+    "errors": {
+      "builtin": "Fiber's default error handler answers a miss with 404 and a method a path lacks with 405, each as text/plain with the status text. A body the binder cannot decode reaches it as a BindError and is answered 500, and the items handlers return fiber.ErrNotFound for a missing row."
+    },
+    "etag": {
+      "mechanism": "Fiber's etag middleware on the two /etag routes, which tags the body with its length and CRC-32 and answers a matching If-None-Match with 304",
+      "dependency": "github.com/gofiber/fiber/v3",
+      "mentions": "etag.New"
+    },
+    "forms": { "builtin": "c.Bind().Form reads a urlencoded or a multipart body into the form tags, the file part as a *multipart.FileHeader." },
+    "headers": { "builtin": "c.Bind().Header fills the header tags, the account as an int." },
+    "items": { "builtin": "One route per method on /items/:id, the id bound with c.Bind().URI. Fiber registers a HEAD route beside each GET route, so the read route answers HEAD too." },
+    "json": { "builtin": "c.JSON encodes the payload with the app's JSONEncoder, which is encoding/json's Marshal unless the config names another." },
+    "middleware": { "mechanism": "No-op handlers ahead of the handler in the route's chain, four or sixteen of them, each calling c.Next" },
+    "parameters": { "builtin": "c.Bind().URI fills the uri tags, each capture as an int." },
+    "query": { "builtin": "c.Bind().Query fills the query tags, the numbers as ints." },
+    "sse": { "builtin": "sse.New, Fiber's own event stream handler, sets the headers, streams the body and flushes each event. The route's handler sends each row as one event." },
+    "static": { "builtin": "static.New serves the payload directory on a wildcard route through fasthttp's file server." },
+    "stream": { "builtin": "c.SendStreamWriter hands fasthttp a function that writes the body after the handler returns. It writes each row and its newline and flushes it." },
+    "template": {
+      "mechanism": "gofiber/template's html engine over html/template, from the embedded views, set as the app's Views, which c.Render reaches",
+      "dependency": "github.com/gofiber/template/html/v3",
+      "mentions": "html.NewFileSystem"
+    }
+  }
+}

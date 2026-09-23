@@ -11,8 +11,10 @@ ASP.NET Core beside it: [`dotnet/minimal-apis`](dotnet/minimal-apis),
 [`java/micronaut`](java/micronaut), [`java/javalin`](java/javalin),
 [`java/helidon-se`](java/helidon-se) and [`java/vertx`](java/vertx). Five run on Node:
 [`node/fastify`](node/fastify), [`node/express`](node/express), [`node/koa`](node/koa),
-[`node/hono`](node/hono) and [`node/h3`](node/h3). There is one in each other language:
-[`python/fastapi`](python/fastapi), [`rust/axum`](rust/axum) and [`go/gin`](go/gin).
+[`node/hono`](node/hono) and [`node/h3`](node/h3). Five run on Go: [`go/gin`](go/gin),
+[`go/chi`](go/chi), [`go/echo`](go/echo), [`go/fiber`](go/fiber) and
+[`go/gorilla-mux`](go/gorilla-mux). There is one in each other language:
+[`python/fastapi`](python/fastapi) and [`rust/axum`](rust/axum).
 
 Discovery, bundles and marks read git's index, not the directory. Run `git add` on new files before
 any `npm run rb` command, or they do not exist to it.
@@ -29,17 +31,17 @@ any `npm run rb` command, or they do not exist to it.
 | `client-exception/index.ts` | How the corpus reads the framework's error bodies. |
 | `Client/` | The OpenAPI document the framework writes about its own routes, and the client generated from it. See Client below. |
 
-The build files the language needs sit at the top of the directory, beside the solution. Carter
-has `solution.slnx`, `global.json`, `nuget.config` and `Directory.Build.props` there. Each Java
+The build files the language needs sit at the top of the directory, beside the solution. Carter has
+`solution.slnx`, `global.json`, `nuget.config` and `Directory.Build.props` there. Each Java
 framework has an aggregator `pom.xml` over its Maven modules: Implementation, UnitTests, and Client
 where it has one. Spring Boot's, Micronaut's and Helidon SE's sit under their framework's parent
 pom, and Quarkus's, Javalin's and Vert.x's import their framework's BOM and pin every plugin
 themselves. Quarkus has no UnitTests module. Implementation's pom names UnitTests/ as its test
 sources, because `@QuarkusTest` builds the application from the module its tests are in. axum has
-one package's `Cargo.toml`, which names each target's path under Implementation/ and UnitTests/,
-and its `Cargo.lock`. Gin has `go.mod` and `go.sum`. Each Node framework has `package.json`,
-`package-lock.json` and `tsconfig.json`. Its source is TypeScript, which Node runs by stripping the
-types as it loads each file, so there is no build step and tsc only checks it.
+one package's `Cargo.toml`, which names each target's path under Implementation/ and UnitTests/, and
+its `Cargo.lock`. Each Go framework has `go.mod` and `go.sum`. Each Node framework has
+`package.json`, `package-lock.json` and `tsconfig.json`. Its source is TypeScript, which Node runs
+by stripping the types as it loads each file, so there is no build step and tsc only checks it.
 
 ## Notes
 
@@ -150,12 +152,12 @@ written in TypeScript compiles its own source with its own settings.
 ## Client
 
 `Client/` holds the OpenAPI document a framework writes about its own routes and a client generated
-from that document. Every framework has one except axum, Gin, Express, Koa, h3, Hono, Helidon SE and
-Vert.x. axum, Gin, Express and Koa write no document without a third-party library, and h3 writes
-none. Hono documents only routes written with @hono/zod-openapi's `createRoute`, and changing a
-route for the document is ruled out below. Helidon SE's OpenAPI support serves a document the
-application packages, and Vert.x's OpenAPI modules read a contract, so neither writes one from its
-routes.
+from that document. Every framework has one except axum, the five Go frameworks, Express, Koa, h3,
+Hono, Helidon SE and Vert.x. axum, the Go frameworks, Express and Koa write no document without a
+third-party library, and h3 writes none. Hono documents only routes written with @hono/zod-openapi's
+`createRoute`, and changing a route for the document is ruled out below. Helidon SE's OpenAPI
+support serves a document the application packages, and Vert.x's OpenAPI modules read a contract, so
+neither writes one from its routes.
 
 - The document comes from the framework's own tooling, reading the routes as the corpus has them.
   The ASP.NET Core frameworks use ASP.NET Core's generation, FastEndpoints through its own
@@ -199,11 +201,13 @@ The site shows, for every test, the code that answers it, the code that wires it
 suite's test of it. Most of that is found from the source. A route literal the test's path matches
 is its handler. The method is read from the literal's own line, so keep the literal on the line of
 the call that names the method, or it matches every method. The finder knows GET, POST, PUT, PATCH
-and DELETE, so a HEAD or OPTIONS route matches every method. Wolverine's `[WolverineHead]` route is
-marked for that reason, and so is the `/cors/small` GET route beside the OPTIONS route that Express
-and Koa give their cors middleware. A formatter that breaks a call across lines separates the two, which is why axum's
-registrations are not run through rustfmt. Any other string that reads as a route matches too,
-with or without its leading slash, such as Gin's `json:"items"` struct tag, a Thymeleaf view named
+and DELETE, so a HEAD or OPTIONS route matches every method. Wolverine's `[WolverineHead]` route and
+chi's `r.Head` route are marked for that reason, and so is the `/cors/small` GET route beside the
+OPTIONS route that Express and Koa give their cors middleware. gorilla/mux names a route's methods
+in `.Methods(...)`, which the finder does not read, so a path that several of its routes share is
+marked. A formatter that breaks a call across lines separates the two, which is why axum's
+registrations are not run through rustfmt. Any other string that reads as a route matches too, with
+or without its leading slash, such as Gin's `json:"items"` struct tag, a Thymeleaf view named
 `items`, a `"/items/{}"` format string or Vert.x's `getJsonArray("items")`. Rename it or mark the
 route.
 
@@ -236,8 +240,9 @@ those tests.
   "corpus=<id>"`. The Node frameworks start each test's name with its id, so
   `node --test --test-name-pattern=<id>` runs it. FastAPI puts `@pytest.mark.corpus("<id>")` on the
   test.
-- The Java frameworks put `@Tag("<id>")` on the test, so `mvn test -Dgroups=<id>` runs it. Gin
-  runs each id as a subtest, `t.Run("<id>", ...)`, so `go test ./UnitTests -run '/<id>'` runs it.
+- The Java frameworks put `@Tag("<id>")` on the test, so `mvn test -Dgroups=<id>` runs it. The Go
+  frameworks run each id as a subtest, `t.Run("<id>", ...)`, so `go test ./UnitTests -run '/<id>'`
+  runs it.
   axum names the ids in the test's doc comment, which the marked block runs through onto the
   function.
 

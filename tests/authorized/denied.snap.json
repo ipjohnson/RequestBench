@@ -71,24 +71,30 @@
   },
   "go:chi": {
    "status": 403,
-   "class": "json",
+   "class": "text",
    "shape": [
-    "error:string"
-   ]
+    ":string"
+   ],
+   "bodyFrom": "captured from frameworks/go/chi/Implementation, which answers text/plain; charset=utf-8: Forbidden"
   },
   "go:echo": {
    "status": 403,
    "class": "json",
    "shape": [
-    "error:string"
-   ]
+    "message:string"
+   ],
+   "body": {
+    "message": "Forbidden"
+   },
+   "bodyFrom": "captured from frameworks/go/echo/Implementation"
   },
   "go:fiber": {
    "status": 403,
-   "class": "json",
+   "class": "text",
    "shape": [
-    "error:string"
-   ]
+    ":string"
+   ],
+   "bodyFrom": "captured from frameworks/go/fiber/Implementation, which answers text/plain; charset=utf-8: Forbidden"
   },
   "go:gin": {
    "status": 403,
@@ -98,10 +104,11 @@
   },
   "go:gorilla-mux": {
    "status": 403,
-   "class": "json",
+   "class": "text",
    "shape": [
-    "error:string"
-   ]
+    ":string"
+   ],
+   "bodyFrom": "captured from frameworks/go/gorilla-mux/Implementation, which answers text/plain; charset=utf-8: Forbidden"
   },
   "java:helidon-se": {
    "status": 403,

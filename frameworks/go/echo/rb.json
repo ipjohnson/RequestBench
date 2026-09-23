@@ -1,0 +1,64 @@
+{
+  "comment": "Echo 5.3 on Go 1.27, one function per family registering its routes in the implementation package under Implementation/, and the server's main package in Implementation/cmd/server. The suite is UnitTests/, go test over the instance served by net/http/httptest, and never reaches the image. Every handler returns its failure to Echo's default error handler, which writes the error's message as JSON. e.Validator is the CustomValidator adapter Echo's guide shows over go-playground, returning echo.NewHTTPError with the validator's text, because the guide's echo.ErrBadRequest.Wrap is written as Bad Request and names no field. The validator names fields by their json names through go-playground's tag-name hook. The first-error route is wired by hand, because go-playground cannot stop at the first failure. The lockfile is go.mod, which records every module version the build selects, and go.sum, which holds their hashes. upgrade is go get -u ./..., which moves every module to its newest release within its major version.",
+  "framework": "Echo",
+  "licence": "MIT",
+  "repo": "https://github.com/labstack/echo",
+  "package": "https://pkg.go.dev/github.com/labstack/echo/v5",
+  "docs": "https://echo.labstack.com/",
+  "lockfile": ["go.mod", "go.sum"],
+  "hosts": {
+    "container-h1": { "dockerfile": "Dockerfile" }
+  },
+  "suite": { "argv": ["go", "test", "./..."], "paths": ["UnitTests"] },
+  "upgrade": { "argv": ["go", "get", "-u", "./..."] },
+  "noHandler": {
+    "cors.preflight": "Echo's CORS middleware on the /cors group answers the preflight, on the 404 route the group registers for its prefix.",
+    "errors.unmatched": "Echo's router answers a path no route matches with echo.ErrNotFound, which the default error handler writes as a 404 with a JSON message.",
+    "errors.wrong_method": "Echo's router answers a method the path has no route for with echo.ErrMethodNotAllowed, a 405 with an Allow header naming the methods it has."
+  },
+  "mechanisms": {
+    "authorized": {
+      "mechanism": "An Echo middleware on the route that compares the bearer token and returns echo.ErrForbidden for any other, because Echo's KeyAuth refuses a wrong key with 401"
+    },
+    "baseline": { "builtin": "c.String writes the text as text/plain." },
+    "body": {
+      "mechanism": "c.Bind decodes the order with Echo's JSONSerializer, and c.Validate runs e.Validator, the CustomValidator adapter Echo's guide shows, which runs go-playground's validator over the validate tags. The first-error route runs the same validator over one field at a time, because go-playground cannot stop at the first failure",
+      "dependency": "github.com/go-playground/validator/v10",
+      "mentions": "validator.New"
+    },
+    "cache": {
+      "mechanism": "An Echo middleware in front of each cache route that replays a stored answer and otherwise stores what the handler wrote, keyed by the path and the route's vary headers, one store per process"
+    },
+    "compressed": {
+      "mechanism": "Echo's Gzip middleware on the two /compressed routes, at gzip's fastest level",
+      "dependency": "github.com/labstack/echo/v5",
+      "mentions": "middleware.GzipWithConfig"
+    },
+    "cors": {
+      "mechanism": "Echo's CORS middleware on the /cors group. A group with middleware registers a 404 route for its prefix, so a preflight reaches the middleware with no OPTIONS route",
+      "dependency": "github.com/labstack/echo/v5",
+      "mentions": "middleware.CORSWithConfig"
+    },
+    "errors": {
+      "builtin": "Echo's router answers a miss with echo.ErrNotFound and a method a path lacks with echo.ErrMethodNotAllowed, and the default error handler writes each as a JSON message. A body the binder cannot decode is echo.ErrBadRequest, and the items handlers return echo.ErrNotFound for a missing row."
+    },
+    "etag": {
+      "mechanism": "An Echo middleware on the /etag routes that holds back the body, hashes it with SHA-1 and answers a matching If-None-Match with 304"
+    },
+    "forms": { "builtin": "c.Bind picks the form or the multipart parser from the Content-Type and fills the form tags, the file part as a *multipart.FileHeader." },
+    "headers": { "builtin": "echo.BindHeaders fills the header tags, the account as an int. c.Bind never reads headers." },
+    "items": { "builtin": "One route per method on /items/:id, the id bound with echo.BindPathValues. HEAD is registered beside GET with the same handler, because Echo's router answers HEAD only where a route names it unless AutoHandleHEAD is set." },
+    "json": { "builtin": "c.JSON hands the payload to Echo's default JSONSerializer, which encodes it with encoding/json straight onto the response." },
+    "middleware": { "mechanism": "No-op echo.MiddlewareFunc layers on the route, four or sixteen of them" },
+    "parameters": { "builtin": "echo.BindPathValues fills the param tags, each capture as an int." },
+    "query": { "builtin": "echo.BindQueryParams fills the query tags, the numbers as ints." },
+    "sse": { "builtin": "Echo has no event stream. The Event type and MarshalTo from Echo's SSE cookbook write each row as the data of one event, flushed through net/http's ResponseController." },
+    "static": { "builtin": "e.Static registers GET /static* and hands each file of the payload directory to net/http's ServeContent." },
+    "stream": { "builtin": "As Echo's streaming cookbook does, encoding/json's encoder writes each row and its newline to the response, flushed through net/http's ResponseController." },
+    "template": {
+      "mechanism": "e.Renderer is echo.TemplateRenderer over html/template, embedded in the binary and parsed once, and c.Render renders into a buffer and sends it",
+      "dependency": "github.com/labstack/echo/v5",
+      "mentions": "echo.TemplateRenderer"
+    }
+  }
+}

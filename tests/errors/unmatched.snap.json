@@ -71,24 +71,30 @@
   },
   "go:chi": {
    "status": 404,
-   "class": "json",
+   "class": "text",
    "shape": [
-    "error:string"
-   ]
+    ":string"
+   ],
+   "bodyFrom": "captured from frameworks/go/chi/Implementation, which answers text/plain; charset=utf-8: 404 page not found"
   },
   "go:echo": {
    "status": 404,
    "class": "json",
    "shape": [
-    "error:string"
-   ]
+    "message:string"
+   ],
+   "body": {
+    "message": "Not Found"
+   },
+   "bodyFrom": "captured from frameworks/go/echo/Implementation"
   },
   "go:fiber": {
    "status": 404,
-   "class": "json",
+   "class": "text",
    "shape": [
-    "error:string"
-   ]
+    ":string"
+   ],
+   "bodyFrom": "captured from frameworks/go/fiber/Implementation, which answers text/plain; charset=utf-8: Not Found"
   },
   "go:gin": {
    "status": 404,
@@ -100,10 +106,11 @@
   },
   "go:gorilla-mux": {
    "status": 404,
-   "class": "json",
+   "class": "text",
    "shape": [
-    "error:string"
-   ]
+    ":string"
+   ],
+   "bodyFrom": "captured from frameworks/go/gorilla-mux/Implementation, which answers text/plain; charset=utf-8: 404 page not found"
   },
   "java:helidon-se": {
    "status": 404,

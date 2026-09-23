@@ -1,0 +1,64 @@
+{
+  "comment": "chi 5.3 on Go 1.27, one function per family registering its routes in the implementation package under Implementation/, and the server's main package in Implementation/cmd/server. The suite is UnitTests/, go test over the router served by net/http/httptest, and never reaches the image. chi is a router over net/http and binds nothing, so bodies and answers go through go-chi/render, which chi's README names among its subpackages. render.Bind decodes a body and calls the payload's Bind, where go-playground's validator runs, and a refusal is the ErrResponse of chi's REST example, which render's README points to. The first-error route is wired by hand, because go-playground cannot stop at the first failure. The lockfile is go.mod, which records every module version the build selects, and go.sum, which holds their hashes. upgrade is go get -u ./..., which moves every module to its newest release within its major version.",
+  "framework": "chi",
+  "licence": "MIT",
+  "repo": "https://github.com/go-chi/chi",
+  "package": "https://pkg.go.dev/github.com/go-chi/chi/v5",
+  "docs": "https://go-chi.io/",
+  "lockfile": ["go.mod", "go.sum"],
+  "hosts": {
+    "container-h1": { "dockerfile": "Dockerfile" }
+  },
+  "suite": { "argv": ["go", "test", "./..."], "paths": ["UnitTests"] },
+  "upgrade": { "argv": ["go", "get", "-u", "./..."] },
+  "noHandler": {
+    "cors.preflight": "go-chi/cors among the /cors subrouter's middlewares answers the preflight before the subrouter routes it.",
+    "errors.unmatched": "chi's router answers a path no route matches with net/http's NotFound, a 404 with a text body.",
+    "errors.wrong_method": "chi's router answers a method the path has no route for with 405, and an Allow header naming the methods it has."
+  },
+  "mechanisms": {
+    "authorized": {
+      "mechanism": "A middleware on the route, through r.With, that compares the bearer token and refuses any other with http.Error and 403, as chi's README writes its AdminOnly middleware"
+    },
+    "baseline": { "builtin": "render.PlainText writes the text as text/plain." },
+    "body": {
+      "mechanism": "render.Bind decodes the order by its Content-Type and calls its Bind method, which on the validate routes runs go-playground's validator over the validate tags. The first-error route runs the same validator over one field at a time, because go-playground cannot stop at the first failure",
+      "dependency": "github.com/go-playground/validator/v10",
+      "mentions": "validator.New"
+    },
+    "cache": {
+      "mechanism": "go-chi/stampede in front of each cache route through r.With. It runs the handler once for a key and keeps the answer, headers included, in one goware/cachestore-mem store for the process, keyed by the path and the route's vary headers",
+      "dependency": "github.com/go-chi/stampede",
+      "mentions": "stampede.Handler"
+    },
+    "compressed": {
+      "mechanism": "chi's Compress middleware on the two /compressed routes through r.With, at gzip's fastest level",
+      "dependency": "github.com/go-chi/chi/v5",
+      "mentions": "middleware.Compress"
+    },
+    "cors": {
+      "mechanism": "go-chi/cors among the /cors subrouter's middlewares, which run before the subrouter routes, so a preflight needs no OPTIONS route",
+      "dependency": "github.com/go-chi/cors",
+      "mentions": "cors.Handler"
+    },
+    "errors": {
+      "builtin": "chi's router answers a miss with net/http's 404 text, and a method a path lacks with 405. A body render cannot decode is refused with 400 and the example's ErrResponse, and the items handlers render its ErrNotFound for a missing row."
+    },
+    "etag": {
+      "mechanism": "A middleware on the /etag routes, through r.With, that holds back the body, hashes it with SHA-1 and answers a matching If-None-Match with 304"
+    },
+    "forms": { "builtin": "net/http's ParseForm and FormFile read the two bodies, and the form's numbers are converted with strconv." },
+    "headers": { "builtin": "The three headers are read from net/http's header map, the account converted with strconv." },
+    "items": { "builtin": "One route per method on /items/{id}, the id read with chi.URLParam. GET and HEAD share a handler, because chi answers HEAD only where a route names it." },
+    "json": { "builtin": "render.JSON encodes the payload with encoding/json into a buffer and writes the buffer." },
+    "middleware": { "mechanism": "No-op func(http.Handler) http.Handler layers that r.With wraps around the handler, four or sixteen of them" },
+    "parameters": { "builtin": "chi.URLParam reads each capture as a string, which strconv converts." },
+    "query": { "builtin": "net/http parses the query string, and strconv converts the numbers." },
+    "sse": { "builtin": "Written by hand, because chi has no event stream and render's gives every event the type data. Each row is one event, flushed through net/http's ResponseController." },
+    "static": { "builtin": "A wildcard route hands each file to net/http's FileServer, as chi's fileserver example does." },
+    "stream": { "builtin": "encoding/json's encoder writes each row and its newline, flushed through net/http's ResponseController." },
+    "template": {
+      "mechanism": "html/template, embedded in the binary and parsed once, executed into the response by the handler, because chi has no view layer"
+    }
+  }
+}

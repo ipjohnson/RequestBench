@@ -104,12 +104,54 @@
    },
    "bodyFrom": "captured from frameworks/dotnet/wolverine-http/Implementation"
   },
+  "go:chi": {
+   "status": 400,
+   "body": {
+    "status": "Invalid request.",
+    "error": "Key: 'CheckedOrder.customerId' Error:Field validation for 'customerId' failed on the 'gt' tag\nKey: 'CheckedOrder.status' Error:Field validation for 'status' failed on the 'required' tag\nKey: 'CheckedOrder.lines' Error:Field validation for 'lines' failed on the 'min' tag"
+   },
+   "bodyFrom": "captured from frameworks/go/chi/Implementation"
+  },
+  "go:echo": {
+   "status": 400,
+   "body": {
+    "message": "Key: 'CheckedOrder.customerId' Error:Field validation for 'customerId' failed on the 'gt' tag\nKey: 'CheckedOrder.status' Error:Field validation for 'status' failed on the 'required' tag\nKey: 'CheckedOrder.lines' Error:Field validation for 'lines' failed on the 'min' tag"
+   },
+   "bodyFrom": "captured from frameworks/go/echo/Implementation"
+  },
+  "go:fiber": {
+   "status": 400,
+   "body": {
+    "errors": [
+     {
+      "field": "customerId",
+      "rule": "gt"
+     },
+     {
+      "field": "status",
+      "rule": "required"
+     },
+     {
+      "field": "lines",
+      "rule": "min"
+     }
+    ]
+   },
+   "bodyFrom": "captured from frameworks/go/fiber/Implementation"
+  },
   "go:gin": {
    "status": 400,
    "body": {
     "error": "Key: 'CheckedOrder.customerId' Error:Field validation for 'customerId' failed on the 'gt' tag\nKey: 'CheckedOrder.status' Error:Field validation for 'status' failed on the 'required' tag\nKey: 'CheckedOrder.lines' Error:Field validation for 'lines' failed on the 'min' tag"
    },
    "bodyFrom": "captured from frameworks/go/gin/Implementation"
+  },
+  "go:gorilla-mux": {
+   "status": 400,
+   "body": {
+    "error": "Key: 'CheckedOrder.customerId' Error:Field validation for 'customerId' failed on the 'gt' tag\nKey: 'CheckedOrder.status' Error:Field validation for 'status' failed on the 'required' tag\nKey: 'CheckedOrder.lines' Error:Field validation for 'lines' failed on the 'min' tag"
+   },
+   "bodyFrom": "captured from frameworks/go/gorilla-mux/Implementation"
   },
   "java:helidon-se": {
    "status": 400,

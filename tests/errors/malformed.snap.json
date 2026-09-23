@@ -114,25 +114,33 @@
    "status": 400,
    "class": "json",
    "shape": [
-    "detail:string",
-    "error:string"
-   ]
+    "error:string",
+    "status:string"
+   ],
+   "body": {
+    "status": "Invalid request.",
+    "error": "unexpected EOF"
+   },
+   "bodyFrom": "captured from frameworks/go/chi/Implementation"
   },
   "go:echo": {
    "status": 400,
    "class": "json",
    "shape": [
-    "detail:string",
-    "error:string"
-   ]
+    "message:string"
+   ],
+   "body": {
+    "message": "Bad Request"
+   },
+   "bodyFrom": "captured from frameworks/go/echo/Implementation"
   },
   "go:fiber": {
-   "status": 400,
-   "class": "json",
+   "status": 500,
+   "class": "text",
    "shape": [
-    "detail:string",
-    "error:string"
-   ]
+    ":string"
+   ],
+   "bodyFrom": "captured from frameworks/go/fiber/Implementation, which answers text/plain; charset=utf-8: bind from body: unexpected end of JSON input"
   },
   "go:gin": {
    "status": 400,
@@ -149,9 +157,12 @@
    "status": 400,
    "class": "json",
    "shape": [
-    "detail:string",
     "error:string"
-   ]
+   ],
+   "body": {
+    "error": "unexpected EOF"
+   },
+   "bodyFrom": "captured from frameworks/go/gorilla-mux/Implementation"
   },
   "java:helidon-se": {
    "status": 400,
