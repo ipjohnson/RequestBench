@@ -96,7 +96,7 @@ performance tests at the rates set in [`orchestrator/ladder.ts`](orchestrator/la
 | Phase | Requests per second | Length |
 | --- | --- | --- |
 | warmup | 1,000 | 30 seconds, not recorded |
-| regular | 500 | A 15-second settle, then 60 seconds |
+| regular | 1,000 | A 15-second settle, then 60 seconds |
 | raised | 2,500 | A 15-second settle, then 60 seconds |
 | peak | 5,000 | A 15-second settle, then 60 seconds |
 
