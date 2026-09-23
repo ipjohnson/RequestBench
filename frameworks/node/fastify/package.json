@@ -29,6 +29,6 @@
     "@microsoft/kiota-bundle": "^1.0.0-preview.106",
     "@types/ejs": "^3.1.5",
     "@types/node": "^26.6.2",
-    "typescript": "^5.9.3"
+    "typescript": "^7.0.2"
   }
 }
