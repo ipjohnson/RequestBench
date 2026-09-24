@@ -1,5 +1,5 @@
 {
-  "comment": "Wolverine.HTTP on ASP.NET Core 10, one endpoint class per family under Implementation/Endpoints. Wolverine generates a handler class for each endpoint. They are generated ahead of time by `dotnet run -- codegen write`, committed under Implementation/Internal/Generated and loaded with TypeLoadMode.Static, which Wolverine's docs recommend for production, and the suite fails when they are stale. The suite is UnitTests/, xunit over Alba, and never reaches the image. upgrade is null because dotnet package update moves every package to its newest release, majors included, and nothing narrows it to patch and minor.",
+  "comment": "Wolverine.HTTP on ASP.NET Core 10, one endpoint class per family under Implementation/Endpoints. On lambda-emulator the application answers behind Amazon.Lambda.AspNetCoreServer.Hosting, which Program.cs adds and which does nothing on the other hosts. Wolverine generates a handler class for each endpoint. They are generated ahead of time by `dotnet run -- codegen write`, committed under Implementation/Internal/Generated and loaded with TypeLoadMode.Static, which Wolverine's docs recommend for production, and the suite fails when they are stale. The suite is UnitTests/, xunit over Alba, and never reaches the image. upgrade is null because dotnet package update moves every package to its newest release, majors included, and nothing narrows it to patch and minor.",
   "framework": "Wolverine.HTTP",
   "licence": "MIT",
   "repo": "https://github.com/JasperFx/wolverine",
@@ -12,6 +12,14 @@
       "dockerfile": "container-h2/Dockerfile",
       "unsupported": {
         "items.head": "Over HTTP/2, Kestrel sends the row the handler writes for HEAD as a DATA frame. HTTP/2 allows no content in an answer to HEAD, so the client resets the stream. Over HTTP/1.1 Kestrel leaves the row unwritten."
+      }
+    },
+    "lambda-emulator": {
+      "dockerfile": "lambda-emulator/Dockerfile",
+      "unsupported": {
+        "compressed.gzip_large": "Amazon.Lambda.AspNetCoreServer marks every request https, as a Function URL's requests are, and ASP.NET Core's response compression leaves an HTTPS answer uncompressed unless EnableForHttps is set.",
+        "sse.medium": "Amazon.Lambda.AspNetCoreServer buffers the whole answer, so the events arrive as one body.",
+        "stream.ndjson": "Amazon.Lambda.AspNetCoreServer buffers the whole answer, so the rows arrive as one body."
       }
     }
   },
