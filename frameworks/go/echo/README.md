@@ -18,6 +18,7 @@ Echo's own, a slot Echo's guide fills, or written for the family where Echo has 
 | `Implementation/views/` | The template, compiled into the binary. |
 | `container-h1/` | How container-h1 starts it. `main.go` is the main package that loads the payloads and serves over HTTP/1.1, and `Dockerfile` builds the image. |
 | `container-h2/` | How container-h2 starts it. `main.go` serves over HTTP/2 with prior knowledge through echo's `StartConfig`, whose `BeforeServeFunc` sets net/http's `Server.Protocols`, and `Dockerfile` builds the image. |
+| `lambda-emulator/` | How lambda-emulator starts it. `main.go` hands the instance to aws-lambda-go-api-proxy's `httpadapter`, which aws-lambda-go's runtime client gives each event, and `Dockerfile` builds the function on the `provided.al2023` base image. |
 | `UnitTests/` | go test tests of the wiring, sending each request to the instance served by `net/http/httptest`. |
 | `client-exception/` | How the corpus reads Echo's error bodies. |
 | `go.mod` | The module, and every module version the build selects. |
@@ -112,7 +113,20 @@ corpus id it covers, so `go test ./UnitTests -run '/json.small'` runs one.
 - `e.Static` registers GET alone, and serves each file through net/http's `ServeContent`, which
   sends `Content-Length`, `Last-Modified` and `Accept-Ranges`.
 - The server is one process. Go sets GOMAXPROCS from the container's CPU quota or cpuset, so under
-  the orchestrator's two CPUs it runs Go code on two threads, which `/__meta` reports.
+  the orchestrator's two CPUs it runs Go code on two threads, which `/__meta` reports. The function
+  on lambda-emulator runs on one core, and so on one thread.
+- On lambda-emulator the instance answers behind aws-lambda-go-api-proxy 0.16's
+  `httpadapter.NewV2`, which reads API Gateway payload format 2.0. The library's echoadapter takes
+  only an echo v4 instance. It hands each request to the instance's `ServeHTTP`, and httpadapter
+  does the same for any `http.Handler`, which a v5 instance is.
+- httpadapter buffers the whole answer into one proxy response, and its response writer cannot
+  flush. Echo's `Response.Flush` panics on a writer that cannot flush, and `middleware.Recover()`
+  catches the panic, so the sse and stream handlers stop at their first flush. Both tests are
+  listed as unsupported on lambda-emulator.
+- httpadapter posts whatever a handler writes for HEAD. A Function URL's caller reads no body in an
+  answer to HEAD, so nothing reads it.
+- The function is built with `-tags lambda.norpc`, as AWS builds a Go function for
+  `provided.al2023`. The tag leaves out the RPC mode of the retired go1.x runtime.
 - A struct tag such as `json:"items"` reads as the route literal `/items`, so the items routes
   carry `rb:handler` marks.
 
