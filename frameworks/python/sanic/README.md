@@ -108,6 +108,14 @@ the worker that accepted it, and the gate sends each test's two requests on one 
 - sanic-ext labels its document OpenAPI 3.0.3 and fills it with Pydantic's JSON Schema, the 2020-12
   dialect of OpenAPI 3.1. A rule such as `gt=0` becomes `"exclusiveMinimum": 0`, which 3.0 reads
   as a boolean, so Kiota refuses the document as it is served. `Client/document.py` labels it 3.1.0.
+- A SIGTERM that reaches Sanic's main process before it has seen both workers acknowledge their
+  start can hang it. Its handler, `WorkerManager.shutdown_signal`, writes each worker's state
+  through the `multiprocessing` manager. It can run while the interrupted `wait_for_ack` loop is
+  waiting on a reply from that same connection, and the loop then waits for a reply that never
+  comes. The workers stop and the main process does not. `UnitTests/test_client.py` stops the
+  server within a second of starting it, so it kills the server's process group when SIGTERM has
+  not ended it in ten seconds. The harness stops a container with `docker stop -t 3`, which kills
+  one that hangs this way.
 
 ## Refusals
 
