@@ -11,6 +11,7 @@ import {
   verdictOf,
   type CodeEntry,
   type FrameworkView,
+  type SiteView,
   type Source,
   type TestsView,
   type Verdict,
@@ -21,12 +22,19 @@ import { factorsOf, hostNotes, routesOf } from "./corpus.ts";
 import { withoutHist } from "./hist.ts";
 import { loadExemplars, loadRuns, staleExemplars } from "./load.ts";
 import type { PageData } from "./page-data.ts";
-import { DEFAULT_HOST, hostOf, rungsOf } from "./run.ts";
+import { codeKey, DEFAULT_HOST, hostOf, pageSlug, rungsOf } from "./run.ts";
 import type { Framework, Route, Run, WireDoc } from "./types.ts";
 
-/** One framework page: a framework as the newest run on the page host measured it. */
+/**
+ * Each test's own source, at the commit a run was made at, and whether it is the tests bundle that
+ * run recorded. Null when history could not answer at that commit.
+ */
+export type TestsSource = { view: TestsView; verdict: Verdict; from: Source; unlinked: string | null } | null;
+
+/** One framework page: a framework as the newest run on one host measured it. */
 export type FrameworkPage = {
   slug: string;
+  host: string;
   run: Run;
   framework: Framework;
   /** The first rate, the one every framework is expected to complete. */
@@ -37,6 +45,7 @@ export type FrameworkPage = {
   from: Source;
   /** Why the page's code carries no links, or why there is no code, when either is so. */
   unlinked: string | null;
+  tests: TestsSource;
   repo: string;
   commit: string;
 };
@@ -51,11 +60,6 @@ export type Site = {
   factors: Record<string, string>;
   families: Record<string, { about: string; comparable: string }>;
   /**
-   * Each test's own source, at the commit the pages describe, and whether it is the tests
-   * bundle that run recorded. Null when history could not answer at that commit.
-   */
-  tests: { view: TestsView; verdict: Verdict; from: Source; unlinked: string | null } | null;
-  /**
    * The corpus the tests pages describe, read where the routes are, and whether its files can be
    * linked. Those pages explain the tests rather than a run, so they need no bundle to verify.
    */
@@ -63,8 +67,9 @@ export type Site = {
   catalog: Catalog;
   /** The runs embedded in the page, one per host, so the table paints without a round trip. */
   embedded: Run[];
+  /** Every host's, from the newest run on that host. */
   pages: FrameworkPage[];
-  /** "<language>:<name>" to its code document, shipped next to the run it describes. */
+  /** codeKey's key to its code document, shipped next to the run it describes. */
   code: Record<string, Record<string, CodeEntry>>;
   pageData: PageData;
   notes: string[];
@@ -82,21 +87,9 @@ export function site(): Site {
   return (g[MEMO] ??= read());
 }
 
-/**
- * A framework page describes one framework as one run measured it, and its name carries no
- * host, so it is generated from one host alone. The other hosts need a name of their own
- * before they can have a page.
- */
-export const PAGE_HOST = DEFAULT_HOST;
-
-function newestOn(runs: Run[], host: string): Run | null {
-  let newest: Run | null = null;
-  for (const r of runs) {
-    if (hostOf(r) !== host) continue;
-    if (!newest || r.runId > newest.runId) newest = r;
-  }
-  return newest;
-}
+/** The default host first, whose pages keep the names they had before there were others. */
+const byHost = (a: Run, b: Run): number =>
+  Number(hostOf(b) === DEFAULT_HOST) - Number(hostOf(a) === DEFAULT_HOST) || (hostOf(a) < hostOf(b) ? -1 : 1);
 
 function read(): Site {
   const config = buildConfig();
@@ -116,48 +109,56 @@ function read(): Site {
         `recapture with \`npm run rb -- validate <framework> --exemplars\`: ${stale.join(", ")}`,
     );
 
-  // One read of history, at the commit the pages describe. With no run the corpus is still
-  // read, at HEAD, because the routes and factors ride in the page whatever results it shows.
-  const newest = newestOn(runs, PAGE_HOST);
-  const at = newest?.commit || "HEAD";
-  const sv = siteView(config.root, at);
-  for (const w of sv.warnings) notes.push(`rb siteview: ${w}`);
-  if (sv.why) notes.push(`no site view at ${at}: ${sv.why}`);
-  const view = sv.view;
-  // A run made from a changed working tree recorded bundles no commit holds. Its commit cannot
-  // show what it measured, and the working tree can, for as long as it has not changed since.
-  const unverified =
-    newest !== null &&
-    (newest.frameworks.some((f) => !verdictOf(view?.frameworks[f.id], f.bundleHash).verified) ||
-      !verdictOf(view?.tests, newest.tests?.bundleHash).verified);
-  const tv = unverified ? siteView(config.root, null) : null;
-  for (const w of tv?.warnings ?? []) notes.push(`rb siteview --worktree: ${w}`);
-  if (tv?.why) notes.push(`no site view of the working tree: ${tv.why}`);
-  const tree = tv?.view ?? null;
-  // The routes are the working tree's corpus whichever tree is read, so a commit history cannot
-  // answer for still has them. The sources are not: HEAD's file under an old run's number is the
-  // thing the bundle hash is there to prevent, so they come only from a tree that verifies.
-  const described = view ?? tree ?? (at === "HEAD" ? null : siteView(config.root, "HEAD").view);
-  const corpus = described?.tests ?? null;
-  const routes = routesOf(corpus);
-  const factors = factorsOf(corpus);
+  // One read of history per host, at the commit its newest run was made at. A framework's code on
+  // one host leaves out the other hosts' directories, so each host's pages need their own read.
+  const views = new Map<string, SiteView | null>();
+  const viewOf = (at: string | null, host: string): SiteView | null => {
+    const key = `${at ?? "worktree"} ${host}`;
+    if (views.has(key)) return views.get(key) ?? null;
+    const sv = siteView(config.root, at, host);
+    const how = `rb siteview ${at === null ? "--worktree" : `--at ${at}`} --host ${host}`;
+    for (const w of sv.warnings) notes.push(`${how}: ${w}`);
+    if (sv.why) notes.push(`${how}: ${sv.why}`);
+    views.set(key, sv.view);
+    return sv.view;
+  };
 
+  const newest = newestPerHost(runs).sort(byHost);
   const pages: FrameworkPage[] = [];
   const code: Site["code"] = {};
-  let tests: Site["tests"] = null;
-  if (newest) {
+  let described: SiteView | null = null;
+  for (const run of newest) {
+    const host = hostOf(run);
+    const at = run.commit || "HEAD";
+    const view = viewOf(at, host);
+    // A run made from a changed working tree recorded bundles no commit holds. Its commit cannot
+    // show what it measured, and the working tree can, for as long as it has not changed since.
+    const unverified =
+      run.frameworks.some((f) => !verdictOf(view?.frameworks[f.id], f.bundleHash).verified) ||
+      !verdictOf(view?.tests, run.tests?.bundleHash).verified;
+    const tree = unverified ? viewOf(null, host) : null;
+    // The routes are the working tree's corpus whichever tree is read, so a commit history cannot
+    // answer for still has them. The sources are not: HEAD's file under an old run's number is the
+    // thing the bundle hash is there to prevent, so they come only from a tree that verifies.
+    described ??= view ?? tree ?? (at === "HEAD" ? null : viewOf("HEAD", host));
+
     // The first rate: the one every framework is expected to complete.
-    const rn = rungsOf(newest)[0] ?? "";
-    const repo = newest.repo || view?.repo || "";
-    const commit = newest.commit ?? "";
+    const rn = rungsOf(run)[0] ?? "";
+    const repo = run.repo || view?.repo || "";
+    const commit = run.commit ?? "";
     const at12 = commit.slice(0, 12) || "this run's commit";
+    const picked = pick(view?.tests, tree?.tests, run.tests?.bundleHash);
+    const tests: TestsSource = picked.view
+      ? { view: picked.view, verdict: picked.verdict, from: picked.from, unlinked: unlinkedWhy(picked.verdict, repo, commit, "The tests'", picked.from) }
+      : null;
     const counts = { commit: 0, worktree: 0, changed: 0, none: 0 };
-    for (const f of newest.frameworks) {
+    for (const f of run.frameworks) {
       const chosen = pick(view?.frameworks[f.id], tree?.frameworks[f.id], f.bundleHash);
       counts[!chosen.view ? "none" : chosen.verdict.verified ? chosen.from : "changed"] += 1;
       pages.push({
-        slug: `${f.language}-${f.name}`,
-        run: newest,
+        slug: pageSlug(f.language, f.name, host),
+        host,
+        run,
         framework: f,
         rn,
         view: chosen.view,
@@ -166,30 +167,28 @@ function read(): Site {
         unlinked: chosen.view
           ? unlinkedWhy(chosen.verdict, repo, commit, "The framework's", chosen.from)
           : `${f.id} is neither at ${at12} nor in the working tree, so its source is unavailable.`,
+        tests,
         repo,
         commit,
       });
       // The handler for a row is the thing a reader wants when they open that row, so it
       // travels with the numbers rather than living only on the page.
-      if (chosen.view) code[f.id] = snippetDoc(chosen.view, repo, commit, chosen.verdict.linkable);
-    }
-    const chosen = pick(view?.tests, tree?.tests, newest.tests?.bundleHash);
-    if (chosen.view) {
-      tests = {
-        view: chosen.view,
-        verdict: chosen.verdict,
-        from: chosen.from,
-        unlinked: unlinkedWhy(chosen.verdict, repo, commit, "The tests'", chosen.from),
-      };
+      if (chosen.view) code[codeKey(f.id, host)] = snippetDoc(chosen.view, repo, commit, chosen.verdict.linkable);
     }
     const where = (from: Source, verified: boolean) =>
       from === "commit" ? `from ${at12}${verified ? "" : ", unverified"}` : `from the working tree${verified ? "" : ", changed since the run"}`;
     notes.push(
-      `wrote ${pages.length} framework page(s): code from ${at12} for ${counts.commit}, from the working tree for ` +
-        `${counts.worktree}, from a working tree changed since the run for ${counts.changed}, none for ${counts.none}; ` +
-        `test sources ${chosen.view ? where(chosen.from, chosen.verdict.verified) : "unavailable"}`,
+      `wrote ${run.frameworks.length} framework page(s) on ${host}: code from ${at12} for ${counts.commit}, from the ` +
+        `working tree for ${counts.worktree}, from a working tree changed since the run for ${counts.changed}, none ` +
+        `for ${counts.none}; test sources ${picked.view ? where(picked.from, picked.verdict.verified) : "unavailable"}`,
     );
   }
+  // With no run the corpus is still read, at HEAD, because the routes and factors ride in the
+  // page whatever results it shows.
+  if (newest.length === 0) described = viewOf("HEAD", DEFAULT_HOST);
+  const corpus = described?.tests ?? null;
+  const routes = routesOf(corpus);
+  const factors = factorsOf(corpus);
 
   const catalog = buildCatalog(runs, wire, Object.keys(code), new Date().toISOString());
   const embedded = newestPerHost(runs).map(withoutHist);
@@ -202,7 +201,6 @@ function read(): Site {
     routes,
     factors,
     families: corpus?.families ?? {},
-    tests,
     corpus: described ? { view: described.tests, repo: described.repo, linkable: described.tests.pushed && described.repo !== "" } : null,
     catalog,
     embedded,
@@ -214,7 +212,14 @@ function read(): Site {
       hosts: hostNotes(),
       routes,
       factors,
-      pages: Object.fromEntries(pages.map((p) => [p.framework.id, `f/${p.slug}.html`])),
+      pages: pagesByHost(pages),
     },
   };
+}
+
+/** Each host's pages, by framework, as the explorer looks a row's page up. */
+function pagesByHost(pages: readonly FrameworkPage[]): PageData["pages"] {
+  const out: PageData["pages"] = {};
+  for (const p of pages) (out[p.host] ??= {})[p.framework.id] = `f/${p.slug}.html`;
+  return out;
 }

@@ -11,9 +11,14 @@
 // untouched, because what is fetched at runtime is the whole document.
 import { z } from "zod";
 
-/** One rung's statistics: what a framework did at one offered rate. */
+/**
+ * One rung's statistics: what a framework did at one offered rate. A closed loop's one rung has
+ * no offered rate, and its achievedRps is the invocations a second the function sustained.
+ */
 export const Rung = z.looseObject({
   rps: z.number().optional(),
+  closed: z.boolean().optional(),
+  invocations: z.number().optional(),
   status: z.string().optional(),
   completed: z.boolean().optional(),
   saturated: z.boolean().optional(),
@@ -51,6 +56,16 @@ export const Hist = z.object({
 });
 export type Hist = z.infer<typeof Hist>;
 
+/** The percentiles of one span of a closed-loop invocation. */
+export const SpanStats = z.looseObject({
+  p50Us: z.number().nullable().optional(),
+  p90Us: z.number().nullable().optional(),
+  p95Us: z.number().nullable().optional(),
+  p99Us: z.number().nullable().optional(),
+  p999Us: z.number().nullable().optional(),
+});
+export type SpanStats = z.infer<typeof SpanStats>;
+
 /** One test's statistics at one rung. The keys are narrower than a rung's. */
 export const TestRung = z.looseObject({
   count: z.number().optional(),
@@ -65,6 +80,8 @@ export const TestRung = z.looseObject({
   bins: z.array(z.number()).optional(),
   /** The same on `histGrid`, fine enough to read a blend's percentiles from. */
   hist: Hist.optional(),
+  /** A closed loop's spans beside the invoke phase, which the percentiles above are. */
+  spans: z.record(z.string(), SpanStats).optional(),
 });
 export type TestRung = z.infer<typeof TestRung>;
 
@@ -98,6 +115,8 @@ export const Framework = z.looseObject({
   bundleHash: z.string().optional(),
   codeHash: z.string().optional(),
   gate: z.looseObject({ measurable: z.boolean(), passed: z.boolean() }).optional(),
+  /** The tests it cannot answer on the run's host, each with the reason. Neither the gate nor the load sent them. */
+  unsupported: z.record(z.string(), z.string()).optional(),
   /** Why this framework has no measurement. */
   error: z.string().optional(),
   rungs: z.record(z.string(), Rung).default({}),

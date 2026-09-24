@@ -149,15 +149,15 @@ export type SiteView = z.infer<typeof SiteViewDoc>;
 export type SiteViewResult = { view: SiteView | null; why: string | null; warnings: string[] };
 
 /**
- * The view of every framework and of the tests at one commit, or in the working tree when `at`
- * is null, or none when history cannot answer.
+ * The view of every framework on `host` and of the tests at one commit, or in the working tree
+ * when `at` is null, or none when history cannot answer.
  *
  * No view is not an error: a shallow checkout has one commit and every page then renders
  * without its code, which is what it should do. The build prints why.
  */
-export function siteView(root: string, at: string | null): SiteViewResult {
+export function siteView(root: string, at: string | null, host: string): SiteViewResult {
   const cli = path.join(root, "orchestrator", "cli.ts");
-  const where = at === null ? ["--worktree"] : ["--at", at];
+  const where = [...(at === null ? ["--worktree"] : ["--at", at]), "--host", host];
   const r = spawnSync(
     process.execPath,
     ["--experimental-strip-types", "--disable-warning=ExperimentalWarning", cli, "siteview", ...where],

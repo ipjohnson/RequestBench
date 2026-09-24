@@ -1,5 +1,5 @@
 ---
-// One framework, as one run measured it.
+// One framework, as one run on one host measured it.
 //
 // Rendered from the bundles at the commit that run recorded rather than from the working tree,
 // so a page about a run made in March shows the code that ran in March.
@@ -11,7 +11,7 @@ import "../../styles/framework.css";
 import { permalink, type Part } from "../../lib/bundleview.ts";
 import { chainWith, comparedOf, deltaFor, floorFor, testValue } from "../../lib/delta.ts";
 import { usedSpan } from "../../lib/bins.ts";
-import { familyOf, hostOf, metaOf, rungsOf, testOrder } from "../../lib/run.ts";
+import { DEFAULT_HOST, familyOf, metaOf, rungLabel, rungsOf, testOrder } from "../../lib/run.ts";
 import { proseHtml } from "../../lib/html.ts";
 import { familyPage } from "../../lib/corpus.ts";
 import { site, type FrameworkPage } from "../../lib/site.ts";
@@ -22,8 +22,8 @@ export function getStaticPaths() {
 }
 
 const { page } = Astro.props as { page: FrameworkPage };
-const { run, framework: t, rn, view, verdict, unlinked, repo, commit } = page;
-const { wire, routes, factors, families: about, catalog, tests: corpus, corpus: described } = site();
+const { run, host, framework: t, rn, view, verdict, unlinked, repo, commit, tests: corpus } = page;
+const { wire, routes, factors, families: about, catalog, corpus: described } = site();
 
 const name = t.framework || t.name;
 const facts = [
@@ -48,7 +48,6 @@ const row = t.rungs[rn];
 const order = testOrder(run);
 const own = t.tests ?? {};
 const snips = view?.snippets ?? {};
-const host = hostOf(run);
 const exemplars = wire[`${t.language}-${t.name}@${host}`]?.tests ?? {};
 // Every percentile the performance table can show, so each can be read against the base's.
 const PCTS = ["p50Us", "p90Us", "p95Us", "p99Us", "p999Us"];
@@ -122,7 +121,7 @@ const rates = rungsOf(run)
   .filter((r) => t.rungs[r])
   .map((r) => ({
     rn: r,
-    label: `${(t.rungs[r]?.rps ?? 0).toLocaleString()} rps`,
+    label: rungLabel(t.rungs[r]),
     span: usedSpan(own, order, r),
     shown: r === rn,
     // A rate the framework did not complete publishes what it achieved and dropped instead of
@@ -176,7 +175,7 @@ const unlocatedOf = (id: string): string[] => {
   return (view?.problems ?? []).filter((p) => p.startsWith(lead)).map((p) => p.slice(lead.length));
 };
 const note = Object.keys(snips).length && missing.length ? ` No handler located for ${missing.join(", ")}.` : "";
-const rate = row ? (row.rps ?? 0).toLocaleString() : "?";
+const offered = row?.closed ? " in a closed loop" : ` at ${row ? (row.rps ?? 0).toLocaleString() : "?"} offered rps`;
 const linkFor = (id: string): string | null => {
   const h = snips[id]?.handler;
   if (!h || !verdict.linkable || !repo) return null;
@@ -216,10 +215,11 @@ const unlinkedNotes = bothFromTree
   : [...new Set([unlinked, corpus?.unlinked].filter((x): x is string => Boolean(x)))];
 /** The first line: an error from a boot carries the end of the framework's log after it. */
 const error = t.error?.split("\n")[0];
+const unsupported = Object.entries(t.unsupported ?? {}).sort(([a], [b]) => (a < b ? -1 : 1));
 ---
 
 <Shell
-  title={`${name} · RequestBench`}
+  title={`${name}${host === DEFAULT_HOST ? "" : ` on ${host}`} · RequestBench`}
   footerLeft="github.com/ipjohnson/RequestBench"
   footerLeftHref="../index.html"
   footerRight={`run ${run.runId}`}
@@ -265,6 +265,21 @@ const error = t.error?.split("\n")[0];
     )
   }
   {error && <div class="note">{`${name} has no measurement in this run: ${error}`}</div>}
+  {
+    unsupported.length > 0 && (
+      <div class="note">
+        <strong>Not offered on {host}.</strong> {name} cannot answer {unsupported.length === 1 ? "this test" : "these tests"} on
+        this host, so neither the gate nor the load sent {unsupported.length === 1 ? "it" : "them"}.
+        <ul>
+          {unsupported.map(([id, why]) => (
+            <li>
+              <code>{id}</code>: {why}
+            </li>
+          ))}
+        </ul>
+      </div>
+    )
+  }
 
   {
     !order.length ? (
@@ -274,7 +289,7 @@ const error = t.error?.split("\n")[0];
         <h2>Tests</h2>
         <p class="hint">
           {order.length} tests in {families.size} families, on the {host} host
-          {rates.length > 1 ? ", at the rate picked on the right" : ` at ${rate} offered rps`}.{note}
+          {rates.length > 1 ? ", at the rate picked on the right" : offered}.{note}
         </p>
         {unlinkedNotes.map((n) => <p class="hint">{n}</p>)}
         {((hasBins && grid) || rates.length > 1 || comparable) && (

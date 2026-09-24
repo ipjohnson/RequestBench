@@ -98,6 +98,11 @@ describe("rateLabel", () => {
   test("a rung no framework has is named by its name", () => {
     assert.equal(rateLabel(run, "beyond"), "beyond");
   });
+
+  test("a closed loop offers no rate, and is named for the loop", () => {
+    const closed: Run = { runId: "r", host: "lambda-emulator", frameworks: [{ ...carter, rungs: { closed: { closed: true, achievedRps: 4725 } } }] };
+    assert.equal(rateLabel(closed, "closed"), "closed loop");
+  });
 });
 
 describe("rows", () => {

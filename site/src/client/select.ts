@@ -5,7 +5,7 @@
 import { blendNamed, blendStats, BLENDS, labelOf, weightsOf } from "../lib/blends.ts";
 import { deltaFor } from "../lib/delta.ts";
 import type { MetricId } from "../lib/metrics.ts";
-import { familyOf, famsAt, metaOf, rungsOf, testOrder } from "../lib/run.ts";
+import { familyOf, famsAt, metaOf, rungLabel, rungsOf, testOrder } from "../lib/run.ts";
 import type { Framework, Route, Run, WireDoc } from "../lib/types.ts";
 import { blendIn, COLS, type Gran, type Row, type State } from "./state.ts";
 
@@ -14,7 +14,7 @@ const COLS_BY_ID = Object.fromEntries(COLS.map((c) => [c.id, c]));
 export function rateLabel(run: Run, rn: string): string {
   for (const f of run.frameworks) {
     const d = f.rungs[rn];
-    if (d) return `${(d.rps ?? 0).toLocaleString()} rps`;
+    if (d) return rungLabel(d);
   }
   return rn;
 }
