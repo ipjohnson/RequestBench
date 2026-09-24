@@ -13,6 +13,7 @@ routes registered inside it and to no others. Every family here is a plugin of i
 | --- | --- |
 | `Implementation/` | The application, in TypeScript. `app.ts` builds it, and `routes/` holds one plugin per corpus family. |
 | `container-h1/` | How container-h1 starts it. `server.ts` loads the payloads and listens, and `Dockerfile` builds the image. |
+| `container-h2/` | How container-h2 starts it. `server.ts` builds the application on a Fastify instance with the `http2` option, which answers HTTP/2 with prior knowledge, and `Dockerfile` builds the image. |
 | `UnitTests/` | node:test tests of the wiring, sending each request through Fastify's `inject()`. |
 | `Client/` | The OpenAPI document @fastify/swagger writes from the route schemas, and the Kiota client generated from it. |
 | `client-exception/` | How the corpus reads Fastify's error bodies. |
