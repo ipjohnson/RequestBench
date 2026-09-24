@@ -17,9 +17,10 @@ the cache and the etag family are wired by hand, because warp ships neither.
 | `Implementation/` | The application: a library with one filter per corpus family under `routes/`, and the recover handler in `refusals.rs`. |
 | `container-h1/` | How container-h1 starts it. `main.rs` is the server binary, and `Dockerfile` builds the image. |
 | `container-h2/` | How container-h2 starts it. `main.rs` is the server binary, on warp's own server, which answers HTTP/2 with prior knowledge beside HTTP/1.1 through hyper-util's auto builder, and `Dockerfile` builds the image. |
+| `lambda-emulator/` | How lambda-emulator starts it. `main.rs` is the function, which hands the application to lambda_http's `run` as the tower `Service` that `warp::service` makes of it, and `Dockerfile` builds it on the `provided.al2023` base image, where it runs as `/var/runtime/bootstrap`. |
 | `UnitTests/` | The suite, which drives the application in process with warp's own `warp::test`. |
 | `client-exception/` | How the corpus reads warp's error bodies. |
-| `Cargo.toml` | One package: the library, the binary and the suite, each at its own path. |
+| `Cargo.toml` | One package: the library, each host's binary and the suite, each at its own path. |
 | `Cargo.lock` | Every crate as resolved. |
 | `askama.toml` | Where askama finds the template. |
 
@@ -121,6 +122,16 @@ container runs two workers under its two-CPU budget, whichever way the budget is
 - container-h2 lists `items.head` as unsupported. Over HTTP/2, warp sends the row its filter answers
   HEAD with as a DATA frame. HTTP/2 allows no content in an answer to HEAD, so the client resets the
   stream.
+- On lambda-emulator the application answers behind lambda_http 1.3, built with API Gateway
+  payload format 2.0 as the only event it reads. warp ships no Lambda adapter, and warp_lambda
+  0.1.4, the newest release of the adapter written for warp, depends on warp 0.3. lambda_http runs
+  any tower `Service`, and `warp::service` makes one of the application, as axum's router is one.
+- lambda_http's `run` buffers the whole answer, so the sse and stream tests are listed as
+  unsupported on lambda-emulator. `run_with_streaming_response` would stream every answer.
+- lambda_http posts the row the filter answers HEAD with, which hyper leaves unwritten over
+  HTTP/1.1. A Function URL's caller reads no body in an answer to HEAD, so nothing reads it.
+- The function is built on the Lambda base image it runs on. Amazon Linux 2023's glibc is older
+  than the one in the rust images, and a binary linked against a newer glibc may not start on it.
 
 ## Refusals
 
