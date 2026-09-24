@@ -49,9 +49,11 @@ builder.Services.OpenApiDocument(options =>
 // 100 MB holds every key the cache family stores many times over.
 builder.Services.AddOutputCache(options => options.DefaultExpirationTimeSpan = TimeSpan.FromSeconds(settings.Cache.TtlSeconds));
 // rb:wiring compressed.*
+// A Function URL's requests are HTTPS, and ASP.NET Core compresses an answer to HTTPS only with
+// EnableForHttps. The container hosts are plain HTTP, where it changes nothing.
+builder.Services.AddResponseCompression(options => options.EnableForHttps = true);
 // Fastest is already the provider's default, and every framework here compresses at that level,
 // so the application says so rather than leaving it to a default.
-builder.Services.AddResponseCompression();
 builder.Services.Configure<GzipCompressionProviderOptions>(options => options.Level = CompressionLevel.Fastest);
 // rb:wiring cors.*
 // A policy listing exactly one origin sends no Vary: Origin, although its answer differs by
