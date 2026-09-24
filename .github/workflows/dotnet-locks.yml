@@ -42,8 +42,8 @@ jobs:
         run: |
           base=${BASE:-$(git merge-base origin/main HEAD)}
           for dir in $(git diff --name-only "$base"...HEAD -- frameworks/dotnet | cut -d/ -f1-3 | sort -u); do
-            [ -f "$dir/Dockerfile" ] || continue
-            sdk=$(grep -m1 '^FROM mcr.microsoft.com/dotnet/sdk' "$dir/Dockerfile" | awk '{print $2}')
+            [ -f "$dir/container-h1/Dockerfile" ] || continue
+            sdk=$(grep -m1 '^FROM mcr.microsoft.com/dotnet/sdk' "$dir/container-h1/Dockerfile" | awk '{print $2}')
             for lock in $(git ls-files -- "$dir" | grep '/packages.lock.json$'); do
               project=$(cd "$(dirname "$lock")" && ls ./*.csproj)
               echo "$dir: restoring $(dirname "${lock#"$dir/"}")/${project#./} with $sdk"
