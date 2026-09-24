@@ -10,7 +10,7 @@ import FamilyPane from "../../components/FamilyPane.astro";
 import "../../styles/framework.css";
 import { permalink, type Part } from "../../lib/bundleview.ts";
 import { chainWith, comparedOf, deltaFor, floorFor, testValue } from "../../lib/delta.ts";
-import { usedSpan } from "../../lib/bins.ts";
+import { usedSpan, usLabel } from "../../lib/bins.ts";
 import { DEFAULT_HOST, familyOf, metaOf, rungLabel, rungsOf, testOrder } from "../../lib/run.ts";
 import { proseHtml } from "../../lib/html.ts";
 import { familyPage } from "../../lib/corpus.ts";
@@ -176,6 +176,12 @@ const unlocatedOf = (id: string): string[] => {
 };
 const note = Object.keys(snips).length && missing.length ? ` No handler located for ${missing.join(", ")}.` : "";
 const offered = row?.closed ? " in a closed loop" : ` at ${row ? (row.rps ?? 0).toLocaleString() : "?"} offered rps`;
+/** A closed loop's cold start: the function's Init, and the first event it answered, which the recording timed. */
+const coldStart =
+  row?.closed && row.first && t.boot?.readyMs !== undefined
+    ? `The function's Init took ${usLabel(t.boot.readyMs * 1000)}, and it answered its first event, ${row.first.id}, ` +
+      `in ${usLabel(row.first.responseUs)}. Nothing warmed it first, and the recording starts with that event.`
+    : null;
 const linkFor = (id: string): string | null => {
   const h = snips[id]?.handler;
   if (!h || !verdict.linkable || !repo) return null;
@@ -291,6 +297,7 @@ const unsupported = Object.entries(t.unsupported ?? {}).sort(([a], [b]) => (a < 
           {order.length} tests in {families.size} families, on the {host} host
           {rates.length > 1 ? ", at the rate picked on the right" : offered}.{note}
         </p>
+        {coldStart && <p class="hint">{coldStart}</p>}
         {unlinkedNotes.map((n) => <p class="hint">{n}</p>)}
         {((hasBins && grid) || rates.length > 1 || comparable) && (
           <div class="eptabs">

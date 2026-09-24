@@ -119,9 +119,12 @@ over HTTP/2 with prior knowledge and no TLS, with 16 connections that each carry
 `lambda-emulator` runs the framework as a Lambda function on its language's AWS base image, on one
 core. The Rust program serves the Lambda Runtime API in Lambda's place, and the function's own
 runtime client asks it for each event, an API Gateway payload format 2.0 request. Its load is a
-closed loop: each event goes out the moment the runtime asks, for a 30-second warmup, then a
-15-second settle and 60 recorded seconds. Each test records the invoke phase, from the event's
-write to the runtime's next request for one, and the Telemetry API's three spans within it. Each
+closed loop: each event goes out the moment the runtime asks, for 120 recorded seconds that start
+with the first event the function answers. Nothing warms it, because a Lambda function's first
+event is live traffic. The requests that learn each answer are sent to the gate's function
+instead. Each test records the invoke phase, from the event's write to the runtime's next request
+for one, and the Telemetry API's three spans within it. The run also keeps the first invocation
+and each second's mean invoke phase on their own, so the cold start shows apart from the tail. Each
 framework's container on the other hosts gets 2 CPUs. These variables change where things run:
 
 | Variable | Effect |

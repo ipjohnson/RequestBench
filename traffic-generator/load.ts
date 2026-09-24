@@ -212,6 +212,20 @@ export interface ClosedRecordedSummary {
   readonly mismatch: number;
   /** The invoke phase over every test. */
   readonly overall: Percentiles & { readonly count: number };
+  /**
+   * The first recorded invocation. With no settle before the recording it is the first event the
+   * function answered, which Lambda's first caller would have waited on.
+   */
+  readonly first?: {
+    readonly id: string;
+    readonly invokeUs: number;
+    readonly responseUs: number;
+    readonly responseLatencyUs: number;
+    readonly responseDurationUs: number;
+    readonly runtimeOverheadUs: number;
+  };
+  /** Each second of the recording: its invocations and their mean invoke phase. */
+  readonly perSecond?: readonly { readonly invocations: number; readonly meanInvokeUs: number }[];
   readonly tests: readonly ClosedTestSummary[];
 }
 

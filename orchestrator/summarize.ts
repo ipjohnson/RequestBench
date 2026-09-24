@@ -9,7 +9,7 @@
 // lambda-emulator's closed loop has one rung and nothing to drop. Its latency is the invoke
 // phase, and each test carries the other spans beside it.
 import { BUCKETS, GROWTH, LOG_GROWTH, pct } from "../traffic-generator/histogram.ts";
-import { isClosed, type ClosedResult, type LoadResult, type PhaseResult } from "../traffic-generator/load.ts";
+import { isClosed, type ClosedRecordedSummary, type ClosedResult, type LoadResult, type PhaseResult } from "../traffic-generator/load.ts";
 import type { FrameworkRun, RunFile } from "./measure.ts";
 
 /**
@@ -97,6 +97,10 @@ export interface ClosedRungSummary {
   readonly p90Us: number;
   readonly p99Us: number;
   readonly p999Us: number;
+  /** The first invocation the recording timed, which with no settle is the function's first. */
+  readonly first?: ClosedRecordedSummary["first"];
+  /** Each second of the recording: its invocations and their mean invoke phase. */
+  readonly perSecond?: ClosedRecordedSummary["perSecond"];
 }
 
 export interface TestRung extends ReturnType<typeof stats> {
@@ -229,6 +233,8 @@ function closedRungs(load: ClosedResult) {
       p90Us: pct(overall, 90),
       p99Us: pct(overall, 99),
       p999Us: pct(overall, 99.9),
+      ...(r.first === undefined ? {} : { first: r.first }),
+      ...(r.perSecond === undefined ? {} : { perSecond: r.perSecond }),
     };
   }
   return { rungs, tests, families };

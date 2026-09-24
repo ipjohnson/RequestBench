@@ -85,6 +85,20 @@ export interface ClosedReport {
   readonly settle: WireSpans;
   /** In the order the load listed the tests. */
   readonly tests: readonly WireSpans[];
+  /**
+   * The first recorded invocation: its test, by its place in the load, and its spans in
+   * nanoseconds. Null when none was recorded.
+   */
+  readonly firstInvocation: {
+    readonly test: number;
+    readonly invoke: number;
+    readonly response: number;
+    readonly responseLatency: number;
+    readonly responseDuration: number;
+    readonly runtimeOverhead: number;
+  } | null;
+  /** Each second of the recording: the invocations whose event went out in it, and their invoke phases summed in nanoseconds. */
+  readonly seconds: readonly (readonly [number, number])[];
 }
 
 /** One phase, every thread's tallies merged. Times are nanoseconds on the program's own clock. */

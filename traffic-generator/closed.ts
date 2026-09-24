@@ -1,11 +1,12 @@
 // A closed loop on the Lambda Runtime API. The Rust program already serves the function's runtime
-// through `pipe`. This primes every performance test through it, hands it the compiled events, and
-// turns each phase's spans into the result. Nothing here times anything.
-import type { RunValues } from "@rb/tests/kit";
+// through `pipe`. primeClosed primes every performance test through one function, and runClosed
+// hands the compiled events to another and turns each phase's spans into the result, so the
+// measured function answers nothing before its first recorded event. Nothing here times anything.
+import type { PerformanceTest, RunValues } from "@rb/tests/kit";
 import { idOf } from "@rb/tests/kit";
 import { BUCKETS, addInto, countOf, percentile } from "./histogram.ts";
 import type { ClosedPhase, ClosedPhaseResult, ClosedResult, ClosedTestSummary, Percentiles, SpanSummary } from "./load.ts";
-import type { Pipe, WireSpans } from "./pipe.ts";
+import type { ClosedReport, Pipe, WireSpans } from "./pipe.ts";
 import { prepare } from "./prepare.ts";
 import { declared, select } from "./select.ts";
 
@@ -18,8 +19,13 @@ export interface ClosedOptions {
   /** Test ids or family names, as a load's `only` names them. Absent means every performance test. */
   readonly only?: readonly string[] | undefined;
   readonly unsupported?: Readonly<Record<string, string>> | undefined;
-  readonly phases: readonly ClosedPhase[];
   readonly log: (line: string) => void;
+}
+
+/** Every performance test, compiled against a function the load does not measure. */
+export interface Primed {
+  readonly tests: readonly PerformanceTest[];
+  readonly compiled: Awaited<ReturnType<typeof prepare>>;
 }
 
 const decode = (b64: string): Uint32Array => {
@@ -40,10 +46,39 @@ const span = (b64: string): SpanSummary => ({ ...percentiles(decode(b64)), histB
 
 const optional = (name: "firstError" | "firstMismatch", value: string | null) => (value === null ? {} : { [name]: value });
 
-export async function runClosed(o: ClosedOptions): Promise<ClosedResult> {
+const us = (ns: number): number => Math.round(ns / 100) / 10;
+
+/** The first recorded invocation, and each second's invocations and mean invoke phase. */
+function start(report: ClosedReport, tests: readonly PerformanceTest[]) {
+  const f = report.firstInvocation;
+  const first =
+    f === null
+      ? {}
+      : {
+          first: {
+            id: idOf(tests[f.test]!.id),
+            invokeUs: us(f.invoke),
+            responseUs: us(f.response),
+            responseLatencyUs: us(f.responseLatency),
+            responseDurationUs: us(f.responseDuration),
+            runtimeOverheadUs: us(f.runtimeOverhead),
+          },
+        };
+  return {
+    ...first,
+    perSecond: report.seconds.map(([invocations, invokeNs]) => ({ invocations, meanInvokeUs: invocations === 0 ? 0 : us(invokeNs / invocations) })),
+  };
+}
+
+export async function primeClosed(o: ClosedOptions): Promise<Primed> {
   const tests = select(o.only, o.unsupported);
   o.log(`priming ${tests.length} tests against ${o.framework} on the Lambda Runtime API`);
   const compiled = await prepare({ pipe: o.pipe, tests, statuses: declared(o.framework), run: o.values, instances: o.instances, log: o.log });
+  return { tests, compiled };
+}
+
+export async function runClosed(o: ClosedOptions & { readonly phases: readonly ClosedPhase[] }, primed: Primed): Promise<ClosedResult> {
+  const { tests, compiled } = primed;
   await o.pipe.open(
     compiled.map((test) => ({
       instances: test.instances.map((i) => ({ request: i.request, label: i.target, accepted: i.accepted, bodyBytes: i.bodyBytes ?? null })),
@@ -97,6 +132,7 @@ export async function runClosed(o: ClosedOptions): Promise<ClosedResult> {
           errors: rows.reduce((n, t) => n + t.errors, 0),
           mismatch: rows.reduce((n, t) => n + t.mismatch, 0),
           overall: { count: countOf(overall), ...percentiles(overall) },
+          ...start(report, tests),
           tests: rows,
         },
       };

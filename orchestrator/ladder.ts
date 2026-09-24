@@ -45,23 +45,20 @@ export function phasesOf(seconds?: number): Phase[] {
 /**
  * lambda-emulator's protocol. A function answers one event at a time and asks for the next, so it
  * is offered a closed loop rather than rates: every event goes out the moment the runtime asks. A
- * warmup records nothing, and then one phase settles and records. Like LADDER, a change to any
- * number here is a new version.
+ * Lambda function's first event is live traffic, where a container can be warmed before it takes
+ * any, so nothing warms the function: one phase records from the first event it answers. The
+ * requests that learn each answer are sent in the gate's boot. Like LADDER, a change to any number
+ * here is a new version.
  */
 export const CLOSED = {
-  version: "closed-v1",
-  warmup: { name: "warmup", settle: 30 },
-  rungs: [{ name: "closed", settle: 15, seconds: 60 }],
+  version: "closed-v2",
+  rungs: [{ name: "closed", seconds: 120 }],
   /** How long a function's runtime may take to ask for its first event before it counts as failed to boot. */
   bootSeconds: 90,
   cooldownMs: 500,
-} as const satisfies { version: string; warmup: ClosedPhase; rungs: readonly ClosedPhase[]; bootSeconds: number; cooldownMs: number };
+} as const satisfies { version: string; rungs: readonly ClosedPhase[]; bootSeconds: number; cooldownMs: number };
 
-/** The closed-loop phases, with `seconds` shortening them for a smoke run as phasesOf does. */
+/** The closed-loop phases, with `seconds` shortening the recording for a smoke run. */
 export function closedPhasesOf(seconds?: number): ClosedPhase[] {
-  if (seconds === undefined) return [CLOSED.warmup, ...CLOSED.rungs];
-  return [
-    { ...CLOSED.warmup, settle: Math.max(5, Math.floor(seconds / 2)) },
-    ...CLOSED.rungs.map((r) => ({ ...r, seconds, settle: Math.min(r.settle, Math.max(1, Math.floor(seconds / 4))) })),
-  ];
+  return CLOSED.rungs.map((r) => ({ ...r, seconds: seconds ?? r.seconds }));
 }

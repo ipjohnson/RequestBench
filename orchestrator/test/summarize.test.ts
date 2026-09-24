@@ -177,18 +177,13 @@ const closed: ClosedResult = {
     framework: "go:chi",
     values: {} as ClosedResult["load"]["values"],
     instances: 1,
-    phases: [
-      { name: "warmup", settle: 1 },
-      { name: "closed", settle: 1, seconds: 1 },
-    ],
+    phases: [{ name: "closed", seconds: 1 }],
   },
   testsLive: 2,
   phases: [
-    { name: "warmup", status: "done", settle: { seconds: 1, invocations: 500, errors: 0, mismatch: 0 } },
     {
       name: "closed",
       status: "done",
-      settle: { seconds: 1, invocations: 500, errors: 0, mismatch: 0 },
       recorded: {
         seconds: 1,
         elapsedSeconds: 1,
@@ -197,6 +192,8 @@ const closed: ClosedResult = {
         errors: 0,
         mismatch: 0,
         overall: { count: 100, p50Us: 0, p90Us: 0, p99Us: 0, p999Us: 0 },
+        first: { id: "json.large", invokeUs: 41000, responseUs: 40000, responseLatencyUs: 39000, responseDurationUs: 1000, runtimeOverheadUs: 1000 },
+        perSecond: [{ invocations: 100, meanInvokeUs: 471 }],
         tests: [spanRow("json.small", "json", { 60: 80 }, { 40: 80 }), spanRow("json.large", "json", { 300: 20 }, { 280: 20 })],
       },
     },
@@ -210,6 +207,7 @@ test("a closed loop's one rung publishes the invoke phase, and each test carries
   const rung = f.rungs["closed"]!;
   assert.ok("closed" in rung);
   assert.deepEqual([rung.achievedRps, rung.invocations, rung.completed], [100, 100, true]);
+  assert.deepEqual([rung.first?.id, rung.first?.responseUs, rung.perSecond?.length], ["json.large", 40000, 1]);
   const merged = new Uint32Array(BUCKETS);
   merged[bucketOf(60)] = 80;
   merged[bucketOf(300)] = 20;
