@@ -3,6 +3,7 @@ Implementation under Sanic's own server. These hold the client to what Sanic ans
 no corpus marks."""
 import asyncio
 import os
+import signal
 import subprocess
 import sys
 import time
@@ -30,7 +31,9 @@ IMPLEMENTATION = Path(__file__).resolve().parent.parent / "Implementation"
 def base():
     """server.py on a free port, as the image runs it, with its two workers."""
     port = free_port()
+    # A session of its own, so the teardown can reach the workers and the manager's helper processes.
     server = subprocess.Popen([sys.executable, "server.py"], cwd=IMPLEMENTATION, stderr=subprocess.DEVNULL,
+                              start_new_session=True,
                               env={**os.environ, "PORT": str(port), "RB_PAYLOADS": str(expected.DIRECTORY)})
     url = f"http://127.0.0.1:{port}"
     try:
@@ -45,7 +48,13 @@ def base():
         yield url
     finally:
         server.terminate()
-        server.wait(timeout=10)
+        try:
+            server.wait(timeout=10)
+        except subprocess.TimeoutExpired:
+            # Sanic's main process can hang on a SIGTERM that arrives before it has seen both workers
+            # start, which these tests do within a second. The README's Notes say why.
+            os.killpg(server.pid, signal.SIGKILL)
+            server.wait()
 
 
 def call(base: str, ask):
