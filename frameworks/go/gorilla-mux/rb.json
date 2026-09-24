@@ -1,5 +1,5 @@
 {
-  "comment": "gorilla/mux 1.8 on Go 1.27, one function per family registering its routes in the implementation package under Implementation/, and the server's main package in container-h1. The suite is UnitTests/, go test over the router served by net/http/httptest, and never reaches the image. mux is a router over net/http and binds nothing, so each family uses the gorilla toolkit where it has something (handlers for CORS, compression and recovery, schema for query strings and forms), net/http where it does not, and code written for the family where neither does. Bodies are decoded with encoding/json and checked with go-playground's validator, and a refusal is 400 with the error's text under error, written with encoding/json's encoder as mux's README writes JSON. The first-error route is wired by hand, because go-playground cannot stop at the first failure. cors.vary is skipped because gorilla/handlers writes Vary: Origin only for a policy of more than one origin. The lockfile is go.mod, which records every module version the build selects, and go.sum, which holds their hashes. upgrade is go get -u ./..., which moves every module to its newest release within its major version.",
+  "comment": "gorilla/mux 1.8 on Go 1.27, one function per family registering its routes in the implementation package under Implementation/, and each host's main package in the host's directory. On lambda-emulator the router answers behind aws-lambda-go-api-proxy's httpadapter, because its gorillamux adapter takes only a bare *mux.Router and the router here is wrapped in gorilla/handlers' RecoveryHandler. The suite is UnitTests/, go test over the router served by net/http/httptest, and never reaches the image. mux is a router over net/http and binds nothing, so each family uses the gorilla toolkit where it has something (handlers for CORS, compression and recovery, schema for query strings and forms), net/http where it does not, and code written for the family where neither does. Bodies are decoded with encoding/json and checked with go-playground's validator, and a refusal is 400 with the error's text under error, written with encoding/json's encoder as mux's README writes JSON. The first-error route is wired by hand, because go-playground cannot stop at the first failure. cors.vary is skipped because gorilla/handlers writes Vary: Origin only for a policy of more than one origin. The lockfile is go.mod, which records every module version the build selects, and go.sum, which holds their hashes. upgrade is go get -u ./..., which moves every module to its newest release within its major version.",
   "framework": "gorilla/mux",
   "licence": "BSD-3-Clause",
   "repo": "https://github.com/gorilla/mux",
@@ -8,7 +8,15 @@
   "lockfile": ["go.mod", "go.sum"],
   "hosts": {
     "container-h1": { "dockerfile": "container-h1/Dockerfile" },
-    "container-h2": { "dockerfile": "container-h2/Dockerfile" }
+    "container-h2": { "dockerfile": "container-h2/Dockerfile" },
+    "lambda-emulator": {
+      "dockerfile": "lambda-emulator/Dockerfile",
+      "unsupported": {
+        "cors.disallowed": "gorilla/handlers' CORS writes nothing for a preflight from an origin it does not allow, which net/http answers with 200. aws-lambda-go-api-proxy's response writer has no status until a handler writes one, so httpadapter fails the invocation instead.",
+        "sse.medium": "aws-lambda-go-api-proxy's httpadapter buffers the whole answer, so the events would arrive as one body. Its response writer cannot flush either, and the handler stops at its first Flush.",
+        "stream.ndjson": "aws-lambda-go-api-proxy's httpadapter buffers the whole answer, so the rows would arrive as one body. Its response writer cannot flush either, and the handler stops at its first Flush."
+      }
+    }
   },
   "suite": { "argv": ["go", "test", "./..."], "paths": ["UnitTests"] },
   "upgrade": { "argv": ["go", "get", "-u", "./..."] },
