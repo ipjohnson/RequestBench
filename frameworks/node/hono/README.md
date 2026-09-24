@@ -14,6 +14,7 @@ application's `fetch`, and writes the Response it gets back.
 | --- | --- |
 | `Implementation/` | The application, in TypeScript. `app.ts` builds it, and `routes/` holds one module per corpus family. |
 | `container-h1/` | How container-h1 starts it. `server.ts` loads the payloads and listens, and `Dockerfile` builds the image. |
+| `container-h2/` | How container-h2 starts it. `server.ts` hands @hono/node-server node:http2's `createServer`, which answers HTTP/2 with prior knowledge, and `Dockerfile` builds the image. |
 | `UnitTests/` | node:test tests of the wiring, sending each request through Hono's `app.request()`. |
 | `client-exception/` | How the corpus reads Hono's error bodies. |
 | `package.json` | The dependencies, and the scripts that start, check and test the Implementation. |
