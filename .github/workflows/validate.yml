@@ -1,8 +1,8 @@
 # Every pull request runs the repository's checks, then, for each framework it can change,
 # `rb validate` on every host the framework implements and the framework's own suite. A framework
 # is picked when a file in its directory changes, other than prose. Every framework is picked when
-# something they all depend on changes: the tests, the orchestrator, the root npm manifests,
-# frameworks/exceptions.ts or this file.
+# something they all depend on changes: the tests, the orchestrator, the traffic generator, the
+# root npm manifests, frameworks/exceptions.ts or this file.
 #
 # Nothing here measures, because a shared runner's timings would be noise.
 name: validate
@@ -30,6 +30,14 @@ jobs:
           node-version: "24"
           cache: npm
       - run: npm ci --no-audit --no-fund
+      # The gate and the load go through the traffic generator's Rust program, which cargo builds
+      # with the toolchain traffic-generator/rust-toolchain.toml pins.
+      - run: rustup toolchain install
+        working-directory: traffic-generator
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: traffic-generator
+          shared-key: traffic-generator
       - run: npm run typecheck
       - run: npm test
       - run: npm run rb -- check
@@ -57,7 +65,7 @@ jobs:
               frameworks/*/*/*)
                 IFS=/ read -r _ language name _ <<< "$path"
                 changed+="$language:$name"$'\n' ;;
-              tests/* | orchestrator/* | frameworks/exceptions.ts | package.json | package-lock.json | tsconfig.json | .github/workflows/validate.yml)
+              tests/* | orchestrator/* | traffic-generator/* | frameworks/exceptions.ts | package.json | package-lock.json | tsconfig.json | .github/workflows/validate.yml)
                 every=true ;;
             esac
           done < <(git diff --name-only "$base"...HEAD)
@@ -96,6 +104,14 @@ jobs:
           node-version: "24"
           cache: npm
       - run: npm ci --no-audit --no-fund
+      # The gate and the load go through the traffic generator's Rust program, which cargo builds
+      # with the toolchain traffic-generator/rust-toolchain.toml pins.
+      - run: rustup toolchain install
+        working-directory: traffic-generator
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: traffic-generator
+          shared-key: traffic-generator
       - env:
           ID: ${{ matrix.validation.id }}
           HOST: ${{ matrix.validation.host }}

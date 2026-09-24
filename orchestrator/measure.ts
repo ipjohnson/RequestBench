@@ -213,7 +213,7 @@ export async function measure(o: MeasureOptions): Promise<RunFile> {
           alive: async () => first.alive(),
         });
       } finally {
-        live.close();
+        await live.close();
       }
     } catch (error) {
       entries.push({ ...withImage, error: `the gate's boot failed: ${(error as Error).message}\n${first.logs()}` });
