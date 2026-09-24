@@ -1,5 +1,5 @@
 {
-  "comment": "Fastify 5 on Node 26, one Fastify plugin per family under Implementation/routes, in TypeScript that Node runs without a build step. The suite is UnitTests/, node:test over Fastify's inject(), and never reaches the image. install-ci-test is npm ci then npm test, because the suite needs node_modules and the typechecker. upgrade is npm update, which moves package-lock.json within the ranges package.json states.",
+  "comment": "Fastify 5 on Node 26, one Fastify plugin per family under Implementation/routes, in TypeScript that Node runs without a build step. On lambda-emulator the application answers behind @fastify/aws-lambda, the Fastify organisation's adapter, which injects each event into it. The suite is UnitTests/, node:test over Fastify's inject(), and never reaches the image. install-ci-test is npm ci then npm test, because the suite needs node_modules and the typechecker. upgrade is npm update, which moves package-lock.json within the ranges package.json states.",
   "framework": "Fastify",
   "licence": "MIT",
   "repo": "https://github.com/fastify/fastify",
@@ -8,7 +8,14 @@
   "lockfile": ["package-lock.json"],
   "hosts": {
     "container-h1": { "dockerfile": "container-h1/Dockerfile" },
-    "container-h2": { "dockerfile": "container-h2/Dockerfile" }
+    "container-h2": { "dockerfile": "container-h2/Dockerfile" },
+    "lambda-emulator": {
+      "dockerfile": "lambda-emulator/Dockerfile",
+      "unsupported": {
+        "sse.medium": "@fastify/aws-lambda buffers the whole answer, so the events arrive as one body.",
+        "stream.ndjson": "@fastify/aws-lambda buffers the whole answer, so the rows arrive as one body."
+      }
+    }
   },
   "suite": { "argv": ["npm", "install-ci-test"], "paths": ["UnitTests"] },
   "upgrade": { "argv": ["npm", "update"] },
