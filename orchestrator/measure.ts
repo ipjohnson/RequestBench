@@ -10,7 +10,8 @@
 //
 // On lambda-emulator the traffic generator's Rust program serves the Lambda Runtime API, and each
 // boot starts it first and the function after it, because the function's runtime reaches out to
-// it. Readiness is the runtime's first /next, and the load is a closed loop.
+// it. Readiness is the runtime's first /next, and the load is a closed loop. The gate's boot also
+// primes the load, so the measured function's first recorded event is the first it answers.
 import { spawn } from "node:child_process";
 import { randomBytes, randomInt } from "node:crypto";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -21,7 +22,7 @@ import suite from "@rb/tests";
 import type { RunValues } from "@rb/tests/kit";
 import { drawRunValues } from "@rb/tests/models/parameters";
 import exceptions from "../frameworks/exceptions.ts";
-import { runClosed } from "../traffic-generator/closed.ts";
+import { primeClosed, runClosed, type Primed } from "../traffic-generator/closed.ts";
 import type { ClosedPhase, ClosedResult, Load, LoadResult } from "../traffic-generator/load.ts";
 import { Pipe } from "../traffic-generator/pipe.ts";
 import { frameworkBundle, testsBundle, treeRollup } from "./bundle.ts";
@@ -70,7 +71,8 @@ export interface FrameworkRun {
   /**
    * The measured boot. The gate's boot ran the same image moments before, so the page cache was
    * warm. On lambda-emulator readyMs is the Init phase, from `docker run` returning to the
-   * runtime's first /next, and probeMs is the first event the function answered.
+   * runtime's first /next, and probeMs is the response to the first event the function answered,
+   * which is the first the recording timed.
    */
   readonly boot?: { readonly startMs: number; readonly readyMs: number; readonly wallMs: number; readonly probeMs: number; readonly pageCache: "warm" };
   /** What /__meta answered, verbatim. */
@@ -353,8 +355,10 @@ async function measureFunction(
   const startFunction = o.driver.startFunction;
   if (startFunction === undefined) return { ...withImage, error: `the driver cannot start a function for ${o.host}` };
 
-  // The gate's boot.
+  // The gate's boot, which also primes the load, so that the measured boot's function answers
+  // nothing before its first recorded event.
   let gated;
+  let primed: Primed | undefined;
   {
     const { pipe, port } = await Pipe.listen(RUNTIME_API_BIND);
     const fn = startFunction(f, port);
@@ -371,6 +375,9 @@ async function measureFunction(
         run: values,
         alive: async () => fn.alive(),
       });
+      if (gated.measurable) {
+        primed = await primeClosed({ pipe, framework: f.id, values, instances: 512, only: o.only, unsupported, log: (line) => log(`  ${line}`) });
+      }
     } catch (error) {
       log(`  boot failed: ${(error as Error).message}`);
       return { ...withImage, error: `the gate's boot failed: ${(error as Error).message}\n${fn.logs()}` };
@@ -384,7 +391,7 @@ async function measureFunction(
   const counts = Object.values(gated.outcomes).reduce<Record<string, number>>((c, x) => ((c[x.status] = (c[x.status] ?? 0) + 1), c), {});
   log(`  gate: ${Object.entries(counts).map(([k, n]) => `${n} ${k}`).join(", ")}`);
   const gateRecord = { measurable: gated.measurable, passed: gated.passed, outcomes: gated.outcomes };
-  if (!gated.measurable) return { ...withImage, gate: gateRecord, error: "it failed the gate, so it was not measured" };
+  if (!gated.measurable || primed === undefined) return { ...withImage, gate: gateRecord, error: "it failed the gate, so it was not measured" };
 
   // The measured boot, with the program on the generator's cores.
   const { pipe, port } = await Pipe.listen(RUNTIME_API_BIND, o.budget.genCpus);
@@ -393,22 +400,16 @@ async function measureFunction(
     const started = performance.now();
     await awaitInit(pipe, fn, o.bootMs);
     const readyMs = performance.now() - started;
+    log(`  boot: start ${round(fn.startMs)} + init ${round(readyMs)} = ${round(fn.startMs + readyMs)} ms`);
+    const result = await runClosed(
+      { pipe, framework: f.id, values, instances: 512, only: o.only, unsupported, phases: o.closedPhases ?? [], log: (line) => log(`  ${line}`) },
+      primed,
+    );
     // The first event the function answers is the other half of its cold start.
-    const sent = performance.now();
-    await pipe.exchange({ method: "GET", target: "/health", headers: [] });
-    const probeMs = performance.now() - sent;
+    const first = result.phases.find((p) => p.recorded?.first !== undefined)?.recorded?.first;
+    const probeMs = (first?.responseUs ?? 0) / 1000;
     const boot = { startMs: round(fn.startMs), readyMs: round(readyMs), wallMs: round(fn.startMs + readyMs), probeMs: round(probeMs), pageCache: "warm" as const };
-    log(`  boot: start ${boot.startMs} + init ${boot.readyMs} = ${boot.wallMs} ms; the first event took ${boot.probeMs} ms`);
-    const result = await runClosed({
-      pipe,
-      framework: f.id,
-      values,
-      instances: 512,
-      only: o.only,
-      unsupported,
-      phases: o.closedPhases ?? [],
-      log: (line) => log(`  ${line}`),
-    });
+    if (first !== undefined) log(`  the first event, ${first.id}, took ${probeMs} ms`);
     const described = await pipe.exchange({ method: "GET", target: "/__meta", headers: [] }).catch(() => undefined);
     let meta: Record<string, unknown> = {};
     try {

@@ -19,6 +19,8 @@ export const Rung = z.looseObject({
   rps: z.number().optional(),
   closed: z.boolean().optional(),
   invocations: z.number().optional(),
+  /** A closed loop's first recorded invocation, which with no warmup is the function's first. */
+  first: z.looseObject({ id: z.string(), responseUs: z.number() }).optional(),
   status: z.string().optional(),
   completed: z.boolean().optional(),
   saturated: z.boolean().optional(),
@@ -115,6 +117,8 @@ export const Framework = z.looseObject({
   bundleHash: z.string().optional(),
   codeHash: z.string().optional(),
   gate: z.looseObject({ measurable: z.boolean(), passed: z.boolean() }).optional(),
+  /** The measured boot. On lambda-emulator readyMs is the function's Init. */
+  boot: z.looseObject({ readyMs: z.number().optional() }).optional(),
   /** The tests it cannot answer on the run's host, each with the reason. Neither the gate nor the load sent them. */
   unsupported: z.record(z.string(), z.string()).optional(),
   /** Why this framework has no measurement. */

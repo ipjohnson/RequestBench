@@ -90,7 +90,13 @@ function fakeDriver(answer: (id: Id) => Transport | "dead", protocol: "http/1.1"
     startFunction: (f, apiPort) => {
       const behaviour = answer(f.id as Id);
       if (behaviour === "dead") return { startMs: 1, alive: () => false, logs: () => "it would not start", stop: () => {} };
-      const r = runtime(apiPort, framed(f, behaviour));
+      const targets: string[] = [];
+      asked.push(targets);
+      const answering = framed(f, behaviour);
+      const r = runtime(apiPort, (req) => {
+        targets.push(req.target);
+        return answering(req);
+      });
       return { startMs: 1, alive: r.alive, logs: () => "", stop: r.stop };
     },
   };
@@ -103,10 +109,10 @@ const PHASES: Load["phases"] = [
   { name: "regular", rps: 100, settle: 1, seconds: 1, abortDropFraction: 0.05 },
 ];
 
-const CLOSED_PHASES: ClosedPhase[] = [
-  { name: "warmup", settle: 1 },
-  { name: "closed", settle: 1, seconds: 1 },
-];
+const CLOSED_PHASES: ClosedPhase[] = [{ name: "closed", seconds: 1 }];
+
+/** What each function the fake driver started was asked, in the order it was started. */
+const asked: string[][] = [];
 
 async function run(
   driver: Driver,
@@ -215,21 +221,41 @@ test("on container-h2 the boot, the gate, the load and /__meta all go over h2c",
 });
 
 test("on lambda-emulator the runtime asks the Runtime API for every event: the gate's, the closed loop's and /__meta", async () => {
+  asked.length = 0;
   const result = await run(fakeDriver(reference), ["node:fastify"], (f) => f, "lambda-emulator");
   const [fastify] = result.frameworks;
   assert.equal(fastify!.error, undefined);
   assert.equal(fastify!.gate?.measurable, true);
   assert.equal(fastify!.meta?.["framework"], "fastify");
-  assert.ok(fastify!.boot !== undefined && fastify!.boot.probeMs > 0);
   const load = fastify!.load!;
   assert.ok(isClosed(load));
-  assert.deepEqual(load.phases.map((p) => p.name), ["warmup", "closed"]);
-  const recorded = load.phases[1]!.recorded!;
+  assert.deepEqual(load.phases.map((p) => p.name), ["closed"]);
+  const recorded = load.phases[0]!.recorded!;
   const wrong = recorded.tests.filter((t) => t.errors + t.mismatch > 0).map((t) => [t.id, t.firstError, t.firstMismatch]);
   assert.deepEqual(wrong, []);
   assert.ok(recorded.invocations > 0 && recorded.tests.every((t) => t.count > 0));
+  // The boot's first event is the recording's first invocation, and every second is accounted for.
+  assert.ok(recorded.first !== undefined && recorded.first.responseUs > 0);
+  assert.equal(fastify!.boot?.probeMs, Math.round(recorded.first.responseUs / 100) / 10);
+  const perSecond = recorded.perSecond ?? [];
+  assert.equal(perSecond.reduce((n, s) => n + s.invocations, 0), recorded.tests.reduce((n, t) => n + t.count, 0));
   const rung = summarize(result).frameworks[0]!.rungs["closed"]!;
-  assert.ok("closed" in rung && rung.achievedRps > 0);
+  assert.ok("closed" in rung && rung.achievedRps > 0 && rung.first?.id === recorded.first.id);
+});
+
+test("on lambda-emulator the gate's boot primes the load, so the measured function answers nothing before its first recorded event", async () => {
+  asked.length = 0;
+  const result = await run(fakeDriver(reference), ["node:fastify"], (f) => f, "lambda-emulator");
+  const load = result.frameworks[0]!.load!;
+  assert.ok(isClosed(load));
+  const recorded = load.phases[0]!.recorded!;
+  assert.equal(asked.length, 2, "one function for the gate and priming, one measured");
+  const [gated, measured] = asked as [string[], string[]];
+  assert.ok(gated.length > measured.length / 100, "priming went to the gate's function");
+  // The measured function answered the recording's events and then /__meta, and nothing else.
+  assert.equal(measured.length, recorded.invocations + 1);
+  assert.equal(measured.at(-1), "/__meta");
+  assert.ok(!measured.slice(0, -1).includes("/health"));
 });
 
 test("a function that exits before its runtime asks for an event is reported with its log, and the run goes on", async () => {

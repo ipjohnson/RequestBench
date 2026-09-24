@@ -216,6 +216,12 @@ struct Phase {
     /// The first recorded invocation's t0 and the last one's t3.
     first: Option<Instant>,
     last: Option<Instant>,
+    /// The first recorded invocation's test and its t0 to t3. With no settle it is the first event
+    /// the function ever answered.
+    first_invocation: Option<(usize, [Instant; 4])>,
+    /// Each second of the recording, from its start: the invocations whose t0 fell in it, and
+    /// their invoke phases summed in nanoseconds.
+    seconds: Vec<(u64, u64)>,
     done: Option<oneshot::Sender<Result<(), String>>>,
 }
 
@@ -481,6 +487,13 @@ impl Env {
         if recorded {
             phase.first.get_or_insert(t0);
             phase.last = Some(t3);
+            phase.first_invocation.get_or_insert((test, [t0, answer.t1, answer.t2, t3]));
+            let second = t0.saturating_duration_since(phase.settle_until).as_secs() as usize;
+            if phase.seconds.len() <= second {
+                phase.seconds.resize(second + 1, (0, 0));
+            }
+            phase.seconds[second].0 += 1;
+            phase.seconds[second].1 += t3.saturating_duration_since(t0).as_nanos() as u64;
         }
     }
 
@@ -565,6 +578,8 @@ impl Env {
             settle: Spans::new(),
             first: None,
             last: None,
+            first_invocation: None,
+            seconds: Vec::new(),
             done: Some(done),
         });
         self.progress.set(start);
@@ -592,6 +607,17 @@ impl Env {
         let result = finished.await.map_err(|_| "the phase ended with no result".to_string())?;
         let phase = self.finished.borrow_mut().take().expect("the finished phase");
         result?;
+        let span = |from: Instant, to: Instant| to.saturating_duration_since(from).as_nanos() as u64;
+        let first_invocation = phase.first_invocation.map(|(test, [t0, t1, t2, t3])| {
+            json!({
+                "test": test,
+                "invoke": span(t0, t3),
+                "response": span(t0, t2),
+                "responseLatency": span(t0, t1),
+                "responseDuration": span(t1, t2),
+                "runtimeOverhead": span(t2, t3),
+            })
+        });
         Ok(json!({
             "kind": "phase",
             "closed": true,
@@ -600,6 +626,8 @@ impl Env {
             "last": phase.last.map_or(0, &nanos),
             "settle": phase.settle.json(),
             "tests": phase.tallies.iter().map(Spans::json).collect::<Vec<_>>(),
+            "firstInvocation": first_invocation,
+            "seconds": phase.seconds,
         }))
     }
 }
@@ -703,7 +731,14 @@ mod tests {
                     head: false,
                 };
                 env.load(vec![vec![instance("/a")], vec![instance("/bb")]]);
-                let report = env.phase(Duration::from_millis(100), Duration::from_millis(300), |_| 0).await.unwrap();
+                let report = env.phase(Duration::ZERO, Duration::from_millis(300), |_| 0).await.unwrap();
+                // With no settle the first recorded invocation is the first event the runtime answered.
+                let first = &report["firstInvocation"];
+                assert!(first["test"].as_u64().unwrap() < 2);
+                assert!(first["invoke"].as_u64().unwrap() >= first["response"].as_u64().unwrap());
+                let counted: u64 = report["seconds"].as_array().unwrap().iter().map(|s| s[0].as_u64().unwrap()).sum();
+                let recorded: u64 = report["tests"].as_array().unwrap().iter().map(|t| t["count"].as_u64().unwrap()).sum();
+                assert_eq!(counted, recorded);
                 for test in report["tests"].as_array().unwrap() {
                     assert!(test["count"].as_u64().unwrap() > 10, "{test}");
                     assert_eq!((test["errors"].as_u64(), test["mismatch"].as_u64()), (Some(0), Some(0)), "{test}");
