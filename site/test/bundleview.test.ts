@@ -8,7 +8,7 @@ const ROOT = fileURLToPath(new URL("../..", import.meta.url));
 
 describe("siteView", () => {
   test("parses what the orchestrator prints, so the two cannot drift apart unnoticed", () => {
-    const { view, why } = siteView(ROOT, "HEAD");
+    const { view, why } = siteView(ROOT, "HEAD", "container-h1");
     assert.equal(why, null);
     const small = view?.tests.tests["json.small"];
     assert.deepEqual([small?.method, small?.path, small?.source.path], ["GET", "/json/small", "tests/json/small.ts"]);
@@ -21,13 +21,13 @@ describe("siteView", () => {
   });
 
   test("a commit history does not hold is said, not guessed at", () => {
-    const { view, why } = siteView(ROOT, "0000000000000000000000000000000000000000");
+    const { view, why } = siteView(ROOT, "0000000000000000000000000000000000000000", "container-h1");
     assert.equal(view, null);
-    assert.match(why ?? "", /rb siteview --at 0{40} failed/);
+    assert.match(why ?? "", /rb siteview --at 0{40} --host container-h1 failed/);
   });
 
   test("reads the working tree when asked, and says so", () => {
-    const { view, why } = siteView(ROOT, null);
+    const { view, why } = siteView(ROOT, null, "container-h1");
     assert.equal(why, null);
     assert.equal(view?.worktree, true);
     assert.equal(view?.tests.pushed, false);
