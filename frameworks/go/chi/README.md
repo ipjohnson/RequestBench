@@ -18,6 +18,7 @@ family where neither does.
 | `Implementation/views/` | The template, compiled into the binary. |
 | `container-h1/` | How container-h1 starts it. `main.go` is the main package that loads the payloads and serves over HTTP/1.1, and `Dockerfile` builds the image. |
 | `container-h2/` | How container-h2 starts it. `main.go` serves over HTTP/2 with prior knowledge through net/http's `Server.Protocols`, and `Dockerfile` builds the image. |
+| `lambda-emulator/` | How lambda-emulator starts it. `main.go` hands the router to aws-lambda-go-api-proxy's `httpadapter`, which aws-lambda-go's runtime client gives each event, and `Dockerfile` builds the function on the `provided.al2023` base image. |
 | `UnitTests/` | go test tests of the wiring, sending each request to the router served by `net/http/httptest`. |
 | `client-exception/` | How the corpus reads chi's error bodies. |
 | `go.mod` | The module, and every module version the build selects. |
@@ -96,7 +97,16 @@ corpus id it covers, so `go test ./UnitTests -run '/json.small'` runs one.
 - `render.HTML` writes a string it is handed, so the template routes execute the template straight
   into the response instead.
 - The server is one process. Go sets GOMAXPROCS from the container's CPU quota or cpuset, so under
-  the orchestrator's two CPUs it runs Go code on two threads, which `/__meta` reports.
+  the orchestrator's two CPUs it runs Go code on two threads, which `/__meta` reports. The function
+  on lambda-emulator runs on one core, and so on one thread.
+- On lambda-emulator the router answers behind aws-lambda-go-api-proxy 0.16's `httpadapter.NewV2`,
+  which reads API Gateway payload format 2.0. It buffers the whole answer into one proxy response,
+  and its response writer cannot flush. The sse and stream handlers stop at their first `Flush`, so
+  both tests are listed as unsupported there.
+- httpadapter posts whatever a handler writes for HEAD. A Function URL's caller reads no body in an
+  answer to HEAD, so nothing reads it.
+- The function is built with `-tags lambda.norpc`, as AWS builds a Go function for
+  `provided.al2023`. The tag leaves out the RPC mode of the retired go1.x runtime.
 - The server is PID 1 in its container. The Go runtime installs its own handler for SIGTERM, so
   `docker stop` ends it at once, with no graceful shutdown.
 - The handler finder knows no HEAD, so `r.Head` on `/items/{id}` reads as a route for every
