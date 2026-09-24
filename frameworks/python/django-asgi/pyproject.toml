@@ -1,4 +1,4 @@
-# The application's dependencies, the suite's and lambda-emulator's. uv.lock beside it is what uv
+# The application's dependencies, the suite's, lambda-emulator's and container-h2's. uv.lock beside it is what uv
 # resolved, which every host's image installs with --locked. Ranges move patch releases alone for
 # 0.x packages, and minor releases too for the rest.
 [project]
@@ -18,6 +18,9 @@ dev = ["pytest~=9.1", "pytest-asyncio~=1.4"]
 # Mangum, which turns each Lambda event into a request for the application on lambda-emulator.
 # Only that host's image installs the group.
 lambda-emulator = ["mangum~=0.22.0"]
+# Hypercorn, the ASGI server with HTTP/2 that container-h2 runs, because uvicorn speaks only
+# HTTP/1.1. Only that host's image installs the group.
+container-h2 = ["hypercorn[uvloop]~=0.18.0"]
 
 [tool.uv]
 package = false

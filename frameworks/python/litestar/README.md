@@ -15,6 +15,7 @@ msgspec Structs.
 | --- | --- |
 | `Implementation/` | The application. `main.py` is what each worker imports, `app.py` builds the application, and `routes/` holds one module per corpus family. |
 | `container-h1/` | How container-h1 starts it. `server.py` starts uvicorn with two workers, and `Dockerfile` builds the image. |
+| `container-h2/` | How container-h2 starts it. `server.py` starts Hypercorn with two workers, which answers HTTP/2 with prior knowledge, and `Dockerfile` builds the image with the `container-h2` group, which adds Hypercorn. |
 | `lambda-emulator/` | How lambda-emulator starts it. `server.py` is the handler's module, which puts the application behind Mangum for awslambdaric, the runtime client, and `Dockerfile` builds the function on the `python:3.14` base image, with the packages and the application together in the task root. |
 | `UnitTests/` | pytest tests of the wiring, sending each request through Litestar's TestClient. |
 | `Client/` | The OpenAPI document Litestar builds from the routes, and the TypeScript client Hey API generates from it, with its own `package.json`. |
@@ -119,6 +120,10 @@ the worker that accepted it, and the gate sends each test's two requests on one 
 - Litestar's default logging configuration writes the root logger's INFO records to stderr, and
   Mangum logs every request it answers at INFO. `lambda-emulator/server.py` keeps Mangum's logger to
   warnings, as `server.py` turns uvicorn's access log off.
+- uvicorn speaks only HTTP/1.1, so on container-h2 the application runs on Hypercorn 0.18.
+  Litestar's deployment documentation shows Hypercorn beside uvicorn. The numbers on container-h2
+  therefore measure another server as well as another protocol. Read against container-h1's, they
+  compare both at once.
 
 ## Refusals
 

@@ -15,6 +15,7 @@ header, so the views do both, and a `django.forms.Form` binds and validates ever
 | --- | --- |
 | `Implementation/` | The application. `asgi.py` is what each worker imports, `settings.py` configures Django and loads the payloads, `urls.py` routes every path, and `views/` holds one module per corpus family. |
 | `container-h1/` | How container-h1 starts it. `server.py` starts uvicorn with two workers, and `Dockerfile` builds the image. |
+| `container-h2/` | How container-h2 starts it. `server.py` starts Hypercorn with two workers, which answers HTTP/2 with prior knowledge, and `Dockerfile` builds the image with the `container-h2` group, which adds Hypercorn. |
 | `lambda-emulator/` | How lambda-emulator starts it. `server.py` is the handler's module, which puts Django's ASGI application behind Mangum for awslambdaric, the runtime client, and `Dockerfile` builds the function on the `python:3.14` base image, with the packages and the application together in the task root. |
 | `UnitTests/` | pytest tests of the wiring, sending each request through Django's AsyncClient. |
 | `client-exception/` | How the corpus reads Django's error bodies. |
@@ -124,6 +125,11 @@ Logging is Django's default. Under uvicorn it writes nothing for a 4xx while `DE
   function's output, with the traceback of a `BadRequest`. Under uvicorn no handler takes them.
 - The function on lambda-emulator is one process, which answers one event at a time, so `/__meta`
   reports one worker there.
+- uvicorn speaks only HTTP/1.1, so on container-h2 the application runs on Hypercorn 0.18. Django's
+  ASGI deployment guide covers Hypercorn beside uvicorn. The numbers on container-h2 therefore
+  measure another server as well as another protocol. Read against container-h1's, they compare both
+  at once. Django implements no ASGI lifespan, and Hypercorn has no setting to skip it, so each
+  worker logs once that it carries on without one.
 
 ## Refusals
 

@@ -43,7 +43,8 @@ export const HOSTS = {
     load: { connections: 16, streams: 16 },
     about:
       "The framework's image in a container, reached over HTTP/2 with prior knowledge and no TLS, so it " +
-      "differs from container-h1 in the protocol alone.",
+      "differs from container-h1 in the protocol alone. A framework whose server speaks only HTTP/1.1 runs " +
+      "on another server here, and its page says which.",
   },
   "lambda-emulator": {
     id: "lambda-emulator",
