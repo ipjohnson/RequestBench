@@ -9,6 +9,7 @@
 import { gunzipSync } from "node:zlib";
 
 import type { Draw, Exceptions, Framework, RunValues, Suite, Test } from "@rb/tests/kit";
+import type { LambdaFraming } from "../traffic-generator/pipe.ts";
 import type { Exchange } from "./live.ts";
 import { validator, type Transport } from "./validate.ts";
 
@@ -153,14 +154,17 @@ export interface Exemplar {
     /**
      * Over HTTP/1.1, the status line, every header line and the blank line after them. Over
      * HTTP/2, the field section's size as RFC 9113 counts it against SETTINGS_MAX_HEADER_LIST_SIZE:
-     * each name and value and 32 more, :status included.
+     * each name and value and 32 more, :status included. On the Lambda Runtime API, what the
+     * function posted to /response besides the body: a proxy response's JSON around it, or a
+     * stream's prelude and the eight NUL bytes after it.
      */
     readonly headerBytes: number;
     /**
      * How the body's end was marked: content-length, chunked or close over HTTP/1.1, frames over
-     * HTTP/2, where END_STREAM marks it, or none for a body that cannot have one.
+     * HTTP/2, where END_STREAM marks it, or none for a body that cannot have one. On the Lambda
+     * Runtime API, how the function framed its answer instead.
      */
-    readonly framing: "content-length" | "chunked" | "close" | "frames" | "none";
+    readonly framing: "content-length" | "chunked" | "close" | "frames" | "none" | LambdaFraming;
     /** As it went over the wire, with any content coding still on. */
     readonly bodyBytes: number;
     /** The start of the body with its content coding undone. */
@@ -189,6 +193,7 @@ const REQUEST_HOST = "<request host>";
 const excerpt = (text: string) => (text.length > EXCERPT ? text.slice(0, EXCERPT) : text);
 
 function framingOf(e: Exchange, headers: ReadonlyMap<string, string>): Exemplar["response"]["framing"] {
+  if (e.response.lambda !== undefined) return e.response.lambda.framing;
   const bodiless = e.request.method === "HEAD" || e.response.status === 204 || e.response.status === 304;
   if (e.response.httpVersion === "2") return bodiless ? "none" : "frames";
   if ((headers.get("transfer-encoding") ?? "").toLowerCase().includes("chunked")) return "chunked";
@@ -201,11 +206,13 @@ export function exemplarOf(e: Exchange): Exemplar {
   const res = e.response;
   const headers = new Map(res.rawHeaders.map(([k, v]) => [k.toLowerCase(), v]));
   const headerBytes =
-    res.httpVersion === "2"
-      ? res.rawHeaders.reduce((sum, [k, v]) => sum + Buffer.byteLength(k) + Buffer.byteLength(v) + 32, ":status".length + 3 + 32)
-      : Buffer.byteLength(`HTTP/${res.httpVersion} ${res.status} ${res.statusMessage}\r\n`) +
-        res.rawHeaders.reduce((sum, [k, v]) => sum + Buffer.byteLength(`${k}: ${v}\r\n`), 0) +
-        2;
+    res.lambda !== undefined
+      ? res.lambda.payloadBytes - res.body.length
+      : res.httpVersion === "2"
+        ? res.rawHeaders.reduce((sum, [k, v]) => sum + Buffer.byteLength(k) + Buffer.byteLength(v) + 32, ":status".length + 3 + 32)
+        : Buffer.byteLength(`HTTP/${res.httpVersion} ${res.status} ${res.statusMessage}\r\n`) +
+          res.rawHeaders.reduce((sum, [k, v]) => sum + Buffer.byteLength(`${k}: ${v}\r\n`), 0) +
+          2;
   let decoded = res.body;
   if ((headers.get("content-encoding") ?? "").includes("gzip") && decoded.length > 0) {
     try {

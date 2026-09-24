@@ -24,7 +24,6 @@ import suite from "@rb/tests";
 import { idOf } from "@rb/tests/kit";
 import type { PerformanceTest } from "@rb/tests/kit";
 import { drawRunValues } from "@rb/tests/models/parameters";
-import exceptions, { type FrameworkId } from "../frameworks/exceptions.ts";
 import { BUCKETS, addInto, countOf, percentile } from "./histogram.ts";
 import { PrepareError, prepare, type Compiled, type Statuses } from "./prepare.ts";
 import {
@@ -39,11 +38,11 @@ import {
   type SettleSummary,
 } from "./load.ts";
 import { Pipe, type PhaseReport } from "./pipe.ts";
+import { UsageError, declared, select } from "./select.ts";
 import { tallyOf, type Tally } from "./tally.ts";
 
 const USAGE = "usage: node traffic-generator/cli.ts <load, as JSON or a file> [--out <file>]";
 
-class UsageError extends Error {}
 
 interface Options {
   readonly load: ResolvedLoad;
@@ -92,52 +91,6 @@ function loadOf(arg: string): ResolvedLoad {
   // Drawn here, a run's values have to come from a source no framework can read.
   const values = parsed.data.values ?? drawRunValues(() => randomInt(2 ** 47) / 2 ** 47);
   return { ...parsed.data, values };
-}
-
-/**
- * The statuses this framework declared. rejected(), notFound(), wrongMethod() and unparseable()
- * compare against them, so a load that does not know which framework it is measuring cannot
- * tell a right answer from a wrong one.
- */
-function declared(id: string): Statuses {
-  if (!Object.hasOwn(exceptions, id)) {
-    const known = Object.keys(exceptions).join(", ");
-    throw new UsageError(`framework: ${id} has no client-exception declaration, only ${known} do`);
-  }
-  const { rejected, malformed, notFound, wrongMethod } = exceptions[id as FrameworkId];
-  return { rejected, malformed, notFound, wrongMethod };
-}
-
-/**
- * The performance tests to offer, by id. `only` names a test by its id, or a whole family by its
- * name. A test the framework cannot answer on its host is left out whatever `only` says.
- */
-function select(only: readonly string[] | undefined, unsupported: Readonly<Record<string, string>> = {}): PerformanceTest[] {
-  for (const id of Object.keys(unsupported)) {
-    if (!Object.hasOwn(suite.tests, id)) throw new UsageError(`unsupported: ${id} is not a test`);
-  }
-  const measured = Object.values(suite.tests)
-    .filter((test): test is PerformanceTest => test.kind === "performance" && !Object.hasOwn(unsupported, idOf(test.id)))
-    .sort((a, b) => (idOf(a.id) < idOf(b.id) ? -1 : 1));
-  if (measured.length === 0) throw new UsageError("unsupported: leaves no performance test to offer");
-  if (only === undefined) return measured;
-
-  const wanted = new Set<string>();
-  for (const name of only) {
-    if (Object.hasOwn(suite.tests, name)) {
-      if (suite.tests[name]!.kind !== "performance") {
-        throw new UsageError(`only: ${name} is a validation test, which is never timed`);
-      }
-      wanted.add(name);
-    } else if (Object.hasOwn(suite.families, name)) {
-      for (const test of measured) if (test.id.family === name) wanted.add(idOf(test.id));
-    } else {
-      throw new UsageError(`only: ${name} is neither a test nor a family`);
-    }
-  }
-  const chosen = measured.filter((test) => wanted.has(idOf(test.id)));
-  if (chosen.length === 0) throw new UsageError(`only: ${only.join(", ")} names no performance test`);
-  return chosen;
 }
 
 const percentiles = (hist: Uint32Array): Percentiles => ({

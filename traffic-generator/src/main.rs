@@ -12,10 +12,19 @@
 //! Anything that goes wrong outside an exchange is answered {"kind":"error","message":"..."}.
 //!
 //!   traffic-generator --target <host:port> [--protocol http/1.1|h2c]
+//!
+//! With `--listen` it serves the Lambda Runtime API instead, says {"kind":"listening","port":N},
+//! and takes {"op":"init"} to wait for the runtime's first /next, the same exchanges and loads, and
+//! {"op":"phase","settleSeconds":30,"seconds":60} for a closed-loop phase.
+//!
+//!   traffic-generator --listen <host:port> --protocol lambda-runtime-api
+mod apigw;
 mod exchange;
 mod h2c;
 mod histogram;
 mod http1;
+mod inbound;
+mod lambda;
 mod load;
 mod request;
 mod tally;
@@ -54,8 +63,17 @@ fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();
     let usage = || -> ! {
         eprintln!("usage: traffic-generator --target <host:port> [--protocol http/1.1|h2c]");
+        eprintln!("       traffic-generator --listen <host:port> --protocol lambda-runtime-api");
         std::process::exit(2);
     };
+    if let [flag, bind, p, name] = args.as_slice()
+        && flag == "--listen"
+        && p == "--protocol"
+        && name == "lambda-runtime-api"
+    {
+        let runtime = tokio::runtime::Builder::new_current_thread().enable_all().build().expect("a runtime");
+        return LocalSet::new().block_on(&runtime, run_lambda(bind.clone()));
+    }
     let (target, protocol) = match args.as_slice() {
         [flag, target] if flag == "--target" => (target.clone(), Protocol::Http1),
         [flag, target, p, name] if flag == "--target" && p == "--protocol" => {
@@ -178,6 +196,113 @@ async fn run(host: String, port: u16, protocol: Protocol) {
     if let Some(open) = load.take() {
         open.close();
     }
+}
+
+#[derive(Deserialize)]
+struct LambdaOpen {
+    tests: Vec<CompiledTest>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct ClosedPhase {
+    settle_seconds: f64,
+    seconds: f64,
+}
+
+/// The Runtime API on `bind`, driven by the same lines as a target.
+async fn run_lambda(bind: String) {
+    let (env, port) = match lambda::listen(&bind).await {
+        Ok(listening) => listening,
+        Err(why) => {
+            eprintln!("traffic-generator: {why}");
+            std::process::exit(1);
+        }
+    };
+    say(&json!({ "kind": "listening", "port": port }));
+    let mut lines = BufReader::new(tokio::io::stdin()).lines();
+    while let Ok(Some(line)) = lines.next_line().await {
+        let command: Value = match serde_json::from_str(&line) {
+            Ok(command) => command,
+            Err(e) => {
+                say(&json!({ "kind": "error", "message": format!("a command that is not JSON: {e}") }));
+                continue;
+            }
+        };
+        let timeout = Duration::from_millis(command["timeoutMs"].as_u64().unwrap_or(10_000));
+        match command["op"].as_str() {
+            Some("init") => {
+                let env = env.clone();
+                tokio::task::spawn_local(async move {
+                    say(&match env.init(timeout).await {
+                        Ok(at) => json!({ "kind": "init", "at": nanos(at) }),
+                        Err(message) => json!({ "kind": "error", "message": message }),
+                    });
+                });
+            }
+            Some("exchange") => {
+                let env = env.clone();
+                tokio::task::spawn_local(async move {
+                    let id = command["id"].clone();
+                    let answer = match serde_json::from_value::<Request>(command["request"].clone()) {
+                        Ok(request) => env.exchange(&request, timeout).await,
+                        Err(e) => Err(format!("a request that does not parse: {e}")),
+                    };
+                    say(&match answer {
+                        Ok(answer) => json!({ "id": id, "answer": answer }),
+                        Err(error) => json!({ "id": id, "error": error }),
+                    });
+                });
+            }
+            Some("open") => match events(command) {
+                Ok(tests) => {
+                    env.load(tests);
+                    say(&json!({ "kind": "ready" }));
+                }
+                Err(message) => say(&json!({ "kind": "error", "message": message })),
+            },
+            Some("phase") => {
+                let phase = match serde_json::from_value::<ClosedPhase>(command) {
+                    Ok(phase) => phase,
+                    Err(e) => {
+                        say(&json!({ "kind": "error", "message": format!("a phase that does not parse: {e}") }));
+                        continue;
+                    }
+                };
+                let (settle, seconds) = (Duration::from_secs_f64(phase.settle_seconds), Duration::from_secs_f64(phase.seconds));
+                say(&match env.phase(settle, seconds, nanos).await {
+                    Ok(report) => report,
+                    Err(message) => json!({ "kind": "error", "message": message }),
+                });
+            }
+            Some("close") => say(&json!({ "kind": "closed" })),
+            other => say(&json!({ "kind": "error", "message": format!("{other:?} is not a command") })),
+        }
+    }
+}
+
+/// Every instance built into the `/next` answer that carries its event, before anything is timed.
+fn events(command: Value) -> Result<Vec<Vec<lambda::Instance>>, String> {
+    let open: LambdaOpen = serde_json::from_value(command).map_err(|e| format!("a load that does not parse: {e}"))?;
+    if open.tests.is_empty() || open.tests.iter().any(|t| t.instances.is_empty()) {
+        return Err("a load needs a test, and each test an instance".into());
+    }
+    let mut tests = Vec::with_capacity(open.tests.len());
+    for test in open.tests {
+        let mut instances = Vec::with_capacity(test.instances.len());
+        for i in test.instances {
+            let body = i.request.body()?;
+            let event = apigw::event(&i.request, body.as_deref());
+            instances.push(lambda::Instance {
+                answer: lambda::NextAnswer::new(&event),
+                label: i.label,
+                accepted: i.accepted,
+                body_bytes: i.body_bytes,
+            });
+        }
+        tests.push(instances);
+    }
+    Ok(tests)
 }
 
 /// Every instance built into its bytes before any thread starts, so nothing is built while a

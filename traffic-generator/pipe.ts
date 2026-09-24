@@ -20,6 +20,9 @@ export interface WireRequest {
   readonly body?: string;
 }
 
+/** How a function framed its answer on the Lambda Runtime API, as src/apigw.rs reads it. */
+export type LambdaFraming = "proxy" | "proxy-base64" | "stream" | "bare";
+
 /** An answer as the framework wrote it. */
 export interface Exchanged {
   readonly status: number;
@@ -32,6 +35,9 @@ export interface Exchanged {
   /** With any chunk framing off and any content coding still on. */
   readonly body: Buffer;
   readonly bodyBytes: number;
+  /** On the Lambda Runtime API: how the function framed its answer, and everything it posted to /response. */
+  readonly framing?: LambdaFraming;
+  readonly payloadBytes?: number;
 }
 
 /** One instance as the load sends it, which prepare.ts compiled. */
@@ -52,6 +58,33 @@ export interface WireTally {
   readonly hist: string;
   readonly firstError: string | null;
   readonly firstMismatch: string | null;
+}
+
+/** One test's invocations in a closed-loop phase: each span's histogram in histogram.ts's layout, as base64. */
+export interface WireSpans {
+  readonly count: number;
+  readonly errors: number;
+  readonly mismatch: number;
+  readonly firstError: string | null;
+  readonly firstMismatch: string | null;
+  /** t0 to t3, which Lambda ends at the next /next. */
+  readonly invoke: string;
+  /** t0 to t2, what a caller waits for. */
+  readonly response: string;
+  readonly responseLatency: string;
+  readonly responseDuration: string;
+  readonly runtimeOverhead: string;
+}
+
+/** A closed-loop phase on the Runtime API. Times are nanoseconds on the program's own clock. */
+export interface ClosedReport {
+  readonly start: number;
+  /** The first recorded invocation's t0 and the last one's t3, or 0 when none was recorded. */
+  readonly first: number;
+  readonly last: number;
+  readonly settle: WireSpans;
+  /** In the order the load listed the tests. */
+  readonly tests: readonly WireSpans[];
 }
 
 /** One phase, every thread's tallies merged. Times are nanoseconds on the program's own clock. */
@@ -88,10 +121,12 @@ export function program(root: string): string {
 
 const ROOT = join(import.meta.dirname, "..");
 
-type Line = { id?: number; answer?: Record<string, unknown>; error?: string; kind?: string; message?: string };
+type Line = { id?: number; answer?: Record<string, unknown>; error?: string; kind?: string; message?: string; [key: string]: unknown };
 
 export class Pipe {
   readonly #child: ChildProcessWithoutNullStreams;
+  /** The port the program serves the Lambda Runtime API on, which it says in its first line. */
+  #listening: { resolve: (port: number) => void; reject: (e: Error) => void } | undefined;
   readonly #exchanges = new Map<number, { resolve: (a: Exchanged) => void; reject: (e: Error) => void }>();
   /** The command other than an exchange that is waiting for its line. One runs at a time. */
   #waiting: { resolve: (line: Line) => void; reject: (e: Error) => void } | undefined;
@@ -115,6 +150,8 @@ export class Pipe {
       this.#exchanges.clear();
       this.#waiting?.reject(this.#ended);
       this.#waiting = undefined;
+      this.#listening?.reject(this.#ended);
+      this.#listening = undefined;
     });
   }
 
@@ -122,6 +159,28 @@ export class Pipe {
   static start(address: { readonly host: string; readonly port: number }, protocol: Protocol = "http/1.1", root: string = ROOT): Pipe {
     const args = ["--target", `${address.host}:${address.port}`, "--protocol", protocol];
     return new Pipe(spawn(program(root), args, { stdio: ["pipe", "pipe", "pipe"] }));
+  }
+
+  /**
+   * The program serving the Lambda Runtime API on `bind`, and the port it bound. `pin` names the
+   * cores it runs on, through taskset, which only Linux has.
+   */
+  static async listen(bind: string, pin?: string, root: string = ROOT): Promise<{ pipe: Pipe; port: number }> {
+    const argv = [program(root), "--listen", bind, "--protocol", "lambda-runtime-api"];
+    const pinned = pin && process.platform === "linux" ? ["taskset", "-c", pin, ...argv] : argv;
+    const pipe = new Pipe(spawn(pinned[0]!, pinned.slice(1), { stdio: ["pipe", "pipe", "pipe"] }));
+    const port = await new Promise<number>((resolve, reject) => (pipe.#listening = { resolve, reject }));
+    return { pipe, port };
+  }
+
+  /** Waits for the runtime's first /next, which ends its Init phase, and says when it came. */
+  async init(timeoutMs: number): Promise<number> {
+    return Number((await this.#command({ op: "init", timeoutMs }, "init"))["at"]);
+  }
+
+  /** A closed-loop phase: events as fast as the runtime asks, unrecorded for `settleSeconds`, then recorded. */
+  async closedPhase(phase: { settleSeconds: number; seconds: number }): Promise<ClosedReport> {
+    return (await this.#command({ op: "phase", ...phase }, "phase")) as unknown as ClosedReport;
   }
 
   /** One request and its whole answer. Nothing about it is timed. */
@@ -178,6 +237,11 @@ export class Pipe {
       if (line.error !== undefined) return pending.reject(new Error(line.error));
       const a = line.answer as Omit<Exchanged, "body"> & { body: string };
       pending.resolve({ ...a, body: Buffer.from(a.body, "base64") });
+      return;
+    }
+    if (line.kind === "listening" && this.#listening !== undefined) {
+      this.#listening.resolve(Number(line["port"]));
+      this.#listening = undefined;
       return;
     }
     const waiting = this.#waiting;

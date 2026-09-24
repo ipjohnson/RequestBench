@@ -167,3 +167,83 @@ export interface LoadResult {
   readonly testsLive: number;
   readonly phases: readonly PhaseResult[];
 }
+
+/**
+ * One closed-loop phase on the Lambda Runtime API. A function answers one event at a time and
+ * asks for the next, so it is offered no rate: every event goes out the moment it asks. The
+ * settle's seconds are not recorded, and the seconds after them are.
+ */
+export interface ClosedPhase {
+  readonly name: string;
+  readonly settle?: number;
+  readonly seconds?: number;
+}
+
+/** One span of a closed-loop test: its percentiles, and its histogram in histogram.ts's layout as base64. */
+export interface SpanSummary extends Percentiles {
+  readonly histB64: string;
+}
+
+export interface ClosedTestSummary {
+  readonly id: string;
+  readonly family: string;
+  readonly count: number;
+  readonly errors: number;
+  readonly mismatch: number;
+  readonly firstMismatch?: string;
+  readonly firstError?: string;
+  /** From the event's write to the runtime's next /next, where Lambda ends the invoke phase. */
+  readonly invoke: SpanSummary;
+  /** From the event's write to the whole answer, which is what a caller waits for. */
+  readonly response: SpanSummary;
+  /** The Telemetry API's spans: to the answer's first bytes, through its last, and on to the next /next. */
+  readonly responseLatency: SpanSummary;
+  readonly responseDuration: SpanSummary;
+  readonly runtimeOverhead: SpanSummary;
+}
+
+export interface ClosedRecordedSummary {
+  readonly seconds: number;
+  /** From the first recorded event's write to the /next after the last one. */
+  readonly elapsedSeconds: number;
+  readonly invocations: number;
+  readonly invocationsPerSecond: number;
+  readonly errors: number;
+  readonly mismatch: number;
+  /** The invoke phase over every test. */
+  readonly overall: Percentiles & { readonly count: number };
+  readonly tests: readonly ClosedTestSummary[];
+}
+
+export interface ClosedPhaseResult {
+  readonly name: string;
+  readonly status: "done";
+  readonly settle?: {
+    readonly seconds: number;
+    readonly invocations: number;
+    readonly errors: number;
+    readonly mismatch: number;
+    readonly firstError?: string;
+    readonly firstMismatch?: string;
+  };
+  readonly recorded?: ClosedRecordedSummary;
+}
+
+/** What a closed-loop load ran and what it measured. */
+export interface ClosedResult {
+  /** Tells it from an open loop's LoadResult. */
+  readonly closed: true;
+  readonly load: {
+    readonly framework: string;
+    readonly values: RunValues;
+    readonly instances: number;
+    readonly only?: readonly string[];
+    readonly unsupported?: Readonly<Record<string, string>>;
+    readonly phases: readonly ClosedPhase[];
+  };
+  /** The performance tests offered. */
+  readonly testsLive: number;
+  readonly phases: readonly ClosedPhaseResult[];
+}
+
+export const isClosed = (result: LoadResult | ClosedResult): result is ClosedResult => "closed" in result;
