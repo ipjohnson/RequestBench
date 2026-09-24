@@ -20,9 +20,10 @@ by hand.
 | `Implementation/templates/` | The template, which rocket_dyn_templates reads from disk when Rocket ignites. |
 | `container-h1/` | How container-h1 starts it. `main.rs` is the server binary, and `Dockerfile` builds the image. |
 | `container-h2/` | How container-h2 starts it. `main.rs` is the server binary, on Rocket's own server, hyper 0.14 with its `http2` feature, which answers HTTP/2 with prior knowledge beside HTTP/1.1, and `Dockerfile` builds the image. |
+| `lambda-emulator/` | How lambda-emulator starts it. `main.rs` is the function, which hands the application to lambda-web's `launch_rocket_on_lambda`, and `Dockerfile` builds it on the `provided.al2023` base image, where it runs as `/var/runtime/bootstrap`. |
 | `UnitTests/` | The suite, which drives the application in process with Rocket's local client. |
 | `client-exception/` | How the corpus reads Rocket's error bodies. |
-| `Cargo.toml` | One package: the library, the binary and the suite, each at its own path. |
+| `Cargo.toml` | One package: the library, each host's binary and the suite, each at its own path. |
 | `Cargo.lock` | Every crate as resolved. |
 
 There is no client project. Rocket writes no OpenAPI document without a third-party library, such
@@ -125,6 +126,21 @@ reads the cgroup's CPU quota, so the container runs two workers under its two-CP
   default, so `main.rs` does neither. A release build logs nothing below critical.
 - The allocator is mimalloc, set as the global allocator in `main.rs`, as for every Rust
   framework here.
+- On lambda-emulator the application answers behind lambda-web 0.2.1, the newest release, from
+  January 2023. Rocket ships no Lambda adapter, and lambda-web's `rocket05` feature is the one
+  written for Rocket 0.5. lambda-web pins lambda_runtime 0.7, where axum's function runs
+  lambda_runtime 1.4. It dispatches each event through Rocket's local client, the one the suite
+  drives the application with, rather than through Rocket's server.
+- `launch_rocket_on_lambda` reads the whole answer into one proxy response, so the sse and stream
+  tests are listed as unsupported on lambda-emulator.
+- lambda-web posts every body in base64, text included, and each header name as Rocket spells it,
+  such as `Content-Type`, where Rocket's server writes it in lowercase. It keeps one value of each
+  header, the last Rocket wrote, except Set-Cookie, whose values go in the proxy response's
+  cookies.
+- lambda-web's default feature, br, brotli-compresses a text answer Rocket did not compress when
+  the request accepts br. It is off, so every answer is Rocket's own.
+- The function is built on the Lambda base image it runs on. Amazon Linux 2023's glibc is older
+  than the one in the rust images, and a binary linked against a newer glibc may not start on it.
 
 ## Refusals
 
