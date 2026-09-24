@@ -22,6 +22,10 @@ int port = int.TryParse(Environment.GetEnvironmentVariable("PORT"), out int pars
 
 builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
 builder.Logging.ClearProviders();
+// On lambda-emulator, where AWS_LAMBDA_FUNCTION_NAME is set, Amazon.Lambda.AspNetCoreServer
+// serves the application in Kestrel's place, and the Lambda runtime client hands it each API
+// Gateway payload format 2.0 event. On the other hosts this does nothing.
+builder.Services.AddAWSLambdaHosting(LambdaEventSource.HttpApi);
 
 builder.Services.AddSingleton(payloads);
 // rb:wiring template.*
