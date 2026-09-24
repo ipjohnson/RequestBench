@@ -24,9 +24,10 @@ import suite from "@rb/tests";
 import { idOf } from "@rb/tests/kit";
 import type { PerformanceTest } from "@rb/tests/kit";
 import { drawRunValues } from "@rb/tests/models/parameters";
-import { BUCKETS, addInto, countOf, percentile } from "./histogram.ts";
+import { BUCKETS, addInto, countOf, percentile, windowOf } from "./histogram.ts";
 import { PrepareError, prepare, type Compiled, type Statuses } from "./prepare.ts";
 import {
+  WINDOW_SECONDS,
   addressOf,
   loadSchema,
   type LoadResult,
@@ -139,6 +140,7 @@ function recordedSummary(
 
   return {
     seconds,
+    windowSeconds: WINDOW_SECONDS,
     elapsedSeconds: Number(elapsed.toFixed(2)),
     achievedRps: Math.round(completed / elapsed),
     scheduled,
@@ -160,6 +162,7 @@ function recordedSummary(
         ...(t.firstMismatch === undefined ? {} : { firstMismatch: t.firstMismatch }),
         ...(t.firstError === undefined ? {} : { firstError: t.firstError }),
         histB64: base64(t.hist),
+        windows: t.windows.map(windowOf),
       };
     }),
   };
@@ -178,7 +181,11 @@ async function runPhase(o: Options, pipe: Pipe, phase: Phase): Promise<PhaseResu
   ];
   console.log(`${phase.name}: offering ${phase.rps} rps over ${o.load.workers} threads: ${parts.join(", then ")}`);
 
-  const report: PhaseReport = await pipe.phase({ ...schedule, abortDropFraction: phase.abortDropFraction ?? null });
+  const report: PhaseReport = await pipe.phase({
+    ...schedule,
+    abortDropFraction: phase.abortDropFraction ?? null,
+    windowSeconds: WINDOW_SECONDS,
+  });
   const { aborted, unfinished } = report;
   // The recorded instances carry on the settle's schedule, so the first of them is due where it ends.
   const from = report.start + Math.round((schedule.settle * 1e9) / phase.rps);

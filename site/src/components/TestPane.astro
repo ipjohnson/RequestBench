@@ -2,12 +2,14 @@
 // One test's pane: what it asks, what it cost, the code behind it, what went over the wire,
 // and the tests that hold it.
 import TestHistogram from "./TestHistogram.astro";
+import TestOverTime from "./TestOverTime.astro";
 import { baseCell } from "../lib/views.ts";
 import { cell, type Unit } from "../lib/metrics.ts";
 import { esc } from "../lib/html.ts";
 import type { Chain } from "../lib/delta.ts";
 import type { BinGrid, Route, TestRung, WireExchange } from "../lib/types.ts";
 import type { Mechanism, Part, Snippet } from "../lib/bundleview.ts";
+import type { Windowing } from "../lib/windows.ts";
 
 /** What this test did at one offered rate. Everything else on the pane is rate-agnostic. */
 export type PaneRung = {
@@ -53,6 +55,8 @@ type Props = {
   route: Route | undefined;
   rungs: PaneRung[];
   grid: BinGrid | undefined;
+  /** How the run's windows are laid out, or null when it has none. */
+  windowing: Windowing | null;
   snippet: Snippet | undefined;
   /** Tests the same registration answers, so six panes do not each claim the block. */
   also: string[];
@@ -85,6 +89,7 @@ const {
   route,
   rungs,
   grid,
+  windowing,
   snippet,
   also,
   link,
@@ -170,6 +175,11 @@ const hdrs = (hs: readonly (readonly [string, string])[]): string =>
   {
     rungs.map((r) => {
       const { fields, measured } = measure(r);
+      // The two charts are tabs when there are both, and whichever there is otherwise.
+      const shape = Boolean(grid && r.span && r.stats?.bins?.some((c) => c > 0));
+      const histogram = grid && r.span ? <TestHistogram grid={grid} stats={r.stats} span={r.span} id={id} /> : null;
+      const overTime = windowing && r.stats?.windows?.length ? <TestOverTime windows={r.stats.windows} windowing={windowing} id={id} /> : null;
+      const tabs = `chart-${id}-${r.rn}`;
       return (
         <div class="eprate" data-rung={r.rn} hidden={!r.shown}>
           {measured ? (
@@ -185,7 +195,41 @@ const hdrs = (hs: readonly (readonly [string, string])[]): string =>
           ) : (
             <p class="empty">Not measured at this rate.</p>
           )}
-          {grid && r.span && <TestHistogram grid={grid} stats={r.stats} span={r.span} id={id} />}
+          {shape && overTime ? (
+            <div class="epchart">
+              <div class="epcharttabs" role="tablist" aria-label={`How to read ${id}'s latency`}>
+                <button
+                  type="button"
+                  role="tab"
+                  id={`${tabs}-hist-tab`}
+                  aria-controls={`${tabs}-hist`}
+                  aria-selected="true"
+                  data-chart="hist"
+                >
+                  Histogram
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  id={`${tabs}-time-tab`}
+                  aria-controls={`${tabs}-time`}
+                  aria-selected="false"
+                  tabindex="-1"
+                  data-chart="time"
+                >
+                  Over time
+                </button>
+              </div>
+              <div role="tabpanel" id={`${tabs}-hist`} aria-labelledby={`${tabs}-hist-tab`}>
+                {histogram}
+              </div>
+              <div role="tabpanel" id={`${tabs}-time`} aria-labelledby={`${tabs}-time-tab`} hidden>
+                {overTime}
+              </div>
+            </div>
+          ) : (
+            (overTime || histogram)
+          )}
         </div>
       );
     })

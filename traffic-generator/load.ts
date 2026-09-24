@@ -17,6 +17,15 @@ export function addressOf(target: string): { host: string; port: number } | unde
 const seconds = z.number().positive();
 
 /**
+ * How long each window of a recording lasts. Every test reports its count and percentiles in
+ * each window apart, so a latency that moves while a phase runs shows how it moved.
+ */
+export const WINDOW_SECONDS = 10;
+
+/** One window of a test's recording: how many it timed, then its p50, p90 and p99. */
+export type Window = readonly [count: number, p50Us: number, p90Us: number, p99Us: number];
+
+/**
  * One rate, offered for a while. The settle runs first and is never recorded, so the framework,
  * the connections and the generator have adjusted to the rate before the recorded seconds
  * start. A phase with only a settle is a warmup.
@@ -126,10 +135,14 @@ export interface TestSummary extends Percentiles {
   readonly firstError?: string;
   /** The test's histogram in the layout histogram.ts describes, as base64. */
   readonly histB64: string;
+  /** Each window of the recording, in order, by when its instances were scheduled. */
+  readonly windows?: readonly Window[];
 }
 
 export interface RecordedSummary {
   readonly seconds: number;
+  /** How long each test's windows last. */
+  readonly windowSeconds?: number;
   /** From the moment the first recorded instance was due to the last answer. */
   readonly elapsedSeconds: number;
   readonly achievedRps: number;
@@ -200,10 +213,14 @@ export interface ClosedTestSummary {
   readonly responseLatency: SpanSummary;
   readonly responseDuration: SpanSummary;
   readonly runtimeOverhead: SpanSummary;
+  /** The invoke phase in each window of the recording, in order, by when its event went out. */
+  readonly windows?: readonly Window[];
 }
 
 export interface ClosedRecordedSummary {
   readonly seconds: number;
+  /** How long each test's windows last. */
+  readonly windowSeconds?: number;
   /** From the first recorded event's write to the /next after the last one. */
   readonly elapsedSeconds: number;
   readonly invocations: number;

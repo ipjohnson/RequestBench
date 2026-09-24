@@ -55,7 +55,10 @@ export interface WireTally {
   readonly errors: number;
   readonly mismatch: number;
   readonly dropped: number;
+  /** Every instance timed, whichever window holds it. */
   readonly hist: string;
+  /** The recorded instances in each window of the phase, in order, each encoded as `hist` is. The settle's tally has none. */
+  readonly windows: readonly string[];
   readonly firstError: string | null;
   readonly firstMismatch: string | null;
 }
@@ -69,6 +72,8 @@ export interface WireSpans {
   readonly firstMismatch: string | null;
   /** t0 to t3, which Lambda ends at the next /next. */
   readonly invoke: string;
+  /** The invoke phase in each window of the recording, in order, each encoded as `invoke` is. `invoke` counts them too. */
+  readonly windows: readonly string[];
   /** t0 to t2, what a caller waits for. */
   readonly response: string;
   readonly responseLatency: string;
@@ -193,7 +198,7 @@ export class Pipe {
   }
 
   /** A closed-loop phase: events as fast as the runtime asks, unrecorded for `settleSeconds`, then recorded. */
-  async closedPhase(phase: { settleSeconds: number; seconds: number }): Promise<ClosedReport> {
+  async closedPhase(phase: { settleSeconds: number; seconds: number; windowSeconds: number }): Promise<ClosedReport> {
     return (await this.#command({ op: "phase", ...phase }, "phase")) as unknown as ClosedReport;
   }
 
@@ -215,7 +220,13 @@ export class Pipe {
     await this.#command({ op: "open", tests, ...shape }, "ready");
   }
 
-  async phase(phase: { rps: number; settle: number; total: number; abortDropFraction: number | null }): Promise<PhaseReport> {
+  async phase(phase: {
+    rps: number;
+    settle: number;
+    total: number;
+    abortDropFraction: number | null;
+    windowSeconds: number;
+  }): Promise<PhaseReport> {
     return (await this.#command({ op: "phase", ...phase }, "phase")) as unknown as PhaseReport;
   }
 

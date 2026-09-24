@@ -31,6 +31,18 @@ export function percentile(hist: Uint32Array, p: number): number {
   return Math.round(midpoint(hist.length - 1));
 }
 
+/**
+ * One window of a recording: how many it timed, then its p50, p90 and p99. Read with pct, as a
+ * summary reads each test's own percentiles, because no window's histogram is kept for a summary
+ * to read them again from.
+ */
+export const windowOf = (counts: Uint32Array): [count: number, p50Us: number, p90Us: number, p99Us: number] => [
+  countOf(counts),
+  pct(counts, 50),
+  pct(counts, 90),
+  pct(counts, 99),
+];
+
 export function addInto(into: Uint32Array, from: Uint32Array): void {
   for (let i = 0; i < into.length; i++) into[i] = into[i]! + from[i]!;
 }

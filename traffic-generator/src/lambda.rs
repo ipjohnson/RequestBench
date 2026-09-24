@@ -115,7 +115,11 @@ pub struct Spans {
     pub count: u64,
     pub errors: u64,
     pub mismatch: u64,
+    /// Every invoke phase, when the spans have no windows, as the settle's have none.
     invoke: Vec<u32>,
+    /// The invoke phase in each window of the recording. An invocation is counted in one of these
+    /// or in `invoke`, never both, and `json` reports `invoke` as the sum.
+    windows: Vec<Vec<u32>>,
     response: Vec<u32>,
     latency: Vec<u32>,
     duration: Vec<u32>,
@@ -126,12 +130,18 @@ pub struct Spans {
 
 impl Spans {
     fn new() -> Spans {
+        Spans::windowed(0)
+    }
+
+    /// Spans with their windows allocated, so none is allocated while a phase is timed.
+    fn windowed(windows: usize) -> Spans {
         let hist = || vec![0u32; BUCKETS];
         Spans {
             count: 0,
             errors: 0,
             mismatch: 0,
             invoke: hist(),
+            windows: (0..windows).map(|_| hist()).collect(),
             response: hist(),
             latency: hist(),
             duration: hist(),
@@ -141,9 +151,16 @@ impl Spans {
         }
     }
 
-    fn time(&mut self, t0: Instant, t1: Instant, t2: Instant, t3: Instant) {
+    /// One invocation's spans. Its invoke phase goes in window `window`, in the last window when it
+    /// is past them, or in `invoke` when there are none.
+    fn time(&mut self, t0: Instant, t1: Instant, t2: Instant, t3: Instant, window: usize) {
         let us = |from: Instant, to: Instant| to.saturating_duration_since(from).as_nanos() as f64 / 1000.0;
-        self.invoke[bucket_of(us(t0, t3))] += 1;
+        let last = self.windows.len().saturating_sub(1);
+        let invoke = match self.windows.get_mut(window.min(last)) {
+            Some(hist) => hist,
+            None => &mut self.invoke,
+        };
+        invoke[bucket_of(us(t0, t3))] += 1;
         self.response[bucket_of(us(t0, t2))] += 1;
         self.latency[bucket_of(us(t0, t1))] += 1;
         self.duration[bucket_of(us(t1, t2))] += 1;
@@ -166,13 +183,20 @@ impl Spans {
             let bytes: Vec<u8> = hist.iter().flat_map(|n| n.to_le_bytes()).collect();
             base64::engine::general_purpose::STANDARD.encode(bytes)
         };
+        let mut invoke = self.invoke.clone();
+        for window in &self.windows {
+            for (into, n) in invoke.iter_mut().zip(window) {
+                *into += n;
+            }
+        }
         json!({
             "count": self.count,
             "errors": self.errors,
             "mismatch": self.mismatch,
             "firstError": self.first_error,
             "firstMismatch": self.first_mismatch,
-            "invoke": b64(&self.invoke),
+            "invoke": b64(&invoke),
+            "windows": self.windows.iter().map(|w| b64(w)).collect::<Vec<_>>(),
             "response": b64(&self.response),
             "responseLatency": b64(&self.latency),
             "responseDuration": b64(&self.duration),
@@ -222,6 +246,8 @@ struct Phase {
     /// Each second of the recording, from its start: the invocations whose t0 fell in it, and
     /// their invoke phases summed in nanoseconds.
     seconds: Vec<(u64, u64)>,
+    /// How long each window of the recording lasts, or zero for none.
+    window_seconds: f64,
     done: Option<oneshot::Sender<Result<(), String>>>,
 }
 
@@ -460,6 +486,14 @@ impl Env {
         let mut phase = self.phase.borrow_mut();
         let Some(phase) = phase.as_mut() else { return };
         let recorded = t0 >= phase.settle_until;
+        // The window the event went out in. Like the check below, it is worked out after the next
+        // event has gone out, so it never sits inside a span. The last event can go out just after
+        // the phase's end, which puts it past the last window.
+        let window = if recorded && phase.window_seconds > 0.0 {
+            (t0.saturating_duration_since(phase.settle_until).as_secs_f64() / phase.window_seconds) as usize
+        } else {
+            0
+        };
         let spans = if recorded { &mut phase.tallies[test] } else { &mut phase.settle };
         let Some(answer) = answered else {
             return spans.error("the runtime asked for another event without answering this one");
@@ -483,7 +517,7 @@ impl Env {
                 }
             }
         }
-        spans.time(t0, answer.t1, answer.t2, t3);
+        spans.time(t0, answer.t1, answer.t2, t3, window);
         if recorded {
             phase.first.get_or_insert(t0);
             phase.last = Some(t3);
@@ -563,23 +597,32 @@ impl Env {
     }
 
     /// A closed-loop phase: events handed out as fast as the runtime asks, unrecorded for `settle`
-    /// and then recorded for `seconds`. The runtime keeps its last `/next` waiting after it.
-    pub async fn phase(self: &Rc<Self>, settle: Duration, seconds: Duration, nanos: impl Fn(Instant) -> u64) -> Result<Value, String> {
+    /// and then recorded for `seconds`, cut into windows `window` long. The runtime keeps its last
+    /// `/next` waiting after it.
+    pub async fn phase(
+        self: &Rc<Self>,
+        settle: Duration,
+        seconds: Duration,
+        window: Duration,
+        nanos: impl Fn(Instant) -> u64,
+    ) -> Result<Value, String> {
         if self.tests.borrow().is_empty() {
             return Err("a phase before the load was opened".into());
         }
+        let windows = if window.is_zero() { 0 } else { (seconds.as_secs_f64() / window.as_secs_f64()).ceil() as usize };
         let (done, finished) = oneshot::channel();
         let start = Instant::now();
         let tests = self.tests.borrow().len();
         *self.phase.borrow_mut() = Some(Phase {
             settle_until: start + settle,
             end: start + settle + seconds,
-            tallies: (0..tests).map(|_| Spans::new()).collect(),
+            tallies: (0..tests).map(|_| Spans::windowed(windows)).collect(),
             settle: Spans::new(),
             first: None,
             last: None,
             first_invocation: None,
             seconds: Vec::new(),
+            window_seconds: window.as_secs_f64(),
             done: Some(done),
         });
         self.progress.set(start);
@@ -731,7 +774,7 @@ mod tests {
                     head: false,
                 };
                 env.load(vec![vec![instance("/a")], vec![instance("/bb")]]);
-                let report = env.phase(Duration::ZERO, Duration::from_millis(300), |_| 0).await.unwrap();
+                let report = env.phase(Duration::ZERO, Duration::from_millis(300), Duration::from_millis(100), |_| 0).await.unwrap();
                 // With no settle the first recorded invocation is the first event the runtime answered.
                 let first = &report["firstInvocation"];
                 assert!(first["test"].as_u64().unwrap() < 2);
@@ -742,9 +785,16 @@ mod tests {
                 for test in report["tests"].as_array().unwrap() {
                     assert!(test["count"].as_u64().unwrap() > 10, "{test}");
                     assert_eq!((test["errors"].as_u64(), test["mismatch"].as_u64()), (Some(0), Some(0)), "{test}");
-                    let invoke = base64::engine::general_purpose::STANDARD.decode(test["invoke"].as_str().unwrap()).unwrap();
-                    let timed: u64 = invoke.chunks(4).map(|b| u64::from(u32::from_le_bytes([b[0], b[1], b[2], b[3]]))).sum();
-                    assert_eq!(timed, test["count"].as_u64().unwrap());
+                    let timed = |b64: &Value| -> u64 {
+                        let hist = base64::engine::general_purpose::STANDARD.decode(b64.as_str().unwrap()).unwrap();
+                        hist.chunks(4).map(|b| u64::from(u32::from_le_bytes([b[0], b[1], b[2], b[3]]))).sum()
+                    };
+                    assert_eq!(timed(&test["invoke"]), test["count"].as_u64().unwrap());
+                    // Three windows of 100 ms, which between them hold every invocation. Which one holds
+                    // each depends on when the stub's thread ran, so it is not checked.
+                    let windows = test["windows"].as_array().unwrap();
+                    assert_eq!(windows.len(), 3);
+                    assert_eq!(windows.iter().map(timed).sum::<u64>(), test["count"].as_u64().unwrap());
                 }
                 // After the phase the runtime waits in /next, and an exchange goes straight to it.
                 let answer = env.exchange(&get("/after"), Duration::from_secs(5)).await.unwrap();

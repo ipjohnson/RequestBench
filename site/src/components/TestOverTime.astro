@@ -1,0 +1,152 @@
+---
+// One test's latency through its recording: its p50, p90 and p99 in each window. The histogram
+// beside it shows the recording all at once, which averages away a latency that climbs while the
+// phase runs, as one does when a framework leaks.
+//
+// Latency on a log axis against time on a linear one. The lines are one hue stepped darkest for
+// p50, which the table leads with, and lightest for p99, which in a window of a few hundred
+// requests rests on the slowest two or three. A dot marks where each line ends, and a window's
+// own numbers are in its readout.
+import { usLabel } from "../lib/bins.ts";
+import { esc } from "../lib/html.ts";
+import { logTicks, windowSpan, type Windowing } from "../lib/windows.ts";
+
+type Props = {
+  windows: number[][];
+  windowing: Windowing;
+  id: string;
+};
+const { windows, windowing, id } = Astro.props as Props;
+const { seconds, places } = windowing;
+const span = windowSpan(windows, places);
+
+const W = 720;
+const H = 150;
+const M = { t: 10, r: 76, b: 26, l: 52 };
+const pw = W - M.l - M.r;
+const ph = H - M.t - M.b;
+const n = windows.length;
+const l0 = Math.log10(span?.lo ?? 1);
+const l1 = Math.log10(span?.hi ?? 10);
+/** A window's line passes through its middle, and its edges bound what it counted. */
+const mid = (i: number): number => M.l + ((i + 0.5) / n) * pw;
+const edge = (i: number): number => M.l + (i / n) * pw;
+const y = (v: number): number => M.t + ph - ((Math.log10(v) - l0) / (l1 - l0)) * ph;
+const at = (v: number): string => v.toFixed(1);
+
+const counted = (w: number[]): boolean => (w[places.count] ?? 0) > 0;
+const lastCounted = windows.findLastIndex(counted);
+
+const lines = (
+  [
+    ["p50", places.p50, "ot50"],
+    ["p90", places.p90, "ot90"],
+    ["p99", places.p99, "ot99"],
+  ] as const
+).map(([name, place, cls]) => {
+  // A window nothing was timed in has no percentile, and the line breaks there rather than
+  // dropping to it.
+  let d = "";
+  let broken = true;
+  windows.forEach((w, i) => {
+    const v = w[place] ?? 0;
+    if (!counted(w) || v <= 0) {
+      broken = true;
+      return;
+    }
+    d += `${broken ? "M" : "L"}${at(mid(i))},${at(y(v))}`;
+    broken = false;
+  });
+  return { name, cls, d, end: lastCounted < 0 ? null : (windows[lastCounted]![place] ?? null) };
+});
+
+// Each line's end is labelled where there is room. A label that would sit on another's is left
+// out, and the legend still names its line.
+const taken: number[] = [];
+const ends = lines.flatMap((l) => {
+  if (!l.end) return [];
+  const ly = y(l.end);
+  if (taken.some((t) => Math.abs(t - ly) < 11)) return [];
+  taken.push(ly);
+  return [{ name: l.name, v: l.end, y: ly }];
+});
+
+const counts = windows.filter(counted).map((w) => w[places.count]!);
+const fewest = Math.min(...counts);
+const most = Math.max(...counts);
+const holds = fewest === most ? fewest.toLocaleString() : `${fewest.toLocaleString()} to ${most.toLocaleString()}`;
+// Every edge is labelled up to six windows, and every other edge past that, so the labels do
+// not run together.
+const every = n > 6 ? 2 : 1;
+const first = windows.find(counted);
+const last = windows[lastCounted];
+const moved =
+  first && last
+    ? ` Its p50 was ${usLabel(first[places.p50]!)} in the first window and ${usLabel(last[places.p50]!)} in the last.`
+    : "";
+const readout = (w: number[], i: number): string =>
+  `${i * seconds}–${(i + 1) * seconds} s · ${(w[places.count] ?? 0).toLocaleString()} requests` +
+  (counted(w) ? ` · p50 ${usLabel(w[places.p50]!)} · p90 ${usLabel(w[places.p90]!)} · p99 ${usLabel(w[places.p99]!)}` : "");
+---
+
+{
+  span && counts.length > 0 && (
+    <figure class="eptime">
+      <svg
+        viewBox={`0 0 ${W} ${H}`}
+        width={W}
+        height={H}
+        role="img"
+        aria-label={`p50, p90 and p99 of ${id} in each ${seconds} seconds of the recording.${moved}`}
+      >
+        <g class="oty">
+          {logTicks(span.lo, span.hi).map((v) => (
+            <Fragment>
+              <line x1={M.l} x2={M.l + pw} y1={at(y(v))} y2={at(y(v))} class="distgrid" />
+              <text x={M.l - 6} y={at(y(v) + 3.5)} class="disttick">
+                {usLabel(v)}
+              </text>
+            </Fragment>
+          ))}
+        </g>
+        {windows.map((w, i) => (
+          <rect x={at(edge(i))} y={M.t} width={at(pw / n)} height={ph} class="othit">
+            <title set:html={esc(readout(w, i))} />
+          </rect>
+        ))}
+        {/* p50 is drawn last, so it is the line on top where they cross. */}
+        {lines.toReversed().map((l) => (
+          <path d={l.d} class={`otline ${l.cls}`} />
+        ))}
+        {lines
+          .toReversed()
+          .map((l) => (l.end ? <circle cx={at(mid(lastCounted))} cy={at(y(l.end))} r="4" class={`otdot ${l.cls}`} /> : null))}
+        {ends.map((e) => (
+          <text x={at(mid(lastCounted) + 9)} y={at(e.y + 3.5)} class="otend">
+            {e.name} {usLabel(e.v)}
+          </text>
+        ))}
+        <g class="otx">
+          {Array.from({ length: n + 1 }, (_, i) => i)
+            .filter((i) => i % every === 0)
+            .map((i) => (
+              <text x={at(edge(i))} y={H - 8} class="disttick">
+                {i * seconds} s
+              </text>
+            ))}
+        </g>
+      </svg>
+      <figcaption>
+        <span class="otkeys">
+          {lines.map((l) => (
+            <span class={`otkey ${l.cls}`}>
+              <i />
+              {l.name}
+            </span>
+          ))}
+        </span>
+        Each window is {seconds} seconds of this test's recording and holds {holds} of its requests. Hover one for its numbers.
+      </figcaption>
+    </figure>
+  )
+}

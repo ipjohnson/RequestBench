@@ -195,6 +195,12 @@ test("every performance test answers the status it declares", async () => {
   assert.equal(regular.recorded.errors, 0, stdout);
   assert.equal(regular.recorded.dropped, 0);
   for (const t of regular.recorded.tests) assert.ok(t.count > 0, `${t.id} ran no instance`);
+  // Two seconds fit in one window, which holds every instance its test timed.
+  assert.equal(regular.recorded.windowSeconds, 10);
+  for (const t of regular.recorded.tests) {
+    assert.deepEqual([t.windows.length, t.windows[0][0]], [1, t.count], t.id);
+    assert.ok(t.windows[0][1] > 0 && t.windows[0][1] <= t.windows[0][2] && t.windows[0][2] <= t.windows[0][3], t.id);
+  }
 });
 
 test("a wrong status is counted against the test that received it and still timed", async () => {

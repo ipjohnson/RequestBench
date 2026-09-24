@@ -59,6 +59,9 @@ pub struct Schedule {
     pub settle: u64,
     /// Recorded instances.
     pub total: u64,
+    /// How long each window of the recording lasts. Each test counts every window apart, and zero
+    /// counts the recording in one histogram.
+    pub window_seconds: f64,
 }
 
 pub struct Report {
@@ -253,6 +256,8 @@ struct Pending {
     instance: usize,
     /// The phase it was sent in. An answer that arrives after its phase reported counts nowhere.
     phase: u64,
+    /// Its place in the phase's schedule, which says the window it counts in.
+    k: u64,
 }
 
 struct Conn {
@@ -276,6 +281,21 @@ struct PhaseTally {
     tallies: Vec<Tally>,
     settle: Tally,
     last: Option<Instant>,
+    /// The first recorded instance's place in the schedule, and how many are scheduled in each
+    /// window from it.
+    recorded: u64,
+    per_window: f64,
+}
+
+impl PhaseTally {
+    /// The window an instance was scheduled in, however long it took. It is worked out once the
+    /// instance's answer has been timed, so it adds nothing to any instance's time.
+    fn window(&self, k: u64) -> usize {
+        if self.per_window < 1.0 {
+            return 0;
+        }
+        (k.saturating_sub(self.recorded) as f64 / self.per_window) as usize
+    }
 }
 
 struct State {
@@ -378,8 +398,15 @@ impl State {
         self.open().await?;
         self.number.set(self.number.get() + 1);
         let tests = self.job.tests.len();
-        *self.phase.borrow_mut() =
-            Some(PhaseTally { tallies: (0..tests).map(|_| Tally::new()).collect(), settle: Tally::new(), last: None });
+        let per_window = schedule.rps * schedule.window_seconds;
+        let windows = if per_window < 1.0 { 0 } else { (schedule.total as f64 / per_window).ceil() as usize };
+        *self.phase.borrow_mut() = Some(PhaseTally {
+            tallies: (0..tests).map(|_| Tally::windowed(windows)).collect(),
+            settle: Tally::new(),
+            last: None,
+            recorded: schedule.settle,
+            per_window,
+        });
         let period = 1e9 / schedule.rps;
         let due = |k: u64| start + Duration::from_nanos((k as f64 * period).round() as u64);
         let end = schedule.settle + schedule.total;
@@ -439,7 +466,7 @@ impl State {
         let instances = &tests[test].instances;
         let instance = (self.random() * instances.len() as f64) as usize;
         self.inflight.set(self.inflight.get() + 1);
-        let pending = Pending { due: at, settle: settling, test, instance, phase: self.number.get() };
+        let pending = Pending { due: at, settle: settling, test, instance, phase: self.number.get(), k };
         if self.job.protocol == Protocol::H2c {
             return self.send_h2(pending);
         }
@@ -524,6 +551,7 @@ impl State {
         let mut phase = self.phase.borrow_mut();
         let Some(phase) = phase.as_mut() else { return };
         phase.last = Some(end);
+        let window = phase.window(p.k);
         let request = &self.job.tests[p.test].instances[p.instance];
         let tally = if p.settle { &mut phase.settle } else { &mut phase.tallies[p.test] };
         if !request.accepted.contains(&status) {
@@ -537,7 +565,7 @@ impl State {
             // measured.
             tally.mismatched(|| format!("{} answered {body_bytes} bytes, expected {expected}", request.label));
         }
-        tally.time(end.duration_since(p.due).as_nanos() as f64 / 1000.0);
+        tally.time(end.duration_since(p.due).as_nanos() as f64 / 1000.0, window);
     }
 
     /// Opens the h2c connections the thread is short of, forgetting any that ended.
@@ -779,7 +807,7 @@ mod tests {
     }
 
     async fn two(load: &mut Load) -> Tally {
-        let mut phased = load.phase(Schedule { rps: 100.0, settle: 0, total: 2 }, None).await.unwrap();
+        let mut phased = load.phase(Schedule { rps: 100.0, settle: 0, total: 2, window_seconds: 0.0 }, None).await.unwrap();
         phased.reports.remove(0).tallies.remove(0)
     }
 
@@ -821,7 +849,7 @@ mod tests {
             }],
         }];
         let mut load = Load::open("127.0.0.1".into(), port, Protocol::H2c, tests, 2, 4, 4).await.unwrap();
-        let mut phased = load.phase(Schedule { rps: 200.0, settle: 0, total: 200 }, None).await.unwrap();
+        let mut phased = load.phase(Schedule { rps: 200.0, settle: 0, total: 200, window_seconds: 0.0 }, None).await.unwrap();
         load.close();
         let mut t = Tally::new();
         for mut report in phased.reports.drain(..) {
@@ -829,6 +857,27 @@ mod tests {
         }
         assert_eq!((t.count, t.errors, t.mismatch, t.dropped), (200, 0, 0, 0), "{:?}", t.first_mismatch);
         assert_eq!(accepted.load(Ordering::SeqCst), 4, "two threads, each with two of the four connections");
+    }
+
+    #[tokio::test]
+    async fn every_recorded_instance_counts_in_the_window_it_was_scheduled_in_and_the_settle_in_none() {
+        let stub = Stub::start(|_| (OK, false));
+        // Enough connections that no instance is dropped while the other tests run beside this one.
+        let mut load = Load::open("127.0.0.1".into(), stub.port, Protocol::Http1, only("GET"), 2, 32, 1).await.unwrap();
+        // 200 a second in half-second windows is 100 instances in each, split over two threads.
+        let schedule = Schedule { rps: 200.0, settle: 20, total: 400, window_seconds: 0.5 };
+        let mut phased = load.phase(schedule, None).await.unwrap();
+        load.close();
+        let (mut t, mut settle) = (Tally::new(), Tally::new());
+        for mut report in phased.reports.drain(..) {
+            t.merge(&report.tallies.remove(0));
+            settle.merge(&report.settle);
+        }
+        let windows: Vec<u32> = t.windows.iter().map(|w| w.iter().sum()).collect();
+        assert_eq!((t.count, t.errors, t.dropped), (400, 0, 0), "{:?}", t.first_error);
+        assert_eq!(windows, [100, 100, 100, 100]);
+        assert_eq!(t.hist.iter().sum::<u32>(), 0, "every recorded instance is in a window");
+        assert_eq!((settle.count, settle.windows.len()), (20, 0));
     }
 
     #[tokio::test]

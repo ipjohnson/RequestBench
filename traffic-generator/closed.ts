@@ -4,8 +4,16 @@
 // measured function answers nothing before its first recorded event. Nothing here times anything.
 import type { PerformanceTest, RunValues } from "@rb/tests/kit";
 import { idOf } from "@rb/tests/kit";
-import { BUCKETS, addInto, countOf, percentile } from "./histogram.ts";
-import type { ClosedPhase, ClosedPhaseResult, ClosedResult, ClosedTestSummary, Percentiles, SpanSummary } from "./load.ts";
+import { BUCKETS, addInto, countOf, percentile, windowOf } from "./histogram.ts";
+import {
+  WINDOW_SECONDS,
+  type ClosedPhase,
+  type ClosedPhaseResult,
+  type ClosedResult,
+  type ClosedTestSummary,
+  type Percentiles,
+  type SpanSummary,
+} from "./load.ts";
 import type { ClosedReport, Pipe, WireSpans } from "./pipe.ts";
 import { prepare } from "./prepare.ts";
 import { declared, select } from "./select.ts";
@@ -88,7 +96,11 @@ export async function runClosed(o: ClosedOptions & { readonly phases: readonly C
   const phases: ClosedPhaseResult[] = [];
   for (const phase of o.phases) {
     o.log(`${phase.name}: a closed loop${phase.settle === undefined ? "" : `, ${phase.settle}s to settle`}${phase.seconds === undefined ? "" : `, ${phase.seconds}s recorded`}`);
-    const report = await o.pipe.closedPhase({ settleSeconds: phase.settle ?? 0, seconds: phase.seconds ?? 0 });
+    const report = await o.pipe.closedPhase({
+      settleSeconds: phase.settle ?? 0,
+      seconds: phase.seconds ?? 0,
+      windowSeconds: WINDOW_SECONDS,
+    });
     const settled = report.settle;
     const settle =
       phase.settle === undefined
@@ -118,6 +130,7 @@ export async function runClosed(o: ClosedOptions & { readonly phases: readonly C
         responseLatency: span(t.responseLatency),
         responseDuration: span(t.responseDuration),
         runtimeOverhead: span(t.runtimeOverhead),
+        windows: t.windows.map((w) => windowOf(decode(w))),
       }));
       const overall = new Uint32Array(BUCKETS);
       for (const t of report.tests) addInto(overall, decode(t.invoke));
@@ -126,6 +139,7 @@ export async function runClosed(o: ClosedOptions & { readonly phases: readonly C
       recorded = {
         recorded: {
           seconds: phase.seconds,
+          windowSeconds: WINDOW_SECONDS,
           elapsedSeconds: Number(elapsed.toFixed(2)),
           invocations,
           invocationsPerSecond: Math.round(invocations / elapsed),
