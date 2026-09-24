@@ -1,5 +1,5 @@
 {
-  "comment": "chi 5.3 on Go 1.27, one function per family registering its routes in the implementation package under Implementation/, and the server's main package in container-h1. The suite is UnitTests/, go test over the router served by net/http/httptest, and never reaches the image. chi is a router over net/http and binds nothing, so bodies and answers go through go-chi/render, which chi's README names among its subpackages. render.Bind decodes a body and calls the payload's Bind, where go-playground's validator runs, and a refusal is the ErrResponse of chi's REST example, which render's README points to. The first-error route is wired by hand, because go-playground cannot stop at the first failure. The lockfile is go.mod, which records every module version the build selects, and go.sum, which holds their hashes. upgrade is go get -u ./..., which moves every module to its newest release within its major version.",
+  "comment": "chi 5.3 on Go 1.27, one function per family registering its routes in the implementation package under Implementation/, and each host's main package in the host's directory. On lambda-emulator the router answers behind aws-lambda-go-api-proxy's httpadapter. The suite is UnitTests/, go test over the router served by net/http/httptest, and never reaches the image. chi is a router over net/http and binds nothing, so bodies and answers go through go-chi/render, which chi's README names among its subpackages. render.Bind decodes a body and calls the payload's Bind, where go-playground's validator runs, and a refusal is the ErrResponse of chi's REST example, which render's README points to. The first-error route is wired by hand, because go-playground cannot stop at the first failure. The lockfile is go.mod, which records every module version the build selects, and go.sum, which holds their hashes. upgrade is go get -u ./..., which moves every module to its newest release within its major version.",
   "framework": "chi",
   "licence": "MIT",
   "repo": "https://github.com/go-chi/chi",
@@ -8,7 +8,14 @@
   "lockfile": ["go.mod", "go.sum"],
   "hosts": {
     "container-h1": { "dockerfile": "container-h1/Dockerfile" },
-    "container-h2": { "dockerfile": "container-h2/Dockerfile" }
+    "container-h2": { "dockerfile": "container-h2/Dockerfile" },
+    "lambda-emulator": {
+      "dockerfile": "lambda-emulator/Dockerfile",
+      "unsupported": {
+        "sse.medium": "aws-lambda-go-api-proxy's httpadapter buffers the whole answer, so the events would arrive as one body. Its response writer cannot flush either, and the handler stops at its first Flush.",
+        "stream.ndjson": "aws-lambda-go-api-proxy's httpadapter buffers the whole answer, so the rows would arrive as one body. Its response writer cannot flush either, and the handler stops at its first Flush."
+      }
+    }
   },
   "suite": { "argv": ["go", "test", "./..."], "paths": ["UnitTests"] },
   "upgrade": { "argv": ["go", "get", "-u", "./..."] },

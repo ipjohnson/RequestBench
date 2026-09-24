@@ -116,10 +116,13 @@ A host is where a framework is started and how it is reached, and each host is i
 `container-h1` is the framework's image in a container, reached over HTTP/1.1, with 256
 connections that each carry one request at a time. `container-h2` reaches the framework's image
 over HTTP/2 with prior knowledge and no TLS, with 16 connections that each carry 16 streams.
-`lambda-emulator` runs the framework as a Lambda function, and is being added in
-[#190](https://github.com/ipjohnson/RequestBench/issues/190). `validate` and `measure` refuse it
-until the traffic generator serves the Lambda Runtime API. Each framework's container gets 2 CPUs.
-These variables change where things run:
+`lambda-emulator` runs the framework as a Lambda function on its language's AWS base image, on one
+core. The Rust program serves the Lambda Runtime API in Lambda's place, and the function's own
+runtime client asks it for each event, an API Gateway payload format 2.0 request. Its load is a
+closed loop: each event goes out the moment the runtime asks, for a 30-second warmup, then a
+15-second settle and 60 recorded seconds. Each test records the invoke phase, from the event's
+write to the runtime's next request for one, and the Telemetry API's three spans within it. Each
+framework's container on the other hosts gets 2 CPUs. These variables change where things run:
 
 | Variable | Effect |
 | --- | --- |

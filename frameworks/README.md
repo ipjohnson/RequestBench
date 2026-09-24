@@ -90,7 +90,7 @@ A host is where a framework is started and how it is reached. `orchestrator/host
 | --- | --- |
 | `container-h1` | The framework's image in a container, reached over HTTP/1.1. |
 | `container-h2` | The framework's image in a container, reached over HTTP/2 with prior knowledge and no TLS. The load holds 16 connections of 16 streams each, the 256 in flight container-h1 holds. |
-| `lambda-emulator` | The framework as a Lambda function on its language's AWS base image, fed API Gateway payload format 2.0 events through the Lambda Runtime API. Not validated or measured yet. |
+| `lambda-emulator` | The framework as a Lambda function on its language's AWS base image, fed API Gateway payload format 2.0 events through the Lambda Runtime API. See [The function](#the-function). |
 
 Each host the framework implements has a directory named for it. The directory holds the host's
 `Dockerfile` and the code that starts the application on that host, such as `main.go`,
@@ -130,6 +130,30 @@ The application must stop when it receives SIGTERM. It runs as PID 1, and the ke
 no default action for SIGTERM. Most runtimes and servers install a handler of their own. Node does
 not, and neither do several Rust servers, so on those the application installs one. Without a
 handler, `docker stop` waits out its timeout.
+
+## The function
+
+On lambda-emulator the framework runs as a Lambda function, in an image built from its language's
+AWS base image. The base image's entrypoint execs `/var/runtime/bootstrap`, and refuses to start
+without one argument, the handler, so the Dockerfile ends with a `CMD` of one word. The framework's
+own Lambda adapter turns each event into a request for the application, and each answer into a
+proxy response.
+
+The orchestrator starts the traffic generator's Lambda Runtime API first, and the function after
+it. The function is ready when its runtime asks for its first event. It gets these settings:
+
+| Setting | Value |
+| --- | --- |
+| `AWS_LAMBDA_RUNTIME_API` | The traffic generator's address. On Linux the function shares the host's network, and it listens on nothing. |
+| `AWS_LAMBDA_FUNCTION_MEMORY_SIZE` | `1769`, the size at which Lambda gives a function one vCPU. Several runtimes size their heap from it. |
+| The rest of Lambda's variables | The function's name, version, log group and log stream, its initialization type and region, as `FUNCTION_ENV` in `orchestrator/container.ts` lists them |
+| `RB_HOST` | `lambda-emulator` |
+| `RB_PAYLOADS` | `/rb/payloads`, a read-only mount of `tests/payloads` |
+| CPUs | One: the first core `RB_SUT_CPUS` names, or a quota of 1 |
+
+The traffic generator reads each answer as a Function URL's caller reads it, so an answer to HEAD
+has no body, whatever the function posted. An adapter that buffers the whole answer cannot stream
+one, so a framework behind it lists the sse and stream tests as unsupported.
 
 ## rb.json
 

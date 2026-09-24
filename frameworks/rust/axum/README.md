@@ -15,9 +15,10 @@ etag family is the one wired by hand.
 | `Implementation/` | The application: a library with one router per corpus family under `routes/`. |
 | `container-h1/` | How container-h1 starts it. `main.rs` is the server binary, and `Dockerfile` builds the image. |
 | `container-h2/` | How container-h2 starts it. `main.rs` is the server binary, on axum's `http2` feature, with which `axum::serve` answers HTTP/2 with prior knowledge beside HTTP/1.1, and `Dockerfile` builds the image. |
+| `lambda-emulator/` | How lambda-emulator starts it. `main.rs` is the function, which hands the router to lambda_http's `run`, and `Dockerfile` builds it on the `provided.al2023` base image, where it runs as `/var/runtime/bootstrap`. |
 | `UnitTests/` | The suite, which drives the router in process with tower's `oneshot`. |
 | `client-exception/` | How the corpus reads axum's error bodies. |
-| `Cargo.toml` | One package: the library, the binary and the suite, each at its own path. |
+| `Cargo.toml` | One package: the library, each host's binary and the suite, each at its own path. |
 | `Cargo.lock` | Every crate as resolved. |
 | `askama.toml` | Where askama finds the template. |
 
@@ -94,6 +95,12 @@ container runs two workers under its two-CPU budget, whichever way the budget is
 - The allocator is mimalloc, set as the global allocator in `main.rs`. A server of this shape
   allocates on every request, and the benchmark runs every Rust framework on the same allocator so
   that a difference between two of them is the framework.
+- On lambda-emulator the router answers behind lambda_http 1.3, built with API Gateway payload
+  format 2.0 as the only event it reads. lambda_http's `run` buffers the whole answer, so the sse
+  and stream tests are listed as unsupported there. `run_with_streaming_response` would stream
+  every answer.
+- The function is built on the Lambda base image it runs on. Amazon Linux 2023's glibc is older
+  than the one in the rust images, and a binary linked against a newer glibc may not start on it.
 
 ## Refusals
 

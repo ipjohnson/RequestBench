@@ -1,5 +1,5 @@
 {
-  "comment": "axum 0.8 on tokio's multi-thread runtime, one router per family under Implementation/routes, merged into one application, with each family's features as tower layers on its own router. One package: the library and the server binary in Implementation/, the suite in UnitTests/, which drives the router in process with tower's oneshot and never reaches the image. The release profile is fat LTO with one codegen unit, as upstream measured every Rust framework. Validation is the validator crate, which axum's own validator example uses, behind an extractor of the port's own like that example's. axum-valid, which packages the example, has no release for validator 0.21. The first-error route is wired by hand, because validator cannot stop at the first failure. The cache is a from_fn layer of the port's own over cached's LruTtlCache, because axum ships none and axum-response-cache has no release for cached 4. upgrade is cargo update, which moves Cargo.lock within the ranges Cargo.toml states.",
+  "comment": "axum 0.8 on tokio's multi-thread runtime, one router per family under Implementation/routes, merged into one application, with each family's features as tower layers on its own router. One package: the library in Implementation/, each host's binary in the host's directory, and the suite in UnitTests/, which drives the router in process with tower's oneshot and never reaches the image. On lambda-emulator the router answers behind lambda_http. The release profile is fat LTO with one codegen unit, as upstream measured every Rust framework. Validation is the validator crate, which axum's own validator example uses, behind an extractor of the port's own like that example's. axum-valid, which packages the example, has no release for validator 0.21. The first-error route is wired by hand, because validator cannot stop at the first failure. The cache is a from_fn layer of the port's own over cached's LruTtlCache, because axum ships none and axum-response-cache has no release for cached 4. upgrade is cargo update, which moves Cargo.lock within the ranges Cargo.toml states.",
   "framework": "axum",
   "licence": "MIT",
   "repo": "https://github.com/tokio-rs/axum",
@@ -8,7 +8,14 @@
   "lockfile": ["Cargo.lock"],
   "hosts": {
     "container-h1": { "dockerfile": "container-h1/Dockerfile" },
-    "container-h2": { "dockerfile": "container-h2/Dockerfile" }
+    "container-h2": { "dockerfile": "container-h2/Dockerfile" },
+    "lambda-emulator": {
+      "dockerfile": "lambda-emulator/Dockerfile",
+      "unsupported": {
+        "sse.medium": "lambda_http's run buffers the whole answer, so the events arrive as one body.",
+        "stream.ndjson": "lambda_http's run buffers the whole answer, so the rows arrive as one body."
+      }
+    }
   },
   "suite": { "argv": ["cargo", "test", "--locked"], "paths": ["UnitTests"] },
   "upgrade": { "argv": ["cargo", "update"] },
