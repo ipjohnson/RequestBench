@@ -120,6 +120,8 @@ the worker that accepted it, and the gate sends each test's two requests on one 
 - Sanic implements no lambda-emulator. Mangum, which Mangum's documentation shows Sanic behind,
   hands every request a `raw_path` of `None`, and Sanic 25.12 answers each with 500. Mangum also
   runs the lifespan's startup on every event, and Sanic refuses the second.
+- Sanic implements no container-h2. Its server speaks HTTP/1.1, and HTTP/3 over QUIC, and no HTTP/2,
+  as the versions its `HTTP` enum lists show.
 
 ## Refusals
 
