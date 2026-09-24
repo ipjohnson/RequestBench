@@ -124,6 +124,9 @@ Helidon's service registry.
 - The container runs `java -jar` as PID 1 with the collector and heap the JVM chooses. The JVM
   reads the container's CPU quota, counts 2 CPUs under `--cpus 2`, and sizes the carrier threads of
   Helidon's virtual threads to match. On SIGTERM Helidon's shutdown hook stops the server.
+- Helidon SE implements no lambda-emulator. Helidon ships no AWS Lambda adapter, and no project
+  publishes one for its WebServer. The Lambda Java base images also stop at Java 25, and Helidon
+  27's jars need Java 27.
 
 ## Refusals
 
