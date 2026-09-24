@@ -17,7 +17,7 @@ import { exemplarFile, FIXED_VALUES, gate, type GateResult } from "./gate.ts";
 import { dirty, git, pushed, repoSlug, resolveCommit, tracked, unstaged } from "./git.ts";
 import { HOSTS, isHostId, type HostId } from "./hosts.ts";
 import { LADDER, phasesOf } from "./ladder.ts";
-import { http1, type Exchange } from "./live.ts";
+import { live, type Exchange } from "./live.ts";
 import { cpuList, machineState } from "./machine.ts";
 import { loadRepo, type LoadedFramework } from "./manifest.ts";
 import { measure, type Driver, type RunFile } from "./measure.ts";
@@ -78,10 +78,11 @@ const hostOf = (id: string | undefined): HostId => {
   return host;
 };
 
-/** Refuses a host whose protocol nothing here speaks yet. The gate and the load reach a framework only over HTTP/1.1 today. */
-function spoken(host: HostId): void {
+/** What a host's framework is reached with, refusing a host whose protocol nothing here speaks yet. */
+function spoken(host: HostId): container.Spoken {
   const { protocol } = HOSTS[host];
-  if (protocol !== "http/1.1") throw new UsageError(`${host} cannot be reached yet: nothing here speaks ${protocol}`);
+  if (protocol === "lambda-runtime-api") throw new UsageError(`${host} cannot be reached yet: nothing here speaks ${protocol}`);
+  return protocol;
 }
 
 /** The frameworks whose rb.json loads, narrowed to the ones named. A name that does not load is an error. */
@@ -276,11 +277,11 @@ async function gateAt(
   alive: () => Promise<boolean>,
 ) {
   const sink: { current: Exchange[] } = { current: [] };
-  const live = http1(address, (e) => sink.current.push(e));
+  const transport = live(address, spoken(host), (e) => sink.current.push(e));
   try {
     return await gate({
       suite,
-      transport: live.transport,
+      transport: transport.transport,
       exceptions: exceptions[id as keyof typeof exceptions],
       declared: f?.declared,
       skips: f?.rb.skips,
@@ -290,7 +291,7 @@ async function gateAt(
       exchanges: sink,
     });
   } finally {
-    await live.close();
+    await transport.close();
   }
 }
 
@@ -303,7 +304,7 @@ async function validate(args: string[]): Promise<number> {
     exemplars: { type: "boolean" },
   });
   const host = hostOf(values.host);
-  spoken(host);
+  const protocol = spoken(host);
 
   if (values.at !== undefined) {
     const m = /^([^:]+):(\d+)$/.exec(values.at);
@@ -335,7 +336,7 @@ async function validate(args: string[]): Promise<number> {
   }
   const running = container.start(ROOT, built, f!, host);
   try {
-    const ready = await container.probe(running.address, LADDER.bootSeconds * 1000, running.alive);
+    const ready = await container.probe(running.address, LADDER.bootSeconds * 1000, running.alive, protocol);
     console.log(`ready in ${Math.round(ready.readyMs)} ms at ${running.address.host}:${running.address.port}`);
     const result = await gateAt(f!.id, host, running.address, f, async () => running.alive());
     report(result);

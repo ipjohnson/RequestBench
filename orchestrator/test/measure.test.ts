@@ -47,8 +47,8 @@ const framework = (id: Id): LoadedFramework => {
   };
 };
 
-/** A host whose "container" is the reference, answering as `id` does, or as told. */
-function fakeDriver(answer: (id: Id) => Transport | "dead"): Driver {
+/** A host whose "container" is the reference, answering as `id` does, or as told, in the host's protocol. */
+function fakeDriver(answer: (id: Id) => Transport | "dead", protocol: "http/1.1" | "h2c" = "http/1.1"): Driver {
   return {
     build: async () => ({ imageId: "sha256:fake", imageBytes: 1 }),
     start: async (f): Promise<Started> => {
@@ -64,7 +64,7 @@ function fakeDriver(answer: (id: Id) => Transport | "dead"): Driver {
           return { status: 200, headers: { "content-type": "application/json" }, body };
         }
         return behaviour(req);
-      });
+      }, protocol);
       let up = true;
       return {
         address: served,
@@ -87,10 +87,15 @@ const PHASES: Load["phases"] = [
   { name: "regular", rps: 100, settle: 1, seconds: 1, abortDropFraction: 0.05 },
 ];
 
-async function run(driver: Driver, ids: Id[], edit: (f: LoadedFramework) => LoadedFramework = (f) => f): Promise<RunFile> {
+async function run(
+  driver: Driver,
+  ids: Id[],
+  edit: (f: LoadedFramework) => LoadedFramework = (f) => f,
+  host: "container-h1" | "container-h2" = "container-h1",
+): Promise<RunFile> {
   return measure({
     root: ROOT,
-    host: "container-h1",
+    host,
     frameworks: ids.map(framework).map(edit),
     driver,
     phases: PHASES,
@@ -170,6 +175,19 @@ test("a test the framework does not support on its host is recorded as such, and
   assert.equal(regular.recorded.tests.some((t) => t.id === "json.medium"), false);
   // The gate asks the validating client and the load asks the generator, and neither reached the route.
   assert.equal(asked.includes("/json/medium"), false);
+});
+
+test("on container-h2 the boot, the gate, the load and /__meta all go over h2c", async () => {
+  const result = await run(fakeDriver(reference, "h2c"), ["node:fastify"], (f) => f, "container-h2");
+  const [fastify] = result.frameworks;
+  assert.equal(fastify!.error, undefined);
+  assert.equal(fastify!.gate?.measurable, true);
+  assert.equal(fastify!.meta?.["framework"], "fastify");
+  const load = fastify!.load!;
+  assert.deepEqual([load.load.protocol, load.load.connections, load.load.streams], ["h2c", 16, 16]);
+  const regular = load.phases[1]!;
+  assert.ok(regular.status === "done" && regular.recorded !== undefined && regular.recorded.completed === 100);
+  assert.equal(regular.recorded.errors + regular.recorded.mismatch, 0);
 });
 
 test("a framework that never answers /health is reported with its log, and the run goes on", async () => {

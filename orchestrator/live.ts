@@ -8,7 +8,7 @@
 //
 // Every exchange is also reported to `onExchange` as it went over the wire, which is what an
 // exemplar is written from.
-import { Pipe } from "../traffic-generator/pipe.ts";
+import { Pipe, type Protocol } from "../traffic-generator/pipe.ts";
 import type { Request, Response, Transport } from "./validate.ts";
 
 export interface Exchange {
@@ -60,8 +60,8 @@ const FIRST_ONLY = new Set([
   "user-agent",
 ]);
 
-export function http1(address: { host: string; port: number }, onExchange?: (e: Exchange) => void): Live {
-  const pipe = Pipe.start(address);
+export function live(address: { host: string; port: number }, protocol: Protocol, onExchange?: (e: Exchange) => void): Live {
+  const pipe = Pipe.start(address, protocol);
 
   const transport: Transport = async (req) => {
     const body = req.body === undefined ? {} : { body: Buffer.from(req.body).toString("base64") };

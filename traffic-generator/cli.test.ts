@@ -7,6 +7,7 @@ import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
 import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import http from "node:http";
+import http2 from "node:http2";
 import type { AddressInfo } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -239,6 +240,28 @@ test("a test the framework does not support on its host is never offered, whatev
   assert.deepEqual(result.load.unsupported, unsupported);
 });
 
+test("over h2c the load holds its connections and carries its streams on them", async () => {
+  // Every json and baseline route answers 200 with the body the stub writes for every route.
+  const sessions: http2.ServerHttp2Session[] = [];
+  const h2 = http2.createServer((req, res) => {
+    req.resume();
+    req.on("end", () => res.writeHead(200, { "content-type": "application/json" }).end("{}"));
+  });
+  h2.on("session", (session: http2.ServerHttp2Session) => sessions.push(session));
+  await new Promise<void>((resolve) => h2.listen(0, "127.0.0.1", resolve));
+  const target = `127.0.0.1:${(h2.address() as AddressInfo).port}`;
+  const shape = { protocol: "h2c", workers: 1, connections: 2, streams: 4, only: ["json", "baseline"] };
+  const { code, result, stdout } = await generate(load([{ name: "regular", rps: 300, seconds: 1 }], { ...shape, target }));
+  for (const session of sessions) session.destroy();
+  await new Promise<void>((resolve) => h2.close(() => resolve()));
+  assert.equal(code, 0, stdout);
+  const { recorded } = result.phases[0];
+  assert.equal(recorded.completed, recorded.scheduled);
+  assert.equal(recorded.errors + recorded.mismatch + recorded.dropped, 0, stdout);
+  // One connection priming used, and the two the load held.
+  assert.equal(sessions.length, 3);
+});
+
 test("a framework that closes the connection with an answer still gets every instance", async () => {
   // Micronaut answers every HEAD with connection: close, as this stub does here.
   answering = stub((route) => (route.startsWith("HEAD /items/") ? [200, { connection: "close" }] : undefined));
@@ -379,4 +402,5 @@ test("a load is refused before anything is sent", async () => {
   await refused([load([...regular, ...regular])], /phases: two phases are named regular/);
   await refused([load(regular, { only: ["nope"] })], /only: nope is neither a test nor a family/);
   await refused([load(regular, { unsupported: { "json.nope": "gone" } })], /unsupported: json\.nope is not a test/);
+  await refused([load(regular, { streams: 4 })], /streams: an HTTP\/1\.1 connection carries one request at a time/);
 });

@@ -150,10 +150,17 @@ export interface Exemplar {
     readonly status: number;
     /** Lower-case names, in the order the framework wrote them. */
     readonly headers: readonly (readonly [string, string])[];
-    /** The status line, every header line and the blank line after them. */
+    /**
+     * Over HTTP/1.1, the status line, every header line and the blank line after them. Over
+     * HTTP/2, the field section's size as RFC 9113 counts it against SETTINGS_MAX_HEADER_LIST_SIZE:
+     * each name and value and 32 more, :status included.
+     */
     readonly headerBytes: number;
-    /** How the body's end was marked: content-length, chunked, close, or none for a body that cannot have one. */
-    readonly framing: "content-length" | "chunked" | "close" | "none";
+    /**
+     * How the body's end was marked: content-length, chunked or close over HTTP/1.1, frames over
+     * HTTP/2, where END_STREAM marks it, or none for a body that cannot have one.
+     */
+    readonly framing: "content-length" | "chunked" | "close" | "frames" | "none";
     /** As it went over the wire, with any content coding still on. */
     readonly bodyBytes: number;
     /** The start of the body with its content coding undone. */
@@ -182,6 +189,8 @@ const REQUEST_HOST = "<request host>";
 const excerpt = (text: string) => (text.length > EXCERPT ? text.slice(0, EXCERPT) : text);
 
 function framingOf(e: Exchange, headers: ReadonlyMap<string, string>): Exemplar["response"]["framing"] {
+  const bodiless = e.request.method === "HEAD" || e.response.status === 204 || e.response.status === 304;
+  if (e.response.httpVersion === "2") return bodiless ? "none" : "frames";
   if ((headers.get("transfer-encoding") ?? "").toLowerCase().includes("chunked")) return "chunked";
   if (headers.has("content-length")) return "content-length";
   if (e.request.method === "HEAD" || e.response.status === 204 || e.response.status === 304) return "none";
@@ -192,9 +201,11 @@ export function exemplarOf(e: Exchange): Exemplar {
   const res = e.response;
   const headers = new Map(res.rawHeaders.map(([k, v]) => [k.toLowerCase(), v]));
   const headerBytes =
-    Buffer.byteLength(`HTTP/${res.httpVersion} ${res.status} ${res.statusMessage}\r\n`) +
-    res.rawHeaders.reduce((sum, [k, v]) => sum + Buffer.byteLength(`${k}: ${v}\r\n`), 0) +
-    2;
+    res.httpVersion === "2"
+      ? res.rawHeaders.reduce((sum, [k, v]) => sum + Buffer.byteLength(k) + Buffer.byteLength(v) + 32, ":status".length + 3 + 32)
+      : Buffer.byteLength(`HTTP/${res.httpVersion} ${res.status} ${res.statusMessage}\r\n`) +
+        res.rawHeaders.reduce((sum, [k, v]) => sum + Buffer.byteLength(`${k}: ${v}\r\n`), 0) +
+        2;
   let decoded = res.body;
   if ((headers.get("content-encoding") ?? "").includes("gzip") && decoded.length > 0) {
     try {

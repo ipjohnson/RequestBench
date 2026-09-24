@@ -1,5 +1,6 @@
-//! The open-loop load over HTTP/1.1: one thread per worker, each taking every `workers`-th
-//! instance of a phase on connections of its own, from a start every thread shares.
+//! The open-loop load: one thread per worker, each taking every `workers`-th instance of a phase
+//! on connections of its own, from a start every thread shares. Over HTTP/1.1 a connection
+//! carries one request at a time. Over h2c it carries up to `streams` at once.
 //!
 //! An instance is timed from its scheduled moment rather than from when it was sent, which is
 //! the coordinated-omission correction: a backlog in the generator or the framework shows up as
@@ -15,17 +16,27 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread::JoinHandle;
 use std::time::{Duration, Instant};
 
+use bytes::Bytes;
+use h2::client::SendRequest;
 use tokio::io::Interest;
 use tokio::net::TcpStream;
 use tokio::sync::{Notify, mpsc};
 use tokio::task::{JoinSet, LocalSet};
 
-use crate::http1::{Answer, Read, Reader};
+use crate::h2c::{self, Template};
+use crate::http1::{Read, Reader};
+use crate::request::Protocol;
 use crate::tally::Tally;
+
+/// A request as its protocol sends it, built before the load began.
+pub enum Wire {
+    Http1(Vec<u8>),
+    H2c(Box<Template>),
+}
 
 /// One instance as the load sends it.
 pub struct Instance {
-    pub bytes: Vec<u8>,
+    pub wire: Wire,
     /// An answer to HEAD ends with its headers, whatever they say about a body.
     pub head: bool,
     /// The method and target, as a mismatch line names them.
@@ -91,12 +102,15 @@ pub struct Load {
 struct Job {
     host: String,
     port: u16,
+    protocol: Protocol,
     tests: Arc<Vec<Test>>,
     /// This thread takes every `workers`-th instance of a phase, settle and recorded alike, starting at this one.
     index: usize,
     workers: usize,
-    /// This thread's share of the load's connections, which is also its in-flight limit.
+    /// This thread's share of the load's connections.
     connections: usize,
+    /// The requests one connection carries at once. Its in-flight limit is this times `connections`.
+    streams: usize,
     seed: u32,
 }
 
@@ -106,7 +120,15 @@ fn seed_of(i: usize) -> u32 {
 }
 
 impl Load {
-    pub async fn open(host: String, port: u16, tests: Vec<Test>, workers: usize, connections: usize) -> Result<Load, String> {
+    pub async fn open(
+        host: String,
+        port: u16,
+        protocol: Protocol,
+        tests: Vec<Test>,
+        workers: usize,
+        connections: usize,
+        streams: usize,
+    ) -> Result<Load, String> {
         let tests = Arc::new(tests);
         let (to_main, from) = mpsc::unbounded_channel();
         let mut threads = Vec::new();
@@ -115,10 +137,12 @@ impl Load {
             let job = Job {
                 host: host.clone(),
                 port,
+                protocol,
                 tests: tests.clone(),
                 index,
                 workers,
                 connections: connections.div_ceil(workers),
+                streams,
                 seed: seed_of(index),
             };
             let tx = to_main.clone();
@@ -241,6 +265,13 @@ struct Conn {
     gone: Cell<bool>,
 }
 
+/// An h2c connection, the requests it carries, and the task that drives its frames.
+struct Stream2 {
+    send: SendRequest<Bytes>,
+    inflight: Cell<usize>,
+    driver: tokio::task::JoinHandle<()>,
+}
+
 struct PhaseTally {
     tallies: Vec<Tally>,
     settle: Tally,
@@ -255,6 +286,9 @@ struct State {
     free: RefCell<VecDeque<Rc<Conn>>>,
     /// Connections open or being opened.
     live: Cell<usize>,
+    /// The h2c connections, handed out in turn to the next with a stream free.
+    h2: RefCell<Vec<Rc<Stream2>>>,
+    turn: Cell<usize>,
     /// Not reset between phases, because an instance the drain gave up on still holds its connection.
     inflight: Cell<usize>,
     phase: RefCell<Option<PhaseTally>>,
@@ -270,6 +304,8 @@ impl State {
             random: Cell::new(seed),
             free: RefCell::new(VecDeque::new()),
             live: Cell::new(0),
+            h2: RefCell::new(Vec::new()),
+            turn: Cell::new(0),
             inflight: Cell::new(0),
             phase: RefCell::new(None),
             number: Cell::new(0),
@@ -291,6 +327,9 @@ impl State {
     /// Opens what the thread is short of and waits for it. Called before the first phase and
     /// again before each one after it, so a phase begins with the connections the load declared.
     async fn open(self: &Rc<Self>) -> Result<(), String> {
+        if self.job.protocol == Protocol::H2c {
+            return self.open_h2().await;
+        }
         let missing = self.job.connections.saturating_sub(self.live.get());
         let mut made = JoinSet::new();
         for _ in 0..missing {
@@ -388,7 +427,7 @@ impl State {
         let tests = &self.job.tests;
         let test = (self.random() * tests.len() as f64) as usize;
         let settling = k < settle;
-        if self.inflight.get() >= self.job.connections {
+        if self.inflight.get() >= self.job.connections * self.job.streams {
             // Dropped by never being sent, so it enters no histogram. A rate with drops is
             // reported with its drop count, because percentiles over the survivors flatter a
             // collapse.
@@ -401,6 +440,9 @@ impl State {
         let instance = (self.random() * instances.len() as f64) as usize;
         self.inflight.set(self.inflight.get() + 1);
         let pending = Pending { due: at, settle: settling, test, instance, phase: self.number.get() };
+        if self.job.protocol == Protocol::H2c {
+            return self.send_h2(pending);
+        }
         let free = self.free.borrow_mut().pop_front();
         match free {
             Some(conn) => self.send(&conn, pending),
@@ -420,16 +462,17 @@ impl State {
 
     fn send(self: &Rc<Self>, conn: &Rc<Conn>, pending: Pending) {
         let instance = &self.job.tests[pending.test].instances[pending.instance];
+        let Wire::Http1(bytes) = &instance.wire else { unreachable!("an h2c request on an HTTP/1.1 connection") };
         conn.reader.borrow_mut().begin(instance.head, false);
         conn.pending.set(Some(pending));
-        match conn.stream.try_write(&instance.bytes) {
-            Ok(n) if n == instance.bytes.len() => {}
+        match conn.stream.try_write(bytes) {
+            Ok(n) if n == bytes.len() => {}
             Ok(n) => {
-                conn.out.borrow_mut().extend_from_slice(&instance.bytes[n..]);
+                conn.out.borrow_mut().extend_from_slice(&bytes[n..]);
                 conn.wake.notify_one();
             }
             Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => {
-                conn.out.borrow_mut().extend_from_slice(&instance.bytes);
+                conn.out.borrow_mut().extend_from_slice(bytes);
                 conn.wake.notify_one();
             }
             Err(e) => {
@@ -448,7 +491,7 @@ impl State {
                 let pending = conn.pending.take();
                 if !conn.reader.borrow().ends() && !conn.gone.get() {
                     self.free.borrow_mut().push_back(conn.clone());
-                    return self.answered(pending, &answer, Instant::now());
+                    return self.answered(pending, answer.status, answer.body_bytes, Instant::now());
                 }
                 // The answer closed its connection. Its replacement is opened now and the answer
                 // is counted once the replacement is up, so the handshake is charged to the test
@@ -457,14 +500,14 @@ impl State {
                 // instance that needs a connection opens one.
                 self.retire(conn);
                 if self.stopped.get() {
-                    return self.answered(pending, &answer, Instant::now());
+                    return self.answered(pending, answer.status, answer.body_bytes, Instant::now());
                 }
                 let state = self.clone();
                 tokio::task::spawn_local(async move {
                     if let Ok(replacement) = state.connect().await {
                         state.free.borrow_mut().push_back(replacement);
                     }
-                    state.answered(pending, &answer, Instant::now());
+                    state.answered(pending, answer.status, answer.body_bytes, Instant::now());
                 });
             }
             Read::Failed(why) => {
@@ -475,7 +518,7 @@ impl State {
         }
     }
 
-    fn answered(&self, pending: Option<Pending>, answer: &Answer, end: Instant) {
+    fn answered(&self, pending: Option<Pending>, status: u16, body_bytes: u64, end: Instant) {
         self.inflight.set(self.inflight.get().saturating_sub(1));
         let Some(p) = pending.filter(|p| p.phase == self.number.get()) else { return };
         let mut phase = self.phase.borrow_mut();
@@ -483,18 +526,78 @@ impl State {
         phase.last = Some(end);
         let request = &self.job.tests[p.test].instances[p.instance];
         let tally = if p.settle { &mut phase.settle } else { &mut phase.tallies[p.test] };
-        if !request.accepted.contains(&answer.status) {
+        if !request.accepted.contains(&status) {
             tally.mismatched(|| {
                 let accepted: Vec<String> = request.accepted.iter().map(u16::to_string).collect();
-                format!("{} answered {}, expected {}", request.label, answer.status, accepted.join(" or "))
+                format!("{} answered {status}, expected {}", request.label, accepted.join(" or "))
             });
-        } else if let Some(expected) = request.body_bytes.filter(|&b| b != answer.body_bytes) {
+        } else if let Some(expected) = request.body_bytes.filter(|&b| b != body_bytes) {
             // The body this request answered with at priming is the one it answers with under
             // load. A framework that starts answering something else is not serving what is being
             // measured.
-            tally.mismatched(|| format!("{} answered {} bytes, expected {expected}", request.label, answer.body_bytes));
+            tally.mismatched(|| format!("{} answered {body_bytes} bytes, expected {expected}", request.label));
         }
         tally.time(end.duration_since(p.due).as_nanos() as f64 / 1000.0);
+    }
+
+    /// Opens the h2c connections the thread is short of, forgetting any that ended.
+    async fn open_h2(self: &Rc<Self>) -> Result<(), String> {
+        self.h2.borrow_mut().retain(|c| !c.driver.is_finished());
+        let missing = self.job.connections.saturating_sub(self.h2.borrow().len());
+        let mut made = JoinSet::new();
+        for _ in 0..missing {
+            let (host, port) = (self.job.host.clone(), self.job.port);
+            made.spawn_local(async move { h2c::connect(&host, port).await });
+        }
+        while let Some(joined) = made.join_next().await {
+            let (send, driver) = joined.map_err(|e| e.to_string())??;
+            self.h2.borrow_mut().push(Rc::new(Stream2 { send, inflight: Cell::new(0), driver }));
+        }
+        Ok(())
+    }
+
+    /// The instance on the next connection in turn with a stream free. The in-flight limit was
+    /// checked, so one has a stream free unless the framework ended connections, and then this
+    /// instance opens a replacement and pays for it.
+    fn send_h2(self: &Rc<Self>, pending: Pending) {
+        let chosen = {
+            let conns = self.h2.borrow();
+            let n = conns.len();
+            let free = (0..n)
+                .map(|step| (self.turn.get() + step) % n)
+                .find(|&i| !conns[i].driver.is_finished() && conns[i].inflight.get() < self.job.streams);
+            free.map(|i| {
+                self.turn.set((i + 1) % n);
+                conns[i].clone()
+            })
+        };
+        if let Some(conn) = &chosen {
+            conn.inflight.set(conn.inflight.get() + 1);
+        }
+        let state = self.clone();
+        tokio::task::spawn_local(async move {
+            let conn = match chosen {
+                Some(conn) => conn,
+                None => match h2c::connect(&state.job.host, state.job.port).await {
+                    Ok((send, driver)) => {
+                        let conn = Rc::new(Stream2 { send, inflight: Cell::new(1), driver });
+                        state.h2.borrow_mut().push(conn.clone());
+                        conn
+                    }
+                    Err(why) => return state.failed(Some(pending), &why),
+                },
+            };
+            let tests = state.job.tests.clone();
+            let Wire::H2c(template) = &tests[pending.test].instances[pending.instance].wire else {
+                unreachable!("an HTTP/1.1 request on an h2c connection")
+            };
+            let fetched = h2c::fetch(&conn.send, template, false).await;
+            conn.inflight.set(conn.inflight.get() - 1);
+            match fetched {
+                Ok(answer) => state.answered(Some(pending), answer.status, answer.body_bytes, Instant::now()),
+                Err(why) => state.failed(Some(pending), &why),
+            }
+        });
     }
 
     fn failed(&self, pending: Option<Pending>, why: &str) {
@@ -648,11 +751,15 @@ mod tests {
         }
     }
 
+    async fn http1(port: u16, tests: Vec<Test>) -> Load {
+        Load::open("127.0.0.1".into(), port, Protocol::Http1, tests, 1, 1, 1).await.unwrap()
+    }
+
     fn only(method: &str) -> Vec<Test> {
-        let bytes = format!("{method} /x HTTP/1.1\r\nhost: stub\r\n\r\n").into_bytes();
+        let wire = Wire::Http1(format!("{method} /x HTTP/1.1\r\nhost: stub\r\n\r\n").into_bytes());
         vec![Test {
             instances: vec![Instance {
-                bytes,
+                wire,
                 head: method == "HEAD",
                 label: format!("{method} /x"),
                 accepted: vec![200],
@@ -672,7 +779,7 @@ mod tests {
             Stub::start(
                 |n| if n == 0 { ("HTTP/1.1 200 OK\r\ncontent-length: 2\r\nconnection: close\r\n\r\n{}", true) } else { (OK, false) },
             );
-        let mut load = Load::open("127.0.0.1".into(), stub.port, only("GET"), 1, 1).await.unwrap();
+        let mut load = http1(stub.port, only("GET")).await;
         let t = two(&mut load).await;
         load.close();
         assert_eq!((t.count, t.errors, t.mismatch, t.dropped), (2, 0, 0, 0));
@@ -682,7 +789,7 @@ mod tests {
     #[tokio::test]
     async fn a_head_answer_with_no_length_ends_at_its_headers_and_keeps_its_connection() {
         let stub = Stub::start(|_| ("HTTP/1.1 200 OK\r\ncontent-type: application/json\r\n\r\n", false));
-        let mut load = Load::open("127.0.0.1".into(), stub.port, only("HEAD"), 1, 1).await.unwrap();
+        let mut load = http1(stub.port, only("HEAD")).await;
         let t = two(&mut load).await;
         load.close();
         assert_eq!((t.count, t.errors, t.mismatch), (2, 0, 0));
@@ -690,9 +797,34 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn over_h2c_every_connection_carries_its_streams_and_nothing_is_dropped_below_the_limit() {
+        let (port, accepted) = crate::h2c::tests::serve();
+        let request = crate::request::Request { method: "GET".into(), target: "/x".into(), headers: vec![], body: None };
+        let template = Template::new(&request, None, &format!("127.0.0.1:{port}")).unwrap();
+        let tests = vec![Test {
+            instances: vec![Instance {
+                wire: Wire::H2c(Box::new(template)),
+                head: false,
+                label: "GET /x".into(),
+                accepted: vec![200],
+                body_bytes: Some(39),
+            }],
+        }];
+        let mut load = Load::open("127.0.0.1".into(), port, Protocol::H2c, tests, 2, 4, 4).await.unwrap();
+        let mut phased = load.phase(Schedule { rps: 200.0, settle: 0, total: 200 }, None).await.unwrap();
+        load.close();
+        let mut t = Tally::new();
+        for mut report in phased.reports.drain(..) {
+            t.merge(&report.tallies.remove(0));
+        }
+        assert_eq!((t.count, t.errors, t.mismatch, t.dropped), (200, 0, 0, 0), "{:?}", t.first_mismatch);
+        assert_eq!(accepted.load(Ordering::SeqCst), 4, "two threads, each with two of the four connections");
+    }
+
+    #[tokio::test]
     async fn a_connection_the_framework_closes_while_idle_is_opened_again_only_by_the_next_phase() {
         let stub = Stub::start(|_| (OK, false));
-        let mut load = Load::open("127.0.0.1".into(), stub.port, only("GET"), 1, 1).await.unwrap();
+        let mut load = http1(stub.port, only("GET")).await;
         stub.accepted.lock().unwrap()[0].shutdown(Shutdown::Both).unwrap();
         tokio::time::sleep(Duration::from_millis(50)).await;
         assert_eq!(stub.connections(), 1, "nothing chased the idle close");

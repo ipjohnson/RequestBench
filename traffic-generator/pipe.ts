@@ -6,6 +6,9 @@ import { spawn, spawnSync, type ChildProcessWithoutNullStreams } from "node:chil
 import { join } from "node:path";
 import { createInterface } from "node:readline";
 
+/** What the program speaks to the framework. */
+export type Protocol = "http/1.1" | "h2c";
+
 /** A request as the corpus sends it, before any protocol. The program adds the host and the framing. */
 export interface WireRequest {
   readonly method: string;
@@ -115,10 +118,10 @@ export class Pipe {
     });
   }
 
-  /** The program, reaching the framework at this address. */
-  static start(address: { readonly host: string; readonly port: number }, root: string = ROOT): Pipe {
-    const child = spawn(program(root), ["--target", `${address.host}:${address.port}`], { stdio: ["pipe", "pipe", "pipe"] });
-    return new Pipe(child);
+  /** The program, reaching the framework at this address in this protocol. */
+  static start(address: { readonly host: string; readonly port: number }, protocol: Protocol = "http/1.1", root: string = ROOT): Pipe {
+    const args = ["--target", `${address.host}:${address.port}`, "--protocol", protocol];
+    return new Pipe(spawn(program(root), args, { stdio: ["pipe", "pipe", "pipe"] }));
   }
 
   /** One request and its whole answer. Nothing about it is timed. */
@@ -131,9 +134,12 @@ export class Pipe {
     });
   }
 
-  /** Builds every instance into its bytes and opens the load's connections. */
-  async open(tests: readonly { readonly instances: readonly LoadInstance[] }[], workers: number, connections: number): Promise<void> {
-    await this.#command({ op: "open", tests, workers, connections }, "ready");
+  /** Builds every instance for the wire and opens the load's connections. */
+  async open(
+    tests: readonly { readonly instances: readonly LoadInstance[] }[],
+    shape: { readonly workers: number; readonly connections: number; readonly streams: number },
+  ): Promise<void> {
+    await this.#command({ op: "open", tests, ...shape }, "ready");
   }
 
   async phase(phase: { rps: number; settle: number; total: number; abortDropFraction: number | null }): Promise<PhaseReport> {

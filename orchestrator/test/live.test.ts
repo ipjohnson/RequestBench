@@ -7,8 +7,9 @@ import suite from "@rb/tests";
 import { validationTest } from "@rb/tests/kit";
 import type { Suite } from "@rb/tests/kit";
 import exceptions from "../../frameworks/exceptions.ts";
+import type { Protocol } from "../../traffic-generator/pipe.ts";
 import { exemplarFile, exemplarOf, FIXED_VALUES, gate } from "../gate.ts";
-import { http1, type Exchange } from "../live.ts";
+import { live, type Exchange } from "../live.ts";
 import { loadSnapshots } from "../snapshots.ts";
 import type { Transport } from "../validate.ts";
 import { corpusReference } from "./reference.ts";
@@ -21,15 +22,20 @@ type Id = keyof typeof exceptions;
 /** One reference process for the whole corpus, as a framework is one process for the whole gate. */
 const referenceFor = (framework: Id): Transport => corpusReference(snapshots, framework, exceptions[framework]).transport();
 
-async function gateOver(framework: Id, transport: Transport, over: { suite?: Suite; skips?: Record<string, string> } = {}) {
-  const served = await serve(transport);
+async function gateOver(
+  framework: Id,
+  transport: Transport,
+  over: { suite?: Suite; skips?: Record<string, string> } = {},
+  protocol: Protocol = "http/1.1",
+) {
+  const served = await serve(transport, protocol);
   const sink: { current: Exchange[] } = { current: [] };
-  const live = http1(served, (e) => sink.current.push(e));
+  const reached = live(served, protocol, (e) => sink.current.push(e));
   let up = true;
   try {
     const result = await gate({
       suite: over.suite ?? suite,
-      transport: live.transport,
+      transport: reached.transport,
       exceptions: exceptions[framework],
       skips: over.skips,
       run: FIXED_VALUES,
@@ -39,7 +45,7 @@ async function gateOver(framework: Id, transport: Transport, over: { suite?: Sui
     return result;
   } finally {
     up = false;
-    await live.close();
+    await reached.close();
     await served.close();
   }
 }
@@ -53,6 +59,17 @@ for (const framework of Object.keys(exceptions) as Id[]) {
     assert.equal(result.passed, true);
   });
 }
+
+test("the reference passes the whole corpus over h2c, and its exemplars are HTTP/2's", async () => {
+  const result = await gateOver("node:fastify", referenceFor("node:fastify"), {}, "h2c");
+  const failed = Object.entries(result.outcomes).filter(([, o]) => o.status !== "passed");
+  assert.deepEqual(failed, []);
+  const json = exemplarOf(result.exchanges.get("json.small")!);
+  assert.equal(json.response.framing, "frames");
+  assert.ok(json.response.headers.every(([name]) => name === name.toLowerCase()));
+  const head = exemplarOf(result.exchanges.get("items.head")!);
+  assert.equal(head.response.framing, "none");
+});
 
 test("a wrong answer fails its own test and no other", async () => {
   const reference = referenceFor("node:fastify");
@@ -103,17 +120,17 @@ test("a skip is reported with its reason, and a test scoped out is not asked", a
   const scoped: Suite = { ...suite, tests: { ...suite.tests, "cors.only_elsewhere": outside } };
   const reason = "the CORS feature applies to the whole application";
   const served = await serve(referenceFor("node:fastify"));
-  const live = http1(served);
+  const transport = live(served, "http/1.1");
   const result = await gate({
     suite: scoped,
-    transport: live.transport,
+    transport: transport.transport,
     exceptions: exceptions["node:fastify"],
     declared: { language: "node", name: "fastify", framework: "Fastify", hosts: {}, mechanisms: {} },
     skips: { "cors.scoped": reason },
     run: FIXED_VALUES,
     alive: async () => true,
   });
-  await live.close();
+  await transport.close();
   await served.close();
   assert.deepEqual(result.outcomes["cors.scoped"], { status: "skipped", reason });
   assert.deepEqual(result.outcomes["cors.only_elsewhere"], { status: "notAsked" });

@@ -291,7 +291,7 @@ async function main(args: string[]): Promise<number> {
   const left = Object.keys(o.load.unsupported ?? {}).filter((id) => suite.tests[id]?.kind === "performance");
   if (left.length > 0) console.log(`leaving out ${left.length} test(s) ${o.load.framework} does not support here: ${left.join(", ")}`);
   console.log(`priming ${o.tests.length} tests against ${o.load.framework} at ${o.load.target}`);
-  const pipe = Pipe.start({ host: o.host, port: o.port });
+  const pipe = Pipe.start({ host: o.host, port: o.port }, o.load.protocol);
   const phases: PhaseResult[] = [];
   try {
     const compiled = await prepare({
@@ -309,7 +309,8 @@ async function main(args: string[]): Promise<number> {
     const tests = compiled.map((test) => ({
       instances: test.instances.map((i) => ({ request: i.request, label: i.target, accepted: i.accepted, bodyBytes: i.bodyBytes ?? null })),
     }));
-    await pipe.open(tests, o.load.workers, o.load.connections);
+    const { workers, connections, streams } = o.load;
+    await pipe.open(tests, { workers, connections, streams });
     for (const phase of o.load.phases) {
       const ended = phases.some((p) => p.status !== "done");
       const result: PhaseResult = ended

@@ -16,6 +16,11 @@ export interface Host {
   readonly protocol: "http/1.1" | "h2c" | "lambda-runtime-api";
   /** How a framework is started on it. */
   readonly start: "container";
+  /**
+   * For an open-loop load, the connections the generator holds and the requests each carries at
+   * once. Their product is the in-flight limit past which an instance is dropped.
+   */
+  readonly load?: { readonly connections: number; readonly streams: number };
   readonly about: string;
 }
 
@@ -24,6 +29,7 @@ export const HOSTS = {
     id: "container-h1",
     protocol: "http/1.1",
     start: "container",
+    load: { connections: 256, streams: 1 },
     about:
       "The framework's image in a container, reached over HTTP/1.1. The name carries the protocol, so " +
       "HTTP/2 arrives as container-h2 beside it rather than as a rename.",
@@ -32,6 +38,9 @@ export const HOSTS = {
     id: "container-h2",
     protocol: "h2c",
     start: "container",
+    // container-h1's 256 in flight, and below every server's default stream limit, Kestrel's
+    // 100 the lowest, so every framework is offered the same shape.
+    load: { connections: 16, streams: 16 },
     about:
       "The framework's image in a container, reached over HTTP/2 with prior knowledge and no TLS, so it " +
       "differs from container-h1 in the protocol alone.",

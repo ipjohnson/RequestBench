@@ -38,42 +38,51 @@ export const phaseSchema = z
     path: ["abortDropFraction"],
   });
 
-export const loadSchema = z.strictObject({
-  target: z.string().refine((t) => addressOf(t) !== undefined, "expected host:port"),
-  /** The declaration in frameworks/exceptions.ts whose statuses every answer is compared with. */
-  framework: z.string(),
-  /** The run's values, so every client in a run sends the same ones. Drawn by the generator when absent. */
-  values: runValuesSchema.optional(),
-  workers: z.number().int().positive().default(4),
-  /**
-   * The connections the load holds, across every thread. They are opened before the first phase
-   * and each carries one request at a time, so no instance pays for a handshake unless its own
-   * answer closed its connection, and every framework is offered the same shape. An instance due
-   * while all of them are busy is dropped, which is what the drop count and abortDropFraction are
-   * about.
-   */
-  connections: z.number().int().positive().default(256),
-  /**
-   * The most requests compiled per test, spread over the values its closure draws. Upstream's
-   * plan held 512 of each, which is what makes precomputing every answer impractical.
-   */
-  instances: z.number().int().positive().default(512),
-  /** Test ids or family names. Absent means every performance test. */
-  only: z.array(z.string().min(1)).min(1).optional(),
-  /** Tests the framework cannot answer on its host, by id, each with the reason. They are never offered. */
-  unsupported: z.record(z.string(), z.string().min(1)).optional(),
-  /** Run in order, on the same threads and connections. */
-  phases: z
-    .array(phaseSchema)
-    .min(1)
-    .superRefine((phases, ctx) => {
-      const seen = new Set<string>();
-      for (const { name } of phases) {
-        if (seen.has(name)) ctx.addIssue({ code: "custom", message: `two phases are named ${name}` });
-        seen.add(name);
-      }
-    }),
-});
+export const loadSchema = z
+  .strictObject({
+    target: z.string().refine((t) => addressOf(t) !== undefined, "expected host:port"),
+    /** The declaration in frameworks/exceptions.ts whose statuses every answer is compared with. */
+    framework: z.string(),
+    /** The run's values, so every client in a run sends the same ones. Drawn by the generator when absent. */
+    values: runValuesSchema.optional(),
+    workers: z.number().int().positive().default(4),
+    /** What the generator speaks to the framework: HTTP/1.1, or HTTP/2 with prior knowledge and no TLS. */
+    protocol: z.enum(["http/1.1", "h2c"]).default("http/1.1"),
+    /**
+     * The connections the load holds, across every thread. They are opened before the first phase
+     * and each carries `streams` requests at a time, so no instance pays for a handshake unless its
+     * own answer closed its connection, and every framework is offered the same shape. An instance
+     * due while every stream of every connection is busy is dropped, which is what the drop count
+     * and abortDropFraction are about.
+     */
+    connections: z.number().int().positive().default(256),
+    /** The requests one connection carries at once. HTTP/1.1 carries one. */
+    streams: z.number().int().positive().default(1),
+    /**
+     * The most requests compiled per test, spread over the values its closure draws. Upstream's
+     * plan held 512 of each, which is what makes precomputing every answer impractical.
+     */
+    instances: z.number().int().positive().default(512),
+    /** Test ids or family names. Absent means every performance test. */
+    only: z.array(z.string().min(1)).min(1).optional(),
+    /** Tests the framework cannot answer on its host, by id, each with the reason. They are never offered. */
+    unsupported: z.record(z.string(), z.string().min(1)).optional(),
+    /** Run in order, on the same threads and connections. */
+    phases: z
+      .array(phaseSchema)
+      .min(1)
+      .superRefine((phases, ctx) => {
+        const seen = new Set<string>();
+        for (const { name } of phases) {
+          if (seen.has(name)) ctx.addIssue({ code: "custom", message: `two phases are named ${name}` });
+          seen.add(name);
+        }
+      }),
+  })
+  .refine((load) => load.protocol === "h2c" || load.streams === 1, {
+    message: "an HTTP/1.1 connection carries one request at a time",
+    path: ["streams"],
+  });
 
 /** A load as it is written. */
 export type Load = z.input<typeof loadSchema>;
