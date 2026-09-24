@@ -24,6 +24,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	implementation.Adapter = "aws-lambda-go-api-proxy httpadapter"
 	// NewV2 reads API Gateway payload format 2.0, the event a Function URL sends.
 	lambda.Start(httpadapter.NewV2(router).ProxyWithContext)
 }

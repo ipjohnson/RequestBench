@@ -23,6 +23,7 @@ func main() {
 		log.Fatal(err)
 	}
 	app := implementation.App(payloads)
+	implementation.Adapter = "Fiber's adaptor, under aws-lambda-go-api-proxy httpadapter"
 	// aws-lambda-go-api-proxy's fiberadapter takes only a fiber v2 app. adaptor.FiberApp, Fiber's
 	// own net/http handler over an app, does for v3 what fiberadapter does for v2, and httpadapter
 	// hands it each event as a net/http request. NewV2 reads API Gateway payload format 2.0, the

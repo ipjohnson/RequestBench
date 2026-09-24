@@ -10,6 +10,10 @@ import (
 	ginjson "github.com/gin-gonic/gin/codec/json"
 )
 
+// Adapter names what hands the application its requests. It is net/http's server unless the
+// host's main package says otherwise.
+var Adapter = "net/http"
+
 // contractRoutes answers /health and /__meta, which the contract asks of every framework
 // outside the corpus.
 func contractRoutes(r *gin.Engine) {
@@ -22,7 +26,7 @@ func contractRoutes(r *gin.Engine) {
 			"framework": "Gin",
 			"version":   version,
 			"runtime":   runtime.Version(),
-			"adapter":   "net/http",
+			"adapter":   Adapter,
 			// The codec gin's build tags selected, as gin records it.
 			"serializer": ginjson.Package,
 			// Go sets this from the container's CPU quota, so it says how many threads run Go code.

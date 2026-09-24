@@ -8,6 +8,10 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
+// Adapter names what hands the application its requests. It is fasthttp's server unless the
+// host's main package says otherwise.
+var Adapter = "fasthttp"
+
 // contractRoutes answers /health and /__meta, which the contract asks of every framework
 // outside the corpus.
 func contractRoutes(app *fiber.App) {
@@ -20,7 +24,7 @@ func contractRoutes(app *fiber.App) {
 			"framework": "Fiber",
 			"version":   version,
 			"runtime":   runtime.Version(),
-			"adapter":   "fasthttp",
+			"adapter":   Adapter,
 			// Fiber's JSONEncoder, which c.JSON calls, is encoding/json's Marshal unless the config names another.
 			"serializer": "encoding/json",
 			// Go sets this from the container's CPU quota, so it says how many threads run Go code.

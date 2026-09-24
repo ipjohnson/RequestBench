@@ -25,6 +25,7 @@ func main() {
 	// Before the router is built, because the template is parsed once only outside debug mode.
 	gin.SetMode(gin.ReleaseMode)
 	router := implementation.Router(payloads)
+	implementation.Adapter = "aws-lambda-go-api-proxy ginadapter"
 	// NewV2 reads API Gateway payload format 2.0, the event a Function URL sends.
 	lambda.Start(ginadapter.NewV2(router).ProxyWithContext)
 }

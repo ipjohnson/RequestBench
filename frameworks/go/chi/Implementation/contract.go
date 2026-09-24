@@ -10,6 +10,10 @@ import (
 	"github.com/go-chi/render"
 )
 
+// Adapter names what hands the application its requests. It is net/http's server unless the
+// host's main package says otherwise.
+var Adapter = "net/http"
+
 // contractRoutes answers /health and /__meta, which the contract asks of every framework
 // outside the corpus.
 func contractRoutes(r chi.Router) {
@@ -22,7 +26,7 @@ func contractRoutes(r chi.Router) {
 			"framework": "chi",
 			"version":   version,
 			"runtime":   runtime.Version(),
-			"adapter":   "net/http",
+			"adapter":   Adapter,
 			// render.JSON encodes with encoding/json.
 			"serializer": "encoding/json",
 			// Go sets this from the container's CPU quota, so it says how many threads run Go code.
