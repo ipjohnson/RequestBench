@@ -141,3 +141,10 @@ test("a rung with drops, an aborted rung and a rung never run publish no latency
   assert.deepEqual(unmeasured.rungs, {});
   assert.equal(unmeasured.error, "it failed the gate, so it was not measured");
 });
+
+test("the tests a framework does not support on the run's host travel with it, and a framework with none has no entry", () => {
+  const unsupported = { "sse.medium": "the runtime client has no response streaming" };
+  const s = summarize({ ...run, frameworks: [{ ...run.frameworks[0]!, unsupported }, run.frameworks[1]!] });
+  assert.deepEqual(s.frameworks[0]!.unsupported, unsupported);
+  assert.equal("unsupported" in s.frameworks[1]!, false);
+});

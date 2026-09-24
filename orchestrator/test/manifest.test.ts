@@ -116,7 +116,19 @@ test("a client's document is tracked and under Client/, and the command is decla
 
 test("a host must be one the benchmark measures on", () => {
   const hosts = { "container-h1": { dockerfile: "Dockerfile" }, "lambda-rie": { dockerfile: "Dockerfile" } };
-  assert.deepEqual(problemsOf({ ...GOOD, hosts }), [`${MANIFEST}: hosts.lambda-rie is not a host, only container-h1 are`]);
+  assert.deepEqual(problemsOf({ ...GOOD, hosts }), [
+    `${MANIFEST}: hosts.lambda-rie is not a host, only container-h1, container-h2, lambda-emulator are`,
+  ]);
+});
+
+test("a host's unsupported tests are named by id, each with a reason", () => {
+  const unsupported = { "json.small": "The runtime client buffers the answer.", "cors.scoped": "Nothing reaches the function's CORS layer." };
+  const hosts = { "container-h1": { dockerfile: "Dockerfile", unsupported } };
+  assert.deepEqual(problemsOf({ ...GOOD, hosts }), []);
+  const nothing = { "container-h1": { dockerfile: "Dockerfile", unsupported: { "json.nope": "gone" } } };
+  assert.deepEqual(problemsOf({ ...GOOD, hosts: nothing }), [`${MANIFEST}: hosts.container-h1.unsupported.json.nope names no test`]);
+  const reasonless = { "container-h1": { dockerfile: "Dockerfile", unsupported: { "json.small": "" } } };
+  assert.equal(problemsOf({ ...GOOD, hosts: reasonless }).length, 1);
 });
 
 test("a skip names a validation test, never a performance test and never nothing", () => {

@@ -222,6 +222,23 @@ test("an answer that is not the length it was primed with is counted as a mismat
   assert.equal(small.firstMismatch, "GET /json/small answered 13 bytes, expected 2");
 });
 
+test("a test the framework does not support on its host is never offered, whatever only names", async () => {
+  answering = stub();
+  delay = 0;
+  const unsupported = { "json.medium": "the runtime client buffers the answer", "cors.scoped": "not here" };
+  const { code, result, stdout } = await generate(
+    load([{ name: "regular", rps: 200, seconds: 1 }], { only: ["json", "baseline.plaintext"], unsupported }),
+  );
+  assert.equal(code, 0, stdout);
+  assert.match(stdout, /leaving out 1 test\(s\) node:fastify does not support here: json\.medium/);
+  assert.equal(result.testsLive, 3);
+  assert.deepEqual(
+    result.phases[0].recorded.tests.map((t: { id: string }) => t.id),
+    ["baseline.plaintext", "json.large", "json.small"],
+  );
+  assert.deepEqual(result.load.unsupported, unsupported);
+});
+
 test("a framework that closes the connection with an answer still gets every instance", async () => {
   // Micronaut answers every HEAD with connection: close, as this stub does here.
   answering = stub((route) => (route.startsWith("HEAD /items/") ? [200, { connection: "close" }] : undefined));
@@ -361,4 +378,5 @@ test("a load is refused before anything is sent", async () => {
   await refused([load(unjudged)], /phases\.0\.abortDropFraction: there is no settle to judge/);
   await refused([load([...regular, ...regular])], /phases: two phases are named regular/);
   await refused([load(regular, { only: ["nope"] })], /only: nope is neither a test nor a family/);
+  await refused([load(regular, { unsupported: { "json.nope": "gone" } })], /unsupported: json\.nope is not a test/);
 });

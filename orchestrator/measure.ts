@@ -48,6 +48,8 @@ export interface FrameworkRun {
   readonly bundleHash: string;
   readonly codeHash: string;
   readonly image?: { readonly id: string; readonly bytes: number };
+  /** The tests it cannot answer on this host, as its rb.json lists them, each with the reason. Neither the gate nor the load sent them. */
+  readonly unsupported?: Readonly<Record<string, string>>;
   readonly gate?: { readonly measurable: boolean; readonly passed: boolean; readonly outcomes: Readonly<Record<string, Outcome>> };
   /** The measured boot. The gate's boot ran the same image moments before, so the page cache was warm. */
   readonly boot?: { readonly startMs: number; readonly readyMs: number; readonly wallMs: number; readonly probeMs: number; readonly pageCache: "warm" };
@@ -175,8 +177,15 @@ export async function measure(o: MeasureOptions): Promise<RunFile> {
   }
 
   for (const [i, f] of o.frameworks.entries()) {
-    const bundle = frameworkBundle(o.root, f, o.at);
-    const base = { id: f.id, ordinal: i + 1, bundleHash: bundle.bundleHash, codeHash: bundle.codeHash };
+    const bundle = frameworkBundle(o.root, f, o.host, o.at);
+    const unsupported = f.rb.hosts[o.host]?.unsupported;
+    const base = {
+      id: f.id,
+      ordinal: i + 1,
+      bundleHash: bundle.bundleHash,
+      codeHash: bundle.codeHash,
+      ...(unsupported === undefined ? {} : { unsupported }),
+    };
     const image = images.get(f.id)!;
     log(`\n=== ${f.id} (${i + 1} of ${o.frameworks.length})`);
     if (image instanceof Error) {
@@ -199,6 +208,7 @@ export async function measure(o: MeasureOptions): Promise<RunFile> {
           exceptions: exceptions[f.id as keyof typeof exceptions],
           declared: f.declared,
           skips: f.rb.skips,
+          unsupported,
           run: values,
           alive: async () => first.alive(),
         });
@@ -239,6 +249,7 @@ export async function measure(o: MeasureOptions): Promise<RunFile> {
         values,
         ...(o.workers === undefined ? {} : { workers: o.workers }),
         ...(o.only === undefined ? {} : { only: [...o.only] }),
+        ...(unsupported === undefined ? {} : { unsupported }),
         phases: [...o.phases],
       };
       const result = await generate(load, (line) => log(`  ${line}`));

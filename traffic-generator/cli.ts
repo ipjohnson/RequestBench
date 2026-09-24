@@ -64,7 +64,7 @@ function options(args: string[]): Options {
   if (positionals.length !== 1) throw new UsageError("name the load once, as JSON or a file");
   const load = loadOf(positionals[0]!);
   const { host, port } = addressOf(load.target)!;
-  return { load, host, port, statuses: declared(load.framework), tests: select(load.only), out: v.out };
+  return { load, host, port, statuses: declared(load.framework), tests: select(load.only, load.unsupported), out: v.out };
 }
 
 /** The load the argument holds or names, with every default and the run's values filled in. */
@@ -107,11 +107,18 @@ function declared(id: string): Statuses {
   return { rejected, malformed, notFound, wrongMethod };
 }
 
-/** The performance tests to offer, by id. `only` names a test by its id, or a whole family by its name. */
-function select(only: readonly string[] | undefined): PerformanceTest[] {
+/**
+ * The performance tests to offer, by id. `only` names a test by its id, or a whole family by its
+ * name. A test the framework cannot answer on its host is left out whatever `only` says.
+ */
+function select(only: readonly string[] | undefined, unsupported: Readonly<Record<string, string>> = {}): PerformanceTest[] {
+  for (const id of Object.keys(unsupported)) {
+    if (!Object.hasOwn(suite.tests, id)) throw new UsageError(`unsupported: ${id} is not a test`);
+  }
   const measured = Object.values(suite.tests)
-    .filter((test): test is PerformanceTest => test.kind === "performance")
+    .filter((test): test is PerformanceTest => test.kind === "performance" && !Object.hasOwn(unsupported, idOf(test.id)))
     .sort((a, b) => (idOf(a.id) < idOf(b.id) ? -1 : 1));
+  if (measured.length === 0) throw new UsageError("unsupported: leaves no performance test to offer");
   if (only === undefined) return measured;
 
   const wanted = new Set<string>();
@@ -367,6 +374,8 @@ function write(out: string, result: LoadResult): void {
 async function main(args: string[]): Promise<number> {
   const o = options(args);
 
+  const left = Object.keys(o.load.unsupported ?? {}).filter((id) => suite.tests[id]?.kind === "performance");
+  if (left.length > 0) console.log(`leaving out ${left.length} test(s) ${o.load.framework} does not support here: ${left.join(", ")}`);
   console.log(`priming ${o.tests.length} tests against ${o.load.framework} at ${o.load.target}`);
   const compiled = await prepare({
     host: o.host,

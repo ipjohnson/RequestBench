@@ -60,6 +60,8 @@ export const loadSchema = z.strictObject({
   instances: z.number().int().positive().default(512),
   /** Test ids or family names. Absent means every performance test. */
   only: z.array(z.string().min(1)).min(1).optional(),
+  /** Tests the framework cannot answer on its host, by id, each with the reason. They are never offered. */
+  unsupported: z.record(z.string(), z.string().min(1)).optional(),
   /** Run in order, on the same threads and connections. */
   phases: z
     .array(phaseSchema)

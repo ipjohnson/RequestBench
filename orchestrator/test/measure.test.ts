@@ -87,11 +87,11 @@ const PHASES: Load["phases"] = [
   { name: "regular", rps: 100, settle: 1, seconds: 1, abortDropFraction: 0.05 },
 ];
 
-async function run(driver: Driver, ids: Id[]): Promise<RunFile> {
+async function run(driver: Driver, ids: Id[], edit: (f: LoadedFramework) => LoadedFramework = (f) => f): Promise<RunFile> {
   return measure({
     root: ROOT,
     host: "container-h1",
-    frameworks: ids.map(framework),
+    frameworks: ids.map(framework).map(edit),
     driver,
     phases: PHASES,
     ladder: "ladder-test",
@@ -144,6 +144,32 @@ test("a framework that passes the gate is measured, and one that fails it is not
   assert.equal(fastapi!.gate?.outcomes["json.medium"]?.status, "failed");
   assert.equal(fastapi!.load, undefined);
   assert.equal(fastapi!.error, "it failed the gate, so it was not measured");
+});
+
+test("a test the framework does not support on its host is recorded as such, and neither the gate nor the load sends it", async () => {
+  const unsupported = { "json.medium": "the runtime client buffers the answer" };
+  const asked: string[] = [];
+  const inner = reference("node:fastify");
+  // json.medium answered wrong, which would fail the gate if it were sent.
+  const counting: Transport = async (req) => {
+    asked.push(req.target);
+    const r = await inner(req);
+    return req.target === "/json/medium" ? { ...r, body: new TextEncoder().encode("[]") } : r;
+  };
+  const result = await run(fakeDriver(() => counting), ["node:fastify"], (f) => ({
+    ...f,
+    rb: { ...f.rb, hosts: { "container-h1": { dockerfile: "Dockerfile", unsupported } } },
+  }));
+  const [fastify] = result.frameworks;
+  assert.deepEqual(fastify!.unsupported, unsupported);
+  assert.deepEqual(fastify!.gate?.outcomes["json.medium"], { status: "unsupported", reason: unsupported["json.medium"] });
+  assert.equal(fastify!.gate?.measurable, true);
+  assert.deepEqual(fastify!.load?.load.unsupported, unsupported);
+  const regular = fastify!.load!.phases[1]!;
+  assert.ok(regular.status === "done" && regular.recorded !== undefined);
+  assert.equal(regular.recorded.tests.some((t) => t.id === "json.medium"), false);
+  // The gate asks the validating client and the load asks the generator, and neither reached the route.
+  assert.equal(asked.includes("/json/medium"), false);
 });
 
 test("a framework that never answers /health is reported with its log, and the run goes on", async () => {

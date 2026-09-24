@@ -16,6 +16,8 @@ export type Outcome =
   | { readonly status: "passed" }
   | { readonly status: "failed"; readonly failures: readonly string[] }
   | { readonly status: "skipped"; readonly reason: string }
+  /** Listed under the host's `unsupported` in rb.json, so it was never sent. */
+  | { readonly status: "unsupported"; readonly reason: string }
   | { readonly status: "notAsked" }
   | { readonly status: "unrun" };
 
@@ -60,6 +62,8 @@ export interface GateInput {
   /** The framework as its rb.json declares it, which a scoped test reads. Absent: nothing is scoped out. */
   readonly declared?: Framework | undefined;
   readonly skips?: Readonly<Record<string, string>> | undefined;
+  /** Tests the framework cannot answer on the host being gated, by id, each with the reason. */
+  readonly unsupported?: Readonly<Record<string, string>> | undefined;
   readonly run: RunValues;
   /**
    * Whether the framework is still up, asked when a call fails to get an answer. Once it is
@@ -85,6 +89,11 @@ export async function gate(input: GateInput): Promise<GateResult> {
 
   for (const test of ordered) {
     const id = idOfTest(test);
+    const unsupported = input.unsupported?.[id];
+    if (unsupported !== undefined) {
+      outcomes[id] = { status: "unsupported", reason: unsupported };
+      continue;
+    }
     if (down) {
       outcomes[id] = { status: "unrun" };
       continue;

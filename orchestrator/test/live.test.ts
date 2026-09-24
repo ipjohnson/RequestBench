@@ -120,6 +120,29 @@ test("a skip is reported with its reason, and a test scoped out is not asked", a
   assert.equal(result.passed, true);
 });
 
+test("an unsupported test is reported with its reason and never sent, and it fails nothing", async () => {
+  const reference = referenceFor("node:fastify");
+  const asked: string[] = [];
+  const counting: Transport = (req) => {
+    asked.push(req.target);
+    return reference(req);
+  };
+  const why = "the runtime client buffers the answer";
+  const result = await gate({
+    suite,
+    transport: counting,
+    exceptions: exceptions["node:fastify"],
+    unsupported: { "sse.medium": why, "cors.scoped": why },
+    run: FIXED_VALUES,
+    alive: async () => true,
+  });
+  assert.deepEqual(result.outcomes["sse.medium"], { status: "unsupported", reason: why });
+  assert.deepEqual(result.outcomes["cors.scoped"], { status: "unsupported", reason: why });
+  assert.equal(asked.includes("/sse/medium"), false);
+  assert.equal(result.measurable, true);
+  assert.equal(result.passed, true);
+});
+
 test("an exemplar is the test's own exchange, with the volatile headers masked", async () => {
   const result = await gateOver("node:fastify", referenceFor("node:fastify"));
   const file = exemplarFile("node:fastify", "container-h1", result.exchanges);

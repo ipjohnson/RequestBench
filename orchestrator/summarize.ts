@@ -159,6 +159,7 @@ function summarizeFramework(f: FrameworkRun) {
     codeHash: f.codeHash,
     ...(f.boot === undefined ? {} : { boot: f.boot }),
     ...(f.gate === undefined ? {} : { gate: { measurable: f.gate.measurable, passed: f.gate.passed } }),
+    ...(f.unsupported === undefined ? {} : { unsupported: f.unsupported }),
     ...(f.error === undefined ? {} : { error: f.error }),
     rungs,
     tests,

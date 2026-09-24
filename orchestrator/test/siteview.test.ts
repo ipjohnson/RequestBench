@@ -87,7 +87,7 @@ before(() => {
 after(() => rmSync(repo, { recursive: true, force: true }));
 
 test("each test is located at the commit, and the declaration and README come from the same commit", () => {
-  const view = frameworkView(repo, DEMO, head, ENDPOINTS, REQUIRED);
+  const view = frameworkView(repo, DEMO, head, ENDPOINTS, REQUIRED, "container-h1");
   assert.deepEqual(view.problems, []);
   const small = view.snippets["json.small"]!;
   assert.equal(small.handler!.how, "derived");
@@ -107,11 +107,11 @@ test("each test is located at the commit, and the declaration and README come fr
 test("a mechanism rb.json declares and the code does not bear out is a problem", () => {
   put(`${DIR}/app.js`, 'app.get("/json/small", (req, res) => res.send(items.small));\napp.get("/items/:id", (req, res) => res.send(rows[0]));\n');
   git("commit", "-qam", "drop the compression");
-  const view = frameworkView(repo, DEMO, git("rev-parse", "HEAD"), ENDPOINTS, REQUIRED);
+  const view = frameworkView(repo, DEMO, git("rev-parse", "HEAD"), ENDPOINTS, REQUIRED, "container-h1");
   assert.ok(view.problems.some((p) => /declares @demo\/compress on the compressed routes for compressed and marks no wiring/.test(p)), view.problems.join("\n"));
   assert.ok(view.problems.some((p) => /locates a handler for only 3\/4/.test(p)), view.problems.join("\n"));
   // The older commit still answers as it did.
-  assert.deepEqual(frameworkView(repo, DEMO, head, ENDPOINTS, REQUIRED).problems, []);
+  assert.deepEqual(frameworkView(repo, DEMO, head, ENDPOINTS, REQUIRED, "container-h1").problems, []);
 });
 
 test("the tests view carries every test's source, its route, its base and the payloads it names", async () => {

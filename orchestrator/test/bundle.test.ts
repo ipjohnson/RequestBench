@@ -21,7 +21,7 @@ const put = (path: string, text: string) => {
   mkdirSync(dirname(join(repo, path)), { recursive: true });
   writeFileSync(join(repo, path), text);
 };
-const rolesOf = (at?: string) => Object.fromEntries(frameworkBundle(repo, DEMO, at).files.map((f) => [f.path, f.role]));
+const rolesOf = (at?: string) => Object.fromEntries(frameworkBundle(repo, DEMO, "container-h1", at).files.map((f) => [f.path, f.role]));
 
 before(() => {
   repo = mkdtempSync(join(tmpdir(), "rb-bundle-"));
@@ -79,7 +79,7 @@ test("a framework's files get the roles upstream's bundle.py gives them, and onl
 });
 
 test("a rollup is sha256sum's own format over the sorted files", () => {
-  const b = frameworkBundle(repo, DEMO);
+  const b = frameworkBundle(repo, DEMO, "container-h1");
   const text = b.files.map((f) => `${f.hash.slice(7)}  ${f.path}\n`).join("");
   assert.equal(b.bundleHash, `sha256:${createHash("sha256").update(text).digest("hex")}`);
   assert.equal(b.codeHash, rollup(b.files.filter((f) => f.role !== "prose" && f.role !== "test" && f.role !== "client")));
@@ -90,28 +90,28 @@ test("a rollup is sha256sum's own format over the sorted files", () => {
 });
 
 test("prose and tests move bundleHash and leave codeHash alone", () => {
-  const before = frameworkBundle(repo, DEMO);
+  const before = frameworkBundle(repo, DEMO, "container-h1");
   put("frameworks/node/demo/README.md", "# Demo, corrected\n");
   put("frameworks/node/demo/suite/app.test.js", "// a sharper test\n");
-  const prose = frameworkBundle(repo, DEMO);
+  const prose = frameworkBundle(repo, DEMO, "container-h1");
   assert.notEqual(prose.bundleHash, before.bundleHash);
   assert.equal(prose.codeHash, before.codeHash);
 
   put("frameworks/node/demo/server.js", "export const x = 2;\n");
-  const code = frameworkBundle(repo, DEMO);
+  const code = frameworkBundle(repo, DEMO, "container-h1");
   assert.notEqual(code.codeHash, before.codeHash);
 
   // The commit still holds what was committed, which is what makes a dirty tree visible.
-  const committed = frameworkBundle(repo, DEMO, "HEAD");
+  const committed = frameworkBundle(repo, DEMO, "container-h1", "HEAD");
   assert.equal(committed.bundleHash, before.bundleHash);
   assert.equal(committed.commit, git("rev-parse", "HEAD"));
   git("checkout", "--", ".");
 });
 
 test("a regenerated client moves bundleHash and leaves codeHash alone", () => {
-  const before = frameworkBundle(repo, DEMO);
+  const before = frameworkBundle(repo, DEMO, "container-h1");
   put("frameworks/node/demo/Client/openapi.json", '{ "openapi": "3.1.0" }\n');
-  const after = frameworkBundle(repo, DEMO);
+  const after = frameworkBundle(repo, DEMO, "container-h1");
   assert.notEqual(after.bundleHash, before.bundleHash);
   assert.equal(after.codeHash, before.codeHash);
   git("checkout", "--", ".");
@@ -124,11 +124,36 @@ test("an untracked file never enters a bundle", () => {
 });
 
 test("a bundle with no Dockerfile did not resolve", () => {
-  assert.deepEqual(frameworkProblems(frameworkBundle(repo, DEMO)), []);
+  assert.deepEqual(frameworkProblems(frameworkBundle(repo, DEMO, "container-h1")), []);
   git("rm", "-q", "frameworks/node/demo/Dockerfile");
-  assert.deepEqual(frameworkProblems(frameworkBundle(repo, DEMO)), ["node:demo has no host file"]);
+  assert.deepEqual(frameworkProblems(frameworkBundle(repo, DEMO, "container-h1")), ["node:demo has no host file"]);
   git("reset", "-q", "HEAD", "--", "frameworks/node/demo/Dockerfile");
   git("checkout", "--", "frameworks/node/demo/Dockerfile");
+});
+
+test("a bundle is read for one host and leaves out the other hosts' directories", () => {
+  put("frameworks/node/demo/container-h2/Dockerfile", "FROM node:26\n");
+  put("frameworks/node/demo/lambda-emulator/handler.js", "export const handler = 1;\n");
+  git("add", "-A");
+  const inside = (b: { files: readonly { path: string }[] }, host: string) => b.files.some((f) => f.path.startsWith(`frameworks/node/demo/${host}/`));
+  const h1 = frameworkBundle(repo, DEMO, "container-h1");
+  const lambda = frameworkBundle(repo, DEMO, "lambda-emulator");
+  assert.equal(inside(h1, "container-h2") || inside(h1, "lambda-emulator"), false);
+  assert.equal(inside(lambda, "container-h2"), false);
+  assert.equal(rolesOf()["frameworks/node/demo/lambda-emulator/handler.js"], undefined);
+  assert.equal(
+    lambda.files.find((f) => f.path === "frameworks/node/demo/lambda-emulator/handler.js")?.role,
+    "source",
+  );
+
+  put("frameworks/node/demo/lambda-emulator/handler.js", "export const handler = 2;\n");
+  git("add", "-A");
+  assert.equal(frameworkBundle(repo, DEMO, "container-h1").codeHash, h1.codeHash);
+  assert.notEqual(frameworkBundle(repo, DEMO, "lambda-emulator").codeHash, lambda.codeHash);
+
+  git("rm", "-rq", "--cached", "frameworks/node/demo/container-h2", "frameworks/node/demo/lambda-emulator");
+  rmSync(join(repo, "frameworks/node/demo/container-h2"), { recursive: true });
+  rmSync(join(repo, "frameworks/node/demo/lambda-emulator"), { recursive: true });
 });
 
 test("the tests bundle gives each part of the corpus its role, and codeHash ignores prose and snapshots", () => {
