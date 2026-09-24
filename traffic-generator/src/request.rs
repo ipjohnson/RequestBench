@@ -31,9 +31,27 @@ impl Request {
     }
 }
 
+/// What the program speaks to the framework.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum Protocol {
+    Http1,
+    /// HTTP/2 with prior knowledge and no TLS.
+    H2c,
+}
+
+impl Protocol {
+    pub fn parse(name: &str) -> Option<Protocol> {
+        match name {
+            "http/1.1" => Some(Protocol::Http1),
+            "h2c" => Some(Protocol::H2c),
+            _ => None,
+        }
+    }
+}
+
 /// Methods whose request says how long its body is even when it has none, so a framework that
 /// reads a length finds one.
-const CARRIES_BODY: [&str; 3] = ["POST", "PUT", "PATCH"];
+pub const CARRIES_BODY: [&str; 3] = ["POST", "PUT", "PATCH"];
 
 /// The request as HTTP/1.1 bytes: the request line, the Host the connection was made to, the
 /// test's headers, the length of the body, and keep-alive.

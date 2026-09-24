@@ -23,8 +23,8 @@ import { meta, probe, type Address, type Budget } from "./container.ts";
 import { corpusVersion, payloadFiles, recordAll } from "./corpus.ts";
 import { gate, type Outcome } from "./gate.ts";
 import { repoSlug, resolveCommit } from "./git.ts";
-import type { HostId } from "./hosts.ts";
-import { http1 } from "./live.ts";
+import { HOSTS, type Host, type HostId } from "./hosts.ts";
+import { live } from "./live.ts";
 import type { MachineState } from "./machine.ts";
 import type { LoadedFramework } from "./manifest.ts";
 
@@ -153,6 +153,8 @@ export function generator(root: string, genCpus?: string): (load: Load, log: (li
 
 export async function measure(o: MeasureOptions): Promise<RunFile> {
   const log = o.log ?? ((line: string) => console.log(line));
+  const { protocol, load: shape }: Host = HOSTS[o.host];
+  if (protocol === "lambda-runtime-api") throw new Error(`${o.host} cannot be measured yet: nothing here speaks ${protocol}`);
   const started = new Date();
   // Drawn here, before anything boots, from a source no framework can read. Every client in
   // the run sends the same ones.
@@ -199,12 +201,12 @@ export async function measure(o: MeasureOptions): Promise<RunFile> {
     let gated;
     const first = await o.driver.start(f);
     try {
-      await probe(first.address, o.bootMs, first.alive);
-      const live = http1(first.address);
+      await probe(first.address, o.bootMs, first.alive, protocol);
+      const transport = live(first.address, protocol);
       try {
         gated = await gate({
           suite,
-          transport: live.transport,
+          transport: transport.transport,
           exceptions: exceptions[f.id as keyof typeof exceptions],
           declared: f.declared,
           skips: f.rb.skips,
@@ -213,7 +215,7 @@ export async function measure(o: MeasureOptions): Promise<RunFile> {
           alive: async () => first.alive(),
         });
       } finally {
-        await live.close();
+        await transport.close();
       }
     } catch (error) {
       entries.push({ ...withImage, error: `the gate's boot failed: ${(error as Error).message}\n${first.logs()}` });
@@ -234,7 +236,7 @@ export async function measure(o: MeasureOptions): Promise<RunFile> {
     // The measured boot.
     const second = await o.driver.start(f);
     try {
-      const ready = await probe(second.address, o.bootMs, second.alive);
+      const ready = await probe(second.address, o.bootMs, second.alive, protocol);
       const boot = {
         startMs: round(second.startMs),
         readyMs: round(ready.readyMs),
@@ -247,13 +249,15 @@ export async function measure(o: MeasureOptions): Promise<RunFile> {
         target: `${second.address.host}:${second.address.port}`,
         framework: f.id,
         values,
+        protocol,
+        ...shape,
         ...(o.workers === undefined ? {} : { workers: o.workers }),
         ...(o.only === undefined ? {} : { only: [...o.only] }),
         ...(unsupported === undefined ? {} : { unsupported }),
         phases: [...o.phases],
       };
       const result = await generate(load, (line) => log(`  ${line}`));
-      entries.push({ ...withImage, gate: gateRecord, boot, meta: await meta(second.address), load: result });
+      entries.push({ ...withImage, gate: gateRecord, boot, meta: await meta(second.address, protocol), load: result });
     } catch (error) {
       entries.push({ ...withImage, gate: gateRecord, error: `the measured boot failed: ${(error as Error).message}\n${second.logs()}` });
       log(`  measurement failed: ${(error as Error).message}`);

@@ -54,8 +54,10 @@ const load: LoadResult = {
     framework: "node:fastify",
     values: {} as LoadResult["load"]["values"],
     workers: 1,
+    protocol: "http/1.1",
     instances: 1,
     connections: 8,
+    streams: 1,
     phases: [
       { name: "warmup", rps: 1000, settle: 1 },
       { name: "regular", rps: 100, seconds: 1 },

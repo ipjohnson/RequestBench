@@ -4,15 +4,16 @@
 //!
 //!   {"op":"exchange","id":1,"request":{...},"timeoutMs":10000}
 //!       -> {"id":1,"answer":{...}} or {"id":1,"error":"..."}
-//!   {"op":"open","tests":[...],"workers":4,"connections":256}   -> {"kind":"ready"}
+//!   {"op":"open","tests":[...],"workers":4,"connections":256,"streams":1} -> {"kind":"ready"}
 //!   {"op":"phase","rps":1000,"settle":30000,"total":60000,"abortDropFraction":0.05}
 //!       -> {"kind":"phase",...}
 //!   {"op":"close"}                                               -> {"kind":"closed"}
 //!
 //! Anything that goes wrong outside an exchange is answered {"kind":"error","message":"..."}.
 //!
-//!   traffic-generator --target <host:port>
+//!   traffic-generator --target <host:port> [--protocol http/1.1|h2c]
 mod exchange;
+mod h2c;
 mod histogram;
 mod http1;
 mod load;
@@ -30,8 +31,9 @@ use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::task::LocalSet;
 
 use crate::exchange::Exchanger;
-use crate::load::{Instance, Load, Phased, Schedule, Test};
-use crate::request::{Request, http1};
+use crate::h2c::Template;
+use crate::load::{Instance, Load, Phased, Schedule, Test, Wire};
+use crate::request::{Protocol, Request, http1};
 use crate::tally::Tally;
 
 /// What every time this program reports is counted from.
@@ -50,19 +52,23 @@ fn say(message: &Value) {
 fn main() {
     LazyLock::force(&ORIGIN);
     let args: Vec<String> = std::env::args().skip(1).collect();
-    let target = match args.as_slice() {
-        [flag, target] if flag == "--target" => target.clone(),
-        _ => {
-            eprintln!("usage: traffic-generator --target <host:port>");
-            std::process::exit(2);
+    let usage = || -> ! {
+        eprintln!("usage: traffic-generator --target <host:port> [--protocol http/1.1|h2c]");
+        std::process::exit(2);
+    };
+    let (target, protocol) = match args.as_slice() {
+        [flag, target] if flag == "--target" => (target.clone(), Protocol::Http1),
+        [flag, target, p, name] if flag == "--target" && p == "--protocol" => {
+            (target.clone(), Protocol::parse(name).unwrap_or_else(|| usage()))
         }
+        _ => usage(),
     };
     let Some((host, port)) = target.rsplit_once(':').and_then(|(h, p)| p.parse::<u16>().ok().map(|p| (h.to_string(), p))) else {
         eprintln!("traffic-generator: --target is host:port, not {target}");
         std::process::exit(2);
     };
     let runtime = tokio::runtime::Builder::new_current_thread().enable_all().build().expect("a runtime");
-    LocalSet::new().block_on(&runtime, run(host, port));
+    LocalSet::new().block_on(&runtime, run(host, port, protocol));
 }
 
 #[derive(Deserialize)]
@@ -84,6 +90,13 @@ struct Open {
     tests: Vec<CompiledTest>,
     workers: usize,
     connections: usize,
+    /// The requests one connection carries at once, which is 1 over HTTP/1.1.
+    #[serde(default = "one")]
+    streams: usize,
+}
+
+fn one() -> usize {
+    1
 }
 
 #[derive(Deserialize)]
@@ -95,8 +108,8 @@ struct PhaseCommand {
     abort_drop_fraction: Option<f64>,
 }
 
-async fn run(host: String, port: u16) {
-    let exchanger = Rc::new(Exchanger::new(host.clone(), port));
+async fn run(host: String, port: u16, protocol: Protocol) {
+    let exchanger = Rc::new(Exchanger::new(host.clone(), port, protocol));
     let mut load: Option<Load> = None;
     let mut lines = BufReader::new(tokio::io::stdin()).lines();
     while let Ok(Some(line)) = lines.next_line().await {
@@ -127,7 +140,7 @@ async fn run(host: String, port: u16) {
                 if let Some(open) = load.take() {
                     open.close();
                 }
-                match open(&host, port, &exchanger.authority(), command).await {
+                match open(&host, port, protocol, &exchanger.authority(), command).await {
                     Ok(opened) => {
                         load = Some(opened);
                         say(&json!({ "kind": "ready" }));
@@ -169,30 +182,31 @@ async fn run(host: String, port: u16) {
 
 /// Every instance built into its bytes before any thread starts, so nothing is built while a
 /// phase is timed.
-async fn open(host: &str, port: u16, authority: &str, command: Value) -> Result<Load, String> {
+async fn open(host: &str, port: u16, protocol: Protocol, authority: &str, command: Value) -> Result<Load, String> {
     let open: Open = serde_json::from_value(command).map_err(|e| format!("a load that does not parse: {e}"))?;
-    if open.workers == 0 || open.connections == 0 || open.tests.is_empty() {
-        return Err("a load needs a worker, a connection and a test".into());
+    if open.workers == 0 || open.connections == 0 || open.streams == 0 || open.tests.is_empty() {
+        return Err("a load needs a worker, a connection, a stream and a test".into());
+    }
+    if protocol == Protocol::Http1 && open.streams != 1 {
+        return Err("an HTTP/1.1 connection carries one request at a time".into());
     }
     let mut tests = Vec::with_capacity(open.tests.len());
     for test in open.tests {
         let mut instances = Vec::with_capacity(test.instances.len());
         for i in test.instances {
             let body = i.request.body()?;
-            instances.push(Instance {
-                bytes: http1(&i.request, body.as_deref(), authority),
-                head: i.request.is_head(),
-                label: i.label,
-                accepted: i.accepted,
-                body_bytes: i.body_bytes,
-            });
+            let wire = match protocol {
+                Protocol::Http1 => Wire::Http1(http1(&i.request, body.as_deref(), authority)),
+                Protocol::H2c => Wire::H2c(Box::new(Template::new(&i.request, body, authority)?)),
+            };
+            instances.push(Instance { wire, head: i.request.is_head(), label: i.label, accepted: i.accepted, body_bytes: i.body_bytes });
         }
         if instances.is_empty() {
             return Err("a test with no instance".into());
         }
         tests.push(Test { instances });
     }
-    Load::open(host.to_string(), port, tests, open.workers, open.connections).await
+    Load::open(host.to_string(), port, protocol, tests, open.workers, open.connections, open.streams).await
 }
 
 /// A phase's threads merged: every test's tally, the settle's, and when it started and ended.

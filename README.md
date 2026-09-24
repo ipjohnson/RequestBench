@@ -113,11 +113,13 @@ HTTP/1.1 client that reads each response, and the gate's own requests are the Ru
 `traffic-generator/src/`, so the gate checks the bytes the load sends.
 
 A host is where a framework is started and how it is reached, and each host is its own run.
-`container-h1` is the framework's image in a container, reached over HTTP/1.1. `container-h2`
-reaches the same image over HTTP/2, and `lambda-emulator` runs the framework as a Lambda function.
-Both are being added in [#190](https://github.com/ipjohnson/RequestBench/issues/190), and
-`validate` and `measure` refuse them until the traffic generator speaks their protocols. Each
-framework's container gets 2 CPUs. These variables change where things run:
+`container-h1` is the framework's image in a container, reached over HTTP/1.1, with 256
+connections that each carry one request at a time. `container-h2` reaches the framework's image
+over HTTP/2 with prior knowledge and no TLS, with 16 connections that each carry 16 streams.
+`lambda-emulator` runs the framework as a Lambda function, and is being added in
+[#190](https://github.com/ipjohnson/RequestBench/issues/190). `validate` and `measure` refuse it
+until the traffic generator serves the Lambda Runtime API. Each framework's container gets 2 CPUs.
+These variables change where things run:
 
 | Variable | Effect |
 | --- | --- |

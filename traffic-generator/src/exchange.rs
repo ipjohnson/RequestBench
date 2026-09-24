@@ -1,26 +1,34 @@
-//! One request and its whole answer, for the gate and for priming. Nothing here is timed, so an
-//! exchange waits on a connection of its own, taken from those an earlier exchange left open.
+//! One request and its whole answer, for the gate and for priming. Nothing here is timed. Over
+//! HTTP/1.1 an exchange waits on a connection of its own, taken from those an earlier exchange
+//! left open. Over h2c every exchange is a stream on one connection.
 use std::cell::RefCell;
 use std::time::Duration;
 
 use base64::Engine;
+use bytes::Bytes;
+use h2::client::SendRequest;
 use serde_json::{Value, json};
 use tokio::io::AsyncWriteExt;
 use tokio::net::TcpStream;
+use tokio::task::JoinHandle;
 
+use crate::h2c::{self, Template};
 use crate::http1::{Answer, Read, Reader};
-use crate::request::{Request, http1};
+use crate::request::{Protocol, Request, http1};
 
 pub struct Exchanger {
     host: String,
     port: u16,
+    protocol: Protocol,
     /// Connections an answer left open, newest last.
     idle: RefCell<Vec<TcpStream>>,
+    /// The h2c connection, and the task that drives its frames.
+    h2: RefCell<Option<(SendRequest<Bytes>, JoinHandle<()>)>>,
 }
 
 impl Exchanger {
-    pub fn new(host: String, port: u16) -> Self {
-        Exchanger { host, port, idle: RefCell::new(Vec::new()) }
+    pub fn new(host: String, port: u16, protocol: Protocol) -> Self {
+        Exchanger { host, port, protocol, idle: RefCell::new(Vec::new()), h2: RefCell::new(None) }
     }
 
     pub fn authority(&self) -> String {
@@ -37,6 +45,9 @@ impl Exchanger {
     }
 
     async fn send(&self, request: &Request) -> Result<Value, String> {
+        if self.protocol == Protocol::H2c {
+            return self.send_h2(request).await;
+        }
         let body = request.body()?;
         let authority = self.authority();
         let bytes = http1(request, body.as_deref(), &authority);
@@ -91,6 +102,37 @@ impl Exchanger {
                 Read::Failed(why) => return Err(cut(arrived, why)),
             }
         }
+    }
+
+    async fn send_h2(&self, request: &Request) -> Result<Value, String> {
+        let authority = self.authority();
+        let template = Template::new(request, request.body()?, &authority)?;
+        // A connection the framework ended since the last exchange is opened again.
+        let open = self.h2.borrow().as_ref().filter(|(_, driver)| !driver.is_finished()).map(|(send, _)| send.clone());
+        let send = match open {
+            Some(send) => send,
+            None => {
+                let (send, driver) = h2c::connect(&self.host, self.port).await?;
+                *self.h2.borrow_mut() = Some((send.clone(), driver));
+                send
+            }
+        };
+        let answer = h2c::fetch(&send, &template, true).await?;
+        let headers: Vec<(String, String)> = answer
+            .headers
+            .unwrap_or_default()
+            .iter()
+            .map(|(name, value)| (name.to_string(), String::from_utf8_lossy(value.as_bytes()).into_owned()))
+            .collect();
+        Ok(json!({
+            "status": answer.status,
+            "reason": "",
+            "version": "2",
+            "host": authority,
+            "headers": headers,
+            "body": base64::engine::general_purpose::STANDARD.encode(answer.body.unwrap_or_default()),
+            "bodyBytes": answer.body_bytes,
+        }))
     }
 
     /// An idle connection the framework has not closed since, or a new one, and which it is.
@@ -161,7 +203,7 @@ mod tests {
 
     #[tokio::test]
     async fn a_request_that_meets_a_connection_the_framework_closed_goes_again_on_a_new_one() {
-        let exchanger = Exchanger::new("127.0.0.1".into(), one_a_connection());
+        let exchanger = Exchanger::new("127.0.0.1".into(), one_a_connection(), Protocol::Http1);
         let request = Request { method: "GET".into(), target: "/x".into(), headers: vec![], body: None };
         for _ in 0..3 {
             let answer = exchanger.exchange(&request, Duration::from_secs(5)).await.unwrap();

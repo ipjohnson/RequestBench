@@ -12,6 +12,7 @@
 import { execFileSync, spawn, spawnSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import http from "node:http";
+import http2 from "node:http2";
 import { join } from "node:path";
 
 import { frameworkDir, frameworkId, type FrameworkKey } from "./bundle.ts";
@@ -202,8 +203,12 @@ export function start(root: string, built: Built, f: FrameworkKey, host: HostId,
   };
 }
 
+/** What a container host's framework is reached with. */
+export type Spoken = "http/1.1" | "h2c";
+
 /** One GET, with the whole of the time left to answer it. */
-function getOnce(address: Address, path: string, timeoutMs: number): Promise<{ status: number; body: Buffer }> {
+function getOnce(address: Address, path: string, timeoutMs: number, protocol: Spoken): Promise<{ status: number; body: Buffer }> {
+  if (protocol === "h2c") return getOnceH2(address, path, timeoutMs);
   return new Promise((resolve, reject) => {
     const req = http.get({ host: address.host, port: address.port, path, agent: false }, (res) => {
       const chunks: Buffer[] = [];
@@ -213,6 +218,30 @@ function getOnce(address: Address, path: string, timeoutMs: number): Promise<{ s
     });
     req.on("error", reject);
     req.setTimeout(Math.max(1, timeoutMs), () => req.destroy(new Error("timed out")));
+  });
+}
+
+/** One GET over HTTP/2 with prior knowledge, on a connection of its own. */
+function getOnceH2(address: Address, path: string, timeoutMs: number): Promise<{ status: number; body: Buffer }> {
+  return new Promise((resolve, reject) => {
+    const session = http2.connect(`http://${address.host}:${address.port}`);
+    const fail = (error: Error) => {
+      session.destroy();
+      reject(error);
+    };
+    session.on("error", fail);
+    const req = session.request({ ":method": "GET", ":path": path });
+    let status = 0;
+    const chunks: Buffer[] = [];
+    req.on("response", (headers) => (status = Number(headers[":status"])));
+    req.on("data", (c: Buffer) => chunks.push(c));
+    req.on("end", () => {
+      session.close();
+      resolve({ status, body: Buffer.concat(chunks) });
+    });
+    req.on("error", fail);
+    req.setTimeout(Math.max(1, timeoutMs), () => fail(new Error("timed out")));
+    req.end();
   });
 }
 
@@ -229,7 +258,7 @@ export interface Ready {
  * already waited, from 1 to 50 ms: a native framework boots in milliseconds and a JVM in
  * seconds, and any fixed interval is too coarse for one or wasteful on the other.
  */
-export async function probe(address: Address, budgetMs: number, alive: () => boolean): Promise<Ready> {
+export async function probe(address: Address, budgetMs: number, alive: () => boolean, protocol: Spoken = "http/1.1"): Promise<Ready> {
   const t0 = performance.now();
   const deadline = t0 + budgetMs;
   let checked = t0;
@@ -244,7 +273,7 @@ export async function probe(address: Address, budgetMs: number, alive: () => boo
     }
     const sent = performance.now();
     try {
-      const r = await getOnce(address, "/health", deadline - sent);
+      const r = await getOnce(address, "/health", deadline - sent, protocol);
       if (r.status === 200 && r.body.length > 0) {
         const done = performance.now();
         return { readyMs: done - t0, probeMs: done - sent };
@@ -258,9 +287,9 @@ export async function probe(address: Address, budgetMs: number, alive: () => boo
 }
 
 /** What the framework says it is, verbatim. Not measured and not checked: an empty object when it says nothing. */
-export async function meta(address: Address): Promise<Record<string, unknown>> {
+export async function meta(address: Address, protocol: Spoken = "http/1.1"): Promise<Record<string, unknown>> {
   try {
-    const r = await getOnce(address, "/__meta", 5000);
+    const r = await getOnce(address, "/__meta", 5000, protocol);
     if (r.status !== 200) return {};
     const parsed: unknown = JSON.parse(r.body.toString("utf8"));
     return parsed !== null && typeof parsed === "object" && !Array.isArray(parsed) ? (parsed as Record<string, unknown>) : {};
