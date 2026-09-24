@@ -96,7 +96,8 @@ and view it.
 
 `npm run rb -- measure` measures every framework, or the ones named, one at a time. It builds each
 image and boots it once to run every test. It then boots it again, times the boot, and offers the
-performance tests at the rates set in [`orchestrator/ladder.ts`](orchestrator/ladder.ts):
+performance tests at the rates of one ladder in [`orchestrator/ladder.ts`](orchestrator/ladder.ts).
+`--ladder` names it, and the `ci` ladder below is used when it is not given:
 
 | Phase | Requests per second | Length |
 | --- | --- | --- |
@@ -120,9 +121,9 @@ over HTTP/2 with prior knowledge and no TLS, with 16 connections that each carry
 `lambda-emulator` runs the framework as a Lambda function on its language's AWS base image, on one
 core. The Rust program serves the Lambda Runtime API in Lambda's place, and the function's own
 runtime client asks it for each event, an API Gateway payload format 2.0 request. Its load is a
-closed loop: each event goes out the moment the runtime asks, for 120 recorded seconds that start
-with the first event the function answers. Nothing warms it, because a Lambda function's first
-event is live traffic. The requests that learn each answer are sent to the gate's function
+closed loop: each event goes out the moment the runtime asks, for 120 recorded seconds on `ci` that
+start with the first event the function answers. Nothing warms it, because a Lambda function's
+first event is live traffic. The requests that learn each answer are sent to the gate's function
 instead. Each test records the invoke phase, from the event's write to the runtime's next request
 for one, and the Telemetry API's three spans within it. The run also keeps the first invocation
 and each second's mean invoke phase on their own, so the cold start shows apart from the tail. Each
@@ -141,10 +142,11 @@ A run is recorded only when it was made on Linux, from a clean working tree, at 
 over the whole corpus at full length. The site shows only recorded runs unless it is built with
 `--unrecorded`.
 
-[`measure.yml`](.github/workflows/measure.yml) measures every framework each night, one
-GitHub-hosted runner for each host a framework implements, with the framework on cores 0 and 1 and
-the generator on cores 2 and 3. It adds each run's summary to the `results` branch, under `runs/`,
-and [`pages.yml`](.github/workflows/pages.yml) then publishes the site from every summary there.
+[`measure.yml`](.github/workflows/measure.yml) measures every framework each night on the `ci`
+ladder, one GitHub-hosted runner for each host a framework implements, with the framework on cores
+0 and 1 and the generator on cores 2 and 3. It adds each run's summary to the `results` branch,
+under `runs/`, and [`pages.yml`](.github/workflows/pages.yml) then publishes the site from every
+summary there.
 
 ## Commands
 

@@ -17,7 +17,7 @@ import * as container from "./container.ts";
 import { exemplarFile, FIXED_VALUES, gate, type GateResult } from "./gate.ts";
 import { dirty, git, pushed, repoSlug, resolveCommit, tracked, unstaged } from "./git.ts";
 import { HOSTS, isHostId, type HostId } from "./hosts.ts";
-import { CLOSED, closedPhasesOf, LADDER, phasesOf } from "./ladder.ts";
+import { closedPhasesOf, isLadderId, LADDERS, phasesOf, type Ladder } from "./ladder.ts";
 import { live, liveOver, type Exchange, type Live } from "./live.ts";
 import { cpuList, machineState } from "./machine.ts";
 import { loadRepo, type LoadedFramework } from "./manifest.ts";
@@ -45,8 +45,9 @@ const USAGE = [
   "  validate --at <host:port> --framework <framework> [--host <id>] [--exemplars]",
   "      the whole corpus against a framework, in its container or started by hand; --exemplars",
   "      writes results/exemplars/<language>-<name>@<host>.json from what it answered",
-  "  measure [<framework>]... [--host <id>] [--seconds <n>] [--only <test|family>,...]",
-  "      gate and measure every framework on one host, and write results/runs/<run>.json",
+  "  measure [<framework>]... [--host <id>] [--ladder <name>] [--seconds <n>] [--only <test|family>,...]",
+  "      gate and measure every framework on one host, and write results/runs/<run>.json; --ladder",
+  "      names the rates and lengths in orchestrator/ladder.ts, ci when it is not given",
   "  summarize <run file> [--out <file>]",
   "      the run as the site reads it: percentiles and histograms per test, family and rung",
   "  suite <framework>...",
@@ -77,6 +78,12 @@ const hostOf = (id: string | undefined): HostId => {
   const host = id ?? "container-h1";
   if (!isHostId(host)) throw new UsageError(`${host} is not a host, only ${Object.keys(HOSTS).join(", ")} are`);
   return host;
+};
+
+const ladderOf = (id: string | undefined): Ladder => {
+  const ladder = id ?? "ci";
+  if (!isLadderId(ladder)) throw new UsageError(`${ladder} is not a ladder in orchestrator/ladder.ts, which has ${Object.keys(LADDERS).join(", ")}`);
+  return LADDERS[ladder];
 };
 
 /** The frameworks whose rb.json loads, narrowed to the ones named. A name that does not load is an error. */
@@ -333,7 +340,7 @@ async function validate(args: string[]): Promise<number> {
   if (protocol === "lambda-runtime-api") return validateFunction(f!, host, built, values.exemplars === true);
   const running = container.start(ROOT, built, f!, host);
   try {
-    const ready = await container.probe(running.address, LADDER.bootSeconds * 1000, running.alive, protocol);
+    const ready = await container.probe(running.address, LADDERS.ci.open.bootSeconds * 1000, running.alive, protocol);
     console.log(`ready in ${Math.round(ready.readyMs)} ms at ${running.address.host}:${running.address.port}`);
     const result = await gateAt(f!.id, host, f, async () => running.alive(), (on) => live(running.address, protocol, on));
     report(result);
@@ -357,7 +364,7 @@ async function validateFunction(f: LoadedFramework, host: HostId, built: contain
   const fn = container.startFunction(ROOT, built, f, host, port);
   try {
     const started = performance.now();
-    await awaitInit(pipe, fn, CLOSED.bootSeconds * 1000);
+    await awaitInit(pipe, fn, LADDERS.ci.closed.bootSeconds * 1000);
     console.log(`ready in ${Math.round(performance.now() - started)} ms: the runtime asked the Runtime API on port ${port} for its first event`);
     const result = await gateAt(f.id, host, f, async () => fn.alive(), (on) => liveOver(pipe, on));
     report(result);
@@ -375,10 +382,12 @@ async function validateFunction(f: LoadedFramework, host: HostId, built: contain
 async function measureCommand(args: string[]): Promise<number> {
   const { values, positionals } = parse(args, {
     host: { type: "string" },
+    ladder: { type: "string" },
     seconds: { type: "string" },
     only: { type: "string" },
   });
   const host = hostOf(values.host);
+  const ladder = ladderOf(values.ladder);
   const closed = HOSTS[host].protocol === "lambda-runtime-api";
   const chosen = frameworks(positionals).filter((f) => Object.hasOwn(f.rb.hosts, host));
   if (chosen.length === 0) throw new UsageError(`no framework with an rb.json that loads implements ${host}`);
@@ -416,12 +425,12 @@ async function measureCommand(args: string[]): Promise<number> {
     host,
     frameworks: chosen,
     driver,
-    phases: phasesOf(seconds),
-    closedPhases: closed ? closedPhasesOf(seconds) : undefined,
-    ladder: closed ? CLOSED.version : LADDER.version,
+    phases: phasesOf(ladder, seconds),
+    closedPhases: closed ? closedPhasesOf(ladder, seconds) : undefined,
+    ladder: closed ? ladder.closed.version : ladder.open.version,
     only,
-    bootMs: (closed ? CLOSED : LADDER).bootSeconds * 1000,
-    cooldownMs: (closed ? CLOSED : LADDER).cooldownMs,
+    bootMs: (closed ? ladder.closed : ladder.open).bootSeconds * 1000,
+    cooldownMs: (closed ? ladder.closed : ladder.open).cooldownMs,
     notRecorded,
     at,
     machine: await machineState(),

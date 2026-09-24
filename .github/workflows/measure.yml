@@ -89,7 +89,7 @@ jobs:
           HOST: ${{ matrix.host }}
           RB_SUT_CPUS: "0,1"
           RB_GEN_CPUS: "2,3"
-        run: npm run rb -- measure --host "$HOST"
+        run: npm run rb -- measure --host "$HOST" --ladder ci
 
       - name: Summarize
         id: summarize
