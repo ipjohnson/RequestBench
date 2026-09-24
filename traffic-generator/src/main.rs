@@ -298,6 +298,7 @@ fn events(command: Value) -> Result<Vec<Vec<lambda::Instance>>, String> {
                 label: i.label,
                 accepted: i.accepted,
                 body_bytes: i.body_bytes,
+                head: i.request.is_head(),
             });
         }
         tests.push(instances);

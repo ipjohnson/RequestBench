@@ -13,6 +13,9 @@
 //! to ask. A phase hands out events as fast as the runtime asks for them, and checks each answer's
 //! status and length against priming after it has handed out the next event, so the check never
 //! sits inside a span.
+//!
+//! An answer is read as a Function URL's caller reads it. That caller gets no body in an answer to
+//! HEAD, whatever the function posted.
 use std::cell::{Cell, RefCell};
 use std::collections::VecDeque;
 use std::rc::Rc;
@@ -104,6 +107,7 @@ pub struct Instance {
     pub accepted: Vec<u16>,
     /// What this request's 2xx body measured at priming, which every answer has to measure again.
     pub body_bytes: Option<u64>,
+    pub head: bool,
 }
 
 /// One test's invocations: its spans on the histogram layout histogram.ts reads, and what went wrong.
@@ -467,8 +471,9 @@ impl Env {
                 format!("{} answered {}, expected {}", request.label, a.status, accepted.join(" or "))
             }),
             Ok(a) => {
-                if let Some(expected) = request.body_bytes.filter(|&b| b != a.body.len() as u64) {
-                    spans.mismatched(|| format!("{} answered {} bytes, expected {expected}", request.label, a.body.len()));
+                let read = if request.head { 0 } else { a.body.len() as u64 };
+                if let Some(expected) = request.body_bytes.filter(|&b| b != read) {
+                    spans.mismatched(|| format!("{} answered {read} bytes, expected {expected}", request.label));
                 }
             }
         }
@@ -518,12 +523,15 @@ impl Env {
             Some(conn) if !conn.gone.get() && self.phase.borrow().is_none() => self.send_exchange(&conn, queued),
             _ => self.queue.borrow_mut().push_back(queued),
         }
-        let answered = match tokio::time::timeout(timeout, answer).await {
+        let mut answered = match tokio::time::timeout(timeout, answer).await {
             Ok(Ok(Ok(answered))) => answered,
             Ok(Ok(Err(why))) => return Err(format!("{}: {why}", describe())),
             Ok(Err(_)) => return Err(format!("{}: the runtime went away", describe())),
             Err(_) => return Err(format!("{}: no answer within {} s", describe(), timeout.as_secs())),
         };
+        if request.is_head() {
+            answered.body.clear();
+        }
         Ok(json!({
             "status": answered.status,
             "reason": "",
@@ -672,6 +680,10 @@ mod tests {
                     let path = target.split('?').next().unwrap();
                     assert_eq!(String::from_utf8(body).unwrap(), format!(r#"{{"length":0,"path":"{path}"}}"#));
                 }
+                // The stub posts a body whatever the method, and a caller reads none in an answer to HEAD.
+                let head = Request { method: "HEAD".into(), ..get("/items/17") };
+                let answer = env.exchange(&head, Duration::from_secs(5)).await.unwrap();
+                assert_eq!((answer["status"].as_u64(), answer["bodyBytes"].as_u64()), (Some(200), Some(0)));
             })
             .await;
     }
@@ -688,6 +700,7 @@ mod tests {
                     label: format!("GET {path}"),
                     accepted: vec![200],
                     body_bytes: Some(format!(r#"{{"length":0,"path":"{path}"}}"#).len() as u64),
+                    head: false,
                 };
                 env.load(vec![vec![instance("/a")], vec![instance("/bb")]]);
                 let report = env.phase(Duration::from_millis(100), Duration::from_millis(300), |_| 0).await.unwrap();
