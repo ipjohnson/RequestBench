@@ -15,6 +15,7 @@ application's `fetch`, and writes the Response it gets back.
 | `Implementation/` | The application, in TypeScript. `app.ts` builds it, and `routes/` holds one module per corpus family. |
 | `container-h1/` | How container-h1 starts it. `server.ts` loads the payloads and listens, and `Dockerfile` builds the image. |
 | `container-h2/` | How container-h2 starts it. `server.ts` hands @hono/node-server node:http2's `createServer`, which answers HTTP/2 with prior knowledge, and `Dockerfile` builds the image. |
+| `lambda-emulator/` | How lambda-emulator starts it. `handler.mjs` exports the handler the Lambda runtime hands each event, the application behind `handle()` from `hono/aws-lambda`, and `Dockerfile` builds the function on the `nodejs:26-preview` base image. The runtime imports a handler's module only as `.js`, `.mjs` or `.cjs`, so `handler.mjs` is JavaScript, and Node strips the types of the application it imports. |
 | `UnitTests/` | node:test tests of the wiring, sending each request through Hono's `app.request()`. |
 | `client-exception/` | How the corpus reads Hono's error bodies. |
 | `package.json` | The dependencies, and the scripts that start, check and test the Implementation. |
@@ -92,9 +93,17 @@ listening. `PORT` defaults to 8080.
   Response it builds, so a refusal it writes, the 400 for a body that is not JSON and the 403 for a
   wrong token, goes out chunked, with no `Content-Length`.
 - The server is one Node process, which @hono/node-server starts, on the container's two cores.
+  The function on lambda-emulator runs on one core.
 - container-h2 lists `sse.medium` as unsupported. hono's streamSSE sets Transfer-Encoding, which
   node:http2 refuses as a connection-specific header. The throw escapes @hono/node-server's error
   handler and ends the process.
+- On lambda-emulator the application answers behind `handle()` from `hono/aws-lambda`, Hono's own
+  adapter, in place of @hono/node-server. It buffers the whole answer into one proxy response, so
+  the sse and stream tests are listed as unsupported there. `streamHandle()` would stream every
+  answer.
+- The function is built on `public.ecr.aws/lambda/nodejs:26-preview`, because container-h1 runs
+  Node 26 and Lambda's Node 26 runtime is still a preview. The runtime logs a warning saying so when
+  it starts.
 
 ## Refusals
 
