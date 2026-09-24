@@ -1,0 +1,51 @@
+/* The tests pages: a card per family, then a section per test with its request and the checks
+   on its answer. The request and response columns reuse the framework page's wire styles. */
+
+.legend-note { font-size: 13.5px; color: var(--ink2); max-width: 78ch; margin: 14px 0 0; }
+.legend-note code, .rule code, .tabout code, .hint code {
+  background: var(--surface2); padding: 1px 4px; border-radius: 2px; font-size: 12px; }
+
+/* ---------- overview ---------- */
+.famgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+           gap: 14px; margin-top: 26px; }
+.famcard { display: flex; flex-direction: column; gap: 6px; background: var(--surface);
+           border: 1px solid var(--rule); border-radius: 4px; padding: 15px 17px 16px;
+           color: var(--ink); text-decoration: none; }
+.famcard:hover { border-color: var(--teal); }
+.famcard:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+.famcard h2 { font-family: var(--f-mono); font-size: 15px; font-weight: 500; margin: 0;
+              color: var(--tealtext); }
+.famcount { font-family: var(--f-mono); font-size: 11px; letter-spacing: .04em;
+            color: var(--ink3); margin: 0; }
+.famabout { font-size: 14px; line-height: 1.5; color: var(--ink2); margin: 0; }
+.famtests { font-family: var(--f-mono); font-size: 11px; color: var(--ink3); margin: auto 0 0;
+            padding-top: 6px; }
+
+/* ---------- a family ---------- */
+.comparable { font-size: 14px; color: var(--ink2); max-width: 78ch; margin: 14px 0 0; }
+.comparable strong { color: var(--ink); font-weight: 600; }
+.testindex { margin-top: 22px; }
+.testindex table { min-width: 0; font-size: 13px; }
+.testindex td, .testindex th { text-align: left; }
+.testindex td.route { word-break: break-all; }
+.testindex td.id { font-family: var(--f-mono); font-size: 12.5px; white-space: nowrap; }
+.testindex td.differs { color: var(--ink2); min-width: 220px; }
+.testindex .pill { margin-left: 7px; }
+.tcase { scroll-margin-top: 16px; }
+.tcasehead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; margin: 0 0 6px; }
+.tcasehead h2 { font-family: var(--f-mono); font-size: 17px; font-weight: 500; margin: 0; }
+.tcasehead .pill { margin: 0; }
+.tabout { margin: 0 0 8px; max-width: 78ch; }
+.tmeta { display: flex; flex-wrap: wrap; gap: 4px 18px; font-family: var(--f-mono);
+         font-size: 11.5px; color: var(--ink3); margin: 0 0 10px; }
+.tcase p.hint { margin: 0 0 8px; }
+.tcase .wirecols { margin-top: 14px; }
+.hnote { font-family: var(--f-body); font-style: italic; color: var(--ink3); }
+.bodycap { font-family: var(--f-mono); font-size: 11.5px; color: var(--ink3); margin: 0 0 6px; }
+.rule { font-size: 13px; color: var(--ink2); margin: 0 0 10px; }
+details.tsource { margin-top: 12px; }
+details.tsource summary { cursor: pointer; font-family: var(--f-mono); font-size: 11.5px;
+                          color: var(--ink3); }
+details.tsource summary:hover { color: var(--ink2); }
+details.tsource .sniphead { margin: 8px 0 6px; }
+details.tsource pre.code { margin: 0; }

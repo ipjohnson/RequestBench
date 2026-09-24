@@ -1,0 +1,150 @@
+---
+// One family of tests: what it measures, and each test's request and the checks on its answer,
+// recorded from the test itself so the page cannot describe a request the test does not send.
+import Shell from "../../components/Shell.astro";
+import TestCall from "../../components/TestCall.astro";
+import "../../styles/tests.css";
+import { permalink } from "../../lib/bundleview.ts";
+import { familiesOf, familyPage, readAgainst, type FamilyEntry } from "../../lib/corpus.ts";
+import { site } from "../../lib/site.ts";
+
+export function getStaticPaths() {
+  const { corpus } = site();
+  return (corpus ? familiesOf(corpus.view) : []).map((family) => ({ params: { family: family.name }, props: { family } }));
+}
+
+const { family } = Astro.props as { family: FamilyEntry };
+const { corpus, factors } = site();
+const view = corpus!.view;
+const commit = view.bundle.commit;
+const link = (file: string): string | null => (corpus!.linkable ? permalink(corpus!.repo, commit, file) : null);
+const files = new Set(view.bundle.files.map((f) => f.path));
+/** A payload with a committed file links to it. A computed one, such as a row, has none. */
+const payloadHref = (name: string): string | null => {
+  const file = [`tests/payloads/${name}`, `tests/payloads/${name}.json`].find((f) => files.has(f));
+  return file ? link(file) : null;
+};
+/** A test on this page by its anchor, and one in another family by its page. */
+const hrefOf = (id: string): string => {
+  const fam = view.tests[id]?.family ?? id.split(".")[0] ?? "";
+  return fam === family.name ? `#${id}` : `${familyPage(fam, "below")}#${id}`;
+};
+const against = readAgainst(view);
+const tests = family.ids.map((id) => ({ id, t: view.tests[id]! }));
+
+// Said once above the tests, and only where one of them needs it.
+const shown = tests.flatMap(({ t }) =>
+  t.calls.flatMap((c) => [c.target, ...c.headers.map((h) => h.value), c.body?.text ?? "", c.expect?.text ?? ""]),
+);
+const legend = [
+  shown.some((s) => s.includes("{run.")) &&
+    "A value written {run.name} is drawn once per run and never given to the framework, so it cannot answer from a table.",
+  shown.some((s) => s.includes("{draw.item}")) && "{draw.item} is a row of items.large, picked per request.",
+  tests.some(({ t }) => t.calls.some((c) => c.declared)) &&
+    "A refusal's status is written 4XX. Frameworks refuse with different statuses, so each declares its own in its " +
+      "client-exception, and the test reads it from there.",
+].filter((s): s is string => typeof s === "string");
+const comparable = `${family.comparable.charAt(0).toLowerCase()}${family.comparable.slice(1)}`;
+const primed = (p: { reads: readonly string[] }): string => (p.reads.length ? ` and reads ${p.reads.join(" and ")}` : "");
+---
+
+<Shell
+  title={`${family.name} tests · RequestBench`}
+  description={family.about}
+  footerLeft="github.com/ipjohnson/RequestBench"
+  footerLeftHref="../index.html"
+  footerRight={`tests at ${commit.slice(0, 12)}`}
+>
+  <p class="crumb"><a href="../tests.html">&larr; tests</a></p>
+  <h1>{family.name}</h1>
+  <p class="lede">{family.about}</p>
+  <p class="comparable"><strong>Comparable</strong> {comparable}</p>
+  {legend.length > 0 && <p class="legend-note">{legend.join(" ")}</p>}
+
+  <div class="scroll testindex">
+    <table>
+      <thead>
+        <tr>
+          <th>test</th>
+          <th>request</th>
+          <th>base</th>
+          <th>what differs from the base</th>
+        </tr>
+      </thead>
+      <tbody>
+        {
+          tests.map(({ id, t }) => (
+            <tr>
+              <td class="id">
+                <a href={`#${id}`}>{id}</a>
+                {t.kind !== "performance" && <span class="pill">not measured</span>}
+              </td>
+              <td class="route">
+                <span class="verb">{t.method ?? ""}</span> {t.path ?? ""}
+              </td>
+              <td class="id">{t.base && <a href={hrefOf(t.base)}>{t.base}</a>}</td>
+              <td class="differs">{t.varies && (factors[t.varies] ?? t.varies)}</td>
+            </tr>
+          ))
+        }
+      </tbody>
+    </table>
+  </div>
+
+  {
+    tests.map(({ id, t }) => {
+      const source = link(t.source.path);
+      const readBy = against.get(id) ?? [];
+      return (
+        <section class="panel tcase" id={id}>
+          <div class="tcasehead">
+            <h2>{id}</h2>
+            {t.kind !== "performance" && (
+              <span class="pill" title="A validation test: rb validate checks it, and nothing measures it.">
+                not measured
+              </span>
+            )}
+          </div>
+          {(t.base || readBy.length > 0) && (
+            <p class="tmeta">
+              {t.base && (
+                <span>
+                  base <a href={hrefOf(t.base)}>{t.base}</a>
+                </span>
+              )}
+              {readBy.length > 0 && (
+                <span>
+                  base of{" "}
+                  {readBy.map((other, i) => (
+                    <>
+                      {i > 0 && ", "}
+                      <a href={hrefOf(other)}>{other}</a>
+                    </>
+                  ))}
+                </span>
+              )}
+            </p>
+          )}
+          <p class="tabout">{t.about}</p>
+          {t.primes.map((p) => (
+            <p class="hint">
+              Before this request, the test sends <code>{`${p.method} ${p.target}`}</code> once{primed(p)}. That request is
+              not measured.
+            </p>
+          ))}
+          {t.calls.map((call) => (
+            <TestCall call={call} payloadHref={payloadHref} />
+          ))}
+          <details class="tsource">
+            <summary>Test source, {t.source.path}</summary>
+            <div class="sniphead">
+              <span class="loc">{t.source.path}</span>
+              {source && <a href={source}>open on GitHub &rarr;</a>}
+            </div>
+            <pre class="code">{t.source.text}</pre>
+          </details>
+        </section>
+      );
+    })
+  }
+</Shell>

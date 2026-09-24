@@ -1,0 +1,91 @@
+---
+// One call of a test: the request as it goes on the wire, and the checks its answer has to pass.
+import type { CallView } from "../lib/bundleview.ts";
+import { proseHtml } from "../lib/html.ts";
+
+type Props = {
+  call: CallView;
+  /** The committed file a payload is, linked when the page may link, or null. */
+  payloadHref: (name: string) => string | null;
+};
+
+const { call, payloadHref } = Astro.props;
+const more = (b: { truncated: boolean; bytes: number }): string => (b.truncated ? `\n… ${b.bytes.toLocaleString()} bytes total` : "");
+const sentHref = call.body?.payload ? payloadHref(call.body.payload) : null;
+const expectHref = call.expect ? payloadHref(call.expect.payload) : null;
+---
+
+<div class="wirecols">
+  <div>
+    <h3>Request</h3>
+    <pre class="wire req">{call.method} {call.target}</pre>
+    {
+      call.headers.length > 0 && (
+        <div class="hdrs">
+          {call.headers.map((h) => (
+            <div class="hrow">
+              <span class="hk">{h.name}</span>
+              <span class="hv">
+                {h.value}
+                {h.note && <span class="hnote"> {h.note}</span>}
+              </span>
+            </div>
+          ))}
+        </div>
+      )
+    }
+    {
+      call.body ? (
+        <>
+          {call.body.payload && (
+            <p class="bodycap">
+              payload {sentHref ? <a href={sentHref}>{call.body.payload}</a> : call.body.payload}
+            </p>
+          )}
+          <pre class="wire">{call.body.text}{more(call.body)}</pre>
+        </>
+      ) : (
+        <p class="rule">No body.</p>
+      )
+    }
+  </div>
+  <div>
+    <h3>Expected response</h3>
+    <pre class="wire res">{call.status === null ? "Any status" : `HTTP ${call.status}`}</pre>
+    {
+      call.declared && (
+        <p class="rule">
+          The status the framework declares as <code>{call.declared}</code> in its client-exception.
+        </p>
+      )
+    }
+    {
+      call.checks.length > 0 && (
+        <div class="hdrs">
+          {call.checks.map((c) => (
+            <div class="hrow">
+              <span class="hk">{c.name}</span>
+              <span class="hv" set:html={proseHtml(c.rule)} />
+            </div>
+          ))}
+        </div>
+      )
+    }
+    {
+      call.expect ? (
+        <>
+          <p class="bodycap">
+            payload {expectHref ? <a href={expectHref}>{call.expect.payload}</a> : call.expect.payload}
+          </p>
+          <pre class="wire">{call.expect.text}{more(call.expect)}</pre>
+          <p class="rule">
+            {call.expect.compared}
+            {call.expect.note && ` ${call.expect.note}`}
+          </p>
+        </>
+      ) : (
+        call.bodyRule && <p class="rule" set:html={proseHtml(call.bodyRule)} />
+      )
+    }
+  </div>
+</div>

@@ -1,7 +1,7 @@
 # site
 
-The results explorer, and one page per framework. An Astro app in the workspace, static
-output, two hydrated islands. A port of upstream's site/ at 9939f4c onto the rewrite's run
+The results explorer, one page per framework, and the tests pages: one listing the families
+and one per family. An Astro app in the workspace, static output, two hydrated islands. A port of upstream's site/ at 9939f4c onto the rewrite's run
 summaries, exemplars and `rb siteview`.
 
     npm run site -- --summaries <dir> [--exemplars <dir>] [--out <dir>] [--data-base <url>] [--unrecorded]
@@ -29,7 +29,7 @@ looked at with:
       hist.ts         the per-test histograms, published beside a run rather than in it
       delta.ts        the base chain: one implementation, used by both kinds of page
       views.ts        the delta cell, likewise, and the base's row on a pane
-      corpus.ts       routes and factors from the corpus, host notes from orchestrator/hosts.ts
+      corpus.ts       routes, factors and the families' reading order from the corpus, host notes from orchestrator/hosts.ts
       site.ts         everything the build reads, read once
       bundleview.ts   the `rb siteview` seam
     src/client/       the browser. Bundled and type-checked
@@ -38,8 +38,8 @@ looked at with:
       explorer.ts     the DOM half of the explorer
       compare.ts      what a framework page is compared with: pure, like select.ts
       test-tree.ts    the DOM half of a framework page
-    src/pages/        index.astro, and f/[slug].astro per framework
-    src/styles/       the palette and the two stylesheets
+    src/pages/        index.astro, f/[slug].astro per framework, tests.astro, and tests/[family].astro per family
+    src/styles/       the palette and the three stylesheets
     tools/build.ts    the CLI
 
 ## Two authorities, one page

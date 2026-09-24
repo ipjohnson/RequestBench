@@ -9,6 +9,7 @@ import { after, before, test } from "node:test";
 import { fileURLToPath } from "node:url";
 
 import suite from "@rb/tests";
+import { items } from "@rb/tests/payloads";
 import { corpusEndpoints, frameworkView, testsView } from "../siteview.ts";
 import type { Endpoint } from "../snippets.ts";
 
@@ -127,4 +128,43 @@ test("the tests view carries every test's source, its route, its base and the pa
   assert.equal(view.pushed, false);
   assert.equal(view.factors["size"]?.reads, "a larger response body, same route and same handler");
   assert.ok(view.families["json"]!.about.length > 0);
+});
+
+test("each test carries what it sends and what it checks, with every drawn value as its placeholder", async () => {
+  const { recordings } = await corpusEndpoints(suite);
+  const { tests } = testsView(ROOT, undefined, suite, recordings);
+  const call = (id: string) => tests[id]!.calls[0]!;
+
+  const read = call("items.read");
+  assert.deepEqual([read.method, read.target, read.status], ["GET", "/items/{draw.item}", "200"]);
+  assert.equal(read.expect?.payload, "row {draw.item} of items.large");
+  assert.equal(read.expect?.note, "Shown with 1417 for {draw.item}.");
+  assert.match(call("parameters.two").expect!.text, /,"echo":\{"one":\{run\.one\},"two":\{run\.two\}\}\}$/);
+  assert.match(call("forms.urlencoded").body!.text, /^page=\{run\.page\}&size=\{run\.size\}&/);
+
+  // A refusal's status is the framework's to declare, and a JSON body goes out with its type.
+  const rejected = call("body.rejected_all");
+  assert.deepEqual([rejected.status, rejected.declared, rejected.body?.payload], ["4XX", "rejected", "order.invalid"]);
+  assert.deepEqual(rejected.headers, [{ name: "content-type", value: "application/json" }]);
+  assert.match(rejected.bodyRule!, /name `customerId`, `status` and `lines`, or exactly one of them/);
+  assert.equal(call("errors.malformed").bodyRule, "The framework's own error body, which is not checked.");
+  assert.equal(call("cors.disallowed").status, null);
+
+  // The priming request is shown as a step before the call, and the value it read as where it goes.
+  const match = tests["etag.match_large"]!;
+  assert.deepEqual(match.primes, [{ method: "GET", target: "/etag/large", reads: ["its etag"] }]);
+  assert.deepEqual(match.calls[0]!.headers, [{ name: "if-none-match", value: '"{etag}"', note: "the etag the priming request answered with" }]);
+  assert.equal(match.calls[0]!.bodyRule, "No body.");
+
+  const vary = call("cache.vary_one");
+  assert.deepEqual(vary.headers, [{ name: "x-rb-tenant", value: "alpha or beta", note: "picked per request" }]);
+  assert.deepEqual(vary.checks, [{ name: "x-rb-serial", rule: "repeats, so a stored answer was replayed" }]);
+
+  const large = call("compressed.gzip_large");
+  assert.deepEqual(large.checks, [
+    { name: "content-encoding", rule: "is `gzip`" },
+    { name: "x-rb-serial", rule: "advances, so the handler ran" },
+  ]);
+  assert.deepEqual([large.expect?.truncated, large.expect?.text.length], [true, 700]);
+  assert.equal(large.expect?.bytes, Buffer.byteLength(JSON.stringify(items.large.value)));
 });

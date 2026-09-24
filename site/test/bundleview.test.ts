@@ -14,6 +14,10 @@ describe("siteView", () => {
     assert.deepEqual([small?.method, small?.path, small?.source.path], ["GET", "/json/small", "tests/json/small.ts"]);
     assert.equal(view?.tests.tests["json.large"]?.base, "json.small");
     assert.ok(view?.tests.factors["size"]?.reads);
+    const read = view?.tests.tests["items.read"];
+    assert.ok(read?.about);
+    assert.deepEqual([read?.calls[0]?.target, read?.calls[0]?.status], ["/items/{draw.item}", "200"]);
+    assert.deepEqual(view?.tests.tests["etag.match_large"]?.primes.map((p) => p.target), ["/etag/large"]);
   });
 
   test("a commit history does not hold is said, not guessed at", () => {

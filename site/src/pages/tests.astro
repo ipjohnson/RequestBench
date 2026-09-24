@@ -1,0 +1,57 @@
+---
+// The corpus: a card per family, each opening the family's page with every test's request and
+// the checks on its answer.
+import Shell from "../components/Shell.astro";
+import "../styles/tests.css";
+import { familiesOf, familyPage } from "../lib/corpus.ts";
+import { site } from "../lib/site.ts";
+
+const { corpus } = site();
+const families = corpus ? familiesOf(corpus.view) : [];
+const total = families.reduce((n, f) => n + f.ids.length, 0);
+const measured = families.reduce((n, f) => n + f.measured, 0);
+const commit = corpus?.view.bundle.commit.slice(0, 12) ?? "";
+const plural = (n: number, word: string): string => `${n} ${word}${n === 1 ? "" : "s"}`;
+---
+
+<Shell
+  title="Tests · RequestBench"
+  description="Every test RequestBench sends to each framework, by family, with the request and the answer it expects."
+  footerLeft="github.com/ipjohnson/RequestBench"
+  footerLeftHref="index.html"
+  footerRight={commit ? `tests at ${commit}` : "tests"}
+>
+  <p class="crumb"><a href="index.html">&larr; results</a></p>
+  <h1>Tests</h1>
+  {
+    corpus ? (
+      <>
+        <p class="lede">
+          Every framework is sent the same {total} tests in {families.length} families. A test is one
+          request and the checks its answer has to pass. A framework is measured only
+          after it passes all {measured} performance tests.
+        </p>
+        <p class="legend-note">
+          Most tests are read against another test, their base, and differ from it in one thing. A
+          family's page shows each test's request, the answer it expects, and what the difference
+          from its base measures.
+        </p>
+        <div class="famgrid">
+          {families.map((f) => (
+            <a class="famcard" href={familyPage(f.name, "root")}>
+              <h2>{f.name}</h2>
+              <p class="famcount">
+                {plural(f.ids.length, "test")}
+                {f.measured < f.ids.length && `, ${f.ids.length - f.measured} not measured`}
+              </p>
+              <p class="famabout">{f.about}</p>
+              <p class="famtests">{f.ids.map((id) => id.slice(f.name.length + 1)).join(" · ")}</p>
+            </a>
+          ))}
+        </div>
+      </>
+    ) : (
+      <div class="note">The build could not read the corpus, so there are no tests to show. It says why in its log.</div>
+    )
+  }
+</Shell>

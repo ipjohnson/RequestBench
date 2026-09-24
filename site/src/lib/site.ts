@@ -55,6 +55,11 @@ export type Site = {
    * bundle that run recorded. Null when history could not answer at that commit.
    */
   tests: { view: TestsView; verdict: Verdict; from: Source; unlinked: string | null } | null;
+  /**
+   * The corpus the tests pages describe, read where the routes are, and whether its files can be
+   * linked. Those pages explain the tests rather than a run, so they need no bundle to verify.
+   */
+  corpus: { view: TestsView; repo: string; linkable: boolean } | null;
   catalog: Catalog;
   /** The runs embedded in the page, one per host, so the table paints without a round trip. */
   embedded: Run[];
@@ -132,7 +137,8 @@ function read(): Site {
   // The routes are the working tree's corpus whichever tree is read, so a commit history cannot
   // answer for still has them. The sources are not: HEAD's file under an old run's number is the
   // thing the bundle hash is there to prevent, so they come only from a tree that verifies.
-  const corpus = view?.tests ?? tree?.tests ?? (at === "HEAD" ? null : (siteView(config.root, "HEAD").view?.tests ?? null));
+  const described = view ?? tree ?? (at === "HEAD" ? null : siteView(config.root, "HEAD").view);
+  const corpus = described?.tests ?? null;
   const routes = routesOf(corpus);
   const factors = factorsOf(corpus);
 
@@ -197,6 +203,7 @@ function read(): Site {
     factors,
     families: corpus?.families ?? {},
     tests,
+    corpus: described ? { view: described.tests, repo: described.repo, linkable: described.tests.pushed && described.repo !== "" } : null,
     catalog,
     embedded,
     pages,

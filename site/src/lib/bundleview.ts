@@ -84,9 +84,35 @@ export const FrameworkView = z.object({
 });
 export type FrameworkView = z.infer<typeof FrameworkView>;
 
+/** The start of a body as it goes on the wire, and the size of all of it. */
+const BodyView = z.object({ text: z.string(), bytes: z.number(), truncated: z.boolean() });
+
+/**
+ * What one call of a test sends, and what it checks on the answer. Rules are prose with
+ * literals in backticks. `status` is null where any status passes, and 4XX where the status is
+ * the one the framework declares under `declared`.
+ */
+export const CallView = z.object({
+  method: z.string(),
+  target: z.string(),
+  headers: z.array(z.object({ name: z.string(), value: z.string(), note: z.string().optional() })),
+  body: BodyView.extend({ payload: z.string().optional() }).optional(),
+  status: z.string().nullable(),
+  declared: z.string().optional(),
+  checks: z.array(z.object({ name: z.string(), rule: z.string() })),
+  expect: BodyView.extend({ payload: z.string(), compared: z.string(), note: z.string().optional() }).optional(),
+  bodyRule: z.string().optional(),
+});
+export type CallView = z.infer<typeof CallView>;
+
+/** A call made before the measured one, and what the test reads from its answer. */
+export const PrimeView = z.object({ method: z.string(), target: z.string(), reads: z.array(z.string()) });
+export type PrimeView = z.infer<typeof PrimeView>;
+
 export const TestView = z.object({
   kind: z.string(),
   family: z.string(),
+  about: z.string().default(""),
   method: z.string().optional(),
   path: z.string().optional(),
   base: z.string().optional(),
@@ -95,6 +121,8 @@ export const TestView = z.object({
   source: z.object({ path: z.string(), hash: z.string(), text: z.string() }),
   /** The payloads it sends or expects, by name. */
   payloads: z.array(z.string()).default([]),
+  calls: z.array(CallView).default([]),
+  primes: z.array(PrimeView).default([]),
 });
 export type TestView = z.infer<typeof TestView>;
 
