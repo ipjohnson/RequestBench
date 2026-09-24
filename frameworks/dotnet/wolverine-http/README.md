@@ -132,6 +132,10 @@ this Mac, against about 280 ms through `app.Run()`, because it finds its command
   reads no body in an answer to HEAD, so nothing reads it.
 - On lambda-emulator `/__meta` reports no `bootMs`. The hosting package runs the runtime client's
   loop inside the server's `StartAsync`, so ASP.NET Core never raises `ApplicationStarted`.
+- lambda-emulator runs Wolverine.HTTP on the JIT runtime, not as a Native AOT build. The code
+  `codegen write` pre-generates roots only Wolverine's message handlers, so a native build drops the
+  HTTP endpoints and answers 404. Rooting the whole application instead fails at startup, on a type
+  Wolverine builds by reflection.
 
 ## Refusals
 
