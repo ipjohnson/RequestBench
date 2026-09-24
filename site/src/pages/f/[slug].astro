@@ -11,6 +11,7 @@ import "../../styles/framework.css";
 import { permalink, type Part } from "../../lib/bundleview.ts";
 import { chainWith, comparedOf, deltaFor, floorFor, testValue } from "../../lib/delta.ts";
 import { usedSpan, usLabel } from "../../lib/bins.ts";
+import { windowingOf } from "../../lib/windows.ts";
 import { DEFAULT_HOST, familyOf, metaOf, rungLabel, rungsOf, testOrder } from "../../lib/run.ts";
 import { proseHtml } from "../../lib/html.ts";
 import { familyPage } from "../../lib/corpus.ts";
@@ -113,6 +114,9 @@ for (const [fam, ids] of groups) if (fam) families.set(fam, [...(families.get(fa
 // A framework that did not complete the rate has no histogram to draw, and the page renders
 // without one rather than as an empty grid.
 const grid = run.binGrid;
+// A run from before the generator windowed its tests has no windows, and its panes draw the
+// histogram alone.
+const windowing = windowingOf(run.windowGrid);
 
 // Every rate the run recorded for this framework, not just the one the page opens on. The
 // reader flips between them in the browser, so all are rendered and one is shown; fetching on
@@ -421,6 +425,7 @@ const unsupported = Object.entries(t.unsupported ?? {}).sort(([a], [b]) => (a < 
                     shown: r.shown,
                   }))}
                   grid={grid}
+                  windowing={windowing}
                   snippet={snips[id]}
                   also={alsoFor(id)}
                   link={linkFor(id)}

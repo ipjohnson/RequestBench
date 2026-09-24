@@ -7,7 +7,8 @@
 // the tree does, so picking one there opens its pane here rather than being a separate
 // selection the reader has to reconcile.
 //
-// The rate and the comparison are picked once for the whole panel, beside the tabs.
+// The rate and the comparison are picked once for the whole panel, beside the tabs. So is the
+// chart under each test's numbers, its histogram or its latency over time.
 import { esc } from "../lib/html.ts";
 import { cell, type Unit } from "../lib/metrics.ts";
 import type { Run, WireDoc } from "../lib/types.ts";
@@ -80,6 +81,38 @@ export function startTree(): void {
   const rung = from.get("rung");
   const host = document.querySelector<HTMLElement>(".eprates")?.dataset["host"];
   if (rung && from.get("host") === host && pickable.some((b) => b.dataset["rung"] === rung)) setRate(rung);
+
+  // Every pane at every rate has its own pair of chart tabs, and a pick in one is a pick in all of
+  // them, so a reader stepping through the tree for a climb keeps reading climbs.
+  const chartTabs = [...document.querySelectorAll<HTMLButtonElement>(".epcharttabs [role=tab]")];
+  const setChart = (chart: string): void => {
+    for (const t of chartTabs) {
+      const on = t.dataset["chart"] === chart;
+      t.setAttribute("aria-selected", String(on));
+      t.tabIndex = on ? 0 : -1;
+      const panel = document.getElementById(t.getAttribute("aria-controls") ?? "");
+      if (panel) panel.hidden = !on;
+    }
+  };
+  for (const t of chartTabs) {
+    t.addEventListener("click", () => setChart(t.dataset["chart"] ?? ""));
+    t.addEventListener("keydown", (ev) => {
+      const own = [...(t.parentElement?.querySelectorAll<HTMLButtonElement>("[role=tab]") ?? [])];
+      const i = own.indexOf(t);
+      const step = ev.key === "ArrowRight" ? 1 : ev.key === "ArrowLeft" ? -1 : 0;
+      const to = step
+        ? own[(i + step + own.length) % own.length]
+        : ev.key === "Home"
+          ? own[0]
+          : ev.key === "End"
+            ? own[own.length - 1]
+            : null;
+      if (!to) return;
+      ev.preventDefault();
+      setChart(to.dataset["chart"] ?? "");
+      to.focus();
+    });
+  }
 
   // What a compared number differs by, and why. One popup for the page, filled from the
   // number's template and placed by script rather than by CSS, so it can shift to stay on

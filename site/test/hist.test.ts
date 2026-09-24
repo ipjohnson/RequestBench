@@ -37,6 +37,15 @@ describe("splitHist", () => {
     assert.equal(JSON.stringify(run), kept);
   });
 
+  test("leaves each test's windows out of the run, and out of the histograms", () => {
+    const windowed = summary();
+    windowed.frameworks[0]!.tests["json.small"]!.rungs!["regular"]!.windows = [[3, 120, 130, 140]];
+    const { run, hist } = splitHist(windowed);
+    assert.equal(JSON.stringify(run).includes("windows"), false);
+    assert.equal(JSON.stringify(hist).includes("windows"), false);
+    assert.equal(JSON.stringify(withoutHist(windowed)).includes("windows"), false);
+  });
+
   test("a document with no frameworks passes through", () => {
     assert.deepEqual(splitHist({ runId: "r" }), { run: { runId: "r" }, hist: {} });
     assert.deepEqual(splitHist(null), { run: null, hist: {} });

@@ -4,6 +4,9 @@
 // publishes them as a document of their own beside the run, and the page carries the run without
 // them. The explorer fetches the document when a blend needs it and puts each histogram back
 // where the summary had it.
+//
+// Each test's windows are left out of the run the same way, and published nowhere. The framework
+// pages draw them when the site is built, and nothing in the browser reads them.
 import { BUCKETS, GROWTH } from "../../../traffic-generator/histogram.ts";
 import type { Hist, Run } from "./types.ts";
 
@@ -16,13 +19,14 @@ export const histUsable = (run: Run): boolean => run.histGrid?.growth === GROWTH
 export const hasHist = (run: Run): boolean =>
   run.frameworks.some((f) => Object.values(f.tests).some((t) => Object.values(t.rungs ?? {}).some((r) => r.hist !== undefined)));
 
-type RawRung = Record<string, unknown> & { hist?: Hist };
+type RawRung = Record<string, unknown> & { hist?: Hist; windows?: unknown };
 type RawTest = Record<string, unknown> & { rungs?: Record<string, RawRung> };
 type RawFramework = Record<string, unknown> & { id?: string; tests?: Record<string, RawTest> };
 
 /**
- * A summary split into the run without its histograms and the histograms. It takes the document
- * as it was read, which is what the build publishes, and leaves every other key where it was.
+ * A summary split into the run without its histograms or windows, and the histograms. It takes the
+ * document as it was read, which is what the build publishes, and leaves every other key where it
+ * was.
  */
 export function splitHist(raw: unknown): { run: unknown; hist: HistDoc } {
   const hist: HistDoc = {};
@@ -36,7 +40,7 @@ export function splitHist(raw: unknown): { run: unknown; hist: HistDoc } {
         if (!t.rungs) return [id, t];
         const rungs = Object.fromEntries(
           Object.entries(t.rungs).map(([rn, rung]) => {
-            const { hist: h, ...rest } = rung;
+            const { hist: h, windows: _, ...rest } = rung;
             if (h && f.id) ((hist[f.id] ??= {})[id] ??= {})[rn] = h;
             return [rn, rest];
           }),
@@ -49,7 +53,7 @@ export function splitHist(raw: unknown): { run: unknown; hist: HistDoc } {
   return { run: { ...doc, frameworks }, hist };
 }
 
-/** The run without its histograms, which is the copy the page carries. */
+/** The run without its histograms or windows, which is the copy the page carries. */
 export const withoutHist = (run: Run): Run => splitHist(run).run as Run;
 
 /** Each histogram put back on the test and rung it came from. */

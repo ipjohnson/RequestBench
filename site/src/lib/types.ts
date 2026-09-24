@@ -51,6 +51,16 @@ export const HistGrid = z.object({
 });
 export type HistGrid = z.infer<typeof HistGrid>;
 
+/**
+ * How the summary cut each test's recording into windows, and what each place of a window holds:
+ * a window is a tuple, and `fields` names its places.
+ */
+export const WindowGrid = z.object({
+  seconds: z.number(),
+  fields: z.array(z.string()),
+});
+export type WindowGrid = z.infer<typeof WindowGrid>;
+
 /** A histogram on the summary's `histGrid` with its empty ends cut off: `counts[0]` is bucket `first`. */
 export const Hist = z.object({
   first: z.number(),
@@ -72,6 +82,8 @@ export const TestRung = z.looseObject({
   bins: z.array(z.number()).optional(),
   /** The same on `histGrid`, fine enough to read a blend's percentiles from. */
   hist: Hist.optional(),
+  /** Each window of the recording, in order, laid out as the summary's `windowGrid` says. */
+  windows: z.array(z.array(z.number())).optional(),
 });
 export type TestRung = z.infer<typeof TestRung>;
 
@@ -135,6 +147,7 @@ export const Run = z.looseObject({
   machine: z.looseObject({ cpu: z.string().optional(), cores: z.number().optional() }).optional(),
   binGrid: BinGrid.optional(),
   histGrid: HistGrid.optional(),
+  windowGrid: WindowGrid.optional(),
   frameworks: z.array(Framework).default([]),
 });
 export type Run = z.infer<typeof Run>;

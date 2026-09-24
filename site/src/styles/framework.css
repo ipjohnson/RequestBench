@@ -203,6 +203,40 @@ select.cmpadd:disabled { opacity: .45; cursor: not-allowed; }
 .ephistmarklabel { font-family: var(--f-mono); font-size: 9.5px; fill: var(--ink3); }
 .ephist figcaption { font-size: 12px; color: var(--ink3); margin-top: 6px; }
 
+/* Histogram and Over time: two charts of one test at one rate, under its numbers. Smaller than
+   the panel's tabs, which they sit inside. */
+.epcharttabs { display: flex; gap: 2px; margin: 14px 0 0; border-bottom: 1px solid var(--rule); }
+.epcharttabs [role="tab"] { appearance: none; background: none; border: 0; cursor: pointer;
+  font: inherit; font-size: 12px; color: var(--ink2); padding: 5px 10px;
+  border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.epcharttabs [role="tab"]:hover { color: var(--ink); }
+.epcharttabs [role="tab"][aria-selected="true"] { color: var(--ink); font-weight: 600;
+  border-bottom-color: var(--teal); }
+.epcharttabs [role="tab"]:focus-visible { outline: 2px solid var(--teal); outline-offset: -2px; }
+.epchart .ephist, .epchart .eptime { margin-top: 10px; }
+
+/* The test's latency through its recording. The lines take the heatmap's teal steps, darkest
+   for p50 and lightest for p99, so their order reads from the shade as well as the legend. */
+.eptime { margin: 14px 0 0; }
+.eptime svg { display: block; max-width: 100%; height: auto; }
+.eptime figcaption { font-size: 12px; color: var(--ink3); margin-top: 6px; }
+.ot50 { --line: var(--heat6); }
+.ot90 { --line: var(--heat5); }
+.ot99 { --line: var(--heat4); }
+.otline { fill: none; stroke: var(--line); stroke-width: 2; stroke-linejoin: round;
+          stroke-linecap: round; pointer-events: none; }
+.otdot { fill: var(--line); stroke: var(--surface); stroke-width: 2; pointer-events: none; }
+/* A window is hovered anywhere in its column, which shades to say whose readout is open. */
+.othit { fill: transparent; }
+.othit:hover { fill: var(--surface2); }
+.oty text { text-anchor: end; }
+.otx text { text-anchor: middle; }
+.otend { font-family: var(--f-mono); font-size: 10.5px; fill: var(--ink2); }
+.otkeys { display: inline-flex; gap: 12px; margin-right: 10px; }
+.otkey { display: inline-flex; align-items: center; gap: 5px; font-family: var(--f-mono);
+         font-size: 11px; color: var(--ink2); }
+.otkey i { display: block; width: 14px; height: 2px; border-radius: 1px; background: var(--line); }
+
 /* One target's latency distribution. The grid is wider than the column on a narrow
    screen, so it scrolls in its own box rather than widening the page. */
 .distscroll { overflow-x: auto; }

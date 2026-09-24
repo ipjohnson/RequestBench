@@ -17,13 +17,14 @@ Results: https://ipjohnson.github.io/RequestBench/
 3. The orchestrator builds each framework into a container image and runs every test against it.
    A framework that fails a performance test is not measured.
 4. The traffic generator sends the performance tests at fixed rates and records a latency
-   histogram for each test.
+   histogram for each test, and one for each 10 seconds of its recording.
 5. The run file records the latencies, the machine, the commit and a hash of each framework's
    files. `npm run rb -- summarize` turns it into the summary the site reads.
-6. The site in [`site/`](site) shows each test's latency, its cost against the test it is read
-   against, and the code that answered it. A blend is a set of tests read together off their
-   merged histograms: every test, the Web or API tests, or a set the reader picks. The tests
-   pages show each family, and each test's request and the checks its answer has to pass.
+6. The site in [`site/`](site) shows each test's latency and how it moved through the recording,
+   its cost against the test it is read against, and the code that answered it. A blend is a set
+   of tests read together off their merged histograms: every test, the Web or API tests, or a set
+   the reader picks. The tests pages show each family, and each test's request and the checks its
+   answer has to pass.
 
 ## Principles
 

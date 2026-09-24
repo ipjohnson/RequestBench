@@ -27,6 +27,7 @@ looked at with:
       catalog.ts      what results exist and where each document is
       blends.ts       the named blends, and a blend read off its tests' merged histograms
       hist.ts         the per-test histograms, published beside a run rather than in it
+      windows.ts      each test's windows, and the latency range a rate's charts share
       delta.ts        the base chain: one implementation, used by both kinds of page
       views.ts        the delta cell, likewise, and the base's row on a pane
       corpus.ts       routes, factors and the families' reading order from the corpus, host notes from orchestrator/hosts.ts
