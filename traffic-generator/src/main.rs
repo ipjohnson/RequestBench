@@ -5,7 +5,7 @@
 //!   {"op":"exchange","id":1,"request":{...},"timeoutMs":10000}
 //!       -> {"id":1,"answer":{...}} or {"id":1,"error":"..."}
 //!   {"op":"open","tests":[...],"workers":4,"connections":256,"streams":1} -> {"kind":"ready"}
-//!   {"op":"phase","rps":1000,"settle":30000,"total":60000,"abortDropFraction":0.05}
+//!   {"op":"phase","rps":1000,"settle":30000,"total":60000,"abortDropFraction":0.05,"windowSeconds":10}
 //!       -> {"kind":"phase",...}
 //!   {"op":"close"}                                               -> {"kind":"closed"}
 //!
@@ -15,7 +15,7 @@
 //!
 //! With `--listen` it serves the Lambda Runtime API instead, says {"kind":"listening","port":N},
 //! and takes {"op":"init"} to wait for the runtime's first /next, the same exchanges and loads, and
-//! {"op":"phase","settleSeconds":30,"seconds":60} for a closed-loop phase.
+//! {"op":"phase","settleSeconds":30,"seconds":60,"windowSeconds":10} for a closed-loop phase.
 //!
 //!   traffic-generator --listen <host:port> --protocol lambda-runtime-api
 mod apigw;
@@ -124,6 +124,7 @@ struct PhaseCommand {
     settle: u64,
     total: u64,
     abort_drop_fraction: Option<f64>,
+    window_seconds: f64,
 }
 
 async fn run(host: String, port: u16, protocol: Protocol) {
@@ -178,7 +179,7 @@ async fn run(host: String, port: u16, protocol: Protocol) {
                         continue;
                     }
                 };
-                let schedule = Schedule { rps: phase.rps, settle: phase.settle, total: phase.total };
+                let schedule = Schedule { rps: phase.rps, settle: phase.settle, total: phase.total, window_seconds: phase.window_seconds };
                 match running.phase(schedule, phase.abort_drop_fraction).await {
                     Ok(phased) => say(&report(phased)),
                     Err(message) => say(&json!({ "kind": "error", "message": message })),
@@ -208,6 +209,7 @@ struct LambdaOpen {
 struct ClosedPhase {
     settle_seconds: f64,
     seconds: f64,
+    window_seconds: f64,
 }
 
 /// The Runtime API on `bind`, driven by the same lines as a target.
@@ -270,7 +272,8 @@ async fn run_lambda(bind: String) {
                     }
                 };
                 let (settle, seconds) = (Duration::from_secs_f64(phase.settle_seconds), Duration::from_secs_f64(phase.seconds));
-                say(&match env.phase(settle, seconds, nanos).await {
+                let window = Duration::from_secs_f64(phase.window_seconds);
+                say(&match env.phase(settle, seconds, window, nanos).await {
                     Ok(report) => report,
                     Err(message) => json!({ "kind": "error", "message": message }),
                 });

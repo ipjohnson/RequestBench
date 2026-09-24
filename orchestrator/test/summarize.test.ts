@@ -5,7 +5,7 @@ import { test } from "node:test";
 import { BUCKETS, bucketOf, pct } from "../../traffic-generator/histogram.ts";
 import type { ClosedResult, ClosedTestSummary, LoadResult, PhaseResult, TestSummary } from "../../traffic-generator/load.ts";
 import type { RunFile } from "../measure.ts";
-import { BIN_GRID, HIST_GRID, rebin, summarize, trim } from "../summarize.ts";
+import { BIN_GRID, HIST_GRID, WINDOW_GRID, rebin, summarize, trim } from "../summarize.ts";
 
 /** A histogram with `n` answers at each latency given, as the generator encodes one. */
 function hist(at: Record<number, number>): string {
@@ -131,6 +131,21 @@ test("the tests' histograms merged give the rung's own percentiles", () => {
   assert.deepEqual([rung.p50Us, rung.p90Us, rung.p99Us], [pct(merged, 50), pct(merged, 90), pct(merged, 99)]);
 });
 
+test("each test's windows travel with it on a completed rung, and the summary names what a window holds", () => {
+  const windows = [
+    [40, 150, 200, 200],
+    [40, 160, 210, 230],
+  ] as const;
+  const small = { ...testRow("json.small", "json", { 150: 60, 200: 20 }), windows };
+  const regular: PhaseResult = { name: "regular", rps: 100, status: "done", recorded: recorded([small]), unfinished: 0 };
+  const windowed = { ...load, phases: [phases[0]!, regular, ...phases.slice(2)] };
+  const s = summarize({ ...run, frameworks: [{ ...run.frameworks[0]!, load: windowed }] });
+  assert.deepEqual(s.windowGrid, WINDOW_GRID);
+  assert.deepEqual(s.frameworks[0]!.tests["json.small"]!.rungs["regular"]!.windows, windows);
+  // A result from before the generator windowed its tests has none to carry.
+  assert.equal("windows" in summarize(run).frameworks[0]!.tests["json.small"]!.rungs["regular"]!, false);
+});
+
 test("a rung with drops, an aborted rung and a rung never run publish no latency", () => {
   const f = summarize(run).frameworks[0]!;
   const raised = f.rungs["raised"]!;
@@ -217,4 +232,14 @@ test("a closed loop's one rung publishes the invoke phase, and each test carries
   assert.deepEqual(Object.keys(small.spans), ["response", "responseLatency", "responseDuration", "runtimeOverhead"]);
   assert.deepEqual([small.hist.first, small.spans.response.hist.first], [bucketOf(60), bucketOf(40)]);
   assert.equal(f.families["closed"]!["json"]!.count, 100);
+});
+
+test("a closed loop's test carries the windows of its invoke phase", () => {
+  const windows = [[80, 60, 61, 62]] as const;
+  const [phase] = closed.phases;
+  const tests = [{ ...spanRow("json.small", "json", { 60: 80 }, { 40: 80 }), windows }];
+  const windowed: ClosedResult = { ...closed, phases: [{ ...phase!, recorded: { ...phase!.recorded!, windowSeconds: 10, tests } }] };
+  const chi = { id: "go:chi", ordinal: 1, bundleHash: "sha256:e", codeHash: "sha256:f", load: windowed };
+  const f = summarize({ ...run, host: "lambda-emulator", frameworks: [chi] }).frameworks[0]!;
+  assert.deepEqual(f.tests["json.small"]!.rungs["closed"]!.windows, windows);
 });

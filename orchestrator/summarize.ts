@@ -1,6 +1,7 @@
 // A run file collapsed into what the site reads and keeps: per test and per rung the
-// percentiles, a coarse histogram and the generator's own histogram, per family the same merged,
-// and per rung what was offered, achieved and dropped. A port of upstream's harness/summarize.py.
+// percentiles, a coarse histogram, the generator's own histogram and the count and percentiles
+// of each window of the recording, per family the same merged, and per rung what was offered,
+// achieved and dropped. A port of upstream's harness/summarize.py.
 //
 // Nothing is divided by anything. A rung a framework did not complete publishes what it
 // achieved and dropped and no latency: the generator drops by never sending, so percentiles
@@ -9,7 +10,15 @@
 // lambda-emulator's closed loop has one rung and nothing to drop. Its latency is the invoke
 // phase, and each test carries the other spans beside it.
 import { BUCKETS, GROWTH, LOG_GROWTH, pct } from "../traffic-generator/histogram.ts";
-import { isClosed, type ClosedRecordedSummary, type ClosedResult, type LoadResult, type PhaseResult } from "../traffic-generator/load.ts";
+import {
+  WINDOW_SECONDS,
+  isClosed,
+  type ClosedRecordedSummary,
+  type ClosedResult,
+  type LoadResult,
+  type PhaseResult,
+  type Window,
+} from "../traffic-generator/load.ts";
 import type { FrameworkRun, RunFile } from "./measure.ts";
 
 /**
@@ -26,6 +35,12 @@ export const BIN_GRID = { loUs: 10, perDecade: 8, count: 39 } as const;
  * written into every summary like BIN_GRID.
  */
 export const HIST_GRID = { growth: GROWTH, count: BUCKETS } as const;
+
+/**
+ * How long each test's windows last, and what each place in a window holds. A run has tens of
+ * thousands of windows, so each is a tuple and its places are named once, in every summary.
+ */
+export const WINDOW_GRID = { seconds: WINDOW_SECONDS, fields: ["count", "p50Us", "p90Us", "p99Us"] } as const;
 
 /** A rung that dropped more than this is serving less than it was offered. */
 const SATURATION = 0.01;
@@ -109,6 +124,8 @@ export interface TestRung extends ReturnType<typeof stats> {
   readonly mismatch: number;
   readonly bins: readonly number[];
   readonly hist: Hist;
+  /** Each window of the recording on WINDOW_GRID, in order. Absent from a run the generator did not window. */
+  readonly windows?: readonly Window[];
 }
 
 /** The spans a closed-loop test publishes beside its invoke phase, which is its TestRung. */
@@ -168,6 +185,7 @@ function openRungs(load: LoadResult | undefined) {
           ...stats(h),
           bins: rebin(h),
           hist: trim(h),
+          ...(t.windows === undefined ? {} : { windows: t.windows }),
         };
       }
       families[phase.name] = familiesOf(byFamily);
@@ -218,6 +236,7 @@ function closedRungs(load: ClosedResult) {
         bins: rebin(h),
         hist: trim(h),
         spans,
+        ...(t.windows === undefined ? {} : { windows: t.windows }),
       };
     }
     families[phase.name] = familiesOf(byFamily);
@@ -284,6 +303,7 @@ export function summarize(run: RunFile) {
     budget: run.budget,
     binGrid: BIN_GRID,
     histGrid: HIST_GRID,
+    windowGrid: WINDOW_GRID,
     frameworks: run.frameworks.map(summarizeFramework),
   };
 }

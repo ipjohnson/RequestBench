@@ -239,8 +239,12 @@ test("on lambda-emulator the runtime asks the Runtime API for every event: the g
   assert.equal(fastify!.boot?.probeMs, Math.round(recorded.first.responseUs / 100) / 10);
   const perSecond = recorded.perSecond ?? [];
   assert.equal(perSecond.reduce((n, s) => n + s.invocations, 0), recorded.tests.reduce((n, t) => n + t.count, 0));
-  const rung = summarize(result).frameworks[0]!.rungs["closed"]!;
+  // A second's recording fits in one window, which holds every invocation of its test.
+  assert.deepEqual(recorded.tests.filter((t) => t.windows?.length !== 1 || t.windows[0]![0] !== t.count), []);
+  const summary = summarize(result).frameworks[0]!;
+  const rung = summary.rungs["closed"]!;
   assert.ok("closed" in rung && rung.achievedRps > 0 && rung.first?.id === recorded.first.id);
+  assert.ok(Object.values(summary.tests).every((t) => t.rungs["closed"]?.windows?.length === 1));
 });
 
 test("on lambda-emulator the gate's boot primes the load, so the measured function answers nothing before its first recorded event", async () => {
