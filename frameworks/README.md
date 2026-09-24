@@ -89,7 +89,7 @@ A host is where a framework is started and how it is reached. `orchestrator/host
 | Host | What it is |
 | --- | --- |
 | `container-h1` | The framework's image in a container, reached over HTTP/1.1. |
-| `container-h2` | The framework's image in a container, reached over HTTP/2 with prior knowledge and no TLS. The load holds 16 connections of 16 streams each, the 256 in flight container-h1 holds. |
+| `container-h2` | The framework's image in a container, reached over HTTP/2 with prior knowledge and no TLS. The load holds 16 connections of 16 streams each, the 256 in flight container-h1 holds. A framework whose server speaks only HTTP/1.1 runs on another server here, and its README says which. |
 | `lambda-emulator` | The framework as a Lambda function on its language's AWS base image, fed API Gateway payload format 2.0 events through the Lambda Runtime API. See [The function](#the-function). |
 
 Each host the framework implements has a directory named for it. The directory holds the host's

@@ -1,5 +1,5 @@
 {
-  "comment": "FastAPI on uvicorn, one APIRouter per family under Implementation/routes, and a sub-application for each of the two families that need a middleware of their own. uvicorn runs two worker processes, because one Python process runs Python on one core at a time and the container has two. On lambda-emulator the application answers behind Mangum, in one process. The suite is UnitTests/, pytest over Starlette's TestClient, and never reaches the image. The suite and upgrade run through uv, which has to be installed.",
+  "comment": "FastAPI on uvicorn, one APIRouter per family under Implementation/routes, and a sub-application for each of the two families that need a middleware of their own. uvicorn runs two worker processes, because one Python process runs Python on one core at a time and the container has two. On container-h2 it runs on Hypercorn, because uvicorn speaks only HTTP/1.1. On lambda-emulator the application answers behind Mangum, in one process. The suite is UnitTests/, pytest over Starlette's TestClient, and never reaches the image. The suite and upgrade run through uv, which has to be installed.",
   "framework": "FastAPI",
   "licence": "MIT",
   "repo": "https://github.com/fastapi/fastapi",
@@ -8,6 +8,7 @@
   "lockfile": ["uv.lock"],
   "hosts": {
     "container-h1": { "dockerfile": "container-h1/Dockerfile" },
+    "container-h2": { "dockerfile": "container-h2/Dockerfile" },
     "lambda-emulator": {
       "dockerfile": "lambda-emulator/Dockerfile",
       "unsupported": {

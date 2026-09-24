@@ -15,6 +15,7 @@ page lists, binds the query strings, headers, forms and bodies here, with Pydant
 | --- | --- |
 | `Implementation/` | The application. `main.py` is what each worker imports, `app.py` builds the application, `validation.py` holds the SpecTree instance, and `routes/` holds one module per corpus family. |
 | `container-h1/` | How container-h1 starts it. `server.py` starts uvicorn with two workers, and `Dockerfile` builds the image. |
+| `container-h2/` | How container-h2 starts it. `server.py` starts Hypercorn with two workers, which answers HTTP/2 with prior knowledge, and `Dockerfile` builds the image with the `container-h2` group, which adds Hypercorn. |
 | `lambda-emulator/` | How lambda-emulator starts it. `server.py` is the handler's module, which puts the application behind Mangum for awslambdaric, the runtime client, and `Dockerfile` builds the function on the `python:3.14` base image, with the packages and the application together in the task root. |
 | `UnitTests/` | pytest tests of the wiring, sending each request through Starlette's TestClient, and of the Kiota client. |
 | `Client/` | The OpenAPI document Starlette's SchemaGenerator builds from the endpoints' docstrings, and the Python client Kiota generates from it. |
@@ -109,6 +110,10 @@ the worker that accepted it, and the gate sends each test's two requests on one 
 - On lambda-emulator the runtime client puts its log handler on the root logger, so the line
   SpecTree logs at error level for each 422 it answers is written to the function's output. Under
   uvicorn no handler takes it.
+- uvicorn speaks only HTTP/1.1, so on container-h2 the application runs on Hypercorn 0.18.
+  Starlette's documentation names uvicorn and points to the ASGI specification's list of servers,
+  which lists Hypercorn. The numbers on container-h2 therefore measure another server as well as
+  another protocol. Read against container-h1's, they compare both at once.
 
 ## Refusals
 

@@ -1,5 +1,5 @@
 {
-  "comment": "Django over ASGI with async views, one module of views per family under Implementation/views, routed by urls.py. uvicorn runs two worker processes, because one Python process runs Python on one core at a time and the container has two. On lambda-emulator the application answers behind Mangum, in one process. Django's ASGI deployment docs list Daphne, Hypercorn and Uvicorn, and Daphne has no worker count of its own. settings.py keeps two of the seven middleware classes startproject installs: CorsMiddleware for the cors family and CommonMiddleware, which writes Content-Length. The suite is UnitTests/, pytest over Django's AsyncClient, and never reaches the image. The suite and upgrade run through uv, which has to be installed.",
+  "comment": "Django over ASGI with async views, one module of views per family under Implementation/views, routed by urls.py. uvicorn runs two worker processes, because one Python process runs Python on one core at a time and the container has two. On container-h2 it runs on Hypercorn, because uvicorn speaks only HTTP/1.1. On lambda-emulator the application answers behind Mangum, in one process. Django's ASGI deployment docs list Daphne, Hypercorn and Uvicorn, and Daphne has no worker count of its own. settings.py keeps two of the seven middleware classes startproject installs: CorsMiddleware for the cors family and CommonMiddleware, which writes Content-Length. The suite is UnitTests/, pytest over Django's AsyncClient, and never reaches the image. The suite and upgrade run through uv, which has to be installed.",
   "framework": "Django",
   "licence": "BSD-3-Clause",
   "repo": "https://github.com/django/django",
@@ -8,6 +8,7 @@
   "lockfile": ["uv.lock"],
   "hosts": {
     "container-h1": { "dockerfile": "container-h1/Dockerfile" },
+    "container-h2": { "dockerfile": "container-h2/Dockerfile" },
     "lambda-emulator": {
       "dockerfile": "lambda-emulator/Dockerfile",
       "unsupported": {

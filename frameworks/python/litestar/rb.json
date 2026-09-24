@@ -1,5 +1,5 @@
 {
-  "comment": "Litestar on uvicorn, one Router per family under Implementation/routes, with a family's middleware on its Router. The models are msgspec Structs, which Litestar converts bodies to and encodes answers from. uvicorn runs two worker processes, because one Python process runs Python on one core at a time and the container has two. On lambda-emulator the application answers behind Mangum, in one process. The suite is UnitTests/, pytest over Litestar's TestClient, and never reaches the image. The suite and upgrade run through uv, which has to be installed. cors.scoped is skipped because Litestar takes CORS on the application alone.",
+  "comment": "Litestar on uvicorn, one Router per family under Implementation/routes, with a family's middleware on its Router. The models are msgspec Structs, which Litestar converts bodies to and encodes answers from. uvicorn runs two worker processes, because one Python process runs Python on one core at a time and the container has two. On container-h2 it runs on Hypercorn, because uvicorn speaks only HTTP/1.1. On lambda-emulator the application answers behind Mangum, in one process. The suite is UnitTests/, pytest over Litestar's TestClient, and never reaches the image. The suite and upgrade run through uv, which has to be installed. cors.scoped is skipped because Litestar takes CORS on the application alone.",
   "framework": "Litestar",
   "licence": "MIT",
   "repo": "https://github.com/litestar-org/litestar",
@@ -8,6 +8,7 @@
   "lockfile": ["uv.lock"],
   "hosts": {
     "container-h1": { "dockerfile": "container-h1/Dockerfile" },
+    "container-h2": { "dockerfile": "container-h2/Dockerfile" },
     "lambda-emulator": {
       "dockerfile": "lambda-emulator/Dockerfile",
       "unsupported": {
