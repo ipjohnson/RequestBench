@@ -11,8 +11,10 @@
   </parent>
 
   <artifactId>implementation</artifactId>
+  <packaging>${packaging}</packaging>
 
   <properties>
+    <packaging>jar</packaging>
     <exec.mainClass>implementation.Application</exec.mainClass>
     <micronaut.aot.enabled>false</micronaut.aot.enabled>
   </properties>
@@ -96,12 +98,18 @@
   </build>
 
   <profiles>
-    <!-- lambda-emulator's build: micronaut-function-aws-api-proxy, whose APIGatewayV2HTTPEventFunction
-         hands the application each API Gateway payload format 2.0 event, and
-         micronaut-aws-lambda-events-serde, with which the Java runtime reads and writes the events
-         through Micronaut Serialization. The other hosts' builds leave both out. -->
+    <!-- lambda-emulator's build: a native executable whose main class is
+         micronaut-function-aws-custom-runtime's runtime for API Gateway payload format 2.0. It polls
+         the Runtime API with Micronaut's HTTP client, reads each event with Micronaut
+         Serialization through micronaut-aws-lambda-events-serde, and hands it to
+         micronaut-function-aws-api-proxy's APIGatewayV2HTTPEventFunction. The other hosts' builds
+         leave all four out. -->
     <profile>
       <id>lambda-emulator</id>
+      <properties>
+        <packaging>native-image</packaging>
+        <exec.mainClass>io.micronaut.function.aws.runtime.APIGatewayV2HTTPEventMicronautLambdaRuntime</exec.mainClass>
+      </properties>
       <dependencies>
         <dependency>
           <groupId>io.micronaut.aws</groupId>
@@ -109,7 +117,15 @@
         </dependency>
         <dependency>
           <groupId>io.micronaut.aws</groupId>
+          <artifactId>micronaut-function-aws-custom-runtime</artifactId>
+        </dependency>
+        <dependency>
+          <groupId>io.micronaut.aws</groupId>
           <artifactId>micronaut-aws-lambda-events-serde</artifactId>
+        </dependency>
+        <dependency>
+          <groupId>io.micronaut</groupId>
+          <artifactId>micronaut-http-client</artifactId>
         </dependency>
       </dependencies>
     </profile>

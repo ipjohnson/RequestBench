@@ -1,0 +1,6 @@
+{
+  "comment": "/__meta reads Netty's version from these resources, which a native image leaves out unless named here.",
+  "resources": [
+    { "glob": "META-INF/io.netty.versions.properties" }
+  ]
+}

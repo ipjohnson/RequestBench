@@ -1,0 +1,5 @@
+#!/bin/sh
+# The command micronaut-maven-plugin writes into a native function's bootstrap, and the adapter
+# /__meta names. A native image reads system properties from its command line, and keeps none of
+# those it was built with.
+exec ./func -XX:MaximumHeapSizePercent=80 -Dio.netty.allocator.numDirectArenas=0 -Dio.netty.noPreferDirect=true -Djava.library.path="$(pwd)" -Drb.adapter=micronaut-function-aws-api-proxy

@@ -113,11 +113,16 @@ plain jar that UnitTests compiles against.
   under it runs every registered filter on every path and parses no form body. Its answer carries
   the headers in `multiValueHeaders` alone, which a Function URL does not read.
 - Tomcat's jars stay in the function, though the adapter's samples leave them out, because
-  `/__meta` reads the adapter's name from Tomcat's `ServerInfo`. So `/__meta` names Tomcat on
-  lambda-emulator too, where Tomcat does not serve.
+  `/__meta` reads Tomcat's `ServerInfo` for the adapter's name. On lambda-emulator the image sets
+  `rb.adapter` through `JAVA_TOOL_OPTIONS`, and `/__meta` names aws-serverless-java-container
+  instead.
 - On lambda-emulator the Java runtime's bootstrap starts the JVM with the serial collector, with C1
   alone through `-XX:TieredStopAtLevel=1`, and with a heap sized from
   `AWS_LAMBDA_FUNCTION_MEMORY_SIZE`. The function runs on one core.
+- lambda-emulator runs Spring Boot on the JVM, not as a native executable.
+  aws-serverless-java-container's native route, its pet-store-native sample, hands each event to
+  Spring Cloud Function's request, the one under `SpringDelegatingLambdaContainerHandler`. Its
+  answers lose every header, its forms go unparsed, and it hangs on the sse and stream answers.
 
 ## Refusals
 
