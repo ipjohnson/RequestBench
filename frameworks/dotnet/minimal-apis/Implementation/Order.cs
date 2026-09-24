@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Implementation;
 
@@ -17,6 +18,7 @@ public sealed class OrderRequest
     public string Status { get; set; } = "";
 
     [Required, MinLength(1)]
+    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "MinLength reads the Count of a List through ICollection, without reflection.")]
     public List<OrderLine> Lines { get; set; } = [];
 }
 

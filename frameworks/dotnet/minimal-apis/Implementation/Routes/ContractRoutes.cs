@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Implementation.Routes;
@@ -13,8 +14,12 @@ public static class ContractRoutes
 
         // Minimal APIs have no package of their own. They ship in the ASP.NET Core shared
         // framework, so the version is the one the shared framework's assemblies report.
-        app.MapGet("/__meta", () => new Meta("ASP.NET Core minimal APIs", Version(typeof(WebApplication).Assembly), RuntimeInformation.FrameworkDescription, "", Boot.Ms));
+        app.MapGet("/__meta", () => new Meta("ASP.NET Core minimal APIs", Version(typeof(WebApplication).Assembly), Runtime(), "", Boot.Ms));
     }
+
+    /// <summary>The runtime's description, and Native AOT after it in a native build, which cannot generate code at runtime.</summary>
+    private static string Runtime() =>
+        RuntimeFeature.IsDynamicCodeSupported ? RuntimeInformation.FrameworkDescription : $"{RuntimeInformation.FrameworkDescription} Native AOT";
 
     /// <summary>The version the assembly reports, without the source revision after the plus.</summary>
     private static string Version(Assembly assembly)

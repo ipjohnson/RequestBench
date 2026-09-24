@@ -36,9 +36,13 @@ public static class BodyRoutes
     }
 
     // rb:wiring body.*
-    /// <summary>OrderRequest's properties in the order they are declared.</summary>
+    /// <summary>
+    /// OrderRequest's properties in the order they are declared. GetProperties promises no order,
+    /// and under Native AOT a property has no MetadataToken to sort by, so the order is written out.
+    /// </summary>
     private static readonly ValidatablePropertyInfo[] Declared =
-        [.. typeof(OrderRequest).GetProperties().OrderBy(p => p.MetadataToken).Select(p => new DeclaredProperty(p))];
+        [.. new[] { nameof(OrderRequest.CustomerId), nameof(OrderRequest.Status), nameof(OrderRequest.Lines) }
+            .Select(name => new DeclaredProperty(typeof(OrderRequest).GetProperty(name)!))];
 
     /// <summary>
     /// Minimal APIs' validation checks every property and has no setting to stop at the first
@@ -53,7 +57,8 @@ public static class BodyRoutes
         HttpContext http = context.HttpContext;
         ValidateContext check = new()
         {
-            ValidationContext = new ValidationContext(order, http.RequestServices, items: null),
+            // AddValidation's filter names the argument after the handler's parameter, and so does this.
+            ValidationContext = new ValidationContext(order, nameof(order), http.RequestServices, items: null),
             ValidationOptions = validation,
         };
         ValidationErrorContext? first = null;
@@ -71,7 +76,7 @@ public static class BodyRoutes
 
     /// <summary>A property and its DataAnnotations, as the code the validation generator writes describes one.</summary>
     private sealed class DeclaredProperty(PropertyInfo property)
-        : ValidatablePropertyInfo(property.DeclaringType!, property.PropertyType, property.Name, property.Name)
+        : ValidatablePropertyInfo(typeof(OrderRequest), property.PropertyType, property.Name, property.Name)
     {
         private readonly ValidationAttribute[] attributes = [.. property.GetCustomAttributes<ValidationAttribute>()];
 

@@ -1,4 +1,5 @@
 using System.IO.Compression;
+using Amazon.Lambda.Serialization.SystemTextJson;
 using FastEndpoints;
 using FastEndpoints.OpenApi;
 using FastEndpoints.OpenApi.Kiota;
@@ -30,8 +31,9 @@ builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
 builder.Logging.ClearProviders();
 // On lambda-emulator, where AWS_LAMBDA_FUNCTION_NAME is set, Amazon.Lambda.AspNetCoreServer
 // serves the application in Kestrel's place, and the Lambda runtime client hands it each API
-// Gateway payload format 2.0 event. On the other hosts this does nothing.
-builder.Services.AddAWSLambdaHosting(LambdaEventSource.HttpApi);
+// Gateway payload format 2.0 event. The function there is a Native AOT build, so the events are
+// read and written with source-generated metadata. On the other hosts this does nothing.
+builder.Services.AddAWSLambdaHosting(LambdaEventSource.HttpApi, new SourceGeneratorLambdaJsonSerializer<LambdaJsonContext>());
 
 builder.Services.AddSingleton(payloads);
 builder.Services.AddFastEndpoints(DiscoveredTypes.All);
@@ -70,7 +72,11 @@ builder.Services.AddAuthorization(options => options.AddPolicy(Policies.Token, p
     .RequireClaim(BearerToken.TokenClaim, settings.Token)));
 // rb:end
 // rb:wiring template.*
+// ASP.NET Core marks Razor components as unsupported under Native AOT. The one component here
+// renders statically, and lambda-emulator's native build answers both template tests.
+#pragma warning disable IL2026
 builder.Services.AddRazorComponents();
+#pragma warning restore IL2026
 
 WebApplication app = builder.Build();
 

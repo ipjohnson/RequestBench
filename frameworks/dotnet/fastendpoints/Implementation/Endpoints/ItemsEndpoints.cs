@@ -31,7 +31,9 @@ public sealed class ItemCreateEndpoint(Payloads payloads) : Endpoint<NewItem, It
     public override Task HandleAsync(NewItem req, CancellationToken ct)
     {
         Item created = req.At(payloads.Large.Count + 1);
-        return Send.CreatedAtAsync<ItemReadEndpoint>(new { id = created.Id }, created, Http.GET, cancellation: ct);
+        // Link generation reads a RouteValueDictionary as it is, and an anonymous object by
+        // reflection over its properties, which a native build does not keep.
+        return Send.CreatedAtAsync<ItemReadEndpoint>(new RouteValueDictionary { ["id"] = created.Id }, created, Http.GET, cancellation: ct);
     }
 }
 

@@ -37,7 +37,7 @@ public static class EtagRoutes
     private static async ValueTask<object?> Revalidate(EndpointFilterInvocationContext context, EndpointFilterDelegate next, JsonSerializerOptions json)
     {
         object value = await next(context) ?? throw new InvalidOperationException("an etag route answered nothing");
-        byte[] body = JsonSerializer.SerializeToUtf8Bytes(value, value.GetType(), json);
+        byte[] body = JsonSerializer.SerializeToUtf8Bytes(value, json.GetTypeInfo(value.GetType()));
         EntityTagHeaderValue tag = new($"\"{Convert.ToHexStringLower(SHA1.HashData(body))}\"");
 
         HttpContext http = context.HttpContext;
