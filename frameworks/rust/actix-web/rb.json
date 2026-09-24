@@ -7,7 +7,8 @@
   "docs": "https://docs.rs/actix-web/4.15.0/actix_web/",
   "lockfile": ["Cargo.lock"],
   "hosts": {
-    "container-h1": { "dockerfile": "container-h1/Dockerfile" }
+    "container-h1": { "dockerfile": "container-h1/Dockerfile" },
+    "container-h2": { "dockerfile": "container-h2/Dockerfile" }
   },
   "suite": { "argv": ["cargo", "test", "--locked"], "paths": ["UnitTests"] },
   "upgrade": { "argv": ["cargo", "update"] },

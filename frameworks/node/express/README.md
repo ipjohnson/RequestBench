@@ -88,6 +88,8 @@ the application is built, and so does the suite.
   route's methods in `Allow`. Only `/cors/small` has an OPTIONS route, which the cors middleware
   answers.
 - The server is one Node process, as Express's `listen` starts it, on the container's two cores.
+- Express implements no container-h2. Its request and response extend node:http's, and node:http2's
+  compatibility API does not carry them, so the application stops on its first HTTP/2 request.
 
 ## Refusals
 

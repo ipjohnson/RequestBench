@@ -98,6 +98,8 @@ listening. `PORT` defaults to 8080.
   when srvx's own one-second timer runs out.
 - `handleCors` sends `access-control-expose-headers: *` on every request it allows, its default.
 - The server is one Node process, as `serve()` starts it, on the container's two cores.
+- h3 implements no container-h2. srvx, which h3's `serve` starts, serves HTTP/2 only with a TLS
+  certificate.
 
 ## Refusals
 

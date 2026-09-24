@@ -15,6 +15,7 @@ Core's, as Wolverine's docs do.
 | `Implementation/` | The application. One endpoint class per corpus family under `Endpoints/`. |
 | `Implementation/Internal/Generated/` | The handler Wolverine generated for each endpoint, committed. |
 | `container-h1/` | The `Dockerfile` that builds the image container-h1 runs. |
+| `container-h2/` | The `Dockerfile` that builds the image container-h2 runs, with Kestrel's endpoints on HTTP/2 alone, which is how Kestrel answers HTTP/2 with prior knowledge. |
 | `UnitTests/` | xunit tests of the wiring, booting the Implementation in process with Alba. |
 | `Client/` | The OpenAPI document the build writes, and the Kiota client generated from it. |
 | `client-exception/` | How the corpus reads Wolverine's error bodies. |

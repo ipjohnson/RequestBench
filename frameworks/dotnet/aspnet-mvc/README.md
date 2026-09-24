@@ -15,6 +15,7 @@ have is ASP.NET Core's, which an MVC application uses as a minimal API does.
 | --- | --- |
 | `Implementation/` | The application. One controller per corpus family under `Controllers/`, and the template family's view under `Views/`. |
 | `container-h1/` | The `Dockerfile` that builds the image container-h1 runs. |
+| `container-h2/` | The `Dockerfile` that builds the image container-h2 runs, with Kestrel's endpoints on HTTP/2 alone, which is how Kestrel answers HTTP/2 with prior knowledge. |
 | `UnitTests/` | xunit tests of the wiring, booting the Implementation in process with `WebApplicationFactory`. |
 | `Client/` | The OpenAPI document MVC's build writes, and the Kiota client generated from it. |
 | `client-exception/` | How the corpus reads MVC's error bodies. |

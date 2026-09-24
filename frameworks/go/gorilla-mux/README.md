@@ -18,6 +18,7 @@ nothing, and code written for the family where neither does.
 | `Implementation/` | The application, the Go package `implementation`. `router.go` builds the router, and a function in a file named for each family registers that family's routes. |
 | `Implementation/views/` | The template, compiled into the binary. |
 | `container-h1/` | How container-h1 starts it. `main.go` is the main package that loads the payloads and serves over HTTP/1.1, and `Dockerfile` builds the image. |
+| `container-h2/` | How container-h2 starts it. `main.go` serves over HTTP/2 with prior knowledge through net/http's `Server.Protocols`, and `Dockerfile` builds the image. |
 | `UnitTests/` | go test tests of the wiring, sending each request to the router served by `net/http/httptest`. |
 | `client-exception/` | How the corpus reads the error bodies. |
 | `go.mod` | The module, and every module version the build selects. |

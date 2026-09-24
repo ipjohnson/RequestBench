@@ -13,6 +13,7 @@ has one.
 | --- | --- |
 | `Implementation/` | The application, a Maven module. One controller per corpus family under `src/main/java/implementation/routes/`. |
 | `container-h1/` | The `Dockerfile` that builds the image container-h1 runs. |
+| `container-h2/` | The `Dockerfile` that builds the image container-h2 runs, with `server.http2.enabled`, which puts HTTP/2 on Tomcat's plain connector. |
 | `UnitTests/` | JUnit tests of the wiring, a Maven module that boots the Implementation on a random port with `@SpringBootTest`. |
 | `Client/` | The OpenAPI document springdoc serves, and the Kiota client generated from it, a Maven module. |
 | `client-exception/` | How the corpus reads Spring Boot's error bodies. |

@@ -113,6 +113,7 @@ corpus id it covers, so `go test ./UnitTests -run '/json.small'` runs one.
   ends the process on it at once, with no graceful shutdown.
 - A struct tag such as `json:"items"` reads as the route literal `/items`, so the items routes
   carry `rb:handler` marks.
+- fiber implements no container-h2. fasthttp, which it runs on, has no HTTP/2.
 
 ## Refusals
 

@@ -7,7 +7,8 @@
   "docs": "https://go-chi.io/",
   "lockfile": ["go.mod", "go.sum"],
   "hosts": {
-    "container-h1": { "dockerfile": "container-h1/Dockerfile" }
+    "container-h1": { "dockerfile": "container-h1/Dockerfile" },
+    "container-h2": { "dockerfile": "container-h2/Dockerfile" }
   },
   "suite": { "argv": ["go", "test", "./..."], "paths": ["UnitTests"] },
   "upgrade": { "argv": ["go", "get", "-u", "./..."] },
