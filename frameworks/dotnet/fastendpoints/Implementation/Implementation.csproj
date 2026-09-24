@@ -1,4 +1,15 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
+  <!-- lambda-emulator publishes this project natively with PublishAot, for linux-x64 or
+       linux-arm64, from a restore locked to packages.lock.json like every other host's. So every
+       restore resolves the ILCompiler and ILLink packages PublishAot adds, for both architectures.
+       PublishAot is set only while restoring, so every other build and publish stays JIT-compiled.
+       Without UseDefaultPublishRuntimeIdentifier the restore would add the machine's own runtime,
+       and the lock file would differ between machines. -->
+  <PropertyGroup Condition="'$(MSBuildIsRestoring)' == 'true'">
+    <PublishAot>true</PublishAot>
+    <RuntimeIdentifiers>linux-x64;linux-arm64</RuntimeIdentifiers>
+    <UseDefaultPublishRuntimeIdentifier>false</UseDefaultPublishRuntimeIdentifier>
+  </PropertyGroup>
   <ItemGroup>
     <!-- lambda-emulator's adapter, with Amazon.Lambda.RuntimeSupport as its runtime client. It does
          nothing outside Lambda, so every host builds with it. -->

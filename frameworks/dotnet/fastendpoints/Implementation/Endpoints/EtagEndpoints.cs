@@ -58,7 +58,7 @@ public sealed class Revalidate : IResponseInterceptor
     public Task InterceptResponseAsync(object response, int statusCode, HttpContext ctx, IReadOnlyCollection<ValidationFailure> failures, CancellationToken ct)
     {
         JsonSerializerOptions json = ctx.RequestServices.GetRequiredService<Config>().Serializer.Options;
-        byte[] body = JsonSerializer.SerializeToUtf8Bytes(response, response.GetType(), json);
+        byte[] body = JsonSerializer.SerializeToUtf8Bytes(response, json.GetTypeInfo(response.GetType()));
         EntityTagHeaderValue tag = new($"\"{Convert.ToHexStringLower(SHA1.HashData(body))}\"");
 
         ctx.Response.GetTypedHeaders().ETag = tag;
