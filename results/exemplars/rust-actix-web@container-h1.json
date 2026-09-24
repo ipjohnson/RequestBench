@@ -206,7 +206,7 @@
         "headerBytes": 118,
         "framing": "content-length",
         "bodyBytes": 225,
-        "body": "{\"customer_id\":[{\"code\":\"range\",\"message\":null,\"params\":{\"min\":1,\"value\":0}}],\"status\":[{\"code\":\"length\",\"message\":null,\"params\":{\"min\":1,\"value\":\"\"}}],\"lines\":[{\"code\":\"length\",\"message\":null,\"params\":{\"value\":[],\"min\":1}}]}",
+        "body": "{\"lines\":[{\"code\":\"length\",\"message\":null,\"params\":{\"min\":1,\"value\":[]}}],\"status\":[{\"code\":\"length\",\"message\":null,\"params\":{\"min\":1,\"value\":\"\"}}],\"customer_id\":[{\"code\":\"range\",\"message\":null,\"params\":{\"min\":1,\"value\":0}}]}",
         "truncated": false
       }
     },
@@ -333,12 +333,12 @@
             "128510"
           ],
           [
-            "x-rb-serial",
-            "1"
-          ],
-          [
             "content-type",
             "application/json"
+          ],
+          [
+            "x-rb-serial",
+            "1"
           ],
           [
             "date",
@@ -367,12 +367,12 @@
             "7953"
           ],
           [
-            "x-rb-serial",
-            "2"
-          ],
-          [
             "content-type",
             "application/json"
+          ],
+          [
+            "x-rb-serial",
+            "2"
           ],
           [
             "date",
@@ -401,12 +401,12 @@
             "123"
           ],
           [
-            "x-rb-serial",
-            "3"
-          ],
-          [
             "content-type",
             "application/json"
+          ],
+          [
+            "x-rb-serial",
+            "3"
           ],
           [
             "date",
@@ -448,12 +448,12 @@
             "123"
           ],
           [
-            "x-rb-serial",
-            "4"
-          ],
-          [
             "vary",
             "x-rb-channel, x-rb-region, x-rb-tenant"
+          ],
+          [
+            "x-rb-serial",
+            "4"
           ],
           [
             "content-type",
@@ -491,12 +491,12 @@
             "123"
           ],
           [
-            "x-rb-serial",
-            "5"
-          ],
-          [
             "vary",
             "x-rb-tenant"
+          ],
+          [
+            "x-rb-serial",
+            "5"
           ],
           [
             "content-type",
@@ -538,8 +538,8 @@
             "chunked"
           ],
           [
-            "content-encoding",
-            "gzip"
+            "content-type",
+            "application/json"
           ],
           [
             "x-rb-serial",
@@ -550,8 +550,8 @@
             "accept-encoding"
           ],
           [
-            "content-type",
-            "application/json"
+            "content-encoding",
+            "gzip"
           ],
           [
             "date",
@@ -589,8 +589,8 @@
             "chunked"
           ],
           [
-            "content-encoding",
-            "gzip"
+            "content-type",
+            "application/json"
           ],
           [
             "x-rb-serial",
@@ -601,8 +601,8 @@
             "accept-encoding"
           ],
           [
-            "content-type",
-            "application/json"
+            "content-encoding",
+            "gzip"
           ],
           [
             "date",
@@ -640,12 +640,12 @@
             "128510"
           ],
           [
-            "x-rb-serial",
-            "10"
-          ],
-          [
             "content-type",
             "application/json"
+          ],
+          [
+            "x-rb-serial",
+            "10"
           ],
           [
             "date",
@@ -683,12 +683,12 @@
             "123"
           ],
           [
-            "x-rb-serial",
-            "12"
-          ],
-          [
             "content-type",
             "application/json"
+          ],
+          [
+            "x-rb-serial",
+            "12"
           ],
           [
             "date",
@@ -769,24 +769,24 @@
             "0"
           ],
           [
-            "access-control-max-age",
-            "600"
-          ],
-          [
-            "access-control-allow-origin",
-            "https://shop.example.com"
-          ],
-          [
-            "access-control-allow-methods",
-            "GET"
+            "access-control-allow-headers",
+            "x-rb-tenant"
           ],
           [
             "vary",
             "Origin, Access-Control-Request-Method, Access-Control-Request-Headers"
           ],
           [
-            "access-control-allow-headers",
-            "x-rb-tenant"
+            "access-control-allow-origin",
+            "https://shop.example.com"
+          ],
+          [
+            "access-control-max-age",
+            "600"
+          ],
+          [
+            "access-control-allow-methods",
+            "GET"
           ],
           [
             "date",
@@ -824,20 +824,20 @@
             "123"
           ],
           [
-            "x-rb-serial",
-            "14"
+            "content-type",
+            "application/json"
           ],
           [
-            "access-control-allow-origin",
-            "https://shop.example.com"
+            "x-rb-serial",
+            "14"
           ],
           [
             "vary",
             "Origin, Access-Control-Request-Method, Access-Control-Request-Headers"
           ],
           [
-            "content-type",
-            "application/json"
+            "access-control-allow-origin",
+            "https://shop.example.com"
           ],
           [
             "date",
@@ -910,20 +910,20 @@
             "123"
           ],
           [
-            "x-rb-serial",
-            "25"
+            "content-type",
+            "application/json"
           ],
           [
-            "access-control-allow-origin",
-            "https://shop.example.com"
+            "x-rb-serial",
+            "25"
           ],
           [
             "vary",
             "Origin, Access-Control-Request-Method, Access-Control-Request-Headers"
           ],
           [
-            "content-type",
-            "application/json"
+            "access-control-allow-origin",
+            "https://shop.example.com"
           ],
           [
             "date",
@@ -1066,16 +1066,16 @@
             "128510"
           ],
           [
-            "etag",
-            "W/\"1f5fe-yblEcbFz-GYD5BxGr0Qbfw==\""
+            "content-type",
+            "application/json"
           ],
           [
             "x-rb-serial",
             "16"
           ],
           [
-            "content-type",
-            "application/json"
+            "etag",
+            "W/\"1f5fe-yblEcbFz-GYD5BxGr0Qbfw==\""
           ],
           [
             "date",
@@ -1131,16 +1131,16 @@
             "123"
           ],
           [
-            "etag",
-            "W/\"7b-Vm7CgwqCVoiwfQ4UdTSHdw==\""
+            "content-type",
+            "application/json"
           ],
           [
             "x-rb-serial",
             "21"
           ],
           [
-            "content-type",
-            "application/json"
+            "etag",
+            "W/\"7b-Vm7CgwqCVoiwfQ4UdTSHdw==\""
           ],
           [
             "date",
@@ -1174,16 +1174,16 @@
             "128510"
           ],
           [
-            "etag",
-            "W/\"1f5fe-yblEcbFz-GYD5BxGr0Qbfw==\""
+            "content-type",
+            "application/json"
           ],
           [
             "x-rb-serial",
             "23"
           ],
           [
-            "content-type",
-            "application/json"
+            "etag",
+            "W/\"1f5fe-yblEcbFz-GYD5BxGr0Qbfw==\""
           ],
           [
             "date",
@@ -1662,12 +1662,12 @@
             "91"
           ],
           [
-            "location",
-            "/items/1426"
-          ],
-          [
             "content-type",
             "application/json"
+          ],
+          [
+            "location",
+            "/items/1426"
           ],
           [
             "date",
@@ -2185,16 +2185,16 @@
             "chunked"
           ],
           [
-            "content-encoding",
-            "identity"
-          ],
-          [
             "cache-control",
             "no-cache"
           ],
           [
             "content-type",
             "text/event-stream"
+          ],
+          [
+            "content-encoding",
+            "identity"
           ],
           [
             "date",
@@ -2212,7 +2212,12 @@
       "request": {
         "method": "GET",
         "target": "/static/items.large.json",
-        "headers": [],
+        "headers": [
+          [
+            "accept-encoding",
+            "gzip"
+          ]
+        ],
         "bodyBytes": 0
       },
       "response": {
@@ -2227,27 +2232,27 @@
             "inline; filename=\"items.large.json\""
           ],
           [
-            "etag",
-            "\"b:1fb91:6ab3e386:1cff8d01\""
-          ],
-          [
-            "last-modified",
-            "<varies>"
+            "accept-ranges",
+            "bytes"
           ],
           [
             "content-type",
             "application/json"
           ],
           [
-            "accept-ranges",
-            "bytes"
+            "last-modified",
+            "<varies>"
+          ],
+          [
+            "etag",
+            "\"8c1270:1fb91:6ab56598:23a40d4d\""
           ],
           [
             "date",
             "<varies>"
           ]
         ],
-        "headerBytes": 273,
+        "headerBytes": 278,
         "framing": "content-length",
         "bodyBytes": 129937,
         "body": "{\"size\":\"large\",\"count\":1425,\"items\":[\n{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"priceCents\":18928,\"inStock\":true},\n{\"id\":2,\"name\":\"brass-hinge-5716\",\"category\":\"garden\",\"priceCents\":17577,\"inStock\":true},\n{\"id\":3,\"name\":\"linen-ring-6971\",\"category\":\"kitchen\",\"priceCents\":5540,\"inStock\":true},\n{\"id\":4,\"name\":\"copper-bolt-9217\",\"category\":\"outdoor\",\"priceCents\":11562,\"inStock\":true},\n{\"id\":5,\"name\":\"linen-lamp-8288\",\"category\":\"office\",\"priceCents\":1413,\"inStock\":true},\n{\"id\":6,\"name\":\"copper-pan-9308\",\"category\":\"tools\",\"priceCents\":10795,\"inStock\":true},\n{\"id\":7,\"name\":\"slate-seed-3051\",\"category\":\"garden\",\"priceCents\":9667,\"inStock\":false},\n{\"id\":8,\"name\":\"oak-lamp-8662\",\"category\":\"kitchen\",\"priceCents\":18032,\"inStock\":false},\n{\"id\":9,\"name\":\"amber-hinge-8405\",\"category\":\"outdoor\",\"priceCents\":9566,\"inStock\":true},\n{\"id\":10,\"name\":\"linen-lamp-9676\",\"category\":\"office\",\"priceCents\":4288,\"inStock\":true},\n{\"id\":11,\"name\":\"brass-trowel-2042\",\"category\":\"tools\",\"priceCents\":17701,\"inStock\":false},\n{\"id\":12,\"name\":\"linen-lamp-5542\",\"category\":\"garden\",\"priceCents\":12163,\"inStock\":true},\n{\"id\":13,\"name\":\"linen-seed-9760\",\"category\":\"kitchen\",\"priceCents\":12305,\"inStock\":false},\n{\"id\":14,\"name\":\"brass-hinge-4996\",\"category\":\"outdoor\",\"priceCents\":8489,\"inStock\":true},\n{\"id\":15,\"name\":\"cedar-hinge-8685\",\"category\":\"office\",\"priceCents\":15667,\"inStock\":true},\n{\"id\":16,\"name\":\"slate-seed-3185\",\"category\":\"tools\",\"priceCents\":4111,\"inStock\":true},\n{\"id\":17,\"name\":\"cedar-bolt-9891\",\"category\":\"garden\",\"priceCents\":18370,\"inStock\":true},\n{\"id\":18,\"name\":\"copper-bolt-8081\",\"category\":\"kitchen\",\"priceCents\":14318,\"inStock\":false},\n{\"id\":19,\"name\":\"amber-seed-4209\",\"category\":\"outdoor\",\"priceCents\":15424,\"inStock\":true},\n{\"id\":20,\"name\":\"oak-bolt-9982\",\"category\":\"office\",\"priceCents\":9582,\"inStock\":true},\n{\"id\":21,\"name\":\"slate-bolt-7099\",\"category\":\"tools\",\"priceCents\":6732,\"inStock\":false},\n{\"id\":22,\"name\":\"brass-seed-9718\",\"category\":\"garden\",\"priceCents\":17198,\"inStock\":true},\n{\"id\":23,\"name\":\"cedar-desk-4039\",",

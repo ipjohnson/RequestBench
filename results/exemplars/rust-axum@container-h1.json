@@ -202,7 +202,7 @@
         "headerBytes": 118,
         "framing": "content-length",
         "bodyBytes": 225,
-        "body": "{\"lines\":[{\"code\":\"length\",\"message\":null,\"params\":{\"value\":[],\"min\":1}}],\"customer_id\":[{\"code\":\"range\",\"message\":null,\"params\":{\"value\":0,\"min\":1}}],\"status\":[{\"code\":\"length\",\"message\":null,\"params\":{\"min\":1,\"value\":\"\"}}]}",
+        "body": "{\"status\":[{\"code\":\"length\",\"message\":null,\"params\":{\"min\":1,\"value\":\"\"}}],\"lines\":[{\"code\":\"length\",\"message\":null,\"params\":{\"value\":[],\"min\":1}}],\"customer_id\":[{\"code\":\"range\",\"message\":null,\"params\":{\"value\":0,\"min\":1}}]}",
         "truncated": false
       }
     },
@@ -238,7 +238,7 @@
         "headerBytes": 117,
         "framing": "content-length",
         "bodyBytes": 78,
-        "body": "{\"customer_id\":[{\"code\":\"range\",\"message\":null,\"params\":{\"value\":0,\"min\":1}}]}",
+        "body": "{\"customer_id\":[{\"code\":\"range\",\"message\":null,\"params\":{\"min\":1,\"value\":0}}]}",
         "truncated": false
       }
     },
@@ -2248,7 +2248,12 @@
       "request": {
         "method": "GET",
         "target": "/static/items.large.json",
-        "headers": [],
+        "headers": [
+          [
+            "accept-encoding",
+            "gzip"
+          ]
+        ],
         "bodyBytes": 0
       },
       "response": {
@@ -2268,7 +2273,7 @@
           ],
           [
             "etag",
-            "\"6ab29d4c.1f0f909f-1fb91\""
+            "\"6ab565a8.0a06e093-1fb91\""
           ],
           [
             "content-length",

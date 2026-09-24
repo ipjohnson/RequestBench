@@ -1126,7 +1126,7 @@
           ],
           [
             "allow",
-            "OPTIONS, PUT, DELETE, GET, HEAD, PATCH"
+            "PATCH, DELETE, OPTIONS, PUT, GET, HEAD"
           ],
           [
             "content-type",
@@ -2429,7 +2429,12 @@
       "request": {
         "method": "GET",
         "target": "/static/items.large.json",
-        "headers": [],
+        "headers": [
+          [
+            "accept-encoding",
+            "gzip"
+          ]
+        ],
         "bodyBytes": 0
       },
       "response": {
@@ -2461,7 +2466,7 @@
           ],
           [
             "etag",
-            "\"1790174614.0801034-129937-2715749122\""
+            "\"1790272911.7623477-129937-2715749122\""
           ]
         ],
         "headerBytes": 279,

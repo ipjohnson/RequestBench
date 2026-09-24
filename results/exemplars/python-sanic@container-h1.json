@@ -719,7 +719,7 @@
         "headers": [
           [
             "allow",
-            "HEAD,GET,OPTIONS"
+            "GET,HEAD,OPTIONS"
           ],
           [
             "connection",
@@ -758,7 +758,7 @@
         "headers": [
           [
             "allow",
-            "HEAD,GET,OPTIONS"
+            "GET,HEAD,OPTIONS"
           ],
           [
             "access-control-allow-origin",
@@ -2216,7 +2216,12 @@
       "request": {
         "method": "GET",
         "target": "/static/items.large.json",
-        "headers": [],
+        "headers": [
+          [
+            "accept-encoding",
+            "gzip"
+          ]
+        ],
         "bodyBytes": 0
       },
       "response": {
