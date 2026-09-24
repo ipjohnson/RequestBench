@@ -107,11 +107,14 @@
         </dependency>
       </dependencies>
     </profile>
-    <!-- lambda-emulator's build: Quarkus's Lambda extension for API Gateway payload format 2.0,
-         which packages the application as a legacy jar with its dependencies in target/lib. The
-         other hosts' builds leave it out. -->
+    <!-- lambda-emulator's build: Quarkus's Lambda extension for API Gateway payload format 2.0, in a
+         native executable that polls the Runtime API itself. The other hosts' builds leave both
+         out. -->
     <profile>
       <id>lambda-emulator</id>
+      <properties>
+        <quarkus.native.enabled>true</quarkus.native.enabled>
+      </properties>
       <dependencies>
         <dependency>
           <groupId>io.quarkus</groupId>

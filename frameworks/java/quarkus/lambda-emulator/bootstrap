@@ -1,0 +1,4 @@
+#!/bin/sh
+# The adapter /__meta names. A native image reads system properties from its command line, and
+# keeps none of those it was built with.
+exec ./runner -Drb.adapter=quarkus-amazon-lambda-http

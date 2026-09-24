@@ -3,6 +3,7 @@ package implementation.routes;
 import java.lang.management.ManagementFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.quarkus.runtime.ImageMode;
 import io.quarkus.runtime.Quarkus;
 import io.quarkus.vertx.http.HttpServerStart;
 import io.vertx.core.impl.launcher.commands.VersionCommand;
@@ -41,11 +42,13 @@ public class ContractRoutes {
     }
 
     // A host whose image sets rb.adapter hands the requests to Vert.x through its own adapter, as
-    // lambda-emulator's does.
+    // lambda-emulator's does. Its function is also a native image, whose Runtime.version() is that
+    // of the JDK the image was built with.
     @GET
     @Path("__meta")
     public Meta meta() {
-        return new Meta("Quarkus", Quarkus.class.getPackage().getImplementationVersion(), "Java " + Runtime.version(),
+        String runtime = "Java " + Runtime.version() + (ImageMode.current() == ImageMode.NATIVE_RUN ? " native image" : "");
+        return new Meta("Quarkus", Quarkus.class.getPackage().getImplementationVersion(), runtime,
                 System.getProperty("rb.adapter", "Vert.x " + VersionCommand.getVersion()), serializer, bootMs);
     }
 }
