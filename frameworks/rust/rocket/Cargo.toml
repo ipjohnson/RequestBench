@@ -3,8 +3,8 @@ name = "rb-rocket"
 version = "0.0.0"
 edition = "2024"
 publish = false
-# The application is in Implementation/, container-h1's server binary in container-h1/ and the
-# suite in UnitTests/, so every target names its path rather than following cargo's src/ and tests/.
+# The application is in Implementation/, each host's binary in the host's directory and the suite
+# in UnitTests/, so every target names its path rather than following cargo's src/ and tests/.
 build = "Implementation/build.rs"
 autobins = false
 autotests = false
@@ -26,6 +26,12 @@ name = "server-h2"
 path = "container-h2/main.rs"
 test = false
 
+[[bin]]
+name = "lambda"
+path = "lambda-emulator/main.rs"
+test = false
+required-features = ["lambda-emulator"]
+
 [[test]]
 name = "unit"
 path = "UnitTests/main.rs"
@@ -35,6 +41,9 @@ cached = "4.0.0"
 # The weak hasher, so an ETag comes from the crate the If-None-Match guard is built on.
 entity-tag = { version = "0.2.0", features = ["weak-hasher"] }
 httpdate = "1.0.3"
+# lambda-emulator's adapter, over lambda_runtime's runtime client. Its default feature, br,
+# brotli-compresses a text answer the application did not compress when the request accepts br.
+lambda-web = { version = "0.2.1", default-features = false, features = ["rocket05"], optional = true }
 # The allocator every Rust framework here runs on, in place of the system one.
 mimalloc = "0.1.52"
 rocket = { version = "0.5.1", features = ["json"] }
@@ -56,3 +65,7 @@ flate2 = "1.1.10"
 [profile.release]
 lto = "fat"
 codegen-units = 1
+
+[features]
+# lambda-emulator's function. Only its binary turns it on.
+lambda-emulator = ["dep:lambda-web"]

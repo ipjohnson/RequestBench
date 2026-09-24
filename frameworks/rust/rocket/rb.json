@@ -1,5 +1,5 @@
 {
-  "comment": "Rocket 0.5.1 on the tokio runtime it builds itself, one stage per family under Implementation/routes, each mounting its routes and what its family needs on one application. One package: the library and the server binary in Implementation/, the suite in UnitTests/, which drives the application in process with Rocket's local client and never reaches the image. The release profile is fat LTO with one codegen unit, as upstream measured every Rust framework. Rocket validates forms but not JSON, so validation is the validator crate behind a Validated data guard of the application's own, because rocket-validation, the crate that joins the two, pins validator 0.16. The first-error route is wired by hand, because validator cannot stop at the first failure. Rocket ships no compression, no response cache, no CORS and no conditional answers: compression is rocket_async_compression's Compress responder, CORS is rocket_cors in its request-guard mode, If-None-Match is read by rocket-etag-if-none-match, and the cache is a Handler of this application's own over cached's LruTtlCache. Rocket's FileServer sends no Last-Modified, so its handler is wrapped to add one. upgrade is cargo update, which moves Cargo.lock within the ranges Cargo.toml states.",
+  "comment": "Rocket 0.5.1 on the tokio runtime it builds itself, one stage per family under Implementation/routes, each mounting its routes and what its family needs on one application. One package: the library in Implementation/, each host's binary in the host's directory, and the suite in UnitTests/, which drives the application in process with Rocket's local client and never reaches the image. On lambda-emulator the application answers behind lambda-web, the adapter written for Rocket 0.5, which dispatches each event through Rocket's local client, because Rocket ships no Lambda adapter. The release profile is fat LTO with one codegen unit, as upstream measured every Rust framework. Rocket validates forms but not JSON, so validation is the validator crate behind a Validated data guard of the application's own, because rocket-validation, the crate that joins the two, pins validator 0.16. The first-error route is wired by hand, because validator cannot stop at the first failure. Rocket ships no compression, no response cache, no CORS and no conditional answers: compression is rocket_async_compression's Compress responder, CORS is rocket_cors in its request-guard mode, If-None-Match is read by rocket-etag-if-none-match, and the cache is a Handler of this application's own over cached's LruTtlCache. Rocket's FileServer sends no Last-Modified, so its handler is wrapped to add one. upgrade is cargo update, which moves Cargo.lock within the ranges Cargo.toml states.",
   "framework": "Rocket",
   "licence": "MIT OR Apache-2.0",
   "repo": "https://github.com/rwf2/Rocket",
@@ -8,7 +8,14 @@
   "lockfile": ["Cargo.lock"],
   "hosts": {
     "container-h1": { "dockerfile": "container-h1/Dockerfile" },
-    "container-h2": { "dockerfile": "container-h2/Dockerfile" }
+    "container-h2": { "dockerfile": "container-h2/Dockerfile" },
+    "lambda-emulator": {
+      "dockerfile": "lambda-emulator/Dockerfile",
+      "unsupported": {
+        "sse.medium": "lambda-web's launch_rocket_on_lambda buffers the whole answer, so the events arrive as one body.",
+        "stream.ndjson": "lambda-web's launch_rocket_on_lambda buffers the whole answer, so the rows arrive as one body."
+      }
+    }
   },
   "suite": { "argv": ["cargo", "test", "--locked"], "paths": ["UnitTests"] },
   "upgrade": { "argv": ["cargo", "update"] },
