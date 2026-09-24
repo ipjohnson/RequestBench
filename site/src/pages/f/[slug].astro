@@ -274,8 +274,11 @@ const unsupported = Object.entries(t.unsupported ?? {}).sort(([a], [b]) => (a < 
   {
     unsupported.length > 0 && (
       <div class="note">
-        <strong>Not offered on {host}.</strong> {name} cannot answer {unsupported.length === 1 ? "this test" : "these tests"} on
-        this host, so neither the gate nor the load sent {unsupported.length === 1 ? "it" : "them"}.
+        <strong>
+          {unsupported.length === 1 ? "One test is" : `${unsupported.length} tests are`} not offered to {name} on {host}.
+        </strong>{" "}
+        {name} cannot answer {unsupported.length === 1 ? "it" : "them"} on this host, so neither the gate nor the load sent{" "}
+        {unsupported.length === 1 ? "it" : "them"}, and the results below cover the other tests.
         <ul>
           {unsupported.map(([id, why]) => (
             <li>
