@@ -6,11 +6,14 @@ payload format 2.0 request, into a WSGI request for the application, and the ans
 response.
 """
 import os
+from importlib.metadata import version
 
 # A function is one process, which answers one event at a time on one thread. Both are set before
 # the application is imported, because routes/contract.py imports them from this module.
 WORKERS = 1
 THREADS = 1
+# What /__meta names as the adapter. contract.py imports it with WORKERS.
+ADAPTER = f"apig-wsgi {version('apig-wsgi')}"
 
 if "RB_PAYLOADS" not in os.environ:
     raise RuntimeError("RB_PAYLOADS has to name the payload directory")

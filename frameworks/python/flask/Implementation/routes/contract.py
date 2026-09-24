@@ -4,13 +4,13 @@ from importlib.metadata import version
 from flask import Blueprint
 
 from payloads import Payloads
-from server import THREADS, WORKERS
+from server import ADAPTER, THREADS, WORKERS
 
 META = {
     "framework": "Flask",
     "version": version("flask"),
     "runtime": f"{platform.python_implementation()} {platform.python_version()}",
-    "adapter": f"gunicorn {version('gunicorn')}",
+    "adapter": ADAPTER,
     "serializer": "Flask's DefaultJSONProvider, over the standard library's json",
     "workers": WORKERS,
     "threads": THREADS,

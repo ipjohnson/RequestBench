@@ -6,10 +6,13 @@ format 2.0 request, into an ASGI request for the application, and the answer int
 """
 import logging
 import os
+from importlib.metadata import version
 
 # A function is one process, which answers one event at a time. It is set before main is imported,
 # because routes/contract.py imports it from this module.
 WORKERS = 1
+# What /__meta names as the adapter. contract.py imports it with WORKERS.
+ADAPTER = f"Mangum {version('mangum')}"
 
 if "RB_PAYLOADS" not in os.environ:
     raise RuntimeError("RB_PAYLOADS has to name the payload directory")
