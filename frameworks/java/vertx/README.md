@@ -123,6 +123,8 @@ per core, so two of the four serve.
 - container-h2 lists `items.head` as unsupported. Over HTTP/2, Vert.x sends the row the route writes
   for HEAD as a DATA frame. HTTP/2 allows no content in an answer to HEAD, so the client resets the
   stream.
+- Vert.x Web implements no lambda-emulator. Vert.x ships no AWS Lambda adapter, and the one
+  published for it, xyz.jetdrone's `vertx.lambda.aws`, was last released in 2019, for Vert.x 3.
 
 ## Refusals
 
