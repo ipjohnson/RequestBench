@@ -117,6 +117,9 @@ the worker that accepted it, and the gate sends each test's two requests on one 
   server within a second of starting it, so it kills the server's process group when SIGTERM has
   not ended it in ten seconds. The harness stops a container with `docker stop -t 3`, which kills
   one that hangs this way.
+- Sanic implements no lambda-emulator. Mangum, which Mangum's documentation shows Sanic behind,
+  hands every request a `raw_path` of `None`, and Sanic 25.12 answers each with 500. Mangum also
+  runs the lifespan's startup on every event, and Sanic refuses the second.
 
 ## Refusals
 
