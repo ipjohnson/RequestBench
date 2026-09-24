@@ -7,7 +7,8 @@
   "docs": "https://helidon.io/docs/v4/se/introduction",
   "lockfile": ["pom.xml", "Implementation/pom.xml"],
   "hosts": {
-    "container-h1": { "dockerfile": "Dockerfile" }
+    "container-h1": { "dockerfile": "container-h1/Dockerfile" },
+    "container-h2": { "dockerfile": "container-h2/Dockerfile" }
   },
   "suite": { "argv": ["mvn", "-B", "test"], "paths": ["UnitTests"] },
   "upgrade": {

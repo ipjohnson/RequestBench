@@ -12,6 +12,7 @@ import { frameworkBundle, frameworkDir, frameworkId, testFiles, testsBundle, typ
 import { callView, primeView, type CallView, type PrimeView } from "./callview.ts";
 import { endpoints, isPayload, recordAll, subjectOf } from "./corpus.ts";
 import { blob, pushed } from "./git.ts";
+import type { HostId } from "./hosts.ts";
 import { KINDS } from "./marks.ts";
 import { rbJsonSchema, type RbJson } from "./manifest.ts";
 import { notesOf } from "./notes.ts";
@@ -67,15 +68,17 @@ export interface FrameworkView {
   readonly pushed: boolean;
 }
 
+/** A framework as a run on `host` recorded it: the bundle is that host's, which is what the run's bundleHash verifies against. */
 export function frameworkView(
   root: string,
   f: FrameworkKey,
   at: string | undefined,
   eps: readonly Endpoint[],
   required: ReadonlySet<string>,
+  host: HostId,
 ): FrameworkView {
   const target = frameworkId(f);
-  const bundle = frameworkBundle(root, f, at);
+  const bundle = frameworkBundle(root, f, host, at);
   const rb = rbJsonAt(root, f, at);
   const mechanisms = rb?.mechanisms ?? {};
   const noHandler = rb?.noHandler ?? {};

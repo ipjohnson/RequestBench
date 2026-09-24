@@ -1,5 +1,5 @@
 {
-  "comment": "poem 3.1 on tokio's multi-thread runtime, one module per family under Implementation/routes, each adding its paths to the one Route the application is, with each family's middleware on its own routes. One package: the library and the server binary in Implementation/, the suite in UnitTests/, which drives the Route in process with poem's TestClient and never reaches the image. The release profile is fat LTO with one codegen unit, as upstream measured every Rust framework. poem's JSON is serde_json, its default. Upstream turned on its sonic-rs feature, and it is left off, so poem writes JSON with the serializer axum's port writes with. Plain poem, not poem-openapi, which is a different way of writing routes. Validation is the validator crate, as axum's port uses it, because poem has none outside poem-openapi and no crate joins the two; a refusal is an error type whose as_response writes validator's errors as JSON, as poem's documentation shows for a custom error. The first-error route is wired by hand, because validator cannot stop at the first failure. The template is Tera, the engine poem's own templating example renders with. The cache is by hand, a poem Middleware over cached's LruTtlCache, the store axum-response-cache keeps, because poem ships no response cache. upgrade is cargo update, which moves Cargo.lock within the ranges Cargo.toml states.",
+  "comment": "poem 3.1 on tokio's multi-thread runtime, one module per family under Implementation/routes, each adding its paths to the one Route the application is, with each family's middleware on its own routes. One package: the library in Implementation/, each host's binary in the host's directory, and the suite in UnitTests/, which drives the Route in process with poem's TestClient and never reaches the image. On lambda-emulator the Route answers behind poem-lambda, poem's own adapter. The release profile is fat LTO with one codegen unit, as upstream measured every Rust framework. poem's JSON is serde_json, its default. Upstream turned on its sonic-rs feature, and it is left off, so poem writes JSON with the serializer axum's port writes with. Plain poem, not poem-openapi, which is a different way of writing routes. Validation is the validator crate, as axum's port uses it, because poem has none outside poem-openapi and no crate joins the two; a refusal is an error type whose as_response writes validator's errors as JSON, as poem's documentation shows for a custom error. The first-error route is wired by hand, because validator cannot stop at the first failure. The template is Tera, the engine poem's own templating example renders with. The cache is by hand, a poem Middleware over cached's LruTtlCache, the store axum-response-cache keeps, because poem ships no response cache. upgrade is cargo update, which moves Cargo.lock within the ranges Cargo.toml states.",
   "framework": "poem",
   "licence": "MIT OR Apache-2.0",
   "repo": "https://github.com/poem-web/poem",
@@ -7,7 +7,15 @@
   "docs": "https://docs.rs/poem/3.1.12/poem/",
   "lockfile": ["Cargo.lock"],
   "hosts": {
-    "container-h1": { "dockerfile": "Dockerfile" }
+    "container-h1": { "dockerfile": "container-h1/Dockerfile" },
+    "container-h2": { "dockerfile": "container-h2/Dockerfile" },
+    "lambda-emulator": {
+      "dockerfile": "lambda-emulator/Dockerfile",
+      "unsupported": {
+        "sse.medium": "poem-lambda's run buffers the whole answer, so the events arrive as one body.",
+        "stream.ndjson": "poem-lambda's run buffers the whole answer, so the rows arrive as one body."
+      }
+    }
   },
   "suite": { "argv": ["cargo", "test", "--locked"], "paths": ["UnitTests"] },
   "upgrade": { "argv": ["cargo", "update"] },

@@ -1,7 +1,8 @@
 # Every pull request runs the repository's checks, then, for each framework it can change,
-# `rb validate` and the framework's own suite. A framework is picked when a file in its directory
-# changes, other than prose. Every framework is picked when something they all depend on changes:
-# the tests, the orchestrator, the root npm manifests, frameworks/exceptions.ts or this file.
+# `rb validate` on every host the framework implements and the framework's own suite. A framework
+# is picked when a file in its directory changes, other than prose. Every framework is picked when
+# something they all depend on changes: the tests, the orchestrator, the traffic generator, the
+# root npm manifests, frameworks/exceptions.ts or this file.
 #
 # Nothing here measures, because a shared runner's timings would be noise.
 name: validate
@@ -29,6 +30,14 @@ jobs:
           node-version: "24"
           cache: npm
       - run: npm ci --no-audit --no-fund
+      # The gate and the load go through the traffic generator's Rust program, which cargo builds
+      # with the toolchain traffic-generator/rust-toolchain.toml pins.
+      - run: rustup toolchain install
+        working-directory: traffic-generator
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: traffic-generator
+          shared-key: traffic-generator
       - run: npm run typecheck
       - run: npm test
       - run: npm run rb -- check
@@ -38,6 +47,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       frameworks: ${{ steps.pick.outputs.frameworks }}
+      validations: ${{ steps.pick.outputs.validations }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -55,7 +65,7 @@ jobs:
               frameworks/*/*/*)
                 IFS=/ read -r _ language name _ <<< "$path"
                 changed+="$language:$name"$'\n' ;;
-              tests/* | orchestrator/* | frameworks/exceptions.ts | package.json | package-lock.json | tsconfig.json | .github/workflows/validate.yml)
+              tests/* | orchestrator/* | traffic-generator/* | frameworks/exceptions.ts | package.json | package-lock.json | tsconfig.json | .github/workflows/validate.yml)
                 every=true ;;
             esac
           done < <(git diff --name-only "$base"...HEAD)
@@ -71,8 +81,14 @@ jobs:
           echo "frameworks=$json" >> "$GITHUB_OUTPUT"
           echo "Frameworks to validate: $(jq -c 'map(.id)' <<< "$json")"
 
+          # One validation for each host a framework's rb.json names.
+          validations=$(jq -c '.[]' <<< "$json" | while IFS= read -r framework; do
+            jq -c --argjson f "$framework" '.hosts | keys[] | $f + {host: .}' "$(jq -r .dir <<< "$framework")/rb.json"
+          done | jq -sc .)
+          echo "validations=$validations" >> "$GITHUB_OUTPUT"
+
   validate:
-    name: validate ${{ matrix.framework.id }}
+    name: validate ${{ matrix.validation.id }} on ${{ matrix.validation.host }}
     needs: frameworks
     if: needs.frameworks.outputs.frameworks != '[]'
     runs-on: ubuntu-latest
@@ -80,7 +96,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        framework: ${{ fromJSON(needs.frameworks.outputs.frameworks) }}
+        validation: ${{ fromJSON(needs.frameworks.outputs.validations) }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -88,9 +104,18 @@ jobs:
           node-version: "24"
           cache: npm
       - run: npm ci --no-audit --no-fund
+      # The gate and the load go through the traffic generator's Rust program, which cargo builds
+      # with the toolchain traffic-generator/rust-toolchain.toml pins.
+      - run: rustup toolchain install
+        working-directory: traffic-generator
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: traffic-generator
+          shared-key: traffic-generator
       - env:
-          ID: ${{ matrix.framework.id }}
-        run: npm run rb -- validate "$ID"
+          ID: ${{ matrix.validation.id }}
+          HOST: ${{ matrix.validation.host }}
+        run: npm run rb -- validate "$ID" --host "$HOST"
 
   # The framework's own tests, with the toolchain its language needs. A test-only dependency never
   # reaches the image, so this is the only job that exercises it.
@@ -120,13 +145,13 @@ jobs:
         with:
           go-version-file: ${{ matrix.framework.dir }}/go.mod
           cache-dependency-path: ${{ matrix.framework.dir }}/go.sum
-      # The JDK the framework's image runs on, read from its last FROM line.
+      # The JDK the framework's container-h1 image runs on, read from its last FROM line.
       - if: matrix.framework.language == 'java'
         id: java
         env:
           DIR: ${{ matrix.framework.dir }}
         run: |
-          image=$(grep -E '^FROM (eclipse-temurin|amazoncorretto):' "$DIR/Dockerfile" | tail -1 | awk '{print $2}')
+          image=$(grep -E '^FROM (eclipse-temurin|amazoncorretto):' "$DIR/container-h1/Dockerfile" | tail -1 | awk '{print $2}')
           case "$image" in
             eclipse-temurin:*) echo "distribution=temurin" >> "$GITHUB_OUTPUT" ;;
             amazoncorretto:*) echo "distribution=corretto" >> "$GITHUB_OUTPUT" ;;

@@ -7,6 +7,10 @@
 //
 // How a framework is built and started is the driver's business, so a test can hand in one
 // that serves the reference instead of a container.
+//
+// On lambda-emulator the traffic generator's Rust program serves the Lambda Runtime API, and each
+// boot starts it first and the function after it, because the function's runtime reaches out to
+// it. Readiness is the runtime's first /next, and the load is a closed loop.
 import { spawn } from "node:child_process";
 import { randomBytes, randomInt } from "node:crypto";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -17,14 +21,16 @@ import suite from "@rb/tests";
 import type { RunValues } from "@rb/tests/kit";
 import { drawRunValues } from "@rb/tests/models/parameters";
 import exceptions from "../frameworks/exceptions.ts";
-import type { Load, LoadResult } from "../traffic-generator/load.ts";
+import { runClosed } from "../traffic-generator/closed.ts";
+import type { ClosedPhase, ClosedResult, Load, LoadResult } from "../traffic-generator/load.ts";
+import { Pipe } from "../traffic-generator/pipe.ts";
 import { frameworkBundle, testsBundle, treeRollup } from "./bundle.ts";
-import { meta, probe, type Address, type Budget } from "./container.ts";
+import { meta, probe, RUNTIME_API_BIND, type Address, type Budget } from "./container.ts";
 import { corpusVersion, payloadFiles, recordAll } from "./corpus.ts";
 import { gate, type Outcome } from "./gate.ts";
 import { repoSlug, resolveCommit } from "./git.ts";
-import type { HostId } from "./hosts.ts";
-import { http1 } from "./live.ts";
+import { HOSTS, type Host, type HostId } from "./hosts.ts";
+import { live, liveOver } from "./live.ts";
 import type { MachineState } from "./machine.ts";
 import type { LoadedFramework } from "./manifest.ts";
 
@@ -36,9 +42,19 @@ export interface Started {
   stop(): void;
 }
 
+/** A lambda-emulator function, which listens on nothing. */
+export interface StartedFunction {
+  readonly startMs: number;
+  alive(): boolean;
+  logs(): string;
+  stop(): void;
+}
+
 export interface Driver {
   build(f: LoadedFramework): Promise<{ readonly imageId: string; readonly imageBytes: number }>;
   start(f: LoadedFramework): Promise<Started> | Started;
+  /** lambda-emulator's function, its runtime pointed at the Runtime API on this port. */
+  startFunction?(f: LoadedFramework, apiPort: number): StartedFunction;
 }
 
 export interface FrameworkRun {
@@ -48,13 +64,19 @@ export interface FrameworkRun {
   readonly bundleHash: string;
   readonly codeHash: string;
   readonly image?: { readonly id: string; readonly bytes: number };
+  /** The tests it cannot answer on this host, as its rb.json lists them, each with the reason. Neither the gate nor the load sent them. */
+  readonly unsupported?: Readonly<Record<string, string>>;
   readonly gate?: { readonly measurable: boolean; readonly passed: boolean; readonly outcomes: Readonly<Record<string, Outcome>> };
-  /** The measured boot. The gate's boot ran the same image moments before, so the page cache was warm. */
+  /**
+   * The measured boot. The gate's boot ran the same image moments before, so the page cache was
+   * warm. On lambda-emulator readyMs is the Init phase, from `docker run` returning to the
+   * runtime's first /next, and probeMs is the first event the function answered.
+   */
   readonly boot?: { readonly startMs: number; readonly readyMs: number; readonly wallMs: number; readonly probeMs: number; readonly pageCache: "warm" };
   /** What /__meta answered, verbatim. */
   readonly meta?: Readonly<Record<string, unknown>>;
-  /** The traffic generator's result, unchanged. */
-  readonly load?: LoadResult;
+  /** The traffic generator's result, unchanged. lambda-emulator's is a closed loop's. */
+  readonly load?: LoadResult | ClosedResult;
   /** Why this framework has no measurement, with the end of its log where there is one. */
   readonly error?: string;
 }
@@ -91,6 +113,8 @@ export interface MeasureOptions {
   readonly frameworks: readonly LoadedFramework[];
   readonly driver: Driver;
   readonly phases: Load["phases"];
+  /** lambda-emulator's closed-loop phases, in place of `phases`. */
+  readonly closedPhases?: readonly ClosedPhase[] | undefined;
   readonly ladder: string;
   readonly only?: readonly string[] | undefined;
   readonly bootMs: number;
@@ -151,6 +175,7 @@ export function generator(root: string, genCpus?: string): (load: Load, log: (li
 
 export async function measure(o: MeasureOptions): Promise<RunFile> {
   const log = o.log ?? ((line: string) => console.log(line));
+  const { protocol, load: shape }: Host = HOSTS[o.host];
   const started = new Date();
   // Drawn here, before anything boots, from a source no framework can read. Every client in
   // the run sends the same ones.
@@ -175,8 +200,15 @@ export async function measure(o: MeasureOptions): Promise<RunFile> {
   }
 
   for (const [i, f] of o.frameworks.entries()) {
-    const bundle = frameworkBundle(o.root, f, o.at);
-    const base = { id: f.id, ordinal: i + 1, bundleHash: bundle.bundleHash, codeHash: bundle.codeHash };
+    const bundle = frameworkBundle(o.root, f, o.host, o.at);
+    const unsupported = f.rb.hosts[o.host]?.unsupported;
+    const base = {
+      id: f.id,
+      ordinal: i + 1,
+      bundleHash: bundle.bundleHash,
+      codeHash: bundle.codeHash,
+      ...(unsupported === undefined ? {} : { unsupported }),
+    };
     const image = images.get(f.id)!;
     log(`\n=== ${f.id} (${i + 1} of ${o.frameworks.length})`);
     if (image instanceof Error) {
@@ -185,25 +217,30 @@ export async function measure(o: MeasureOptions): Promise<RunFile> {
       continue;
     }
     const withImage = { ...base, image };
+    if (protocol === "lambda-runtime-api") {
+      entries.push(await measureFunction(o, f, withImage, values, unsupported, log));
+      continue;
+    }
 
     // The gate's boot.
     let gated;
     const first = await o.driver.start(f);
     try {
-      await probe(first.address, o.bootMs, first.alive);
-      const live = http1(first.address);
+      await probe(first.address, o.bootMs, first.alive, protocol);
+      const transport = live(first.address, protocol);
       try {
         gated = await gate({
           suite,
-          transport: live.transport,
+          transport: transport.transport,
           exceptions: exceptions[f.id as keyof typeof exceptions],
           declared: f.declared,
           skips: f.rb.skips,
+          unsupported,
           run: values,
           alive: async () => first.alive(),
         });
       } finally {
-        live.close();
+        await transport.close();
       }
     } catch (error) {
       entries.push({ ...withImage, error: `the gate's boot failed: ${(error as Error).message}\n${first.logs()}` });
@@ -224,7 +261,7 @@ export async function measure(o: MeasureOptions): Promise<RunFile> {
     // The measured boot.
     const second = await o.driver.start(f);
     try {
-      const ready = await probe(second.address, o.bootMs, second.alive);
+      const ready = await probe(second.address, o.bootMs, second.alive, protocol);
       const boot = {
         startMs: round(second.startMs),
         readyMs: round(ready.readyMs),
@@ -237,12 +274,15 @@ export async function measure(o: MeasureOptions): Promise<RunFile> {
         target: `${second.address.host}:${second.address.port}`,
         framework: f.id,
         values,
+        protocol,
+        ...shape,
         ...(o.workers === undefined ? {} : { workers: o.workers }),
         ...(o.only === undefined ? {} : { only: [...o.only] }),
+        ...(unsupported === undefined ? {} : { unsupported }),
         phases: [...o.phases],
       };
       const result = await generate(load, (line) => log(`  ${line}`));
-      entries.push({ ...withImage, gate: gateRecord, boot, meta: await meta(second.address), load: result });
+      entries.push({ ...withImage, gate: gateRecord, boot, meta: await meta(second.address, protocol), load: result });
     } catch (error) {
       entries.push({ ...withImage, gate: gateRecord, error: `the measured boot failed: ${(error as Error).message}\n${second.logs()}` });
       log(`  measurement failed: ${(error as Error).message}`);
@@ -279,4 +319,111 @@ export async function measure(o: MeasureOptions): Promise<RunFile> {
   writeFileSync(out, `${JSON.stringify(run, null, 2)}\n`);
   log(`\nrun ${runId} -> ${out}${run.recorded ? "" : ` (not recorded: ${run.notRecorded.join("; ")})`}`);
   return run;
+}
+
+/**
+ * The runtime's first /next, or the function's exit, whichever comes first. The runtime's own
+ * init error comes back from the program.
+ */
+export async function awaitInit(pipe: Pipe, fn: StartedFunction, budgetMs: number): Promise<void> {
+  let settled = false;
+  const init = pipe.init(budgetMs).finally(() => (settled = true));
+  const exited = (async () => {
+    while (!settled) {
+      await pause(1000);
+      if (!settled && !fn.alive()) throw new Error("the function exited before its runtime asked for an event");
+    }
+  })();
+  try {
+    await Promise.race([init, exited]);
+  } finally {
+    init.catch(() => {});
+    exited.catch(() => {});
+  }
+}
+
+async function measureFunction(
+  o: MeasureOptions,
+  f: LoadedFramework,
+  withImage: Omit<FrameworkRun, "gate" | "boot" | "meta" | "load" | "error">,
+  values: RunValues,
+  unsupported: Readonly<Record<string, string>> | undefined,
+  log: (line: string) => void,
+): Promise<FrameworkRun> {
+  const startFunction = o.driver.startFunction;
+  if (startFunction === undefined) return { ...withImage, error: `the driver cannot start a function for ${o.host}` };
+
+  // The gate's boot.
+  let gated;
+  {
+    const { pipe, port } = await Pipe.listen(RUNTIME_API_BIND);
+    const fn = startFunction(f, port);
+    try {
+      await awaitInit(pipe, fn, o.bootMs);
+      const transport = liveOver(pipe);
+      gated = await gate({
+        suite,
+        transport: transport.transport,
+        exceptions: exceptions[f.id as keyof typeof exceptions],
+        declared: f.declared,
+        skips: f.rb.skips,
+        unsupported,
+        run: values,
+        alive: async () => fn.alive(),
+      });
+    } catch (error) {
+      log(`  boot failed: ${(error as Error).message}`);
+      return { ...withImage, error: `the gate's boot failed: ${(error as Error).message}\n${fn.logs()}` };
+    } finally {
+      // Without its Runtime API the runtime exits, so the container has stopped by the time it is asked to.
+      await pipe.close();
+      fn.stop();
+      await pause(o.cooldownMs);
+    }
+  }
+  const counts = Object.values(gated.outcomes).reduce<Record<string, number>>((c, x) => ((c[x.status] = (c[x.status] ?? 0) + 1), c), {});
+  log(`  gate: ${Object.entries(counts).map(([k, n]) => `${n} ${k}`).join(", ")}`);
+  const gateRecord = { measurable: gated.measurable, passed: gated.passed, outcomes: gated.outcomes };
+  if (!gated.measurable) return { ...withImage, gate: gateRecord, error: "it failed the gate, so it was not measured" };
+
+  // The measured boot, with the program on the generator's cores.
+  const { pipe, port } = await Pipe.listen(RUNTIME_API_BIND, o.budget.genCpus);
+  const fn = startFunction(f, port);
+  try {
+    const started = performance.now();
+    await awaitInit(pipe, fn, o.bootMs);
+    const readyMs = performance.now() - started;
+    // The first event the function answers is the other half of its cold start.
+    const sent = performance.now();
+    await pipe.exchange({ method: "GET", target: "/health", headers: [] });
+    const probeMs = performance.now() - sent;
+    const boot = { startMs: round(fn.startMs), readyMs: round(readyMs), wallMs: round(fn.startMs + readyMs), probeMs: round(probeMs), pageCache: "warm" as const };
+    log(`  boot: start ${boot.startMs} + init ${boot.readyMs} = ${boot.wallMs} ms; the first event took ${boot.probeMs} ms`);
+    const result = await runClosed({
+      pipe,
+      framework: f.id,
+      values,
+      instances: 512,
+      only: o.only,
+      unsupported,
+      phases: o.closedPhases ?? [],
+      log: (line) => log(`  ${line}`),
+    });
+    const described = await pipe.exchange({ method: "GET", target: "/__meta", headers: [] }).catch(() => undefined);
+    let meta: Record<string, unknown> = {};
+    try {
+      const parsed: unknown = described?.status === 200 ? JSON.parse(described.body.toString("utf8")) : {};
+      if (parsed !== null && typeof parsed === "object" && !Array.isArray(parsed)) meta = parsed as Record<string, unknown>;
+    } catch {
+      // What /__meta says is never checked, and a body that is not JSON says nothing.
+    }
+    return { ...withImage, gate: gateRecord, boot, meta, load: result };
+  } catch (error) {
+    log(`  measurement failed: ${(error as Error).message}`);
+    return { ...withImage, gate: gateRecord, error: `the measured boot failed: ${(error as Error).message}\n${fn.logs()}` };
+  } finally {
+    await pipe.close();
+    fn.stop();
+    await pause(o.cooldownMs);
+  }
 }

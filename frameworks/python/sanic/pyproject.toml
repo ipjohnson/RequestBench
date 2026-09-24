@@ -26,7 +26,7 @@ package = false
 [tool.pytest.ini_options]
 testpaths = ["UnitTests"]
 # Client/ holds the Kiota package the client tests import.
-pythonpath = ["Implementation", "Client"]
+pythonpath = ["Implementation", "container-h1", "Client"]
 addopts = "--strict-markers"
 markers = ["corpus(*ids): the corpus tests this test holds the framework to"]
 # Raised as Sanic imports websockets, and as Kiota's generated client is imported, which the suite

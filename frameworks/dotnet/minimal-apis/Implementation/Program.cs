@@ -23,6 +23,10 @@ int port = int.TryParse(Environment.GetEnvironmentVariable("PORT"), out int pars
 
 builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
 builder.Logging.ClearProviders();
+// On lambda-emulator, where AWS_LAMBDA_FUNCTION_NAME is set, Amazon.Lambda.AspNetCoreServer
+// serves the application in Kestrel's place, and the Lambda runtime client hands it each API
+// Gateway payload format 2.0 event. On the other hosts this does nothing.
+builder.Services.AddAWSLambdaHosting(LambdaEventSource.HttpApi);
 
 builder.Services.AddSingleton(payloads);
 // The document dotnet build writes to Client/openapi.json. Nothing maps a route to it.
@@ -43,9 +47,11 @@ builder.Services.AddValidation();
 // 100 MB holds every key the cache family stores many times over.
 builder.Services.AddOutputCache(options => options.DefaultExpirationTimeSpan = TimeSpan.FromSeconds(settings.Cache.TtlSeconds));
 // rb:wiring compressed.*
+// A Function URL's requests are HTTPS, and ASP.NET Core compresses an answer to HTTPS only with
+// EnableForHttps. The container hosts are plain HTTP, where it changes nothing.
+builder.Services.AddResponseCompression(options => options.EnableForHttps = true);
 // Fastest is already the provider's default, and every framework here compresses at that level,
 // so the route says so rather than leaving it to a default.
-builder.Services.AddResponseCompression();
 builder.Services.Configure<GzipCompressionProviderOptions>(options => options.Level = CompressionLevel.Fastest);
 // rb:wiring cors.*
 // A policy listing exactly one origin sends no Vary: Origin, although its answer differs by

@@ -3,8 +3,8 @@ name = "rb-poem"
 version = "0.0.0"
 edition = "2024"
 publish = false
-# The application is in Implementation/ and the suite in UnitTests/, so every target names its
-# path rather than following cargo's src/ and tests/.
+# The application is in Implementation/, each host's binary in the host's directory and the suite
+# in UnitTests/, so every target names its path rather than following cargo's src/ and tests/.
 build = "Implementation/build.rs"
 autobins = false
 autotests = false
@@ -18,8 +18,19 @@ doctest = false
 
 [[bin]]
 name = "server"
-path = "Implementation/main.rs"
+path = "container-h1/main.rs"
 test = false
+
+[[bin]]
+name = "server-h2"
+path = "container-h2/main.rs"
+test = false
+
+[[bin]]
+name = "lambda"
+path = "lambda-emulator/main.rs"
+test = false
+required-features = ["lambda-emulator"]
 
 [[test]]
 name = "unit"
@@ -32,6 +43,8 @@ futures-util = "0.3.34"
 # The allocator every Rust framework here runs on, in place of the system one.
 mimalloc = "0.1.52"
 poem = { version = "3.1.12", features = ["compression", "multipart", "sse", "static-files"] }
+# lambda-emulator's adapter, poem's own, over lambda_http's runtime client.
+poem-lambda = { version = "5.1.4", optional = true }
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.151"
 sha1 = "0.11.0"
@@ -50,3 +63,7 @@ poem = { version = "3.1.12", features = ["compression", "multipart", "sse", "sta
 [profile.release]
 lto = "fat"
 codegen-units = 1
+
+[features]
+# lambda-emulator's function. Only its binary turns it on.
+lambda-emulator = ["dep:poem-lambda"]

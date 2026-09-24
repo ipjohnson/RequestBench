@@ -3,8 +3,8 @@ name = "rb-salvo"
 version = "0.0.0"
 edition = "2024"
 publish = false
-# The application is in Implementation/ and the suite in UnitTests/, so every target names its
-# path rather than following cargo's src/ and tests/.
+# The application is in Implementation/, container-h1's server binary in container-h1/ and the
+# suite in UnitTests/, so every target names its path rather than following cargo's src/ and tests/.
 build = "Implementation/build.rs"
 autobins = false
 autotests = false
@@ -18,8 +18,14 @@ doctest = false
 
 [[bin]]
 name = "server"
-path = "Implementation/main.rs"
+path = "container-h1/main.rs"
 test = false
+
+[[bin]]
+name = "server-h2"
+path = "container-h2/main.rs"
+test = false
+required-features = ["container-h2"]
 
 [[test]]
 name = "unit"
@@ -46,3 +52,7 @@ flate2 = "1.1.10"
 [profile.release]
 lto = "fat"
 codegen-units = 1
+
+[features]
+# container-h2's server, which answers HTTP/2 with prior knowledge. Only its binary turns it on.
+container-h2 = ["salvo/http2-cleartext"]

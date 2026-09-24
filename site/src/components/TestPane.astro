@@ -32,6 +32,9 @@ export type PaneTest = {
 
 type Pct = "p50Us" | "p95Us" | "p99Us" | "p999Us";
 
+/** How a function framed its answer on lambda-emulator, which the exemplar's `fr` then holds. */
+const LAMBDA_FRAMINGS = new Set(["proxy", "proxy-base64", "stream", "bare"]);
+
 /**
  * One column of the performance table. `base` is null when there is no base row. `m` names the
  * statistic and `n` is its number, which another framework's row is read against.
@@ -118,6 +121,17 @@ const measure = (r: PaneRung): { fields: Field[]; measured: boolean } => {
       pct(["p95", "p95Us"]),
       pct(["p99", "p99Us"]),
       pct(["p99.9", "p999Us"]),
+      // A closed loop's invoke phase is the percentiles above, and its other spans follow at p50.
+      ...Object.entries(d.spans ?? {}).map(
+        ([span, s]): Field => ({
+          k: `${span} p50`,
+          m: `${span}.p50Us`,
+          n: s.p50Us,
+          v: cell(s.p50Us, "us"),
+          title: `${span} at p99 is ${cell(s.p99Us, "us")}.`,
+          base: under(cell(b.spans?.[span]?.p50Us, "us"), null, "us", ""),
+        }),
+      ),
       {
         k: "size",
         m: "sbz",
@@ -125,7 +139,9 @@ const measure = (r: PaneRung): { fields: Field[]; measured: boolean } => {
         v: cell(exchange?.sbz, "B"),
         title:
           exchange &&
-          `The response body as the gate captured it. Its headers add ${exchange.shz.toLocaleString()} B.`,
+          (LAMBDA_FRAMINGS.has(exchange.fr)
+            ? `The response body as the gate captured it. What the function posted around it adds ${exchange.shz.toLocaleString()} B.`
+            : `The response body as the gate captured it. Its headers add ${exchange.shz.toLocaleString()} B.`),
         base: under(cell(baseExchange?.sbz, "B"), size, "B", ""),
       },
       { k: "samples", m: "count", n: d.count, v: cell(d.count), base: under(cell(b.count), null, "", "") },

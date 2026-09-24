@@ -18,7 +18,7 @@ export function usLabel(v: number): string {
 /**
  * The bins something actually landed in, across every test at one rate.
  *
- * The grid reaches 600 ms because one framework needs it there. Drawing all of it on a
+ * The grid reaches hundreds of milliseconds because one framework needs it there. Drawing all of it on a
  * framework that finishes inside a millisecond would spend most of the width on nothing, and
  * drawing each test to its own span would rescale the axis under a reader stepping through
  * them. One span per framework per rate is the middle: tests stay comparable, empty width does
@@ -47,8 +47,8 @@ export function usedSpan(
  * Where a latency sits across a span drawn `width` wide, measured from `left`.
  *
  * The bins are uniform in log space, so this is exact rather than snapped to a column. It
- * has to be: the grid starts at 80 us, so no bin edge is ever a round decade and a tick
- * placed on the nearest edge would sit a third of a column off where it says it is.
+ * has to be: a grid that starts off a round decade, as the one before 10 us did at 80 us, has no
+ * bin edge on a decade, and a tick placed on the nearest edge would sit off where it says it is.
  */
 export function scaleFor(grid: BinGrid, c0: number, c1: number, left: number, width: number) {
   const lg0 = Math.log10(binEdge(grid, c0));

@@ -5,16 +5,20 @@
 // Nothing is divided by anything. A rung a framework did not complete publishes what it
 // achieved and dropped and no latency: the generator drops by never sending, so percentiles
 // over what survived would flatter the frameworks that collapse hardest.
+//
+// lambda-emulator's closed loop has one rung and nothing to drop. Its latency is the invoke
+// phase, and each test carries the other spans beside it.
 import { BUCKETS, GROWTH, LOG_GROWTH, pct } from "../traffic-generator/histogram.ts";
-import type { PhaseResult } from "../traffic-generator/load.ts";
+import { isClosed, type ClosedResult, type LoadResult, type PhaseResult } from "../traffic-generator/load.ts";
 import type { FrameworkRun, RunFile } from "./measure.ts";
 
 /**
- * The coarse grid a page draws a distribution on: eight bins a decade from 80 µs reaches 600 ms
- * in 31 columns, wide enough to tell two apart on screen. Changing it changes what a summary
- * means, so it is written into every summary rather than agreed out of band.
+ * The coarse grid a page draws a distribution on: eight bins a decade from 10 µs reaches 750 ms
+ * in 39 columns, wide enough to tell two apart on screen. It starts at 10 µs because a Lambda
+ * invocation on the emulator can take less than 80 µs. Changing it changes what a summary means,
+ * so it is written into every summary rather than agreed out of band.
  */
-export const BIN_GRID = { loUs: 80, perDecade: 8, count: 31 } as const;
+export const BIN_GRID = { loUs: 10, perDecade: 8, count: 39 } as const;
 
 /**
  * The generator's grid, which each test's `hist` is counted on: bucket i starts at growth^i µs.
@@ -78,6 +82,23 @@ export interface RungSummary {
   readonly p999Us: number | null;
 }
 
+/** A closed-loop rung: what a function sustained answering one event at a time, with nothing offered or dropped. */
+export interface ClosedRungSummary {
+  readonly closed: true;
+  readonly status: "done";
+  readonly completed: true;
+  /** The invocations a second the function sustained. */
+  readonly achievedRps: number;
+  readonly invocations: number;
+  readonly errors: number;
+  readonly mismatch: number;
+  /** The invoke phase over every test. */
+  readonly p50Us: number;
+  readonly p90Us: number;
+  readonly p99Us: number;
+  readonly p999Us: number;
+}
+
 export interface TestRung extends ReturnType<typeof stats> {
   readonly count: number;
   readonly errors: number;
@@ -86,16 +107,41 @@ export interface TestRung extends ReturnType<typeof stats> {
   readonly hist: Hist;
 }
 
-function summarizeFramework(f: FrameworkRun) {
-  const meta = f.meta ?? {};
-  const [language, name] = f.id.split(":") as [string, string];
+/** The spans a closed-loop test publishes beside its invoke phase, which is its TestRung. */
+export const SPANS = ["response", "responseLatency", "responseDuration", "runtimeOverhead"] as const;
+
+export interface ClosedTestRung extends TestRung {
+  readonly spans: Readonly<Record<(typeof SPANS)[number], ReturnType<typeof stats> & { readonly hist: Hist }>>;
+}
+
+type FamilyStats = { count: number; p50Us: number; p90Us: number; p99Us: number; p999Us: number };
+
+function familiesOf(byFamily: ReadonlyMap<string, Uint32Array>): Record<string, FamilyStats> {
+  return Object.fromEntries(
+    [...byFamily].map(([fam, h]) => {
+      const s = stats(h);
+      return [fam, { count: h.reduce((a, b) => a + b, 0), p50Us: s.p50Us, p90Us: s.p90Us, p99Us: s.p99Us, p999Us: s.p999Us }];
+    }),
+  );
+}
+
+function addTo(byFamily: Map<string, Uint32Array>, family: string, overall: Uint32Array, h: Uint32Array): void {
+  const fam = byFamily.get(family) ?? new Uint32Array(BUCKETS);
+  for (let b = 0; b < BUCKETS; b++) {
+    overall[b]! += h[b]!;
+    fam[b]! += h[b]!;
+  }
+  byFamily.set(family, fam);
+}
+
+function openRungs(load: LoadResult | undefined) {
   const rungs: Record<string, RungSummary> = {};
   const tests: Record<string, { family: string; rungs: Record<string, TestRung> }> = {};
-  const families: Record<string, Record<string, { count: number; p50Us: number; p90Us: number; p99Us: number; p999Us: number }>> = {};
+  const families: Record<string, Record<string, FamilyStats>> = {};
 
   // The warmup records nothing and is not a rung.
-  for (const [i, phase] of (f.load?.phases ?? []).entries()) {
-    const declared = f.load!.load.phases[i]!;
+  for (const [i, phase] of (load?.phases ?? []).entries()) {
+    const declared = load!.load.phases[i]!;
     if (declared.seconds === undefined) continue;
     if (phase.status === "notRun") {
       rungs[phase.name] = { rps: phase.rps, status: "notRun", completed: false, saturated: false, achievedRps: 0, dropped: 0, errors: 0, mismatch: 0, p50Us: null, p90Us: null, p99Us: null, p999Us: null };
@@ -110,10 +156,7 @@ function summarizeFramework(f: FrameworkRun) {
     if (completed) {
       for (const t of r.tests) {
         const h = decode(t.histB64);
-        for (let b = 0; b < BUCKETS; b++) overall[b]! += h[b]!;
-        const fam = byFamily.get(t.family) ?? new Uint32Array(BUCKETS);
-        for (let b = 0; b < BUCKETS; b++) fam[b]! += h[b]!;
-        byFamily.set(t.family, fam);
+        addTo(byFamily, t.family, overall, h);
         (tests[t.id] ??= { family: t.family, rungs: {} }).rungs[phase.name] = {
           count: t.count,
           errors: t.errors,
@@ -123,12 +166,7 @@ function summarizeFramework(f: FrameworkRun) {
           hist: trim(h),
         };
       }
-      families[phase.name] = Object.fromEntries(
-        [...byFamily].map(([fam, h]) => {
-          const s = stats(h);
-          return [fam, { count: h.reduce((a, b) => a + b, 0), p50Us: s.p50Us, p90Us: s.p90Us, p99Us: s.p99Us, p999Us: s.p999Us }];
-        }),
-      );
+      families[phase.name] = familiesOf(byFamily);
     }
     rungs[phase.name] = {
       rps: phase.rps,
@@ -145,7 +183,61 @@ function summarizeFramework(f: FrameworkRun) {
       p999Us: completed ? pct(overall, 99.9) : null,
     };
   }
+  return { rungs, tests, families };
+}
 
+function closedRungs(load: ClosedResult) {
+  const rungs: Record<string, ClosedRungSummary> = {};
+  const tests: Record<string, { family: string; rungs: Record<string, ClosedTestRung> }> = {};
+  const families: Record<string, Record<string, FamilyStats>> = {};
+
+  // The warmup records nothing and is not a rung.
+  for (const phase of load.phases) {
+    const r = phase.recorded;
+    if (r === undefined) continue;
+    const overall = new Uint32Array(BUCKETS);
+    const byFamily = new Map<string, Uint32Array>();
+    for (const t of r.tests) {
+      const h = decode(t.invoke.histB64);
+      addTo(byFamily, t.family, overall, h);
+      const spans = Object.fromEntries(
+        SPANS.map((name) => {
+          const s = decode(t[name].histB64);
+          return [name, { ...stats(s), hist: trim(s) }];
+        }),
+      ) as ClosedTestRung["spans"];
+      (tests[t.id] ??= { family: t.family, rungs: {} }).rungs[phase.name] = {
+        count: t.count,
+        errors: t.errors,
+        mismatch: t.mismatch,
+        ...stats(h),
+        bins: rebin(h),
+        hist: trim(h),
+        spans,
+      };
+    }
+    families[phase.name] = familiesOf(byFamily);
+    rungs[phase.name] = {
+      closed: true,
+      status: phase.status,
+      completed: true,
+      achievedRps: r.invocationsPerSecond,
+      invocations: r.invocations,
+      errors: r.errors,
+      mismatch: r.mismatch,
+      p50Us: pct(overall, 50),
+      p90Us: pct(overall, 90),
+      p99Us: pct(overall, 99),
+      p999Us: pct(overall, 99.9),
+    };
+  }
+  return { rungs, tests, families };
+}
+
+function summarizeFramework(f: FrameworkRun) {
+  const meta = f.meta ?? {};
+  const [language, name] = f.id.split(":") as [string, string];
+  const { rungs, tests, families } = f.load !== undefined && isClosed(f.load) ? closedRungs(f.load) : openRungs(f.load);
   return {
     id: f.id,
     language,
@@ -159,6 +251,7 @@ function summarizeFramework(f: FrameworkRun) {
     codeHash: f.codeHash,
     ...(f.boot === undefined ? {} : { boot: f.boot }),
     ...(f.gate === undefined ? {} : { gate: { measurable: f.gate.measurable, passed: f.gate.passed } }),
+    ...(f.unsupported === undefined ? {} : { unsupported: f.unsupported }),
     ...(f.error === undefined ? {} : { error: f.error }),
     rungs,
     tests,

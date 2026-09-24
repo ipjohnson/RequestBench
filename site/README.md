@@ -1,7 +1,7 @@
 # site
 
-The results explorer, one page per framework, and the tests pages: one listing the families
-and one per family. An Astro app in the workspace, static output, two hydrated islands. A port of upstream's site/ at 9939f4c onto the rewrite's run
+The results explorer, one page per framework on each host, and the tests pages: one listing the
+families and one per family. An Astro app in the workspace, static output, two hydrated islands. A port of upstream's site/ at 9939f4c onto the rewrite's run
 summaries, exemplars and `rb siteview`.
 
     npm run site -- --summaries <dir> [--exemplars <dir>] [--out <dir>] [--data-base <url>] [--unrecorded]
@@ -38,7 +38,7 @@ looked at with:
       explorer.ts     the DOM half of the explorer
       compare.ts      what a framework page is compared with: pure, like select.ts
       test-tree.ts    the DOM half of a framework page
-    src/pages/        index.astro, f/[slug].astro per framework, tests.astro, and tests/[family].astro per family
+    src/pages/        index.astro, f/[slug].astro per framework and host, tests.astro, and tests/[family].astro per family
     src/styles/       the palette and the three stylesheets
     tools/build.ts    the CLI
 
@@ -61,9 +61,11 @@ A cross-origin base needs that origin to allow the read; GitHub Pages sends
 
 ## The siteview seam
 
-`npm run rb -- siteview --at <commit>` reads each framework's bundle, snippets and rb.json, and
-each test's source, from history at the commit a run recorded. The build runs it once, at the
-newest run's commit, and parses what it prints. It stays a subprocess because
+`npm run rb -- siteview --at <commit> --host <host>` reads each framework's bundle on that host,
+its snippets and rb.json, and each test's source, from history at the commit a run recorded. The
+build runs it once for each host, at the commit of the newest run on that host, and parses what it
+prints. A framework's page on container-h1 is `f/<language>-<name>.html`, the name it had before
+there were other hosts, and on any other host `f/<language>-<name>@<host>.html`. It stays a subprocess because
 orchestrator/snippets.ts is the only authority on where a handler starts and ends, and because
 the corpus it reads loads its payloads from beside its own source, which a module bundled into
 Astro's build scratch cannot do.

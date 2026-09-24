@@ -18,5 +18,5 @@
   },
   // Node strips the types and runs the source, so this only checks it. client-exception is the
   // repository's to check, against the corpus's kit.
-  "include": ["Implementation", "UnitTests"]
+  "include": ["Implementation", "container-h1", "UnitTests"]
 }

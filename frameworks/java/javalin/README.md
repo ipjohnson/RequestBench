@@ -13,10 +13,12 @@ router, its validator, its bundled plugins, or one of its rendering modules.
 | Path | What it is |
 | --- | --- |
 | `Implementation/` | The application, a Maven module. One class per corpus family under `src/main/java/implementation/routes/`, each adding its routes to the config. |
+| `container-h1/` | The `Dockerfile` that builds the image container-h1 runs. |
+| `container-h2/` | How container-h2 starts it. `H2c.java` serves the application on a Jetty connector that answers HTTP/2 with prior knowledge, and `Dockerfile` builds the image with Implementation's `container-h2` profile, which compiles `H2c.java` and adds Jetty's HTTP/2 module. |
 | `UnitTests/` | JUnit tests of the wiring, a Maven module. Each test starts the Implementation on a random port with javalin-testtools' `JavalinTest.test`. |
 | `Client/` | The OpenAPI document javalin-openapi writes from the handlers' `@OpenApi` annotations, and the Java client OpenAPI Generator writes from it, a Maven module. |
 | `client-exception/` | How the corpus reads Javalin's error bodies. |
-| `pom.xml` | The three modules. Javalin offers no parent pom for an application, so this one pins every dependency and plugin, each version a property, and Javalin's own artifacts through `javalin-bom`. |
+| `pom.xml` | The three modules. Javalin offers no parent pom for an application, so this one pins every dependency and plugin, each version a property, Javalin's own artifacts through `javalin-bom`, and every Jetty module through `jetty-bom` at the Jetty Javalin runs on. |
 
 ## Building, running and testing
 
@@ -120,6 +122,14 @@ beside the plain jar under the `exec` classifier, because UnitTests compiles aga
 - The container runs `java -jar` as PID 1 with the collector and heap the JVM chooses. The JVM
   reads the container's CPU quota and counts 2 CPUs under `--cpus 2`. On SIGTERM it exits in under
   a second. Javalin registers no shutdown hook, so a request in flight is not finished.
+- Javalin has no setting for HTTP/2. On container-h2, `H2c` adds a Jetty connector with an
+  HTTP/1.1 and an h2c connection factory through `config.jetty.addConnector`, and Javalin adds its
+  own HTTP/1.1 connector only when none was added. The HTTP/1.1 factory sees the preface a client
+  with prior knowledge opens with, and hands the connection to the h2c factory.
+- `Application.create` takes the host's settings as a second argument, applied after the
+  application's own. `H2c` uses it, and container-h1 passes none.
+- Javalin implements no lambda-emulator. Javalin ships no AWS Lambda adapter, and its maintainers
+  declined to add one in [javalin issue 2576](https://github.com/javalin/javalin/issues/2576).
 
 ## Refusals
 

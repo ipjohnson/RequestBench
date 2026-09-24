@@ -12,6 +12,9 @@ facility where Micronaut has one, from the Micronaut modules Implementation's po
 | Path | What it is |
 | --- | --- |
 | `Implementation/` | The application, a Maven module. One controller per corpus family under `src/main/java/implementation/routes/`. |
+| `container-h1/` | The `Dockerfile` that builds the image container-h1 runs. |
+| `container-h2/` | The `Dockerfile` that builds the image container-h2 runs, with `micronaut.server.http-version` at 2.0, with which its Netty server answers HTTP/2 with prior knowledge. |
+| `lambda-emulator/` | The `Dockerfile` that builds the function lambda-emulator runs, on the `java:25` base image, with Implementation's `lambda-emulator` profile, which adds micronaut-function-aws-api-proxy and micronaut-aws-lambda-events-serde. The Java runtime client hands each event to the adapter's `APIGatewayV2HTTPEventFunction`. |
 | `UnitTests/` | JUnit tests of the wiring, a Maven module that boots the Implementation on a random port with `@MicronautTest`. |
 | `Client/` | The OpenAPI document micronaut-openapi writes, and the declarative client generated from it, a Maven module. |
 | `client-exception/` | How the corpus reads Micronaut's error bodies. |
@@ -102,6 +105,24 @@ into `implementation-0.0.0.jar`, which the image runs. It keeps the plain jar as
   middleware layers, the ETag filter and micronaut-security's.
 - The container runs `java -jar` as PID 1 with the collector and heap the JVM chooses. On SIGTERM,
   Micronaut's shutdown hook stops the server and the process exits in under a second.
+- On lambda-emulator the application answers behind micronaut-function-aws-api-proxy 5.1's
+  `APIGatewayV2HTTPEventFunction`, which reads API Gateway payload format 2.0. It hands each event
+  to Micronaut's router through Micronaut Servlet's request and response, and Netty serves
+  nothing. The adapter buffers the whole answer, so the sse and stream tests are listed as
+  unsupported there.
+- The compression is the Netty server's, so compressed.gzip_large's answer arrives uncompressed on
+  lambda-emulator. The adapter's request reads a multipart body as a urlencoded form and finds no
+  parts, so forms.multipart's `@Part tenant` is missing and Micronaut answers 400. Both tests are
+  listed as unsupported there.
+- micronaut-aws-lambda-events-serde registers a `CustomPojoSerializer`, so the Java runtime reads
+  each event and writes each answer with Micronaut Serialization rather than its own Jackson.
+- The function's handler is named by class alone, as Micronaut's guide asks, and the runtime finds
+  `handleRequest` through the `RequestHandler` interface.
+- `/__meta` names Netty as the adapter on lambda-emulator too, where Netty serves nothing. It has
+  no `bootMs` there, because no server starts to send the startup event that sets it.
+- On lambda-emulator the Java runtime's bootstrap starts the JVM with the serial collector, with C1
+  alone through `-XX:TieredStopAtLevel=1`, and with a heap sized from
+  `AWS_LAMBDA_FUNCTION_MEMORY_SIZE`. The function runs on one core.
 
 ## Refusals
 

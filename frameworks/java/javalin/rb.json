@@ -1,5 +1,5 @@
 {
-  "comment": "Javalin 7.2 on Jetty 12, one class per family under Implementation/src/main/java/implementation/routes, each adding its routes to the config Javalin.create hands it. The suite is UnitTests/, JUnit over the application javalin-testtools starts on a random port, and never reaches the image. Maven has no lockfile: the aggregator pom pins every dependency and plugin, Javalin's own artifacts through javalin-bom, and nothing resolves a range, so the two poms the image is built from are what pin it. upgrade moves each version property the aggregator's dependency and plugin management use to its newest patch release. Javalin's validator runs every check it holds, so the first-error route checks one rule at a time by hand, with Javalin's Validator. Javalin ships no response cache, so the cache family's store is written for it, and it sends no Last-Modified for a static file, so an after handler adds it. Every handler is marked, because each route literal is in its @OpenApi annotation as well as in its registration.",
+  "comment": "Javalin 7.2 on Jetty 12, one class per family under Implementation/src/main/java/implementation/routes, each adding its routes to the config Javalin.create hands it. On container-h2, H2c from container-h2/ adds a Jetty connector that answers HTTP/2 with prior knowledge, through Implementation's container-h2 profile. The suite is UnitTests/, JUnit over the application javalin-testtools starts on a random port, and never reaches the image. Maven has no lockfile: the aggregator pom pins every dependency and plugin, Javalin's own artifacts through javalin-bom, and nothing resolves a range, so the two poms the image is built from are what pin it. upgrade moves each version property the aggregator's dependency and plugin management use to its newest patch release. Javalin's validator runs every check it holds, so the first-error route checks one rule at a time by hand, with Javalin's Validator. Javalin ships no response cache, so the cache family's store is written for it, and it sends no Last-Modified for a static file, so an after handler adds it. Every handler is marked, because each route literal is in its @OpenApi annotation as well as in its registration.",
   "framework": "Javalin",
   "licence": "Apache-2.0",
   "repo": "https://github.com/javalin/javalin",
@@ -7,7 +7,8 @@
   "docs": "https://javalin.io/documentation",
   "lockfile": ["pom.xml", "Implementation/pom.xml"],
   "hosts": {
-    "container-h1": { "dockerfile": "Dockerfile" }
+    "container-h1": { "dockerfile": "container-h1/Dockerfile" },
+    "container-h2": { "dockerfile": "container-h2/Dockerfile" }
   },
   "suite": { "argv": ["mvn", "-B", "test"], "paths": ["UnitTests"] },
   "upgrade": {

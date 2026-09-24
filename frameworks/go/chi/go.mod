@@ -3,6 +3,8 @@ module github.com/ipjohnson/RequestBench/frameworks/go/chi
 go 1.27.1
 
 require (
+	github.com/aws/aws-lambda-go v1.55.1
+	github.com/awslabs/aws-lambda-go-api-proxy v0.16.2
 	github.com/go-chi/chi/v5 v5.3.2
 	github.com/go-chi/cors v1.2.2
 	github.com/go-chi/render v1.0.3

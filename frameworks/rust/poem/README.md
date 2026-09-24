@@ -13,10 +13,13 @@ validator crate, the template engine is Tera, and the cache and the etag family 
 
 | Path | What it is |
 | --- | --- |
-| `Implementation/` | The application: a library with one module per corpus family under `routes/`, each adding its paths to the one `Route`, and the server binary, `main.rs`. |
+| `Implementation/` | The application: a library with one module per corpus family under `routes/`, each adding its paths to the one `Route`. |
+| `container-h1/` | How container-h1 starts it. `main.rs` is the server binary, and `Dockerfile` builds the image. |
+| `container-h2/` | How container-h2 starts it. `main.rs` is the server binary, on poem's own server, which answers HTTP/2 with prior knowledge beside HTTP/1.1 through hyper-util's auto builder, and `Dockerfile` builds the image. |
+| `lambda-emulator/` | How lambda-emulator starts it. `main.rs` is the function, which hands the `Route` to poem-lambda's `run`, and `Dockerfile` builds it on the `provided.al2023` base image, where it runs as `/var/runtime/bootstrap`. |
 | `UnitTests/` | The suite, which drives the `Route` in process with poem's `TestClient`. |
 | `client-exception/` | How the corpus reads poem's error bodies. |
-| `Cargo.toml` | One package: the library, the binary and the suite, each at its own path. |
+| `Cargo.toml` | One package: the library, each host's binary and the suite, each at its own path. |
 | `Cargo.lock` | Every crate as resolved. |
 
 There is no client project. poem writes an OpenAPI document only through poem-openapi, whose routes
@@ -114,6 +117,16 @@ container runs two workers under its two-CPU budget, whichever way the budget is
 - The allocator is mimalloc, set as the global allocator in `main.rs`. A server of this shape
   allocates on every request, and the benchmark runs every Rust framework on the same allocator so
   that a difference between two of them is the framework.
+- On lambda-emulator the `Route` answers behind poem-lambda 5.1.4, the newest release of poem's
+  own adapter. poem-lambda pins lambda_http 0.15, where axum's function runs 1.3. poem-lambda's
+  `run` reads the whole answer into one proxy response, so the sse and stream tests are listed as
+  unsupported there.
+- poem-lambda leaves lambda_http's default features on, so the function reads an API Gateway REST
+  event, a payload format 2.0 event, an ALB event and a WebSocket event. lambda_http tries them in
+  that order, so it parses each payload format 2.0 event twice. The first parse, as a REST event,
+  fails because the event has no `httpMethod`.
+- The function is built on the Lambda base image it runs on. Amazon Linux 2023's glibc is older
+  than the one in the rust images, and a binary linked against a newer glibc may not start on it.
 
 ## Refusals
 

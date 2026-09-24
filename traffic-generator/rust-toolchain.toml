@@ -1,0 +1,5 @@
+# The compiler the generator is built with is part of what a run measured with, so it is pinned,
+# at the version the Rust frameworks' images build with.
+[toolchain]
+channel = "1.98.1"
+profile = "minimal"

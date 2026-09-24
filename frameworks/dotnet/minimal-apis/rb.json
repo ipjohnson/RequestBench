@@ -1,5 +1,5 @@
 {
-  "comment": "ASP.NET Core 10 minimal APIs, one static class per family under Implementation/Routes, which is dotnet:carter's application without Carter. The suite is UnitTests/, xunit over WebApplicationFactory<Program>, and never reaches the image. Minimal APIs have no package of their own. They ship in the ASP.NET Core shared framework, which the aspnet runtime image supplies and the Dockerfile pins by digest, so package is that image's registry page and /__meta reports the shared framework's version. The lockfile pins the OpenAPI packages the build adds. The first-error route is wired by hand, because minimal APIs' validation cannot stop at the first failure. upgrade is null because dotnet package update moves every package to its newest release, majors included, and nothing narrows it to patch and minor.",
+  "comment": "ASP.NET Core 10 minimal APIs, one static class per family under Implementation/Routes, which is dotnet:carter's application without Carter. On lambda-emulator the application answers behind Amazon.Lambda.AspNetCoreServer.Hosting, which Program.cs adds and which does nothing on the other hosts. The suite is UnitTests/, xunit over WebApplicationFactory<Program>, and never reaches the image. Minimal APIs have no package of their own. They ship in the ASP.NET Core shared framework, which the aspnet runtime image supplies and the Dockerfile pins by digest, so package is that image's registry page and /__meta reports the shared framework's version. On lambda-emulator the Lambda base image supplies the shared framework, pinned the same way. The lockfile pins the OpenAPI packages the build adds and lambda-emulator's adapter. The first-error route is wired by hand, because minimal APIs' validation cannot stop at the first failure. upgrade is null because dotnet package update moves every package to its newest release, majors included, and nothing narrows it to patch and minor.",
   "framework": "ASP.NET Core minimal APIs",
   "licence": "MIT",
   "repo": "https://github.com/dotnet/aspnetcore",
@@ -7,7 +7,20 @@
   "docs": "https://learn.microsoft.com/aspnet/core/fundamentals/minimal-apis",
   "lockfile": ["Implementation/packages.lock.json"],
   "hosts": {
-    "container-h1": { "dockerfile": "Dockerfile" }
+    "container-h1": { "dockerfile": "container-h1/Dockerfile" },
+    "container-h2": {
+      "dockerfile": "container-h2/Dockerfile",
+      "unsupported": {
+        "items.head": "Over HTTP/2, Kestrel sends the row the handler writes for HEAD as a DATA frame. HTTP/2 allows no content in an answer to HEAD, so the client resets the stream. Over HTTP/1.1 Kestrel leaves the row unwritten."
+      }
+    },
+    "lambda-emulator": {
+      "dockerfile": "lambda-emulator/Dockerfile",
+      "unsupported": {
+        "sse.medium": "Amazon.Lambda.AspNetCoreServer buffers the whole answer, so the events arrive as one body.",
+        "stream.ndjson": "Amazon.Lambda.AspNetCoreServer buffers the whole answer, so the rows arrive as one body."
+      }
+    }
   },
   "suite": { "argv": ["dotnet", "test", "UnitTests"], "paths": ["UnitTests"] },
   "upgrade": null,

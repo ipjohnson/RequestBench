@@ -54,6 +54,8 @@ export const rbJsonSchema = z.strictObject({
       z.strictObject({
         dockerfile: z.string().min(1),
         buildArgs: z.record(z.string(), z.string()).optional(),
+        /** Tests the framework cannot answer on this host, each with the reason. Neither the gate nor the load sends them. */
+        unsupported: z.record(z.string(), z.string().min(1)).optional(),
       }),
     )
     .refine((hosts) => Object.keys(hosts).length > 0, "a framework implements at least one host"),
@@ -157,6 +159,9 @@ function check(f: FrameworkKey & { dir: string; id: string }, rb: RbJson, input:
   for (const [host, entry] of Object.entries(rb.hosts)) {
     if (!isHostId(host)) out.push(`${at}: hosts.${host} is not a host, only ${Object.keys(HOSTS).join(", ")} are`);
     path(`hosts.${host}.dockerfile`, entry.dockerfile, true);
+    for (const id of Object.keys(entry.unsupported ?? {})) {
+      if (input.tests[id] === undefined) out.push(`${at}: hosts.${host}.unsupported.${id} names no test`);
+    }
   }
   if (rb.suite !== undefined) {
     for (const p of rb.suite.paths) path("suite.paths", p, false);

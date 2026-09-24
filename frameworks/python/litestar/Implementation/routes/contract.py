@@ -4,13 +4,13 @@ from importlib.metadata import version
 from litestar import MediaType, Router, get
 
 from payloads import Payloads
-from server import WORKERS
+from server import ADAPTER, WORKERS
 
 META = {
     "framework": "Litestar",
     "version": version("litestar"),
     "runtime": f"{platform.python_implementation()} {platform.python_version()}",
-    "adapter": f"uvicorn {version('uvicorn')}",
+    "adapter": ADAPTER,
     "serializer": f"msgspec {version('msgspec')}",
     "workers": WORKERS,
 }

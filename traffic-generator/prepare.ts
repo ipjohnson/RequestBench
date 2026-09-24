@@ -3,8 +3,10 @@
 // A test declares its request as a closure. Running one allocates and costs a few microseconds,
 // and both land inside the time the load records, so the load never runs one. This runs each
 // closure once per instance against the framework about to be measured, before anything is timed,
-// and keeps what went out and what came back: the bytes, the statuses the test declared, and the
-// length of a 2xx body, which the load then compares against every answer.
+// and keeps what went out and what came back: the request, the statuses the test declared, and the
+// length of a 2xx body, which the load then compares against every answer. The request names no
+// protocol. It goes out through the Rust program, which writes it as the host speaks, so priming
+// reads each answer the way the load will.
 //
 // How many instances a test has follows from what its closure draws: every combination of the
 // values a `choice` picks from, and rows of the large payload spread across the count, up to the
@@ -24,7 +26,7 @@ import type {
 } from "@rb/tests/kit";
 import { idOf } from "@rb/tests/kit";
 import { LARGE } from "@rb/tests/models/payload";
-import { Pool, type Answer, type Request } from "./wire.ts";
+import type { Exchanged, Pipe, WireRequest } from "./pipe.ts";
 
 /** The statuses a framework declares in its client-exception package. */
 export interface Statuses {
@@ -34,7 +36,8 @@ export interface Statuses {
   readonly wrongMethod: number;
 }
 
-export interface Prepared extends Request {
+export interface Prepared {
+  readonly request: WireRequest;
   /** The method and target, as a mismatch line names them. */
   readonly target: string;
   /** The statuses the test declared, any one of which is right. */
@@ -54,8 +57,8 @@ export interface Compiled {
 }
 
 export interface PrepareOptions {
-  readonly host: string;
-  readonly port: number;
+  /** The Rust program, already reaching the framework. */
+  readonly pipe: Pipe;
   readonly tests: readonly PerformanceTest[];
   readonly statuses: Statuses;
   readonly run: RunValues;
@@ -72,33 +75,28 @@ const NOTHING_SENT = "the test sent nothing: a call goes on the wire when it is 
 const TWICE = "a performance test sends one request outside once, so that the load can send it as bytes";
 
 export async function prepare(o: PrepareOptions): Promise<Compiled[]> {
-  const pool = new Pool(o.host, o.port);
   const once = new Once();
   const out: Compiled[] = [];
-  try {
-    for (const test of o.tests) {
-      const id = idOf(test.id);
-      // The first instance takes the first of every value and says what the closure draws.
-      const first = await run(test, sweep(0, 1, undefined));
-      const sizes = first.sizes;
-      const count = Math.min(o.instances, sizes.reduce((n, size) => n * size, 1));
-      const instances = [first.prepared];
-      for (let i = 1; i < count; i++) instances.push((await run(test, sweep(i, count, sizes))).prepared);
-      // A wrong status is the framework's answer, not a test that cannot be sent, so the load
-      // goes on and counts it in every instance.
-      const wrong = instances.find((instance) => !instance.accepted.includes(instance.status));
-      if (wrong !== undefined) {
-        o.log(`  ${id}: ${wrong.target} answered ${wrong.status}, expected ${wrong.accepted.join(" or ")}`);
-      }
-      out.push({ id, instances });
+  for (const test of o.tests) {
+    const id = idOf(test.id);
+    // The first instance takes the first of every value and says what the closure draws.
+    const first = await run(test, sweep(0, 1, undefined));
+    const sizes = first.sizes;
+    const count = Math.min(o.instances, sizes.reduce((n, size) => n * size, 1));
+    const instances = [first.prepared];
+    for (let i = 1; i < count; i++) instances.push((await run(test, sweep(i, count, sizes))).prepared);
+    // A wrong status is the framework's answer, not a test that cannot be sent, so the load
+    // goes on and counts it in every instance.
+    const wrong = instances.find((instance) => !instance.accepted.includes(instance.status));
+    if (wrong !== undefined) {
+      o.log(`  ${id}: ${wrong.target} answered ${wrong.status}, expected ${wrong.accepted.join(" or ")}`);
     }
-  } finally {
-    pool.destroy();
+    out.push({ id, instances });
   }
   return out;
 
   async function run(test: PerformanceTest, drawn: { draw: Draw; sizes: number[] }) {
-    const client = new PreparingClient(o.host, o.port, pool, o.statuses, o.run, drawn.draw, once);
+    const client = new PreparingClient(o.pipe, o.statuses, o.run, drawn.draw, once);
     const id = idOf(test.id);
     try {
       await test.request(client);
@@ -167,9 +165,7 @@ class Once {
 }
 
 class PreparingClient implements Client {
-  readonly host: string;
-  readonly port: number;
-  readonly pool: Pool;
+  readonly pipe: Pipe;
   readonly statuses: Statuses;
   readonly run: RunValues;
   readonly draw: Draw;
@@ -180,10 +176,8 @@ class PreparingClient implements Client {
   outside = 0;
   subject: Subject | undefined;
 
-  constructor(host: string, port: number, pool: Pool, statuses: Statuses, run: RunValues, draw: Draw, once: Once) {
-    this.host = host;
-    this.port = port;
-    this.pool = pool;
+  constructor(pipe: Pipe, statuses: Statuses, run: RunValues, draw: Draw, once: Once) {
+    this.pipe = pipe;
     this.statuses = statuses;
     this.run = run;
     this.draw = draw;
@@ -234,8 +228,22 @@ class PreparingClient implements Client {
   }
 }
 
-/** A body that may carry one, so a framework that reads a length finds one. */
-const CARRIES_BODY = new Set<Method>(["POST", "PUT", "PATCH"]);
+/** An answer as priming reads it: header names in lower case, a repeated one joined with commas. */
+interface Answer {
+  readonly status: number;
+  readonly bodyBytes: number;
+  readonly headers: ReadonlyMap<string, string>;
+  readonly body: Buffer;
+}
+
+function answerOf(a: Exchanged): Answer {
+  const headers = new Map<string, string>();
+  for (const [raw, value] of a.headers) {
+    const name = raw.toLowerCase();
+    headers.set(name, headers.has(name) ? `${headers.get(name)}, ${value}` : value);
+  }
+  return { status: a.status, bodyBytes: a.bodyBytes, headers, body: a.body };
+}
 
 class PreparingCall<T = void> implements Call<T> {
   readonly #client: PreparingClient;
@@ -246,7 +254,6 @@ class PreparingCall<T = void> implements Call<T> {
   readonly #headers: [string, string][] = [];
   #body: Buffer | undefined;
   #expected: readonly number[] = [];
-  #keep = false;
   #answer: Promise<Answer> | undefined;
 
   constructor(client: PreparingClient, method: Method, path: string, body?: Json) {
@@ -340,31 +347,31 @@ class PreparingCall<T = void> implements Call<T> {
   }
 
   etag(): Promise<string> {
-    return this.#read().then((answer) => {
-      const tag = answer.headers?.get("etag");
+    return this.#send().then((answer) => {
+      const tag = answer.headers.get("etag");
       if (tag === undefined) throw new Error(`${this.#describe()} answered ${answer.status} with no etag`);
       return tag;
     });
   }
 
   headerValue(name: string): Promise<string | undefined> {
-    return this.#read().then((answer) => answer.headers?.get(name.toLowerCase()));
+    return this.#send().then((answer) => answer.headers.get(name.toLowerCase()));
   }
 
   json<U = Json>(): Promise<U> {
-    return this.#read().then((answer) => JSON.parse(answer.body!.toString("utf8")) as U);
+    return this.#send().then((answer) => JSON.parse(answer.body.toString("utf8")) as U);
   }
 
   text(): Promise<string> {
-    return this.#read().then((answer) => answer.body!.toString("utf8"));
+    return this.#send().then((answer) => answer.body.toString("utf8"));
   }
 
   recorded(): Promise<Recorded> {
-    return this.#read().then((answer) => ({
+    return this.#send().then((answer) => ({
       status: answer.status,
-      headers: Object.fromEntries(answer.headers ?? []),
+      headers: Object.fromEntries(answer.headers),
       bytes: answer.bodyBytes,
-      text: answer.body!.toString("utf8"),
+      text: answer.body.toString("utf8"),
     }));
   }
 
@@ -395,53 +402,36 @@ class PreparingCall<T = void> implements Call<T> {
     return `${this.#method} ${this.#target()}`;
   }
 
-  #read(): Promise<Answer> {
-    this.#keep = true;
-    return this.#send();
-  }
-
   /** The request as it goes out. Sent once, however many times the call is awaited or read. */
   #send(): Promise<Answer> {
     if (this.#answer !== undefined) return this.#answer;
     const target = this.#target();
     const headers = [...this.#headers];
-    if (this.#body !== undefined) {
-      if (!headers.some(([name]) => name.toLowerCase() === "content-type")) {
-        // A raw body with no content type of its own goes out as JSON too. It is there to reach
-        // the parser, and a type the framework does not parse would be refused before it ran.
-        headers.push(["content-type", "application/json"]);
-      }
-      headers.push(["content-length", String(this.#body.length)]);
-    } else if (CARRIES_BODY.has(this.#method)) {
-      headers.push(["content-length", "0"]);
+    // A raw body with no content type of its own goes out as JSON too. It is there to reach the
+    // parser, and a type the framework does not parse would be refused before it ran. The length
+    // is the protocol's to write.
+    if (this.#body !== undefined && !headers.some(([name]) => name.toLowerCase() === "content-type")) {
+      headers.push(["content-type", "application/json"]);
     }
-    let head = `${this.#method} ${target} HTTP/1.1\r\nhost: ${this.#client.host}:${this.#client.port}\r\n`;
-    for (const [name, value] of headers) head += `${name}: ${value}\r\n`;
-    head += "connection: keep-alive\r\n\r\n";
-    const front = Buffer.from(head, "latin1");
-    const bytes = this.#body === undefined ? front : Buffer.concat([front, this.#body]);
-    const request: Request = { bytes, head: this.#method === "HEAD", keep: this.#keep };
-
-    this.#answer = new Promise<Answer>((resolve, reject) => {
-      this.#client.pool.send(
-        request,
-        (answer) => {
-          this.#client.sent(
-            {
-              ...request,
-              // The load keeps nothing of an answer but its status and how long its body was.
-              keep: false,
-              target: `${this.#method} ${target}`,
-              accepted: this.#expected,
-              bodyBytes: answer.status >= 200 && answer.status < 300 ? answer.bodyBytes : undefined,
-              status: answer.status,
-            },
-            this.#priming,
-          );
-          resolve(answer);
+    const request: WireRequest = {
+      method: this.#method,
+      target,
+      headers,
+      ...(this.#body === undefined ? {} : { body: this.#body.toString("base64") }),
+    };
+    this.#answer = this.#client.pipe.exchange(request).then((exchanged) => {
+      const answer = answerOf(exchanged);
+      this.#client.sent(
+        {
+          request,
+          target: `${this.#method} ${target}`,
+          accepted: this.#expected,
+          bodyBytes: answer.status >= 200 && answer.status < 300 ? answer.bodyBytes : undefined,
+          status: answer.status,
         },
-        reject,
+        this.#priming,
       );
+      return answer;
     });
     return this.#answer;
   }

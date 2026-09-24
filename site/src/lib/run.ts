@@ -3,12 +3,25 @@
 // `rb summarize` keys every statistic by name inside each framework and writes no list beside
 // them, so the lists are read off the frameworks. Both kinds of page need them, which is why
 // they are here rather than in the browser's select.ts.
-import type { FamilyRecord, Framework, Run } from "./types.ts";
+import type { FamilyRecord, Framework, Run, Rung } from "./types.ts";
 
-/** The host a run without one was measured on, which is the only host there has been. */
+/** The host a run without one was measured on, which was the only host there was. */
 export const DEFAULT_HOST = "container-h1";
 
 export const hostOf = (run: Run): string => run.host || DEFAULT_HOST;
+
+/**
+ * A framework page's name. The default host's pages keep the names they had before there were
+ * other hosts, so links to them still open.
+ */
+export const pageSlug = (language: string, name: string, host: string): string =>
+  host === DEFAULT_HOST ? `${language}-${name}` : `${language}-${name}@${host}`;
+
+/** A framework's code document on a host, keyed as its page is named. */
+export const codeKey = (id: string, host: string): string => (host === DEFAULT_HOST ? id : `${id}@${host}`);
+
+/** A rung as a button or a column names it: its offered rate, or the closed loop that offers none. */
+export const rungLabel = (r: Rung | undefined): string => (r?.closed ? "closed loop" : `${(r?.rps ?? 0).toLocaleString()} rps`);
 
 /** The machine a run was measured on, as the explorer names it: its CPU model and core count. */
 export const machineOf = (run: Run): string => `${run.machine?.cpu || "unknown CPU"}, ${run.machine?.cores ?? "?"} cores`;

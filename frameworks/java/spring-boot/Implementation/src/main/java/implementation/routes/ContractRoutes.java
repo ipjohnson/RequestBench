@@ -38,9 +38,10 @@ public class ContractRoutes {
         return "ok";
     }
 
+    // A host whose image sets rb.adapter answers without Tomcat, as lambda-emulator's does.
     @GetMapping("/__meta")
     public Meta meta() {
         return new Meta("Spring Boot", SpringBootVersion.getVersion(), "Java " + Runtime.version(),
-                ServerInfo.getServerInfo().replace('/', ' '), serializer, bootMs);
+                System.getProperty("rb.adapter", ServerInfo.getServerInfo().replace('/', ' ')), serializer, bootMs);
     }
 }

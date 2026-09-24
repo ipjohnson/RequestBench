@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import { BUCKETS, bucketOf, pct } from "../../traffic-generator/histogram.ts";
-import type { LoadResult, PhaseResult, TestSummary } from "../../traffic-generator/load.ts";
+import type { ClosedResult, ClosedTestSummary, LoadResult, PhaseResult, TestSummary } from "../../traffic-generator/load.ts";
 import type { RunFile } from "../measure.ts";
 import { BIN_GRID, HIST_GRID, rebin, summarize, trim } from "../summarize.ts";
 
@@ -54,8 +54,10 @@ const load: LoadResult = {
     framework: "node:fastify",
     values: {} as LoadResult["load"]["values"],
     workers: 1,
+    protocol: "http/1.1",
     instances: 1,
     connections: 8,
+    streams: 1,
     phases: [
       { name: "warmup", rps: 1000, settle: 1 },
       { name: "regular", rps: 100, seconds: 1 },
@@ -132,12 +134,89 @@ test("the tests' histograms merged give the rung's own percentiles", () => {
 test("a rung with drops, an aborted rung and a rung never run publish no latency", () => {
   const f = summarize(run).frameworks[0]!;
   const raised = f.rungs["raised"]!;
+  assert.ok(!("closed" in raised));
   assert.deepEqual([raised.completed, raised.saturated, raised.p50Us], [false, true, null]);
   assert.equal(f.tests["json.small"]!.rungs["raised"], undefined);
   const peak = f.rungs["peak"]!;
+  assert.ok(!("closed" in peak));
   assert.deepEqual([peak.status, peak.completed, peak.achievedRps, peak.dropped, peak.p99Us], ["aborted", false, 90, 30, null]);
   assert.deepEqual([f.rungs["beyond"]!.status, f.rungs["beyond"]!.p50Us], ["notRun", null]);
   const unmeasured = summarize(run).frameworks[1]!;
   assert.deepEqual(unmeasured.rungs, {});
   assert.equal(unmeasured.error, "it failed the gate, so it was not measured");
+});
+
+test("the tests a framework does not support on the run's host travel with it, and a framework with none has no entry", () => {
+  const unsupported = { "sse.medium": "the runtime client has no response streaming" };
+  const s = summarize({ ...run, frameworks: [{ ...run.frameworks[0]!, unsupported }, run.frameworks[1]!] });
+  assert.deepEqual(s.frameworks[0]!.unsupported, unsupported);
+  assert.equal("unsupported" in s.frameworks[1]!, false);
+});
+
+/** A closed-loop test whose invoke phase and response span land where given. */
+const spanRow = (id: string, family: string, invoke: Record<number, number>, response: Record<number, number>): ClosedTestSummary => {
+  const count = Object.values(invoke).reduce((a, b) => a + b, 0);
+  const span = (at: Record<number, number>) => ({ p50Us: 0, p90Us: 0, p99Us: 0, p999Us: 0, histB64: hist(at) });
+  return {
+    id,
+    family,
+    count,
+    errors: 0,
+    mismatch: 0,
+    invoke: span(invoke),
+    response: span(response),
+    responseLatency: span(response),
+    responseDuration: span({ 1: count }),
+    runtimeOverhead: span({ 20: count }),
+  };
+};
+
+const closed: ClosedResult = {
+  closed: true,
+  load: {
+    framework: "go:chi",
+    values: {} as ClosedResult["load"]["values"],
+    instances: 1,
+    phases: [
+      { name: "warmup", settle: 1 },
+      { name: "closed", settle: 1, seconds: 1 },
+    ],
+  },
+  testsLive: 2,
+  phases: [
+    { name: "warmup", status: "done", settle: { seconds: 1, invocations: 500, errors: 0, mismatch: 0 } },
+    {
+      name: "closed",
+      status: "done",
+      settle: { seconds: 1, invocations: 500, errors: 0, mismatch: 0 },
+      recorded: {
+        seconds: 1,
+        elapsedSeconds: 1,
+        invocations: 100,
+        invocationsPerSecond: 100,
+        errors: 0,
+        mismatch: 0,
+        overall: { count: 100, p50Us: 0, p90Us: 0, p99Us: 0, p999Us: 0 },
+        tests: [spanRow("json.small", "json", { 60: 80 }, { 40: 80 }), spanRow("json.large", "json", { 300: 20 }, { 280: 20 })],
+      },
+    },
+  ],
+};
+
+test("a closed loop's one rung publishes the invoke phase, and each test carries the other spans beside it", () => {
+  const chi = { id: "go:chi", ordinal: 1, bundleHash: "sha256:e", codeHash: "sha256:f", load: closed };
+  const f = summarize({ ...run, host: "lambda-emulator", frameworks: [chi] }).frameworks[0]!;
+  assert.deepEqual(Object.keys(f.rungs), ["closed"]);
+  const rung = f.rungs["closed"]!;
+  assert.ok("closed" in rung);
+  assert.deepEqual([rung.achievedRps, rung.invocations, rung.completed], [100, 100, true]);
+  const merged = new Uint32Array(BUCKETS);
+  merged[bucketOf(60)] = 80;
+  merged[bucketOf(300)] = 20;
+  assert.deepEqual([rung.p50Us, rung.p99Us], [pct(merged, 50), pct(merged, 99)]);
+  const small = f.tests["json.small"]!.rungs["closed"]!;
+  assert.ok("spans" in small);
+  assert.deepEqual(Object.keys(small.spans), ["response", "responseLatency", "responseDuration", "runtimeOverhead"]);
+  assert.deepEqual([small.hist.first, small.spans.response.hist.first], [bucketOf(60), bucketOf(40)]);
+  assert.equal(f.families["closed"]!["json"]!.count, 100);
 });

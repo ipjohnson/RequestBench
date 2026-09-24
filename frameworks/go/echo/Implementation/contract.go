@@ -9,6 +9,10 @@ import (
 	"github.com/labstack/echo/v5"
 )
 
+// Adapter names what hands the application its requests. It is net/http's server unless the
+// host's main package says otherwise.
+var Adapter = "net/http"
+
 // contractRoutes answers /health and /__meta, which the contract asks of every framework
 // outside the corpus.
 func contractRoutes(e *echo.Echo) {
@@ -21,7 +25,7 @@ func contractRoutes(e *echo.Echo) {
 			"framework": "Echo",
 			"version":   version,
 			"runtime":   runtime.Version(),
-			"adapter":   "net/http",
+			"adapter":   Adapter,
 			// Echo's default JSONSerializer encodes with encoding/json.
 			"serializer": "encoding/json",
 			// Go sets this from the container's CPU quota, so it says how many threads run Go code.

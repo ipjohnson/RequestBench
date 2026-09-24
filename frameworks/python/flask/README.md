@@ -13,11 +13,14 @@ extension for Pydantic.
 
 | Path | What it is |
 | --- | --- |
-| `Implementation/` | The application. `server.py` starts gunicorn, `app.py` builds the application each worker serves, and `routes/` holds one blueprint per corpus family. |
+| `Implementation/` | The application. `app.py` builds the application each worker serves, and `routes/` holds one blueprint per corpus family. |
+| `container-h1/` | How container-h1 starts it. `server.py` starts gunicorn with two workers, and `Dockerfile` builds the image. |
+| `container-h2/` | How container-h2 starts it. `server.py` starts gunicorn as container-h1's does, serving HTTP/2 with prior knowledge and no TLS, and `Dockerfile` builds the image with the `container-h2` group, which adds gunicorn's http2 extra. |
+| `lambda-emulator/` | How lambda-emulator starts it. `server.py` is the handler's module, which puts the application behind apig-wsgi for awslambdaric, the runtime client, and `Dockerfile` builds the function on the `python:3.14` base image, with the packages and the application together in the task root. |
 | `UnitTests/` | pytest tests of the wiring, sending each request through Flask's test client. |
 | `client-exception/` | How the corpus reads the refusals of Flask and Flask-Pydantic. |
-| `pyproject.toml` | The dependencies, the suite's dependencies, and pytest's settings. |
-| `uv.lock` | What uv resolved, which the image installs. |
+| `pyproject.toml` | The dependencies, the suite's dependencies, lambda-emulator's adapter as a group of its own, and pytest's settings. |
+| `uv.lock` | What uv resolved, which each host's image installs. |
 
 There is no `Client/`. Flask writes no OpenAPI document about its routes without a third-party
 library, such as APIFlask, flask-openapi3 or flask-smorest.
@@ -26,7 +29,7 @@ library, such as APIFlask, flask-openapi3 or flask-smorest.
 
 ```sh
 uv sync
-cd Implementation && RB_PAYLOADS=../../../../tests/payloads PORT=8080 ../.venv/bin/python server.py
+cd Implementation && RB_PAYLOADS=../../../../tests/payloads PORT=8080 ../.venv/bin/python ../container-h1/server.py
 uv run pytest
 ```
 
@@ -101,6 +104,20 @@ store.
 - Flask-Compress adds `Vary: Accept-Encoding` to every answer it looks at, compressed or not.
 - gunicorn's gthread worker closes a connection that has been idle for 2 seconds, its `keepalive`
   default.
+- On lambda-emulator the application answers behind apig-wsgi 2.20, which reads API Gateway payload
+  format 2.0 and hands Flask each event as a WSGI request. apig-wsgi buffers the whole answer into
+  one proxy response, so the sse and stream tests are listed as unsupported there.
+- Flask's documentation names no Lambda adapter. apig-wsgi is a maintained WSGI one that reads
+  payload format 2.0 itself and answers `Set-Cookie` in that format's `cookies`. serverless-wsgi,
+  another, answers payload format 2.0 without `cookies`.
+- apig-wsgi keeps only the last value of a response header the application repeats, other than
+  `Set-Cookie`. No answer here repeats one.
+- The function on lambda-emulator is one process on one thread, which answers one event at a time,
+  so `/__meta` reports one worker and one thread there.
+- gunicorn 26.2 serves HTTP/2 with prior knowledge and no TLS through `http2_cleartext`, which needs
+  the h2 library from its http2 extra. It serves it only to a peer in `forwarded_allow_ips`. On
+  container-h2 a published port's peer is Docker's gateway, so every peer is trusted. gunicorn then
+  also honours the `X-Forwarded-*` headers it reads, and the corpus sends none of them.
 
 ## Refusals
 

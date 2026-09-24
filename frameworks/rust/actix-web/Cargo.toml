@@ -3,8 +3,8 @@ name = "rb-actix-web"
 version = "0.0.0"
 edition = "2024"
 publish = false
-# The application is in Implementation/ and the suite in UnitTests/, so every target names its
-# path rather than following cargo's src/ and tests/.
+# The application is in Implementation/, each host's binary in the host's directory and the suite
+# in UnitTests/, so every target names its path rather than following cargo's src/ and tests/.
 build = "Implementation/build.rs"
 autobins = false
 autotests = false
@@ -18,8 +18,19 @@ doctest = false
 
 [[bin]]
 name = "server"
-path = "Implementation/main.rs"
+path = "container-h1/main.rs"
 test = false
+
+[[bin]]
+name = "server-h2"
+path = "container-h2/main.rs"
+test = false
+
+[[bin]]
+name = "lambda"
+path = "lambda-emulator/main.rs"
+test = false
+required-features = ["lambda-emulator"]
 
 [[test]]
 name = "unit"
@@ -37,6 +48,9 @@ askama = "0.16.1"
 # The store axum-response-cache keeps its answers in, for the cache middleware written here.
 cached = { version = "4.0.0", default-features = false, features = ["ahash", "time_stores"] }
 futures-util = "0.3.34"
+# lambda-emulator's adapter, over lambda_runtime's runtime client. Its default feature, br,
+# brotli-compresses a text answer the application did not compress when the request accepts br.
+lambda-web = { version = "0.2.1", default-features = false, features = ["actix4"], optional = true }
 # The allocator every Rust framework here runs on, in place of the system one.
 mimalloc = "0.1.52"
 serde = { version = "1.0.229", features = ["derive"] }
@@ -54,3 +68,7 @@ flate2 = "1.1.10"
 [profile.release]
 lto = "fat"
 codegen-units = 1
+
+[features]
+# lambda-emulator's function. Only its binary turns it on.
+lambda-emulator = ["dep:lambda-web"]

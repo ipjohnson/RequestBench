@@ -323,12 +323,12 @@ class Explorer {
   /* ---- what a row opens ---- */
 
   /**
-   * A framework page is per framework, but a row's key carries its slice: node:fastify at
-   * blend granularity, node:fastify|json at family. Look the page up by the framework itself,
+   * A framework page is per framework and host, but a row's key carries its slice: node:fastify
+   * at blend granularity, node:fastify|json at family. Look the page up by the framework itself,
    * or the link appears on one of the three views and not the other two.
    */
   private pageFor(id: string): string | undefined {
-    return this.rb.pages[id];
+    return this.rb.pages[this.st.host]?.[id];
   }
 
   /**

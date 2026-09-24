@@ -4,12 +4,13 @@
   "type": "module",
   "comment": "Its own package and lockfile, never a workspace of the repository's, so the versions /__meta reports are the ones this lockfile resolved. The source is TypeScript that Node runs as it is, so there is no build step and tsc only checks it. The scripts pass --experimental-strip-types because Node 22 needs it. Node 26, which the image runs, accepts it.",
   "scripts": {
-    "start": "node --experimental-strip-types --disable-warning=ExperimentalWarning Implementation/server.ts",
+    "start": "node --experimental-strip-types --disable-warning=ExperimentalWarning container-h1/server.ts",
     "typecheck": "tsc -p tsconfig.json",
     "test": "tsc -p tsconfig.json && node --experimental-strip-types --disable-warning=ExperimentalWarning --test \"UnitTests/*.test.ts\"",
     "client": "node --experimental-strip-types --disable-warning=ExperimentalWarning Client/document.ts && node --experimental-strip-types --disable-warning=ExperimentalWarning Client/generate.ts"
   },
   "dependencies": {
+    "@fastify/aws-lambda": "^6.4.1",
     "@fastify/compress": "^9.2.0",
     "@fastify/cors": "^11.3.0",
     "@fastify/etag": "^6.2.0",

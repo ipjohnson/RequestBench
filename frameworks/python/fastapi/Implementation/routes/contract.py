@@ -5,13 +5,13 @@ from fastapi import APIRouter
 from fastapi.responses import PlainTextResponse
 
 from payloads import Payloads
-from server import WORKERS
+from server import ADAPTER, WORKERS
 
 META = {
     "framework": "FastAPI",
     "version": version("fastapi"),
     "runtime": f"{platform.python_implementation()} {platform.python_version()}",
-    "adapter": f"uvicorn {version('uvicorn')}",
+    "adapter": ADAPTER,
     "serializer": f"pydantic-core {version('pydantic-core')}",
     "workers": WORKERS,
 }

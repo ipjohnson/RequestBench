@@ -14,8 +14,10 @@ written for the family where Fiber has none.
 
 | Path | What it is |
 | --- | --- |
-| `Implementation/` | The application, the Go package `implementation`. `router.go` builds the app, a function in a file named for each family registers that family's routes, and `cmd/server` is the main package that loads the payloads and serves. |
+| `Implementation/` | The application, the Go package `implementation`. `router.go` builds the app, and a function in a file named for each family registers that family's routes. |
 | `Implementation/views/` | The template, compiled into the binary. |
+| `container-h1/` | How container-h1 starts it. `main.go` is the main package that loads the payloads and serves over HTTP/1.1, and `Dockerfile` builds the image. |
+| `lambda-emulator/` | How lambda-emulator starts it. `main.go` hands the app to Fiber's `adaptor.FiberApp`, a net/http handler, and that to aws-lambda-go-api-proxy's `httpadapter`, which aws-lambda-go's runtime client gives each event. `Dockerfile` builds the function on the `provided.al2023` base image. |
 | `UnitTests/` | go test tests of the wiring, sending each request over HTTP to the app served on a loopback port. |
 | `client-exception/` | How the corpus reads Fiber's error bodies. |
 | `go.mod` | The module, and every module version the build selects. |
@@ -26,7 +28,7 @@ There is no client, because Fiber writes no OpenAPI document of its own.
 ## Building, running and testing
 
 ```sh
-go build -o server ./Implementation/cmd/server
+go build -o server ./container-h1
 RB_PAYLOADS=../../../tests/payloads PORT=8080 ./server
 go test ./...
 ```
@@ -107,11 +109,33 @@ corpus id it covers, so `go test ./UnitTests -run '/json.small'` runs one.
   buffer, which goes out with its length.
 - The server is one process. Fiber's prefork, which would start a child process per CPU, is off
   by default. Go sets GOMAXPROCS from the container's CPU quota or cpuset, so under the
-  orchestrator's two CPUs it runs Go code on two threads, which `/__meta` reports.
+  orchestrator's two CPUs it runs Go code on two threads, which `/__meta` reports. The function on
+  lambda-emulator runs on one core, and so on one thread.
+- On lambda-emulator no fasthttp server runs. The app answers behind Fiber's `adaptor.FiberApp`
+  and aws-lambda-go-api-proxy 0.16's `httpadapter.NewV2`, which reads API Gateway payload format
+  2.0. The library's own fiberadapter takes only a fiber v2 app. `adaptor.FiberApp` turns each
+  net/http request into a fasthttp one for the app and copies the answer back, as fiberadapter
+  does for v2.
+- Fiber's [svelte-netlify recipe](https://github.com/gofiber/recipes/tree/master/svelte-netlify)
+  runs an app on Lambda through `adaptor.FiberApp` too, behind carlmjohnson/gateway. gateway reads
+  only API Gateway payload format 1.0, and a Function URL sends 2.0.
+- httpadapter buffers the whole answer into one proxy response, and its response writer cannot
+  flush. `adaptor.FiberApp` streams a body only into a writer that can flush, so it reads the sse
+  and stream bodies whole into the one answer. Both tests are listed as unsupported on
+  lambda-emulator.
+- `adaptor.FiberApp` copies every header fasthttp holds into the answer. A 204 on lambda-emulator
+  carries fasthttp's default `Content-Type: text/plain; charset=utf-8`, which fasthttp's server
+  leaves off an answer with no body. A streamed answer carries `Transfer-Encoding: chunked` in its
+  proxy response.
+- httpadapter posts whatever the app writes for HEAD. A Function URL's caller reads no body in an
+  answer to HEAD, so nothing reads it.
+- The function is built with `-tags lambda.norpc`, as AWS builds a Go function for
+  `provided.al2023`. The tag leaves out the RPC mode of the retired go1.x runtime.
 - The server is PID 1 in its container. Fiber installs no handler for SIGTERM, and the Go runtime
   ends the process on it at once, with no graceful shutdown.
 - A struct tag such as `json:"items"` reads as the route literal `/items`, so the items routes
   carry `rb:handler` marks.
+- fiber implements no container-h2. fasthttp, which it runs on, has no HTTP/2.
 
 ## Refusals
 

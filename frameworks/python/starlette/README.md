@@ -13,18 +13,20 @@ page lists, binds the query strings, headers, forms and bodies here, with Pydant
 
 | Path | What it is |
 | --- | --- |
-| `Implementation/` | The application. `server.py` starts uvicorn, `main.py` is what each worker imports, `app.py` builds the application, `validation.py` holds the SpecTree instance, and `routes/` holds one module per corpus family. |
+| `Implementation/` | The application. `main.py` is what each worker imports, `app.py` builds the application, `validation.py` holds the SpecTree instance, and `routes/` holds one module per corpus family. |
+| `container-h1/` | How container-h1 starts it. `server.py` starts uvicorn with two workers, and `Dockerfile` builds the image. |
+| `lambda-emulator/` | How lambda-emulator starts it. `server.py` is the handler's module, which puts the application behind Mangum for awslambdaric, the runtime client, and `Dockerfile` builds the function on the `python:3.14` base image, with the packages and the application together in the task root. |
 | `UnitTests/` | pytest tests of the wiring, sending each request through Starlette's TestClient, and of the Kiota client. |
 | `Client/` | The OpenAPI document Starlette's SchemaGenerator builds from the endpoints' docstrings, and the Python client Kiota generates from it. |
 | `client-exception/` | How the corpus reads SpecTree's error bodies. |
-| `pyproject.toml` | The dependencies, the suite's dependencies, and pytest's settings. |
-| `uv.lock` | What uv resolved, which the image installs. |
+| `pyproject.toml` | The dependencies, the suite's dependencies, lambda-emulator's adapter as a group of its own, and pytest's settings. |
+| `uv.lock` | What uv resolved, which each host's image installs. |
 
 ## Building, running and testing
 
 ```sh
 uv sync
-cd Implementation && RB_PAYLOADS=../../../../tests/payloads PORT=8080 ../.venv/bin/python server.py
+cd Implementation && RB_PAYLOADS=../../../../tests/payloads PORT=8080 ../.venv/bin/python ../container-h1/server.py
 uv run pytest
 ```
 
@@ -91,6 +93,22 @@ the worker that accepted it, and the gate sends each test's two requests on one 
   `X-Accel-Buffering: no` with every stream, and ends each line with CRLF.
 - uvicorn writes one access-log line per request by default. `server.py` turns that off, because
   no other framework in the corpus logs a request.
+- On lambda-emulator the application answers behind Mangum 0.22, which reads API Gateway payload
+  format 2.0. Mangum buffers the whole answer into one proxy response, so the sse and stream tests
+  are listed as unsupported there.
+- Mangum runs the ASGI lifespan's startup and shutdown around every event rather than once, so
+  `lambda-emulator/server.py` turns the lifespan off. The application registers nothing for either.
+- Mangum posts whatever the application writes for HEAD, where uvicorn leaves the body unwritten. A
+  Function URL's caller reads no body in an answer to HEAD, so nothing reads it.
+- Mangum writes `Content-Type: application/json` on an answer that has none, such as the 204 of
+  `items.delete`.
+- Mangum runs every event on asyncio's own event loop, so uvloop, which uvicorn picks on
+  container-h1, goes unused on lambda-emulator.
+- The function on lambda-emulator is one process, which answers one event at a time, so `/__meta`
+  reports one worker there.
+- On lambda-emulator the runtime client puts its log handler on the root logger, so the line
+  SpecTree logs at error level for each 422 it answers is written to the function's output. Under
+  uvicorn no handler takes it.
 
 ## Refusals
 

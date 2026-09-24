@@ -1,5 +1,5 @@
 {
-  "comment": "Quarkus 3.39 with Quarkus REST on Vert.x, one resource class per family under Implementation/src/main/java/implementation/routes. The suite is UnitTests/, @QuarkusTest classes driven with REST Assured, which Implementation's pom compiles as its own tests because @QuarkusTest builds the application from the module its tests are in. It never reaches the image. Maven has no lockfile: the Quarkus platform BOM pins every extension and library and nothing resolves a range, so the two poms the image is built from are what pin it. upgrade moves quarkus.platform.version, which names the BOM and the Maven plugin, to its newest patch release. The client command turns the suite profile off so that Implementation writes the document before Client generates from it, and skips the tests, whose client tests need that profile.",
+  "comment": "Quarkus 3.39 with Quarkus REST on Vert.x, one resource class per family under Implementation/src/main/java/implementation/routes. On lambda-emulator the application answers behind quarkus-amazon-lambda-http, which Implementation's lambda-emulator profile adds. The suite is UnitTests/, @QuarkusTest classes driven with REST Assured, which Implementation's pom compiles as its own tests because @QuarkusTest builds the application from the module its tests are in. It never reaches the image. Maven has no lockfile: the Quarkus platform BOM pins every extension and library and nothing resolves a range, so the two poms the image is built from are what pin it. upgrade moves quarkus.platform.version, which names the BOM and the Maven plugin, to its newest patch release. The client command turns the suite profile off so that Implementation writes the document before Client generates from it, and skips the tests, whose client tests need that profile.",
   "framework": "Quarkus",
   "licence": "Apache-2.0",
   "repo": "https://github.com/quarkusio/quarkus",
@@ -7,7 +7,16 @@
   "docs": "https://quarkus.io/guides/",
   "lockfile": ["pom.xml", "Implementation/pom.xml"],
   "hosts": {
-    "container-h1": { "dockerfile": "Dockerfile" }
+    "container-h1": { "dockerfile": "container-h1/Dockerfile" },
+    "container-h2": { "dockerfile": "container-h2/Dockerfile" },
+    "lambda-emulator": {
+      "dockerfile": "lambda-emulator/Dockerfile",
+      "unsupported": {
+        "compressed.gzip_large": "quarkus-amazon-lambda-http hands each event to Vert.x through a virtual connection, which has no compressor, so the answer arrives uncompressed.",
+        "sse.medium": "quarkus-amazon-lambda-http buffers the whole answer, so the events arrive as one body.",
+        "stream.ndjson": "quarkus-amazon-lambda-http buffers the whole answer, so the rows arrive as one body."
+      }
+    }
   },
   "suite": { "argv": ["mvn", "-B", "test"], "paths": ["UnitTests"] },
   "upgrade": {

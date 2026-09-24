@@ -1,5 +1,5 @@
 {
-  "comment": "Micronaut 5.1 on its Netty server, one controller per family under Implementation/src/main/java/implementation/routes. The suite is UnitTests/, JUnit with @MicronautTest over the application on a random port, and never reaches the image. Maven has no lockfile: micronaut-parent imports the Micronaut platform's BOM, which pins every dependency and plugin, and nothing resolves a range, so the two poms the image is built from are what pin it. upgrade moves the parent to its newest patch release, because update-parent with minor and major updates off moves nothing else, and names the versions plugin's version, which micronaut-parent does not manage. /__meta reports micronaut-core's version, which platform 5.1.5 resolves to 5.1.15, so package names micronaut-core. Refusals are Micronaut's default error body. micronaut-validation cannot stop at the first failure, so the first-error route's record orders its rules with a group sequence. Micronaut computes no ETag for an answer a handler returns, so the etag family's filter is written for it. Micronaut's CORS configuration has no path, so it covers every route and cors.scoped is skipped.",
+  "comment": "Micronaut 5.1 on its Netty server, one controller per family under Implementation/src/main/java/implementation/routes. On lambda-emulator the application answers behind micronaut-function-aws-api-proxy, which Implementation's lambda-emulator profile adds. The suite is UnitTests/, JUnit with @MicronautTest over the application on a random port, and never reaches the image. Maven has no lockfile: micronaut-parent imports the Micronaut platform's BOM, which pins every dependency and plugin, and nothing resolves a range, so the two poms the image is built from are what pin it. upgrade moves the parent to its newest patch release, because update-parent with minor and major updates off moves nothing else, and names the versions plugin's version, which micronaut-parent does not manage. /__meta reports micronaut-core's version, which platform 5.1.5 resolves to 5.1.15, so package names micronaut-core. Refusals are Micronaut's default error body. micronaut-validation cannot stop at the first failure, so the first-error route's record orders its rules with a group sequence. Micronaut computes no ETag for an answer a handler returns, so the etag family's filter is written for it. Micronaut's CORS configuration has no path, so it covers every route and cors.scoped is skipped.",
   "framework": "Micronaut",
   "licence": "Apache-2.0",
   "repo": "https://github.com/micronaut-projects/micronaut-core",
@@ -7,7 +7,17 @@
   "docs": "https://docs.micronaut.io/latest/guide/",
   "lockfile": ["pom.xml", "Implementation/pom.xml"],
   "hosts": {
-    "container-h1": { "dockerfile": "Dockerfile" }
+    "container-h1": { "dockerfile": "container-h1/Dockerfile" },
+    "container-h2": { "dockerfile": "container-h2/Dockerfile" },
+    "lambda-emulator": {
+      "dockerfile": "lambda-emulator/Dockerfile",
+      "unsupported": {
+        "compressed.gzip_large": "The compression is the Netty server's, and micronaut-function-aws-api-proxy hands each event to the router without Netty, so the answer arrives uncompressed.",
+        "forms.multipart": "micronaut-function-aws-api-proxy reads a multipart body as a urlencoded form and finds no parts in it, so the handler's @Part tenant is missing and Micronaut answers 400.",
+        "sse.medium": "micronaut-function-aws-api-proxy buffers the whole answer, so the events arrive as one body.",
+        "stream.ndjson": "micronaut-function-aws-api-proxy buffers the whole answer, so the rows arrive as one body."
+      }
+    }
   },
   "suite": { "argv": ["mvn", "-B", "test"], "paths": ["UnitTests"] },
   "upgrade": {

@@ -15,6 +15,6 @@ export type PageData = {
   hosts: Record<string, HostNote>;
   routes: Record<string, Route>;
   factors: Record<string, string>;
-  /** "<language>:<name>" to the framework page for it, when this build wrote one. */
-  pages: Record<string, string>;
+  /** By host, "<language>:<name>" to the framework page for it, when this build wrote one. */
+  pages: Record<string, Record<string, string>>;
 };

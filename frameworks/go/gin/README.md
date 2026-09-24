@@ -12,8 +12,11 @@ gin-contrib package, or written for the family where Gin has none.
 
 | Path | What it is |
 | --- | --- |
-| `Implementation/` | The application, the Go package `implementation`. `router.go` builds the engine, a function in a file named for each family registers that family's routes, and `cmd/server` is the main package that loads the payloads and serves. |
+| `Implementation/` | The application, the Go package `implementation`. `router.go` builds the engine, and a function in a file named for each family registers that family's routes. |
 | `Implementation/views/` | The template, compiled into the binary. |
+| `container-h1/` | How container-h1 starts it. `main.go` is the main package that loads the payloads and serves over HTTP/1.1, and `Dockerfile` builds the image. |
+| `container-h2/` | How container-h2 starts it. `main.go` serves over HTTP/2 with prior knowledge through gin's `UseH2C`, and `Dockerfile` builds the image. |
+| `lambda-emulator/` | How lambda-emulator starts it. `main.go` hands the engine to aws-lambda-go-api-proxy's `ginadapter`, which aws-lambda-go's runtime client gives each event, and `Dockerfile` builds the function on the `provided.al2023` base image. |
 | `UnitTests/` | go test tests of the wiring, sending each request to the router served by `net/http/httptest`. |
 | `client-exception/` | How the corpus reads Gin's error bodies. |
 | `go.mod` | The module, and every module version the build selects. |
@@ -24,7 +27,7 @@ There is no client, because Gin emits none.
 ## Building, running and testing
 
 ```sh
-go build -o server ./Implementation/cmd/server
+go build -o server ./container-h1
 RB_PAYLOADS=../../../tests/payloads PORT=8080 ./server
 go test ./...
 ```
@@ -76,7 +79,17 @@ corpus id it covers, so `go test ./UnitTests -run '/json.small'` runs one.
 - JSON is encoding/json, Gin's default codec. Gin can switch to sonic or another codec with a
   build tag, and this build passes none.
 - The server is one process. Go sets GOMAXPROCS from the container's CPU quota or cpuset, so under
-  the orchestrator's two CPUs it runs Go code on two threads, which `/__meta` reports.
+  the orchestrator's two CPUs it runs Go code on two threads, which `/__meta` reports. The function
+  on lambda-emulator runs on one core, and so on one thread.
+- On lambda-emulator the engine answers behind aws-lambda-go-api-proxy 0.16's `ginadapter.NewV2`,
+  which reads API Gateway payload format 2.0. It buffers the whole answer into one proxy response,
+  and its response writer cannot flush. gin's `Flush` skips a writer that cannot flush, so
+  `c.Stream` writes every row into the buffer. The sse and stream answers arrive whole, as one
+  body, so both tests are listed as unsupported there.
+- ginadapter posts whatever a handler writes for HEAD. A Function URL's caller reads no body in an
+  answer to HEAD, so nothing reads it.
+- The function is built with `-tags lambda.norpc`, as AWS builds a Go function for
+  `provided.al2023`. The tag leaves out the RPC mode of the retired go1.x runtime.
 - The server is PID 1 in its container. The Go runtime installs its own handler for SIGTERM, so
   `docker stop` ends it at once, with no graceful shutdown.
 - A struct tag such as `json:"items"` reads as the route literal `/items`, so the create route

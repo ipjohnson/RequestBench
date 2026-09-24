@@ -107,6 +107,18 @@
         </dependency>
       </dependencies>
     </profile>
+    <!-- lambda-emulator's build: Quarkus's Lambda extension for API Gateway payload format 2.0,
+         which packages the application as a legacy jar with its dependencies in target/lib. The
+         other hosts' builds leave it out. -->
+    <profile>
+      <id>lambda-emulator</id>
+      <dependencies>
+        <dependency>
+          <groupId>io.quarkus</groupId>
+          <artifactId>quarkus-amazon-lambda-http</artifactId>
+        </dependency>
+      </dependencies>
+    </profile>
     <!-- mvn -P client,!suite package writes the document SmallRye OpenAPI builds from the routes
          into Client/src/main/openapi while Quarkus builds the application. The extension is in this
          profile alone, so the image, which is built without it, serves no /q/openapi. -->

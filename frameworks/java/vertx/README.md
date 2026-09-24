@@ -14,6 +14,8 @@ their families, because Vert.x has neither.
 | Path | What it is |
 | --- | --- |
 | `Implementation/` | The application, a Maven module. `Application` deploys one `Server` verticle per core, and each builds a router over one class per corpus family under `src/main/java/implementation/routes/`. |
+| `container-h1/` | The `Dockerfile` that builds the image container-h1 runs. |
+| `container-h2/` | The `Dockerfile` that builds the image container-h2 runs, as container-h1's, because Vert.x's `HttpServerOptions` answer HTTP/2 with prior knowledge on a plain port by default. |
 | `UnitTests/` | JUnit tests of the wiring, a Maven module that deploys the server verticle on a random port with vertx-junit5. |
 | `client-exception/` | How the corpus reads Vert.x's error bodies. |
 | `pom.xml` | The two modules. Vert.x's stack BOM, imported as Vert.x's starter imports it, pins every Vert.x module and what they depend on. This pom pins that BOM, JUnit's BOM and every plugin. |
@@ -118,6 +120,11 @@ per core, so two of the four serve.
 - The container runs `java -jar` as PID 1 with the collector and heap the JVM chooses. The JVM
   reads the container's CPU quota and counts 2 CPUs under `--cpus 2`. On SIGTERM it exits at once,
   because nothing registers a shutdown hook.
+- container-h2 lists `items.head` as unsupported. Over HTTP/2, Vert.x sends the row the route writes
+  for HEAD as a DATA frame. HTTP/2 allows no content in an answer to HEAD, so the client resets the
+  stream.
+- Vert.x Web implements no lambda-emulator. Vert.x ships no AWS Lambda adapter, and the one
+  published for it, xyz.jetdrone's `vertx.lambda.aws`, was last released in 2019, for Vert.x 3.
 
 ## Refusals
 

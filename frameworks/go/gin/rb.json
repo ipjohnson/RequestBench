@@ -1,5 +1,5 @@
 {
-  "comment": "Gin 1.12 on Go 1.27, one function per family registering its routes in the implementation package under Implementation/, and the server's main package in Implementation/cmd/server. The suite is UnitTests/, go test over the router served by net/http/httptest, and never reaches the image. Gin writes nothing for a body it cannot bind, so a refusal is the answer gin's README gives: 400 and err.Error(). The validator names fields by their json names through go-playground's tag-name hook, which gin hands out through binding.Validator.Engine(). The first-error route is wired by hand, because go-playground cannot stop at the first failure. The lockfile is go.mod, which records every module version the build selects, and go.sum, which holds their hashes. upgrade is go get -u ./..., which moves every module to its newest release within its major version.",
+  "comment": "Gin 1.12 on Go 1.27, one function per family registering its routes in the implementation package under Implementation/, and each host's main package in the host's directory. On lambda-emulator the engine answers behind aws-lambda-go-api-proxy's ginadapter. The suite is UnitTests/, go test over the router served by net/http/httptest, and never reaches the image. Gin writes nothing for a body it cannot bind, so a refusal is the answer gin's README gives: 400 and err.Error(). The validator names fields by their json names through go-playground's tag-name hook, which gin hands out through binding.Validator.Engine(). The first-error route is wired by hand, because go-playground cannot stop at the first failure. The lockfile is go.mod, which records every module version the build selects, and go.sum, which holds their hashes. upgrade is go get -u ./..., which moves every module to its newest release within its major version.",
   "framework": "Gin",
   "licence": "MIT",
   "repo": "https://github.com/gin-gonic/gin",
@@ -7,7 +7,15 @@
   "docs": "https://gin-gonic.com/en/docs/",
   "lockfile": ["go.mod", "go.sum"],
   "hosts": {
-    "container-h1": { "dockerfile": "Dockerfile" }
+    "container-h1": { "dockerfile": "container-h1/Dockerfile" },
+    "container-h2": { "dockerfile": "container-h2/Dockerfile" },
+    "lambda-emulator": {
+      "dockerfile": "lambda-emulator/Dockerfile",
+      "unsupported": {
+        "sse.medium": "aws-lambda-go-api-proxy's ginadapter buffers the whole answer, so the events arrive as one body.",
+        "stream.ndjson": "aws-lambda-go-api-proxy's ginadapter buffers the whole answer, so the rows arrive as one body."
+      }
+    }
   },
   "suite": { "argv": ["go", "test", "./..."], "paths": ["UnitTests"] },
   "upgrade": { "argv": ["go", "get", "-u", "./..."] },

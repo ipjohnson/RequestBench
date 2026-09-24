@@ -17,6 +17,8 @@ published no Java 27 image yet, so this port builds and runs on Amazon Corretto 
 | Path | What it is |
 | --- | --- |
 | `Implementation/` | The application, a Maven module. `Main` builds the server, and one `HttpFeature` per corpus family under `src/main/java/implementation/routes/` registers that family's routes. |
+| `container-h1/` | The `Dockerfile` that builds the image container-h1 runs. |
+| `container-h2/` | The `Dockerfile` that builds the image container-h2 runs, with the `container-h2` profile, which adds Helidon's HTTP/2 module, and the WebServer answers HTTP/2 with prior knowledge once it finds that module. |
 | `UnitTests/` | JUnit tests of the wiring, a Maven module that starts the Implementation on a random port with Helidon's `@ServerTest`. |
 | `client-exception/` | How the corpus reads Helidon's error bodies. |
 | `pom.xml` | The two modules, under Helidon's SE application parent, which pins every Helidon module and plugin through Helidon's BOM. It also pins Thymeleaf, which the parent does not manage. |
@@ -122,6 +124,9 @@ Helidon's service registry.
 - The container runs `java -jar` as PID 1 with the collector and heap the JVM chooses. The JVM
   reads the container's CPU quota, counts 2 CPUs under `--cpus 2`, and sizes the carrier threads of
   Helidon's virtual threads to match. On SIGTERM Helidon's shutdown hook stops the server.
+- Helidon SE implements no lambda-emulator. Helidon ships no AWS Lambda adapter, and no project
+  publishes one for its WebServer. The Lambda Java base images also stop at Java 25, and Helidon
+  27's jars need Java 27.
 
 ## Refusals
 

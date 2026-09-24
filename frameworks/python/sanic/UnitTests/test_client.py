@@ -32,7 +32,7 @@ def base():
     """server.py on a free port, as the image runs it, with its two workers."""
     port = free_port()
     # A session of its own, so the teardown can reach the workers and the manager's helper processes.
-    server = subprocess.Popen([sys.executable, "server.py"], cwd=IMPLEMENTATION, stderr=subprocess.DEVNULL,
+    server = subprocess.Popen([sys.executable, str(IMPLEMENTATION.parent / "container-h1" / "server.py")], cwd=IMPLEMENTATION, stderr=subprocess.DEVNULL,
                               start_new_session=True,
                               env={**os.environ, "PORT": str(port), "RB_PAYLOADS": str(expected.DIRECTORY)})
     url = f"http://127.0.0.1:{port}"

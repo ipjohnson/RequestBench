@@ -10,10 +10,12 @@
 // reading as a framework that changed. codeHash leaves out the roles that do not change what
 // runs; bundleHash covers every file.
 //
-// The rules below are bundle-v1. Changing any of them reissues every hash in the series, so a
+// The rules below are bundle-v2. Changing any of them reissues every hash in the series, so a
 // change is a new version:
 //   - the file set comes from git, never a filesystem walk, so an editor backup or a build
 //     artifact cannot enter it
+//   - a framework's bundle is read for one host, and leaves out the directories named for the
+//     other hosts, so a change to how one host starts the framework is no change on another
 //   - paths are repo-relative and sorted bytewise
 //   - a file's hash is SHA-256 over its bytes, as sha256:<hex>
 //   - a rollup is SHA-256 over one `<hex>  <path>` line per file, which is sha256sum's own
@@ -24,8 +26,11 @@
 import { createHash } from "node:crypto";
 
 import { blob, resolveCommit, tracked } from "./git.ts";
+import { HOST_IDS, type HostId } from "./hosts.ts";
 
-export const BUNDLE_VERSION = "bundle-v1";
+// bundle-v1 read every file under a framework's directory. v2 gives the same hashes at any commit
+// with no host directory in it.
+export const BUNDLE_VERSION = "bundle-v2";
 
 export type FrameworkRole = "source" | "manifest" | "config" | "host" | "contract" | "prose" | "test" | "client";
 export type TestsRole = "test" | "family" | "kit" | "model" | "payload" | "snapshot" | "manifest" | "source" | "prose";
@@ -64,8 +69,9 @@ function build(
   at: string | undefined,
   roleOf: (path: string) => Role,
   notCode: ReadonlySet<Role>,
+  keep: (path: string) => boolean = () => true,
 ): Bundle {
-  const paths = tracked(root, prefix, at);
+  const paths = tracked(root, prefix, at).filter(keep);
   if (paths.length === 0) throw new Error(`${id} has no tracked files under ${prefix}`);
   const files = paths.map((path): BundleFile => {
     const bytes = blob(root, path, at);
@@ -187,10 +193,22 @@ function suitePathsAt(root: string, dir: string, at: string | undefined): string
   return Array.isArray(paths) ? paths.filter((p): p is string => typeof p === "string") : [];
 }
 
-export function frameworkBundle(root: string, f: FrameworkKey, at?: string): Bundle {
+/** The directories of every host but this one, relative to the framework's directory. */
+const otherHosts = (host: HostId): string[] => HOST_IDS.filter((h) => h !== host).map((h) => `${h}/`);
+
+export function frameworkBundle(root: string, f: FrameworkKey, host: HostId, at?: string): Bundle {
   const dir = frameworkDir(f);
   const suite = suitePathsAt(root, dir, at);
-  return build(root, frameworkId(f), `${dir}/`, at, (path) => frameworkRole(path.slice(dir.length + 1), suite), FRAMEWORK_NOT_CODE);
+  const others = otherHosts(host);
+  return build(
+    root,
+    frameworkId(f),
+    `${dir}/`,
+    at,
+    (path) => frameworkRole(path.slice(dir.length + 1), suite),
+    FRAMEWORK_NOT_CODE,
+    (path) => !others.some((o) => path.slice(dir.length + 1).startsWith(o)),
+  );
 }
 
 /** One complaint per role a framework bundle should hold and does not. */

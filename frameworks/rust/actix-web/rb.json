@@ -1,5 +1,5 @@
 {
-  "comment": "actix-web 4 on actix-rt, one module per family under Implementation/routes, each adding its routes to the App's ServiceConfig, with each family's middleware wrapped around that family's scope or resource alone. HttpServer builds one App per worker thread, so the response cache's stores are made once and every App shares them. One package: the library and the server binary in Implementation/, the suite in UnitTests/, which drives the App in process with actix-web's test utilities and never reaches the image. The release profile is fat LTO with one codegen unit, as upstream measured every Rust framework. Validation is the validator crate, which axum's port uses too, run by an extractor written here. actix-web has no validation of its own, and actix-web-validator 7, the crate that adds it, needs validator 0.20. The first-error route is wired by hand, because validator cannot stop at the first failure. actix-web ships no response cache and none written for it is in wide use, so the cache middleware is written by hand over cached's LruTtlCache, the store axum-response-cache uses. The etag family is actix-middleware-etag's, and the sse family is actix-web-lab's, where the actix project tries out what actix-web lacks. upgrade is cargo update, which moves Cargo.lock within the ranges Cargo.toml states.",
+  "comment": "actix-web 4 on actix-rt, one module per family under Implementation/routes, each adding its routes to the App's ServiceConfig, with each family's middleware wrapped around that family's scope or resource alone. HttpServer builds one App per worker thread, so the response cache's stores are made once and every App shares them. One package: the library in Implementation/, each host's binary in the host's directory, and the suite in UnitTests/, which drives the App in process with actix-web's test utilities and never reaches the image. On lambda-emulator the App answers behind lambda-web, the adapter written for actix-web, because the actix project ships none. The release profile is fat LTO with one codegen unit, as upstream measured every Rust framework. Validation is the validator crate, which axum's port uses too, run by an extractor written here. actix-web has no validation of its own, and actix-web-validator 7, the crate that adds it, needs validator 0.20. The first-error route is wired by hand, because validator cannot stop at the first failure. actix-web ships no response cache and none written for it is in wide use, so the cache middleware is written by hand over cached's LruTtlCache, the store axum-response-cache uses. The etag family is actix-middleware-etag's, and the sse family is actix-web-lab's, where the actix project tries out what actix-web lacks. upgrade is cargo update, which moves Cargo.lock within the ranges Cargo.toml states.",
   "framework": "actix-web",
   "licence": "MIT OR Apache-2.0",
   "repo": "https://github.com/actix/actix-web",
@@ -7,7 +7,15 @@
   "docs": "https://docs.rs/actix-web/4.15.0/actix_web/",
   "lockfile": ["Cargo.lock"],
   "hosts": {
-    "container-h1": { "dockerfile": "Dockerfile" }
+    "container-h1": { "dockerfile": "container-h1/Dockerfile" },
+    "container-h2": { "dockerfile": "container-h2/Dockerfile" },
+    "lambda-emulator": {
+      "dockerfile": "lambda-emulator/Dockerfile",
+      "unsupported": {
+        "sse.medium": "lambda-web's run_actix_on_lambda buffers the whole answer, so the events arrive as one body.",
+        "stream.ndjson": "lambda-web's run_actix_on_lambda buffers the whole answer, so the rows arrive as one body."
+      }
+    }
   },
   "suite": { "argv": ["cargo", "test", "--locked"], "paths": ["UnitTests"] },
   "upgrade": { "argv": ["cargo", "update"] },

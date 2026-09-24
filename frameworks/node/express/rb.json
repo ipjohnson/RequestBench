@@ -1,5 +1,5 @@
 {
-  "comment": "Express 5 on Node 26, one module per family under Implementation/routes, in TypeScript that Node runs without a build step. The suite is UnitTests/, node:test through supertest, and never reaches the image. install-ci-test is npm ci then npm test, because the suite needs node_modules and the typechecker. upgrade is npm update, which moves package-lock.json within the ranges package.json states. Express has no validation and its documentation names no library, so the validate routes run express-validator, the one written for Express, and answer its errors as its guide does. Express ships no response cache, so the cache family's middleware is written for it.",
+  "comment": "Express 5 on Node 26, one module per family under Implementation/routes, in TypeScript that Node runs without a build step. Express's documentation names no Lambda adapter, so on lambda-emulator the application answers behind @codegenie/serverless-express, the one Express's ecosystem installs most. The suite is UnitTests/, node:test through supertest, and never reaches the image. install-ci-test is npm ci then npm test, because the suite needs node_modules and the typechecker. upgrade is npm update, which moves package-lock.json within the ranges package.json states. Express has no validation and its documentation names no library, so the validate routes run express-validator, the one written for Express, and answer its errors as its guide does. Express ships no response cache, so the cache family's middleware is written for it.",
   "framework": "Express",
   "licence": "MIT",
   "repo": "https://github.com/expressjs/express",
@@ -7,7 +7,21 @@
   "docs": "https://expressjs.com/",
   "lockfile": ["package-lock.json"],
   "hosts": {
-    "container-h1": { "dockerfile": "Dockerfile" }
+    "container-h1": { "dockerfile": "container-h1/Dockerfile" },
+    "lambda-emulator": {
+      "dockerfile": "lambda-emulator/Dockerfile",
+      "unsupported": {
+        "sse.medium": "@codegenie/serverless-express buffers the whole answer, so the events arrive as one body.",
+        "stream.ndjson": "@codegenie/serverless-express buffers the whole answer, so the rows arrive as one body.",
+        "cache.small": "@codegenie/serverless-express reads the answer's headers from getHeaders(), which never holds headers handed to writeHead when none was set before. The cache middleware replays a stored answer that way, so the replay arrives without them, x-rb-serial among them.",
+        "cache.medium": "@codegenie/serverless-express reads the answer's headers from getHeaders(), which never holds headers handed to writeHead when none was set before. The cache middleware replays a stored answer that way, so the replay arrives without them, x-rb-serial among them.",
+        "cache.large": "@codegenie/serverless-express reads the answer's headers from getHeaders(), which never holds headers handed to writeHead when none was set before. The cache middleware replays a stored answer that way, so the replay arrives without them, x-rb-serial among them.",
+        "cache.vary_one": "@codegenie/serverless-express reads the answer's headers from getHeaders(), which never holds headers handed to writeHead when none was set before. The cache middleware replays a stored answer that way, so the replay arrives without them, x-rb-serial among them.",
+        "cache.vary_many": "@codegenie/serverless-express reads the answer's headers from getHeaders(), which never holds headers handed to writeHead when none was set before. The cache middleware replays a stored answer that way, so the replay arrives without them, x-rb-serial among them.",
+        "errors.unmatched": "Express's final handler answers a path no route matches, and before it writes, on-finished listens on the request's socket. @codegenie/serverless-express gives the request a socket stub with no on method, so the final handler throws and the adapter answers 500. This is CodeGenieApp/serverless-express#698.",
+        "errors.wrong_method": "Express's final handler answers a method the path has no route for, and before it writes, on-finished listens on the request's socket. @codegenie/serverless-express gives the request a socket stub with no on method, so the final handler throws and the adapter answers 500. This is CodeGenieApp/serverless-express#698."
+      }
+    }
   },
   "suite": { "argv": ["npm", "install-ci-test"], "paths": ["UnitTests"] },
   "upgrade": { "argv": ["npm", "update"] },

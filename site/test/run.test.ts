@@ -1,7 +1,7 @@
 // The lists a summary does not write down: its rungs, its tests and its languages.
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
-import { familyOf, machineOf, machinesFor, metaOf, rungsOf, testOrder, timeline } from "../src/lib/run.ts";
+import { codeKey, familyOf, machineOf, machinesFor, metaOf, pageSlug, rungsOf, testOrder, timeline } from "../src/lib/run.ts";
 import type { Framework, Run } from "../src/lib/types.ts";
 
 const framework = (id: string, rungs: string[], tests: string[]): Framework => {
@@ -117,5 +117,17 @@ describe("machinesFor", () => {
   test("counts only the runs the newest run can be read against", () => {
     const runs = [on("a", "AMD EPYC 7763", 4, "ladder-v1"), on("b", "INTEL 8573C")];
     assert.deepEqual(machinesFor(runs, runs[1]!), [{ machine: "INTEL 8573C, 4 cores", runs: 1 }]);
+  });
+});
+
+describe("pageSlug and codeKey", () => {
+  test("the default host's pages and code keep the names they had before there were other hosts", () => {
+    assert.equal(pageSlug("go", "chi", "container-h1"), "go-chi");
+    assert.equal(codeKey("go:chi", "container-h1"), "go:chi");
+  });
+
+  test("every other host's carry the host", () => {
+    assert.equal(pageSlug("go", "chi", "lambda-emulator"), "go-chi@lambda-emulator");
+    assert.equal(codeKey("go:chi", "container-h2"), "go:chi@container-h2");
   });
 });

@@ -1,5 +1,5 @@
 {
-  "comment": "FastEndpoints 8.3 on ASP.NET Core 10, one endpoint class per route, the classes of a family together in one file under Implementation/Endpoints. The suite is UnitTests/, xunit.v3 over FastEndpoints.Testing's AppFixture<Program>, and never reaches the image. It runs under Microsoft.Testing.Platform, which global.json selects. upgrade is null because dotnet package update moves every package to its newest release, majors included, and nothing narrows it to patch and minor.",
+  "comment": "FastEndpoints 8.3 on ASP.NET Core 10, one endpoint class per route, the classes of a family together in one file under Implementation/Endpoints. On lambda-emulator the application answers behind Amazon.Lambda.AspNetCoreServer.Hosting, which Program.cs adds and which does nothing on the other hosts. The suite is UnitTests/, xunit.v3 over FastEndpoints.Testing's AppFixture<Program>, and never reaches the image. It runs under Microsoft.Testing.Platform, which global.json selects. upgrade is null because dotnet package update moves every package to its newest release, majors included, and nothing narrows it to patch and minor.",
   "framework": "FastEndpoints",
   "licence": "MIT",
   "repo": "https://github.com/FastEndpoints/FastEndpoints",
@@ -7,7 +7,20 @@
   "docs": "https://fast-endpoints.com/",
   "lockfile": ["Implementation/packages.lock.json"],
   "hosts": {
-    "container-h1": { "dockerfile": "Dockerfile" }
+    "container-h1": { "dockerfile": "container-h1/Dockerfile" },
+    "container-h2": {
+      "dockerfile": "container-h2/Dockerfile",
+      "unsupported": {
+        "items.head": "Over HTTP/2, Kestrel sends the row the handler writes for HEAD as a DATA frame. HTTP/2 allows no content in an answer to HEAD, so the client resets the stream. Over HTTP/1.1 Kestrel leaves the row unwritten."
+      }
+    },
+    "lambda-emulator": {
+      "dockerfile": "lambda-emulator/Dockerfile",
+      "unsupported": {
+        "sse.medium": "Amazon.Lambda.AspNetCoreServer buffers the whole answer, so the events arrive as one body.",
+        "stream.ndjson": "Amazon.Lambda.AspNetCoreServer buffers the whole answer, so the rows would arrive as one body. HttpResponse.HasStarted also stays false while the handler writes the rows, so FastEndpoints sends its automatic 204 after the handler."
+      }
+    }
   },
   "suite": { "argv": ["dotnet", "test", "--project", "UnitTests"], "paths": ["UnitTests"] },
   "upgrade": null,

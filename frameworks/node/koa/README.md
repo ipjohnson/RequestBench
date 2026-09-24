@@ -12,7 +12,10 @@ publishes for it, mounted in front of that family's routes alone.
 
 | Path | What it is |
 | --- | --- |
-| `Implementation/` | The application, in TypeScript. `app.ts` builds it, `server.ts` starts it, and `routes/` holds one module per corpus family, each registering its routes on the one @koa/router. |
+| `Implementation/` | The application, in TypeScript. `app.ts` builds it, and `routes/` holds one module per corpus family, each registering its routes on the one @koa/router. |
+| `container-h1/` | How container-h1 starts it. `server.ts` loads the payloads and listens, and `Dockerfile` builds the image. |
+| `container-h2/` | How container-h2 starts it. `server.ts` serves the application's callback on node:http2's server, which answers HTTP/2 with prior knowledge, and `Dockerfile` builds the image. |
+| `lambda-emulator/` | How lambda-emulator starts it. `handler.mjs` exports the handler the Lambda runtime hands each event, the application's callback behind serverless-http, and `Dockerfile` builds the function on the `nodejs:26-preview` base image. The runtime imports a handler's module only as `.js`, `.mjs` or `.cjs`, so `handler.mjs` is JavaScript, and Node strips the types of the application it imports. |
 | `UnitTests/` | node:test tests of the wiring, sending each request through supertest over `app.callback()`. |
 | `client-exception/` | How the corpus reads Koa's error bodies. |
 | `package.json` | The dependencies, and the scripts that start, check and test the Implementation. |
@@ -90,6 +93,14 @@ listening. `PORT` defaults to 8080.
   write it.
 - For HEAD, Koa serialises a JSON body to write its Content-Length, and then sends no body.
 - The server is one Node process, as Koa's `listen` starts it, on the container's two cores.
+  The function on lambda-emulator runs on one core.
+- On lambda-emulator the application's callback answers behind serverless-http 4.0. Koa's
+  documentation names no Lambda adapter, and serverless-http names Koa among the frameworks it
+  serves. It buffers the whole answer into one proxy response and has no streaming mode, so the sse
+  and stream tests are listed as unsupported there.
+- The function is built on `public.ecr.aws/lambda/nodejs:26-preview`, because container-h1 runs
+  Node 26 and Lambda's Node 26 runtime is still a preview. The runtime logs a warning saying so when
+  it starts.
 
 ## Refusals
 

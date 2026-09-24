@@ -68,6 +68,20 @@
     </dependency>
   </dependencies>
 
+  <profiles>
+    <!-- container-h2's build. The WebServer finds Helidon's HTTP/2 module on the classpath and answers
+         HTTP/2 with prior knowledge, and container-h1's build leaves it off. -->
+    <profile>
+      <id>container-h2</id>
+      <dependencies>
+        <dependency>
+          <groupId>io.helidon.webserver</groupId>
+          <artifactId>helidon-webserver-http2</artifactId>
+        </dependency>
+      </dependencies>
+    </profile>
+  </profiles>
+
   <build>
     <plugins>
       <!-- Helidon's annotation processors write the JSON converters for @Json.Entity records and the
