@@ -123,6 +123,9 @@ container runs two workers under its two-CPU budget, whichever way the budget is
 - The allocator is mimalloc, set as the global allocator in `main.rs`. A server of this shape
   allocates on every request, and the benchmark runs every Rust framework on the same allocator so
   that a difference between two of them is the framework.
+- Salvo implements no lambda-emulator. Salvo ships no Lambda adapter, and none is published for
+  it. lambda_http runs a tower service, and Salvo's `tower-compat` feature converts only the other
+  way, a tower service into a Salvo handler.
 
 ## Refusals
 
