@@ -3,6 +3,8 @@ module github.com/ipjohnson/RequestBench/frameworks/go/fiber
 go 1.27.1
 
 require (
+	github.com/aws/aws-lambda-go v1.55.1
+	github.com/awslabs/aws-lambda-go-api-proxy v0.16.2
 	github.com/go-playground/validator/v10 v10.30.5
 	github.com/gofiber/fiber/v3 v3.5.0
 	github.com/gofiber/template/html/v3 v3.0.9
