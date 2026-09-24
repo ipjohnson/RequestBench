@@ -20,8 +20,12 @@ public class ContractRoutes {
     @Serdeable
     public record Meta(String framework, String version, String runtime, String adapter, String serializer, Long bootMs) {}
 
-    /** Every Netty jar carries the same version. */
-    private static final String ADAPTER = "Netty " + Version.identify().values().iterator().next().artifactVersion();
+    /**
+     * Every Netty jar carries the same version. A host whose image sets rb.adapter answers without
+     * Netty, as lambda-emulator's does.
+     */
+    private static final String ADAPTER =
+            System.getProperty("rb.adapter", "Netty " + Version.identify().values().iterator().next().artifactVersion());
 
     /** Micronaut Serialization reads and writes JSON through jackson-core's parser and generator. */
     private static final String SERIALIZER = "Micronaut Serialization on jackson-core " + PackageVersion.VERSION;

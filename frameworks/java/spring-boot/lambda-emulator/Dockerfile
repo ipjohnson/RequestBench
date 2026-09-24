@@ -22,4 +22,7 @@ RUN mvn -B -q -o -f Implementation/pom.xml -Plambda-emulator package dependency:
 FROM public.ecr.aws/lambda/java:25@sha256:075fdad1d8ec95a94b5f945140cabc24391bf18750ff924cee64219d50f08ccd
 COPY --from=build /src/Implementation/target/classes/ ${LAMBDA_TASK_ROOT}/
 COPY --from=build /src/Implementation/target/dependency/ ${LAMBDA_TASK_ROOT}/lib/
+# The adapter /__meta names. The JVM reads JAVA_TOOL_OPTIONS itself, which is how Lambda documents
+# setting a Java function's options.
+ENV JAVA_TOOL_OPTIONS=-Drb.adapter=aws-serverless-java-container
 CMD ["implementation.StreamLambdaHandler::handleRequest"]

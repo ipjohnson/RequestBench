@@ -22,4 +22,7 @@ RUN mvn -B -q -o -f Implementation/pom.xml -Plambda-emulator package -DskipTests
 FROM public.ecr.aws/lambda/java:25@sha256:075fdad1d8ec95a94b5f945140cabc24391bf18750ff924cee64219d50f08ccd
 COPY --from=build /src/Implementation/target/lib/ ${LAMBDA_TASK_ROOT}/lib/
 COPY --from=build /src/Implementation/target/implementation-0.0.0-runner.jar ${LAMBDA_TASK_ROOT}/lib/
+# The adapter /__meta names. The JVM reads JAVA_TOOL_OPTIONS itself, which is how Lambda documents
+# setting a Java function's options.
+ENV JAVA_TOOL_OPTIONS=-Drb.adapter=quarkus-amazon-lambda-http
 CMD ["io.quarkus.amazon.lambda.runtime.QuarkusStreamHandler::handleRequest"]

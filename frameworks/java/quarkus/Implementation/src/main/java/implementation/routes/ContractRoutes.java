@@ -40,10 +40,12 @@ public class ContractRoutes {
         return "ok";
     }
 
+    // A host whose image sets rb.adapter hands the requests to Vert.x through its own adapter, as
+    // lambda-emulator's does.
     @GET
     @Path("__meta")
     public Meta meta() {
         return new Meta("Quarkus", Quarkus.class.getPackage().getImplementationVersion(), "Java " + Runtime.version(),
-                "Vert.x " + VersionCommand.getVersion(), serializer, bootMs);
+                System.getProperty("rb.adapter", "Vert.x " + VersionCommand.getVersion()), serializer, bootMs);
     }
 }
