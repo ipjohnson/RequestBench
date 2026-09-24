@@ -13,11 +13,12 @@ import { isClosed, type ClosedResult, type LoadResult, type PhaseResult } from "
 import type { FrameworkRun, RunFile } from "./measure.ts";
 
 /**
- * The coarse grid a page draws a distribution on: eight bins a decade from 80 µs reaches 600 ms
- * in 31 columns, wide enough to tell two apart on screen. Changing it changes what a summary
- * means, so it is written into every summary rather than agreed out of band.
+ * The coarse grid a page draws a distribution on: eight bins a decade from 10 µs reaches 750 ms
+ * in 39 columns, wide enough to tell two apart on screen. It starts at 10 µs because a Lambda
+ * invocation on the emulator can take less than 80 µs. Changing it changes what a summary means,
+ * so it is written into every summary rather than agreed out of band.
  */
-export const BIN_GRID = { loUs: 80, perDecade: 8, count: 31 } as const;
+export const BIN_GRID = { loUs: 10, perDecade: 8, count: 39 } as const;
 
 /**
  * The generator's grid, which each test's `hist` is counted on: bucket i starts at growth^i µs.
