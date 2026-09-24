@@ -102,14 +102,6 @@
    "shape": [],
    "bodyFrom": "captured from frameworks/go/gin/Implementation, which answers with no body"
   },
-  "go:gorilla-mux": {
-   "status": 403,
-   "class": "text",
-   "shape": [
-    ":string"
-   ],
-   "bodyFrom": "captured from frameworks/go/gorilla-mux/Implementation, which answers text/plain; charset=utf-8: Forbidden"
-  },
   "java:helidon-se": {
    "status": 403,
    "class": "empty",

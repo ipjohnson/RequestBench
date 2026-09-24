@@ -106,13 +106,6 @@
    },
    "bodyFrom": "captured from frameworks/go/gin/Implementation"
   },
-  "go:gorilla-mux": {
-   "status": 400,
-   "body": {
-    "error": "Key: 'CheckedOrder.customerId' Error:Field validation for 'customerId' failed on the 'gt' tag"
-   },
-   "bodyFrom": "captured from frameworks/go/gorilla-mux/Implementation"
-  },
   "java:helidon-se": {
    "status": 400,
    "body": {
