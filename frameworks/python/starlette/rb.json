@@ -1,5 +1,5 @@
 {
-  "comment": "Starlette on uvicorn, one module of routes per family under Implementation/routes. Starlette validates nothing itself, so SpecTree, the request validation Starlette's third-party packages page lists, binds bodies, query strings, headers and forms with Pydantic and answers 422 itself. uvicorn runs two worker processes, because one Python process runs Python on one core at a time and the container has two. The suite is UnitTests/, pytest over Starlette's TestClient, and never reaches the image. The suite and upgrade run through uv, which has to be installed.",
+  "comment": "Starlette on uvicorn, one module of routes per family under Implementation/routes. Starlette validates nothing itself, so SpecTree, the request validation Starlette's third-party packages page lists, binds bodies, query strings, headers and forms with Pydantic and answers 422 itself. uvicorn runs two worker processes, because one Python process runs Python on one core at a time and the container has two. On lambda-emulator the application answers behind Mangum, in one process. The suite is UnitTests/, pytest over Starlette's TestClient, and never reaches the image. The suite and upgrade run through uv, which has to be installed.",
   "framework": "Starlette",
   "licence": "BSD-3-Clause",
   "repo": "https://github.com/Kludex/starlette",
@@ -7,7 +7,14 @@
   "docs": "https://starlette.dev/",
   "lockfile": ["uv.lock"],
   "hosts": {
-    "container-h1": { "dockerfile": "container-h1/Dockerfile" }
+    "container-h1": { "dockerfile": "container-h1/Dockerfile" },
+    "lambda-emulator": {
+      "dockerfile": "lambda-emulator/Dockerfile",
+      "unsupported": {
+        "sse.medium": "Mangum buffers the whole answer, so the events arrive as one body.",
+        "stream.ndjson": "Mangum buffers the whole answer, so the rows arrive as one body."
+      }
+    }
   },
   "suite": { "argv": ["uv", "run", "--locked", "pytest"], "paths": ["UnitTests"] },
   "upgrade": { "argv": ["uv", "lock", "--upgrade"] },

@@ -1,6 +1,6 @@
-# The application's dependencies, and the suite's. uv.lock beside it is what uv resolved, which
-# the image installs with --locked. Ranges move patch releases alone for 0.x packages, and minor
-# releases too for the rest.
+# The application's dependencies, the suite's and lambda-emulator's. uv.lock beside it is what uv
+# resolved, which every host's image installs with --locked. Ranges move patch releases alone for
+# 0.x packages, and minor releases too for the rest.
 [project]
 name = "rb-starlette"
 version = "0"
@@ -24,6 +24,9 @@ dependencies = [
 # Client/document.py writes the document, and the Kiota client's tests call the application through
 # Kiota's Python runtime.
 dev = ["httpx2~=2.13", "microsoft-kiota-bundle~=1.14", "pytest~=9.1", "pyyaml~=6.0"]
+# Mangum, which turns each Lambda event into a request for the application on lambda-emulator.
+# Only that host's image installs the group.
+lambda-emulator = ["mangum~=0.22.0"]
 
 [tool.uv]
 package = false
