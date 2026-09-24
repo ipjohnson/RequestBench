@@ -15,6 +15,7 @@ extension for Pydantic.
 | --- | --- |
 | `Implementation/` | The application. `app.py` builds the application each worker serves, and `routes/` holds one blueprint per corpus family. |
 | `container-h1/` | How container-h1 starts it. `server.py` starts gunicorn with two workers, and `Dockerfile` builds the image. |
+| `container-h2/` | How container-h2 starts it. `server.py` starts gunicorn as container-h1's does, serving HTTP/2 with prior knowledge and no TLS, and `Dockerfile` builds the image with the `container-h2` group, which adds gunicorn's http2 extra. |
 | `lambda-emulator/` | How lambda-emulator starts it. `server.py` is the handler's module, which puts the application behind apig-wsgi for awslambdaric, the runtime client, and `Dockerfile` builds the function on the `python:3.14` base image, with the packages and the application together in the task root. |
 | `UnitTests/` | pytest tests of the wiring, sending each request through Flask's test client. |
 | `client-exception/` | How the corpus reads the refusals of Flask and Flask-Pydantic. |
@@ -113,6 +114,10 @@ store.
   `Set-Cookie`. No answer here repeats one.
 - The function on lambda-emulator is one process on one thread, which answers one event at a time,
   so `/__meta` reports one worker and one thread there.
+- gunicorn 26.2 serves HTTP/2 with prior knowledge and no TLS through `http2_cleartext`, which needs
+  the h2 library from its http2 extra. It serves it only to a peer in `forwarded_allow_ips`. On
+  container-h2 a published port's peer is Docker's gateway, so every peer is trusted. gunicorn then
+  also honours the `X-Forwarded-*` headers it reads, and the corpus sends none of them.
 
 ## Refusals
 
