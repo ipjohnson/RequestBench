@@ -2480,7 +2480,12 @@
       "request": {
         "method": "GET",
         "target": "/static/items.large.json",
-        "headers": [],
+        "headers": [
+          [
+            "accept-encoding",
+            "gzip"
+          ]
+        ],
         "bodyBytes": 0
       },
       "response": {
@@ -2512,7 +2517,7 @@
           ],
           [
             "etag",
-            "\"7360adec1ba3f2b1ea9e68838626697e\""
+            "\"95655f13bf4ad9ce34944af37008250e\""
           ]
         ],
         "headerBytes": 239,

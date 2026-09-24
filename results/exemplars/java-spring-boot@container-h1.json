@@ -136,7 +136,7 @@
         "headerBytes": 355,
         "framing": "chunked",
         "bodyBytes": 100,
-        "body": "{\"timestamp\":\"2026-09-22T16:02:29.246Z\",\"status\":403,\"error\":\"Forbidden\",\"path\":\"/authorized/small\"}",
+        "body": "{\"timestamp\":\"2026-09-24T18:02:05.027Z\",\"status\":403,\"error\":\"Forbidden\",\"path\":\"/authorized/small\"}",
         "truncated": false
       }
     },
@@ -310,7 +310,7 @@
         "headerBytes": 156,
         "framing": "chunked",
         "bodyBytes": 1200,
-        "body": "{\"timestamp\":\"2026-09-22T16:02:29.311Z\",\"status\":400,\"error\":\"Bad Request\",\"errors\":[{\"objectName\":\"orderRequest\",\"field\":\"customerId\",\"rejectedValue\":0,\"codes\":[\"Positive.orderRequest.customerId\",\"Positive.customerId\",\"Positive.int\",\"Positive\"],\"arguments\":[{\"arguments\":null,\"code\":\"customerId\",\"codes\":[\"orderRequest.customerId\",\"customerId\"],\"defaultMessage\":\"customerId\"}],\"bindingFailure\":false,\"code\":\"Positive\",\"defaultMessage\":\"must be greater than 0\"},{\"objectName\":\"orderRequest\",\"field\":\"status\",\"rejectedValue\":\"\",\"codes\":[\"NotEmpty.orderRequest.status\",\"NotEmpty.status\",\"NotEmpty.java.lang.String\",\"NotEmpty\"],\"arguments\":[{\"arguments\":null,\"code\":\"status\",\"codes\":[\"orderRequest.status\",\"status\"],\"defaultMessage\":\"status\"}],\"bindingFailure\":false,\"code\":\"NotEmpty\",\"defaultMessage\":\"must not be empty\"},{\"objectName\":\"orderRequest\",\"field\":\"lines\",\"rejectedValue\":[],\"codes\":[\"NotEmpty.orderRequest.lines\",\"NotEmpty.lines\",\"NotEmpty.java.util.List\",\"NotEmpty\"],\"arguments\":[{\"arguments\":null,\"code\":\"lines\",\"codes\":[\"orderRequest.lines\",\"lines\"],\"defaultMessage\":\"lines\"}],\"bindingFailure\":false,\"code\":\"NotEmpty\",\"defaultMessage\":\"must not be empty\"}],\"path\":\"/body/validate/small\"}",
+        "body": "{\"timestamp\":\"2026-09-24T18:02:05.123Z\",\"status\":400,\"error\":\"Bad Request\",\"errors\":[{\"objectName\":\"orderRequest\",\"field\":\"customerId\",\"rejectedValue\":0,\"codes\":[\"Positive.orderRequest.customerId\",\"Positive.customerId\",\"Positive.int\",\"Positive\"],\"arguments\":[{\"arguments\":null,\"code\":\"customerId\",\"codes\":[\"orderRequest.customerId\",\"customerId\"],\"defaultMessage\":\"customerId\"}],\"bindingFailure\":false,\"code\":\"Positive\",\"defaultMessage\":\"must be greater than 0\"},{\"objectName\":\"orderRequest\",\"field\":\"lines\",\"rejectedValue\":[],\"codes\":[\"NotEmpty.orderRequest.lines\",\"NotEmpty.lines\",\"NotEmpty.java.util.List\",\"NotEmpty\"],\"arguments\":[{\"arguments\":null,\"code\":\"lines\",\"codes\":[\"orderRequest.lines\",\"lines\"],\"defaultMessage\":\"lines\"}],\"bindingFailure\":false,\"code\":\"NotEmpty\",\"defaultMessage\":\"must not be empty\"},{\"objectName\":\"orderRequest\",\"field\":\"status\",\"rejectedValue\":\"\",\"codes\":[\"NotEmpty.orderRequest.status\",\"NotEmpty.status\",\"NotEmpty.java.lang.String\",\"NotEmpty\"],\"arguments\":[{\"arguments\":null,\"code\":\"status\",\"codes\":[\"orderRequest.status\",\"status\"],\"defaultMessage\":\"status\"}],\"bindingFailure\":false,\"code\":\"NotEmpty\",\"defaultMessage\":\"must not be empty\"}],\"path\":\"/body/validate/small\"}",
         "truncated": false
       }
     },
@@ -354,7 +354,7 @@
         "headerBytes": 156,
         "framing": "chunked",
         "bodyBytes": 508,
-        "body": "{\"timestamp\":\"2026-09-22T16:02:29.329Z\",\"status\":400,\"error\":\"Bad Request\",\"errors\":[{\"objectName\":\"firstErrorOrder\",\"field\":\"customerId\",\"rejectedValue\":0,\"codes\":[\"Positive.firstErrorOrder.customerId\",\"Positive.customerId\",\"Positive.int\",\"Positive\"],\"arguments\":[{\"arguments\":null,\"code\":\"customerId\",\"codes\":[\"firstErrorOrder.customerId\",\"customerId\"],\"defaultMessage\":\"customerId\"}],\"bindingFailure\":false,\"code\":\"Positive\",\"defaultMessage\":\"must be greater than 0\"}],\"path\":\"/body/validate/first-error\"}",
+        "body": "{\"timestamp\":\"2026-09-24T18:02:05.145Z\",\"status\":400,\"error\":\"Bad Request\",\"errors\":[{\"objectName\":\"firstErrorOrder\",\"field\":\"customerId\",\"rejectedValue\":0,\"codes\":[\"Positive.firstErrorOrder.customerId\",\"Positive.customerId\",\"Positive.int\",\"Positive\"],\"arguments\":[{\"arguments\":null,\"code\":\"customerId\",\"codes\":[\"firstErrorOrder.customerId\",\"customerId\"],\"defaultMessage\":\"customerId\"}],\"bindingFailure\":false,\"code\":\"Positive\",\"defaultMessage\":\"must be greater than 0\"}],\"path\":\"/body/validate/first-error\"}",
         "truncated": false
       }
     },
@@ -1269,7 +1269,7 @@
         "headerBytes": 156,
         "framing": "chunked",
         "bodyBytes": 105,
-        "body": "{\"timestamp\":\"2026-09-22T16:02:29.414Z\",\"status\":400,\"error\":\"Bad Request\",\"path\":\"/body/validate/small\"}",
+        "body": "{\"timestamp\":\"2026-09-24T18:02:05.255Z\",\"status\":400,\"error\":\"Bad Request\",\"path\":\"/body/validate/small\"}",
         "truncated": false
       }
     },
@@ -1311,7 +1311,7 @@
         "headerBytes": 185,
         "framing": "chunked",
         "bodyBytes": 96,
-        "body": "{\"timestamp\":\"2026-09-22T16:02:29.419Z\",\"status\":404,\"error\":\"Not Found\",\"path\":\"/items/999999\"}",
+        "body": "{\"timestamp\":\"2026-09-24T18:02:05.261Z\",\"status\":404,\"error\":\"Not Found\",\"path\":\"/items/999999\"}",
         "truncated": false
       }
     },
@@ -1353,7 +1353,7 @@
         "headerBytes": 185,
         "framing": "chunked",
         "bodyBytes": 100,
-        "body": "{\"timestamp\":\"2026-09-22T16:02:29.424Z\",\"status\":404,\"error\":\"Not Found\",\"path\":\"/errors/unmatched\"}",
+        "body": "{\"timestamp\":\"2026-09-24T18:02:05.265Z\",\"status\":404,\"error\":\"Not Found\",\"path\":\"/errors/unmatched\"}",
         "truncated": false
       }
     },
@@ -1369,7 +1369,7 @@
         "headers": [
           [
             "allow",
-            "GET, DELETE, PATCH, PUT"
+            "DELETE, PATCH, GET, PUT"
           ],
           [
             "vary",
@@ -1399,7 +1399,7 @@
         "headerBytes": 217,
         "framing": "chunked",
         "bodyBytes": 101,
-        "body": "{\"timestamp\":\"2026-09-22T16:02:29.427Z\",\"status\":405,\"error\":\"Method Not Allowed\",\"path\":\"/items/17\"}",
+        "body": "{\"timestamp\":\"2026-09-24T18:02:05.268Z\",\"status\":405,\"error\":\"Method Not Allowed\",\"path\":\"/items/17\"}",
         "truncated": false
       }
     },
@@ -2800,7 +2800,12 @@
       "request": {
         "method": "GET",
         "target": "/static/items.large.json",
-        "headers": [],
+        "headers": [
+          [
+            "accept-encoding",
+            "gzip"
+          ]
+        ],
         "bodyBytes": 0
       },
       "response": {
@@ -2819,12 +2824,16 @@
             "accept-encoding"
           ],
           [
+            "content-encoding",
+            "gzip"
+          ],
+          [
             "content-type",
             "application/json"
           ],
           [
-            "content-length",
-            "129937"
+            "transfer-encoding",
+            "chunked"
           ],
           [
             "date",
@@ -2839,9 +2848,9 @@
             "keep-alive"
           ]
         ],
-        "headerBytes": 249,
-        "framing": "content-length",
-        "bodyBytes": 129937,
+        "headerBytes": 277,
+        "framing": "chunked",
+        "bodyBytes": 18941,
         "body": "{\"size\":\"large\",\"count\":1425,\"items\":[\n{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"priceCents\":18928,\"inStock\":true},\n{\"id\":2,\"name\":\"brass-hinge-5716\",\"category\":\"garden\",\"priceCents\":17577,\"inStock\":true},\n{\"id\":3,\"name\":\"linen-ring-6971\",\"category\":\"kitchen\",\"priceCents\":5540,\"inStock\":true},\n{\"id\":4,\"name\":\"copper-bolt-9217\",\"category\":\"outdoor\",\"priceCents\":11562,\"inStock\":true},\n{\"id\":5,\"name\":\"linen-lamp-8288\",\"category\":\"office\",\"priceCents\":1413,\"inStock\":true},\n{\"id\":6,\"name\":\"copper-pan-9308\",\"category\":\"tools\",\"priceCents\":10795,\"inStock\":true},\n{\"id\":7,\"name\":\"slate-seed-3051\",\"category\":\"garden\",\"priceCents\":9667,\"inStock\":false},\n{\"id\":8,\"name\":\"oak-lamp-8662\",\"category\":\"kitchen\",\"priceCents\":18032,\"inStock\":false},\n{\"id\":9,\"name\":\"amber-hinge-8405\",\"category\":\"outdoor\",\"priceCents\":9566,\"inStock\":true},\n{\"id\":10,\"name\":\"linen-lamp-9676\",\"category\":\"office\",\"priceCents\":4288,\"inStock\":true},\n{\"id\":11,\"name\":\"brass-trowel-2042\",\"category\":\"tools\",\"priceCents\":17701,\"inStock\":false},\n{\"id\":12,\"name\":\"linen-lamp-5542\",\"category\":\"garden\",\"priceCents\":12163,\"inStock\":true},\n{\"id\":13,\"name\":\"linen-seed-9760\",\"category\":\"kitchen\",\"priceCents\":12305,\"inStock\":false},\n{\"id\":14,\"name\":\"brass-hinge-4996\",\"category\":\"outdoor\",\"priceCents\":8489,\"inStock\":true},\n{\"id\":15,\"name\":\"cedar-hinge-8685\",\"category\":\"office\",\"priceCents\":15667,\"inStock\":true},\n{\"id\":16,\"name\":\"slate-seed-3185\",\"category\":\"tools\",\"priceCents\":4111,\"inStock\":true},\n{\"id\":17,\"name\":\"cedar-bolt-9891\",\"category\":\"garden\",\"priceCents\":18370,\"inStock\":true},\n{\"id\":18,\"name\":\"copper-bolt-8081\",\"category\":\"kitchen\",\"priceCents\":14318,\"inStock\":false},\n{\"id\":19,\"name\":\"amber-seed-4209\",\"category\":\"outdoor\",\"priceCents\":15424,\"inStock\":true},\n{\"id\":20,\"name\":\"oak-bolt-9982\",\"category\":\"office\",\"priceCents\":9582,\"inStock\":true},\n{\"id\":21,\"name\":\"slate-bolt-7099\",\"category\":\"tools\",\"priceCents\":6732,\"inStock\":false},\n{\"id\":22,\"name\":\"brass-seed-9718\",\"category\":\"garden\",\"priceCents\":17198,\"inStock\":true},\n{\"id\":23,\"name\":\"cedar-desk-4039\",",
         "truncated": true
       }

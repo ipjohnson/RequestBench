@@ -2756,7 +2756,12 @@
       "request": {
         "method": "GET",
         "target": "/static/items.large.json",
-        "headers": [],
+        "headers": [
+          [
+            "accept-encoding",
+            "gzip"
+          ]
+        ],
         "bodyBytes": 0
       },
       "response": {

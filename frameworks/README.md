@@ -338,6 +338,8 @@ read from the README at the run's commit.
 2. `npm run typecheck` and `npm test` pass.
 3. `npm run rb -- check` reports 0 problems.
 4. `npm run rb -- suite <id>` passes.
-5. `npm run rb -- validate <id> --exemplars` passes every performance test.
+5. `npm run rb -- validate <id> --host <host> --exemplars` passes every performance test on each host
+   in rb.json.
 6. `npm run rb -- client <id>` reports `Client/` current, if rb.json declares `client`.
-7. Commit the exemplar file with the framework.
+7. Commit the exemplar file for each host with the framework. A pull request's validate jobs also
+   upload each one, as the artifact `exemplar-<language>-<name>@<host>`.

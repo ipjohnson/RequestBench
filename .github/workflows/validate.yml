@@ -112,10 +112,21 @@ jobs:
         with:
           workspaces: traffic-generator
           shared-key: traffic-generator
-      - env:
+      # --exemplars writes each test's request and answer to results/exemplars, which the site's
+      # wire panes and sizes read. The file is uploaded, so a pull request can commit it.
+      - id: validate
+        env:
           ID: ${{ matrix.validation.id }}
           HOST: ${{ matrix.validation.host }}
-        run: npm run rb -- validate "$ID" --host "$HOST"
+        run: |
+          npm run rb -- validate "$ID" --host "$HOST" --exemplars
+          echo "exemplar=${ID/:/-}@$HOST" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: exemplar-${{ steps.validate.outputs.exemplar }}
+          path: results/exemplars/${{ steps.validate.outputs.exemplar }}.json
+          if-no-files-found: error
+          retention-days: 14
 
   # The framework's own tests, with the toolchain its language needs. A test-only dependency never
   # reaches the image, so this is the only job that exercises it.

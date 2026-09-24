@@ -206,7 +206,7 @@
         "headerBytes": 118,
         "framing": "content-length",
         "bodyBytes": 265,
-        "body": "{\"code\":400,\"message\":\"lines: Validation error: length [{\\\"value\\\": Array [], \\\"min\\\": Number(1)}]\\ncustomer_id: Validation error: range [{\\\"min\\\": Number(1), \\\"value\\\": Number(0)}]\\nstatus: Validation error: length [{\\\"min\\\": Number(1), \\\"value\\\": String(\\\"\\\")}]\"}",
+        "body": "{\"code\":400,\"message\":\"lines: Validation error: length [{\\\"value\\\": Array [], \\\"min\\\": Number(1)}]\\ncustomer_id: Validation error: range [{\\\"min\\\": Number(1), \\\"value\\\": Number(0)}]\\nstatus: Validation error: length [{\\\"value\\\": String(\\\"\\\"), \\\"min\\\": Number(1)}]\"}",
         "truncated": false
       }
     },
@@ -2157,7 +2157,12 @@
       "request": {
         "method": "GET",
         "target": "/static/items.large.json",
-        "headers": [],
+        "headers": [
+          [
+            "accept-encoding",
+            "gzip"
+          ]
+        ],
         "bodyBytes": 0
       },
       "response": {

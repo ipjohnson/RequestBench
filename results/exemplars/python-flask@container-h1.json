@@ -891,7 +891,7 @@
           ],
           [
             "allow",
-            "GET, HEAD, OPTIONS"
+            "HEAD, OPTIONS, GET"
           ],
           [
             "content-length",
@@ -946,7 +946,7 @@
           ],
           [
             "allow",
-            "GET, HEAD, OPTIONS"
+            "HEAD, OPTIONS, GET"
           ],
           [
             "access-control-allow-origin",
@@ -1222,7 +1222,7 @@
           ],
           [
             "allow",
-            "DELETE, PATCH, HEAD, GET, PUT, OPTIONS"
+            "PATCH, DELETE, HEAD, OPTIONS, PUT, GET"
           ],
           [
             "content-length",
@@ -2625,7 +2625,12 @@
       "request": {
         "method": "GET",
         "target": "/static/items.large.json",
-        "headers": [],
+        "headers": [
+          [
+            "accept-encoding",
+            "gzip"
+          ]
+        ],
         "bodyBytes": 0
       },
       "response": {
@@ -2665,7 +2670,7 @@
           ],
           [
             "etag",
-            "\"1790174611.7202122-129937-2715749122\""
+            "\"1790272867.5820615-129937-2715749122\""
           ],
           [
             "accept-ranges",

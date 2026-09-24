@@ -30,12 +30,12 @@
             "SAMEORIGIN"
           ],
           [
-            "permissions-policy",
-            "interest-cohort=()"
-          ],
-          [
             "x-content-type-options",
             "nosniff"
+          ],
+          [
+            "permissions-policy",
+            "interest-cohort=()"
           ],
           [
             "content-length",
@@ -81,12 +81,12 @@
             "SAMEORIGIN"
           ],
           [
-            "permissions-policy",
-            "interest-cohort=()"
-          ],
-          [
             "x-content-type-options",
             "nosniff"
+          ],
+          [
+            "permissions-policy",
+            "interest-cohort=()"
           ],
           [
             "content-length",
@@ -127,12 +127,12 @@
             "SAMEORIGIN"
           ],
           [
-            "permissions-policy",
-            "interest-cohort=()"
-          ],
-          [
             "x-content-type-options",
             "nosniff"
+          ],
+          [
+            "permissions-policy",
+            "interest-cohort=()"
           ],
           [
             "content-length",
@@ -179,12 +179,12 @@
             "SAMEORIGIN"
           ],
           [
-            "permissions-policy",
-            "interest-cohort=()"
-          ],
-          [
             "x-content-type-options",
             "nosniff"
+          ],
+          [
+            "permissions-policy",
+            "interest-cohort=()"
           ],
           [
             "content-length",
@@ -231,12 +231,12 @@
             "SAMEORIGIN"
           ],
           [
-            "permissions-policy",
-            "interest-cohort=()"
-          ],
-          [
             "x-content-type-options",
             "nosniff"
+          ],
+          [
+            "permissions-policy",
+            "interest-cohort=()"
           ],
           [
             "content-length",
@@ -283,16 +283,16 @@
             "SAMEORIGIN"
           ],
           [
-            "permissions-policy",
-            "interest-cohort=()"
-          ],
-          [
             "x-content-type-options",
             "nosniff"
           ],
           [
+            "permissions-policy",
+            "interest-cohort=()"
+          ],
+          [
             "content-length",
-            "365"
+            "363"
           ],
           [
             "date",
@@ -301,8 +301,8 @@
         ],
         "headerBytes": 245,
         "framing": "content-length",
-        "bodyBytes": 365,
-        "body": "{\"code\":422,\"message\":\"Unprocessable Entity. The request was well-formed but was unable to be followed due to semantic errors.\",\"errors\":{\"customer_id\":[{\"code\":\"range\",\"message\":null,\"params\":{\"min\":1.0,\"value\":0}}],\"lines\":[{\"code\":\"length\",\"message\":null,\"params\":{\"min\":1,\"value\":[]}}],\"status\":[{\"code\":\"length\",\"message\":null,\"params\":{\"min\":1,\"value\":\"\"}}]}}",
+        "bodyBytes": 363,
+        "body": "{\"code\":422,\"message\":\"Unprocessable Entity. The request was well-formed but was unable to be followed due to semantic errors.\",\"errors\":{\"customer_id\":[{\"code\":\"range\",\"message\":null,\"params\":{\"min\":1,\"value\":0}}],\"status\":[{\"code\":\"length\",\"message\":null,\"params\":{\"min\":1,\"value\":\"\"}}],\"lines\":[{\"code\":\"length\",\"message\":null,\"params\":{\"value\":[],\"min\":1}}]}}",
         "truncated": false
       }
     },
@@ -335,16 +335,16 @@
             "SAMEORIGIN"
           ],
           [
-            "permissions-policy",
-            "interest-cohort=()"
-          ],
-          [
             "x-content-type-options",
             "nosniff"
           ],
           [
+            "permissions-policy",
+            "interest-cohort=()"
+          ],
+          [
             "content-length",
-            "218"
+            "216"
           ],
           [
             "date",
@@ -353,8 +353,8 @@
         ],
         "headerBytes": 245,
         "framing": "content-length",
-        "bodyBytes": 218,
-        "body": "{\"code\":422,\"message\":\"Unprocessable Entity. The request was well-formed but was unable to be followed due to semantic errors.\",\"errors\":{\"customer_id\":[{\"code\":\"range\",\"message\":null,\"params\":{\"min\":1.0,\"value\":0}}]}}",
+        "bodyBytes": 216,
+        "body": "{\"code\":422,\"message\":\"Unprocessable Entity. The request was well-formed but was unable to be followed due to semantic errors.\",\"errors\":{\"customer_id\":[{\"code\":\"range\",\"message\":null,\"params\":{\"value\":0,\"min\":1}}]}}",
         "truncated": false
       }
     },
@@ -387,12 +387,12 @@
             "SAMEORIGIN"
           ],
           [
-            "permissions-policy",
-            "interest-cohort=()"
-          ],
-          [
             "x-content-type-options",
             "nosniff"
+          ],
+          [
+            "permissions-policy",
+            "interest-cohort=()"
           ],
           [
             "content-length",
@@ -439,12 +439,12 @@
             "SAMEORIGIN"
           ],
           [
-            "permissions-policy",
-            "interest-cohort=()"
-          ],
-          [
             "x-content-type-options",
             "nosniff"
+          ],
+          [
+            "permissions-policy",
+            "interest-cohort=()"
           ],
           [
             "content-length",
@@ -489,12 +489,12 @@
             "SAMEORIGIN"
           ],
           [
-            "permissions-policy",
-            "interest-cohort=()"
-          ],
-          [
             "x-content-type-options",
             "nosniff"
+          ],
+          [
+            "permissions-policy",
+            "interest-cohort=()"
           ],
           [
             "content-length",
@@ -539,12 +539,12 @@
             "SAMEORIGIN"
           ],
           [
-            "permissions-policy",
-            "interest-cohort=()"
-          ],
-          [
             "x-content-type-options",
             "nosniff"
+          ],
+          [
+            "permissions-policy",
+            "interest-cohort=()"
           ],
           [
             "content-length",
@@ -589,12 +589,12 @@
             "SAMEORIGIN"
           ],
           [
-            "permissions-policy",
-            "interest-cohort=()"
-          ],
-          [
             "x-content-type-options",
             "nosniff"
+          ],
+          [
+            "permissions-policy",
+            "interest-cohort=()"
           ],
           [
             "content-length",
@@ -656,12 +656,12 @@
             "SAMEORIGIN"
           ],
           [
-            "permissions-policy",
-            "interest-cohort=()"
-          ],
-          [
             "x-content-type-options",
             "nosniff"
+          ],
+          [
+            "permissions-policy",
+            "interest-cohort=()"
           ],
           [
             "content-length",
@@ -715,12 +715,12 @@
             "SAMEORIGIN"
           ],
           [
-            "permissions-policy",
-            "interest-cohort=()"
-          ],
-          [
             "x-content-type-options",
             "nosniff"
+          ],
+          [
+            "permissions-policy",
+            "interest-cohort=()"
           ],
           [
             "content-length",
@@ -778,12 +778,12 @@
             "SAMEORIGIN"
           ],
           [
-            "permissions-policy",
-            "interest-cohort=()"
-          ],
-          [
             "x-content-type-options",
             "nosniff"
+          ],
+          [
+            "permissions-policy",
+            "interest-cohort=()"
           ],
           [
             "transfer-encoding",
@@ -841,12 +841,12 @@
             "SAMEORIGIN"
           ],
           [
-            "permissions-policy",
-            "interest-cohort=()"
-          ],
-          [
             "x-content-type-options",
             "nosniff"
+          ],
+          [
+            "permissions-policy",
+            "interest-cohort=()"
           ],
           [
             "transfer-encoding",
@@ -900,12 +900,12 @@
             "SAMEORIGIN"
           ],
           [
-            "permissions-policy",
-            "interest-cohort=()"
-          ],
-          [
             "x-content-type-options",
             "nosniff"
+          ],
+          [
+            "permissions-policy",
+            "interest-cohort=()"
           ],
           [
             "content-length",
@@ -959,12 +959,12 @@
             "SAMEORIGIN"
           ],
           [
-            "permissions-policy",
-            "interest-cohort=()"
-          ],
-          [
             "x-content-type-options",
             "nosniff"
+          ],
+          [
+            "permissions-policy",
+            "interest-cohort=()"
           ],
           [
             "content-length",
@@ -1018,12 +1018,12 @@
             "SAMEORIGIN"
           ],
           [
-            "permissions-policy",
-            "interest-cohort=()"
-          ],
-          [
             "x-content-type-options",
             "nosniff"
+          ],
+          [
+            "permissions-policy",
+            "interest-cohort=()"
           ],
           [
             "content-length",
@@ -1089,12 +1089,12 @@
             "SAMEORIGIN"
           ],
           [
-            "permissions-policy",
-            "interest-cohort=()"
-          ],
-          [
             "x-content-type-options",
             "nosniff"
+          ],
+          [
+            "permissions-policy",
+            "interest-cohort=()"
           ],
           [
             "content-length",
@@ -1152,12 +1152,12 @@
             "SAMEORIGIN"
           ],
           [
-            "permissions-policy",
-            "interest-cohort=()"
-          ],
-          [
             "x-content-type-options",
             "nosniff"
+          ],
+          [
+            "permissions-policy",
+            "interest-cohort=()"
           ],
           [
             "content-length",
@@ -1203,12 +1203,12 @@
             "SAMEORIGIN"
           ],
           [
-            "permissions-policy",
-            "interest-cohort=()"
-          ],
-          [
             "x-content-type-options",
             "nosniff"
+          ],
+          [
+            "permissions-policy",
+            "interest-cohort=()"
           ],
           [
             "content-length",
@@ -1255,12 +1255,12 @@
             "SAMEORIGIN"
           ],
           [
-            "permissions-policy",
-            "interest-cohort=()"
-          ],
-          [
             "x-content-type-options",
             "nosniff"
+          ],
+          [
+            "permissions-policy",
+            "interest-cohort=()"
           ],
           [
             "content-length",
@@ -1301,12 +1301,12 @@
             "SAMEORIGIN"
           ],
           [
-            "permissions-policy",
-            "interest-cohort=()"
-          ],
-          [
             "x-content-type-options",
             "nosniff"
+          ],
+          [
+            "permissions-policy",
+            "interest-cohort=()"
           ],
           [
             "content-length",
@@ -1347,12 +1347,12 @@
             "SAMEORIGIN"
           ],
           [
-            "permissions-policy",
-            "interest-cohort=()"
-          ],
-          [
             "x-content-type-options",
             "nosniff"
+          ],
+          [
+            "permissions-policy",
+            "interest-cohort=()"
           ],
           [
             "content-length",
@@ -1393,12 +1393,12 @@
             "SAMEORIGIN"
           ],
           [
-            "permissions-policy",
-            "interest-cohort=()"
-          ],
-          [
             "x-content-type-options",
             "nosniff"
+          ],
+          [
+            "permissions-policy",
+            "interest-cohort=()"
           ],
           [
             "content-length",
@@ -1447,12 +1447,12 @@
             "SAMEORIGIN"
           ],
           [
-            "permissions-policy",
-            "interest-cohort=()"
-          ],
-          [
             "x-content-type-options",
             "nosniff"
+          ],
+          [
+            "permissions-policy",
+            "interest-cohort=()"
           ],
           [
             "content-length",
@@ -1502,12 +1502,12 @@
             "SAMEORIGIN"
           ],
           [
-            "permissions-policy",
-            "interest-cohort=()"
-          ],
-          [
             "x-content-type-options",
             "nosniff"
+          ],
+          [
+            "permissions-policy",
+            "interest-cohort=()"
           ],
           [
             "content-length",
@@ -1556,12 +1556,12 @@
             "SAMEORIGIN"
           ],
           [
-            "permissions-policy",
-            "interest-cohort=()"
-          ],
-          [
             "x-content-type-options",
             "nosniff"
+          ],
+          [
+            "permissions-policy",
+            "interest-cohort=()"
           ],
           [
             "content-length",
@@ -1615,12 +1615,12 @@
             "SAMEORIGIN"
           ],
           [
-            "permissions-policy",
-            "interest-cohort=()"
-          ],
-          [
             "x-content-type-options",
             "nosniff"
+          ],
+          [
+            "permissions-policy",
+            "interest-cohort=()"
           ],
           [
             "content-length",
@@ -1667,12 +1667,12 @@
             "SAMEORIGIN"
           ],
           [
-            "permissions-policy",
-            "interest-cohort=()"
-          ],
-          [
             "x-content-type-options",
             "nosniff"
+          ],
+          [
+            "permissions-policy",
+            "interest-cohort=()"
           ],
           [
             "content-length",
@@ -1719,12 +1719,12 @@
             "SAMEORIGIN"
           ],
           [
-            "permissions-policy",
-            "interest-cohort=()"
-          ],
-          [
             "x-content-type-options",
             "nosniff"
+          ],
+          [
+            "permissions-policy",
+            "interest-cohort=()"
           ],
           [
             "content-length",
@@ -1778,12 +1778,12 @@
             "SAMEORIGIN"
           ],
           [
-            "permissions-policy",
-            "interest-cohort=()"
-          ],
-          [
             "x-content-type-options",
             "nosniff"
+          ],
+          [
+            "permissions-policy",
+            "interest-cohort=()"
           ],
           [
             "content-length",
@@ -1937,12 +1937,12 @@
             "SAMEORIGIN"
           ],
           [
-            "permissions-policy",
-            "interest-cohort=()"
-          ],
-          [
             "x-content-type-options",
             "nosniff"
+          ],
+          [
+            "permissions-policy",
+            "interest-cohort=()"
           ],
           [
             "content-length",
@@ -1996,12 +1996,12 @@
             "SAMEORIGIN"
           ],
           [
-            "permissions-policy",
-            "interest-cohort=()"
-          ],
-          [
             "x-content-type-options",
             "nosniff"
+          ],
+          [
+            "permissions-policy",
+            "interest-cohort=()"
           ],
           [
             "content-length",
@@ -2155,12 +2155,12 @@
             "SAMEORIGIN"
           ],
           [
-            "permissions-policy",
-            "interest-cohort=()"
-          ],
-          [
             "x-content-type-options",
             "nosniff"
+          ],
+          [
+            "permissions-policy",
+            "interest-cohort=()"
           ],
           [
             "content-length",
@@ -2211,12 +2211,12 @@
             "SAMEORIGIN"
           ],
           [
-            "permissions-policy",
-            "interest-cohort=()"
-          ],
-          [
             "x-content-type-options",
             "nosniff"
+          ],
+          [
+            "permissions-policy",
+            "interest-cohort=()"
           ],
           [
             "content-length",
@@ -2253,12 +2253,12 @@
             "SAMEORIGIN"
           ],
           [
-            "permissions-policy",
-            "interest-cohort=()"
-          ],
-          [
             "x-content-type-options",
             "nosniff"
+          ],
+          [
+            "permissions-policy",
+            "interest-cohort=()"
           ],
           [
             "content-length",
@@ -2299,12 +2299,12 @@
             "SAMEORIGIN"
           ],
           [
-            "permissions-policy",
-            "interest-cohort=()"
-          ],
-          [
             "x-content-type-options",
             "nosniff"
+          ],
+          [
+            "permissions-policy",
+            "interest-cohort=()"
           ],
           [
             "content-length",
@@ -2345,12 +2345,12 @@
             "SAMEORIGIN"
           ],
           [
-            "permissions-policy",
-            "interest-cohort=()"
-          ],
-          [
             "x-content-type-options",
             "nosniff"
+          ],
+          [
+            "permissions-policy",
+            "interest-cohort=()"
           ],
           [
             "content-length",
@@ -2397,12 +2397,12 @@
             "SAMEORIGIN"
           ],
           [
-            "permissions-policy",
-            "interest-cohort=()"
-          ],
-          [
             "x-content-type-options",
             "nosniff"
+          ],
+          [
+            "permissions-policy",
+            "interest-cohort=()"
           ],
           [
             "content-length",
@@ -2449,12 +2449,12 @@
             "SAMEORIGIN"
           ],
           [
-            "permissions-policy",
-            "interest-cohort=()"
-          ],
-          [
             "x-content-type-options",
             "nosniff"
+          ],
+          [
+            "permissions-policy",
+            "interest-cohort=()"
           ],
           [
             "content-length",
@@ -2495,12 +2495,12 @@
             "SAMEORIGIN"
           ],
           [
-            "permissions-policy",
-            "interest-cohort=()"
-          ],
-          [
             "x-content-type-options",
             "nosniff"
+          ],
+          [
+            "permissions-policy",
+            "interest-cohort=()"
           ],
           [
             "content-length",
@@ -2541,12 +2541,12 @@
             "SAMEORIGIN"
           ],
           [
-            "permissions-policy",
-            "interest-cohort=()"
-          ],
-          [
             "x-content-type-options",
             "nosniff"
+          ],
+          [
+            "permissions-policy",
+            "interest-cohort=()"
           ],
           [
             "content-length",
@@ -2587,12 +2587,12 @@
             "SAMEORIGIN"
           ],
           [
-            "permissions-policy",
-            "interest-cohort=()"
-          ],
-          [
             "x-content-type-options",
             "nosniff"
+          ],
+          [
+            "permissions-policy",
+            "interest-cohort=()"
           ],
           [
             "content-length",
@@ -2633,12 +2633,12 @@
             "SAMEORIGIN"
           ],
           [
-            "permissions-policy",
-            "interest-cohort=()"
-          ],
-          [
             "x-content-type-options",
             "nosniff"
+          ],
+          [
+            "permissions-policy",
+            "interest-cohort=()"
           ],
           [
             "content-length",
@@ -2679,12 +2679,12 @@
             "SAMEORIGIN"
           ],
           [
-            "permissions-policy",
-            "interest-cohort=()"
-          ],
-          [
             "x-content-type-options",
             "nosniff"
+          ],
+          [
+            "permissions-policy",
+            "interest-cohort=()"
           ],
           [
             "content-length",
@@ -2725,12 +2725,12 @@
             "SAMEORIGIN"
           ],
           [
-            "permissions-policy",
-            "interest-cohort=()"
-          ],
-          [
             "x-content-type-options",
             "nosniff"
+          ],
+          [
+            "permissions-policy",
+            "interest-cohort=()"
           ],
           [
             "content-length",
@@ -2771,12 +2771,12 @@
             "SAMEORIGIN"
           ],
           [
-            "permissions-policy",
-            "interest-cohort=()"
-          ],
-          [
             "x-content-type-options",
             "nosniff"
+          ],
+          [
+            "permissions-policy",
+            "interest-cohort=()"
           ],
           [
             "content-length",
@@ -2817,12 +2817,12 @@
             "SAMEORIGIN"
           ],
           [
-            "permissions-policy",
-            "interest-cohort=()"
-          ],
-          [
             "x-content-type-options",
             "nosniff"
+          ],
+          [
+            "permissions-policy",
+            "interest-cohort=()"
           ],
           [
             "content-length",
@@ -2863,12 +2863,12 @@
             "SAMEORIGIN"
           ],
           [
-            "permissions-policy",
-            "interest-cohort=()"
-          ],
-          [
             "x-content-type-options",
             "nosniff"
+          ],
+          [
+            "permissions-policy",
+            "interest-cohort=()"
           ],
           [
             "content-length",
@@ -2909,12 +2909,12 @@
             "SAMEORIGIN"
           ],
           [
-            "permissions-policy",
-            "interest-cohort=()"
-          ],
-          [
             "x-content-type-options",
             "nosniff"
+          ],
+          [
+            "permissions-policy",
+            "interest-cohort=()"
           ],
           [
             "content-length",
@@ -2955,12 +2955,12 @@
             "SAMEORIGIN"
           ],
           [
-            "permissions-policy",
-            "interest-cohort=()"
-          ],
-          [
             "x-content-type-options",
             "nosniff"
+          ],
+          [
+            "permissions-policy",
+            "interest-cohort=()"
           ],
           [
             "content-length",
@@ -3014,12 +3014,12 @@
             "SAMEORIGIN"
           ],
           [
-            "permissions-policy",
-            "interest-cohort=()"
-          ],
-          [
             "x-content-type-options",
             "nosniff"
+          ],
+          [
+            "permissions-policy",
+            "interest-cohort=()"
           ],
           [
             "transfer-encoding",
@@ -3033,7 +3033,7 @@
         "headerBytes": 272,
         "framing": "chunked",
         "bodyBytes": 8451,
-        "body": "data:{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"priceCents\":18928,\"inStock\":true}\n\ndata:{\"id\":2,\"name\":\"brass-hinge-5716\",\"category\":\"garden\",\"priceCents\":17577,\"inStock\":true}\n\ndata:{\"id\":3,\"name\":\"linen-ring-6971\",\"category\":\"kitchen\",\"priceCents\":5540,\"inStock\":true}\n\ndata:{\"id\":4,\"name\":\"copper-bolt-9217\",\"category\":\"outdoor\",\"priceCents\":11562,\"inStock\":true}\n\ndata:{\"id\":5,\"name\":\"linen-lamp-8288\",\"category\":\"office\",\"priceCents\":1413,\"inStock\":true}\n\ndata:{\"id\":6,\"name\":\"copper-pan-9308\",\"category\":\"tools\",\"priceCents\":10795,\"inStock\":true}\n\ndata:{\"id\":7,\"name\":\"slate-seed-3051\",\"category\":\"garden\",\"priceCents\":9667,\"inStock\":false}\n\ndata:{\"id\":8,\"name\":\"oak-lamp-8662\",\"category\":\"kitchen\",\"priceCents\":18032,\"inStock\":false}\n\ndata:{\"id\":9,\"name\":\"amber-hinge-8405\",\"category\":\"outdoor\",\"priceCents\":9566,\"inStock\":true}\n\ndata:{\"id\":10,\"name\":\"linen-lamp-9676\",\"category\":\"office\",\"priceCents\":4288,\"inStock\":true}\n\ndata:{\"id\":11,\"name\":\"brass-trowel-2042\",\"category\":\"tools\",\"priceCents\":17701,\"inStock\":false}\n\ndata:{\"id\":12,\"name\":\"linen-lamp-5542\",\"category\":\"garden\",\"priceCents\":12163,\"inStock\":true}\n\ndata:{\"id\":13,\"name\":\"linen-seed-9760\",\"category\":\"kitchen\",\"priceCents\":12305,\"inStock\":false}\n\ndata:{\"id\":14,\"name\":\"brass-hinge-4996\",\"category\":\"outdoor\",\"priceCents\":8489,\"inStock\":true}\n\ndata:{\"id\":15,\"name\":\"cedar-hinge-8685\",\"category\":\"office\",\"priceCents\":15667,\"inStock\":true}\n\ndata:{\"id\":16,\"name\":\"slate-seed-3185\",\"category\":\"tools\",\"priceCents\":4111,\"inStock\":true}\n\ndata:{\"id\":17,\"name\":\"cedar-bolt-9891\",\"category\":\"garden\",\"priceCents\":18370,\"inStock\":true}\n\ndata:{\"id\":18,\"name\":\"copper-bolt-8081\",\"category\":\"kitchen\",\"priceCents\":14318,\"inStock\":false}\n:\n\ndata:{\"id\":19,\"name\":\"amber-seed-4209\",\"category\":\"outdoor\",\"priceCents\":15424,\"inStock\":true}\n\ndata:{\"id\":20,\"name\":\"oak-bolt-9982\",\"category\":\"office\",\"priceCents\":9582,\"inStock\":true}\n\ndata:{\"id\":21,\"name\":\"slate-bolt-7099\",\"category\":\"tools\",\"priceCents\":6732,\"inStock\":false}\n\ndata:{\"id\":22,\"name\":\"brass-seed-9718\",\"category\":\"garde",
+        "body": "data:{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"priceCents\":18928,\"inStock\":true}\n\ndata:{\"id\":2,\"name\":\"brass-hinge-5716\",\"category\":\"garden\",\"priceCents\":17577,\"inStock\":true}\n\ndata:{\"id\":3,\"name\":\"linen-ring-6971\",\"category\":\"kitchen\",\"priceCents\":5540,\"inStock\":true}\n\ndata:{\"id\":4,\"name\":\"copper-bolt-9217\",\"category\":\"outdoor\",\"priceCents\":11562,\"inStock\":true}\n\ndata:{\"id\":5,\"name\":\"linen-lamp-8288\",\"category\":\"office\",\"priceCents\":1413,\"inStock\":true}\n\ndata:{\"id\":6,\"name\":\"copper-pan-9308\",\"category\":\"tools\",\"priceCents\":10795,\"inStock\":true}\n\ndata:{\"id\":7,\"name\":\"slate-seed-3051\",\"category\":\"garden\",\"priceCents\":9667,\"inStock\":false}\n\ndata:{\"id\":8,\"name\":\"oak-lamp-8662\",\"category\":\"kitchen\",\"priceCents\":18032,\"inStock\":false}\n\ndata:{\"id\":9,\"name\":\"amber-hinge-8405\",\"category\":\"outdoor\",\"priceCents\":9566,\"inStock\":true}\n\ndata:{\"id\":10,\"name\":\"linen-lamp-9676\",\"category\":\"office\",\"priceCents\":4288,\"inStock\":true}\n\ndata:{\"id\":11,\"name\":\"brass-trowel-2042\",\"category\":\"tools\",\"priceCents\":17701,\"inStock\":false}\n\ndata:{\"id\":12,\"name\":\"linen-lamp-5542\",\"category\":\"garden\",\"priceCents\":12163,\"inStock\":true}\n\ndata:{\"id\":13,\"name\":\"linen-seed-9760\",\"category\":\"kitchen\",\"priceCents\":12305,\"inStock\":false}\n\ndata:{\"id\":14,\"name\":\"brass-hinge-4996\",\"category\":\"outdoor\",\"priceCents\":8489,\"inStock\":true}\n\ndata:{\"id\":15,\"name\":\"cedar-hinge-8685\",\"category\":\"office\",\"priceCents\":15667,\"inStock\":true}\n\ndata:{\"id\":16,\"name\":\"slate-seed-3185\",\"category\":\"tools\",\"priceCents\":4111,\"inStock\":true}\n\ndata:{\"id\":17,\"name\":\"cedar-bolt-9891\",\"category\":\"garden\",\"priceCents\":18370,\"inStock\":true}\n\ndata:{\"id\":18,\"name\":\"copper-bolt-8081\",\"category\":\"kitchen\",\"priceCents\":14318,\"inStock\":false}\n\ndata:{\"id\":19,\"name\":\"amber-seed-4209\",\"category\":\"outdoor\",\"priceCents\":15424,\"inStock\":true}\n\ndata:{\"id\":20,\"name\":\"oak-bolt-9982\",\"category\":\"office\",\"priceCents\":9582,\"inStock\":true}\n\ndata:{\"id\":21,\"name\":\"slate-bolt-7099\",\"category\":\"tools\",\"priceCents\":6732,\"inStock\":false}\n\ndata:{\"id\":22,\"name\":\"brass-seed-9718\",\"category\":\"garden\"",
         "truncated": true
       }
     },
@@ -3041,7 +3041,12 @@
       "request": {
         "method": "GET",
         "target": "/static/items.large.json",
-        "headers": [],
+        "headers": [
+          [
+            "accept-encoding",
+            "gzip"
+          ]
+        ],
         "bodyBytes": 0
       },
       "response": {
@@ -3064,12 +3069,12 @@
             "SAMEORIGIN"
           ],
           [
-            "permissions-policy",
-            "interest-cohort=()"
-          ],
-          [
             "x-content-type-options",
             "nosniff"
+          ],
+          [
+            "permissions-policy",
+            "interest-cohort=()"
           ],
           [
             "content-length",
@@ -3110,12 +3115,12 @@
             "SAMEORIGIN"
           ],
           [
-            "permissions-policy",
-            "interest-cohort=()"
-          ],
-          [
             "x-content-type-options",
             "nosniff"
+          ],
+          [
+            "permissions-policy",
+            "interest-cohort=()"
           ],
           [
             "transfer-encoding",
@@ -3156,12 +3161,12 @@
             "SAMEORIGIN"
           ],
           [
-            "permissions-policy",
-            "interest-cohort=()"
-          ],
-          [
             "x-content-type-options",
             "nosniff"
+          ],
+          [
+            "permissions-policy",
+            "interest-cohort=()"
           ],
           [
             "content-length",
@@ -3202,12 +3207,12 @@
             "SAMEORIGIN"
           ],
           [
-            "permissions-policy",
-            "interest-cohort=()"
-          ],
-          [
             "x-content-type-options",
             "nosniff"
+          ],
+          [
+            "permissions-policy",
+            "interest-cohort=()"
           ],
           [
             "content-length",

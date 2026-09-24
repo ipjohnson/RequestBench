@@ -76,7 +76,7 @@
         "headerBytes": 148,
         "framing": "chunked",
         "bodyBytes": 129,
-        "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.4\",\"title\":\"Forbidden\",\"status\":403,\"traceId\":\"0HNOOUJ525EBR:00000003\"}",
+        "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.4\",\"title\":\"Forbidden\",\"status\":403,\"traceId\":\"0HNOQCNH17ULO:00000003\"}",
         "truncated": false
       }
     },
@@ -230,7 +230,7 @@
         "headerBytes": 150,
         "framing": "chunked",
         "bodyBytes": 374,
-        "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.1\",\"title\":\"One or more validation errors occurred.\",\"status\":400,\"errors\":{\"CustomerId\":[\"The field CustomerId must be between 1 and 2147483647.\"],\"Status\":[\"The Status field is required.\"],\"Lines\":[\"The field Lines must be a string or array type with a minimum length of '1'.\"]},\"traceId\":\"0HNOOUJ525EBR:0000000B\"}",
+        "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.1\",\"title\":\"One or more validation errors occurred.\",\"status\":400,\"errors\":{\"CustomerId\":[\"The field CustomerId must be between 1 and 2147483647.\"],\"Status\":[\"The Status field is required.\"],\"Lines\":[\"The field Lines must be a string or array type with a minimum length of '1'.\"]},\"traceId\":\"0HNOQCNH17ULO:0000000B\"}",
         "truncated": false
       }
     },
@@ -270,7 +270,7 @@
         "headerBytes": 150,
         "framing": "chunked",
         "bodyBytes": 242,
-        "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.1\",\"title\":\"One or more validation errors occurred.\",\"status\":400,\"errors\":{\"CustomerId\":[\"The field CustomerId must be between 1 and 2147483647.\"]},\"traceId\":\"0HNOOUJ525EBR:0000000D\"}",
+        "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.1\",\"title\":\"One or more validation errors occurred.\",\"status\":400,\"errors\":{\"CustomerId\":[\"The field CustomerId must be between 1 and 2147483647.\"]},\"traceId\":\"0HNOQCNH17ULO:0000000D\"}",
         "truncated": false
       }
     },
@@ -1065,7 +1065,7 @@
         "headerBytes": 150,
         "framing": "chunked",
         "bodyBytes": 131,
-        "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.1\",\"title\":\"Bad Request\",\"status\":400,\"traceId\":\"0HNOOUJ525EBR:00000029\"}",
+        "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.1\",\"title\":\"Bad Request\",\"status\":400,\"traceId\":\"0HNOQCNH17ULO:00000029\"}",
         "truncated": false
       }
     },
@@ -1099,7 +1099,7 @@
         "headerBytes": 148,
         "framing": "chunked",
         "bodyBytes": 129,
-        "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.5\",\"title\":\"Not Found\",\"status\":404,\"traceId\":\"0HNOOUJ525EBR:0000002B\"}",
+        "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.5\",\"title\":\"Not Found\",\"status\":404,\"traceId\":\"0HNOQCNH17ULO:0000002B\"}",
         "truncated": false
       }
     },
@@ -1133,7 +1133,7 @@
         "headerBytes": 148,
         "framing": "chunked",
         "bodyBytes": 129,
-        "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.5\",\"title\":\"Not Found\",\"status\":404,\"traceId\":\"0HNOOUJ525EBR:0000002D\"}",
+        "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.5\",\"title\":\"Not Found\",\"status\":404,\"traceId\":\"0HNOQCNH17ULO:0000002D\"}",
         "truncated": false
       }
     },
@@ -1171,7 +1171,7 @@
         "headerBytes": 195,
         "framing": "chunked",
         "bodyBytes": 138,
-        "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.6\",\"title\":\"Method Not Allowed\",\"status\":405,\"traceId\":\"0HNOOUJ525EBR:0000002F\"}",
+        "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.6\",\"title\":\"Method Not Allowed\",\"status\":405,\"traceId\":\"0HNOQCNH17ULO:0000002F\"}",
         "truncated": false
       }
     },
@@ -2456,16 +2456,17 @@
       "request": {
         "method": "GET",
         "target": "/static/items.large.json",
-        "headers": [],
+        "headers": [
+          [
+            "accept-encoding",
+            "gzip"
+          ]
+        ],
         "bodyBytes": 0
       },
       "response": {
         "status": 200,
         "headers": [
-          [
-            "content-length",
-            "129937"
-          ],
           [
             "content-type",
             "application/json"
@@ -2483,17 +2484,29 @@
             "bytes"
           ],
           [
+            "content-encoding",
+            "gzip"
+          ],
+          [
             "etag",
-            "\"1dd4ad646abcc91\""
+            "\"1dd4c4ea5934791\""
           ],
           [
             "last-modified",
             "<varies>"
+          ],
+          [
+            "transfer-encoding",
+            "chunked"
+          ],
+          [
+            "vary",
+            "Accept-Encoding"
           ]
         ],
-        "headerBytes": 222,
-        "framing": "content-length",
-        "bodyBytes": 129937,
+        "headerBytes": 273,
+        "framing": "chunked",
+        "bodyBytes": 31248,
         "body": "{\"size\":\"large\",\"count\":1425,\"items\":[\n{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"priceCents\":18928,\"inStock\":true},\n{\"id\":2,\"name\":\"brass-hinge-5716\",\"category\":\"garden\",\"priceCents\":17577,\"inStock\":true},\n{\"id\":3,\"name\":\"linen-ring-6971\",\"category\":\"kitchen\",\"priceCents\":5540,\"inStock\":true},\n{\"id\":4,\"name\":\"copper-bolt-9217\",\"category\":\"outdoor\",\"priceCents\":11562,\"inStock\":true},\n{\"id\":5,\"name\":\"linen-lamp-8288\",\"category\":\"office\",\"priceCents\":1413,\"inStock\":true},\n{\"id\":6,\"name\":\"copper-pan-9308\",\"category\":\"tools\",\"priceCents\":10795,\"inStock\":true},\n{\"id\":7,\"name\":\"slate-seed-3051\",\"category\":\"garden\",\"priceCents\":9667,\"inStock\":false},\n{\"id\":8,\"name\":\"oak-lamp-8662\",\"category\":\"kitchen\",\"priceCents\":18032,\"inStock\":false},\n{\"id\":9,\"name\":\"amber-hinge-8405\",\"category\":\"outdoor\",\"priceCents\":9566,\"inStock\":true},\n{\"id\":10,\"name\":\"linen-lamp-9676\",\"category\":\"office\",\"priceCents\":4288,\"inStock\":true},\n{\"id\":11,\"name\":\"brass-trowel-2042\",\"category\":\"tools\",\"priceCents\":17701,\"inStock\":false},\n{\"id\":12,\"name\":\"linen-lamp-5542\",\"category\":\"garden\",\"priceCents\":12163,\"inStock\":true},\n{\"id\":13,\"name\":\"linen-seed-9760\",\"category\":\"kitchen\",\"priceCents\":12305,\"inStock\":false},\n{\"id\":14,\"name\":\"brass-hinge-4996\",\"category\":\"outdoor\",\"priceCents\":8489,\"inStock\":true},\n{\"id\":15,\"name\":\"cedar-hinge-8685\",\"category\":\"office\",\"priceCents\":15667,\"inStock\":true},\n{\"id\":16,\"name\":\"slate-seed-3185\",\"category\":\"tools\",\"priceCents\":4111,\"inStock\":true},\n{\"id\":17,\"name\":\"cedar-bolt-9891\",\"category\":\"garden\",\"priceCents\":18370,\"inStock\":true},\n{\"id\":18,\"name\":\"copper-bolt-8081\",\"category\":\"kitchen\",\"priceCents\":14318,\"inStock\":false},\n{\"id\":19,\"name\":\"amber-seed-4209\",\"category\":\"outdoor\",\"priceCents\":15424,\"inStock\":true},\n{\"id\":20,\"name\":\"oak-bolt-9982\",\"category\":\"office\",\"priceCents\":9582,\"inStock\":true},\n{\"id\":21,\"name\":\"slate-bolt-7099\",\"category\":\"tools\",\"priceCents\":6732,\"inStock\":false},\n{\"id\":22,\"name\":\"brass-seed-9718\",\"category\":\"garden\",\"priceCents\":17198,\"inStock\":true},\n{\"id\":23,\"name\":\"cedar-desk-4039\",",
         "truncated": true
       }
