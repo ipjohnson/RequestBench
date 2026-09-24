@@ -121,17 +121,6 @@ const measure = (r: PaneRung): { fields: Field[]; measured: boolean } => {
       pct(["p95", "p95Us"]),
       pct(["p99", "p99Us"]),
       pct(["p99.9", "p999Us"]),
-      // A closed loop's invoke phase is the percentiles above, and its other spans follow at p50.
-      ...Object.entries(d.spans ?? {}).map(
-        ([span, s]): Field => ({
-          k: `${span} p50`,
-          m: `${span}.p50Us`,
-          n: s.p50Us,
-          v: cell(s.p50Us, "us"),
-          title: `${span} at p99 is ${cell(s.p99Us, "us")}.`,
-          base: under(cell(b.spans?.[span]?.p50Us, "us"), null, "us", ""),
-        }),
-      ),
       {
         k: "size",
         m: "sbz",

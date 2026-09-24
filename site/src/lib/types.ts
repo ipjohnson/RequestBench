@@ -58,16 +58,6 @@ export const Hist = z.object({
 });
 export type Hist = z.infer<typeof Hist>;
 
-/** The percentiles of one span of a closed-loop invocation. */
-export const SpanStats = z.looseObject({
-  p50Us: z.number().nullable().optional(),
-  p90Us: z.number().nullable().optional(),
-  p95Us: z.number().nullable().optional(),
-  p99Us: z.number().nullable().optional(),
-  p999Us: z.number().nullable().optional(),
-});
-export type SpanStats = z.infer<typeof SpanStats>;
-
 /** One test's statistics at one rung. The keys are narrower than a rung's. */
 export const TestRung = z.looseObject({
   count: z.number().optional(),
@@ -82,8 +72,6 @@ export const TestRung = z.looseObject({
   bins: z.array(z.number()).optional(),
   /** The same on `histGrid`, fine enough to read a blend's percentiles from. */
   hist: Hist.optional(),
-  /** A closed loop's spans beside the invoke phase, which the percentiles above are. */
-  spans: z.record(z.string(), SpanStats).optional(),
 });
 export type TestRung = z.infer<typeof TestRung>;
 
