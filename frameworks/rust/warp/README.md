@@ -118,6 +118,9 @@ container runs two workers under its two-CPU budget, whichever way the budget is
 - The allocator is mimalloc, set as the global allocator in `main.rs`. A server of this shape
   allocates on every request, and the benchmark runs every Rust framework on the same allocator so
   that a difference between two of them is the framework.
+- container-h2 lists `items.head` as unsupported. Over HTTP/2, warp sends the row its filter answers
+  HEAD with as a DATA frame. HTTP/2 allows no content in an answer to HEAD, so the client resets the
+  stream.
 
 ## Refusals
 

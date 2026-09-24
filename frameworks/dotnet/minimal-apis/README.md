@@ -94,6 +94,9 @@ Client section says.
 - Minimal APIs have no package of their own. They ship in the ASP.NET Core shared framework, which
   the image takes from the aspnet runtime image. `/__meta` reports the version of that shared
   framework, and rb.json's `package` is that image's registry page.
+- container-h2 lists `items.head` as unsupported. Over HTTP/2, Kestrel sends the row the handler
+  writes for HEAD as a DATA frame. HTTP/2 allows no content in an answer to HEAD, so the client
+  resets the stream. Over HTTP/1.1 Kestrel leaves the row unwritten.
 
 ## Refusals
 

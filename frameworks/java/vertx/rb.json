@@ -8,7 +8,12 @@
   "lockfile": ["pom.xml", "Implementation/pom.xml"],
   "hosts": {
     "container-h1": { "dockerfile": "container-h1/Dockerfile" },
-    "container-h2": { "dockerfile": "container-h2/Dockerfile" }
+    "container-h2": {
+      "dockerfile": "container-h2/Dockerfile",
+      "unsupported": {
+        "items.head": "Over HTTP/2, Vert.x sends the row the route writes for HEAD as a DATA frame. HTTP/2 allows no content in an answer to HEAD, so the client resets the stream."
+      }
+    }
   },
   "suite": { "argv": ["mvn", "-B", "test"], "paths": ["UnitTests"] },
   "upgrade": {

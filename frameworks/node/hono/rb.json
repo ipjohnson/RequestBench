@@ -8,7 +8,12 @@
   "lockfile": ["package-lock.json"],
   "hosts": {
     "container-h1": { "dockerfile": "container-h1/Dockerfile" },
-    "container-h2": { "dockerfile": "container-h2/Dockerfile" }
+    "container-h2": {
+      "dockerfile": "container-h2/Dockerfile",
+      "unsupported": {
+        "sse.medium": "hono's streamSSE sets Transfer-Encoding, which node:http2 refuses as a connection-specific header. The throw escapes @hono/node-server's error handler and ends the process."
+      }
+    }
   },
   "suite": { "argv": ["npm", "install-ci-test"], "paths": ["UnitTests"] },
   "upgrade": { "argv": ["npm", "update"] },
