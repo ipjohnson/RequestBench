@@ -121,6 +121,8 @@ beside the plain jar under the `exec` classifier, because UnitTests compiles aga
 - The container runs `java -jar` as PID 1 with the collector and heap the JVM chooses. The JVM
   reads the container's CPU quota and counts 2 CPUs under `--cpus 2`. On SIGTERM it exits in under
   a second. Javalin registers no shutdown hook, so a request in flight is not finished.
+- Javalin implements no lambda-emulator. Javalin ships no AWS Lambda adapter, and its maintainers
+  declined to add one in [javalin issue 2576](https://github.com/javalin/javalin/issues/2576).
 
 ## Refusals
 
