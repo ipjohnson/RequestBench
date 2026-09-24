@@ -1,13 +1,19 @@
 # Measures every framework on each host some framework implements. Each host is its own job on its
 # own GitHub-hosted runner, and within a host the frameworks run one after another on that runner,
 # so every number in a run was taken on the same machine. Each run's summary is added to the
-# results branch under runs/<month>/, and pages.yml publishes the site when this finishes.
+# results branch under runs/<month>/, and pages.yml publishes the site when this finishes. A run
+# started by hand can name one host, such as `gh workflow run measure.yml -f host=lambda-emulator`.
 name: measure
 
 on:
   schedule:
     - cron: "0 2 * * *"
   workflow_dispatch:
+    inputs:
+      host:
+        description: The one host to measure, such as lambda-emulator. Empty measures every host.
+        required: false
+        default: ""
 
 concurrency:
   group: measure
@@ -23,10 +29,20 @@ jobs:
       hosts: ${{ steps.pick.outputs.hosts }}
     steps:
       - uses: actions/checkout@v7
-      # Every host an rb.json names, so a host no framework implements yet gets no job.
+      # Every host an rb.json names, so a host no framework implements yet gets no job, or the one
+      # host a run started by hand names.
       - id: pick
+        env:
+          HOST: ${{ inputs.host }}
         run: |
           hosts=$(git ls-files -- ':(glob)frameworks/*/*/rb.json' | xargs -n1 jq -r '.hosts | keys[]' | sort -u | jq -Rnc '[inputs]')
+          if [ -n "$HOST" ]; then
+            hosts=$(jq -c --arg host "$HOST" 'map(select(. == $host))' <<< "$hosts")
+            if [ "$hosts" = "[]" ]; then
+              echo "::error::No framework implements $HOST."
+              exit 1
+            fi
+          fi
           echo "hosts=$hosts" >> "$GITHUB_OUTPUT"
           echo "Hosts to measure: $hosts"
 
