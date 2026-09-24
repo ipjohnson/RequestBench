@@ -749,6 +749,16 @@ mod tests {
         fn connections(&self) -> usize {
             self.accepted.lock().unwrap().len()
         }
+
+        /// Waits until it has accepted `n` connections. A client's connect returns before the
+        /// stub's thread has taken the connection off the listener.
+        async fn opened(&self, n: usize) {
+            let deadline = std::time::Instant::now() + Duration::from_secs(5);
+            while self.connections() < n {
+                assert!(std::time::Instant::now() < deadline, "the stub accepted {} of {n} connections", self.connections());
+                tokio::time::sleep(Duration::from_millis(1)).await;
+            }
+        }
     }
 
     async fn http1(port: u16, tests: Vec<Test>) -> Load {
@@ -825,6 +835,7 @@ mod tests {
     async fn a_connection_the_framework_closes_while_idle_is_opened_again_only_by_the_next_phase() {
         let stub = Stub::start(|_| (OK, false));
         let mut load = http1(stub.port, only("GET")).await;
+        stub.opened(1).await;
         stub.accepted.lock().unwrap()[0].shutdown(Shutdown::Both).unwrap();
         tokio::time::sleep(Duration::from_millis(50)).await;
         assert_eq!(stub.connections(), 1, "nothing chased the idle close");
