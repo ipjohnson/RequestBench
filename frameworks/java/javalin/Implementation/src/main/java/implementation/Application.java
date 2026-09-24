@@ -2,6 +2,7 @@ package implementation;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.function.Consumer;
 
 import implementation.routes.AuthorizedRoutes;
 import implementation.routes.BaselineRoutes;
@@ -23,6 +24,7 @@ import implementation.routes.StaticRoutes;
 import implementation.routes.StreamRoutes;
 import implementation.routes.TemplateRoutes;
 import io.javalin.Javalin;
+import io.javalin.config.JavalinConfig;
 import io.javalin.compression.CompressionStrategy;
 import io.javalin.compression.Gzip;
 
@@ -45,6 +47,11 @@ public final class Application {
      * first.
      */
     public static Javalin create(Payloads p) {
+        return create(p, config -> {});
+    }
+
+    /** The application, with a host's own settings applied after its own. */
+    public static Javalin create(Payloads p, Consumer<JavalinConfig> host) {
         return Javalin.create(config -> {
             config.startup.showJavalinBanner = false;
             // rb:wiring compressed.*
@@ -70,6 +77,7 @@ public final class Application {
             new SseRoutes(p).register(config);
             new StaticRoutes(p).register(config);
             new ContractRoutes().register(config);
+            host.accept(config);
         });
     }
 }
