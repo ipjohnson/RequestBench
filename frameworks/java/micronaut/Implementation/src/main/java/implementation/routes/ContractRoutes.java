@@ -2,6 +2,7 @@ package implementation.routes;
 
 import java.lang.management.ManagementFactory;
 
+import io.micronaut.core.util.NativeImageUtils;
 import io.micronaut.core.version.VersionUtils;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.Controller;
@@ -44,8 +45,11 @@ public class ContractRoutes {
         return "ok";
     }
 
+    // lambda-emulator's function is a native image, whose Runtime.version() is that of the JDK the
+    // image was built with.
     @Get("/__meta")
     public Meta meta() {
-        return new Meta("Micronaut", VersionUtils.getMicronautVersion(), "Java " + Runtime.version(), ADAPTER, SERIALIZER, bootMs);
+        String runtime = "Java " + Runtime.version() + (NativeImageUtils.inImageRuntimeCode() ? " native image" : "");
+        return new Meta("Micronaut", VersionUtils.getMicronautVersion(), runtime, ADAPTER, SERIALIZER, bootMs);
     }
 }
