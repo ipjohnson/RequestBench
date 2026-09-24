@@ -13,7 +13,8 @@ header, so the views do both, and a `django.forms.Form` binds and validates ever
 
 | Path | What it is |
 | --- | --- |
-| `Implementation/` | The application. `server.py` starts uvicorn, `asgi.py` is what each worker imports, `settings.py` configures Django and loads the payloads, `urls.py` routes every path, and `views/` holds one module per corpus family. |
+| `Implementation/` | The application. `asgi.py` is what each worker imports, `settings.py` configures Django and loads the payloads, `urls.py` routes every path, and `views/` holds one module per corpus family. |
+| `container-h1/` | How container-h1 starts it. `server.py` starts uvicorn with two workers, and `Dockerfile` builds the image. |
 | `UnitTests/` | pytest tests of the wiring, sending each request through Django's AsyncClient. |
 | `client-exception/` | How the corpus reads Django's error bodies. |
 | `pyproject.toml` | The dependencies, the suite's dependencies, and pytest's settings. |
@@ -23,7 +24,7 @@ header, so the views do both, and a `django.forms.Form` binds and validates ever
 
 ```sh
 uv sync
-cd Implementation && RB_PAYLOADS=../../../../tests/payloads PORT=8080 ../.venv/bin/python server.py
+cd Implementation && RB_PAYLOADS=../../../../tests/payloads PORT=8080 ../.venv/bin/python ../container-h1/server.py
 uv run pytest
 ```
 

@@ -7,7 +7,7 @@
   "docs": "https://quarkus.io/guides/",
   "lockfile": ["pom.xml", "Implementation/pom.xml"],
   "hosts": {
-    "container-h1": { "dockerfile": "Dockerfile" }
+    "container-h1": { "dockerfile": "container-h1/Dockerfile" }
   },
   "suite": { "argv": ["mvn", "-B", "test"], "paths": ["UnitTests"] },
   "upgrade": {

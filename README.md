@@ -109,7 +109,11 @@ scheduled moment, and its latency counts from that moment. A backlog in the fram
 generator therefore shows up as latency. Requests are built before timing starts, and the
 generator reads each response with its own minimal HTTP/1.1 client.
 
-The only host is `container-h1`: the framework's image in a container, reached over HTTP/1.1. Each
+A host is where a framework is started and how it is reached, and each host is its own run.
+`container-h1` is the framework's image in a container, reached over HTTP/1.1. `container-h2`
+reaches the same image over HTTP/2, and `lambda-emulator` runs the framework as a Lambda function.
+Both are being added in [#190](https://github.com/ipjohnson/RequestBench/issues/190), and
+`validate` and `measure` refuse them until the traffic generator speaks their protocols. Each
 framework's container gets 2 CPUs. These variables change where things run:
 
 | Variable | Effect |
@@ -125,10 +129,10 @@ A run is recorded only when it was made on Linux, from a clean working tree, at 
 over the whole corpus at full length. The site shows only recorded runs unless it is built with
 `--unrecorded`.
 
-[`measure.yml`](.github/workflows/measure.yml) measures every framework each night on one
-GitHub-hosted runner, with the framework on cores 0 and 1 and the generator on cores 2 and 3. It
-adds the run's summary to the `results` branch, under `runs/`, and
-[`pages.yml`](.github/workflows/pages.yml) then publishes the site from every summary there.
+[`measure.yml`](.github/workflows/measure.yml) measures every framework each night, one
+GitHub-hosted runner for each host a framework implements, with the framework on cores 0 and 1 and
+the generator on cores 2 and 3. It adds each run's summary to the `results` branch, under `runs/`,
+and [`pages.yml`](.github/workflows/pages.yml) then publishes the site from every summary there.
 
 ## Commands
 

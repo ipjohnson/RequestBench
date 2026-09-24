@@ -16,8 +16,9 @@ by hand.
 
 | Path | What it is |
 | --- | --- |
-| `Implementation/` | The application: a library with one stage per corpus family under `routes/`, each mounting its routes on the one Rocket, and the server binary, `main.rs`. |
+| `Implementation/` | The application: a library with one stage per corpus family under `routes/`, each mounting its routes on the one Rocket. |
 | `Implementation/templates/` | The template, which rocket_dyn_templates reads from disk when Rocket ignites. |
+| `container-h1/` | How container-h1 starts it. `main.rs` is the server binary, and `Dockerfile` builds the image. |
 | `UnitTests/` | The suite, which drives the application in process with Rocket's local client. |
 | `client-exception/` | How the corpus reads Rocket's error bodies. |
 | `Cargo.toml` | One package: the library, the binary and the suite, each at its own path. |

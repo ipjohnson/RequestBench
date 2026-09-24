@@ -13,7 +13,8 @@ the automatic HEAD and OPTIONS routes, templating and the OpenAPI document.
 
 | Path | What it is |
 | --- | --- |
-| `Implementation/` | The application. `server.py` starts Sanic's manager, `main.py` holds the factory each worker builds the application with, `app.py` builds it, `routes/` holds one module per corpus family, and `documented.py` holds what the OpenAPI document says beyond what sanic-ext reads from a route. |
+| `Implementation/` | The application. `main.py` holds the factory each worker builds the application with, `app.py` builds it, `routes/` holds one module per corpus family, and `documented.py` holds what the OpenAPI document says beyond what sanic-ext reads from a route. |
+| `container-h1/` | How container-h1 starts it. `server.py` starts Sanic's manager with two workers, and `Dockerfile` builds the image. |
 | `UnitTests/` | pytest tests of the wiring, sending each request to Sanic's own server through sanic-testing's ReusableClient, and tests of the Kiota client against `server.py`. |
 | `Client/` | The OpenAPI document sanic-ext builds from the routes, the Python client Kiota generates from it, and the two scripts that write them. |
 | `client-exception/` | How the corpus reads Sanic's error bodies. |
@@ -24,7 +25,7 @@ the automatic HEAD and OPTIONS routes, templating and the OpenAPI document.
 
 ```sh
 uv sync
-cd Implementation && RB_PAYLOADS=../../../../tests/payloads PORT=8080 ../.venv/bin/python server.py
+cd Implementation && RB_PAYLOADS=../../../../tests/payloads PORT=8080 ../.venv/bin/python ../container-h1/server.py
 uv run pytest
 ```
 

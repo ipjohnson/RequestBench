@@ -13,7 +13,8 @@ validator crate, the template engine is Tera, and the cache and the etag family 
 
 | Path | What it is |
 | --- | --- |
-| `Implementation/` | The application: a library with one module per corpus family under `routes/`, each adding its paths to the one `Route`, and the server binary, `main.rs`. |
+| `Implementation/` | The application: a library with one module per corpus family under `routes/`, each adding its paths to the one `Route`. |
+| `container-h1/` | How container-h1 starts it. `main.rs` is the server binary, and `Dockerfile` builds the image. |
 | `UnitTests/` | The suite, which drives the `Route` in process with poem's `TestClient`. |
 | `client-exception/` | How the corpus reads poem's error bodies. |
 | `Cargo.toml` | One package: the library, the binary and the suite, each at its own path. |

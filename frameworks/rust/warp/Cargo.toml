@@ -3,8 +3,8 @@ name = "rb-warp"
 version = "0.0.0"
 edition = "2024"
 publish = false
-# The application is in Implementation/ and the suite in UnitTests/, so every target names its
-# path rather than following cargo's src/ and tests/.
+# The application is in Implementation/, container-h1's server binary in container-h1/ and the
+# suite in UnitTests/, so every target names its path rather than following cargo's src/ and tests/.
 build = "Implementation/build.rs"
 autobins = false
 autotests = false
@@ -18,7 +18,7 @@ doctest = false
 
 [[bin]]
 name = "server"
-path = "Implementation/main.rs"
+path = "container-h1/main.rs"
 test = false
 
 [[test]]

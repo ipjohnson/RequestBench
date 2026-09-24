@@ -6,7 +6,7 @@
   "package": "https://www.nuget.org/packages/Carter",
   "lockfile": ["Implementation/packages.lock.json"],
   "hosts": {
-    "container-h1": { "dockerfile": "Dockerfile" }
+    "container-h1": { "dockerfile": "container-h1/Dockerfile" }
   },
   "suite": { "argv": ["dotnet", "test", "UnitTests"], "paths": ["UnitTests"] },
   "upgrade": null,

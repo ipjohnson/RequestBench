@@ -13,6 +13,7 @@ router, its validator, its bundled plugins, or one of its rendering modules.
 | Path | What it is |
 | --- | --- |
 | `Implementation/` | The application, a Maven module. One class per corpus family under `src/main/java/implementation/routes/`, each adding its routes to the config. |
+| `container-h1/` | The `Dockerfile` that builds the image container-h1 runs. |
 | `UnitTests/` | JUnit tests of the wiring, a Maven module. Each test starts the Implementation on a random port with javalin-testtools' `JavalinTest.test`. |
 | `Client/` | The OpenAPI document javalin-openapi writes from the handlers' `@OpenApi` annotations, and the Java client OpenAPI Generator writes from it, a Maven module. |
 | `client-exception/` | How the corpus reads Javalin's error bodies. |

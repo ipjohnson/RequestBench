@@ -1,5 +1,5 @@
 {
-  "comment": "Echo 5.3 on Go 1.27, one function per family registering its routes in the implementation package under Implementation/, and the server's main package in Implementation/cmd/server. The suite is UnitTests/, go test over the instance served by net/http/httptest, and never reaches the image. Every handler returns its failure to Echo's default error handler, which writes the error's message as JSON. e.Validator is the CustomValidator adapter Echo's guide shows over go-playground, returning echo.NewHTTPError with the validator's text, because the guide's echo.ErrBadRequest.Wrap is written as Bad Request and names no field. The validator names fields by their json names through go-playground's tag-name hook. The first-error route is wired by hand, because go-playground cannot stop at the first failure. The lockfile is go.mod, which records every module version the build selects, and go.sum, which holds their hashes. upgrade is go get -u ./..., which moves every module to its newest release within its major version.",
+  "comment": "Echo 5.3 on Go 1.27, one function per family registering its routes in the implementation package under Implementation/, and the server's main package in container-h1. The suite is UnitTests/, go test over the instance served by net/http/httptest, and never reaches the image. Every handler returns its failure to Echo's default error handler, which writes the error's message as JSON. e.Validator is the CustomValidator adapter Echo's guide shows over go-playground, returning echo.NewHTTPError with the validator's text, because the guide's echo.ErrBadRequest.Wrap is written as Bad Request and names no field. The validator names fields by their json names through go-playground's tag-name hook. The first-error route is wired by hand, because go-playground cannot stop at the first failure. The lockfile is go.mod, which records every module version the build selects, and go.sum, which holds their hashes. upgrade is go get -u ./..., which moves every module to its newest release within its major version.",
   "framework": "Echo",
   "licence": "MIT",
   "repo": "https://github.com/labstack/echo",
@@ -7,7 +7,7 @@
   "docs": "https://echo.labstack.com/",
   "lockfile": ["go.mod", "go.sum"],
   "hosts": {
-    "container-h1": { "dockerfile": "Dockerfile" }
+    "container-h1": { "dockerfile": "container-h1/Dockerfile" }
   },
   "suite": { "argv": ["go", "test", "./..."], "paths": ["UnitTests"] },
   "upgrade": { "argv": ["go", "get", "-u", "./..."] },

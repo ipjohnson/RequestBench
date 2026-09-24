@@ -33,8 +33,8 @@ There are two kinds of test:
 ## Adding a framework
 
 1. Create `frameworks/<language>/<name>/` with the files in [Layout](#layout).
-2. Write the application and its `Dockerfile`. See [The application](#the-application) and
-   [The container](#the-container).
+2. Write the application, and `container-h1/` with its `Dockerfile`. See
+   [The application](#the-application), [Hosts](#hosts) and [The container](#the-container).
 3. Write `rb.json`. See [rb.json](#rbjson).
 4. Write `client-exception/index.ts` and register it. See [client-exception](#client-exception).
 5. Write the framework's own tests in `UnitTests/`, at least one for each performance test.
@@ -54,8 +54,8 @@ directory, so they do not see untracked files. The image is built from tracked f
 | --- | --- |
 | `README.md` | Required. How the framework is built, run, tested and wired, and its Notes. |
 | `rb.json` | Required. What the framework declares about itself. |
-| `Dockerfile` | Builds the image. |
 | `Implementation/` | The application. |
+| `container-h1/` | How container-h1 starts the application: its `Dockerfile`, and any start-up code the host needs. Each other host the framework implements has a directory of its own. See [Hosts](#hosts). |
 | `UnitTests/` | The framework's own tests. |
 | `client-exception/index.ts` | How the tests read the framework's error responses. |
 | `Client/` | Optional. The framework's OpenAPI document and a client generated from it. |
@@ -82,10 +82,32 @@ The application also serves two routes that the tests do not call:
   resolved. The framework's page shows `adapter` and `serializer` when they are present. The run
   file keeps the whole object.
 
+## Hosts
+
+A host is where a framework is started and how it is reached. `orchestrator/hosts.ts` lists them.
+
+| Host | What it is |
+| --- | --- |
+| `container-h1` | The framework's image in a container, reached over HTTP/1.1. |
+| `container-h2` | The same, reached over HTTP/2 with prior knowledge and no TLS. Not validated or measured yet. |
+| `lambda-emulator` | The framework as a Lambda function on its language's AWS base image, fed API Gateway payload format 2.0 events through the Lambda Runtime API. Not validated or measured yet. |
+
+Each host the framework implements has a directory named for it. The directory holds the host's
+`Dockerfile` and the code that starts the application on that host, such as `main.go`,
+`server.ts`, `server.py` or `main.rs` for container-h1. The application in `Implementation/` is
+the same on every host, and so are the dependencies: a dependency only one host needs, such as a
+Lambda adapter, goes in the framework's one manifest and lockfile. A run on one host hashes the
+framework's files without the other hosts' directories, so changing how one host starts the
+framework does not change its code on another.
+
+Every host offers every test. A test the framework cannot answer on a host goes in that host's
+`unsupported` in rb.json, with the reason. The gate reports it as unsupported and never sends it,
+and the load leaves it out.
+
 ## The container
 
-The image is built from the framework's directory alone. A recorded run builds it from
-`git archive` of that directory at the run's commit.
+The image is built from the framework's directory alone, with the Dockerfile in the host's
+directory. A recorded run builds it from `git archive` of that directory at the run's commit.
 
 - Pin every `FROM` image by digest.
 - Install dependencies from the lockfile inside the image, so the version `/__meta` reports is the
@@ -96,7 +118,7 @@ The orchestrator starts the container with these settings:
 | Setting | Value |
 | --- | --- |
 | `PORT` | `8080` |
-| `RB_HOST` | `container-h1`, the only host |
+| `RB_HOST` | The host's id, such as `container-h1` |
 | `RB_PAYLOADS` | `/rb/payloads`, a read-only mount of `tests/payloads` |
 | CPUs | A quota of 2, which `RB_CPUS` changes, or the cores `RB_SUT_CPUS` names |
 
@@ -123,7 +145,7 @@ rb.json declares what the framework is and how to build, test and upgrade it.
 | `package` | The registry page of the package that was resolved. |
 | `docs` | Optional. The framework's documentation. |
 | `lockfile` | The tracked files that pin the resolved versions, or `null` if nothing is pinned. |
-| `hosts` | For each host, the `dockerfile` and optional `buildArgs`. `container-h1` is the only host. |
+| `hosts` | For each host the framework implements, the `dockerfile` in the host's directory, optional `buildArgs`, and optional `unsupported`, which names each test the framework cannot answer on that host with the reason. See [Hosts](#hosts). |
 | `suite` | How to run the framework's own tests. `argv` is the command, and `paths` are the directories that hold the tests. `cwd` and `env` are optional. |
 | `upgrade` | A command that moves the pinned versions within their ranges, or `null` if they are moved by hand. |
 | `client` | Optional. How `Client/` is written. See [Client](#client). |
@@ -280,7 +302,7 @@ read from the README at the run's commit.
 | `npm run rb -- check` | Checks every framework's rb.json, files and marks. It should report 0 problems. |
 | `npm run rb -- snippets <id>` | Shows where the framework answers each test. |
 | `npm run rb -- suite <id>` | Runs the framework's own tests on this machine. The framework's toolchain must be on PATH. |
-| `npm run rb -- validate <id> --exemplars` | Builds the image, runs every test against the container, and writes each test's request and response to `results/exemplars/<language>-<name>@container-h1.json`. |
+| `npm run rb -- validate <id> --exemplars` | Builds the image, runs every test against the container, and writes each test's request and response to `results/exemplars/<language>-<name>@container-h1.json`. `--host` names another host. |
 | `npm run rb -- validate --at <host:port> --framework <id>` | Runs every test against a server you started yourself. |
 | `npm run rb -- upgrade <id>` | Runs rb.json's `upgrade` and shows what moved. |
 | `npm run rb -- client <id>` | Runs rb.json's `client` and fails if anything under `Client/` changed. |

@@ -13,6 +13,7 @@ application uses ASP.NET Core's feature through the endpoint's configuration.
 | Path | What it is |
 | --- | --- |
 | `Implementation/` | The application. One endpoint class per route, the classes of a family together in one file under `Endpoints/`. |
+| `container-h1/` | The `Dockerfile` that builds the image container-h1 runs. |
 | `UnitTests/` | xunit.v3 tests of the wiring, booting the Implementation in process with FastEndpoints.Testing's `AppFixture<Program>`. |
 | `Client/` | The OpenAPI document FastEndpoints.OpenApi writes, and the Kiota client FastEndpoints.OpenApi.Kiota generates from it. |
 | `client-exception/` | How the corpus reads FastEndpoints' error bodies. |

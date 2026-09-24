@@ -12,6 +12,7 @@ facility where Micronaut has one, from the Micronaut modules Implementation's po
 | Path | What it is |
 | --- | --- |
 | `Implementation/` | The application, a Maven module. One controller per corpus family under `src/main/java/implementation/routes/`. |
+| `container-h1/` | The `Dockerfile` that builds the image container-h1 runs. |
 | `UnitTests/` | JUnit tests of the wiring, a Maven module that boots the Implementation on a random port with `@MicronautTest`. |
 | `Client/` | The OpenAPI document micronaut-openapi writes, and the declarative client generated from it, a Maven module. |
 | `client-exception/` | How the corpus reads Micronaut's error bodies. |

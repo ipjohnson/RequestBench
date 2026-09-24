@@ -13,7 +13,8 @@ extension for Pydantic.
 
 | Path | What it is |
 | --- | --- |
-| `Implementation/` | The application. `server.py` starts gunicorn, `app.py` builds the application each worker serves, and `routes/` holds one blueprint per corpus family. |
+| `Implementation/` | The application. `app.py` builds the application each worker serves, and `routes/` holds one blueprint per corpus family. |
+| `container-h1/` | How container-h1 starts it. `server.py` starts gunicorn with two workers, and `Dockerfile` builds the image. |
 | `UnitTests/` | pytest tests of the wiring, sending each request through Flask's test client. |
 | `client-exception/` | How the corpus reads the refusals of Flask and Flask-Pydantic. |
 | `pyproject.toml` | The dependencies, the suite's dependencies, and pytest's settings. |
@@ -26,7 +27,7 @@ library, such as APIFlask, flask-openapi3 or flask-smorest.
 
 ```sh
 uv sync
-cd Implementation && RB_PAYLOADS=../../../../tests/payloads PORT=8080 ../.venv/bin/python server.py
+cd Implementation && RB_PAYLOADS=../../../../tests/payloads PORT=8080 ../.venv/bin/python ../container-h1/server.py
 uv run pytest
 ```
 

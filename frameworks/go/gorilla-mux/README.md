@@ -15,8 +15,9 @@ nothing, and code written for the family where neither does.
 
 | Path | What it is |
 | --- | --- |
-| `Implementation/` | The application, the Go package `implementation`. `router.go` builds the router, a function in a file named for each family registers that family's routes, and `cmd/server` is the main package that loads the payloads and serves. |
+| `Implementation/` | The application, the Go package `implementation`. `router.go` builds the router, and a function in a file named for each family registers that family's routes. |
 | `Implementation/views/` | The template, compiled into the binary. |
+| `container-h1/` | How container-h1 starts it. `main.go` is the main package that loads the payloads and serves over HTTP/1.1, and `Dockerfile` builds the image. |
 | `UnitTests/` | go test tests of the wiring, sending each request to the router served by `net/http/httptest`. |
 | `client-exception/` | How the corpus reads the error bodies. |
 | `go.mod` | The module, and every module version the build selects. |
@@ -27,7 +28,7 @@ There is no client, because mux writes no OpenAPI document of its own.
 ## Building, running and testing
 
 ```sh
-go build -o server ./Implementation/cmd/server
+go build -o server ./container-h1
 RB_PAYLOADS=../../../tests/payloads PORT=8080 ./server
 go test ./...
 ```

@@ -14,7 +14,8 @@ the cache and the etag family are wired by hand, because warp ships neither.
 
 | Path | What it is |
 | --- | --- |
-| `Implementation/` | The application: a library with one filter per corpus family under `routes/`, the recover handler in `refusals.rs`, and the server binary, `main.rs`. |
+| `Implementation/` | The application: a library with one filter per corpus family under `routes/`, and the recover handler in `refusals.rs`. |
+| `container-h1/` | How container-h1 starts it. `main.rs` is the server binary, and `Dockerfile` builds the image. |
 | `UnitTests/` | The suite, which drives the application in process with warp's own `warp::test`. |
 | `client-exception/` | How the corpus reads warp's error bodies. |
 | `Cargo.toml` | One package: the library, the binary and the suite, each at its own path. |

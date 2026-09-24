@@ -12,6 +12,7 @@ uses.
 | Path | What it is |
 | --- | --- |
 | `Implementation/` | The application. One Carter module per corpus family under `Routes/`. |
+| `container-h1/` | The `Dockerfile` that builds the image container-h1 runs. |
 | `UnitTests/` | xunit tests of the wiring, booting the Implementation in process with `WebApplicationFactory`. |
 | `Client/` | The OpenAPI document Carter's build writes, and the Kiota client generated from it. |
 | `client-exception/` | How the corpus reads Carter's error bodies. |

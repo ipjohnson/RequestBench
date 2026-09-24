@@ -14,6 +14,7 @@ their families, because Vert.x has neither.
 | Path | What it is |
 | --- | --- |
 | `Implementation/` | The application, a Maven module. `Application` deploys one `Server` verticle per core, and each builds a router over one class per corpus family under `src/main/java/implementation/routes/`. |
+| `container-h1/` | The `Dockerfile` that builds the image container-h1 runs. |
 | `UnitTests/` | JUnit tests of the wiring, a Maven module that deploys the server verticle on a random port with vertx-junit5. |
 | `client-exception/` | How the corpus reads Vert.x's error bodies. |
 | `pom.xml` | The two modules. Vert.x's stack BOM, imported as Vert.x's starter imports it, pins every Vert.x module and what they depend on. This pom pins that BOM, JUnit's BOM and every plugin. |

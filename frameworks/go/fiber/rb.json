@@ -1,5 +1,5 @@
 {
-  "comment": "Fiber 3.5 on Go 1.27 and fasthttp, one function per family registering its routes in the implementation package under Implementation/, and the server's main package in Implementation/cmd/server. The suite is UnitTests/, go test over the app served on a loopback port, and never reaches the image. c.Bind() runs go-playground's validator, registered as the app's StructValidator as Fiber's validation guide registers it, and a validation failure is answered as the guide's step 4 answers one. Any other bind failure is returned to Fiber's default error handler, as the guide returns it, which answers a BindError with 500. The first-error route is wired by hand, because go-playground cannot stop at the first failure. The lockfile is go.mod, which records every module version the build selects, and go.sum, which holds their hashes. upgrade is go get -u ./..., which moves every module to its newest release within its major version.",
+  "comment": "Fiber 3.5 on Go 1.27 and fasthttp, one function per family registering its routes in the implementation package under Implementation/, and the server's main package in container-h1. The suite is UnitTests/, go test over the app served on a loopback port, and never reaches the image. c.Bind() runs go-playground's validator, registered as the app's StructValidator as Fiber's validation guide registers it, and a validation failure is answered as the guide's step 4 answers one. Any other bind failure is returned to Fiber's default error handler, as the guide returns it, which answers a BindError with 500. The first-error route is wired by hand, because go-playground cannot stop at the first failure. The lockfile is go.mod, which records every module version the build selects, and go.sum, which holds their hashes. upgrade is go get -u ./..., which moves every module to its newest release within its major version.",
   "framework": "Fiber",
   "licence": "MIT",
   "repo": "https://github.com/gofiber/fiber",
@@ -7,7 +7,7 @@
   "docs": "https://docs.gofiber.io/",
   "lockfile": ["go.mod", "go.sum"],
   "hosts": {
-    "container-h1": { "dockerfile": "Dockerfile" }
+    "container-h1": { "dockerfile": "container-h1/Dockerfile" }
   },
   "suite": { "argv": ["go", "test", "./..."], "paths": ["UnitTests"] },
   "upgrade": { "argv": ["go", "get", "-u", "./..."] },

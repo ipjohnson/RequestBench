@@ -13,7 +13,8 @@ an application, and a sub-application mounted on a path has its own.
 
 | Path | What it is |
 | --- | --- |
-| `Implementation/` | The application, in TypeScript. `app.ts` builds it, `server.ts` starts it, `routes/` holds one module per corpus family, and `views/` holds the Pug view. |
+| `Implementation/` | The application, in TypeScript. `app.ts` builds it, `routes/` holds one module per corpus family, and `views/` holds the Pug view. |
+| `container-h1/` | How container-h1 starts it. `server.ts` loads the payloads and listens, and `Dockerfile` builds the image. |
 | `UnitTests/` | node:test tests of the wiring, sending each request through supertest. |
 | `client-exception/` | How the corpus reads the validate routes' refusals. |
 | `package.json` | The dependencies, and the scripts that start, check and test the Implementation. |

@@ -12,6 +12,7 @@ project has the shape code.quarkus.io writes for Quarkus 3.39.
 | Path | What it is |
 | --- | --- |
 | `Implementation/` | The application, a Maven module with the `quarkus` packaging. One resource class per corpus family under `src/main/java/implementation/routes/`. |
+| `container-h1/` | The `Dockerfile` that builds the image container-h1 runs. |
 | `UnitTests/` | `@QuarkusTest` classes driven with REST Assured, which Implementation's pom compiles as its tests. |
 | `Client/` | The OpenAPI document SmallRye OpenAPI writes, and a Maven module that generates a REST Client from it. |
 | `client-exception/` | How the corpus reads Quarkus's error bodies. |

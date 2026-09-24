@@ -12,7 +12,8 @@ this port runs. Version 1 is 1.15.11, under npm's `1x` tag.
 
 | Path | What it is |
 | --- | --- |
-| `Implementation/` | The application, in TypeScript. `app.ts` builds it, `server.ts` starts it, and `routes/` holds one module per corpus family. `views/` holds the EJS template. |
+| `Implementation/` | The application, in TypeScript. `app.ts` builds it, and `routes/` holds one module per corpus family. `views/` holds the EJS template. |
+| `container-h1/` | How container-h1 starts it. `server.ts` loads the payloads and listens, and `Dockerfile` builds the image. |
 | `UnitTests/` | node:test tests of the wiring, sending each request through h3's `app.request()`. |
 | `client-exception/` | How the corpus reads h3's error bodies. |
 | `package.json` | The dependencies, and the scripts that start, check and test the Implementation. |

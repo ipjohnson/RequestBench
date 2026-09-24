@@ -12,7 +12,8 @@ etag family is the one wired by hand.
 
 | Path | What it is |
 | --- | --- |
-| `Implementation/` | The application: a library with one router per corpus family under `routes/`, and the server binary, `main.rs`. |
+| `Implementation/` | The application: a library with one router per corpus family under `routes/`. |
+| `container-h1/` | How container-h1 starts it. `main.rs` is the server binary, and `Dockerfile` builds the image. |
 | `UnitTests/` | The suite, which drives the router in process with tower's `oneshot`. |
 | `client-exception/` | How the corpus reads axum's error bodies. |
 | `Cargo.toml` | One package: the library, the binary and the suite, each at its own path. |

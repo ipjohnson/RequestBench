@@ -7,7 +7,7 @@
   "docs": "https://fast-endpoints.com/",
   "lockfile": ["Implementation/packages.lock.json"],
   "hosts": {
-    "container-h1": { "dockerfile": "Dockerfile" }
+    "container-h1": { "dockerfile": "container-h1/Dockerfile" }
   },
   "suite": { "argv": ["dotnet", "test", "--project", "UnitTests"], "paths": ["UnitTests"] },
   "upgrade": null,

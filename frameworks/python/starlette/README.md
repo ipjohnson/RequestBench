@@ -13,7 +13,8 @@ page lists, binds the query strings, headers, forms and bodies here, with Pydant
 
 | Path | What it is |
 | --- | --- |
-| `Implementation/` | The application. `server.py` starts uvicorn, `main.py` is what each worker imports, `app.py` builds the application, `validation.py` holds the SpecTree instance, and `routes/` holds one module per corpus family. |
+| `Implementation/` | The application. `main.py` is what each worker imports, `app.py` builds the application, `validation.py` holds the SpecTree instance, and `routes/` holds one module per corpus family. |
+| `container-h1/` | How container-h1 starts it. `server.py` starts uvicorn with two workers, and `Dockerfile` builds the image. |
 | `UnitTests/` | pytest tests of the wiring, sending each request through Starlette's TestClient, and of the Kiota client. |
 | `Client/` | The OpenAPI document Starlette's SchemaGenerator builds from the endpoints' docstrings, and the Python client Kiota generates from it. |
 | `client-exception/` | How the corpus reads SpecTree's error bodies. |
@@ -24,7 +25,7 @@ page lists, binds the query strings, headers, forms and bodies here, with Pydant
 
 ```sh
 uv sync
-cd Implementation && RB_PAYLOADS=../../../../tests/payloads PORT=8080 ../.venv/bin/python server.py
+cd Implementation && RB_PAYLOADS=../../../../tests/payloads PORT=8080 ../.venv/bin/python ../container-h1/server.py
 uv run pytest
 ```
 

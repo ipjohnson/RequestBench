@@ -7,7 +7,7 @@
   "docs": "https://docs.rs/poem/3.1.12/poem/",
   "lockfile": ["Cargo.lock"],
   "hosts": {
-    "container-h1": { "dockerfile": "Dockerfile" }
+    "container-h1": { "dockerfile": "container-h1/Dockerfile" }
   },
   "suite": { "argv": ["cargo", "test", "--locked"], "paths": ["UnitTests"] },
   "upgrade": { "argv": ["cargo", "update"] },

@@ -12,7 +12,8 @@ publishes for it, mounted in front of that family's routes alone.
 
 | Path | What it is |
 | --- | --- |
-| `Implementation/` | The application, in TypeScript. `app.ts` builds it, `server.ts` starts it, and `routes/` holds one module per corpus family, each registering its routes on the one @koa/router. |
+| `Implementation/` | The application, in TypeScript. `app.ts` builds it, and `routes/` holds one module per corpus family, each registering its routes on the one @koa/router. |
+| `container-h1/` | How container-h1 starts it. `server.ts` loads the payloads and listens, and `Dockerfile` builds the image. |
 | `UnitTests/` | node:test tests of the wiring, sending each request through supertest over `app.callback()`. |
 | `client-exception/` | How the corpus reads Koa's error bodies. |
 | `package.json` | The dependencies, and the scripts that start, check and test the Implementation. |

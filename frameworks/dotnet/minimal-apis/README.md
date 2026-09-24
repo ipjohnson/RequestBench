@@ -15,6 +15,7 @@ framework, Carter's rows price Carter alone.
 | Path | What it is |
 | --- | --- |
 | `Implementation/` | The application. One static class per corpus family under `Routes/`, whose `Map` method `Program.cs` calls. |
+| `container-h1/` | The `Dockerfile` that builds the image container-h1 runs. |
 | `UnitTests/` | xunit tests of the wiring, booting the Implementation in process with `WebApplicationFactory`. |
 | `Client/` | The OpenAPI document the Implementation's build writes, and the Kiota client generated from it. |
 | `client-exception/` | How the corpus reads minimal APIs' error bodies. |

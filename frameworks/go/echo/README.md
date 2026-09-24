@@ -14,8 +14,9 @@ Echo's own, a slot Echo's guide fills, or written for the family where Echo has 
 
 | Path | What it is |
 | --- | --- |
-| `Implementation/` | The application, the Go package `implementation`. `router.go` builds the instance, a function in a file named for each family registers that family's routes, and `cmd/server` is the main package that loads the payloads and serves. |
+| `Implementation/` | The application, the Go package `implementation`. `router.go` builds the instance, and a function in a file named for each family registers that family's routes. |
 | `Implementation/views/` | The template, compiled into the binary. |
+| `container-h1/` | How container-h1 starts it. `main.go` is the main package that loads the payloads and serves over HTTP/1.1, and `Dockerfile` builds the image. |
 | `UnitTests/` | go test tests of the wiring, sending each request to the instance served by `net/http/httptest`. |
 | `client-exception/` | How the corpus reads Echo's error bodies. |
 | `go.mod` | The module, and every module version the build selects. |
@@ -26,7 +27,7 @@ There is no client, because Echo writes no OpenAPI document of its own.
 ## Building, running and testing
 
 ```sh
-go build -o server ./Implementation/cmd/server
+go build -o server ./container-h1
 RB_PAYLOADS=../../../tests/payloads PORT=8080 ./server
 go test ./...
 ```

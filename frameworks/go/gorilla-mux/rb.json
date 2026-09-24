@@ -1,5 +1,5 @@
 {
-  "comment": "gorilla/mux 1.8 on Go 1.27, one function per family registering its routes in the implementation package under Implementation/, and the server's main package in Implementation/cmd/server. The suite is UnitTests/, go test over the router served by net/http/httptest, and never reaches the image. mux is a router over net/http and binds nothing, so each family uses the gorilla toolkit where it has something (handlers for CORS, compression and recovery, schema for query strings and forms), net/http where it does not, and code written for the family where neither does. Bodies are decoded with encoding/json and checked with go-playground's validator, and a refusal is 400 with the error's text under error, written with encoding/json's encoder as mux's README writes JSON. The first-error route is wired by hand, because go-playground cannot stop at the first failure. cors.vary is skipped because gorilla/handlers writes Vary: Origin only for a policy of more than one origin. The lockfile is go.mod, which records every module version the build selects, and go.sum, which holds their hashes. upgrade is go get -u ./..., which moves every module to its newest release within its major version.",
+  "comment": "gorilla/mux 1.8 on Go 1.27, one function per family registering its routes in the implementation package under Implementation/, and the server's main package in container-h1. The suite is UnitTests/, go test over the router served by net/http/httptest, and never reaches the image. mux is a router over net/http and binds nothing, so each family uses the gorilla toolkit where it has something (handlers for CORS, compression and recovery, schema for query strings and forms), net/http where it does not, and code written for the family where neither does. Bodies are decoded with encoding/json and checked with go-playground's validator, and a refusal is 400 with the error's text under error, written with encoding/json's encoder as mux's README writes JSON. The first-error route is wired by hand, because go-playground cannot stop at the first failure. cors.vary is skipped because gorilla/handlers writes Vary: Origin only for a policy of more than one origin. The lockfile is go.mod, which records every module version the build selects, and go.sum, which holds their hashes. upgrade is go get -u ./..., which moves every module to its newest release within its major version.",
   "framework": "gorilla/mux",
   "licence": "BSD-3-Clause",
   "repo": "https://github.com/gorilla/mux",
@@ -7,7 +7,7 @@
   "docs": "https://gorilla.github.io/",
   "lockfile": ["go.mod", "go.sum"],
   "hosts": {
-    "container-h1": { "dockerfile": "Dockerfile" }
+    "container-h1": { "dockerfile": "container-h1/Dockerfile" }
   },
   "suite": { "argv": ["go", "test", "./..."], "paths": ["UnitTests"] },
   "upgrade": { "argv": ["go", "get", "-u", "./..."] },

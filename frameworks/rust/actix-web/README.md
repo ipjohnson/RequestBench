@@ -14,7 +14,8 @@ where neither has one. The cache family is wired by hand.
 
 | Path | What it is |
 | --- | --- |
-| `Implementation/` | The application: a library with one module per corpus family under `routes/`, each adding its routes to the App's ServiceConfig, and the server binary, `main.rs`. |
+| `Implementation/` | The application: a library with one module per corpus family under `routes/`, each adding its routes to the App's ServiceConfig. |
+| `container-h1/` | How container-h1 starts it. `main.rs` is the server binary, and `Dockerfile` builds the image. |
 | `UnitTests/` | The suite, which drives the App in process with actix-web's test utilities. |
 | `client-exception/` | How the corpus reads actix-web's error bodies. |
 | `Cargo.toml` | One package: the library, the binary and the suite, each at its own path. |

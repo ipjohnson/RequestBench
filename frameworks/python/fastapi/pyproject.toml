@@ -24,7 +24,7 @@ package = false
 
 [tool.pytest.ini_options]
 testpaths = ["UnitTests"]
-pythonpath = ["Implementation"]
+pythonpath = ["Implementation", "container-h1"]
 addopts = "--strict-markers"
 markers = ["corpus(*ids): the corpus tests this test holds the framework to"]
 # Raised inside Starlette's TestClient, which the suite cannot change.

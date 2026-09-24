@@ -7,7 +7,7 @@
   "docs": "https://starlette.dev/",
   "lockfile": ["uv.lock"],
   "hosts": {
-    "container-h1": { "dockerfile": "Dockerfile" }
+    "container-h1": { "dockerfile": "container-h1/Dockerfile" }
   },
   "suite": { "argv": ["uv", "run", "--locked", "pytest"], "paths": ["UnitTests"] },
   "upgrade": { "argv": ["uv", "lock", "--upgrade"] },
