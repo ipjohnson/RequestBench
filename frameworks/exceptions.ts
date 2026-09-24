@@ -14,7 +14,6 @@ import fastify from "./node/fastify/client-exception/index.ts";
 import fiber from "./go/fiber/client-exception/index.ts";
 import flask from "./python/flask/client-exception/index.ts";
 import gin from "./go/gin/client-exception/index.ts";
-import gorillaMux from "./go/gorilla-mux/client-exception/index.ts";
 import h3 from "./node/h3/client-exception/index.ts";
 import helidonSe from "./java/helidon-se/client-exception/index.ts";
 import hono from "./node/hono/client-exception/index.ts";
@@ -49,7 +48,6 @@ export type FrameworkId =
   | "go:echo"
   | "go:fiber"
   | "go:gin"
-  | "go:gorilla-mux"
   | "java:helidon-se"
   | "java:javalin"
   | "java:micronaut"
@@ -90,7 +88,6 @@ export default {
   "go:echo": echo,
   "go:fiber": fiber,
   "go:gin": gin,
-  "go:gorilla-mux": gorillaMux,
   "java:helidon-se": helidonSe,
   "java:javalin": javalin,
   "java:micronaut": micronaut,

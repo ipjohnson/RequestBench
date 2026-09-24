@@ -104,14 +104,6 @@
    ],
    "bodyFrom": "captured from frameworks/go/gin/Implementation, which answers text/plain: 404 page not found"
   },
-  "go:gorilla-mux": {
-   "status": 404,
-   "class": "text",
-   "shape": [
-    ":string"
-   ],
-   "bodyFrom": "captured from frameworks/go/gorilla-mux/Implementation, which answers text/plain; charset=utf-8: 404 page not found"
-  },
   "java:helidon-se": {
    "status": 404,
    "class": "text",

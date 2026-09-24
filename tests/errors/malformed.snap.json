@@ -153,17 +153,6 @@
    },
    "bodyFrom": "captured from frameworks/go/gin/Implementation"
   },
-  "go:gorilla-mux": {
-   "status": 400,
-   "class": "json",
-   "shape": [
-    "error:string"
-   ],
-   "body": {
-    "error": "unexpected EOF"
-   },
-   "bodyFrom": "captured from frameworks/go/gorilla-mux/Implementation"
-  },
   "java:helidon-se": {
    "status": 400,
    "class": "text",
