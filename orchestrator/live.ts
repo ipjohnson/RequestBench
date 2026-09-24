@@ -8,7 +8,7 @@
 //
 // Every exchange is also reported to `onExchange` as it went over the wire, which is what an
 // exemplar is written from.
-import { Pipe, type Protocol } from "../traffic-generator/pipe.ts";
+import { Pipe, type LambdaFraming, type Protocol } from "../traffic-generator/pipe.ts";
 import type { Request, Response, Transport } from "./validate.ts";
 
 export interface Exchange {
@@ -22,6 +22,8 @@ export interface Exchange {
     /** Names as the framework spelled them, in the order it wrote them. */
     readonly rawHeaders: readonly (readonly [string, string])[];
     readonly body: Buffer;
+    /** On the Lambda Runtime API: how the function framed its answer, and everything it posted to /response. */
+    readonly lambda?: { readonly framing: LambdaFraming; readonly payloadBytes: number };
   };
 }
 
@@ -61,8 +63,18 @@ const FIRST_ONLY = new Set([
 ]);
 
 export function live(address: { host: string; port: number }, protocol: Protocol, onExchange?: (e: Exchange) => void): Live {
-  const pipe = Pipe.start(address, protocol);
+  return over(Pipe.start(address, protocol), true, onExchange);
+}
 
+/**
+ * The transport over a program someone else started, as lambda-emulator's server starts before
+ * its function does. Closing the transport leaves the program running.
+ */
+export function liveOver(pipe: Pipe, onExchange?: (e: Exchange) => void): Live {
+  return over(pipe, false, onExchange);
+}
+
+function over(pipe: Pipe, owned: boolean, onExchange?: (e: Exchange) => void): Live {
   const transport: Transport = async (req) => {
     const body = req.body === undefined ? {} : { body: Buffer.from(req.body).toString("base64") };
     const answer = await pipe.exchange({ method: req.method, target: req.target, headers: Object.entries(req.headers), ...body }, ANSWER_MS);
@@ -81,11 +93,12 @@ export function live(address: { host: string; port: number }, protocol: Protocol
         httpVersion: answer.version,
         rawHeaders: answer.headers,
         body: answer.body,
+        ...(answer.framing === undefined ? {} : { lambda: { framing: answer.framing, payloadBytes: answer.payloadBytes ?? answer.body.length } }),
       },
     });
     const response: Response = { status: answer.status, headers: joined, body: answer.body };
     return response;
   };
 
-  return { transport, close: () => pipe.close() };
+  return { transport, close: () => (owned ? pipe.close() : Promise.resolve()) };
 }

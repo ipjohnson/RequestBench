@@ -1,5 +1,6 @@
 // A whole run with a fake host: the reference served over a socket stands in for each framework's
-// container, and the real traffic generator measures it.
+// container, and the real traffic generator measures it. On lambda-emulator a runtime client in
+// this process stands in for the function, and asks the generator's Runtime API for its events.
 import assert from "node:assert/strict";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -9,12 +10,14 @@ import { fileURLToPath } from "node:url";
 
 import suite from "@rb/tests";
 import exceptions from "../../frameworks/exceptions.ts";
-import type { Load } from "../../traffic-generator/load.ts";
+import { isClosed, type ClosedPhase, type Load } from "../../traffic-generator/load.ts";
 import type { LoadedFramework, RbJson } from "../manifest.ts";
 import { measure, type Driver, type RunFile, type Started } from "../measure.ts";
 import { loadSnapshots } from "../snapshots.ts";
+import { summarize } from "../summarize.ts";
 import type { Transport } from "../validate.ts";
 import { corpusReference } from "./reference.ts";
+import { runtime } from "./runtime.ts";
 import { serve } from "./serve.ts";
 
 const ROOT = fileURLToPath(new URL("../..", import.meta.url));
@@ -47,7 +50,22 @@ const framework = (id: Id): LoadedFramework => {
   };
 };
 
-/** A host whose "container" is the reference, answering as `id` does, or as told, in the host's protocol. */
+/** What every framework answers besides the corpus: readiness, and what it says it is. */
+const framed =
+  (f: LoadedFramework, behaviour: Transport): Transport =>
+  async (req) => {
+    if (req.target === "/health") return { status: 200, headers: { "content-type": "text/plain" }, body: new TextEncoder().encode("ok") };
+    if (req.target === "/__meta") {
+      const body = new TextEncoder().encode(JSON.stringify({ framework: f.name, version: "0.0.0" }));
+      return { status: 200, headers: { "content-type": "application/json" }, body };
+    }
+    return behaviour(req);
+  };
+
+/**
+ * A host whose "container" is the reference, answering as `id` does, or as told, in the host's
+ * protocol. Its "function" is the reference behind a runtime client.
+ */
 function fakeDriver(answer: (id: Id) => Transport | "dead", protocol: "http/1.1" | "h2c" = "http/1.1"): Driver {
   return {
     build: async () => ({ imageId: "sha256:fake", imageBytes: 1 }),
@@ -56,15 +74,7 @@ function fakeDriver(answer: (id: Id) => Transport | "dead", protocol: "http/1.1"
       if (behaviour === "dead") {
         return { address: { host: "127.0.0.1", port: 1 }, startMs: 1, alive: () => false, logs: () => "it would not start", stop: () => {} };
       }
-      // What every framework answers besides the corpus: readiness, and what it says it is.
-      const served = await serve(async (req) => {
-        if (req.target === "/health") return { status: 200, headers: { "content-type": "text/plain" }, body: new TextEncoder().encode("ok") };
-        if (req.target === "/__meta") {
-          const body = new TextEncoder().encode(JSON.stringify({ framework: f.name, version: "0.0.0" }));
-          return { status: 200, headers: { "content-type": "application/json" }, body };
-        }
-        return behaviour(req);
-      }, protocol);
+      const served = await serve(framed(f, behaviour), protocol);
       let up = true;
       return {
         address: served,
@@ -77,6 +87,12 @@ function fakeDriver(answer: (id: Id) => Transport | "dead", protocol: "http/1.1"
         },
       };
     },
+    startFunction: (f, apiPort) => {
+      const behaviour = answer(f.id as Id);
+      if (behaviour === "dead") return { startMs: 1, alive: () => false, logs: () => "it would not start", stop: () => {} };
+      const r = runtime(apiPort, framed(f, behaviour));
+      return { startMs: 1, alive: r.alive, logs: () => "", stop: r.stop };
+    },
   };
 }
 
@@ -87,11 +103,16 @@ const PHASES: Load["phases"] = [
   { name: "regular", rps: 100, settle: 1, seconds: 1, abortDropFraction: 0.05 },
 ];
 
+const CLOSED_PHASES: ClosedPhase[] = [
+  { name: "warmup", settle: 1 },
+  { name: "closed", settle: 1, seconds: 1 },
+];
+
 async function run(
   driver: Driver,
   ids: Id[],
   edit: (f: LoadedFramework) => LoadedFramework = (f) => f,
-  host: "container-h1" | "container-h2" = "container-h1",
+  host: "container-h1" | "container-h2" | "lambda-emulator" = "container-h1",
 ): Promise<RunFile> {
   return measure({
     root: ROOT,
@@ -99,6 +120,7 @@ async function run(
     frameworks: ids.map(framework).map(edit),
     driver,
     phases: PHASES,
+    closedPhases: CLOSED_PHASES,
     ladder: "ladder-test",
     bootMs: 5000,
     cooldownMs: 0,
@@ -139,6 +161,7 @@ test("a framework that passes the gate is measured, and one that fails it is not
   assert.ok(fastify!.boot !== undefined && fastify!.boot.readyMs > 0);
   assert.equal(fastify!.error, undefined);
   const load = fastify!.load!;
+  assert.ok(!isClosed(load));
   assert.deepEqual(load.load.values, result.values);
   assert.deepEqual(load.load.phases, PHASES);
   assert.deepEqual(load.phases.map((p) => [p.name, p.status]), [["warmup", "done"], ["regular", "done"]]);
@@ -184,10 +207,36 @@ test("on container-h2 the boot, the gate, the load and /__meta all go over h2c",
   assert.equal(fastify!.gate?.measurable, true);
   assert.equal(fastify!.meta?.["framework"], "fastify");
   const load = fastify!.load!;
+  assert.ok(!isClosed(load));
   assert.deepEqual([load.load.protocol, load.load.connections, load.load.streams], ["h2c", 16, 16]);
   const regular = load.phases[1]!;
   assert.ok(regular.status === "done" && regular.recorded !== undefined && regular.recorded.completed === 100);
   assert.equal(regular.recorded.errors + regular.recorded.mismatch, 0);
+});
+
+test("on lambda-emulator the runtime asks the Runtime API for every event: the gate's, the closed loop's and /__meta", async () => {
+  const result = await run(fakeDriver(reference), ["node:fastify"], (f) => f, "lambda-emulator");
+  const [fastify] = result.frameworks;
+  assert.equal(fastify!.error, undefined);
+  assert.equal(fastify!.gate?.measurable, true);
+  assert.equal(fastify!.meta?.["framework"], "fastify");
+  assert.ok(fastify!.boot !== undefined && fastify!.boot.probeMs > 0);
+  const load = fastify!.load!;
+  assert.ok(isClosed(load));
+  assert.deepEqual(load.phases.map((p) => p.name), ["warmup", "closed"]);
+  const recorded = load.phases[1]!.recorded!;
+  const wrong = recorded.tests.filter((t) => t.errors + t.mismatch > 0).map((t) => [t.id, t.firstError, t.firstMismatch]);
+  assert.deepEqual(wrong, []);
+  assert.ok(recorded.invocations > 0 && recorded.tests.every((t) => t.count > 0));
+  const rung = summarize(result).frameworks[0]!.rungs["closed"]!;
+  assert.ok("closed" in rung && rung.achievedRps > 0);
+});
+
+test("a function that exits before its runtime asks for an event is reported with its log, and the run goes on", async () => {
+  const result = await run(fakeDriver((id) => (id === "dotnet:carter" ? "dead" : reference(id))), ["dotnet:carter", "node:fastify"], (f) => f, "lambda-emulator");
+  const [carter, fastify] = result.frameworks;
+  assert.match(carter!.error ?? "", /the gate's boot failed: the function exited before its runtime asked for an event\nit would not start/);
+  assert.equal(fastify!.error, undefined);
 });
 
 test("a framework that never answers /health is reported with its log, and the run goes on", async () => {

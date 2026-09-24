@@ -172,10 +172,81 @@ export function start(root: string, built: Built, f: FrameworkKey, host: HostId,
   } catch {
     address = nowhere;
   }
-  return {
+  return { name, address, startMs, ...handle(name) };
+}
+
+/** What a container host's framework is reached with. */
+export type Spoken = "http/1.1" | "h2c";
+
+/**
+ * What Lambda puts in a function's environment. The Node, Java and .NET bootstraps size their heap
+ * or their GC from the memory, and Lambda gives a function one vCPU at 1,769 MB. The Rust and Node
+ * runtime clients refuse to start without some of the rest.
+ */
+/**
+ * Where the traffic generator serves the Runtime API. On Linux the function shares the host's
+ * network and reaches it on loopback. Elsewhere Docker Desktop's host.docker.internal reaches the
+ * host, so it listens on every address.
+ */
+export const RUNTIME_API_BIND = process.platform === "linux" ? "127.0.0.1:0" : "0.0.0.0:0";
+
+export const FUNCTION_ENV = {
+  AWS_LAMBDA_FUNCTION_NAME: "rb",
+  AWS_LAMBDA_FUNCTION_VERSION: "$LATEST",
+  AWS_LAMBDA_FUNCTION_MEMORY_SIZE: "1769",
+  AWS_LAMBDA_LOG_GROUP_NAME: "/aws/lambda/rb",
+  AWS_LAMBDA_LOG_STREAM_NAME: "rb",
+  AWS_LAMBDA_INITIALIZATION_TYPE: "on-demand",
+  AWS_REGION: "us-east-1",
+  AWS_DEFAULT_REGION: "us-east-1",
+} as const;
+
+export interface RunningFunction {
+  readonly name: string;
+  /** How long `docker run` took to return, which is before the runtime asks for its first event. */
+  readonly startMs: number;
+  alive(): boolean;
+  logs(lines?: number): string;
+  stop(): void;
+}
+
+/**
+ * lambda-emulator: the function's image, whose base image execs the runtime's bootstrap because
+ * AWS_LAMBDA_RUNTIME_API is set, pointed at the Runtime API the traffic generator serves on
+ * `apiPort`. On Linux it shares the host's network, so the runtime reaches the server over
+ * loopback with no bridge or NAT on the path, and a function listens on nothing. It runs on one
+ * core: the first of RB_SUT_CPUS, or a quota of one.
+ */
+export function startFunction(root: string, built: Built, f: FrameworkKey, host: HostId, apiPort: number, b: Budget = budget()): RunningFunction {
+  const name = `rb-${f.language}-${f.name}-${host}-${randomBytes(3).toString("hex")}`;
+  const linux = process.platform === "linux";
+  const core = b.cpuset?.split(",")[0]?.split("-")[0];
+  const args = [
+    "run",
+    "-d",
+    "--name",
     name,
-    address,
-    startMs,
+    ...(linux ? ["--network", "host"] : []),
+    "-e",
+    `AWS_LAMBDA_RUNTIME_API=${linux ? "127.0.0.1" : "host.docker.internal"}:${apiPort}`,
+    ...Object.entries(FUNCTION_ENV).flatMap(([k, v]) => ["-e", `${k}=${v}`]),
+    "-e",
+    `RB_HOST=${host}`,
+    "-e",
+    `RB_PAYLOADS=${PAYLOADS_IN_CONTAINER}`,
+    "-v",
+    `${join(root, "tests", "payloads")}:${PAYLOADS_IN_CONTAINER}:ro`,
+    ...(core ? ["--cpuset-cpus", core] : ["--cpus", "1"]),
+    built.tag,
+  ];
+  const t0 = performance.now();
+  docker(args);
+  return { name, startMs: performance.now() - t0, ...handle(name) };
+}
+
+/** Asking after a container, reading its log and stopping it, by its name. */
+function handle(name: string): Pick<RunningFunction, "alive" | "logs" | "stop"> {
+  return {
     alive: () => {
       try {
         return docker(["inspect", "-f", "{{.State.Running}}", name]) === "true";
@@ -202,9 +273,6 @@ export function start(root: string, built: Built, f: FrameworkKey, host: HostId,
     },
   };
 }
-
-/** What a container host's framework is reached with. */
-export type Spoken = "http/1.1" | "h2c";
 
 /** One GET, with the whole of the time left to answer it. */
 function getOnce(address: Address, path: string, timeoutMs: number, protocol: Spoken): Promise<{ status: number; body: Buffer }> {

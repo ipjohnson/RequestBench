@@ -11,16 +11,17 @@ import { parseArgs, type ParseArgsOptionsConfig } from "node:util";
 
 import suite from "@rb/tests";
 import exceptions from "../frameworks/exceptions.ts";
+import { Pipe } from "../traffic-generator/pipe.ts";
 import { frameworkBundle, frameworkProblems, testsBundle, TESTS_ID, type Bundle, type FrameworkKey } from "./bundle.ts";
 import * as container from "./container.ts";
 import { exemplarFile, FIXED_VALUES, gate, type GateResult } from "./gate.ts";
 import { dirty, git, pushed, repoSlug, resolveCommit, tracked, unstaged } from "./git.ts";
 import { HOSTS, isHostId, type HostId } from "./hosts.ts";
-import { LADDER, phasesOf } from "./ladder.ts";
-import { live, type Exchange } from "./live.ts";
+import { CLOSED, closedPhasesOf, LADDER, phasesOf } from "./ladder.ts";
+import { live, liveOver, type Exchange, type Live } from "./live.ts";
 import { cpuList, machineState } from "./machine.ts";
 import { loadRepo, type LoadedFramework } from "./manifest.ts";
-import { measure, type Driver, type RunFile } from "./measure.ts";
+import { awaitInit, measure, type Driver, type RunFile } from "./measure.ts";
 import { corpusEndpoints, frameworkView, testsView } from "./siteview.ts";
 import { summarize } from "./summarize.ts";
 import { covered, failing, located } from "./snippets.ts";
@@ -77,13 +78,6 @@ const hostOf = (id: string | undefined): HostId => {
   if (!isHostId(host)) throw new UsageError(`${host} is not a host, only ${Object.keys(HOSTS).join(", ")} are`);
   return host;
 };
-
-/** What a host's framework is reached with, refusing a host whose protocol nothing here speaks yet. */
-function spoken(host: HostId): container.Spoken {
-  const { protocol } = HOSTS[host];
-  if (protocol === "lambda-runtime-api") throw new UsageError(`${host} cannot be reached yet: nothing here speaks ${protocol}`);
-  return protocol;
-}
 
 /** The frameworks whose rb.json loads, narrowed to the ones named. A name that does not load is an error. */
 function frameworks(named: readonly string[]): LoadedFramework[] {
@@ -269,15 +263,16 @@ function writeExemplars(id: string, host: HostId, exchanges: ReadonlyMap<string,
   console.log(`exemplars -> ${file}`);
 }
 
+/** The gate over the transport `open` gives, which reports every exchange it makes. */
 async function gateAt(
   id: string,
   host: HostId,
-  address: { host: string; port: number },
   f: LoadedFramework | undefined,
   alive: () => Promise<boolean>,
+  open: (onExchange: (e: Exchange) => void) => Live,
 ) {
   const sink: { current: Exchange[] } = { current: [] };
-  const transport = live(address, spoken(host), (e) => sink.current.push(e));
+  const transport = open((e) => sink.current.push(e));
   try {
     return await gate({
       suite,
@@ -304,9 +299,10 @@ async function validate(args: string[]): Promise<number> {
     exemplars: { type: "boolean" },
   });
   const host = hostOf(values.host);
-  const protocol = spoken(host);
+  const { protocol } = HOSTS[host];
 
   if (values.at !== undefined) {
+    if (protocol === "lambda-runtime-api") throw new UsageError(`--at names a server, and a function on ${host} listens on nothing`);
     const m = /^([^:]+):(\d+)$/.exec(values.at);
     if (m === null) throw new UsageError(`--at is host:port, not ${values.at}`);
     const id = values.framework;
@@ -315,7 +311,7 @@ async function validate(args: string[]): Promise<number> {
     const address = { host: m[1]!, port: Number(m[2]) };
     const f = loadRepo(ROOT).frameworks.find((x) => x.id === id);
     if (f === undefined) console.log(`${id} has no rb.json that loads, so no skip and no scope applies`);
-    const result = await gateAt(id, host, address, f, () => listening(address.host, address.port));
+    const result = await gateAt(id, host, f, () => listening(address.host, address.port), (on) => live(address, protocol, on));
     report(result);
     if (values.exemplars) writeExemplars(id, host, result.exchanges);
     return result.passed ? 0 : 1;
@@ -334,11 +330,12 @@ async function validate(args: string[]): Promise<number> {
     console.log(`build failed: ${(error as Error).message}`);
     return 1;
   }
+  if (protocol === "lambda-runtime-api") return validateFunction(f!, host, built, values.exemplars === true);
   const running = container.start(ROOT, built, f!, host);
   try {
     const ready = await container.probe(running.address, LADDER.bootSeconds * 1000, running.alive, protocol);
     console.log(`ready in ${Math.round(ready.readyMs)} ms at ${running.address.host}:${running.address.port}`);
-    const result = await gateAt(f!.id, host, running.address, f, async () => running.alive());
+    const result = await gateAt(f!.id, host, f, async () => running.alive(), (on) => live(running.address, protocol, on));
     report(result);
     if (values.exemplars) writeExemplars(f!.id, host, result.exchanges);
     return result.passed ? 0 : 1;
@@ -350,6 +347,31 @@ async function validate(args: string[]): Promise<number> {
   }
 }
 
+/**
+ * The gate against a function on lambda-emulator. The Runtime API starts first, because the
+ * function's runtime reaches out to it, and the function is ready when its runtime first asks for
+ * an event.
+ */
+async function validateFunction(f: LoadedFramework, host: HostId, built: container.Built, exemplars: boolean): Promise<number> {
+  const { pipe, port } = await Pipe.listen(container.RUNTIME_API_BIND);
+  const fn = container.startFunction(ROOT, built, f, host, port);
+  try {
+    const started = performance.now();
+    await awaitInit(pipe, fn, CLOSED.bootSeconds * 1000);
+    console.log(`ready in ${Math.round(performance.now() - started)} ms: the runtime asked the Runtime API on port ${port} for its first event`);
+    const result = await gateAt(f.id, host, f, async () => fn.alive(), (on) => liveOver(pipe, on));
+    report(result);
+    if (exemplars) writeExemplars(f.id, host, result.exchanges);
+    return result.passed ? 0 : 1;
+  } catch (error) {
+    console.log(`boot failed: ${(error as Error).message}\n${fn.logs()}`);
+    return 1;
+  } finally {
+    await pipe.close();
+    fn.stop();
+  }
+}
+
 async function measureCommand(args: string[]): Promise<number> {
   const { values, positionals } = parse(args, {
     host: { type: "string" },
@@ -357,7 +379,7 @@ async function measureCommand(args: string[]): Promise<number> {
     only: { type: "string" },
   });
   const host = hostOf(values.host);
-  spoken(host);
+  const closed = HOSTS[host].protocol === "lambda-runtime-api";
   const chosen = frameworks(positionals).filter((f) => Object.hasOwn(f.rb.hosts, host));
   if (chosen.length === 0) throw new UsageError(`no framework with an rb.json that loads implements ${host}`);
   const seconds = values.seconds === undefined ? undefined : Number(values.seconds);
@@ -367,7 +389,9 @@ async function measureCommand(args: string[]): Promise<number> {
   const head = resolveCommit(ROOT);
   const changed = dirty(ROOT);
   const notRecorded = [
-    ...(process.platform === "linux" ? [] : ["not Linux, so the load reached the framework through a published port"]),
+    ...(process.platform === "linux"
+      ? []
+      : [closed ? "not Linux, so the function reached the Runtime API through host.docker.internal" : "not Linux, so the load reached the framework through a published port"]),
     ...(changed.length === 0 ? [] : [`the working tree has ${changed.length} changed file(s)`]),
     ...(pushed(ROOT, head) ? [] : ["the commit is not pushed, so no link to its code can open"]),
     ...(seconds === undefined ? [] : ["the rungs were shortened"]),
@@ -383,6 +407,7 @@ async function measureCommand(args: string[]): Promise<number> {
       return { imageId: b.imageId, imageBytes: b.imageBytes };
     },
     start: (f) => container.start(ROOT, built.get(f.id)!, f, host),
+    startFunction: (f, apiPort) => container.startFunction(ROOT, built.get(f.id)!, f, host, apiPort),
   };
   const genCpus = process.env["RB_GEN_CPUS"]?.trim();
   const dockerVersion = spawnSync("docker", ["version", "--format", "{{.Server.Version}}"], { encoding: "utf8" }).stdout?.trim();
@@ -392,10 +417,11 @@ async function measureCommand(args: string[]): Promise<number> {
     frameworks: chosen,
     driver,
     phases: phasesOf(seconds),
-    ladder: LADDER.version,
+    closedPhases: closed ? closedPhasesOf(seconds) : undefined,
+    ladder: closed ? CLOSED.version : LADDER.version,
     only,
-    bootMs: LADDER.bootSeconds * 1000,
-    cooldownMs: LADDER.cooldownMs,
+    bootMs: (closed ? CLOSED : LADDER).bootSeconds * 1000,
+    cooldownMs: (closed ? CLOSED : LADDER).cooldownMs,
     notRecorded,
     at,
     machine: await machineState(),
