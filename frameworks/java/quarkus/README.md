@@ -14,6 +14,7 @@ project has the shape code.quarkus.io writes for Quarkus 3.39.
 | `Implementation/` | The application, a Maven module with the `quarkus` packaging. One resource class per corpus family under `src/main/java/implementation/routes/`. |
 | `container-h1/` | The `Dockerfile` that builds the image container-h1 runs. |
 | `container-h2/` | The `Dockerfile` that builds the image container-h2 runs, as container-h1's, because Quarkus's Vert.x server answers HTTP/2 with prior knowledge on a plain port by default. |
+| `lambda-emulator/` | The `Dockerfile` that builds the function lambda-emulator runs, on the `java:25` base image, with Implementation's `lambda-emulator` profile, which adds quarkus-amazon-lambda-http. The extension's `QuarkusStreamHandler` starts Quarkus and hands it each event. |
 | `UnitTests/` | `@QuarkusTest` classes driven with REST Assured, which Implementation's pom compiles as its tests. |
 | `Client/` | The OpenAPI document SmallRye OpenAPI writes, and a Maven module that generates a REST Client from it. |
 | `client-exception/` | How the corpus reads Quarkus's error bodies. |
@@ -112,6 +113,20 @@ copies it.
   Quarkus shuts down and exits in under a second. At startup the JDK warns that brotli4j, which
   Quarkus's HTTP extension ships beside Netty, loads a native library. Brotli is not among the
   compressors.
+- On lambda-emulator the application answers behind quarkus-amazon-lambda-http 3.39, Quarkus's
+  extension for API Gateway payload format 2.0. `QuarkusStreamHandler` starts Quarkus when the Java
+  runtime loads it, and hands each event to Vert.x's router through a virtual connection inside
+  the JVM, with no socket. The extension buffers the whole answer, so the sse and stream tests are
+  listed as unsupported there.
+- The virtual connection has no compressor, so compressed.gzip_large's answer arrives
+  uncompressed, and the test is listed as unsupported there.
+- The extension packages the application as a legacy jar with its dependencies beside it, which is
+  the layout the Java runtime loads. container-h1's image runs Quarkus's fast-jar.
+- `/__meta` has no `bootMs` on lambda-emulator. It is taken when the HTTP server starts, and the
+  function starts none.
+- On lambda-emulator the Java runtime's bootstrap starts the JVM with the serial collector, with C1
+  alone through `-XX:TieredStopAtLevel=1`, and with a heap sized from
+  `AWS_LAMBDA_FUNCTION_MEMORY_SIZE`. The function runs on one core.
 
 ## Refusals
 
