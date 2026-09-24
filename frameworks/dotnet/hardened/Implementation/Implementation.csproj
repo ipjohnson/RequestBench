@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- The application: the handlers, the module that holds them, and the payloads. Nothing here
+       names a host. Each host's directory holds a project that imports ImplementationLibrary under
+       that host's attribute and starts it. -->
+  <PropertyGroup>
+    <!-- The document the build reads out of the compiled assembly after each compile, which
+         Client/ generates its client from. An image's build copies no Client/, so it writes none. -->
+    <HardenedOpenApiOutput Condition="Exists('../Client/Client.csproj')">../Client/openapi.json</HardenedOpenApiOutput>
+  </PropertyGroup>
+  <!-- Hardened's assemblies all carry the version 1.0.0, so /__meta reads the package version from
+       here: the version Directory.Packages.props pins, which the locked restore resolves. -->
+  <ItemGroup>
+    <AssemblyMetadata Include="HardenedVersion" Value="$(HardenedVersion)" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Hardened.Shared.Runtime" />
+    <PackageReference Include="Hardened.Web.Runtime" />
+    <PackageReference Include="Hardened.Library.SourceGenerator" />
+    <PackageReference Include="Hardened.Web.SourceGenerator" />
+    <PackageReference Include="Hardened.Validation.SourceGenerator" />
+    <PackageReference Include="Hardened.Requests.Caching.Memory" />
+    <PackageReference Include="Hardened.Web.StaticContent" />
+    <PackageReference Include="RazorBlade" />
+    <PackageReference Include="Hardened.Templates.RazorBlade" />
+  </ItemGroup>
+</Project>

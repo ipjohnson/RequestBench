@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- The test project the hardened-web template writes: xUnit v3 under Hardened's [HardenedTest],
+       which builds the library module for each test and sends requests through its pipeline. -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <!-- xUnit v3 test projects are executables. -->
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Hardened.Shared.Testing" />
+    <PackageReference Include="Hardened.Shared.Testing.xUnit" />
+    <PackageReference Include="Hardened.Web.Testing" />
+    <PackageReference Include="Hardened.Web.Kestrel.Testing" />
+    <PackageReference Include="Hardened.Kiota.Testing" />
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+  </ItemGroup>
+  <!-- The library, not a host, as the template's tests reference it. -->
+  <ItemGroup>
+    <ProjectReference Include="../Implementation/Implementation.csproj" />
+    <ProjectReference Include="../Client/Client.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="Xunit" />
+    <Using Include="System.Text.Json.Nodes" />
+    <Using Include="Hardened.Shared.Testing.Attributes" />
+    <Using Include="Hardened.Web.Testing" />
+  </ItemGroup>
+</Project>

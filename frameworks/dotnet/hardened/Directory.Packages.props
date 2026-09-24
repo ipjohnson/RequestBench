@@ -1,0 +1,38 @@
+<Project>
+  <!-- One version for each package, for every project and every host. A host's project names
+       only the packages that host needs, and resolves them at the versions set here. -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <HardenedVersion>0.39.0-rc1000</HardenedVersion>
+  </PropertyGroup>
+
+  <ItemGroup Label="Hardened">
+    <PackageVersion Include="Hardened.Shared.Runtime" Version="$(HardenedVersion)" />
+    <PackageVersion Include="Hardened.Web.Runtime" Version="$(HardenedVersion)" />
+    <PackageVersion Include="Hardened.Requests.Caching.Memory" Version="$(HardenedVersion)" />
+    <PackageVersion Include="Hardened.Web.StaticContent" Version="$(HardenedVersion)" />
+    <PackageVersion Include="Hardened.Templates.RazorBlade" Version="$(HardenedVersion)" />
+    <PackageVersion Include="RazorBlade" Version="1.0.0" />
+    <PackageVersion Include="Hardened.Library.SourceGenerator" Version="$(HardenedVersion)" />
+    <PackageVersion Include="Hardened.Web.SourceGenerator" Version="$(HardenedVersion)" />
+    <PackageVersion Include="Hardened.Validation.SourceGenerator" Version="$(HardenedVersion)" />
+  </ItemGroup>
+
+  <ItemGroup Label="Hosts">
+    <PackageVersion Include="Hardened.Web.Kestrel.Runtime" Version="$(HardenedVersion)" />
+    <PackageVersion Include="Hardened.Aws.Lambda.Runtime" Version="$(HardenedVersion)" />
+    <PackageVersion Include="Hardened.Aws.Lambda.Http" Version="$(HardenedVersion)" />
+  </ItemGroup>
+
+  <ItemGroup Label="Tests and client">
+    <PackageVersion Include="Hardened.Shared.Testing" Version="$(HardenedVersion)" />
+    <PackageVersion Include="Hardened.Shared.Testing.xUnit" Version="$(HardenedVersion)" />
+    <PackageVersion Include="Hardened.Web.Testing" Version="$(HardenedVersion)" />
+    <PackageVersion Include="Hardened.Web.Kestrel.Testing" Version="$(HardenedVersion)" />
+    <PackageVersion Include="Hardened.Kiota.Testing" Version="$(HardenedVersion)" />
+    <PackageVersion Include="Microsoft.Kiota.Bundle" Version="2.1.2" />
+    <PackageVersion Include="xunit.v3" Version="3.2.2" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="4.0.0" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.10.1" />
+  </ItemGroup>
+</Project>

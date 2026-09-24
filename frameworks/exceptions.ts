@@ -16,6 +16,7 @@ import flask from "./python/flask/client-exception/index.ts";
 import gin from "./go/gin/client-exception/index.ts";
 import gorillaMux from "./go/gorilla-mux/client-exception/index.ts";
 import h3 from "./node/h3/client-exception/index.ts";
+import hardened from "./dotnet/hardened/client-exception/index.ts";
 import helidonSe from "./java/helidon-se/client-exception/index.ts";
 import hono from "./node/hono/client-exception/index.ts";
 import javalin from "./java/javalin/client-exception/index.ts";
@@ -43,6 +44,7 @@ export type FrameworkId =
   | "dotnet:aspnet-mvc"
   | "dotnet:carter"
   | "dotnet:fastendpoints"
+  | "dotnet:hardened"
   | "dotnet:minimal-apis"
   | "dotnet:wolverine-http"
   | "go:chi"
@@ -84,6 +86,7 @@ export default {
   "dotnet:aspnet-mvc": aspnetMvc,
   "dotnet:carter": carter,
   "dotnet:fastendpoints": fastendpoints,
+  "dotnet:hardened": hardened,
   "dotnet:minimal-apis": minimalApis,
   "dotnet:wolverine-http": wolverineHttp,
   "go:chi": chi,

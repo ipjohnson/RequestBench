@@ -48,6 +48,21 @@
    "shape": [],
    "bodyFrom": "captured from frameworks/dotnet/fastendpoints/Implementation, which answers with no body"
   },
+  "dotnet:hardened": {
+   "status": 403,
+   "class": "json",
+   "shape": [
+    "details:string",
+    "message:string",
+    "type:string"
+   ],
+   "body": {
+    "type": "AuthorizationException",
+    "message": "This request is not permitted.",
+    "details": ""
+   },
+   "bodyFrom": "captured from frameworks/dotnet/hardened/Implementation"
+  },
   "dotnet:minimal-apis": {
    "status": 403,
    "class": "json",

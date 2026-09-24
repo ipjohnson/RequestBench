@@ -44,6 +44,21 @@
    },
    "bodyFrom": "captured from frameworks/dotnet/fastendpoints/Implementation"
   },
+  "dotnet:hardened": {
+   "status": 400,
+   "body": {
+    "type": "ValidationError",
+    "message": "One or more validation errors occurred.",
+    "errors": [
+     {
+      "field": "order.customerId",
+      "code": "range",
+      "message": "customerId must be at least 1."
+     }
+    ]
+   },
+   "bodyFrom": "captured from frameworks/dotnet/hardened/Implementation"
+  },
   "dotnet:minimal-apis": {
    "status": 400,
    "body": {

@@ -7,7 +7,7 @@ into a container image, runs the tests against it, and measures it. The framewor
 
 | Language | Frameworks |
 | --- | --- |
-| .NET | [ASP.NET Core minimal APIs](dotnet/minimal-apis), [ASP.NET Core MVC](dotnet/aspnet-mvc), [Carter](dotnet/carter), [FastEndpoints](dotnet/fastendpoints), [Wolverine.HTTP](dotnet/wolverine-http) |
+| .NET | [ASP.NET Core minimal APIs](dotnet/minimal-apis), [ASP.NET Core MVC](dotnet/aspnet-mvc), [Carter](dotnet/carter), [FastEndpoints](dotnet/fastendpoints), [Hardened](dotnet/hardened), [Wolverine.HTTP](dotnet/wolverine-http) |
 | Go | [chi](go/chi), [Echo](go/echo), [Fiber](go/fiber), [Gin](go/gin), [gorilla/mux](go/gorilla-mux) |
 | Java | [Helidon SE](java/helidon-se), [Javalin](java/javalin), [Micronaut](java/micronaut), [Quarkus](java/quarkus), [Spring Boot](java/spring-boot), [Vert.x Web](java/vertx) |
 | Node | [Express](node/express), [Fastify](node/fastify), [h3](node/h3), [Hono](node/hono), [Koa](node/koa) |

@@ -72,6 +72,29 @@
    },
    "bodyFrom": "captured from frameworks/dotnet/fastendpoints/Implementation"
   },
+  "dotnet:hardened": {
+   "status": 400,
+   "class": "json",
+   "shape": [
+    "errors[].code:string",
+    "errors[].field:string",
+    "errors[].message:string",
+    "message:string",
+    "type:string"
+   ],
+   "body": {
+    "type": "ValidationError",
+    "message": "One or more validation errors occurred.",
+    "errors": [
+     {
+      "field": "order",
+      "code": "invalid",
+      "message": "Expected depth to be zero at the end of the JSON payload. There is an open JSON object or array that should be closed."
+     }
+    ]
+   },
+   "bodyFrom": "captured from frameworks/dotnet/hardened/Implementation"
+  },
   "dotnet:minimal-apis": {
    "status": 400,
    "class": "json",

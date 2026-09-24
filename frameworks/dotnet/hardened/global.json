@@ -1,0 +1,7 @@
+{
+  "comment": "The SDK the target builds with, pinned so a machine carrying a newer preview builds what the container does. rollForward takes the newest 10.0 feature band installed.",
+  "sdk": {
+    "version": "10.0.100",
+    "rollForward": "latestFeature"
+  }
+}

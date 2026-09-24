@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- How lambda-emulator starts the application: Hardened's Lambda host, whose invocation loop
+       reads each event from the Lambda Runtime API, published as a Native AOT executable. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <!-- On for every build, so dotnet build reports what the native publish would refuse. -->
+    <PublishAot>true</PublishAot>
+  </PropertyGroup>
+  <!-- The Dockerfile publishes for linux-x64 or linux-arm64 from a restore locked to
+       packages.lock.json, so every restore resolves both architectures' ILCompiler packages.
+       Without UseDefaultPublishRuntimeIdentifier the restore would add the machine's own runtime,
+       and the lock file would differ between machines. -->
+  <PropertyGroup Condition="'$(MSBuildIsRestoring)' == 'true'">
+    <RuntimeIdentifiers>linux-x64;linux-arm64</RuntimeIdentifiers>
+    <UseDefaultPublishRuntimeIdentifier>false</UseDefaultPublishRuntimeIdentifier>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Hardened.Shared.Runtime" />
+    <PackageReference Include="Hardened.Web.Runtime" />
+    <PackageReference Include="Hardened.Aws.Lambda.Runtime" />
+    <PackageReference Include="Hardened.Aws.Lambda.Http" />
+    <PackageReference Include="Hardened.Library.SourceGenerator" />
+    <PackageReference Include="Hardened.Web.SourceGenerator" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Implementation/Implementation.csproj" />
+  </ItemGroup>
+</Project>
