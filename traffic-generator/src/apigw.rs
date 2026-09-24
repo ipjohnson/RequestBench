@@ -149,20 +149,22 @@ fn text_of(value: &Value) -> String {
     }
 }
 
-/// The status, headers and cookies of a proxy response or a streamed answer's prelude.
+/// The status, headers and cookies of a proxy response or a streamed answer's prelude. A null is
+/// no header: Amazon.Lambda.AspNetCoreServer writes `"Content-Type": null` for an answer with no
+/// content type.
 fn head_of(map: &Map<String, Value>, headers: &mut Vec<(String, String)>) -> u16 {
     if let Some(Value::Object(h)) = map.get("headers") {
-        headers.extend(h.iter().map(|(name, value)| (name.clone(), text_of(value))));
+        headers.extend(h.iter().filter(|(_, value)| !value.is_null()).map(|(name, value)| (name.clone(), text_of(value))));
     }
     if let Some(Value::Object(h)) = map.get("multiValueHeaders") {
         for (name, values) in h {
             if let Value::Array(values) = values {
-                headers.extend(values.iter().map(|value| (name.clone(), text_of(value))));
+                headers.extend(values.iter().filter(|value| !value.is_null()).map(|value| (name.clone(), text_of(value))));
             }
         }
     }
     if let Some(Value::Array(cookies)) = map.get("cookies") {
-        headers.extend(cookies.iter().map(|c| ("set-cookie".to_string(), text_of(c))));
+        headers.extend(cookies.iter().filter(|c| !c.is_null()).map(|c| ("set-cookie".to_string(), text_of(c))));
     }
     map.get("statusCode").and_then(Value::as_u64).map_or(200, |s| s as u16)
 }
@@ -263,6 +265,8 @@ mod tests {
         assert!(a.headers.contains(&("set-cookie".into(), "s=1".into())));
         let bare = answered(br#"{"ok":true}"#).unwrap();
         assert_eq!((bare.status, bare.body.as_slice(), bare.framing), (200, br#"{"ok":true}"#.as_slice(), "bare"));
+        let untyped = answered(br#"{"statusCode":204,"headers":{"Content-Type":null,"x-n":"1"}}"#).unwrap();
+        assert_eq!(untyped.headers, vec![("x-n".to_string(), "1".to_string())]);
     }
 
     #[test]
