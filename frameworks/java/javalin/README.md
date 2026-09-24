@@ -128,6 +128,8 @@ beside the plain jar under the `exec` classifier, because UnitTests compiles aga
   with prior knowledge opens with, and hands the connection to the h2c factory.
 - `Application.create` takes the host's settings as a second argument, applied after the
   application's own. `H2c` uses it, and container-h1 passes none.
+- Javalin implements no lambda-emulator. Javalin ships no AWS Lambda adapter, and its maintainers
+  declined to add one in [javalin issue 2576](https://github.com/javalin/javalin/issues/2576).
 
 ## Refusals
 
