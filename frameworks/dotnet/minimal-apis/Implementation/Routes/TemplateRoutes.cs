@@ -18,6 +18,8 @@ public static class TemplateRoutes
     }
 
     // rb:wiring template.*
-    private static RazorComponentResult<ItemsPage> Page(Payload payload) =>
-        new(new Dictionary<string, object?> { [nameof(ItemsPage.Body)] = payload });
+    // A native build compiles the routes with the request delegate generator, which cannot see
+    // ItemsPage, because the Razor generator writes it. So the handlers return the base class.
+    private static RazorComponentResult Page(Payload payload) =>
+        new RazorComponentResult<ItemsPage>(new Dictionary<string, object?> { [nameof(ItemsPage.Body)] = payload });
 }

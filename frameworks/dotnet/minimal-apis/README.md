@@ -17,7 +17,7 @@ framework, Carter's rows price Carter alone.
 | `Implementation/` | The application. One static class per corpus family under `Routes/`, whose `Map` method `Program.cs` calls. |
 | `container-h1/` | The `Dockerfile` that builds the image container-h1 runs. |
 | `container-h2/` | The `Dockerfile` that builds the image container-h2 runs, with Kestrel's endpoints on HTTP/2 alone, which is how Kestrel answers HTTP/2 with prior knowledge. |
-| `lambda-emulator/` | The `Dockerfile` that builds the function lambda-emulator runs, on the `dotnet:10` Lambda base image. The function starts from `Program.cs`, where `AddAWSLambdaHosting` puts Amazon.Lambda.AspNetCoreServer in Kestrel's place. |
+| `lambda-emulator/` | The `Dockerfile` that builds the function lambda-emulator runs: the application compiled with Native AOT on AWS's `sam/build-dotnet10` image, as the `bootstrap` of the `provided:al2023` Lambda base image. The function starts from `Program.cs`, where `AddAWSLambdaHosting` puts Amazon.Lambda.AspNetCoreServer in Kestrel's place. |
 | `UnitTests/` | xunit tests of the wiring, booting the Implementation in process with `WebApplicationFactory`. |
 | `Client/` | The OpenAPI document the Implementation's build writes, and the Kiota client generated from it. |
 | `client-exception/` | How the corpus reads minimal APIs' error bodies. |
@@ -94,16 +94,49 @@ Client section says.
   100 MB holds every key the cache family stores.
 - Minimal APIs have no package of their own. They ship in the ASP.NET Core shared framework, which
   the image takes from the aspnet runtime image. `/__meta` reports the version of that shared
-  framework, and rb.json's `package` is that image's registry page. On lambda-emulator the function
-  takes the shared framework from the Lambda base image instead.
+  framework, and rb.json's `package` is that image's registry page. On lambda-emulator the native
+  build compiles in the shared framework's runtime pack, at the version the pinned SDK chooses.
 - container-h2 lists `items.head` as unsupported. Over HTTP/2, Kestrel sends the row the handler
   writes for HEAD as a DATA frame. HTTP/2 allows no content in an answer to HEAD, so the client
   resets the stream. Over HTTP/1.1 Kestrel leaves the row unwritten.
 - On lambda-emulator the application answers behind Amazon.Lambda.AspNetCoreServer.Hosting 2.2,
   which reads API Gateway payload format 2.0. `AddAWSLambdaHosting` in `Program.cs` puts it in
   Kestrel's place only where `AWS_LAMBDA_FUNCTION_NAME` is set, so it does nothing on the other
-  hosts. It buffers the whole answer into one proxy response, so the sse and stream tests are
-  listed as unsupported there. `EnableResponseStreaming` would stream every answer.
+  hosts. It reads and writes the events with `SourceGeneratorLambdaJsonSerializer` over
+  `LambdaJsonContext`, the form a native build needs. It buffers the whole answer into one proxy
+  response, so the sse and stream tests are listed as unsupported there. `EnableResponseStreaming`
+  would stream every answer.
+- lambda-emulator runs a Native AOT build of the application, as the function's `bootstrap` on the
+  `provided:al2023` base image. The container hosts keep the JIT runtime. `/__meta` adds
+  `Native AOT` to the runtime, because `RuntimeFeature.IsDynamicCodeSupported` is false in a
+  native build.
+- The native build is compiled on AWS's `sam/build-dotnet10` image, which is Amazon Linux 2023 like
+  the base image, so the executable links against the glibc 2.34 the function runs on. That image
+  carries clang and zlib, which Native AOT needs. Its own SDK is 10.0.400, which asks for the SDK's
+  implicit packages at 10.0.11 where the lock file records 10.0.12. So the Dockerfile copies in the
+  SDK the container hosts build with.
+- Every host restores locked to the one lock file. So `Implementation.csproj` sets `PublishAot`
+  while restoring, with `RuntimeIdentifiers` for linux-x64 and linux-arm64, and every restore
+  resolves the ILCompiler and ILLink packages the native publish needs. Only lambda-emulator's
+  Dockerfile publishes with `PublishAot`, so every other build and publish stays JIT-compiled. The
+  container hosts' restores download those packages and both architectures' runtime packs, and
+  never use them.
+- The native publish fails on the compiler's trimming and AOT warnings about the application's own
+  code. ILC's warnings do not fail it. They name code the application cannot change, ASP.NET Core's
+  Razor components.
+- ASP.NET Core marks Razor components as unsupported under Native AOT: `AddRazorComponents` carries
+  `RequiresUnreferencedCode`. The one component renders statically, and the native build answers
+  both template tests, so `Program.cs` suppresses the warning.
+- A native build turns on the request delegate generator, which cannot see `ItemsPage`, because the
+  Razor generator writes it. So the template handlers return the base `RazorComponentResult`.
+- `GetProperties` promises no order, and under Native AOT a property has no `MetadataToken` to sort
+  by. So the first-error filter names `OrderRequest`'s properties in their declared order. It gives
+  its `ValidationContext` the handler's parameter name as the display name, as `AddValidation`'s
+  filter does, because the constructor that works a name out reflects over the type.
+- `MinLength` is marked as reading `Count` by reflection from a collection that is not an
+  `ICollection`. `Lines` is a `List`, so `Order.cs` suppresses that warning.
+- The etag filter serialises the answer through the JSON options' `GetTypeInfo`, the overload a
+  native build can use.
 - Amazon.Lambda.AspNetCoreServer marks every request https, as a Function URL's requests are.
   ASP.NET Core's response compression leaves an HTTPS answer uncompressed unless `EnableForHttps`
   is set, so `Program.cs` sets it. The container hosts are plain HTTP, where it changes nothing.
