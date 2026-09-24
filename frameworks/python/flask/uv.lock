@@ -12,6 +12,15 @@ wheels = [
 ]
 
 [[package]]
+name = "apig-wsgi"
+version = "2.20.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/90/4a/3036a3cd4fdec296b510b366a5e69e4784abce836d57de5f8a3c6ee96691/apig_wsgi-2.20.0.tar.gz", hash = "sha256:9c6aea1e96688b5848efb409ae3c3afb4ed2b162cd71dab683b1466a7387b964", size = 17158, upload-time = "2025-09-08T15:30:31.767Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/38/d2/dfdc29f172c9c8f73b895aeae285717585905a4a9c0d677ed7a1cd7f9812/apig_wsgi-2.20.0-py3-none-any.whl", hash = "sha256:5489b3590a748d42b8c040ca11e776ce9eecbb00ae34f509ce82a89f5babfc47", size = 8420, upload-time = "2025-09-08T15:30:30.552Z" },
+]
+
+[[package]]
 name = "blinker"
 version = "1.9.0"
 source = { registry = "https://pypi.org/simple" }
@@ -410,6 +419,9 @@ dependencies = [
 dev = [
     { name = "pytest" },
 ]
+lambda-emulator = [
+    { name = "apig-wsgi" },
+]
 
 [package.metadata]
 requires-dist = [
@@ -424,6 +436,7 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [{ name = "pytest", specifier = "~=9.1" }]
+lambda-emulator = [{ name = "apig-wsgi", specifier = "~=2.20" }]
 
 [[package]]
 name = "typing-extensions"
