@@ -14,6 +14,7 @@ has one.
 | `Implementation/` | The application, a Maven module. One controller per corpus family under `src/main/java/implementation/routes/`. |
 | `container-h1/` | The `Dockerfile` that builds the image container-h1 runs. |
 | `container-h2/` | The `Dockerfile` that builds the image container-h2 runs, with `server.http2.enabled`, which puts HTTP/2 on Tomcat's plain connector. |
+| `lambda-emulator/` | How lambda-emulator starts it. `StreamLambdaHandler.java` starts the application behind aws-serverless-java-container's `SpringBootLambdaContainerHandler`, which the Java runtime client hands each event, and `Dockerfile` builds the function on the `java:25` base image. Implementation's `lambda-emulator` profile adds the adapter and compiles the handler. |
 | `UnitTests/` | JUnit tests of the wiring, a Maven module that boots the Implementation on a random port with `@SpringBootTest`. |
 | `Client/` | The OpenAPI document springdoc serves, and the Kiota client generated from it, a Maven module. |
 | `client-exception/` | How the corpus reads Spring Boot's error bodies. |
@@ -97,6 +98,26 @@ plain jar that UnitTests compiles against.
 - The container runs `java -jar` as PID 1 with the collector and heap the JVM chooses. The JVM
   reads the container's CPU quota, counts 2 CPUs under `--cpus 2` and chooses G1. On SIGTERM it
   runs Spring's graceful shutdown and exits in under a second.
+- On lambda-emulator the application answers behind aws-serverless-java-container 3.0's
+  `SpringBootLambdaContainerHandler`, built by `getHttpApiV2ProxyHandler` for API Gateway payload
+  format 2.0. The adapter's own servlet container takes Tomcat's place. The adapter buffers the
+  whole answer, so the sse and stream tests are listed as unsupported there.
+- The adapter's container has no compression and no error pages. compressed.gzip_large's answer
+  arrives uncompressed. `sendError` sets the status and never reaches Boot's `/error`, so the two
+  body.rejected refusals arrive with no body. All three are listed as unsupported there.
+- Tomcat makes a multipart body's text fields request parameters, and the adapter's request does
+  not. forms.multipart's `@RequestParam tenant` finds nothing and Spring MVC answers 400, so the
+  test is listed as unsupported there.
+- The adapter's other handler, `SpringDelegatingLambdaContainerHandler`, which its Spring Boot 4
+  samples run with no handler class of their own, is not used. Spring Cloud Function's request
+  under it runs every registered filter on every path and parses no form body. Its answer carries
+  the headers in `multiValueHeaders` alone, which a Function URL does not read.
+- Tomcat's jars stay in the function, though the adapter's samples leave them out, because
+  `/__meta` reads the adapter's name from Tomcat's `ServerInfo`. So `/__meta` names Tomcat on
+  lambda-emulator too, where Tomcat does not serve.
+- On lambda-emulator the Java runtime's bootstrap starts the JVM with the serial collector, with C1
+  alone through `-XX:TieredStopAtLevel=1`, and with a heap sized from
+  `AWS_LAMBDA_FUNCTION_MEMORY_SIZE`. The function runs on one core.
 
 ## Refusals
 

@@ -1,5 +1,5 @@
 {
-  "comment": "Spring Boot 4.1 with Spring MVC on Tomcat, one controller per family under Implementation/src/main/java/implementation/routes. The suite is UnitTests/, JUnit over the application booted on a random port, and never reaches the image. Maven has no lockfile: Boot's parent pins every dependency and plugin through its BOM and nothing resolves a range, so the two poms the image is built from are what pin it. upgrade moves the Boot parent to its newest patch release, because versions:update-parent with minor and major updates off moves nothing else.",
+  "comment": "Spring Boot 4.1 with Spring MVC on Tomcat, one controller per family under Implementation/src/main/java/implementation/routes. On lambda-emulator the application answers behind aws-serverless-java-container's SpringBootLambdaContainerHandler, which Implementation's lambda-emulator profile adds with StreamLambdaHandler from lambda-emulator/. The suite is UnitTests/, JUnit over the application booted on a random port, and never reaches the image. Maven has no lockfile: Boot's parent pins every dependency and plugin through its BOM and nothing resolves a range, so the two poms the image is built from are what pin it. upgrade moves the Boot parent to its newest patch release, because versions:update-parent with minor and major updates off moves nothing else.",
   "framework": "Spring Boot",
   "licence": "Apache-2.0",
   "repo": "https://github.com/spring-projects/spring-boot",
@@ -8,7 +8,18 @@
   "lockfile": ["pom.xml", "Implementation/pom.xml"],
   "hosts": {
     "container-h1": { "dockerfile": "container-h1/Dockerfile" },
-    "container-h2": { "dockerfile": "container-h2/Dockerfile" }
+    "container-h2": { "dockerfile": "container-h2/Dockerfile" },
+    "lambda-emulator": {
+      "dockerfile": "lambda-emulator/Dockerfile",
+      "unsupported": {
+        "body.rejected_all": "aws-serverless-java-container answers sendError with the status alone and never forwards to Boot's /error page, so the 400 arrives with no body to name the fields.",
+        "body.rejected_first": "aws-serverless-java-container answers sendError with the status alone and never forwards to Boot's /error page, so the 400 arrives with no body to name the field.",
+        "compressed.gzip_large": "server.compression is Tomcat's, and aws-serverless-java-container's container, which takes Tomcat's place, compresses nothing, so the answer arrives uncompressed.",
+        "forms.multipart": "aws-serverless-java-container's request does not make a multipart body's text fields request parameters, as Tomcat does, so the handler's @RequestParam tenant is missing and Spring MVC answers 400.",
+        "sse.medium": "aws-serverless-java-container buffers the whole answer, so the events arrive as one body.",
+        "stream.ndjson": "aws-serverless-java-container buffers the whole answer, so the rows arrive as one body."
+      }
+    }
   },
   "suite": { "argv": ["mvn", "-B", "test"], "paths": ["UnitTests"] },
   "upgrade": {
