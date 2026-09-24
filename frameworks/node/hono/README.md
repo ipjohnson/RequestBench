@@ -91,6 +91,9 @@ listening. `PORT` defaults to 8080.
   Response it builds, so a refusal it writes, the 400 for a body that is not JSON and the 403 for a
   wrong token, goes out chunked, with no `Content-Length`.
 - The server is one Node process, which @hono/node-server starts, on the container's two cores.
+- container-h2 lists `sse.medium` as unsupported. hono's streamSSE sets Transfer-Encoding, which
+  node:http2 refuses as a connection-specific header. The throw escapes @hono/node-server's error
+  handler and ends the process.
 
 ## Refusals
 

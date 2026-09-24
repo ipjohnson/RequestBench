@@ -120,6 +120,9 @@ per core, so two of the four serve.
 - The container runs `java -jar` as PID 1 with the collector and heap the JVM chooses. The JVM
   reads the container's CPU quota and counts 2 CPUs under `--cpus 2`. On SIGTERM it exits at once,
   because nothing registers a shutdown hook.
+- container-h2 lists `items.head` as unsupported. Over HTTP/2, Vert.x sends the row the route writes
+  for HEAD as a DATA frame. HTTP/2 allows no content in an answer to HEAD, so the client resets the
+  stream.
 
 ## Refusals
 

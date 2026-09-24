@@ -7,7 +7,12 @@
   "lockfile": ["Implementation/packages.lock.json"],
   "hosts": {
     "container-h1": { "dockerfile": "container-h1/Dockerfile" },
-    "container-h2": { "dockerfile": "container-h2/Dockerfile" }
+    "container-h2": {
+      "dockerfile": "container-h2/Dockerfile",
+      "unsupported": {
+        "items.head": "Over HTTP/2, Kestrel sends the row the handler writes for HEAD as a DATA frame. HTTP/2 allows no content in an answer to HEAD, so the client resets the stream. Over HTTP/1.1 Kestrel leaves the row unwritten."
+      }
+    }
   },
   "suite": { "argv": ["dotnet", "test", "UnitTests"], "paths": ["UnitTests"] },
   "upgrade": null,

@@ -8,7 +8,12 @@
   "lockfile": ["Cargo.lock"],
   "hosts": {
     "container-h1": { "dockerfile": "container-h1/Dockerfile" },
-    "container-h2": { "dockerfile": "container-h2/Dockerfile" }
+    "container-h2": {
+      "dockerfile": "container-h2/Dockerfile",
+      "unsupported": {
+        "items.head": "Over HTTP/2, warp sends the row its filter answers HEAD with as a DATA frame. HTTP/2 allows no content in an answer to HEAD, so the client resets the stream."
+      }
+    }
   },
   "suite": { "argv": ["cargo", "test", "--locked"], "paths": ["UnitTests"] },
   "upgrade": { "argv": ["cargo", "update"] },

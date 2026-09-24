@@ -116,6 +116,9 @@ this Mac, against about 280 ms through `app.Run()`, because it finds its command
   Implementation adds neither. A 401, 403, 404 or 405 has no body.
 - settings.json sizes the cache in entries, and output caching sizes it in bytes. Its default of
   100 MB holds every key the cache family stores.
+- container-h2 lists `items.head` as unsupported. Over HTTP/2, Kestrel sends the row the handler
+  writes for HEAD as a DATA frame. HTTP/2 allows no content in an answer to HEAD, so the client
+  resets the stream. Over HTTP/1.1 Kestrel leaves the row unwritten.
 
 ## Refusals
 
