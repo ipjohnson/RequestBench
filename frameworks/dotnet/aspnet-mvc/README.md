@@ -103,7 +103,7 @@ Client section says.
   listed as unsupported there. `EnableResponseStreaming` would stream every answer.
 - Amazon.Lambda.AspNetCoreServer marks every request https, as a Function URL's requests are.
   ASP.NET Core's response compression leaves an HTTPS answer uncompressed unless `EnableForHttps`
-  is set, so lambda-emulator lists `compressed.gzip_large` as unsupported.
+  is set, so `Program.cs` sets it. The container hosts are plain HTTP, where it changes nothing.
 - Amazon.Lambda.AspNetCoreServer posts the row the handler writes for HEAD. A Function URL's caller
   reads no body in an answer to HEAD, so nothing reads it.
 - On lambda-emulator `/__meta` reports no `bootMs`. The hosting package runs the runtime client's
