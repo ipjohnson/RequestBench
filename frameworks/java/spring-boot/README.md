@@ -119,6 +119,10 @@ plain jar that UnitTests compiles against.
 - On lambda-emulator the Java runtime's bootstrap starts the JVM with the serial collector, with C1
   alone through `-XX:TieredStopAtLevel=1`, and with a heap sized from
   `AWS_LAMBDA_FUNCTION_MEMORY_SIZE`. The function runs on one core.
+- lambda-emulator runs Spring Boot on the JVM, not as a native executable.
+  aws-serverless-java-container's native route, its pet-store-native sample, hands each event to
+  Spring Cloud Function's request, the one under `SpringDelegatingLambdaContainerHandler`. Its
+  answers lose every header, its forms go unparsed, and it hangs on the sse and stream answers.
 
 ## Refusals
 
