@@ -7,6 +7,9 @@
     <OpenApiGenerateDocuments Condition="'$(RB_PAYLOADS)' == ''">false</OpenApiGenerateDocuments>
   </PropertyGroup>
   <ItemGroup>
+    <!-- lambda-emulator's adapter, with Amazon.Lambda.RuntimeSupport as its runtime client. It does
+         nothing outside Lambda, so every host builds with it. -->
+    <PackageReference Include="Amazon.Lambda.AspNetCoreServer.Hosting" Version="2.2.1" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.12" />
     <PackageReference Include="Microsoft.Extensions.ApiDescription.Server" Version="10.0.12">
       <PrivateAssets>all</PrivateAssets>
