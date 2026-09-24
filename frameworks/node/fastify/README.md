@@ -14,6 +14,7 @@ routes registered inside it and to no others. Every family here is a plugin of i
 | `Implementation/` | The application, in TypeScript. `app.ts` builds it, and `routes/` holds one plugin per corpus family. |
 | `container-h1/` | How container-h1 starts it. `server.ts` loads the payloads and listens, and `Dockerfile` builds the image. |
 | `container-h2/` | How container-h2 starts it. `server.ts` builds the application on a Fastify instance with the `http2` option, which answers HTTP/2 with prior knowledge, and `Dockerfile` builds the image. |
+| `lambda-emulator/` | How lambda-emulator starts it. `handler.mjs` exports the handler the Lambda runtime hands each event, the application behind @fastify/aws-lambda, and `Dockerfile` builds the function on the `nodejs:26-preview` base image. The runtime imports a handler's module only as `.js`, `.mjs` or `.cjs`, so `handler.mjs` is JavaScript, and Node strips the types of the application it imports. |
 | `UnitTests/` | node:test tests of the wiring, sending each request through Fastify's `inject()`. |
 | `Client/` | The OpenAPI document @fastify/swagger writes from the route schemas, and the Kiota client generated from it. |
 | `client-exception/` | How the corpus reads Fastify's error bodies. |
@@ -76,6 +77,20 @@ listening. `PORT` defaults to 8080.
 - Fastify closes the connection after it refuses a body its parser cannot read, because the client
   may still be sending. Under load, every `errors.malformed` request pays for a new connection.
 - The server is one Node process, as Fastify's `listen` starts it, on the container's two cores.
+  The function on lambda-emulator runs on one core.
+- On lambda-emulator the application answers behind @fastify/aws-lambda 6.4, the Fastify
+  organisation's adapter. It hands each event to Fastify's `inject()`, as the suite does, and no
+  server runs. It buffers the whole answer into one proxy response, so the sse and stream tests are
+  listed as unsupported there. Its `payloadAsStream` option would stream every answer.
+- @fastify/aws-lambda builds the query from the event's `queryStringParameters` rather than its
+  `rawQueryString`, and splits a value at its commas. On lambda-emulator `?q=a,b` reaches a route as
+  an array. No corpus value holds a comma.
+- The function runs with `NODE_OPTIONS=--experimental-require-module`. Lambda's bootstrap otherwise
+  starts Node with `require()` of an ES module turned off, and @fastify/static requires
+  content-disposition 3, which is one, so the application would not load.
+- The function is built on `public.ecr.aws/lambda/nodejs:26-preview`, because container-h1 runs
+  Node 26 and Lambda's Node 26 runtime is still a preview. The runtime logs a warning saying so when
+  it starts.
 
 ## Refusals
 

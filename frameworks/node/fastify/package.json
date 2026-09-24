@@ -10,6 +10,7 @@
     "client": "node --experimental-strip-types --disable-warning=ExperimentalWarning Client/document.ts && node --experimental-strip-types --disable-warning=ExperimentalWarning Client/generate.ts"
   },
   "dependencies": {
+    "@fastify/aws-lambda": "^6.4.1",
     "@fastify/compress": "^9.2.0",
     "@fastify/cors": "^11.3.0",
     "@fastify/etag": "^6.2.0",
