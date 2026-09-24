@@ -101,6 +101,8 @@ Client section says.
   Kestrel's place only where `AWS_LAMBDA_FUNCTION_NAME` is set, so it does nothing on the other
   hosts. It buffers the whole answer into one proxy response, so the sse and stream tests are
   listed as unsupported there. `EnableResponseStreaming` would stream every answer.
+- lambda-emulator runs ASP.NET Core MVC on the JIT runtime, not as a Native AOT build, because
+  ASP.NET Core MVC does not support Native AOT.
 - Amazon.Lambda.AspNetCoreServer marks every request https, as a Function URL's requests are.
   ASP.NET Core's response compression leaves an HTTPS answer uncompressed unless `EnableForHttps`
   is set, so `Program.cs` sets it. The container hosts are plain HTTP, where it changes nothing.
