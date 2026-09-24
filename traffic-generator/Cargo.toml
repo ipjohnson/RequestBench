@@ -1,0 +1,17 @@
+[package]
+name = "traffic-generator"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+base64 = "0.22"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["rt", "net", "time", "io-util", "io-std", "sync", "macros"] }
+
+# The generator's own cost is inside every latency it records, so it is built the way the Rust
+# frameworks are.
+[profile.release]
+lto = "fat"
+codegen-units = 1

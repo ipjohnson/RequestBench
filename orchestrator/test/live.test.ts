@@ -39,7 +39,7 @@ async function gateOver(framework: Id, transport: Transport, over: { suite?: Sui
     return result;
   } finally {
     up = false;
-    live.close();
+    await live.close();
     await served.close();
   }
 }
@@ -113,7 +113,7 @@ test("a skip is reported with its reason, and a test scoped out is not asked", a
     run: FIXED_VALUES,
     alive: async () => true,
   });
-  live.close();
+  await live.close();
   await served.close();
   assert.deepEqual(result.outcomes["cors.scoped"], { status: "skipped", reason });
   assert.deepEqual(result.outcomes["cors.only_elsewhere"], { status: "notAsked" });

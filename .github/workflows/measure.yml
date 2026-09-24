@@ -48,6 +48,14 @@ jobs:
           node-version: "24"
           cache: npm
       - run: npm ci --no-audit --no-fund
+      # The gate and the load go through the traffic generator's Rust program, which cargo builds
+      # with the toolchain traffic-generator/rust-toolchain.toml pins.
+      - run: rustup toolchain install
+        working-directory: traffic-generator
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: traffic-generator
+          shared-key: traffic-generator
 
       # Every framework's image is built in this one job, and the runner's preinstalled toolchains
       # leave too little disk for all of them.

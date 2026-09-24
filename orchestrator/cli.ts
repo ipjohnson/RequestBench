@@ -290,7 +290,7 @@ async function gateAt(
       exchanges: sink,
     });
   } finally {
-    live.close();
+    await live.close();
   }
 }
 

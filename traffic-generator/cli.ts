@@ -13,12 +13,13 @@
 // ends the load there, and the phases after it are not run. A framework dropping that much in
 // the settle goes on dropping at that rate.
 //
-// The full result, histograms included, goes to --out after every phase.
+// This process runs the corpus: it primes every test through the Rust program in src/ and
+// hands it the compiled load. The program does the timing, and this turns its tallies into the
+// result. The full result, histograms included, goes to --out after every phase.
 import { randomInt } from "node:crypto";
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { parseArgs } from "node:util";
-import { Worker } from "node:worker_threads";
 import suite from "@rb/tests";
 import { idOf } from "@rb/tests/kit";
 import type { PerformanceTest } from "@rb/tests/kit";
@@ -37,8 +38,8 @@ import {
   type ResolvedLoad,
   type SettleSummary,
 } from "./load.ts";
-import { mergeTally, newTally, type Tally } from "./tally.ts";
-import type { FromWorker, Job, Report, Schedule, ToWorker } from "./worker.ts";
+import { Pipe, type PhaseReport } from "./pipe.ts";
+import { tallyOf, type Tally } from "./tally.ts";
 
 const USAGE = "usage: node traffic-generator/cli.ts <load, as JSON or a file> [--out <file>]";
 
@@ -139,87 +140,6 @@ function select(only: readonly string[] | undefined, unsupported: Readonly<Recor
   return chosen;
 }
 
-/** Seeds for the worker threads, and one past them for this thread. */
-const seedOf = (i: number): number => Math.imul(0x9e3779b9, i + 1) >>> 0;
-
-function next<K extends FromWorker["kind"]>(worker: Worker, kind: K): Promise<Extract<FromWorker, { kind: K }>> {
-  return new Promise((resolve, reject) => {
-    const onMessage = (message: FromWorker) => {
-      if (message.kind !== kind) return;
-      off();
-      resolve(message as Extract<FromWorker, { kind: K }>);
-    };
-    const onError = (error: Error) => {
-      off();
-      reject(error);
-    };
-    const onExit = (code: number) => {
-      off();
-      reject(new Error(`a worker thread exited with code ${code} before it was ${kind}`));
-    };
-    const off = () => {
-      worker.off("message", onMessage);
-      worker.off("error", onError);
-      worker.off("exit", onExit);
-    };
-    worker.on("message", onMessage);
-    worker.on("error", onError);
-    worker.on("exit", onExit);
-  });
-}
-
-/** The threads that time every phase, started once so each keeps its connections from one phase to the next. */
-async function spawn(o: Options, compiled: Compiled[]): Promise<Worker[]> {
-  const { workers, connections } = o.load;
-  const threads = Array.from({ length: workers }, (_, index) => {
-    const job: Job = {
-      host: o.host,
-      port: o.port,
-      tests: compiled,
-      index,
-      workers,
-      connections: Math.ceil(connections / workers),
-      seed: seedOf(index),
-    };
-    return new Worker(new URL("./worker.ts", import.meta.url), { workerData: job });
-  });
-  try {
-    await Promise.all(threads.map((thread) => next(thread, "ready")));
-  } catch (error) {
-    await Promise.all(threads.map((thread) => thread.terminate()));
-    throw error;
-  }
-  return threads;
-}
-
-/** One phase on every thread, from a start they share until the last of them has drained. */
-async function offer(
-  threads: readonly Worker[],
-  schedule: Schedule,
-  limit: number | undefined,
-): Promise<{ start: bigint; aborted: boolean; reports: Report[] }> {
-  const done = Promise.all(threads.map((thread) => next(thread, "done")));
-  // Awaited once the settle is judged. Until then this keeps a thread that fails from being
-  // reported as an unhandled rejection instead of as its own error.
-  done.catch(() => {});
-  // Judged on the drops of every thread together, so no thread goes on while another stops.
-  const judging =
-    limit === undefined || schedule.settle === 0
-      ? undefined
-      : { limit, settled: Promise.all(threads.map((thread) => next(thread, "settled"))) };
-  // One start for every thread, far enough ahead that it reaches each of them before it
-  // passes, so an instance is due at the same moment whichever thread holds it.
-  const start = process.hrtime.bigint() + 50_000_000n;
-  for (const thread of threads) thread.postMessage({ kind: "phase", schedule, start } satisfies ToWorker);
-  let aborted = false;
-  if (judging !== undefined) {
-    const dropped = (await judging.settled).reduce((sum, message) => sum + message.dropped, 0);
-    aborted = dropped / schedule.settle > judging.limit;
-    if (aborted) for (const thread of threads) thread.postMessage({ kind: "stop" } satisfies ToWorker);
-  }
-  return { start, aborted, reports: (await done).map((message) => message.report) };
-}
-
 const percentiles = (hist: Uint32Array): Percentiles => ({
   p50Us: percentile(hist, 50),
   p90Us: percentile(hist, 90),
@@ -231,9 +151,7 @@ const base64 = (hist: Uint32Array): string =>
   Buffer.from(hist.buffer, hist.byteOffset, hist.byteLength).toString("base64");
 
 /** The settle's instances, summed over every test. */
-function settleSummary(seconds: number, scheduled: number, reports: readonly Report[]): SettleSummary {
-  const t = newTally();
-  for (const report of reports) mergeTally(t, report.settle);
+function settleSummary(seconds: number, scheduled: number, t: Tally): SettleSummary {
   const completed = t.count;
   return {
     seconds,
@@ -251,25 +169,20 @@ function settleSummary(seconds: number, scheduled: number, reports: readonly Rep
   };
 }
 
-/** The recorded instances. `from` is the moment the first of them was due. */
+/** The recorded instances. `from` is the moment the first of them was due, and `last` when the last answer ended. */
 function recordedSummary(
   tests: readonly PerformanceTest[],
   seconds: number,
   scheduled: number,
-  from: bigint,
-  reports: readonly Report[],
+  from: number,
+  last: number,
+  tallies: readonly Tally[],
 ): RecordedSummary {
-  const tallies = tests.map(newTally);
-  let last = from;
-  for (const report of reports) {
-    report.tallies.forEach((tally, i) => mergeTally(tallies[i]!, tally));
-    if (report.last > last) last = report.last;
-  }
   const overall = new Uint32Array(BUCKETS);
   for (const tally of tallies) addInto(overall, tally.hist);
   const sum = (field: (tally: Tally) => number) => tallies.reduce((s, tally) => s + field(tally), 0);
   const completed = countOf(overall);
-  const elapsed = last > from ? Number(last - from) / 1e9 : seconds;
+  const elapsed = last > from ? (last - from) / 1e9 : seconds;
 
   return {
     seconds,
@@ -299,8 +212,9 @@ function recordedSummary(
   };
 }
 
-async function runPhase(o: Options, threads: readonly Worker[], phase: Phase): Promise<PhaseResult> {
-  const schedule: Schedule = {
+async function runPhase(o: Options, pipe: Pipe, phase: Phase): Promise<PhaseResult> {
+  // One phase, counted in instances across every thread.
+  const schedule = {
     rps: phase.rps,
     settle: Math.round(phase.rps * (phase.settle ?? 0)),
     total: Math.round(phase.rps * (phase.seconds ?? 0)),
@@ -309,17 +223,17 @@ async function runPhase(o: Options, threads: readonly Worker[], phase: Phase): P
     ...(phase.settle === undefined ? [] : [`${phase.settle}s to settle`]),
     ...(phase.seconds === undefined ? [] : [`${schedule.total} instances recorded over ${phase.seconds}s`]),
   ];
-  console.log(`${phase.name}: offering ${phase.rps} rps over ${threads.length} threads: ${parts.join(", then ")}`);
+  console.log(`${phase.name}: offering ${phase.rps} rps over ${o.load.workers} threads: ${parts.join(", then ")}`);
 
-  const { start, aborted, reports } = await offer(threads, schedule, phase.abortDropFraction);
+  const report: PhaseReport = await pipe.phase({ ...schedule, abortDropFraction: phase.abortDropFraction ?? null });
+  const { aborted, unfinished } = report;
   // The recorded instances carry on the settle's schedule, so the first of them is due where it ends.
-  const from = start + BigInt(Math.round((schedule.settle * 1e9) / phase.rps));
-  const settle = phase.settle === undefined ? {} : { settle: settleSummary(phase.settle, schedule.settle, reports) };
+  const from = report.start + Math.round((schedule.settle * 1e9) / phase.rps);
+  const settle = phase.settle === undefined ? {} : { settle: settleSummary(phase.settle, schedule.settle, tallyOf(report.settle)) };
   const recorded =
     phase.seconds === undefined || aborted
       ? {}
-      : { recorded: recordedSummary(o.tests, phase.seconds, schedule.total, from, reports) };
-  const unfinished = reports.reduce((sum, report) => sum + report.unfinished, 0);
+      : { recorded: recordedSummary(o.tests, phase.seconds, schedule.total, from, report.last, report.tests.map(tallyOf)) };
   return { name: phase.name, rps: phase.rps, status: aborted ? "aborted" : "done", ...settle, ...recorded, unfinished };
 }
 
@@ -377,32 +291,36 @@ async function main(args: string[]): Promise<number> {
   const left = Object.keys(o.load.unsupported ?? {}).filter((id) => suite.tests[id]?.kind === "performance");
   if (left.length > 0) console.log(`leaving out ${left.length} test(s) ${o.load.framework} does not support here: ${left.join(", ")}`);
   console.log(`priming ${o.tests.length} tests against ${o.load.framework} at ${o.load.target}`);
-  const compiled = await prepare({
-    host: o.host,
-    port: o.port,
-    tests: o.tests,
-    statuses: o.statuses,
-    run: o.load.values,
-    instances: o.load.instances,
-    log: (line) => console.log(line),
-  });
-  const requests = compiled.reduce((n, test) => n + test.instances.length, 0);
-  console.log(`  ${requests} requests prepared, at most ${Math.max(...compiled.map((test) => test.instances.length))} for one test`);
-
-  const threads = await spawn(o, compiled);
+  const pipe = Pipe.start({ host: o.host, port: o.port });
   const phases: PhaseResult[] = [];
   try {
+    const compiled = await prepare({
+      pipe,
+      tests: o.tests,
+      statuses: o.statuses,
+      run: o.load.values,
+      instances: o.load.instances,
+      log: (line) => console.log(line),
+    });
+    const requests = compiled.reduce((n, test) => n + test.instances.length, 0);
+    console.log(`  ${requests} requests prepared, at most ${Math.max(...compiled.map((test) => test.instances.length))} for one test`);
+
+    // Every thread and connection is opened before the first phase, and kept for every phase after it.
+    const tests = compiled.map((test) => ({
+      instances: test.instances.map((i) => ({ request: i.request, label: i.target, accepted: i.accepted, bodyBytes: i.bodyBytes ?? null })),
+    }));
+    await pipe.open(tests, o.load.workers, o.load.connections);
     for (const phase of o.load.phases) {
       const ended = phases.some((p) => p.status !== "done");
       const result: PhaseResult = ended
         ? { name: phase.name, rps: phase.rps, status: "notRun" }
-        : await runPhase(o, threads, phase);
+        : await runPhase(o, pipe, phase);
       phases.push(result);
       print(phase, result);
       if (o.out !== undefined) write(o.out, { load: o.load, testsLive: o.tests.length, phases });
     }
   } finally {
-    await Promise.all(threads.map((thread) => thread.terminate()));
+    await pipe.close();
   }
   if (o.out !== undefined) console.log(`result -> ${o.out}`);
   return 0;
