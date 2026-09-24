@@ -15,10 +15,11 @@ header, so the views do both, and a `django.forms.Form` binds and validates ever
 | --- | --- |
 | `Implementation/` | The application. `asgi.py` is what each worker imports, `settings.py` configures Django and loads the payloads, `urls.py` routes every path, and `views/` holds one module per corpus family. |
 | `container-h1/` | How container-h1 starts it. `server.py` starts uvicorn with two workers, and `Dockerfile` builds the image. |
+| `lambda-emulator/` | How lambda-emulator starts it. `server.py` is the handler's module, which puts Django's ASGI application behind Mangum for awslambdaric, the runtime client, and `Dockerfile` builds the function on the `python:3.14` base image, with the packages and the application together in the task root. |
 | `UnitTests/` | pytest tests of the wiring, sending each request through Django's AsyncClient. |
 | `client-exception/` | How the corpus reads Django's error bodies. |
-| `pyproject.toml` | The dependencies, the suite's dependencies, and pytest's settings. |
-| `uv.lock` | What uv resolved, which the image installs. |
+| `pyproject.toml` | The dependencies, the suite's dependencies, lambda-emulator's adapter as a group of its own, and pytest's settings. |
+| `uv.lock` | What uv resolved, which each host's image installs. |
 
 ## Building, running and testing
 
@@ -60,7 +61,7 @@ corpus reaches the container at whatever address it was given. Two of the seven 
 
 Sessions, CSRF, authentication, messages and the security and clickjacking headers are work the
 corpus never asks for, and `CsrfViewMiddleware` would refuse every POST that carries no token.
-Logging is Django's default, which writes nothing for a 4xx while `DEBUG` is off.
+Logging is Django's default. Under uvicorn it writes nothing for a 4xx while `DEBUG` is off.
 
 ## How each family is wired
 
@@ -104,13 +105,25 @@ Logging is Django's default, which writes nothing for a 4xx while `DEBUG` is off
 - Django answers every error it writes itself, the 404, 400 and 403, with an HTML page, whatever
   the request accepts.
 - Django implements no ASGI lifespan and refuses any scope but HTTP, so `server.py` tells uvicorn
-  not to ask.
+  not to ask, and `lambda-emulator/server.py` tells Mangum.
 - `django.views.static.serve` is a synchronous view, so Django runs it in a thread. Under ASGI
   Django reads the file it answers with to its end, in a thread, before it sends any of it, and
   warns once in each worker that it consumed a synchronous iterator. Django documents `serve` for
   development. WhiteNoise, the usual answer in production, is a synchronous middleware, and while
   one is installed Django runs every request on every route through a thread.
 - A required `BooleanField` refuses `False`, so the items forms declare `inStock` not required.
+- On lambda-emulator the application answers behind Mangum 0.22, which reads API Gateway payload
+  format 2.0. Mangum buffers the whole answer into one proxy response, so the sse and stream tests
+  are listed as unsupported there.
+- Mangum posts the body Django writes for HEAD, where uvicorn leaves it unwritten. A Function URL's
+  caller reads no body in an answer to HEAD, so nothing reads it.
+- Mangum runs every event on asyncio's own event loop, so uvloop, which uvicorn picks on
+  container-h1, goes unused on lambda-emulator.
+- On lambda-emulator the runtime client puts its log handler on the root logger, so the warning
+  Django logs for each 4xx it answers, such as `Not Found: /items/999999`, is written to the
+  function's output, with the traceback of a `BadRequest`. Under uvicorn no handler takes them.
+- The function on lambda-emulator is one process, which answers one event at a time, so `/__meta`
+  reports one worker there.
 
 ## Refusals
 
