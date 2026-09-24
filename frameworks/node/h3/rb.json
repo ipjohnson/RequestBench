@@ -1,5 +1,5 @@
 {
-  "comment": "h3 v2 on Node 26, served by h3's serve(), which runs srvx's Node adapter, in TypeScript that Node runs without a build step. npm's latest h3 is 2.0.1-rc.32, a release candidate of v2, and the range admits later candidates and the release. One module per family under Implementation/routes registers its routes and gives each route its middleware in the route's options, because h3 runs middleware registered with app.use() on every request. The suite is UnitTests/, node:test over app.request(), and never reaches the image. install-ci-test is npm ci then npm test, because the suite needs node_modules and the typechecker. upgrade is npm update, which moves package-lock.json within the ranges package.json states. There is no Client/, because h3 writes no OpenAPI document.",
+  "comment": "h3 v2 on Node 26, served by h3's serve(), which runs srvx's Node adapter, in TypeScript that Node runs without a build step. On lambda-emulator the application's fetch answers behind srvx's AWS Lambda adapter. npm's latest h3 is 2.0.1-rc.32, a release candidate of v2, and the range admits later candidates and the release. One module per family under Implementation/routes registers its routes and gives each route its middleware in the route's options, because h3 runs middleware registered with app.use() on every request. The suite is UnitTests/, node:test over app.request(), and never reaches the image. install-ci-test is npm ci then npm test, because the suite needs node_modules and the typechecker. upgrade is npm update, which moves package-lock.json within the ranges package.json states. There is no Client/, because h3 writes no OpenAPI document.",
   "framework": "h3",
   "licence": "MIT",
   "repo": "https://github.com/h3js/h3",
@@ -7,7 +7,16 @@
   "docs": "https://h3.dev/",
   "lockfile": ["package-lock.json"],
   "hosts": {
-    "container-h1": { "dockerfile": "container-h1/Dockerfile" }
+    "container-h1": { "dockerfile": "container-h1/Dockerfile" },
+    "lambda-emulator": {
+      "dockerfile": "lambda-emulator/Dockerfile",
+      "unsupported": {
+        "sse.medium": "srvx's toLambdaHandler buffers the whole answer, so the events arrive as one body.",
+        "stream.ndjson": "srvx's toLambdaHandler buffers the whole answer, so the rows arrive as one body.",
+        "baseline.plaintext": "srvx's AWS Lambda adapter reads the answer's headers before its body. h3 answers a string with srvx's FastResponse, whose headers gain the text/plain Content-Type only once the body is read, so the answer goes out with none.",
+        "compressed.gzip_large": "srvx's AWS Lambda adapter chooses base64 by the Content-Type alone and ignores Content-Encoding. It writes the gzipped JSON as UTF-8 text, which replaces the bytes that are not UTF-8, so the body arrives corrupt."
+      }
+    }
   },
   "suite": { "argv": ["npm", "install-ci-test"], "paths": ["UnitTests"] },
   "upgrade": { "argv": ["npm", "update"] },
