@@ -9,6 +9,7 @@
     "test": "tsc -p tsconfig.json && node --experimental-strip-types --disable-warning=ExperimentalWarning --test \"UnitTests/*.test.ts\""
   },
   "dependencies": {
+    "@codegenie/serverless-express": "^5.0.0",
     "compression": "^1.8.2",
     "cors": "^2.8.6",
     "express": "^5.2.1",
