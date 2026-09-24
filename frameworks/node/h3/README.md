@@ -14,6 +14,7 @@ this port runs. Version 1 is 1.15.11, under npm's `1x` tag.
 | --- | --- |
 | `Implementation/` | The application, in TypeScript. `app.ts` builds it, and `routes/` holds one module per corpus family. `views/` holds the EJS template. |
 | `container-h1/` | How container-h1 starts it. `server.ts` loads the payloads and listens, and `Dockerfile` builds the image. |
+| `lambda-emulator/` | How lambda-emulator starts it. `handler.mjs` exports the handler the Lambda runtime hands each event, the application's `fetch` behind `toLambdaHandler` from `srvx/aws-lambda`, and `Dockerfile` builds the function on the `nodejs:26-preview` base image. The runtime imports a handler's module only as `.js`, `.mjs` or `.cjs`, so `handler.mjs` is JavaScript, and Node strips the types of the application it imports. |
 | `UnitTests/` | node:test tests of the wiring, sending each request through h3's `app.request()`. |
 | `client-exception/` | How the corpus reads h3's error bodies. |
 | `package.json` | The dependencies, and the scripts that start, check and test the Implementation. |
@@ -98,8 +99,26 @@ listening. `PORT` defaults to 8080.
   when srvx's own one-second timer runs out.
 - `handleCors` sends `access-control-expose-headers: *` on every request it allows, its default.
 - The server is one Node process, as `serve()` starts it, on the container's two cores.
+  The function on lambda-emulator runs on one core.
 - h3 implements no container-h2. srvx, which h3's `serve` starts, serves HTTP/2 only with a TLS
   certificate.
+- On lambda-emulator the application's `fetch` answers behind `toLambdaHandler` from srvx 1.0's
+  `srvx/aws-lambda`. h3 runs on srvx, and srvx's documentation gives this adapter for Lambda. The
+  function imports srvx, so `package.json` names it beside h3, which depends on it.
+- `toLambdaHandler` buffers the whole answer into one proxy response, so the sse and stream tests
+  are listed as unsupported on lambda-emulator. `handleLambdaEventWithStream` would stream every
+  answer.
+- srvx's Lambda adapter reads an answer's headers before its body. h3 answers a string with srvx's
+  `FastResponse`, whose headers gain the `text/plain` Content-Type only once the body is read, so on
+  lambda-emulator `/plaintext` goes out with no Content-Type. `baseline.plaintext` is listed as
+  unsupported there.
+- srvx's Lambda adapter chooses base64 by the Content-Type alone, and ignores Content-Encoding. It
+  writes a gzipped JSON body as UTF-8 text, which corrupts it, so `compressed.gzip_large` is listed
+  as unsupported on lambda-emulator. `compressed.gzip_small` passes, because the compressed
+  middleware leaves a body under 1 KB alone.
+- The function is built on `public.ecr.aws/lambda/nodejs:26-preview`, because container-h1 runs
+  Node 26 and Lambda's Node 26 runtime is still a preview. The runtime logs a warning saying so when
+  it starts.
 
 ## Refusals
 
