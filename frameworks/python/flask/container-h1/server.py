@@ -6,6 +6,7 @@ each worker builds the application, loading the payloads before it accepts from 
 gunicorn writes no access log unless it is given a file, and it is given none.
 """
 import os
+from importlib.metadata import version
 import sys
 from pathlib import Path
 
@@ -17,6 +18,8 @@ WORKERS = 2
 # gunicorn documents 2 to 4 threads per core, and the container has two cores. Each worker runs
 # Python on one core at a time, so more threads would only queue for it.
 THREADS = 4
+# What /__meta names as the adapter. contract.py imports it with WORKERS.
+ADAPTER = f"gunicorn {version('gunicorn')}"
 
 
 class Server(BaseApplication):

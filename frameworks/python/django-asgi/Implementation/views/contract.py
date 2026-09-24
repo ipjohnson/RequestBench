@@ -4,13 +4,13 @@ from importlib.metadata import version
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.http import require_GET
 
-from server import WORKERS
+from server import ADAPTER, WORKERS
 
 META = {
     "framework": "Django",
     "version": version("django"),
     "runtime": f"{platform.python_implementation()} {platform.python_version()}",
-    "adapter": f"uvicorn {version('uvicorn')}",
+    "adapter": ADAPTER,
     "serializer": "json",
     "workers": WORKERS,
 }

@@ -5,10 +5,13 @@ handler with each event it asks the Runtime API for. Mangum turns the event, an 
 format 2.0 request, into an ASGI request for Django, and the answer into a proxy response.
 """
 import os
+from importlib.metadata import version
 
 # A function is one process, which answers one event at a time. It is set before asgi is imported,
 # because views/contract.py imports it from this module.
 WORKERS = 1
+# What /__meta names as the adapter. contract.py imports it with WORKERS.
+ADAPTER = f"Mangum {version('mangum')}"
 
 if "RB_PAYLOADS" not in os.environ:
     raise RuntimeError("RB_PAYLOADS has to name the payload directory")
