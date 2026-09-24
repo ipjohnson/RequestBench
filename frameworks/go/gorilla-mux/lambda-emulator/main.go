@@ -21,6 +21,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	implementation.Adapter = "aws-lambda-go-api-proxy httpadapter"
 	// aws-lambda-go-api-proxy's gorillamux adapter takes a bare *mux.Router, and the router comes
 	// wrapped in gorilla/handlers' RecoveryHandler. httpadapter hands each request to any
 	// http.Handler's ServeHTTP, as gorillamux does to the router's. NewV2 reads API Gateway payload

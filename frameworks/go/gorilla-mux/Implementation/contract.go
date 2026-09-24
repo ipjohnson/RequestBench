@@ -10,6 +10,10 @@ import (
 	"github.com/gorilla/mux"
 )
 
+// Adapter names what hands the application its requests. It is net/http's server unless the
+// host's main package says otherwise.
+var Adapter = "net/http"
+
 // contractRoutes answers /health and /__meta, which the contract asks of every framework
 // outside the corpus.
 func contractRoutes(r *mux.Router) {
@@ -25,7 +29,7 @@ func contractRoutes(r *mux.Router) {
 			"framework":  "gorilla/mux",
 			"version":    version,
 			"runtime":    runtime.Version(),
-			"adapter":    "net/http",
+			"adapter":    Adapter,
 			"serializer": "encoding/json",
 			// Go sets this from the container's CPU quota, so it says how many threads run Go code.
 			"gomaxprocs": runtime.GOMAXPROCS(0),

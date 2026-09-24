@@ -22,6 +22,7 @@ func main() {
 		log.Fatal(err)
 	}
 	e := implementation.Router(payloads)
+	implementation.Adapter = "aws-lambda-go-api-proxy httpadapter"
 	// aws-lambda-go-api-proxy's echoadapter takes an echo v4 instance, and hands each request to its
 	// ServeHTTP. httpadapter does the same for any http.Handler, which a v5 instance is. NewV2 reads
 	// API Gateway payload format 2.0, the event a Function URL sends.
