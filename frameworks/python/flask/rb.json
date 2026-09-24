@@ -1,5 +1,5 @@
 {
-  "comment": "Flask on gunicorn, one blueprint per family under Implementation/routes. gunicorn runs two worker processes, because one Python process runs Python on one core at a time and the container has two, with the gthread worker, because the sync worker closes the connection after every answer. No framework document or client: Flask writes no OpenAPI document without a third-party library. The suite is UnitTests/, pytest over Flask's test client, and never reaches the image. The suite and upgrade run through uv, which has to be installed.",
+  "comment": "Flask on gunicorn, one blueprint per family under Implementation/routes. gunicorn runs two worker processes, because one Python process runs Python on one core at a time and the container has two, with the gthread worker, because the sync worker closes the connection after every answer. On lambda-emulator the application answers behind apig-wsgi, in one process. No framework document or client: Flask writes no OpenAPI document without a third-party library. The suite is UnitTests/, pytest over Flask's test client, and never reaches the image. The suite and upgrade run through uv, which has to be installed.",
   "framework": "Flask",
   "licence": "BSD-3-Clause",
   "repo": "https://github.com/pallets/flask",
@@ -7,7 +7,14 @@
   "docs": "https://flask.palletsprojects.com/",
   "lockfile": ["uv.lock"],
   "hosts": {
-    "container-h1": { "dockerfile": "container-h1/Dockerfile" }
+    "container-h1": { "dockerfile": "container-h1/Dockerfile" },
+    "lambda-emulator": {
+      "dockerfile": "lambda-emulator/Dockerfile",
+      "unsupported": {
+        "sse.medium": "apig-wsgi buffers the whole answer, so the events arrive as one body.",
+        "stream.ndjson": "apig-wsgi buffers the whole answer, so the rows arrive as one body."
+      }
+    }
   },
   "suite": { "argv": ["uv", "run", "--locked", "pytest"], "paths": ["UnitTests"] },
   "upgrade": { "argv": ["uv", "lock", "--upgrade"] },
