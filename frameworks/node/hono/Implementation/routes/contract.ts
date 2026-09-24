@@ -29,7 +29,7 @@ const contract: Routes = (app) => {
   // The payloads are loaded before the server starts, so a server that answers has them.
   app.get("/health", (c) => c.text("ok"));
 
-  app.get("/__meta", (c) => c.json({ ...meta, bootMs: boot.ms }));
+  app.get("/__meta", (c) => c.json({ ...meta, adapter: boot.adapter ?? meta.adapter, bootMs: boot.ms }));
 };
 
 export default contract;
