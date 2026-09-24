@@ -21,6 +21,12 @@ name = "server"
 path = "container-h1/main.rs"
 test = false
 
+[[bin]]
+name = "server-h2"
+path = "container-h2/main.rs"
+test = false
+required-features = ["container-h2"]
+
 [[test]]
 name = "unit"
 path = "UnitTests/main.rs"
@@ -49,3 +55,7 @@ tower = { version = "0.5.3", features = ["util"] }
 [profile.release]
 lto = "fat"
 codegen-units = 1
+
+[features]
+# container-h2's server, which answers HTTP/2 with prior knowledge. Only its binary turns it on.
+container-h2 = ["axum/http2"]

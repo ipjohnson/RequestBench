@@ -21,6 +21,11 @@ name = "server"
 path = "container-h1/main.rs"
 test = false
 
+[[bin]]
+name = "server-h2"
+path = "container-h2/main.rs"
+test = false
+
 [[test]]
 name = "unit"
 path = "UnitTests/main.rs"

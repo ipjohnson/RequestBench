@@ -13,6 +13,7 @@ uses.
 | --- | --- |
 | `Implementation/` | The application. One Carter module per corpus family under `Routes/`. |
 | `container-h1/` | The `Dockerfile` that builds the image container-h1 runs. |
+| `container-h2/` | The `Dockerfile` that builds the image container-h2 runs, with Kestrel's endpoints on HTTP/2 alone, which is how Kestrel answers HTTP/2 with prior knowledge. |
 | `UnitTests/` | xunit tests of the wiring, booting the Implementation in process with `WebApplicationFactory`. |
 | `Client/` | The OpenAPI document Carter's build writes, and the Kiota client generated from it. |
 | `client-exception/` | How the corpus reads Carter's error bodies. |

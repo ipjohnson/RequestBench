@@ -16,6 +16,7 @@ written by hand.
 | --- | --- |
 | `Implementation/` | The application: a library with one router per corpus family under `routes/`. |
 | `container-h1/` | How container-h1 starts it. `main.rs` is the server binary, and `Dockerfile` builds the image. |
+| `container-h2/` | How container-h2 starts it. `main.rs` is the server binary, on salvo's `http2-cleartext` feature, with which its TCP acceptor answers HTTP/2 with prior knowledge beside HTTP/1.1, and `Dockerfile` builds the image. |
 | `UnitTests/` | The suite, which drives the service in process with Salvo's `TestClient`. |
 | `client-exception/` | How the corpus reads Salvo's error bodies. |
 | `Cargo.toml` | One package: the library, the binary and the suite, each at its own path. |

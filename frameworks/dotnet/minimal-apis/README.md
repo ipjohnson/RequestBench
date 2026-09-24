@@ -16,6 +16,7 @@ framework, Carter's rows price Carter alone.
 | --- | --- |
 | `Implementation/` | The application. One static class per corpus family under `Routes/`, whose `Map` method `Program.cs` calls. |
 | `container-h1/` | The `Dockerfile` that builds the image container-h1 runs. |
+| `container-h2/` | The `Dockerfile` that builds the image container-h2 runs, with Kestrel's endpoints on HTTP/2 alone, which is how Kestrel answers HTTP/2 with prior knowledge. |
 | `UnitTests/` | xunit tests of the wiring, booting the Implementation in process with `WebApplicationFactory`. |
 | `Client/` | The OpenAPI document the Implementation's build writes, and the Kiota client generated from it. |
 | `client-exception/` | How the corpus reads minimal APIs' error bodies. |
