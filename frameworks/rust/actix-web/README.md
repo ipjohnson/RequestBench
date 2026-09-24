@@ -17,9 +17,10 @@ where neither has one. The cache family is wired by hand.
 | `Implementation/` | The application: a library with one module per corpus family under `routes/`, each adding its routes to the App's ServiceConfig. |
 | `container-h1/` | How container-h1 starts it. `main.rs` is the server binary, and `Dockerfile` builds the image. |
 | `container-h2/` | How container-h2 starts it. `main.rs` is the server binary, on `HttpServer::bind_auto_h2c`, which answers HTTP/2 with prior knowledge beside HTTP/1.1, and `Dockerfile` builds the image. |
+| `lambda-emulator/` | How lambda-emulator starts it. `main.rs` is the function, which hands the App to lambda-web's `run_actix_on_lambda`, and `Dockerfile` builds it on the `provided.al2023` base image, where it runs as `/var/runtime/bootstrap`. |
 | `UnitTests/` | The suite, which drives the App in process with actix-web's test utilities. |
 | `client-exception/` | How the corpus reads actix-web's error bodies. |
-| `Cargo.toml` | One package: the library, the binary and the suite, each at its own path. |
+| `Cargo.toml` | One package: the library, each host's binary and the suite, each at its own path. |
 | `Cargo.lock` | Every crate as resolved. |
 | `askama.toml` | Where askama finds the template. |
 
@@ -131,6 +132,21 @@ App from the function `routes` returns.
 - The allocator is mimalloc, set as the global allocator in `main.rs`. A server of this shape
   allocates on every request, and the benchmark runs every Rust framework on the same allocator so
   that a difference between two of them is the framework.
+- On lambda-emulator the App answers behind lambda-web 0.2.1, the newest release, from January
+  2023. The actix project ships no Lambda adapter, and lambda-web's `actix4` feature is the one
+  written for actix-web. lambda-web pins lambda_runtime 0.7, where axum's function runs
+  lambda_runtime 1.4. It builds each request with actix-web's `test::TestRequest` and calls the
+  service of one App, where HttpServer builds an App per worker.
+- `run_actix_on_lambda` reads the whole answer into one proxy response, so the sse and stream tests
+  are listed as unsupported on lambda-emulator.
+- lambda-web posts every body in base64, text included. It keeps one value of each header, the
+  last the App wrote, except Set-Cookie, whose values go in the proxy response's cookies.
+- lambda-web's default feature, br, brotli-compresses a text answer the App did not compress when
+  the request accepts br. It is off, so every answer is the App's own.
+- lambda-web posts the row the HEAD route answers with, which the HTTP/1 codec leaves unwritten. A
+  Function URL's caller reads no body in an answer to HEAD, so nothing reads it.
+- The function is built on the Lambda base image it runs on. Amazon Linux 2023's glibc is older
+  than the one in the rust images, and a binary linked against a newer glibc may not start on it.
 
 ## Refusals
 
