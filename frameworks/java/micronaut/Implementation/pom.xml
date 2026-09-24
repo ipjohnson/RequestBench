@@ -96,6 +96,23 @@
   </build>
 
   <profiles>
+    <!-- lambda-emulator's build: micronaut-function-aws-api-proxy, whose APIGatewayV2HTTPEventFunction
+         hands the application each API Gateway payload format 2.0 event, and
+         micronaut-aws-lambda-events-serde, with which the Java runtime reads and writes the events
+         through Micronaut Serialization. The other hosts' builds leave both out. -->
+    <profile>
+      <id>lambda-emulator</id>
+      <dependencies>
+        <dependency>
+          <groupId>io.micronaut.aws</groupId>
+          <artifactId>micronaut-function-aws-api-proxy</artifactId>
+        </dependency>
+        <dependency>
+          <groupId>io.micronaut.aws</groupId>
+          <artifactId>micronaut-aws-lambda-events-serde</artifactId>
+        </dependency>
+      </dependencies>
+    </profile>
     <!-- mvn -Pclient compile runs micronaut-openapi's annotation processor over the controllers,
          which writes Client/openapi.yml. The processor is in this profile alone, so the image,
          which is built without it, does not change. -->
