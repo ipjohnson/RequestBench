@@ -4,6 +4,7 @@
 // The shell is rendered here and the table is drawn in the browser, because every slice the
 // controls offer is a different table over the same run and building them all at once would
 // ship forty copies of one number.
+import Intro from "../components/Intro.astro";
 import Shell from "../components/Shell.astro";
 import { BLENDS, labelOf } from "../lib/blends.ts";
 import { jsonScript } from "../lib/html.ts";
@@ -31,12 +32,7 @@ const commit = builtFrom?.commit.slice(0, 12);
     </span>
   </p>
   <h1>RequestBench Results</h1>
-  <p class="lede">
-    Every framework in a run shares one machine and one window, so these are real latencies and
-    they rank directly against each other. Nothing here is divided by anything: what a framework
-    took is what is shown. The <a href="tests.html">tests</a> page shows what each request sends and
-    what its answer has to pass.
-  </p>
+  <Intro />
 
   <div class="controls">
     <div class="ctl">

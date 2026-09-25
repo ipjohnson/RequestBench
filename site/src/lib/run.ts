@@ -75,6 +75,11 @@ export function testOrder(run: Run): string[] {
 
 export const languagesOf = (run: Run): string[] => [...new Set(run.frameworks.map((f) => f.language))].sort();
 
+const LANGUAGE_NAMES: Record<string, string> = { dotnet: ".NET", go: "Go", java: "Java", node: "Node", python: "Python", rust: "Rust" };
+
+/** A language as a sentence names it. One missing from LANGUAGE_NAMES keeps its directory's name. */
+export const languageName = (language: string): string => LANGUAGE_NAMES[language] ?? language;
+
 /** A test's family as the run recorded it, or its id's prefix where no framework measured it. */
 export const familyOf = (run: Run, id: string): string =>
   run.frameworks.map((f) => f.tests?.[id]?.family).find(Boolean) ?? id.split(".")[0] ?? id;
