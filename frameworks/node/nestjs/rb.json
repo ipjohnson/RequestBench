@@ -1,0 +1,88 @@
+{
+  "comment": "NestJS 12 on Node 26, one controller per family under Implementation/, in TypeScript that nest build compiles, because Nest's classes are written with decorators and Node's type stripping runs no decorator. container-h1 runs the application on Nest's Express adapter, its default. container-h2 runs the same application on Nest's Fastify adapter with Fastify's http2 option, which answers HTTP/2 with prior knowledge, because the Express adapter has no HTTP/2 option. lambda-emulator runs it on the Express adapter behind @codegenie/serverless-express, as Nest's serverless recipe does. The suite is UnitTests/, Vitest through supertest as Nest 12's starter project tests, over both adapters, and never reaches the image. install-ci-test is npm ci then npm test, which typechecks the source and runs the suite. upgrade is npm update, which moves package-lock.json within the ranges package.json states. CacheInterceptor stores the value a handler returns rather than its answer, so the cache routes return their headers with their body. Client/ holds the OpenAPI document @nestjs/swagger writes from the controllers, from a second build with its CLI plugin, and the Kiota client generated from it.",
+  "framework": "NestJS",
+  "licence": "MIT",
+  "repo": "https://github.com/nestjs/nest",
+  "package": "https://www.npmjs.com/package/@nestjs/core",
+  "docs": "https://docs.nestjs.com/",
+  "lockfile": ["package-lock.json"],
+  "hosts": {
+    "container-h1": { "dockerfile": "container-h1/Dockerfile" },
+    "container-h2": { "dockerfile": "container-h2/Dockerfile" },
+    "lambda-emulator": {
+      "dockerfile": "lambda-emulator/Dockerfile",
+      "unsupported": {
+        "sse.medium": "@codegenie/serverless-express buffers the whole answer, so the events arrive as one body.",
+        "stream.ndjson": "@codegenie/serverless-express buffers the whole answer, so the rows arrive as one body."
+      }
+    }
+  },
+  "suite": { "argv": ["npm", "install-ci-test"], "paths": ["UnitTests"] },
+  "upgrade": { "argv": ["npm", "update"] },
+  "client": {
+    "document": "Client/openapi.json",
+    "writer": "@nestjs/swagger 12.0.2's SwaggerModule, in Client/document.ts, compiled by nest build with @nestjs/swagger's CLI plugin, which records each DTO's properties and each handler's return type",
+    "generator": "Kiota 1.35.0, through @microsoft/kiota in Client/generate.ts, because Nest recommends no generator",
+    "argv": ["npm", "run", "client"]
+  },
+  "skips": {
+    "cors.scoped": "Nest's CORS is enableCors, which covers the whole application. Nest has no setting or decorator that narrows it to a route, so /json/small answers the allowed origin too."
+  },
+  "noHandler": {
+    "cors.preflight": "enableCors installs the cors middleware on Express and @fastify/cors on Fastify, and each answers the preflight before Nest's router, so no handler runs.",
+    "errors.unmatched": "Nest's not-found handler, which it registers after every route, answers a path no route matches with 404.",
+    "errors.wrong_method": "Express and Fastify match the method and the path together, so a method /items/:id has no route for reaches Nest's not-found handler, which answers 404."
+  },
+  "mechanisms": {
+    "authorized": {
+      "mechanism": "A guard, Nest's way to decide whether a request may reach its handler, on the route with @UseGuards. It lets settings.json's bearer token through, and Nest answers any other request with ForbiddenException's 403",
+      "mentions": "CanActivate"
+    },
+    "baseline": { "builtin": "The handler returns the string, and @Header sets its type to text/plain." },
+    "body": {
+      "mechanism": "ValidationPipe on each validate route, which checks the body against class-validator's decorators on the order's class and refuses it with BadRequestException's 400 and a message for each rule it breaks. The first-error route runs it over one field's class at a time, each made with PickType, and stops at the first that fails",
+      "dependency": "class-validator",
+      "mentions": "ValidationPipe"
+    },
+    "cache": {
+      "mechanism": "Nest's CacheInterceptor from @nestjs/cache-manager on the cache controller, over an in-memory Keyv store sized and aged by settings.json, with trackBy overridden to key on the route's vary headers as well as the URL. The handler returns its headers with its body, so the stored value carries x-rb-serial, and an interceptor writes them on the fresh answer and on a replay",
+      "dependency": "@nestjs/cache-manager",
+      "mentions": "CacheInterceptor"
+    },
+    "compressed": {
+      "mechanism": "Compression for the whole application at zlib's fastest level and a 1 kB threshold: the compression middleware on Express, as Nest's compression guide installs it, and @fastify/compress on Fastify",
+      "dependency": "compression"
+    },
+    "cors": {
+      "mechanism": "enableCors, which installs the cors middleware on Express and @fastify/cors on Fastify, for the whole application",
+      "mentions": "enableCors"
+    },
+    "errors": { "builtin": "Nest's not-found handler answers a path or a method with no route with NotFoundException's 404, the body parser refuses a body that is not JSON with 400, and the items handlers throw NotFoundException for a missing row. Nest's exception filter writes each as JSON." },
+    "etag": {
+      "mechanism": "Express's etag setting, on by default, which tags every answer with a weak SHA-1 tag and answers a matching If-None-Match with 304. On container-h2, @fastify/etag, registered on the Fastify instance, does the same with a strong tag",
+      "dependency": "@fastify/etag",
+      "mentions": "fastifyEtag"
+    },
+    "forms": { "builtin": "The platform's urlencoded parser reads the form, which ValidationPipe binds to query.many's class. FileInterceptor reads the upload, with Multer on Express and @fastify/multipart on Fastify." },
+    "headers": { "builtin": "The @Headers decorator reads each header by name. It takes no pipe, so the handler converts the account and throws BadRequestException for a header that is missing or no integer." },
+    "items": { "builtin": "One method per verb on /items/:id, the id converted by ParseIntPipe and each body bound by ValidationPipe. Express and Fastify answer HEAD with the GET route." },
+    "json": { "builtin": "The handler returns the payload, which the platform writes with JSON.stringify." },
+    "middleware": {
+      "mechanism": "A functional middleware that calls the next and nothing else, applied four or sixteen times to the route through the module's MiddlewareConsumer",
+      "mentions": "MiddlewareConsumer"
+    },
+    "parameters": { "builtin": "The @Param decorator reads each capture, and ParseIntPipe converts it to an integer." },
+    "query": { "builtin": "The @Query decorator reads the query string. ParseIntPipe converts query.one's page, and ValidationPipe binds query.many's eight values to a class whose decorators convert the numbers." },
+    "sse": { "builtin": "The @Sse decorator sends each value of the Observable the handler returns as one event. Each names an empty id, because Nest numbers an event that names none." },
+    "static": {
+      "mechanism": "ServeStaticModule over the payload directory under /static, which serves it with express.static on Express and @fastify/static on Fastify",
+      "dependency": "@nestjs/serve-static",
+      "mentions": "ServeStaticModule"
+    },
+    "stream": { "builtin": "The handler returns a StreamableFile over a Readable of lines, which the platform pipes into the response." },
+    "template": {
+      "mechanism": "A Handlebars view rendered by the @Render decorator: hbs as Express's view engine, set with setViewEngine, and @fastify/view with Handlebars on Fastify",
+      "mentions": "setViewEngine"
+    }
+  }
+}
