@@ -38,6 +38,9 @@ export const factorsOf = (tests: TestsView | null): Record<string, string> =>
 export const hostNotes = (): Record<string, HostNote> =>
   Object.fromEntries(Object.values(HOSTS).map((h) => [h.id, { note: h.about }]));
 
+/** How a framework runs on each host, as the explorer's intro lists them. */
+export const hostBriefs = (): string[] => Object.values(HOSTS).map((h) => h.brief);
+
 /** A family as the tests pages list it: its tests in reading order, and how many are measured. */
 export type FamilyEntry = { name: string; about: string; comparable: string; ids: string[]; measured: number };
 

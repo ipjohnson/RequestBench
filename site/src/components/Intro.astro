@@ -1,0 +1,23 @@
+---
+// The explorer's intro: what RequestBench measures, in one paragraph. The counts, the languages
+// and the hosts come from the build, so the text keeps up with the runs, the corpus and the
+// orchestrator's hosts.
+import { hostBriefs } from "../lib/corpus.ts";
+import { languageName } from "../lib/run.ts";
+import { site } from "../lib/site.ts";
+
+const { corpus, catalog, pages } = site();
+const frameworks = new Set(pages.map((p) => p.framework.id)).size;
+const languages = [...new Set(catalog.runs.flatMap((r) => r.languages))].sort().map(languageName);
+const tests = Object.keys(corpus?.view.tests ?? {}).length;
+const hosts = hostBriefs();
+const listed = new Intl.ListFormat("en-GB", { type: "conjunction" });
+const what = frameworks > 0 ? `${frameworks} HTTP frameworks` : "HTTP frameworks";
+const where = languages.length > 0 ? ` in ${listed.format(languages)}` : "";
+---
+
+<p class="lede">
+  RequestBench measures {what}{where}. They run on {hosts.length} hosts: {listed.format(hosts)}. Every framework
+  answers the same <a href="tests.html">{tests > 0 ? `${tests} tests` : "tests"}</a>, which cover the features a web
+  service relies on, from JSON and validation to CORS, caching and compression.
+</p>

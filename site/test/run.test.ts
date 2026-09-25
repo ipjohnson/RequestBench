@@ -1,7 +1,7 @@
 // The lists a summary does not write down: its rungs, its tests and its languages.
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
-import { codeKey, familyOf, machineOf, machinesFor, metaOf, pageSlug, rungsOf, testOrder, timeline } from "../src/lib/run.ts";
+import { codeKey, familyOf, languageName, machineOf, machinesFor, metaOf, pageSlug, rungsOf, testOrder, timeline } from "../src/lib/run.ts";
 import type { Framework, Run } from "../src/lib/types.ts";
 
 const framework = (id: string, rungs: string[], tests: string[]): Framework => {
@@ -42,6 +42,16 @@ describe("testOrder", () => {
       frameworks: [framework("dotnet:carter", [], ["json.small", "baseline.plaintext"]), framework("node:fastify", [], ["json.large", "json.small"])],
     };
     assert.deepEqual(testOrder(run), ["baseline.plaintext", "json.large", "json.small"]);
+  });
+});
+
+describe("languageName", () => {
+  test("names each language as a sentence does", () => {
+    assert.deepEqual(["dotnet", "go", "java", "node", "python", "rust"].map(languageName), [".NET", "Go", "Java", "Node", "Python", "Rust"]);
+  });
+
+  test("keeps the directory's name for a language it has no name for", () => {
+    assert.equal(languageName("kotlin"), "kotlin");
   });
 });
 

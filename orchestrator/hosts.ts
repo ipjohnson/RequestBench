@@ -22,6 +22,8 @@ export interface Host {
    */
   readonly load?: { readonly connections: number; readonly streams: number };
   readonly about: string;
+  /** How a framework runs here, as the explorer's intro lists the hosts. */
+  readonly brief: string;
 }
 
 export const HOSTS = {
@@ -33,6 +35,7 @@ export const HOSTS = {
     about:
       "The framework's image in a container, reached over HTTP/1.1. The name carries the protocol, so " +
       "HTTP/2 arrives as container-h2 beside it rather than as a rename.",
+    brief: "in a container over HTTP/1.1",
   },
   "container-h2": {
     id: "container-h2",
@@ -45,6 +48,7 @@ export const HOSTS = {
       "The framework's image in a container, reached over HTTP/2 with prior knowledge and no TLS, so it " +
       "differs from container-h1 in the protocol alone. A framework whose server speaks only HTTP/1.1 runs " +
       "on another server here, and its page says which.",
+    brief: "in a container over HTTP/2",
   },
   "lambda-emulator": {
     id: "lambda-emulator",
@@ -54,6 +58,7 @@ export const HOSTS = {
       "The framework as a Lambda function on its language's AWS base image. The traffic generator serves " +
       "the Lambda Runtime API in place of Lambda, and the function's own runtime client asks it for each " +
       "event, an API Gateway payload format 2.0 request.",
+    brief: "as a Lambda function",
   },
 } as const satisfies Record<string, Host>;
 
