@@ -80,8 +80,10 @@ is showing, and whether the files have changed since the run. Working-tree files
 linked, because no commit holds them. Only a framework found in neither has no code, and its
 page says the source is unavailable.
 
-The wire panes read `results/exemplars`, which `npm run rb -- validate --exemplars` writes, in a
-container or against a framework started by hand with `--at host:port --framework <id>`.
+The wire panes read the exemplars the gate captures. `npm run rb -- measure` writes them to
+`results/exemplars`, and measure.yml adds each run's to the results branch under `exemplars/`,
+which pages.yml builds from. `npm run rb -- validate --exemplars` writes them too, in a container
+or against a framework started by hand with `--at host:port --framework <id>`.
 
 `astro dev` reads the same things from the environment that tools/build.ts puts there:
 

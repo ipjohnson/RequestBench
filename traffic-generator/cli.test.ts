@@ -1,6 +1,6 @@
 // The generator run as a process against a stub that answers every performance test in the
-// corpus the way node:fastify declares it does, and answers 500 to a request that went out
-// on the wire wrong.
+// corpus with the statuses STATUSES declares, and answers 500 to a request that went out on the
+// wire wrong.
 //
 //   node --experimental-strip-types --test traffic-generator/cli.test.ts
 import assert from "node:assert/strict";
@@ -31,6 +31,9 @@ const VALUES = {
   maxPrice: 48000,
 };
 const ETAG = '"stub"';
+
+/** The stub's refusals: 400 for a bad body, and 404 for a path or a method it has no route for. */
+const STATUSES = { rejected: 400, malformed: 400, notFound: 404, wrongMethod: 404 };
 const { token, cors } = settings.value;
 
 type Answer = number | readonly [number, Record<string, string>] | readonly [number, Record<string, string>, string];
@@ -48,7 +51,7 @@ function typed(path: string): RegExp {
   return /^application\/json$/;
 }
 
-/** 400 for a body the parser refuses and for one that breaks orderRequest's rules, as fastify answers both. */
+/** 400 for a body the parser refuses and for one that breaks orderRequest's rules, as STATUSES declares both. */
 function validated(body: string): Answer {
   let order: unknown;
   try {
@@ -176,9 +179,9 @@ function generate(...args: string[]): Promise<Ran> {
   });
 }
 
-/** A load against the stub as node:fastify with the values the stub checks, as the one argument. */
+/** A load against the stub, with the statuses it declares and the values it checks, as the one argument. */
 const load = (phases: readonly object[], rest: object = {}): string =>
-  JSON.stringify({ target: address, framework: "node:fastify", values: VALUES, ...rest, phases });
+  JSON.stringify({ target: address, framework: "test:stub", statuses: STATUSES, values: VALUES, ...rest, phases });
 
 test("every performance test answers the status it declares", async () => {
   answering = stub();
@@ -237,7 +240,7 @@ test("a test the framework does not support on its host is never offered, whatev
     load([{ name: "regular", rps: 200, seconds: 1 }], { only: ["json", "baseline.plaintext"], unsupported }),
   );
   assert.equal(code, 0, stdout);
-  assert.match(stdout, /leaving out 1 test\(s\) node:fastify does not support here: json\.medium/);
+  assert.match(stdout, /leaving out 1 test\(s\) test:stub does not support here: json\.medium/);
   assert.equal(result.testsLive, 3);
   assert.deepEqual(
     result.phases[0].recorded.tests.map((t: { id: string }) => t.id),
@@ -399,7 +402,8 @@ test("a load is refused before anything is sent", async () => {
   await refused([join(OUT, "missing.json")], /cannot read the load at .*missing\.json/);
   await refused([load(regular, { rps: 10 })], /the load: Unrecognized key: "rps"/);
   await refused([load(regular, { target: "nowhere" })], /target: expected host:port/);
-  await refused([load(regular, { framework: "go:unregistered" })], /framework: go:unregistered has no client-exception declaration/);
+  await refused([load(regular, { statuses: undefined })], /statuses: Invalid input: expected object, received undefined/);
+  await refused([load(regular, { statuses: { ...STATUSES, rejected: 4000 } })], /statuses\.rejected: Too big: expected number to be <=599/);
   await refused([load(regular, { values: { ...VALUES, one: 7 } })], /values\.one: Too small: expected number to be >=1000/);
   await refused([load([])], /phases: Too small: expected array to have >=1 items/);
   await refused([load([{ name: "warmup", rps: 10 }])], /phases\.0: a phase needs settle, seconds or both/);

@@ -50,10 +50,10 @@ Results: https://ipjohnson.github.io/RequestBench/
 | [`orchestrator/`](orchestrator) | The `rb` command: checks, validation, measurement and summaries. |
 | [`traffic-generator/`](traffic-generator) | The load generator a measurement runs: a Rust program that speaks each host's protocol and does all of the timing, and the TypeScript that runs the corpus through it. |
 | [`site/`](site) | The results explorer, an Astro site. See [site/README.md](site/README.md). |
-| [`results/exemplars/`](results/exemplars) | Each framework's request and response for every test, which the site shows. |
 
-A measurement writes its run file to `results/runs/`, and summaries go to `results/summary/`.
-Neither is committed.
+A measurement writes its run file to `results/runs/`, and each framework's exemplars, its request
+and response for every test, to `results/exemplars/`. Summaries go to `results/summary/`. None of
+them is committed.
 
 ## Requirements
 
@@ -145,8 +145,8 @@ over the whole corpus at full length. The site shows only recorded runs unless i
 [`measure.yml`](.github/workflows/measure.yml) measures every framework each night on the `ci`
 ladder, one GitHub-hosted runner for each host a framework implements, with the framework on cores
 0 and 1 and the generator on cores 2 and 3. It adds each run's summary to the `results` branch,
-under `runs/`, and [`pages.yml`](.github/workflows/pages.yml) then publishes the site from every
-summary there.
+under `runs/`, and the exemplars its gates captured under `exemplars/`.
+[`pages.yml`](.github/workflows/pages.yml) then publishes the site from them.
 
 ## Commands
 

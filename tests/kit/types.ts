@@ -195,9 +195,8 @@ export interface Assertion<T> {
 export type Body = (c: Client) => unknown;
 
 /**
- * Generated from discovery once the orchestrator exists, the same way
- * FrameworkId is. Until then a wrong family name is caught at load, by the
- * directory the file is in, rather than by the compiler.
+ * A wrong family name is caught at load, by the directory the file is in,
+ * rather than by the compiler.
  */
 export type FamilyName = string;
 
@@ -206,7 +205,7 @@ export interface TestId {
   readonly name: string;
 }
 
-/** The key in the plan, the snapshot and every result row. */
+/** The key in the plan and every result row. */
 export function idOf(id: TestId): string {
   return `${id.family}.${id.name}`;
 }

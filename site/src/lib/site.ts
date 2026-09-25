@@ -113,7 +113,7 @@ function read(): Site {
   if (stale.length)
     notes.push(
       `${stale.length} exemplar file(s) match no test in any run and will show no exchange; ` +
-        `recapture with \`npm run rb -- validate <framework> --exemplars\`: ${stale.join(", ")}`,
+        `the next measure run of each replaces it: ${stale.join(", ")}`,
     );
 
   // One read of history per host, at the commit its newest run was made at. A framework's code on

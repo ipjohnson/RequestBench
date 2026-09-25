@@ -1,6 +1,7 @@
-# Publishes the results site from every summary on the results branch, under runs/. It runs when
-# measure.yml finishes, when main changes something the site is built from, and by hand. Until a
-# summary is recorded there is nothing to publish, and the site already deployed stays.
+# Publishes the results site from every summary on the results branch, under runs/, and the
+# exemplars beside them, under exemplars/. It runs when measure.yml finishes, when main changes
+# something the site is built from, and by hand. Until a summary is recorded there is nothing to
+# publish, and the site already deployed stays.
 name: pages
 
 on:
@@ -13,7 +14,6 @@ on:
       - site/**
       - orchestrator/**
       - tests/**
-      - results/exemplars/**
       - package.json
       - package-lock.json
       - .github/workflows/pages.yml
@@ -52,7 +52,7 @@ jobs:
       - if: steps.runs.outputs.count != '0'
         run: npm ci --no-audit --no-fund
       - if: steps.runs.outputs.count != '0'
-        run: npm run site -- --summaries _results/runs --exemplars results/exemplars --out site/dist
+        run: npm run site -- --summaries _results/runs --exemplars _results/exemplars --out site/dist
       - if: steps.runs.outputs.count != '0'
         uses: actions/configure-pages@v6
       - if: steps.runs.outputs.count != '0'

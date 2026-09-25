@@ -14,7 +14,6 @@ latency.
 | --- | --- |
 | `<family>/index.ts` | The family: its name, what it measures, what its numbers compare across, and its tests. |
 | `<family>/<name>.ts` | One test. |
-| `<family>/<name>.snap.json` | Each framework's own error body for a test the reference answers with an error. |
 | `index.ts` | The list of families. |
 | `factors.ts` | What each `varies` value measures. |
 | `kit/` | What a test is written with: `performanceTest`, `validationTest`, `family`, the payload helpers and the client. |
@@ -150,8 +149,9 @@ To add a performance test:
 4. Put any new response data in a committed file in `payloads/`. Give it a model in `models/`, and
    load it in `payloads/index.ts`.
 5. Add a route to `orchestrator/test/reference.ts` that computes the right answer from the request.
-6. If the reference answers with a framework's error body, add `<name>.snap.json` holding each
-   registered framework's captured body.
+6. If the reference answers it with a framework's own error body, add the test to `REFUSALS` in
+   `orchestrator/test/reference.ts`, and its answer to each contract in
+   `orchestrator/test/contracts.ts`.
 7. Update the tests that count performance tests. In `traffic-generator/cli.test.ts`, add a stub
    route and update `testsLive`. In `orchestrator/test/edges.test.ts`, update the list of tests
    with no base or the count of tests with one.

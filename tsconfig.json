@@ -25,7 +25,6 @@
   // source with its own settings and dependencies.
   "include": [
     "tests/**/*.ts",
-    "frameworks/exceptions.ts",
     "frameworks/*/*/client-exception/**/*.ts",
     "orchestrator/**/*.ts",
     "traffic-generator/**/*.ts"

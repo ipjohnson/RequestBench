@@ -1,7 +1,7 @@
 // What a summary and an exemplar file look like on disk.
 //
-// Parsed rather than asserted, because the files are written by `rb summarize` and by
-// `rb validate --exemplars` and arrive here as whatever a run of any age wrote. Every field the
+// Parsed rather than asserted, because the files are written by `rb summarize` and by the gate of
+// `rb measure` or `rb validate --exemplars`, and arrive here as whatever a run of any age wrote. Every field the
 // site reads is optional here and defaulted where it is used, so a summary from before a field
 // existed loads and renders without it.
 //
@@ -176,7 +176,7 @@ export type WireDoc = {
 
 const Header = z.tuple([z.string(), z.string()]);
 
-/** An exemplar file as `rb validate --exemplars` writes it: one exchange per test. */
+/** An exemplar file as the gate writes it: one exchange per test. */
 export const Exemplars = z.looseObject({
   framework: z.string().default(""),
   host: z.string().default(""),

@@ -6,6 +6,8 @@
 // Each test gets a session of its own and is sent twice on it, as corpus.test.ts does, because
 // fresh() and replayed() are claims about two answers. The draws are fixed, so the second send
 // asks for exactly what the first did and a replay has something to replay.
+import { mkdirSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 import { gunzipSync } from "node:zlib";
 
 import type { Draw, Exceptions, Framework, RunValues, Suite, Test } from "@rb/tests/kit";
@@ -244,9 +246,17 @@ export function exemplarOf(e: Exchange): Exemplar {
   };
 }
 
-/** One framework's exemplars on one host, keyed by test id, as results/exemplars holds them. */
+/** One framework's exemplars on one host, keyed by test id, as an exemplar file holds them. */
 export function exemplarFile(framework: string, host: string, exchanges: ReadonlyMap<string, Exchange>) {
   const tests: Record<string, Exemplar> = {};
   for (const id of [...exchanges.keys()].sort()) tests[id] = exemplarOf(exchanges.get(id)!);
   return { framework, host, tests };
+}
+
+/** Writes one framework's exemplars on one host to `<dir>/<language>-<name>@<host>.json`, and returns the file. */
+export function writeExemplars(dir: string, framework: string, host: string, exchanges: ReadonlyMap<string, Exchange>): string {
+  const file = join(dir, `${framework.replace(":", "-")}@${host}.json`);
+  mkdirSync(dirname(file), { recursive: true });
+  writeFileSync(file, `${JSON.stringify(exemplarFile(framework, host, exchanges), null, 2)}\n`);
+  return file;
 }

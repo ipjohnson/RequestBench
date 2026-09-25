@@ -68,7 +68,7 @@ export function loadRuns(dir: string): LoadReport {
   return { runs, raw: raw_, rejected };
 }
 
-/** Bodies are trimmed for display; the whole excerpt stays in results/exemplars. */
+/** Bodies are trimmed for display; the whole excerpt stays in the exemplar file. */
 export const BODY_LIMIT = 700;
 
 /** One request/response pair per test per framework, captured by the gate. */

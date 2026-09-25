@@ -3,18 +3,11 @@
 Each directory `frameworks/<language>/<name>/` holds an application written with one web framework.
 The application serves every endpoint that the tests in `tests/` call. The orchestrator builds it
 into a container image, runs the tests against it, and measures it. The framework's id is
-`<language>:<name>`, such as `dotnet:carter`.
+`<language>:<name>`, such as `dotnet:carter`. `npm run rb -- list` lists every framework and the
+hosts it implements.
 
-| Language | Frameworks |
-| --- | --- |
-| .NET | [ASP.NET Core minimal APIs](dotnet/minimal-apis), [ASP.NET Core MVC](dotnet/aspnet-mvc), [Carter](dotnet/carter), [FastEndpoints](dotnet/fastendpoints), [Wolverine.HTTP](dotnet/wolverine-http) |
-| Go | [chi](go/chi), [Echo](go/echo), [Fiber](go/fiber), [Gin](go/gin), [net/http](go/net-http) |
-| Java | [Helidon SE](java/helidon-se), [Javalin](java/javalin), [Micronaut](java/micronaut), [Quarkus](java/quarkus), [Spring Boot](java/spring-boot), [Vert.x Web](java/vertx) |
-| Node | [Express](node/express), [Fastify](node/fastify), [h3](node/h3), [Hono](node/hono), [Koa](node/koa) |
-| Python | [Django](python/django-asgi), [FastAPI](python/fastapi), [Flask](python/flask), [Litestar](python/litestar), [Sanic](python/sanic), [Starlette](python/starlette) |
-| Rust | [actix-web](rust/actix-web), [axum](rust/axum), [poem](rust/poem), [Rocket](rust/rocket), [Salvo](rust/salvo), [warp](rust/warp) |
-
-[Carter](dotnet/carter) is the worked example.
+The directory is all there is to a framework. The orchestrator finds it by its rb.json, and
+nothing outside the directory names it. [Carter](dotnet/carter) is the worked example.
 
 ## The tests
 
@@ -36,14 +29,13 @@ There are two kinds of test:
 2. Write the application, and `container-h1/` with its `Dockerfile`. See
    [The application](#the-application), [Hosts](#hosts) and [The container](#the-container).
 3. Write `rb.json`. See [rb.json](#rbjson).
-4. Write `client-exception/index.ts` and register it. See [client-exception](#client-exception).
+4. Write `client-exception/index.ts`. See [client-exception](#client-exception).
 5. Write the framework's own tests in `UnitTests/`, at least one for each performance test.
 6. Mark the code the orchestrator cannot find by itself. See [Marks](#marks).
 7. Add `Client/` if the framework can write an OpenAPI document about its own routes. See
    [Client](#client).
 8. Write `README.md`. See [The framework's README](#the-frameworks-readme).
-9. Add the framework to the table above.
-10. Run the checks in [Before committing](#before-committing).
+9. Run the checks in [Before committing](#before-committing).
 
 Run `git add` on new files as you go. The `npm run rb` commands read git's index, not the
 directory, so they do not see untracked files. The image is built from tracked files too.
@@ -200,9 +192,10 @@ default-exports `exceptions({...})` from `@rb/tests/kit`, with these fields:
 
 [Carter's](dotnet/carter/client-exception/index.ts) is an example.
 
-Register it in `frameworks/exceptions.ts`: import it, add the id to `FrameworkId`, and add the
-entry. The root `npm run typecheck` reads `client-exception/` and no other file of the framework's.
-A framework written in TypeScript checks its own source with its own `tsconfig.json`.
+The orchestrator imports it from beside the framework's rb.json, and `npm run rb -- check` reports
+a framework whose declaration is missing or does not load. The root `npm run typecheck` reads
+`client-exception/` and no other file of the framework's. A framework written in TypeScript checks
+its own source with its own `tsconfig.json`.
 
 ## Marks
 
@@ -338,8 +331,10 @@ read from the README at the run's commit.
 2. `npm run typecheck` and `npm test` pass.
 3. `npm run rb -- check` reports 0 problems.
 4. `npm run rb -- suite <id>` passes.
-5. `npm run rb -- validate <id> --host <host> --exemplars` passes every performance test on each host
-   in rb.json.
+5. `npm run rb -- validate <id> --host <host>` passes every performance test on each host in
+   rb.json.
 6. `npm run rb -- client <id>` reports `Client/` current, if rb.json declares `client`.
-7. Commit the exemplar file for each host with the framework. A pull request's validate jobs also
-   upload each one, as the artifact `exemplar-<language>-<name>@<host>`.
+
+The exemplars are not committed. A pull request's validate jobs upload each host's as the artifact
+`exemplar-<language>-<name>@<host>`, for review. The site shows the ones the nightly measure run
+captures, which measure.yml records on the results branch.

@@ -16,6 +16,15 @@ export function addressOf(target: string): { host: string; port: number } | unde
 
 const seconds = z.number().positive();
 
+const status = z.number().int().min(100).max(599);
+
+/**
+ * The statuses a framework's client-exception declaration gives. rejected(), notFound(),
+ * wrongMethod() and unparseable() compare an answer against them, so a load that does not know
+ * them cannot tell a right answer from a wrong one.
+ */
+const statusesSchema = z.strictObject({ rejected: status, malformed: status, notFound: status, wrongMethod: status });
+
 /**
  * How long each window of a recording lasts. Every test reports its count and percentiles in
  * each window apart, so a latency that moves while a phase runs shows how it moved.
@@ -50,8 +59,9 @@ export const phaseSchema = z
 export const loadSchema = z
   .strictObject({
     target: z.string().refine((t) => addressOf(t) !== undefined, "expected host:port"),
-    /** The declaration in frameworks/exceptions.ts whose statuses every answer is compared with. */
+    /** The framework the load measures, as `language:name`. */
     framework: z.string(),
+    statuses: statusesSchema,
     /** The run's values, so every client in a run sends the same ones. Drawn by the generator when absent. */
     values: runValuesSchema.optional(),
     workers: z.number().int().positive().default(4),
