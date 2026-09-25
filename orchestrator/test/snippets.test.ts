@@ -162,6 +162,26 @@ test("gin's :param captures match the corpus's {run.one}, and the block ends whe
   assert.deepEqual(span(found["parameters.two"]), [2, 4]);
 });
 
+test("Go's ServeMux names the method inside its pattern, so a GET and a PUT on one route go to different endpoints", () => {
+  const { found, problems } = run(
+    "go",
+    [
+      src("items.go", [
+        "func itemsRoutes(mux *http.ServeMux) {",
+        '\tmux.HandleFunc("GET /items/{id}", read)',
+        '\tmux.HandleFunc("PUT /items/{id}", func(w http.ResponseWriter, r *http.Request) {',
+        "\t\treplace(w, r)",
+        "\t})",
+        "}",
+      ]),
+    ],
+    [ep("items.read", "GET", "/items/{draw.item}"), ep("items.replace", "PUT", "/items/{draw.item}")],
+  );
+  assert.deepEqual(problems, []);
+  assert.deepEqual(span(found["items.read"]), [2, 2]);
+  assert.deepEqual(span(found["items.replace"]), [3, 5]);
+});
+
 test("a Node route with a handler body, and a route named in a comment is not a registration", () => {
   const { found, problems } = run(
     "node",

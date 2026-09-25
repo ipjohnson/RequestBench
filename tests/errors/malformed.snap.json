@@ -153,6 +153,17 @@
    },
    "bodyFrom": "captured from frameworks/go/gin/Implementation"
   },
+  "go:net-http": {
+   "status": 400,
+   "class": "json",
+   "shape": [
+    "error:string"
+   ],
+   "body": {
+    "error": "unexpected EOF"
+   },
+   "bodyFrom": "captured from frameworks/go/net-http/Implementation"
+  },
   "java:helidon-se": {
    "status": 400,
    "class": "text",

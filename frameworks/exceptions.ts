@@ -22,6 +22,7 @@ import koa from "./node/koa/client-exception/index.ts";
 import litestar from "./python/litestar/client-exception/index.ts";
 import micronaut from "./java/micronaut/client-exception/index.ts";
 import minimalApis from "./dotnet/minimal-apis/client-exception/index.ts";
+import netHttp from "./go/net-http/client-exception/index.ts";
 import poem from "./rust/poem/client-exception/index.ts";
 import quarkus from "./java/quarkus/client-exception/index.ts";
 import rocket from "./rust/rocket/client-exception/index.ts";
@@ -48,6 +49,7 @@ export type FrameworkId =
   | "go:echo"
   | "go:fiber"
   | "go:gin"
+  | "go:net-http"
   | "java:helidon-se"
   | "java:javalin"
   | "java:micronaut"
@@ -88,6 +90,7 @@ export default {
   "go:echo": echo,
   "go:fiber": fiber,
   "go:gin": gin,
+  "go:net-http": netHttp,
   "java:helidon-se": helidonSe,
   "java:javalin": javalin,
   "java:micronaut": micronaut,

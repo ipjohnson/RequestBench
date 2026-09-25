@@ -117,6 +117,8 @@ const CAPTURE = "(?::[\\w]+|\\{[\\w.*:]*\\}|<[\\w:]+>|\\*[\\w]*)";
 const QUOTE = "[\"'`]";
 /** Rocket writes #[get("/query/one?<q..>")]. The route is the part before the ?, so the tail is matched and ignored. */
 const QUERY_SPEC = "(?:\\?[^\"'`]*)?";
+/** Go's ServeMux writes the method inside the pattern, "GET /items/{id}". It is captured, because it is the registration's own. */
+const PATTERN_METHOD = "(?:([A-Z]+)[ \\t]+)?";
 
 const METHODS = ["get", "post", "put", "patch", "delete"] as const;
 
@@ -163,7 +165,7 @@ function routeRegex(route: string): RegExp {
       .map((seg) => (seg.startsWith("{") && seg.endsWith("}") ? CAPTURE : escapeRe(seg)));
     // The leading slash is optional, because Django's path() matches what is left after the
     // slash. The quotes still delimit.
-    rx = new RegExp(`${QUOTE}/?${segments.join("/")}${QUERY_SPEC}${QUOTE}`);
+    rx = new RegExp(`${QUOTE}${PATTERN_METHOD}/?${segments.join("/")}${QUERY_SPEC}${QUOTE}`);
     routeRegexes.set(route, rx);
   }
   return rx;
@@ -461,7 +463,7 @@ function derive(lines: readonly string[], ep: Endpoint, syntax: string): [number
     // A route literal also turns up in the prose above a neighbouring route, and counting it
     // would make a correct file ambiguous.
     if (m === null || m.index >= commentAt(line, syntax)) return;
-    const found = methodOn(lines, n, syntax);
+    const found = m[1]?.toLowerCase() ?? methodOn(lines, n, syntax);
     if (found !== null && found !== method) return;
     const start = annotatedStart(lines, n);
     // A data file has no delimiters to balance: an OpenAPI path is a key, and what it serves is

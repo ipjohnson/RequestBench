@@ -104,6 +104,14 @@
    ],
    "bodyFrom": "captured from frameworks/go/gin/Implementation, which answers text/plain: 404 page not found"
   },
+  "go:net-http": {
+   "status": 404,
+   "class": "text",
+   "shape": [
+    ":string"
+   ],
+   "bodyFrom": "captured from frameworks/go/net-http/Implementation, which answers text/plain; charset=utf-8: 404 page not found"
+  },
   "java:helidon-se": {
    "status": 404,
    "class": "text",
