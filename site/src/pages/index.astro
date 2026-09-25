@@ -5,6 +5,7 @@
 // controls offer is a different table over the same run and building them all at once would
 // ship forty copies of one number.
 import Intro from "../components/Intro.astro";
+import Mark from "../components/Mark.astro";
 import Shell from "../components/Shell.astro";
 import { BLENDS, labelOf } from "../lib/blends.ts";
 import { jsonScript } from "../lib/html.ts";
@@ -31,7 +32,7 @@ const commit = builtFrom?.commit.slice(0, 12);
       {builtFrom && <>{" "}&middot; commit {builtFrom.href ? <a href={builtFrom.href}>{commit}</a> : commit}</>}
     </span>
   </p>
-  <h1>RequestBench Results</h1>
+  <h1><Mark />RequestBench Results</h1>
   <Intro />
 
   <div class="controls">

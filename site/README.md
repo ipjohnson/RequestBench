@@ -41,6 +41,7 @@ looked at with:
       test-tree.ts    the DOM half of a framework page
     src/pages/        index.astro, f/[slug].astro per framework and host, tests.astro, and tests/[family].astro per family
     src/styles/       the palette and the three stylesheets
+    src/assets/       the tab icons: favicon.svg, and the two PNGs drawn from it for browsers that take no SVG
     tools/build.ts    the CLI
 
 ## Two authorities, one page

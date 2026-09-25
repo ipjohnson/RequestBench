@@ -18,6 +18,10 @@ code, .mono { font-family: var(--f-mono); }
 .eyebrow::after { content: ""; flex: 1; height: 1px; background: var(--rule2); }
 h1 { font-family: var(--f-display); font-weight: 600; letter-spacing: -.02em;
      font-size: clamp(30px, 5vw, 46px); line-height: 1.05; margin: 0 0 14px; }
+/* In em, so it scales with the heading. The offset centres the bars on the capitals. */
+.mark { display: inline-block; width: .9em; height: .9em; vertical-align: -.115em;
+        margin-right: .3em; fill: var(--teal); }
+.mark .tail { fill: var(--amber); }
 .lede { font-family: var(--f-display); font-size: clamp(16px, 2vw, 19px);
         color: var(--ink2); max-width: 64ch; margin: 0; }
 .crumb { font-family: var(--f-mono); font-size: 11.5px; margin: 0 0 18px; }
