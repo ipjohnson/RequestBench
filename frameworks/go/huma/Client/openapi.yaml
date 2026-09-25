@@ -1,0 +1,1515 @@
+components:
+  schemas:
+    BoundCheckedOrder:
+      additionalProperties: false
+      properties:
+        bytes:
+          format: int64
+          type: integer
+        echo:
+          $ref: "#/components/schemas/CheckedOrder"
+        fields:
+          format: int64
+          type: integer
+      required:
+        - fields
+        - bytes
+        - echo
+      type: object
+    BoundOrder:
+      additionalProperties: false
+      properties:
+        bytes:
+          format: int64
+          type: integer
+        echo:
+          $ref: "#/components/schemas/Order"
+        fields:
+          format: int64
+          type: integer
+      required:
+        - fields
+        - bytes
+        - echo
+      type: object
+    CheckedLine:
+      additionalProperties: false
+      properties:
+        productId:
+          format: int64
+          minimum: 1
+          type: integer
+        qty:
+          format: int64
+          minimum: 1
+          type: integer
+      required:
+        - productId
+        - qty
+      type: object
+    CheckedOrder:
+      additionalProperties: false
+      properties:
+        customerId:
+          format: int64
+          minimum: 1
+          type: integer
+        lines:
+          items:
+            $ref: "#/components/schemas/CheckedLine"
+          minItems: 1
+          nullable: true
+          type: array
+        status:
+          minLength: 1
+          type: string
+      required:
+        - customerId
+        - status
+        - lines
+      type: object
+    EchoedHeadersBound:
+      additionalProperties: false
+      properties:
+        count:
+          format: int64
+          type: integer
+        echo:
+          $ref: "#/components/schemas/HeadersBound"
+        items:
+          items:
+            $ref: "#/components/schemas/Item"
+          nullable: true
+          type: array
+        size:
+          type: string
+      required:
+        - echo
+        - size
+        - count
+        - items
+      type: object
+    EchoedParametersOne:
+      additionalProperties: false
+      properties:
+        count:
+          format: int64
+          type: integer
+        echo:
+          $ref: "#/components/schemas/ParametersOne"
+        items:
+          items:
+            $ref: "#/components/schemas/Item"
+          nullable: true
+          type: array
+        size:
+          type: string
+      required:
+        - echo
+        - size
+        - count
+        - items
+      type: object
+    EchoedParametersTwo:
+      additionalProperties: false
+      properties:
+        count:
+          format: int64
+          type: integer
+        echo:
+          $ref: "#/components/schemas/ParametersTwo"
+        items:
+          items:
+            $ref: "#/components/schemas/Item"
+          nullable: true
+          type: array
+        size:
+          type: string
+      required:
+        - echo
+        - size
+        - count
+        - items
+      type: object
+    EchoedQueryOne:
+      additionalProperties: false
+      properties:
+        count:
+          format: int64
+          type: integer
+        echo:
+          $ref: "#/components/schemas/QueryOne"
+        items:
+          items:
+            $ref: "#/components/schemas/Item"
+          nullable: true
+          type: array
+        size:
+          type: string
+      required:
+        - echo
+        - size
+        - count
+        - items
+      type: object
+    EchoedSearch:
+      additionalProperties: false
+      properties:
+        count:
+          format: int64
+          type: integer
+        echo:
+          $ref: "#/components/schemas/Search"
+        items:
+          items:
+            $ref: "#/components/schemas/Item"
+          nullable: true
+          type: array
+        size:
+          type: string
+      required:
+        - echo
+        - size
+        - count
+        - items
+      type: object
+    ErrorDetail:
+      additionalProperties: false
+      properties:
+        location:
+          description: Where the error occurred, e.g. 'body.items[3].tags' or 'path.thing-id'
+          type: string
+        message:
+          description: Error message text
+          type: string
+        value:
+          description: The value at the given location
+      type: object
+    ErrorModel:
+      additionalProperties: false
+      properties:
+        detail:
+          description: A human-readable explanation specific to this occurrence of the problem.
+          example: Property foo is required but is missing.
+          type: string
+        errors:
+          description: Optional list of individual error details
+          items:
+            $ref: "#/components/schemas/ErrorDetail"
+          nullable: true
+          type: array
+        instance:
+          description: A URI reference that identifies the specific occurrence of the problem.
+          example: https://example.com/error-log/abc123
+          format: uri
+          type: string
+        status:
+          description: HTTP status code
+          example: 400
+          format: int64
+          type: integer
+        title:
+          description: A short, human-readable summary of the problem type. This value should not change between occurrences of the error.
+          example: Bad Request
+          type: string
+        type:
+          default: about:blank
+          description: A URI reference to human-readable documentation for the error.
+          example: https://example.com/errors/example
+          format: uri
+          type: string
+      type: object
+    HeadersBound:
+      additionalProperties: false
+      properties:
+        account:
+          format: int64
+          type: integer
+        requestId:
+          type: string
+        tenant:
+          type: string
+      required:
+        - tenant
+        - requestId
+        - account
+      type: object
+    Item:
+      additionalProperties: false
+      properties:
+        category:
+          type: string
+        id:
+          format: int64
+          type: integer
+        inStock:
+          type: boolean
+        name:
+          type: string
+        priceCents:
+          format: int64
+          type: integer
+      required:
+        - id
+        - name
+        - category
+        - priceCents
+        - inStock
+      type: object
+    ItemPatch:
+      additionalProperties: false
+      properties:
+        inStock:
+          type: boolean
+        priceCents:
+          format: int64
+          type: integer
+      type: object
+    Line:
+      additionalProperties: false
+      properties:
+        productId:
+          format: int64
+          type: integer
+        qty:
+          format: int64
+          type: integer
+      required:
+        - productId
+        - qty
+      type: object
+    NewItem:
+      additionalProperties: false
+      properties:
+        category:
+          type: string
+        inStock:
+          type: boolean
+        name:
+          type: string
+        priceCents:
+          format: int64
+          type: integer
+      required:
+        - name
+        - category
+        - priceCents
+        - inStock
+      type: object
+    Order:
+      additionalProperties: false
+      properties:
+        customerId:
+          format: int64
+          type: integer
+        lines:
+          items:
+            $ref: "#/components/schemas/Line"
+          nullable: true
+          type: array
+        status:
+          type: string
+      required:
+        - customerId
+        - status
+        - lines
+      type: object
+    ParametersOne:
+      additionalProperties: false
+      properties:
+        one:
+          format: int64
+          type: integer
+      required:
+        - one
+      type: object
+    ParametersTwo:
+      additionalProperties: false
+      properties:
+        one:
+          format: int64
+          type: integer
+        two:
+          format: int64
+          type: integer
+      required:
+        - one
+        - two
+      type: object
+    Payload:
+      additionalProperties: false
+      properties:
+        count:
+          format: int64
+          type: integer
+        items:
+          items:
+            $ref: "#/components/schemas/Item"
+          nullable: true
+          type: array
+        size:
+          type: string
+      required:
+        - size
+        - count
+        - items
+      type: object
+    QueryOne:
+      additionalProperties: false
+      properties:
+        page:
+          format: int64
+          type: integer
+      required:
+        - page
+      type: object
+    Search:
+      additionalProperties: false
+      properties:
+        category:
+          type: string
+        maxPrice:
+          format: int64
+          type: integer
+        minPrice:
+          format: int64
+          type: integer
+        page:
+          format: int64
+          type: integer
+        q:
+          type: string
+        size:
+          format: int64
+          type: integer
+        sort:
+          type: string
+        status:
+          type: string
+      required:
+        - page
+        - size
+        - status
+        - category
+        - sort
+        - q
+        - minPrice
+        - maxPrice
+      type: object
+    UploadEcho:
+      additionalProperties: false
+      properties:
+        requestId:
+          type: string
+        tenant:
+          type: string
+      required:
+        - tenant
+        - requestId
+      type: object
+    Uploaded:
+      additionalProperties: false
+      properties:
+        echo:
+          $ref: "#/components/schemas/UploadEcho"
+        file:
+          $ref: "#/components/schemas/UploadedFile"
+      required:
+        - file
+        - echo
+      type: object
+    UploadedFile:
+      additionalProperties: false
+      properties:
+        bytes:
+          format: int64
+          type: integer
+        name:
+          type: string
+      required:
+        - name
+        - bytes
+      type: object
+  securitySchemes:
+    bearer:
+      scheme: bearer
+      type: http
+info:
+  title: RequestBench
+  version: 1.0.0
+openapi: 3.0.3
+paths:
+  /authorized/small:
+    get:
+      operationId: get-authorized-small
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payload"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Get authorized small
+  /body/bind/medium:
+    post:
+      operationId: post-body-bind-medium
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Order"
+          application/octet-stream:
+            schema:
+              format: binary
+              type: string
+              x-contentMediaType: application/octet-stream
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BoundOrder"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      summary: Post body bind medium
+  /body/bind/small:
+    post:
+      operationId: post-body-bind-small
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Order"
+          application/octet-stream:
+            schema:
+              format: binary
+              type: string
+              x-contentMediaType: application/octet-stream
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BoundOrder"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      summary: Post body bind small
+  /body/validate/first-error:
+    post:
+      operationId: post-body-validate-first-error
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Order"
+          application/octet-stream:
+            schema:
+              format: binary
+              type: string
+              x-contentMediaType: application/octet-stream
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BoundOrder"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      summary: Post body validate first error
+  /body/validate/medium:
+    post:
+      operationId: post-body-validate-medium
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CheckedOrder"
+          application/octet-stream:
+            schema:
+              format: binary
+              type: string
+              x-contentMediaType: application/octet-stream
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BoundCheckedOrder"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      summary: Post body validate medium
+  /body/validate/small:
+    post:
+      operationId: post-body-validate-small
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CheckedOrder"
+          application/octet-stream:
+            schema:
+              format: binary
+              type: string
+              x-contentMediaType: application/octet-stream
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BoundCheckedOrder"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      summary: Post body validate small
+  /cache/large:
+    get:
+      operationId: get-cache-large
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payload"
+          description: OK
+          headers:
+            x-rb-serial:
+              schema:
+                type: string
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      summary: Get cache large
+  /cache/medium:
+    get:
+      operationId: get-cache-medium
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payload"
+          description: OK
+          headers:
+            x-rb-serial:
+              schema:
+                type: string
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      summary: Get cache medium
+  /cache/small:
+    get:
+      operationId: get-cache-small
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payload"
+          description: OK
+          headers:
+            x-rb-serial:
+              schema:
+                type: string
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      summary: Get cache small
+  /cache/vary/many:
+    get:
+      operationId: get-cache-vary-many
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payload"
+          description: OK
+          headers:
+            Vary:
+              schema:
+                type: string
+            x-rb-serial:
+              schema:
+                type: string
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      summary: Get cache vary many
+  /cache/vary/one:
+    get:
+      operationId: get-cache-vary-one
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payload"
+          description: OK
+          headers:
+            Vary:
+              schema:
+                type: string
+            x-rb-serial:
+              schema:
+                type: string
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      summary: Get cache vary one
+  /compressed/large:
+    get:
+      operationId: get-compressed-large
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payload"
+          description: OK
+          headers:
+            x-rb-serial:
+              schema:
+                type: string
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      summary: Get compressed large
+  /compressed/small:
+    get:
+      operationId: get-compressed-small
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payload"
+          description: OK
+          headers:
+            x-rb-serial:
+              schema:
+                type: string
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      summary: Get compressed small
+  /cors/small:
+    get:
+      operationId: get-cors-small
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payload"
+          description: OK
+          headers:
+            x-rb-serial:
+              schema:
+                type: string
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      summary: Get cors small
+  /etag/large:
+    get:
+      operationId: list-etag-large
+      parameters:
+        - description: Succeeds if the server's resource matches one of the passed values.
+          in: header
+          name: If-Match
+          schema:
+            description: Succeeds if the server's resource matches one of the passed values.
+            items:
+              type: string
+            nullable: true
+            type: array
+        - description: Succeeds if the server's resource matches none of the passed values. On writes, the special value * may be used to match any existing value.
+          in: header
+          name: If-None-Match
+          schema:
+            description: Succeeds if the server's resource matches none of the passed values. On writes, the special value * may be used to match any existing value.
+            items:
+              type: string
+            nullable: true
+            type: array
+        - description: Succeeds if the server's resource date is more recent than the passed date.
+          in: header
+          name: If-Modified-Since
+          schema:
+            description: Succeeds if the server's resource date is more recent than the passed date.
+            format: date-time-http
+            type: string
+        - description: Succeeds if the server's resource date is older or the same as the passed date.
+          in: header
+          name: If-Unmodified-Since
+          schema:
+            description: Succeeds if the server's resource date is older or the same as the passed date.
+            format: date-time-http
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                format: base64
+                type: string
+          description: OK
+          headers:
+            Content-Type:
+              schema:
+                type: string
+            ETag:
+              schema:
+                type: string
+            x-rb-serial:
+              schema:
+                type: string
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      summary: List etag large
+  /etag/small:
+    get:
+      operationId: list-etag-small
+      parameters:
+        - description: Succeeds if the server's resource matches one of the passed values.
+          in: header
+          name: If-Match
+          schema:
+            description: Succeeds if the server's resource matches one of the passed values.
+            items:
+              type: string
+            nullable: true
+            type: array
+        - description: Succeeds if the server's resource matches none of the passed values. On writes, the special value * may be used to match any existing value.
+          in: header
+          name: If-None-Match
+          schema:
+            description: Succeeds if the server's resource matches none of the passed values. On writes, the special value * may be used to match any existing value.
+            items:
+              type: string
+            nullable: true
+            type: array
+        - description: Succeeds if the server's resource date is more recent than the passed date.
+          in: header
+          name: If-Modified-Since
+          schema:
+            description: Succeeds if the server's resource date is more recent than the passed date.
+            format: date-time-http
+            type: string
+        - description: Succeeds if the server's resource date is older or the same as the passed date.
+          in: header
+          name: If-Unmodified-Since
+          schema:
+            description: Succeeds if the server's resource date is older or the same as the passed date.
+            format: date-time-http
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                format: base64
+                type: string
+          description: OK
+          headers:
+            Content-Type:
+              schema:
+                type: string
+            ETag:
+              schema:
+                type: string
+            x-rb-serial:
+              schema:
+                type: string
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      summary: List etag small
+  /forms/multipart:
+    post:
+      operationId: post-forms-multipart
+      requestBody:
+        content:
+          multipart/form-data:
+            encoding:
+              file:
+                contentType: text/plain
+              requestId:
+                contentType: text/plain
+              tenant:
+                contentType: text/plain
+            schema:
+              properties:
+                file:
+                  format: binary
+                  type: string
+                  x-contentEncoding: binary
+                  x-contentMediaType: application/octet-stream
+                requestId:
+                  type: string
+                tenant:
+                  type: string
+              required:
+                - file
+                - tenant
+                - requestId
+              type: object
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Uploaded"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      summary: Post forms multipart
+  /forms/urlencoded:
+    post:
+      operationId: post-forms-urlencoded
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              format: binary
+              type: string
+              x-contentMediaType: application/octet-stream
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EchoedSearch"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      summary: Post forms urlencoded
+  /headers:
+    get:
+      operationId: get-headers
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payload"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      summary: Get headers
+  /headers/bind:
+    get:
+      operationId: get-headers-bind
+      parameters:
+        - in: header
+          name: X-Rb-Tenant
+          schema:
+            type: string
+        - in: header
+          name: X-Rb-Request-Id
+          schema:
+            type: string
+        - in: header
+          name: X-Rb-Account
+          schema:
+            format: int64
+            type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EchoedHeadersBound"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      summary: Get headers bind
+  /items:
+    post:
+      operationId: post-items
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewItem"
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Item"
+          description: Created
+          headers:
+            Location:
+              schema:
+                type: string
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      summary: Post items
+  /items/{id}:
+    delete:
+      operationId: delete-items-by-id
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            format: int64
+            type: integer
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      summary: Delete items by ID
+    get:
+      operationId: get-items-by-id
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            format: int64
+            type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Item"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      summary: Get items by ID
+    patch:
+      operationId: patch-items-by-id
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            format: int64
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ItemPatch"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Item"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      summary: Patch items by ID
+    put:
+      operationId: put-items-by-id
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            format: int64
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewItem"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Item"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      summary: Put items by ID
+  /json/large:
+    get:
+      operationId: get-json-large
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payload"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      summary: Get JSON large
+  /json/medium:
+    get:
+      operationId: get-json-medium
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payload"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      summary: Get JSON medium
+  /json/small:
+    get:
+      operationId: get-json-small
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payload"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      summary: Get JSON small
+  /middleware/four:
+    get:
+      operationId: get-middleware-four
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payload"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      summary: Get middleware four
+  /middleware/none:
+    get:
+      operationId: get-middleware-none
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payload"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      summary: Get middleware none
+  /middleware/sixteen:
+    get:
+      operationId: get-middleware-sixteen
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payload"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      summary: Get middleware sixteen
+  /parameters/static/segment/literal:
+    get:
+      operationId: get-parameters-static-segment-literal
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payload"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      summary: Get parameters static segment literal
+  /parameters/{one}/segment/literal:
+    get:
+      operationId: get-parameters-by-one-segment-literal
+      parameters:
+        - in: path
+          name: one
+          required: true
+          schema:
+            format: int64
+            type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EchoedParametersOne"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      summary: Get parameters by one segment literal
+  /parameters/{one}/with-second/{two}:
+    get:
+      operationId: get-parameters-by-one-with-second-by-two
+      parameters:
+        - in: path
+          name: one
+          required: true
+          schema:
+            format: int64
+            type: integer
+        - in: path
+          name: two
+          required: true
+          schema:
+            format: int64
+            type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EchoedParametersTwo"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      summary: Get parameters by one with second by two
+  /plaintext:
+    get:
+      operationId: list-plaintext
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                format: base64
+                type: string
+          description: OK
+          headers:
+            Content-Type:
+              schema:
+                type: string
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      summary: List plaintext
+  /query/many:
+    get:
+      operationId: get-query-many
+      parameters:
+        - explode: false
+          in: query
+          name: page
+          schema:
+            format: int64
+            type: integer
+        - explode: false
+          in: query
+          name: size
+          schema:
+            format: int64
+            type: integer
+        - explode: false
+          in: query
+          name: status
+          schema:
+            type: string
+        - explode: false
+          in: query
+          name: category
+          schema:
+            type: string
+        - explode: false
+          in: query
+          name: sort
+          schema:
+            type: string
+        - explode: false
+          in: query
+          name: q
+          schema:
+            type: string
+        - explode: false
+          in: query
+          name: minPrice
+          schema:
+            format: int64
+            type: integer
+        - explode: false
+          in: query
+          name: maxPrice
+          schema:
+            format: int64
+            type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EchoedSearch"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      summary: Get query many
+  /query/one:
+    get:
+      operationId: get-query-one
+      parameters:
+        - explode: false
+          in: query
+          name: page
+          schema:
+            format: int64
+            type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EchoedQueryOne"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      summary: Get query one
+  /sse/medium:
+    get:
+      operationId: get-sse-medium
+      responses:
+        "200":
+          content:
+            text/event-stream:
+              schema:
+                description: Each oneOf object in the array represents one possible Server Sent Events (SSE) message, serialized as UTF-8 text according to the SSE specification.
+                items:
+                  oneOf:
+                    - properties:
+                        data:
+                          $ref: "#/components/schemas/Item"
+                        event:
+                          const: message
+                          description: The event name.
+                          type: string
+                        id:
+                          description: The event ID.
+                          type: integer
+                        retry:
+                          description: The retry time in milliseconds.
+                          type: integer
+                      required:
+                        - data
+                      title: Event message
+                      type: object
+                title: Server Sent Events
+                type: array
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+  /stream/items:
+    get:
+      operationId: get-stream-items
+      responses:
+        "200":
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      summary: Get stream items
+  /template/medium:
+    get:
+      operationId: list-template-medium
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                format: base64
+                type: string
+          description: OK
+          headers:
+            Content-Type:
+              schema:
+                type: string
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      summary: List template medium
+  /template/small:
+    get:
+      operationId: list-template-small
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                format: base64
+                type: string
+          description: OK
+          headers:
+            Content-Type:
+              schema:
+                type: string
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      summary: List template small

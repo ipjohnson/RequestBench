@@ -1,0 +1,75 @@
+{
+  "comment": "Huma 2.39 on Go 1.27, over Go's ServeMux through Huma's humago adapter, so it measures Huma's layer over the router go:net-http uses. One function per family registers its operations in the implementation package under Implementation/, and each host's main package is in the host's directory. On lambda-emulator the ServeMux answers behind aws-lambda-go-api-proxy's httpadapter, because Huma has no Lambda adapter of its own. The suite is UnitTests/, go test through humatest, Huma's test utility, and never reaches the image. Each family uses Huma where it has something: typed inputs for parameters, query strings, headers and bodies, JSON Schema validation from struct tags, a resolver for the first-error route, groups with Huma middleware, the conditional package, StreamResponse, the sse package, and MultipartFormFiles. Huma has no CORS, compression, response cache, view layer, urlencoded form binding or file server, so those are written for it or come from net/http. The default create hook, which puts $schema in every answer, is dropped, because the corpus compares each body whole. The lockfile is go.mod, which records every module version the build selects and pins oapi-codegen as a tool, and go.sum, which holds their hashes. upgrade is go get -u ./... tool, which moves every module and the tool to its newest release within its major version.",
+  "framework": "Huma",
+  "licence": "MIT",
+  "repo": "https://github.com/danielgtaylor/huma",
+  "package": "https://pkg.go.dev/github.com/danielgtaylor/huma/v2",
+  "docs": "https://huma.rocks/",
+  "lockfile": ["go.mod", "go.sum"],
+  "hosts": {
+    "container-h1": { "dockerfile": "container-h1/Dockerfile" },
+    "container-h2": { "dockerfile": "container-h2/Dockerfile" },
+    "lambda-emulator": {
+      "dockerfile": "lambda-emulator/Dockerfile",
+      "unsupported": {
+        "sse.medium": "aws-lambda-go-api-proxy's httpadapter buffers the whole answer, so the events would arrive as one body. Its response writer cannot flush either, and Huma's sse package cannot flush through it.",
+        "stream.ndjson": "aws-lambda-go-api-proxy's httpadapter buffers the whole answer, so the rows would arrive as one body. Its response writer cannot flush either."
+      }
+    }
+  },
+  "suite": { "argv": ["go", "test", "./..."], "paths": ["UnitTests"] },
+  "upgrade": { "argv": ["go", "get", "-u", "./...", "tool"] },
+  "client": {
+    "document": "Client/openapi.yaml",
+    "writer": "Huma 2.39.1's OpenAPI().DowngradeYAML(), in Client/openapi/main.go, which writes OpenAPI 3.0.3 as Huma's client SDK tutorial does for oapi-codegen",
+    "generator": "oapi-codegen 2.8.0, which Huma's client SDK tutorial uses, pinned as a tool in go.mod",
+    "argv": ["go", "generate", "./Client"]
+  },
+  "noHandler": {
+    "cors.preflight": "The CORS middleware on the /cors group answers the preflight, on an OPTIONS operation registered so the preflight reaches Huma.",
+    "errors.unmatched": "humago registers each operation as a ServeMux pattern, and the ServeMux answers a path no pattern matches with net/http's NotFound, a 404 with a text body.",
+    "errors.wrong_method": "The ServeMux answers a method the path has no pattern for with 405, its text, and an Allow header naming the methods it has."
+  },
+  "mechanisms": {
+    "authorized": {
+      "mechanism": "A middleware on a Huma group around the operation, which compares the bearer token and refuses any other with huma.WriteErr and 403, as Huma's groups page puts an auth middleware on a group",
+      "mentions": "huma.WriteErr"
+    },
+    "baseline": { "builtin": "The handler answers a []byte body under text/plain, which Huma writes as it is." },
+    "body": {
+      "mechanism": "Huma parses the order into the input's Body. The bind routes set SkipValidateBody. The validate routes check the JSON Schema Huma builds from CheckedOrder's minimum, minLength and minItems tags. The first-error route runs Huma's validator over one field at a time in a resolver, because Huma cannot stop at the first failure",
+      "mentions": "huma.Validate"
+    },
+    "cache": {
+      "mechanism": "A middleware on a Huma group around each cache operation, which replays a stored answer and otherwise stores what the handler wrote, keyed by the path and the operation's vary headers, one store per process"
+    },
+    "compressed": {
+      "mechanism": "A middleware on a Huma group around the two /compressed operations, which gzips the answer with compress/gzip at its fastest level when Accept-Encoding names gzip",
+      "mentions": "gzip.BestSpeed"
+    },
+    "cors": {
+      "mechanism": "A middleware on a Huma group around the /cors operations, which answers a preflight itself and adds the CORS headers to an answer for the allowed origin"
+    },
+    "errors": {
+      "builtin": "The ServeMux answers a miss with net/http's 404 text, and a method a path lacks with 405 and an Allow header. Huma refuses a body that does not parse with 400 problem details, and the items handlers return huma.Error404NotFound for a missing row."
+    },
+    "etag": {
+      "mechanism": "The handler encodes the payload and hashes it with SHA-1 for the ETag, and Huma's conditional package compares it with If-None-Match and answers 304",
+      "mentions": "PreconditionFailed"
+    },
+    "forms": { "builtin": "Huma decodes the multipart form by its form tags, as MultipartFormFiles. Huma decodes no urlencoded form, so the handler parses the raw body with net/url and converts the numbers with strconv." },
+    "headers": { "builtin": "Huma binds the three headers into typed input fields by their header tags." },
+    "items": { "builtin": "One Huma operation per method on /items/{id}, the id bound by its path tag. humago registers the GET as a ServeMux pattern, which answers HEAD too." },
+    "json": { "builtin": "Huma serialises the output's Body with its JSON format, encoding/json's encoder." },
+    "middleware": { "mechanism": "No-op Huma middlewares in the operation's Middlewares, four or sixteen of them" },
+    "parameters": { "builtin": "Huma binds each path parameter into a typed input field by its path tag." },
+    "query": { "builtin": "Huma binds the query string into typed input fields by their query tags." },
+    "sse": { "builtin": "Huma's sse package sends each row as the data of an event of the default type, message, and flushes it." },
+    "static": { "builtin": "Huma serves no files, so a ServeMux pattern for everything below /static/ hands each file to net/http's FileServerFS." },
+    "stream": { "builtin": "A huma.StreamResponse writes each row with encoding/json's encoder and flushes it." },
+    "template": {
+      "mechanism": "html/template, embedded in the binary and parsed once, rendered into a buffer and answered as a []byte body under text/html, as Huma's HTML response page does",
+      "mentions": "template.ParseFS"
+    }
+  }
+}
