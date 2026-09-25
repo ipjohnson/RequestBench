@@ -1,0 +1,60 @@
+{
+  "comment": "Django REST framework on Django over WSGI, served by gunicorn as flask is, because DRF's views are synchronous. One module of views per family under Implementation/views, routed by urls.py, and the items resource a ViewSet that DRF's SimpleRouter routes. gunicorn runs two worker processes of four threads each, because one Python process runs Python on one core at a time and the container has two. On container-h2 gunicorn serves HTTP/2 with prior knowledge itself, with its http2 extra. On lambda-emulator the application answers behind apig-wsgi, in one process. settings.py keeps JSONRenderer alone of DRF's two default renderers and no authentication classes, and keeps two of the seven middleware classes startproject installs: CorsMiddleware for the cors family and CommonMiddleware, which writes Content-Length. DRF has no cache, compression, conditional requests or middleware of its own, so those families put Django's view decorators on the function @api_view wraps, where DRF's caching guide puts cache_page. No framework document or client: DRF's own schema generator is deprecated in favour of drf-spectacular, a third-party package. The suite is UnitTests/, pytest over DRF's APIClient, and never reaches the image. The suite and upgrade run through uv, which has to be installed.",
+  "framework": "Django REST framework",
+  "licence": "BSD-3-Clause",
+  "repo": "https://github.com/encode/django-rest-framework",
+  "package": "https://pypi.org/project/djangorestframework/",
+  "docs": "https://www.django-rest-framework.org/",
+  "lockfile": ["uv.lock"],
+  "hosts": {
+    "container-h1": { "dockerfile": "container-h1/Dockerfile" },
+    "container-h2": { "dockerfile": "container-h2/Dockerfile" },
+    "lambda-emulator": {
+      "dockerfile": "lambda-emulator/Dockerfile",
+      "unsupported": {
+        "sse.medium": "apig-wsgi buffers the whole answer, so the events arrive as one body.",
+        "stream.ndjson": "apig-wsgi buffers the whole answer, so the rows arrive as one body."
+      }
+    }
+  },
+  "suite": { "argv": ["uv", "run", "--locked", "pytest"], "paths": ["UnitTests"] },
+  "upgrade": { "argv": ["uv", "lock", "--upgrade"] },
+  "noHandler": {
+    "cors.preflight": "django-cors-headers' CorsMiddleware answers the preflight before the URLconf is consulted, and no view runs.",
+    "errors.unmatched": "Django's URL resolver finds no pattern, and Django answers with its default 404 page.",
+    "errors.wrong_method": "The items ViewSet has no action for POST on /items/<int:pk>, and DRF answers 405 with MethodNotAllowed."
+  },
+  "mechanisms": {
+    "authorized": {
+      "mechanism": "A DRF permission class on the view, which compares the bearer token with settings.json's and refuses any other with DRF's 403 before the view runs"
+    },
+    "baseline": { "mechanism": "PlainTextRenderer on the view, the custom renderer DRF's renderer guide writes as its example, which sends the string as text/plain" },
+    "body": {
+      "mechanism": "DRF Serializers over request.data, which DRF's JSONParser parsed: types alone on the bind routes and orderRequest's rules on the validate routes, refused with DRF's 400 through is_valid(raise_exception=True). The first-error route's serializer overrides to_internal_value to stop at the first field that fails, because a serializer cannot"
+    },
+    "cache": {
+      "mechanism": "Django's cache_page on the function @api_view wraps, as DRF's caching guide places it, over LocMemCache, one store in each worker. vary_on_headers names the headers each vary row is keyed on"
+    },
+    "compressed": { "mechanism": "Django's gzip_page on the function @api_view wraps, because DRF compresses nothing, at its fixed threshold of 200 bytes and at gzip level 6, which Django hard-codes" },
+    "cors": {
+      "mechanism": "django-cors-headers' CorsMiddleware, kept to /cors/ by CORS_URLS_REGEX, as DRF's documentation recommends",
+      "dependency": "django-cors-headers",
+      "mentions": "corsheaders"
+    },
+    "errors": {
+      "builtin": "Django's URL resolver answers a path no pattern matches with its default HTML 404 page. Inside a view, DRF's exception handler answers the items ViewSet's NotFound with 404, a method with no action with 405, and a body JSONParser cannot parse with 400, each as JSON with a detail message."
+    },
+    "etag": { "mechanism": "Django's ConditionalGetMiddleware, scoped to the two functions @api_view wraps with decorator_from_middleware, because DRF computes no validator. It hashes the rendered body with MD5 and answers a matching If-None-Match with 304" },
+    "forms": { "builtin": "DRF's FormParser and MultiPartParser parse both bodies into request.data, and a Serializer binds the fields and the upload." },
+    "headers": { "builtin": "The view reads request.headers by name and converts the account with int(), because DRF binds no header." },
+    "items": { "mechanism": "A ViewSet with an action per method, which DRF's SimpleRouter routes. DRF answers HEAD with retrieve and a method with no action with 405, and a Serializer binds each body, with partial=True on the patch" },
+    "json": { "builtin": "A view returns a Response holding the payload, which DRF's JSONRenderer, the one renderer settings.py keeps, writes with the standard library's json." },
+    "middleware": { "mechanism": "A no-op Django middleware whose process_request returns None, made a view decorator with decorator_from_middleware, four or sixteen times on the function @api_view wraps, because DRF has no middleware of its own" },
+    "parameters": { "builtin": "Django's <int:...> path converter, which matches digits and hands the DRF view an int." },
+    "query": { "builtin": "A DRF Serializer over request.query_params, which binds and converts each value." },
+    "sse": { "mechanism": "Django's StreamingHttpResponse typed text/event-stream, over a generator that frames each row as one event, because DRF has no event stream of its own. EventStreamRenderer on the view lets DRF's content negotiation accept the request" },
+    "static": { "mechanism": "django.views.static.serve over the payload directory, because DRF serves no files" },
+    "stream": { "builtin": "Django's StreamingHttpResponse typed application/x-ndjson, over a generator that renders each row with DRF's JSONRenderer, because DRF's Response renders the whole body at once." },
+    "template": { "mechanism": "DRF's TemplateHTMLRenderer on the view, which renders the template the Response names with Django's template language, through the DjangoTemplates backend the TEMPLATES setting configures" }
+  }
+}
