@@ -69,6 +69,8 @@ type Props = {
   mechanism: Mechanism | undefined;
   /** What the snippet matcher said about this test when it located no handler. */
   unlocated: string[];
+  /** What answers this test, where rb.json says the framework has no handler of its own for it. */
+  noHandler: string | undefined;
   /** The corpus test this pane is for. */
   test: PaneTest | undefined;
   /** What holds this framework to the test: its own suite, and its client-exception package. */
@@ -97,6 +99,7 @@ const {
   alsoWired,
   mechanism,
   unlocated,
+  noHandler,
   test,
   tests,
   exchange,
@@ -257,6 +260,8 @@ const hdrs = (hs: readonly (readonly [string, string])[]): string =>
           )}
           <pre class="code">{h.text}</pre>
         </>
+      ) : noHandler ? (
+        <p class="mech">{noHandler}</p>
       ) : (
         <p class="empty">
           No handler located for this test.

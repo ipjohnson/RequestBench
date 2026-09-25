@@ -18,6 +18,7 @@ describe("siteView", () => {
     assert.ok(read?.about);
     assert.deepEqual([read?.calls[0]?.target, read?.calls[0]?.status], ["/items/{draw.item}", "200"]);
     assert.deepEqual(view?.tests.tests["etag.match_large"]?.primes.map((p) => p.target), ["/etag/large"]);
+    assert.match(view?.frameworks["rust:actix-web"]?.noHandler["cors.preflight"] ?? "", /actix-cors/);
   });
 
   test("a commit history does not hold is said, not guessed at", () => {
@@ -147,6 +148,7 @@ describe("snippetDoc", () => {
     },
     problems: [],
     mechanisms: { json: { builtin: "The handler returns the object." } },
+    noHandler: {},
     notes: [],
     pushed: true,
   };

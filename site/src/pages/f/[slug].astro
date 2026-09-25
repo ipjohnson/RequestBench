@@ -172,7 +172,8 @@ const famRungs = (fam: string, ids: string[]) =>
     shown: r.shown,
   }));
 
-const missing = order.filter((id) => !snips[id]?.handler);
+// A test rb.json says has no handler of the framework's own is explained on its pane, not missing.
+const missing = order.filter((id) => !snips[id]?.handler && !view?.noHandler[id]);
 /** What the matcher said about a test it located no handler for, without the ids it opens with. */
 const unlocatedOf = (id: string): string[] => {
   const lead = `${t.id} ${id} `;
@@ -434,6 +435,7 @@ const unsupported = Object.entries(t.unsupported ?? {}).sort(([a], [b]) => (a < 
                   alsoWired={alsoWired(id)}
                   mechanism={view?.mechanisms[id.split(".")[0] ?? ""]}
                   unlocated={unlocatedOf(id)}
+                  noHandler={view?.noHandler[id]}
                   test={testOf(id)}
                   exchange={exemplars[id]}
                   against={against}

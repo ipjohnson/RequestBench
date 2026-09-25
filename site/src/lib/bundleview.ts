@@ -77,6 +77,8 @@ export const FrameworkView = z.object({
   snippets: z.record(z.string(), Snippet),
   problems: z.array(z.string()),
   mechanisms: z.record(z.string(), Mechanism).default({}),
+  /** The tests rb.json says the framework answers with no handler of its own, and what answers each. */
+  noHandler: z.record(z.string(), z.string()).default({}),
   project: Project.optional(),
   /** The items of the README's `## Notes`, which the page ends with. */
   notes: z.array(z.string()).default([]),
