@@ -119,12 +119,14 @@ test('stream.ndjson: on Fastify, the StreamableFile goes out a row per line, wit
 });
 
 // rb:test sse.medium
-test('sse.medium: on Fastify, each row of items.medium is the data of one event', async () => {
+test('sse.medium: on Fastify, each row of items.medium is the data of one event, whose id is empty', async () => {
   const response = await asText(request(app.getHttpServer()).get('/sse/medium').set('accept', 'text/event-stream'));
+  const lines = (response.body as string).split('\n');
+  const rows = expected.json('items.medium.json')['items'] as unknown[];
 
   expect(response.headers['content-type']).toBe('text/event-stream');
-  const data = (response.body as string).split('\n').filter((line) => line.startsWith('data: ')).map((line) => JSON.parse(line.slice('data: '.length)));
-  expect(data).toEqual(expected.json('items.medium.json')['items']);
+  expect(lines.filter((line) => line.startsWith('data: ')).map((line) => JSON.parse(line.slice('data: '.length)))).toEqual(rows);
+  expect(lines.filter((line) => line.startsWith('id:'))).toEqual(rows.map(() => 'id: '));
 });
 
 // rb:test cache.vary_one

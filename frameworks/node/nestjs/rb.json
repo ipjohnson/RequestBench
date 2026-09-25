@@ -73,7 +73,7 @@
     },
     "parameters": { "builtin": "The @Param decorator reads each capture, and ParseIntPipe converts it to an integer." },
     "query": { "builtin": "The @Query decorator reads the query string. ParseIntPipe converts query.one's page, and ValidationPipe binds query.many's eight values to a class whose decorators convert the numbers." },
-    "sse": { "builtin": "The @Sse decorator sends each value of the Observable the handler returns as one event." },
+    "sse": { "builtin": "The @Sse decorator sends each value of the Observable the handler returns as one event. Each names an empty id, because Nest numbers an event that names none." },
     "static": {
       "mechanism": "ServeStaticModule over the payload directory under /static, which serves it with express.static on Express and @fastify/static on Fastify",
       "dependency": "@nestjs/serve-static",

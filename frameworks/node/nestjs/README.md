@@ -81,7 +81,7 @@ the application while the runtime imports it, before the function asks for its f
 | cors | `enableCors`, which installs the cors middleware on Express and @fastify/cors on Fastify. | Nest |
 | forms | The platform's urlencoded parser reads the form, which `ValidationPipe` binds to query.many's DTO. `FileInterceptor` reads the upload, with Multer on Express and @fastify/multipart on Fastify. | Nest |
 | stream | The handler returns a `StreamableFile` over a `Readable` of lines, and the platform pipes it into the response. | Nest |
-| sse | `@Sse` sends each value of the `Observable` the handler returns as one event. | Nest |
+| sse | `@Sse` sends each value of the `Observable` the handler returns as one event, each with an empty id. | Nest |
 | static | `ServeStaticModule` over the payload directory under `/static`, which serves it with `express.static` on Express and @fastify/static on Fastify. | @nestjs/serve-static |
 
 CacheInterceptor stores the value a handler returns, not the answer. A replay would lose the
@@ -103,10 +103,12 @@ replay.
   writes. On Express the two are joined into one line.
 - Nest answers a POST with 201 unless the handler sets another status with `@HttpCode`. The body and
   forms routes create nothing, so they set 200.
-- Nest starts an SSE answer with an empty line and numbers each event with an `id:` field. It writes
-  `Expire: 0`, where the header HTTP defines is `Expires`, beside `Cache-Control`, `Pragma` and
-  `X-Accel-Buffering: no`. The typo was raised in https://github.com/nestjs/nest/issues/17588 and is
-  still in 12.1.0.
+- Nest numbers each SSE event with an `id:` field unless the event names an id, and has no setting
+  that turns it off. The corpus's events carry no id, so each event names an empty one. Nest writes
+  it as `id: `, which an EventSource reads as no id.
+- Nest starts an SSE answer with an empty line. It writes `Expire: 0`, where the header HTTP defines
+  is `Expires`, beside `Cache-Control`, `Pragma` and `X-Accel-Buffering: no`. The typo was raised in
+  https://github.com/nestjs/nest/issues/17588 and is still in 12.1.0.
 - Express's `res.render` adds `_locals` to the object it renders. The template handlers return a copy
   of the payload, so the payload the other handlers return is never changed.
 - Nest's upload interceptors come from `@nestjs/platform-express` and from
