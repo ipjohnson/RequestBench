@@ -1,7 +1,12 @@
 ---
-// The frame every page shares: the fonts, the palette and the footer.
+// The frame every page shares: the fonts, the palette, the tab icons and the footer.
 import "../styles/tokens.css";
 import "../styles/app.css";
+// Imported rather than left in public/, so each link is an /assets/ URL that
+// relative-assets.ts makes relative like every other asset.
+import appleTouchIcon from "../assets/apple-touch-icon.png?url";
+import favicon32 from "../assets/favicon-32.png?url";
+import favicon from "../assets/favicon.svg?url";
 
 type Props = {
   title: string;
@@ -23,6 +28,9 @@ const { title, description, dataBase, footerLeft, footerLeftHref, footerRight } 
     <title>{title}</title>
     {description && <meta name="description" content={description} />}
     {dataBase && <meta name="rb:data" content={dataBase} />}
+    <link rel="icon" href={favicon32} sizes="32x32" type="image/png" />
+    <link rel="icon" href={favicon} type="image/svg+xml" />
+    <link rel="apple-touch-icon" href={appleTouchIcon} />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
