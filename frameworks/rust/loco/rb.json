@@ -1,0 +1,81 @@
+{
+  "comment": "Loco 1.2 on axum 0.8 and tokio's multi-thread runtime, one controller per family under Implementation/controllers, each a Loco Routes, added to the application's AppRoutes by the App's Hooks. One package: the library in Implementation/, each host's binary in the host's directory, and the suite in UnitTests/. config/ and assets/ sit at the package root, where a Loco project keeps them, and Loco reads them from the directory it starts in. container-h1 and container-h2 run Loco's command line with start, which serves the router through Loco's own Hooks::serve. container-h2's binary is built with axum's http2 feature, so that serve answers HTTP/2 with prior knowledge, and no serve override is needed. On lambda-emulator the binary boots the application as start does and hands the router to lambda_http, because Loco has no Lambda adapter. Loco's default features bring a database, background workers and JWT auth, which no family uses, so they are off. The suite is UnitTests/, Loco's request helper serving the booted application to axum-test in process, and never reaches the image. The release profile is fat LTO with one codegen unit, as upstream measured every Rust framework. There is no Client/: loco-openapi documents only a handler annotated with utoipa's path attribute and registered through its own openapi wrapper, and its release depends on Loco 0.16. upgrade is cargo update, which moves Cargo.lock within the ranges Cargo.toml states.",
+  "framework": "Loco",
+  "licence": "Apache-2.0",
+  "repo": "https://github.com/loco-rs/loco",
+  "package": "https://crates.io/crates/loco-rs",
+  "docs": "https://loco.rs/docs/",
+  "lockfile": ["Cargo.lock"],
+  "hosts": {
+    "container-h1": { "dockerfile": "container-h1/Dockerfile" },
+    "container-h2": { "dockerfile": "container-h2/Dockerfile" },
+    "lambda-emulator": {
+      "dockerfile": "lambda-emulator/Dockerfile",
+      "unsupported": {
+        "sse.medium": "lambda_http's run buffers the whole answer, so the events arrive as one body.",
+        "stream.ndjson": "lambda_http's run buffers the whole answer, so the rows arrive as one body."
+      }
+    }
+  },
+  "suite": { "argv": ["cargo", "test", "--locked"], "paths": ["UnitTests"] },
+  "upgrade": { "argv": ["cargo", "update"] },
+  "noHandler": {
+    "cors.preflight": "The layer Loco's Cors makes, on the cors routes, answers the preflight, and no handler runs.",
+    "errors.unmatched": "axum's router answers a path no route matches with 404 and no body. Loco's fallback middleware, which would answer it with a page of its own, is off in production.",
+    "errors.wrong_method": "axum's method router answers a method the path has no route for with 405, an Allow header and no body.",
+    "static.file": "Loco's static middleware serves the file from the payload directory config/production.yaml maps to /static, and no handler runs."
+  },
+  "mechanisms": {
+    "authorized": {
+      "mechanism": "An extractor of the application's own, which checks settings.json's bearer token before the handler runs, as Loco's own auth extractors check a JWT or an API key against a user in a database, which this application has none of. Any other token is refused with Loco's error JSON and 403",
+      "mentions": "FromRequestParts"
+    },
+    "baseline": { "builtin": "Loco's format::text writes the string as text/plain." },
+    "body": {
+      "mechanism": "The validator crate's rules, derived on the order and run by Loco's JsonValidateWithMessage extractor before the handler, which refuses the body with 400 and the rules each field broke. The first-error route checks one field at a time by hand, because validator cannot stop at the first failure",
+      "dependency": "validator",
+      "mentions": "Validate"
+    },
+    "cache": {
+      "mechanism": "Loco's in-memory cache, ctx.cache, sized by settings.json when the context is made. Loco ships no response cache, so each handler keeps its answer there with the serial it wrote, keyed by the path and the headers the route varies on, for settings.json's time to live",
+      "mentions": "ctx.cache"
+    },
+    "compressed": {
+      "mechanism": "Loco's compression middleware, turned on in the config file, which is tower-http's CompressionLayer on every route at tower-http's default level and 32-byte threshold, which Loco has no setting for",
+      "mentions": "compression"
+    },
+    "cors": {
+      "mechanism": "Loco's Cors, its cors middleware's settings, made into the middleware's layer with settings.json's policy and added to the cors routes alone with Loco's Routes::layer",
+      "mentions": "Cors"
+    },
+    "errors": { "builtin": "axum's router answers a path no route matches with 404 and a method a path has no route for with 405, both with no body. Loco's Json extractor refuses a body that is not JSON with 400, and the items handlers answer a missing row with Loco's not_found, both with Loco's error JSON." },
+    "etag": {
+      "mechanism": "Loco's etag middleware, on by default, which answers 304 when If-None-Match names the tag a handler set. It computes none, so the handlers hash the JSON they answer with SHA-1 and set the tag with Loco's RenderBuilder::etag",
+      "mentions": "etag("
+    },
+    "forms": { "builtin": "axum's Form extractor, from Loco's prelude, binds the urlencoded body, and its Multipart extractor reads the upload part by part." },
+    "headers": { "builtin": "The handler reads the three headers from axum's HeaderMap, the account parsed as an integer, and answers a header that is missing or no integer with Loco's bad_request." },
+    "items": { "builtin": "One handler per method on /items/{id}, the id bound as an integer by Path and each body by Loco's Json. axum answers HEAD with the GET route." },
+    "json": {
+      "mechanism": "serde's derived Serialize on the payload types, which Loco's format::json writes with serde_json",
+      "dependency": "serde_json",
+      "mentions": "Serialize"
+    },
+    "middleware": {
+      "mechanism": "axum's from_fn middleware, four or sixteen no-op layers added to the route with Loco's Routes::layer",
+      "mentions": "from_fn"
+    },
+    "parameters": { "builtin": "axum's Path extractor, from Loco's prelude, binds each capture as an integer." },
+    "query": { "builtin": "axum's Query extractor, from Loco's prelude, binds the query string into a struct, the numbers as integers." },
+    "sse": { "builtin": "axum's Sse response writes each row serde_json serialises as the data of one event. Loco has no SSE response of its own." },
+    "static": {
+      "mechanism": "Loco's static middleware, turned on in the config file, which is tower-http's ServeDir over the payload directory at /static",
+      "mentions": "static"
+    },
+    "stream": { "builtin": "Body::from_stream writes each row and its newline as one chunk, as the body of the response Loco's RenderBuilder hands over." },
+    "template": {
+      "mechanism": "Loco's Tera view engine over assets/views, added by the view engine initializer Loco's starter generates, and rendered per request with format::render().view",
+      "mentions": "TeraView"
+    }
+  }
+}

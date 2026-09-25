@@ -1,0 +1,41 @@
+# The production environment, which every host runs, as Loco's starter writes it, with the
+# middleware two families use turned on. Every other middleware keeps Loco's default.
+
+logger:
+  enable: true
+  pretty_backtrace: false
+  level: <%= get_env(name="LOG_LEVEL", default="info") %>
+  format: json
+
+server:
+  port: <%= get_env(name="PORT", default="8080") %>
+  binding: 0.0.0.0
+  # The host a mailer's links point at. No mailer runs.
+  host: http://localhost
+  middlewares:
+    # rb:wiring compressed.*
+    # Loco's compression middleware: tower-http's CompressionLayer on every route, at its default
+    # level, which Loco has no setting for.
+    compression:
+      enable: true
+    # rb:wiring static.*
+    # Loco's static middleware: tower-http's ServeDir over the payload directory at /static. A file
+    # the directory does not hold falls back to one that does not exist either, which is a 404.
+    static:
+      enable: true
+      must_exist: false
+      precompressed: false
+      folder:
+        uri: "/static"
+        path: <%= get_env(name="RB_PAYLOADS") %>
+      fallback: <%= get_env(name="RB_PAYLOADS") %>/missing
+    # rb:end
+
+# No worker runs. Loco's default mode, BackgroundQueue, refuses to start without a queue to take
+# jobs from, and BackgroundAsync needs none.
+workers:
+  mode: BackgroundAsync
+
+settings:
+  # The payload directory, which the application loads before it starts.
+  payloads: <%= get_env(name="RB_PAYLOADS") %>
