@@ -1,56 +1,21 @@
-# Measures every framework on each host some framework implements. Each host is its own job on its
-# own GitHub-hosted runner, and within a host the frameworks run one after another on that runner,
-# so every number in a run was taken on the same machine. Each run's summary is added to the
-# results branch under runs/<month>/. The exemplars each framework's gate captured go under
-# exemplars/, in place of the ones an earlier run left, and pages.yml publishes the site when this
-# finishes. A run started by hand can name one host, such as
-# `gh workflow run measure.yml -f host=lambda-emulator`.
-name: measure
+# A one-off copy of measure.yml for this branch, which is never merged. It measures the .NET
+# frameworks, Hardened among them, on container-h1 and lambda-emulator, and records nothing: the
+# summaries and exemplars stay as this run's artifacts, and the results branch and the site are
+# left alone. Its name differs from measure's, so pages.yml does not rebuild the site when it ends,
+# and its concurrency group differs, so it neither waits for the nightly nor holds it up.
+# Started with `gh workflow run measure.yml --ref measure/dotnet-hardened`.
+name: measure .NET unrecorded
 
 on:
-  schedule:
-    - cron: "0 2 * * *"
   workflow_dispatch:
-    inputs:
-      host:
-        description: The one host to measure, such as lambda-emulator. Empty measures every host.
-        required: false
-        default: ""
 
 concurrency:
-  group: measure
+  group: measure-dotnet-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
-  hosts:
-    name: hosts to measure
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    outputs:
-      hosts: ${{ steps.pick.outputs.hosts }}
-    steps:
-      - uses: actions/checkout@v7
-      # Every host an rb.json names, so a host no framework implements yet gets no job, or the one
-      # host a run started by hand names.
-      - id: pick
-        env:
-          HOST: ${{ inputs.host }}
-        run: |
-          hosts=$(git ls-files -- ':(glob)frameworks/*/*/rb.json' | xargs -n1 jq -r '.hosts | keys[]' | sort -u | jq -Rnc '[inputs]')
-          if [ -n "$HOST" ]; then
-            hosts=$(jq -c --arg host "$HOST" 'map(select(. == $host))' <<< "$hosts")
-            if [ "$hosts" = "[]" ]; then
-              echo "::error::No framework implements $HOST."
-              exit 1
-            fi
-          fi
-          echo "hosts=$hosts" >> "$GITHUB_OUTPUT"
-          echo "Hosts to measure: $hosts"
-
   measure:
     name: ${{ matrix.host }}
-    needs: hosts
     runs-on: ubuntu-latest
     timeout-minutes: 330
     permissions:
@@ -58,7 +23,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        host: ${{ fromJSON(needs.hosts.outputs.hosts) }}
+        host: [container-h1, lambda-emulator]
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -83,7 +48,7 @@ jobs:
           df -h /
 
       # A framework that fails its gate or its boot has an entry saying why, and the others are
-      # still measured, so the run is summarized and recorded either way.
+      # still measured, so the run is summarized either way.
       - name: Measure
         id: measure
         continue-on-error: true
@@ -91,7 +56,10 @@ jobs:
           HOST: ${{ matrix.host }}
           RB_SUT_CPUS: "0,1"
           RB_GEN_CPUS: "2,3"
-        run: npm run rb -- measure --host "$HOST" --ladder ci
+        run: >-
+          npm run rb -- measure
+          dotnet:aspnet-mvc dotnet:carter dotnet:fastendpoints dotnet:hardened dotnet:minimal-apis dotnet:wolverine-http
+          --host "$HOST" --ladder ci
 
       - name: Summarize
         id: summarize
@@ -126,52 +94,3 @@ jobs:
         run: |
           echo "::error::A framework was not measured on ${{ matrix.host }}. Its entry in the run file says why."
           exit 1
-
-  record:
-    name: record the summaries and exemplars
-    needs: measure
-    if: always() && needs.measure.result != 'skipped'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          ref: results
-      # Each host's job uploads its own summary, and a host whose job never summarized has none.
-      - uses: actions/download-artifact@v8
-        with:
-          pattern: summary-*
-          merge-multiple: true
-          path: /tmp/summary
-      - uses: actions/download-artifact@v8
-        with:
-          pattern: exemplars-*
-          merge-multiple: true
-          path: /tmp/exemplars
-      - run: |
-          shopt -s nullglob
-          summaries=(/tmp/summary/*.json)
-          if [ ${#summaries[@]} -eq 0 ]; then
-            echo "::error::No host produced a summary."
-            exit 1
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          runs=()
-          for file in "${summaries[@]}"; do
-            run=$(basename "$file" .json)
-            runs+=("$run")
-            mkdir -p "runs/${run:0:7}"
-            cp "$file" "runs/${run:0:7}/"
-            git add runs
-            git commit -m "Record run $run"
-          done
-          exemplars=(/tmp/exemplars/*.json)
-          if [ ${#exemplars[@]} -gt 0 ]; then
-            mkdir -p exemplars
-            cp "${exemplars[@]}" exemplars/
-            git add exemplars
-            git diff --cached --quiet || git commit -m "Record the exemplars of ${runs[*]}"
-          fi
-          git push origin HEAD:results
