@@ -17,7 +17,6 @@ import { LARGE } from "@rb/tests/models/payload";
 import * as published from "@rb/tests/payloads";
 import { tracked } from "./discover.ts";
 import { ETAG, placeholders, recorder, type Assert, type RecordedCall, type Recording } from "./record.ts";
-import { fileOf, loadSnapshots, type Snapshot } from "./snapshots.ts";
 
 type Obj = Record<string, unknown>;
 
@@ -36,8 +35,13 @@ export interface Corpus {
   readonly models: ReadonlyMap<z.ZodType, string>;
   /** Every payload tests/payloads exports, by its value, which is how a request body is traced to its payload. */
   readonly payloads: ReadonlyMap<unknown, Payload>;
-  readonly snapshots: ReadonlyMap<string, Snapshot>;
   readonly files: ReadonlySet<string>;
+}
+
+/** `tests/<family>/<name>.ts` for a test id, with the name's underscores as hyphens. */
+function fileOf(id: string): string {
+  const [family, name] = id.split(".") as [string, string];
+  return `tests/${family}/${name.replace(/_/g, "-")}.ts`;
 }
 
 const FORMATS = new Set(["json", "lines", "events", "text", "html"]);
@@ -76,10 +80,10 @@ export async function corpus(root: string): Promise<Corpus> {
     for (const call of recording.calls) if (!call.priming) sent.push({ id, test, call, recording });
   }
 
-  return { sent, models, payloads, snapshots: loadSnapshots(root, ids), files };
+  return { sent, models, payloads, files };
 }
 
-/** Beside the registry every framework is added to. */
+/** In frameworks/, beside the frameworks it describes. */
 export const DOCUMENT = "frameworks/openapi.json";
 
 /** A status a response is keyed by. `4XX` is one a framework declares, and `default` is any. */
@@ -298,10 +302,6 @@ export function openapi(c: Corpus): Obj {
       ...(file === undefined ? {} : { externalValue: posix.relative(directory, file) }),
     };
   }
-
-  /** The snapshot holding each framework's own answer to a row, named rather than copied in. */
-  const captured = (s: Sent) =>
-    c.snapshots.has(s.id) ? ` ${fileOf(s.id, ".snap.json")} holds the answer each framework was captured giving.` : "";
 
   /** The schema of a payload as an answer carries it, with the echo beside its own fields. */
   function bodySchema(p: Payload, echo: readonly (keyof RunValues)[]): Obj | undefined {
@@ -558,7 +558,7 @@ export function openapi(c: Corpus): Obj {
   function response(status: Status, from: readonly Sent[]): Obj {
     const declared = status === "4XX" ? " Each test below names its status by the field in the framework's client-exception/index.ts." : "";
     const lead = failing(status) ? [`The framework's own error body, which has to be non-empty JSON.${declared}`] : [];
-    const description = [...lead, ...from.map((s) => `${s.id}: ${facts(s, status).join(", ")}.${captured(s)}`)].join("\n\n");
+    const description = [...lead, ...from.map((s) => `${s.id}: ${facts(s, status).join(", ")}.`)].join("\n\n");
     const headers = responseHeaders(from);
 
     const bodies = from.flatMap((s) =>
@@ -628,7 +628,7 @@ export function openapi(c: Corpus): Obj {
     if (u.miss === "method") {
       return `**${id}** (${fileOf(id)}) sends ${call.method} here, and no route may answer it. The router answers with the wrongMethod status in the framework's client-exception/index.ts, and the framework's own error body. ${test.about}`;
     }
-    return `**${id}** (${fileOf(id)}) sends ${call.method} here, and no route matches the path. The router answers with the notFound status in the framework's client-exception/index.ts, and the framework's own error body.${captured(u.sent)} ${test.about}`;
+    return `**${id}** (${fileOf(id)}) sends ${call.method} here, and no route matches the path. The router answers with the notFound status in the framework's client-exception/index.ts, and the framework's own error body. ${test.about}`;
   }
 
   const { ops, unrouted } = operations(c.sent);
@@ -674,7 +674,7 @@ function info(version: string): Obj {
       "An example on each body names the payload it is, and holds no value. When the payload is a committed file, the example links to it, such as items.large to tests/payloads/items.large.json. That file is the exact answer. A computed answer, such as a row, a rendered page or the bind answer, has no file. Its example names the payloads it is computed from, and tests/payloads/index.ts computes it.",
       "A value written {run.name} is drawn once per run and never given to the framework. A handler binds it as the type its schema gives and writes it back in an echo object beside the payload's own fields.",
       "x-rb-serial is one counter for the whole process. A handler that writes it increments it and writes the new value. A stored answer replayed from a cache carries the value it was stored with.",
-      "An answer of 400 or above carries the framework's own error body, which has to be non-empty JSON. The corpus reads a refusal only through the framework's frameworks/<language>/<name>/client-exception/index.ts. That declaration gives four statuses, which this document writes as 4XX and names by field: rejected, malformed, notFound and wrongMethod. It also says whether a rejection names every bad field or only the first. A new framework writes its declaration and registers it in frameworks/exceptions.ts.",
+      "An answer of 400 or above carries the framework's own error body, which has to be non-empty JSON. The corpus reads a refusal only through the framework's frameworks/<language>/<name>/client-exception/index.ts. That declaration gives four statuses, which this document writes as 4XX and names by field: rejected, malformed, notFound and wrongMethod. It also says whether a rejection names every bad field or only the first.",
       "A path's own description names any request sent there that no route may answer.",
       "The values a framework configures itself from are in tests/payloads/settings.json. They are the bearer token, the CORS policy attached to /cors, and the cache's capacity, lifetime and vary headers.",
       "The harness passes PORT and RB_HOST. /health and /__meta are the contract's own and are not tests.",

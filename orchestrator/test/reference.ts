@@ -4,8 +4,8 @@
 // It is a second author. Each route computes its answer from the request and the
 // published data rather than from what a test expects, so a test that names the wrong
 // payload for its path fails here. What a framework writes in its own words, which is
-// every error body, comes from the snapshot beside each refusal row, as that framework
-// was captured answering. An ETag hashed from the body and a serial that advances when a
+// every error body, comes from the error contract it answers as, one of those in
+// contracts.ts. An ETag hashed from the body and a serial that advances when a
 // handler runs and repeats when a stored answer is replayed are written the way a
 // correct framework writes them. Those halves are only as strong as the checks in the
 // tests that read them.
@@ -14,11 +14,26 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { gzipSync } from "node:zlib";
 
-import type { Draw, Exceptions, RunValues } from "@rb/tests/kit";
+import type { Draw, Exceptions, Json, RunValues } from "@rb/tests/kit";
 import { orderRequest } from "@rb/tests/models/order-request";
 import { items, settings } from "@rb/tests/payloads";
-import type { Snapshot } from "../snapshots.ts";
 import type { Request, Response, Transport } from "../validate.ts";
+
+const REFUSAL_IDS = ["authorized.denied", "body.rejected_all", "body.rejected_first", "errors.malformed", "errors.unmatched"] as const;
+
+/** A row the reference refuses in the contract's own words. */
+export type Refusal = (typeof REFUSAL_IDS)[number];
+
+export const REFUSALS: ReadonlySet<string> = new Set(REFUSAL_IDS);
+
+/** An error contract: what a framework's client-exception declares, and what its handlers answer each refusal with. */
+export interface Contract {
+  /** How the tests name it, as `language:name`. */
+  readonly id: string;
+  readonly declared: Exceptions;
+  /** The status and body each refusal row is answered with. An answer with no body has an empty one. */
+  readonly answers: Readonly<Record<Refusal, { readonly status: number; readonly body?: Json }>>;
+}
 
 /** Values of the shape a run draws, fixed so that a failure reproduces. */
 export const RUN: RunValues = {
@@ -104,19 +119,16 @@ function parts(body: string, type: string): Map<string, { filename: string | und
   return out;
 }
 
-/**
- * The whole corpus as one framework answers it. `snapshots` holds the refusal rows,
- * whose bodies are each framework's own.
- */
-export function corpusReference(snapshots: ReadonlyMap<string, Snapshot>, framework: string, declared: Exceptions) {
-  const own = (id: string, status?: number): Reply => {
-    const captured = snapshots.get(id)?.frameworks[framework];
-    if (captured === undefined) throw new Error(`no ${id} answer for ${framework}`);
-    return captured.body === undefined ? { status: status ?? captured.status } : json(captured.body, status ?? captured.status);
+/** The whole corpus as a framework with this error contract answers it. */
+export function corpusReference(contract: Contract) {
+  const { declared, answers } = contract;
+  const own = (id: Refusal, status?: number): Reply => {
+    const answer = answers[id];
+    return answer.body === undefined ? { status: status ?? answer.status } : json(answer.body, status ?? answer.status);
   };
   const notFound = () => own("errors.unmatched", declared.notFound);
 
-  function ordered(req: Request, refusal: string): Reply {
+  function ordered(req: Request, refusal: Refusal | ""): Reply {
     let parsed: unknown;
     try {
       parsed = JSON.parse(req.body ?? "");

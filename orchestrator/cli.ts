@@ -1,7 +1,7 @@
 // The orchestrator's command line: `npm run rb -- <command>`. USAGE below lists the commands.
 //
-// Every command reads the repository it runs in. A framework is named language:name, as in
-// frameworks/exceptions.ts, and `tests` names the tests bundle.
+// Every command reads the repository it runs in. A framework is named language:name, for its
+// directory frameworks/<language>/<name>, and `tests` names the tests bundle.
 import { spawnSync } from "node:child_process";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import net from "node:net";
@@ -10,11 +10,12 @@ import { fileURLToPath } from "node:url";
 import { parseArgs, type ParseArgsOptionsConfig } from "node:util";
 
 import suite from "@rb/tests";
-import exceptions from "../frameworks/exceptions.ts";
+import type { Exceptions } from "@rb/tests/kit";
 import { Pipe } from "../traffic-generator/pipe.ts";
 import { frameworkBundle, frameworkProblems, testsBundle, TESTS_ID, type Bundle, type FrameworkKey } from "./bundle.ts";
 import * as container from "./container.ts";
-import { exemplarFile, FIXED_VALUES, gate, type GateResult } from "./gate.ts";
+import { exceptionsOf, withExceptions } from "./exceptions.ts";
+import { FIXED_VALUES, gate, writeExemplars, type GateResult } from "./gate.ts";
 import { dirty, git, pushed, repoSlug, resolveCommit, tracked, unstaged } from "./git.ts";
 import { HOSTS, isHostId, type HostId } from "./hosts.ts";
 import { closedPhasesOf, isLadderId, LADDERS, phasesOf, type Ladder } from "./ladder.ts";
@@ -27,6 +28,9 @@ import { summarize } from "./summarize.ts";
 import { covered, failing, located } from "./snippets.ts";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
+
+/** Where `rb validate --exemplars` and `rb measure` write each framework's exemplars on a host. */
+const EXEMPLARS = join(ROOT, "results", "exemplars");
 
 const USAGE = [
   "usage: npm run rb -- <command> [options]",
@@ -46,8 +50,9 @@ const USAGE = [
   "      the whole corpus against a framework, in its container or started by hand; --exemplars",
   "      writes results/exemplars/<language>-<name>@<host>.json from what it answered",
   "  measure [<framework>]... [--host <id>] [--ladder <name>] [--seconds <n>] [--only <test|family>,...]",
-  "      gate and measure every framework on one host, and write results/runs/<run>.json; --ladder",
-  "      names the rates and lengths in orchestrator/ladder.ts, ci when it is not given",
+  "      gate and measure every framework on one host, write results/runs/<run>.json, and write each",
+  "      gate's exemplars to results/exemplars; --ladder names the rates and lengths in",
+  "      orchestrator/ladder.ts, ci when it is not given",
   "  summarize <run file> [--out <file>]",
   "      the run as the site reads it: percentiles and histograms per test, family and rung",
   "  suite <framework>...",
@@ -121,6 +126,7 @@ async function check(args: string[]): Promise<number> {
   const { frameworks: loaded, problems } = loadRepo(ROOT);
   const { endpoints, required } = await corpusEndpoints(suite);
   for (const f of loaded) {
+    await exceptionsOf(ROOT, f).catch((error: Error) => problems.push(error.message));
     const hosts = Object.keys(f.rb.hosts) as HostId[];
     for (const host of hosts) problems.push(...frameworkProblems(frameworkBundle(ROOT, f, host)).map((p) => `${p} on ${host}`));
     const view = frameworkView(ROOT, f, undefined, endpoints, required, hosts[0]!);
@@ -262,17 +268,19 @@ function report(result: GateResult): void {
   console.log(`${line}; ${result.measurable ? "measurable" : "not measurable"}`);
 }
 
-function writeExemplars(id: string, host: HostId, exchanges: ReadonlyMap<string, Exchange>): void {
+/** A framework's declaration, or a usage error that says why it has none. */
+async function exceptionsFor(id: string): Promise<Exceptions> {
   const key = keyOf(id);
-  const file = join(ROOT, "results", "exemplars", `${key.language}-${key.name}@${host}.json`);
-  mkdirSync(dirname(file), { recursive: true });
-  writeFileSync(file, `${JSON.stringify(exemplarFile(id, host, exchanges), null, 2)}\n`);
-  console.log(`exemplars -> ${file}`);
+  try {
+    return await exceptionsOf(ROOT, key);
+  } catch (error) {
+    throw new UsageError(`${id} has no client-exception declaration that loads: ${(error as Error).message}`);
+  }
 }
 
 /** The gate over the transport `open` gives, which reports every exchange it makes. */
 async function gateAt(
-  id: string,
+  exceptions: Exceptions,
   host: HostId,
   f: LoadedFramework | undefined,
   alive: () => Promise<boolean>,
@@ -284,7 +292,7 @@ async function gateAt(
     return await gate({
       suite,
       transport: transport.transport,
-      exceptions: exceptions[id as keyof typeof exceptions],
+      exceptions,
       declared: f?.declared,
       skips: f?.rb.skips,
       unsupported: f?.rb.hosts[host]?.unsupported,
@@ -314,13 +322,13 @@ async function validate(args: string[]): Promise<number> {
     if (m === null) throw new UsageError(`--at is host:port, not ${values.at}`);
     const id = values.framework;
     if (id === undefined) throw new UsageError("--framework is required with --at, to read its error bodies");
-    if (!Object.hasOwn(exceptions, id)) throw new UsageError(`${id} has no client-exception declaration`);
+    const exceptions = await exceptionsFor(id);
     const address = { host: m[1]!, port: Number(m[2]) };
     const f = loadRepo(ROOT).frameworks.find((x) => x.id === id);
     if (f === undefined) console.log(`${id} has no rb.json that loads, so no skip and no scope applies`);
-    const result = await gateAt(id, host, f, () => listening(address.host, address.port), (on) => live(address, protocol, on));
+    const result = await gateAt(exceptions, host, f, () => listening(address.host, address.port), (on) => live(address, protocol, on));
     report(result);
-    if (values.exemplars) writeExemplars(id, host, result.exchanges);
+    if (values.exemplars) console.log(`exemplars -> ${writeExemplars(EXEMPLARS, id, host, result.exchanges)}`);
     return result.passed ? 0 : 1;
   }
 
@@ -329,6 +337,7 @@ async function validate(args: string[]): Promise<number> {
   const entry = f!.rb.hosts[host];
   if (entry === undefined) throw new UsageError(`${f!.id} does not implement ${host}`);
   const at = atOf(values.commit);
+  const exceptions = await exceptionsFor(f!.id);
   console.log(`build ${f!.id} for ${host}${at === undefined ? " from the working tree" : ` at ${at.slice(0, 12)}`}`);
   let built: container.Built;
   try {
@@ -337,14 +346,14 @@ async function validate(args: string[]): Promise<number> {
     console.log(`build failed: ${(error as Error).message}`);
     return 1;
   }
-  if (protocol === "lambda-runtime-api") return validateFunction(f!, host, built, values.exemplars === true);
+  if (protocol === "lambda-runtime-api") return validateFunction(f!, exceptions, host, built, values.exemplars === true);
   const running = container.start(ROOT, built, f!, host);
   try {
     const ready = await container.probe(running.address, LADDERS.ci.open.bootSeconds * 1000, running.alive, protocol);
     console.log(`ready in ${Math.round(ready.readyMs)} ms at ${running.address.host}:${running.address.port}`);
-    const result = await gateAt(f!.id, host, f, async () => running.alive(), (on) => live(running.address, protocol, on));
+    const result = await gateAt(exceptions, host, f, async () => running.alive(), (on) => live(running.address, protocol, on));
     report(result);
-    if (values.exemplars) writeExemplars(f!.id, host, result.exchanges);
+    if (values.exemplars) console.log(`exemplars -> ${writeExemplars(EXEMPLARS, f!.id, host, result.exchanges)}`);
     return result.passed ? 0 : 1;
   } catch (error) {
     console.log(`boot failed: ${(error as Error).message}\n${running.logs()}`);
@@ -359,16 +368,16 @@ async function validate(args: string[]): Promise<number> {
  * function's runtime reaches out to it, and the function is ready when its runtime first asks for
  * an event.
  */
-async function validateFunction(f: LoadedFramework, host: HostId, built: container.Built, exemplars: boolean): Promise<number> {
+async function validateFunction(f: LoadedFramework, exceptions: Exceptions, host: HostId, built: container.Built, exemplars: boolean): Promise<number> {
   const { pipe, port } = await Pipe.listen(container.RUNTIME_API_BIND);
   const fn = container.startFunction(ROOT, built, f, host, port);
   try {
     const started = performance.now();
     await awaitInit(pipe, fn, LADDERS.ci.closed.bootSeconds * 1000);
     console.log(`ready in ${Math.round(performance.now() - started)} ms: the runtime asked the Runtime API on port ${port} for its first event`);
-    const result = await gateAt(f.id, host, f, async () => fn.alive(), (on) => liveOver(pipe, on));
+    const result = await gateAt(exceptions, host, f, async () => fn.alive(), (on) => liveOver(pipe, on));
     report(result);
-    if (exemplars) writeExemplars(f.id, host, result.exchanges);
+    if (exemplars) console.log(`exemplars -> ${writeExemplars(EXEMPLARS, f.id, host, result.exchanges)}`);
     return result.passed ? 0 : 1;
   } catch (error) {
     console.log(`boot failed: ${(error as Error).message}\n${fn.logs()}`);
@@ -389,8 +398,9 @@ async function measureCommand(args: string[]): Promise<number> {
   const host = hostOf(values.host);
   const ladder = ladderOf(values.ladder);
   const closed = HOSTS[host].protocol === "lambda-runtime-api";
-  const chosen = frameworks(positionals).filter((f) => Object.hasOwn(f.rb.hosts, host));
-  if (chosen.length === 0) throw new UsageError(`no framework with an rb.json that loads implements ${host}`);
+  const implementing = frameworks(positionals).filter((f) => Object.hasOwn(f.rb.hosts, host));
+  if (implementing.length === 0) throw new UsageError(`no framework with an rb.json that loads implements ${host}`);
+  const chosen = await Promise.all(implementing.map((f) => withExceptions(ROOT, f)));
   const seconds = values.seconds === undefined ? undefined : Number(values.seconds);
   if (seconds !== undefined && !(seconds > 0)) throw new UsageError(`--seconds has to be a positive number, not ${values.seconds}`);
   const only = values.only?.split(",").map((s) => s.trim()).filter((s) => s !== "");
@@ -437,6 +447,7 @@ async function measureCommand(args: string[]): Promise<number> {
     budget: { ...container.budget(), ...(genCpus ? { genCpus } : {}) },
     tools: { node: process.version, ...(dockerVersion ? { docker: dockerVersion } : {}) },
     outDir: join(ROOT, "results", "runs"),
+    exemplarDir: EXEMPLARS,
     workers: genCpus ? cpuList(genCpus).size : undefined,
   });
   return run.frameworks.every((f) => f.load !== undefined) ? 0 : 1;

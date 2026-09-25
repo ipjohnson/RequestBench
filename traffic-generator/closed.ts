@@ -15,12 +15,14 @@ import {
   type SpanSummary,
 } from "./load.ts";
 import type { ClosedReport, Pipe, WireSpans } from "./pipe.ts";
-import { prepare } from "./prepare.ts";
-import { declared, select } from "./select.ts";
+import { prepare, type Statuses } from "./prepare.ts";
+import { select } from "./select.ts";
 
 export interface ClosedOptions {
   readonly pipe: Pipe;
   readonly framework: string;
+  /** The statuses the framework's client-exception declaration gives, as a load carries them. */
+  readonly statuses: Statuses;
   readonly values: RunValues;
   /** The most requests compiled per test, as an open-loop load compiles them. */
   readonly instances: number;
@@ -81,7 +83,7 @@ function start(report: ClosedReport, tests: readonly PerformanceTest[]) {
 export async function primeClosed(o: ClosedOptions): Promise<Primed> {
   const tests = select(o.only, o.unsupported);
   o.log(`priming ${tests.length} tests against ${o.framework} on the Lambda Runtime API`);
-  const compiled = await prepare({ pipe: o.pipe, tests, statuses: declared(o.framework), run: o.values, instances: o.instances, log: o.log });
+  const compiled = await prepare({ pipe: o.pipe, tests, statuses: o.statuses, run: o.values, instances: o.instances, log: o.log });
   return { tests, compiled };
 }
 

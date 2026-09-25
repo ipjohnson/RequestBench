@@ -9,14 +9,14 @@ import { after, test } from "node:test";
 import { fileURLToPath } from "node:url";
 
 import suite from "@rb/tests";
-import exceptions from "../../frameworks/exceptions.ts";
 import { isClosed, type ClosedPhase, type Load } from "../../traffic-generator/load.ts";
+import type { DeclaredFramework } from "../exceptions.ts";
 import type { LoadedFramework, RbJson } from "../manifest.ts";
 import { measure, type Driver, type RunFile, type Started } from "../measure.ts";
-import { loadSnapshots } from "../snapshots.ts";
 import { summarize } from "../summarize.ts";
 import type { Transport } from "../validate.ts";
-import { corpusReference } from "./reference.ts";
+import { FIRST_ERROR, PROBLEM_DETAILS, VALIDATION_LIST } from "./contracts.ts";
+import { corpusReference, type Contract } from "./reference.ts";
 import { runtime } from "./runtime.ts";
 import { serve } from "./serve.ts";
 
@@ -24,8 +24,14 @@ const ROOT = fileURLToPath(new URL("../..", import.meta.url));
 const OUT = mkdtempSync(join(tmpdir(), "rb-measure-"));
 after(() => rmSync(OUT, { recursive: true, force: true }));
 
-const snapshots = loadSnapshots(ROOT, Object.keys(suite.tests));
-type Id = keyof typeof exceptions;
+const EXEMPLARS = join(OUT, "exemplars");
+
+/**
+ * The frameworks a run measures here. Each is a real one, so its directory has files to hash, and
+ * answers in the words of the contract written like its own.
+ */
+const CONTRACT_OF = { "node:fastify": FIRST_ERROR, "python:fastapi": VALIDATION_LIST, "dotnet:carter": PROBLEM_DETAILS } as const;
+type Id = keyof typeof CONTRACT_OF;
 
 const rb = (framework: string): RbJson => ({
   framework,
@@ -38,7 +44,7 @@ const rb = (framework: string): RbJson => ({
   mechanisms: {},
 });
 
-const framework = (id: Id): LoadedFramework => {
+const framework = (id: Id): DeclaredFramework => {
   const [language, name] = id.split(":") as [string, string];
   return {
     language,
@@ -47,6 +53,7 @@ const framework = (id: Id): LoadedFramework => {
     dir: `frameworks/${language}/${name}`,
     rb: rb(name),
     declared: { language, name, framework: name, hosts: {}, mechanisms: {} },
+    exceptions: CONTRACT_OF[id].declared,
   };
 };
 
@@ -102,7 +109,7 @@ function fakeDriver(answer: (id: Id) => Transport | "dead", protocol: "http/1.1"
   };
 }
 
-const reference = (id: Id): Transport => corpusReference(snapshots, id, exceptions[id]).transport();
+const reference = (id: Id): Transport => corpusReference(CONTRACT_OF[id] as Contract).transport();
 
 const PHASES: Load["phases"] = [
   { name: "warmup", rps: 200, settle: 1 },
@@ -117,7 +124,7 @@ const asked: string[][] = [];
 async function run(
   driver: Driver,
   ids: Id[],
-  edit: (f: LoadedFramework) => LoadedFramework = (f) => f,
+  edit: (f: DeclaredFramework) => DeclaredFramework = (f) => f,
   host: "container-h1" | "container-h2" | "lambda-emulator" = "container-h1",
 ): Promise<RunFile> {
   return measure({
@@ -136,12 +143,13 @@ async function run(
     budget: { cpus: "2" },
     tools: { node: process.version },
     outDir: OUT,
+    exemplarDir: EXEMPLARS,
     workers: 2,
     log: () => {},
   });
 }
 
-test("a framework that passes the gate is measured, and one that fails it is not", async () => {
+test("a framework that passes the gate is measured, and one that fails it is not, and each gate's exchanges are its exemplars", async () => {
   const wrong = (id: Id): Transport => {
     const inner = reference(id);
     return async (req) => {
@@ -169,6 +177,8 @@ test("a framework that passes the gate is measured, and one that fails it is not
   const load = fastify!.load!;
   assert.ok(!isClosed(load));
   assert.deepEqual(load.load.values, result.values);
+  const { rejected, malformed, notFound, wrongMethod } = FIRST_ERROR.declared;
+  assert.deepEqual(load.load.statuses, { rejected, malformed, notFound, wrongMethod });
   assert.deepEqual(load.load.phases, PHASES);
   assert.deepEqual(load.phases.map((p) => [p.name, p.status]), [["warmup", "done"], ["regular", "done"]]);
   const regular = load.phases[1]!;
@@ -178,6 +188,13 @@ test("a framework that passes the gate is measured, and one that fails it is not
   assert.equal(fastapi!.gate?.outcomes["json.medium"]?.status, "failed");
   assert.equal(fastapi!.load, undefined);
   assert.equal(fastapi!.error, "it failed the gate, so it was not measured");
+
+  const exemplars = (id: Id) =>
+    JSON.parse(readFileSync(join(EXEMPLARS, `${id.replace(":", "-")}@container-h1.json`), "utf8")) as { framework: string; host: string; tests: Record<string, unknown> };
+  const measured = exemplars("node:fastify");
+  assert.deepEqual([measured.framework, measured.host], ["node:fastify", "container-h1"]);
+  assert.deepEqual(Object.keys(measured.tests).sort(), Object.keys(suite.tests).sort());
+  assert.ok(Object.hasOwn(exemplars("python:fastapi").tests, "json.small"), "a framework that fails the gate still has the exchanges it answered");
 });
 
 test("a test the framework does not support on its host is recorded as such, and neither the gate nor the load sends it", async () => {

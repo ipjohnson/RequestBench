@@ -326,8 +326,8 @@ const hdrs = (hs: readonly (readonly [string, string])[]): string =>
       </div>
     ) : (
       <p class="empty">
-        No captured exchange for this framework. Exemplars are written by <code>npm run rb -- validate --exemplars</code>{" "}
-        and only for the frameworks it has been run against.
+        No captured exchange for this framework. Exemplars are written by the gate of a measure run,{" "}
+        or of <code>npm run rb -- validate --exemplars</code>, for each framework it boots.
       </p>
     )
   }

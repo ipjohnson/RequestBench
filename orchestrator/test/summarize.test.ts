@@ -52,6 +52,7 @@ const load: LoadResult = {
   load: {
     target: "127.0.0.1:1",
     framework: "node:fastify",
+    statuses: { rejected: 400, malformed: 400, notFound: 404, wrongMethod: 404 },
     values: {} as LoadResult["load"]["values"],
     workers: 1,
     protocol: "http/1.1",

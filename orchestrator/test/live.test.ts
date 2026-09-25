@@ -1,29 +1,23 @@
 // The gate over a real socket, with the reference standing in for a framework that is running.
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { fileURLToPath } from "node:url";
 
 import suite from "@rb/tests";
 import { validationTest } from "@rb/tests/kit";
 import type { Suite } from "@rb/tests/kit";
-import exceptions from "../../frameworks/exceptions.ts";
 import type { Protocol } from "../../traffic-generator/pipe.ts";
 import { exemplarFile, exemplarOf, FIXED_VALUES, gate } from "../gate.ts";
 import { live, type Exchange } from "../live.ts";
-import { loadSnapshots } from "../snapshots.ts";
 import type { Transport } from "../validate.ts";
-import { corpusReference } from "./reference.ts";
+import { CONTRACTS, FIRST_ERROR } from "./contracts.ts";
+import { corpusReference, type Contract } from "./reference.ts";
 import { serve } from "./serve.ts";
 
-const ROOT = fileURLToPath(new URL("../..", import.meta.url));
-const snapshots = loadSnapshots(ROOT, Object.keys(suite.tests));
-type Id = keyof typeof exceptions;
-
 /** One reference process for the whole corpus, as a framework is one process for the whole gate. */
-const referenceFor = (framework: Id): Transport => corpusReference(snapshots, framework, exceptions[framework]).transport();
+const referenceFor = (contract: Contract): Transport => corpusReference(contract).transport();
 
 async function gateOver(
-  framework: Id,
+  contract: Contract,
   transport: Transport,
   over: { suite?: Suite; skips?: Record<string, string> } = {},
   protocol: Protocol = "http/1.1",
@@ -36,7 +30,7 @@ async function gateOver(
     const result = await gate({
       suite: over.suite ?? suite,
       transport: reached.transport,
-      exceptions: exceptions[framework],
+      exceptions: contract.declared,
       skips: over.skips,
       run: FIXED_VALUES,
       alive: async () => up,
@@ -50,9 +44,9 @@ async function gateOver(
   }
 }
 
-for (const framework of Object.keys(exceptions) as Id[]) {
-  test(`the reference passes the whole corpus over a socket, as ${framework}`, async () => {
-    const result = await gateOver(framework, referenceFor(framework));
+for (const contract of CONTRACTS) {
+  test(`the reference passes the whole corpus over a socket, as ${contract.id}`, async () => {
+    const result = await gateOver(contract, referenceFor(contract));
     const failed = Object.entries(result.outcomes).filter(([, o]) => o.status !== "passed");
     assert.deepEqual(failed, []);
     assert.equal(result.measurable, true);
@@ -61,7 +55,7 @@ for (const framework of Object.keys(exceptions) as Id[]) {
 }
 
 test("the reference passes the whole corpus over h2c, and its exemplars are HTTP/2's", async () => {
-  const result = await gateOver("node:fastify", referenceFor("node:fastify"), {}, "h2c");
+  const result = await gateOver(FIRST_ERROR, referenceFor(FIRST_ERROR), {}, "h2c");
   const failed = Object.entries(result.outcomes).filter(([, o]) => o.status !== "passed");
   assert.deepEqual(failed, []);
   const json = exemplarOf(result.exchanges.get("json.small")!);
@@ -72,19 +66,19 @@ test("the reference passes the whole corpus over h2c, and its exemplars are HTTP
 });
 
 test("a wrong answer fails its own test and no other", async () => {
-  const reference = referenceFor("node:fastify");
+  const reference = referenceFor(FIRST_ERROR);
   const wrong: Transport = async (req) => {
     const r = await reference(req);
     return req.target === "/json/medium" ? { ...r, body: new TextEncoder().encode("[]") } : r;
   };
-  const result = await gateOver("node:fastify", wrong);
+  const result = await gateOver(FIRST_ERROR, wrong);
   const failed = Object.entries(result.outcomes).filter(([, o]) => o.status === "failed").map(([id]) => id);
   assert.deepEqual(failed, ["json.medium"]);
   assert.equal(result.measurable, false);
 });
 
 test("once the framework stops answering, the rest is unrun rather than failed", async () => {
-  const reference = referenceFor("node:fastify");
+  const reference = referenceFor(FIRST_ERROR);
   const served = await serve(reference);
   let stopped = false;
   const dying: Transport = async (req) => {
@@ -97,7 +91,7 @@ test("once the framework stops answering, the rest is unrun rather than failed",
   const result = await gate({
     suite,
     transport: dying,
-    exceptions: exceptions["node:fastify"],
+    exceptions: FIRST_ERROR.declared,
     run: FIXED_VALUES,
     alive: async () => !stopped,
   });
@@ -119,13 +113,13 @@ test("a skip is reported with its reason, and a test scoped out is not asked", a
   });
   const scoped: Suite = { ...suite, tests: { ...suite.tests, "cors.only_elsewhere": outside } };
   const reason = "the CORS feature applies to the whole application";
-  const served = await serve(referenceFor("node:fastify"));
+  const served = await serve(referenceFor(FIRST_ERROR));
   const transport = live(served, "http/1.1");
   const result = await gate({
     suite: scoped,
     transport: transport.transport,
-    exceptions: exceptions["node:fastify"],
-    declared: { language: "node", name: "fastify", framework: "Fastify", hosts: {}, mechanisms: {} },
+    exceptions: FIRST_ERROR.declared,
+    declared: { language: "reference", name: "first-error", framework: "First error", hosts: {}, mechanisms: {} },
     skips: { "cors.scoped": reason },
     run: FIXED_VALUES,
     alive: async () => true,
@@ -138,7 +132,7 @@ test("a skip is reported with its reason, and a test scoped out is not asked", a
 });
 
 test("an unsupported test is reported with its reason and never sent, and it fails nothing", async () => {
-  const reference = referenceFor("node:fastify");
+  const reference = referenceFor(FIRST_ERROR);
   const asked: string[] = [];
   const counting: Transport = (req) => {
     asked.push(req.target);
@@ -148,7 +142,7 @@ test("an unsupported test is reported with its reason and never sent, and it fai
   const result = await gate({
     suite,
     transport: counting,
-    exceptions: exceptions["node:fastify"],
+    exceptions: FIRST_ERROR.declared,
     unsupported: { "sse.medium": why, "cors.scoped": why },
     run: FIXED_VALUES,
     alive: async () => true,
@@ -161,8 +155,8 @@ test("an unsupported test is reported with its reason and never sent, and it fai
 });
 
 test("an exemplar is the test's own exchange, with the volatile headers masked", async () => {
-  const result = await gateOver("node:fastify", referenceFor("node:fastify"));
-  const file = exemplarFile("node:fastify", "container-h1", result.exchanges);
+  const result = await gateOver(FIRST_ERROR, referenceFor(FIRST_ERROR));
+  const file = exemplarFile(FIRST_ERROR.id, "container-h1", result.exchanges);
   assert.equal(Object.keys(file.tests).length, Object.keys(suite.tests).length);
   const small = file.tests["json.small"]!;
   assert.equal(small.request.method, "GET");

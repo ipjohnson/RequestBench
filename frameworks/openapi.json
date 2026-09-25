@@ -2,8 +2,8 @@
   "openapi": "3.1.1",
   "info": {
     "title": "RequestBench corpus",
-    "version": "0cf77aa75b0d",
-    "description": "Generated from the corpus in tests/ by orchestrator/openapi.ts. Do not edit it. Run npm run spec after changing a test or a payload. npm test fails while this file is out of date.\n\nIt is the same for every framework. Each operation is what one or more tests send. Its summary names the tests, and its description gives each test's file and quotes its about.\n\nEvery body the corpus compares is a payload. The harness copies tests/payloads/ into the container and names the directory in RB_PAYLOADS. Load every file before /health answers 200, keep the parsed objects in the framework's own types, and serialise them on every request. Compute nothing ahead of a request.\n\nAn example on each body names the payload it is, and holds no value. When the payload is a committed file, the example links to it, such as items.large to tests/payloads/items.large.json. That file is the exact answer. A computed answer, such as a row, a rendered page or the bind answer, has no file. Its example names the payloads it is computed from, and tests/payloads/index.ts computes it.\n\nA value written {run.name} is drawn once per run and never given to the framework. A handler binds it as the type its schema gives and writes it back in an echo object beside the payload's own fields.\n\nx-rb-serial is one counter for the whole process. A handler that writes it increments it and writes the new value. A stored answer replayed from a cache carries the value it was stored with.\n\nAn answer of 400 or above carries the framework's own error body, which has to be non-empty JSON. The corpus reads a refusal only through the framework's frameworks/<language>/<name>/client-exception/index.ts. That declaration gives four statuses, which this document writes as 4XX and names by field: rejected, malformed, notFound and wrongMethod. It also says whether a rejection names every bad field or only the first. A new framework writes its declaration and registers it in frameworks/exceptions.ts.\n\nA path's own description names any request sent there that no route may answer.\n\nThe values a framework configures itself from are in tests/payloads/settings.json. They are the bearer token, the CORS policy attached to /cors, and the cache's capacity, lifetime and vary headers.\n\nThe harness passes PORT and RB_HOST. /health and /__meta are the contract's own and are not tests."
+    "version": "8a82c73a5c4f",
+    "description": "Generated from the corpus in tests/ by orchestrator/openapi.ts. Do not edit it. Run npm run spec after changing a test or a payload. npm test fails while this file is out of date.\n\nIt is the same for every framework. Each operation is what one or more tests send. Its summary names the tests, and its description gives each test's file and quotes its about.\n\nEvery body the corpus compares is a payload. The harness copies tests/payloads/ into the container and names the directory in RB_PAYLOADS. Load every file before /health answers 200, keep the parsed objects in the framework's own types, and serialise them on every request. Compute nothing ahead of a request.\n\nAn example on each body names the payload it is, and holds no value. When the payload is a committed file, the example links to it, such as items.large to tests/payloads/items.large.json. That file is the exact answer. A computed answer, such as a row, a rendered page or the bind answer, has no file. Its example names the payloads it is computed from, and tests/payloads/index.ts computes it.\n\nA value written {run.name} is drawn once per run and never given to the framework. A handler binds it as the type its schema gives and writes it back in an echo object beside the payload's own fields.\n\nx-rb-serial is one counter for the whole process. A handler that writes it increments it and writes the new value. A stored answer replayed from a cache carries the value it was stored with.\n\nAn answer of 400 or above carries the framework's own error body, which has to be non-empty JSON. The corpus reads a refusal only through the framework's frameworks/<language>/<name>/client-exception/index.ts. That declaration gives four statuses, which this document writes as 4XX and names by field: rejected, malformed, notFound and wrongMethod. It also says whether a rejection names every bad field or only the first.\n\nA path's own description names any request sent there that no route may answer.\n\nThe values a framework configures itself from are in tests/payloads/settings.json. They are the bearer token, the CORS policy attached to /cors, and the cache's capacity, lifetime and vary headers.\n\nThe harness passes PORT and RB_HOST. /health and /__meta are the contract's own and are not tests."
   },
   "servers": [
     {
@@ -163,7 +163,7 @@
             }
           },
           "403": {
-            "description": "The framework's own error body, which has to be non-empty JSON.\n\nauthorized.denied: any error body. tests/authorized/denied.snap.json holds the answer each framework was captured giving.",
+            "description": "The framework's own error body, which has to be non-empty JSON.\n\nauthorized.denied: any error body.",
             "content": {
               "application/json": {}
             }
@@ -285,7 +285,7 @@
         },
         "responses": {
           "4XX": {
-            "description": "The framework's own error body, which has to be non-empty JSON. Each test below names its status by the field in the framework's client-exception/index.ts.\n\nbody.rejected_first: the rejected status, naming customerId. tests/body/rejected-first.snap.json holds the answer each framework was captured giving.",
+            "description": "The framework's own error body, which has to be non-empty JSON. Each test below names its status by the field in the framework's client-exception/index.ts.\n\nbody.rejected_first: the rejected status, naming customerId.",
             "content": {
               "application/json": {}
             }
@@ -387,7 +387,7 @@
             }
           },
           "4XX": {
-            "description": "The framework's own error body, which has to be non-empty JSON. Each test below names its status by the field in the framework's client-exception/index.ts.\n\nbody.rejected_all: the rejected status, naming customerId, status and lines, or one of them where the declaration says reports `\"first\"`. tests/body/rejected-all.snap.json holds the answer each framework was captured giving.\n\nerrors.malformed: the malformed status, because `{\"customerId\": 1, \"lines\": [` is not JSON. tests/errors/malformed.snap.json holds the answer each framework was captured giving.",
+            "description": "The framework's own error body, which has to be non-empty JSON. Each test below names its status by the field in the framework's client-exception/index.ts.\n\nbody.rejected_all: the rejected status, naming customerId, status and lines, or one of them where the declaration says reports `\"first\"`.\n\nerrors.malformed: the malformed status, because `{\"customerId\": 1, \"lines\": [` is not JSON.",
             "content": {
               "application/json": {}
             }
@@ -801,7 +801,7 @@
     },
     "/errors/unmatched": {
       "summary": "errors.unmatched",
-      "description": "**errors.unmatched** (tests/errors/unmatched.ts) sends GET here, and no route matches the path. The router answers with the notFound status in the framework's client-exception/index.ts, and the framework's own error body. tests/errors/unmatched.snap.json holds the answer each framework was captured giving. A path no route matches, which is the router's own miss rather than a handler's decision. A framework that walks its whole route table before giving up pays for it here and nowhere else."
+      "description": "**errors.unmatched** (tests/errors/unmatched.ts) sends GET here, and no route matches the path. The router answers with the notFound status in the framework's client-exception/index.ts, and the framework's own error body. A path no route matches, which is the router's own miss rather than a handler's decision. A framework that walks its whole route table before giving up pays for it here and nowhere else."
     },
     "/etag/large": {
       "get": {

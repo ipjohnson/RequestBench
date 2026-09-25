@@ -1,27 +1,11 @@
-// Which performance tests a load offers, and the statuses the framework declared, for the open
-// loop in cli.ts and the closed loop in closed.ts alike.
+// Which performance tests a load offers, for the open loop in cli.ts and the closed loop in
+// closed.ts alike.
 import suite from "@rb/tests";
 import { idOf } from "@rb/tests/kit";
 import type { PerformanceTest } from "@rb/tests/kit";
-import exceptions, { type FrameworkId } from "../frameworks/exceptions.ts";
-import type { Statuses } from "./prepare.ts";
 
 /** A load that asks for what cannot be offered, which refuses it before anything is sent. */
 export class UsageError extends Error {}
-
-/**
- * The statuses this framework declared. rejected(), notFound(), wrongMethod() and unparseable()
- * compare against them, so a load that does not know which framework it is measuring cannot
- * tell a right answer from a wrong one.
- */
-export function declared(id: string): Statuses {
-  if (!Object.hasOwn(exceptions, id)) {
-    const known = Object.keys(exceptions).join(", ");
-    throw new UsageError(`framework: ${id} has no client-exception declaration, only ${known} do`);
-  }
-  const { rejected, malformed, notFound, wrongMethod } = exceptions[id as FrameworkId];
-  return { rejected, malformed, notFound, wrongMethod };
-}
 
 /**
  * The performance tests to offer, by id. `only` names a test by its id, or a whole family by its

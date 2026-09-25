@@ -23,7 +23,9 @@ const GOOD = {
   },
 };
 
-const FILES = [MANIFEST, `${DIR}/README.md`, `${DIR}/Dockerfile`, `${DIR}/package-lock.json`, `${DIR}/suite/app.test.js`];
+const DECLARATION = `${DIR}/client-exception/index.ts`;
+
+const FILES = [MANIFEST, `${DIR}/README.md`, `${DIR}/Dockerfile`, `${DIR}/package-lock.json`, `${DIR}/suite/app.test.js`, DECLARATION];
 
 const README = "# Demo\n\n## Notes\n\n- Demo answers HEAD without running the GET route.\n";
 
@@ -32,7 +34,6 @@ function input(manifest: unknown, over: Partial<LoadInput> = {}, readme = README
     manifests: [MANIFEST],
     tracked: new Set(FILES),
     read: (path) => (path.endsWith("README.md") ? readme : typeof manifest === "string" ? manifest : JSON.stringify(manifest)),
-    registry: ["node:demo"],
     tests: { "json.small": { kind: "performance" }, "cors.scoped": { kind: "validation" } },
     families: ["json", "cors"],
     ...over,
@@ -155,8 +156,7 @@ test("every family has a mechanism entry, and no entry names a family that does 
   assert.equal(problemsOf(both).length, 1);
 });
 
-test("a framework with an rb.json has an entry in frameworks/exceptions.ts", () => {
-  assert.deepEqual(problemsOf(GOOD, { registry: ["node:other"] }), [
-    "node:demo has an rb.json and no entry in frameworks/exceptions.ts",
-  ]);
+test("a framework declares its error bodies in client-exception/index.ts beside its rb.json", () => {
+  const tracked = new Set(FILES.filter((f) => f !== DECLARATION));
+  assert.deepEqual(problemsOf(GOOD, { tracked }), [`${MANIFEST}: there is no client-exception/index.ts beside it`]);
 });

@@ -1,8 +1,10 @@
 # Measures every framework on each host some framework implements. Each host is its own job on its
 # own GitHub-hosted runner, and within a host the frameworks run one after another on that runner,
 # so every number in a run was taken on the same machine. Each run's summary is added to the
-# results branch under runs/<month>/, and pages.yml publishes the site when this finishes. A run
-# started by hand can name one host, such as `gh workflow run measure.yml -f host=lambda-emulator`.
+# results branch under runs/<month>/. The exemplars each framework's gate captured go under
+# exemplars/, in place of the ones an earlier run left, and pages.yml publishes the site when this
+# finishes. A run started by hand can name one host, such as
+# `gh workflow run measure.yml -f host=lambda-emulator`.
 name: measure
 
 on:
@@ -111,6 +113,14 @@ jobs:
           path: summary/
           retention-days: 90
 
+      # A framework whose image did not build has none.
+      - uses: actions/upload-artifact@v7
+        with:
+          name: exemplars-${{ matrix.host }}
+          path: results/exemplars/
+          if-no-files-found: ignore
+          retention-days: 90
+
       - name: Fail if a framework was not measured
         if: steps.measure.outcome == 'failure'
         run: |
@@ -118,7 +128,7 @@ jobs:
           exit 1
 
   record:
-    name: record the summaries
+    name: record the summaries and exemplars
     needs: measure
     if: always() && needs.measure.result != 'skipped'
     runs-on: ubuntu-latest
@@ -134,6 +144,11 @@ jobs:
           pattern: summary-*
           merge-multiple: true
           path: /tmp/summary
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: exemplars-*
+          merge-multiple: true
+          path: /tmp/exemplars
       - run: |
           shopt -s nullglob
           summaries=(/tmp/summary/*.json)
@@ -143,11 +158,20 @@ jobs:
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          runs=()
           for file in "${summaries[@]}"; do
             run=$(basename "$file" .json)
+            runs+=("$run")
             mkdir -p "runs/${run:0:7}"
             cp "$file" "runs/${run:0:7}/"
             git add runs
             git commit -m "Record run $run"
           done
+          exemplars=(/tmp/exemplars/*.json)
+          if [ ${#exemplars[@]} -gt 0 ]; then
+            mkdir -p exemplars
+            cp "${exemplars[@]}" exemplars/
+            git add exemplars
+            git diff --cached --quiet || git commit -m "Record the exemplars of ${runs[*]}"
+          fi
           git push origin HEAD:results

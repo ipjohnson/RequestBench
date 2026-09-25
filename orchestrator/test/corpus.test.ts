@@ -3,37 +3,29 @@
 //
 // The correct answer is never written here. It comes from the reference, which
 // computes each answer from the request and the published payloads rather than from
-// what the test expects, and answers each error in the words a framework was captured
-// using. The wrong answers come from the test's own assertions, one mistake per
+// what the test expects, and answers each error in the words of one of the error
+// contracts in contracts.ts. The wrong answers come from the test's own assertions, one mistake per
 // assertion, and each has to fail on that assertion alone.
 //
 // Every case sends the test twice on one session, because freshness and replay are
 // relations between two answers. The mistake is made on the second.
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
-import { fileURLToPath } from "node:url";
 
 import suite from "@rb/tests";
 import type { Test } from "@rb/tests/kit";
-import exceptions from "../../frameworks/exceptions.ts";
 import { recorder } from "../record.ts";
-import { loadSnapshots } from "../snapshots.ts";
 import { validator, type Failure, type Response, type Transport } from "../validate.ts";
+import { CONTRACTS } from "./contracts.ts";
 import { mistakesFor, type Mistake } from "./mutations.ts";
-import { corpusReference, DRAW, RUN } from "./reference.ts";
+import { corpusReference, DRAW, REFUSALS, RUN, type Contract } from "./reference.ts";
 
-type FrameworkId = keyof typeof exceptions;
+/** A row whose answer declares nothing of the contract's answers the same whichever is asked, so it is asked of one. */
+const ANY = CONTRACTS[0]!;
 
-const ROOT = fileURLToPath(new URL("../..", import.meta.url));
-const snapshots = loadSnapshots(ROOT, Object.keys(suite.tests));
-const FRAMEWORKS = Object.keys(exceptions) as FrameworkId[];
+const references = new Map(CONTRACTS.map((c) => [c.id, corpusReference(c)]));
 
-/** A row whose answer declares nothing of the framework's answers the same whichever is asked, so it is asked of one. */
-const ANY: FrameworkId = "node:fastify";
-
-const references = new Map(FRAMEWORKS.map((f) => [f, corpusReference(snapshots, f, exceptions[f])]));
-
-/** Assertions whose right answer is read from the framework's declaration, so each framework is asked. */
+/** Assertions whose right answer is read from the contract's declaration, so each contract is asked. */
 const DECLARED = new Set(["rejected", "unparseable", "notFound", "wrongMethod"]);
 
 interface Outcome {
@@ -42,8 +34,8 @@ interface Outcome {
   readonly unsent: number;
 }
 
-async function twice(t: Test, framework: FrameworkId, transport: Transport, turn = () => {}): Promise<Outcome> {
-  const session = validator({ transport, exceptions: exceptions[framework], run: RUN, draw: DRAW });
+async function twice(t: Test, contract: Contract, transport: Transport, turn = () => {}): Promise<Outcome> {
+  const session = validator({ transport, exceptions: contract.declared, run: RUN, draw: DRAW });
   await t.request(session.client);
   const first = session.failures.splice(0);
   turn();
@@ -78,16 +70,16 @@ async function assertsOf(t: Test) {
 
 for (const [id, t] of Object.entries(suite.tests)) {
   const asserts = await assertsOf(t);
-  const each = snapshots.has(id) || asserts.some((a) => DECLARED.has(a.kind));
+  const each = REFUSALS.has(id) || asserts.some((a) => DECLARED.has(a.kind));
   const mistakes = asserts.flatMap(mistakesFor);
 
   describe(id, () => {
-    for (const framework of each ? FRAMEWORKS : [ANY]) {
-      const label = each ? `, as ${framework}` : "";
-      const reference = references.get(framework)!;
+    for (const contract of each ? CONTRACTS : [ANY]) {
+      const label = each ? `, as ${contract.id}` : "";
+      const reference = references.get(contract.id)!;
 
       test(`passes the reference answer${label}`, async () => {
-        const o = await twice(t, framework, reference.transport());
+        const o = await twice(t, contract, reference.transport());
         assert.equal(show([...o.first, ...o.second]), "", "the reference answer failed");
         assert.equal(o.unsent, 0, "a call was built and never sent");
       });
@@ -95,7 +87,7 @@ for (const [id, t] of Object.entries(suite.tests)) {
       for (const m of mistakes) {
         test(`fails on ${m.breaks} when ${m.what}${label}`, async (ctx) => {
           const x = mistaken(reference.transport(), m);
-          const o = await twice(t, framework, x.transport, x.turn);
+          const o = await twice(t, contract, x.transport, x.turn);
           if (o.first.length > 0) {
             ctx.skip("the reference answer already fails here, so a mistake proves nothing");
             return;

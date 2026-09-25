@@ -12,9 +12,9 @@ import { z } from "zod";
 
 import suite from "@rb/tests";
 import type { Framework, Test } from "@rb/tests/kit";
-import exceptions from "../frameworks/exceptions.ts";
 import { frameworkDir, frameworkId, type FrameworkKey } from "./bundle.ts";
 import { discover, tracked } from "./discover.ts";
+import { declarationOf } from "./exceptions.ts";
 import { HOSTS, isHostId } from "./hosts.ts";
 import { NOTES_HEADING, notesOf } from "./notes.ts";
 
@@ -109,8 +109,6 @@ export interface LoadInput {
   readonly manifests: readonly string[];
   readonly tracked: ReadonlySet<string>;
   readonly read: (path: string) => string;
-  /** The frameworks frameworks/exceptions.ts declares an error envelope for. */
-  readonly registry: readonly string[];
   readonly tests: Readonly<Record<string, Pick<Test, "kind">>>;
   readonly families: readonly string[];
 }
@@ -146,6 +144,8 @@ function check(f: FrameworkKey & { dir: string; id: string }, rb: RbJson, input:
     if (full === undefined) out.push(`${at}: ${what} ${rel} leaves the framework's directory`);
     else if (file ? !input.tracked.has(full) : !trackedUnder(input.tracked, full)) out.push(`${at}: ${what} ${rel} is not tracked`);
   };
+
+  if (!input.tracked.has(declarationOf(f))) out.push(`${at}: there is no client-exception/index.ts beside it`);
 
   const readme = `${f.dir}/README.md`;
   if (!input.tracked.has(readme)) out.push(`${at}: there is no README.md beside it`);
@@ -222,14 +222,6 @@ export function loadFrameworks(input: LoadInput): Loaded {
       declared: { language: f.language, name: f.name, framework: rb.framework, hosts: rb.hosts, mechanisms: rb.mechanisms },
     });
   }
-
-  // Discovery finds frameworks and the registry types their error envelopes, so they are two
-  // lists, and this keeps every framework in both. A declaration may come before its
-  // framework: the corpus tests read fastify's and fastapi's without either being built.
-  for (const manifest of input.manifests) {
-    const id = frameworkId(keyOf(manifest));
-    if (!input.registry.includes(id)) problems.push(`${id} has an rb.json and no entry in frameworks/exceptions.ts`);
-  }
   return { frameworks, problems };
 }
 
@@ -239,7 +231,6 @@ export function loadRepo(root: string): Loaded {
     manifests: discover(root).frameworks,
     tracked: new Set(tracked(root)),
     read: (path) => readFileSync(join(root, path), "utf8"),
-    registry: Object.keys(exceptions),
     tests: suite.tests,
     families: Object.keys(suite.families),
   });

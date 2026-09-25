@@ -2,7 +2,7 @@
 # `rb validate` on every host the framework implements and the framework's own suite. A framework
 # is picked when a file in its directory changes, other than prose. Every framework is picked when
 # something they all depend on changes: the tests, the orchestrator, the traffic generator, the
-# root npm manifests, frameworks/exceptions.ts or this file.
+# root npm manifests or this file.
 #
 # Nothing here measures, because a shared runner's timings would be noise.
 name: validate
@@ -65,7 +65,7 @@ jobs:
               frameworks/*/*/*)
                 IFS=/ read -r _ language name _ <<< "$path"
                 changed+="$language:$name"$'\n' ;;
-              tests/* | orchestrator/* | traffic-generator/* | frameworks/exceptions.ts | package.json | package-lock.json | tsconfig.json | .github/workflows/validate.yml)
+              tests/* | orchestrator/* | traffic-generator/* | package.json | package-lock.json | tsconfig.json | .github/workflows/validate.yml)
                 every=true ;;
             esac
           done < <(git diff --name-only "$base"...HEAD)
@@ -112,8 +112,8 @@ jobs:
         with:
           workspaces: traffic-generator
           shared-key: traffic-generator
-      # --exemplars writes each test's request and answer to results/exemplars, which the site's
-      # wire panes and sizes read. The file is uploaded, so a pull request can commit it.
+      # --exemplars writes each test's request and answer to results/exemplars. The file is uploaded,
+      # so a reviewer can read what the framework answered. The site shows the ones measure.yml records.
       - id: validate
         env:
           ID: ${{ matrix.validation.id }}

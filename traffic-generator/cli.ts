@@ -39,7 +39,7 @@ import {
   type SettleSummary,
 } from "./load.ts";
 import { Pipe, type PhaseReport } from "./pipe.ts";
-import { UsageError, declared, select } from "./select.ts";
+import { UsageError, select } from "./select.ts";
 import { tallyOf, type Tally } from "./tally.ts";
 
 const USAGE = "usage: node traffic-generator/cli.ts <load, as JSON or a file> [--out <file>]";
@@ -65,7 +65,7 @@ function options(args: string[]): Options {
   if (positionals.length !== 1) throw new UsageError("name the load once, as JSON or a file");
   const load = loadOf(positionals[0]!);
   const { host, port } = addressOf(load.target)!;
-  return { load, host, port, statuses: declared(load.framework), tests: select(load.only, load.unsupported), out: v.out };
+  return { load, host, port, statuses: load.statuses, tests: select(load.only, load.unsupported), out: v.out };
 }
 
 /** The load the argument holds or names, with every default and the run's values filled in. */

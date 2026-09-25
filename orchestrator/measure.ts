@@ -3,7 +3,8 @@
 //
 // The gate gets a boot of its own. It asks every question at least once, so on the boot being
 // measured it would spend the framework's cold start before the warmup. A framework that fails
-// the gate is not measured, and its run entry says why.
+// the gate is not measured, and its run entry says why. The gate's exchanges are the framework's
+// exemplars, which the site shows beside the run's numbers.
 //
 // How a framework is built and started is the driver's business, so a test can hand in one
 // that serves the reference instead of a container.
@@ -19,19 +20,19 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 
 import suite from "@rb/tests";
-import type { RunValues } from "@rb/tests/kit";
+import type { Exceptions, RunValues } from "@rb/tests/kit";
 import { drawRunValues } from "@rb/tests/models/parameters";
-import exceptions from "../frameworks/exceptions.ts";
 import { primeClosed, runClosed, type Primed } from "../traffic-generator/closed.ts";
 import type { ClosedPhase, ClosedResult, Load, LoadResult } from "../traffic-generator/load.ts";
 import { Pipe } from "../traffic-generator/pipe.ts";
 import { frameworkBundle, testsBundle, treeRollup } from "./bundle.ts";
 import { meta, probe, RUNTIME_API_BIND, type Address, type Budget } from "./container.ts";
 import { corpusVersion, payloadFiles, recordAll } from "./corpus.ts";
-import { gate, type Outcome } from "./gate.ts";
+import type { DeclaredFramework } from "./exceptions.ts";
+import { gate, writeExemplars, type Outcome } from "./gate.ts";
 import { repoSlug, resolveCommit } from "./git.ts";
 import { HOSTS, type Host, type HostId } from "./hosts.ts";
-import { live, liveOver } from "./live.ts";
+import { live, liveOver, type Exchange } from "./live.ts";
 import type { MachineState } from "./machine.ts";
 import type { LoadedFramework } from "./manifest.ts";
 
@@ -112,7 +113,7 @@ export interface RunFile {
 export interface MeasureOptions {
   readonly root: string;
   readonly host: HostId;
-  readonly frameworks: readonly LoadedFramework[];
+  readonly frameworks: readonly DeclaredFramework[];
   readonly driver: Driver;
   readonly phases: Load["phases"];
   /** lambda-emulator's closed-loop phases, in place of `phases`. */
@@ -130,6 +131,8 @@ export interface MeasureOptions {
   readonly tools: RunFile["tools"];
   /** The run file is written here, named for the run. */
   readonly outDir: string;
+  /** Each framework's exemplars are written here, from its gate, named for the framework and the host. None are written when absent. */
+  readonly exemplarDir?: string | undefined;
   /** Threads for the generator. Its own default when absent. */
   readonly workers?: number | undefined;
   readonly generate?: (load: Load, log: (line: string) => void) => Promise<LoadResult>;
@@ -138,6 +141,9 @@ export interface MeasureOptions {
 
 const round = (ms: number) => Math.round(ms * 10) / 10;
 const pause = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** The statuses a load compares answers against, from the framework's declaration. */
+const statusesOf = ({ rejected, malformed, notFound, wrongMethod }: Exceptions) => ({ rejected, malformed, notFound, wrongMethod });
 
 /** The traffic generator as its own process, pinned to RB_GEN_CPUS on Linux, handed the load as a file. */
 export function generator(root: string, genCpus?: string): (load: Load, log: (line: string) => void) => Promise<LoadResult> {
@@ -229,17 +235,19 @@ export async function measure(o: MeasureOptions): Promise<RunFile> {
     const first = await o.driver.start(f);
     try {
       await probe(first.address, o.bootMs, first.alive, protocol);
-      const transport = live(first.address, protocol);
+      const sink: { current: Exchange[] } = { current: [] };
+      const transport = live(first.address, protocol, (e) => sink.current.push(e));
       try {
         gated = await gate({
           suite,
           transport: transport.transport,
-          exceptions: exceptions[f.id as keyof typeof exceptions],
+          exceptions: f.exceptions,
           declared: f.declared,
           skips: f.rb.skips,
           unsupported,
           run: values,
           alive: async () => first.alive(),
+          exchanges: sink,
         });
       } finally {
         await transport.close();
@@ -254,6 +262,7 @@ export async function measure(o: MeasureOptions): Promise<RunFile> {
     }
     const counts = Object.values(gated.outcomes).reduce<Record<string, number>>((c, x) => ((c[x.status] = (c[x.status] ?? 0) + 1), c), {});
     log(`  gate: ${Object.entries(counts).map(([k, n]) => `${n} ${k}`).join(", ")}`);
+    if (o.exemplarDir !== undefined) log(`  exemplars -> ${writeExemplars(o.exemplarDir, f.id, o.host, gated.exchanges)}`);
     const gateRecord = { measurable: gated.measurable, passed: gated.passed, outcomes: gated.outcomes };
     if (!gated.measurable) {
       entries.push({ ...withImage, gate: gateRecord, error: "it failed the gate, so it was not measured" });
@@ -275,6 +284,7 @@ export async function measure(o: MeasureOptions): Promise<RunFile> {
       const load: Load = {
         target: `${second.address.host}:${second.address.port}`,
         framework: f.id,
+        statuses: statusesOf(f.exceptions),
         values,
         protocol,
         ...shape,
@@ -346,7 +356,7 @@ export async function awaitInit(pipe: Pipe, fn: StartedFunction, budgetMs: numbe
 
 async function measureFunction(
   o: MeasureOptions,
-  f: LoadedFramework,
+  f: DeclaredFramework,
   withImage: Omit<FrameworkRun, "gate" | "boot" | "meta" | "load" | "error">,
   values: RunValues,
   unsupported: Readonly<Record<string, string>> | undefined,
@@ -354,6 +364,8 @@ async function measureFunction(
 ): Promise<FrameworkRun> {
   const startFunction = o.driver.startFunction;
   if (startFunction === undefined) return { ...withImage, error: `the driver cannot start a function for ${o.host}` };
+
+  const statuses = statusesOf(f.exceptions);
 
   // The gate's boot, which also primes the load, so that the measured boot's function answers
   // nothing before its first recorded event.
@@ -364,19 +376,21 @@ async function measureFunction(
     const fn = startFunction(f, port);
     try {
       await awaitInit(pipe, fn, o.bootMs);
-      const transport = liveOver(pipe);
+      const sink: { current: Exchange[] } = { current: [] };
+      const transport = liveOver(pipe, (e) => sink.current.push(e));
       gated = await gate({
         suite,
         transport: transport.transport,
-        exceptions: exceptions[f.id as keyof typeof exceptions],
+        exceptions: f.exceptions,
         declared: f.declared,
         skips: f.rb.skips,
         unsupported,
         run: values,
         alive: async () => fn.alive(),
+        exchanges: sink,
       });
       if (gated.measurable) {
-        primed = await primeClosed({ pipe, framework: f.id, values, instances: 512, only: o.only, unsupported, log: (line) => log(`  ${line}`) });
+        primed = await primeClosed({ pipe, framework: f.id, statuses, values, instances: 512, only: o.only, unsupported, log: (line) => log(`  ${line}`) });
       }
     } catch (error) {
       log(`  boot failed: ${(error as Error).message}`);
@@ -390,6 +404,7 @@ async function measureFunction(
   }
   const counts = Object.values(gated.outcomes).reduce<Record<string, number>>((c, x) => ((c[x.status] = (c[x.status] ?? 0) + 1), c), {});
   log(`  gate: ${Object.entries(counts).map(([k, n]) => `${n} ${k}`).join(", ")}`);
+  if (o.exemplarDir !== undefined) log(`  exemplars -> ${writeExemplars(o.exemplarDir, f.id, o.host, gated.exchanges)}`);
   const gateRecord = { measurable: gated.measurable, passed: gated.passed, outcomes: gated.outcomes };
   if (!gated.measurable || primed === undefined) return { ...withImage, gate: gateRecord, error: "it failed the gate, so it was not measured" };
 
@@ -402,7 +417,7 @@ async function measureFunction(
     const readyMs = performance.now() - started;
     log(`  boot: start ${round(fn.startMs)} + init ${round(readyMs)} = ${round(fn.startMs + readyMs)} ms`);
     const result = await runClosed(
-      { pipe, framework: f.id, values, instances: 512, only: o.only, unsupported, phases: o.closedPhases ?? [], log: (line) => log(`  ${line}`) },
+      { pipe, framework: f.id, statuses, values, instances: 512, only: o.only, unsupported, phases: o.closedPhases ?? [], log: (line) => log(`  ${line}`) },
       primed,
     );
     // The first event the function answers is the other half of its cold start.
