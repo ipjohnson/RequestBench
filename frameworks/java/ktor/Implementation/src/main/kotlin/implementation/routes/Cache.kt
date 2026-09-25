@@ -64,7 +64,8 @@ val ResponseCache = createRouteScopedPlugin("ResponseCache", ::ResponseCacheConf
     }
     on(ResponseBodyReadyForSend) { call, content ->
         if (call.attributes.contains(Replayed) || content !is OutgoingContent.ByteArrayContent) return@on
-        val headers = listOf("x-rb-serial", HttpHeaders.Vary).mapNotNull { name -> call.response.headers[name]?.let { name to it } }
+        // Lowercase, because Ktor's HTTP/2 response stores header names lowercase and looks them up as given.
+        val headers = listOf("x-rb-serial", "vary").mapNotNull { name -> call.response.headers[name]?.let { name to it } }
         store.put(call.key(), Stored(content.bytes(), content.contentType, headers, TimeSource.Monotonic.markNow() + store.ttl))
     }
 }
