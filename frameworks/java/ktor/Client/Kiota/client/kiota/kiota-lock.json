@@ -1,0 +1,33 @@
+{
+  "descriptionHash": "7ABF472159EAC73D64974DB0FB7EFB860D8385D92733E14C861BFAA80290FEB8C16D84AA33B55E39039F20FB7CD16BE86B439838751ABECA1A6B09C3BB95FC25",
+  "descriptionLocation": "../../../openapi.json",
+  "lockFileVersion": "1.0.0",
+  "kiotaVersion": "1.35.0",
+  "clientClassName": "KtorClient",
+  "typeAccessModifier": "Public",
+  "clientNamespaceName": "client.kiota",
+  "language": "Java",
+  "usesBackingStore": false,
+  "excludeBackwardCompatible": true,
+  "includeAdditionalData": true,
+  "disableSSLValidation": false,
+  "serializers": [
+    "none"
+  ],
+  "deserializers": [
+    "none"
+  ],
+  "structuredMimeTypes": [
+    "application/json",
+    "text/plain;q=0.9",
+    "application/x-www-form-urlencoded;q=0.2",
+    "multipart/form-data;q=0.1"
+  ],
+  "includePatterns": [],
+  "excludePatterns": [
+    "/static/**",
+    "/cors/**#OPTIONS"
+  ],
+  "disabledValidationRules": [],
+  "allowedExternalOrigins": []
+}

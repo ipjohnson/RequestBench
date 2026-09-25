@@ -1,0 +1,1556 @@
+{
+    "openapi": "3.1.1",
+    "info": {
+        "title": "Ktor",
+        "version": "0.0.0"
+    },
+    "paths": {
+        "/authorized/small": {
+            "get": {
+                "summary": "",
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Payload"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "token": []
+                    }
+                ]
+            }
+        },
+        "/plaintext": {
+            "get": {
+                "summary": "",
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "text/plain": {}
+                        }
+                    }
+                }
+            }
+        },
+        "/json/small": {
+            "get": {
+                "summary": "",
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Payload"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/json/medium": {
+            "get": {
+                "summary": "",
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Payload"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/json/large": {
+            "get": {
+                "summary": "",
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Payload"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/middleware/none": {
+            "get": {
+                "summary": "",
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Payload"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/middleware/four": {
+            "get": {
+                "summary": "",
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Payload"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/middleware/sixteen": {
+            "get": {
+                "summary": "",
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Payload"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/parameters/static/segment/literal": {
+            "get": {
+                "summary": "",
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Payload"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/parameters/{one}/segment/literal": {
+            "get": {
+                "summary": "",
+                "parameters": [
+                    {
+                        "name": "one",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "size",
+                                        "count",
+                                        "items",
+                                        "echo"
+                                    ],
+                                    "properties": {
+                                        "size": {
+                                            "type": "string"
+                                        },
+                                        "count": {
+                                            "type": "integer"
+                                        },
+                                        "items": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Item"
+                                            }
+                                        },
+                                        "echo": {
+                                            "$ref": "#/components/schemas/One"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/parameters/{one}/with-second/{two}": {
+            "get": {
+                "summary": "",
+                "parameters": [
+                    {
+                        "name": "one",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "two",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "size",
+                                        "count",
+                                        "items",
+                                        "echo"
+                                    ],
+                                    "properties": {
+                                        "size": {
+                                            "type": "string"
+                                        },
+                                        "count": {
+                                            "type": "integer"
+                                        },
+                                        "items": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Item"
+                                            }
+                                        },
+                                        "echo": {
+                                            "$ref": "#/components/schemas/Two"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/query/one": {
+            "get": {
+                "summary": "",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "size",
+                                        "count",
+                                        "items",
+                                        "echo"
+                                    ],
+                                    "properties": {
+                                        "size": {
+                                            "type": "string"
+                                        },
+                                        "count": {
+                                            "type": "integer"
+                                        },
+                                        "items": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Item"
+                                            }
+                                        },
+                                        "echo": {
+                                            "$ref": "#/components/schemas/Page"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/query/many": {
+            "get": {
+                "summary": "",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "size",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "category",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "minPrice",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "maxPrice",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "size",
+                                        "count",
+                                        "items",
+                                        "echo"
+                                    ],
+                                    "properties": {
+                                        "size": {
+                                            "type": "string"
+                                        },
+                                        "count": {
+                                            "type": "integer"
+                                        },
+                                        "items": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Item"
+                                            }
+                                        },
+                                        "echo": {
+                                            "$ref": "#/components/schemas/Search"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/headers": {
+            "get": {
+                "summary": "",
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Payload"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/headers/bind": {
+            "get": {
+                "summary": "",
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "size",
+                                        "count",
+                                        "items",
+                                        "echo"
+                                    ],
+                                    "properties": {
+                                        "size": {
+                                            "type": "string"
+                                        },
+                                        "count": {
+                                            "type": "integer"
+                                        },
+                                        "items": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Item"
+                                            }
+                                        },
+                                        "echo": {
+                                            "$ref": "#/components/schemas/Caller"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/body/bind/small": {
+            "post": {
+                "summary": "",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Order"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Bound"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/body/bind/medium": {
+            "post": {
+                "summary": "",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Order"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Bound"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/body/validate/small": {
+            "post": {
+                "summary": "",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Order"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Bound"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/body/validate/medium": {
+            "post": {
+                "summary": "",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Order"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Bound"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/body/validate/first-error": {
+            "post": {
+                "summary": "",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Order"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Bound"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/items": {
+            "post": {
+                "summary": "The payloads' \"items\" key reads as this route too.",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/NewItem"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "",
+                        "headers": {
+                            "Location": {
+                                "content": {
+                                    "text/plain": {}
+                                }
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Item"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/items/{id}": {
+            "put": {
+                "summary": "",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/NewItem"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Item"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "summary": "",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "404": {
+                        "description": "",
+                        "content": {
+                            "text/plain": {}
+                        }
+                    },
+                    "204": {
+                        "description": ""
+                    }
+                }
+            },
+            "get": {
+                "summary": "",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "404": {
+                        "description": "",
+                        "content": {
+                            "text/plain": {}
+                        }
+                    },
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Item"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "summary": "",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ItemPatch"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "404": {
+                        "description": "",
+                        "content": {
+                            "text/plain": {}
+                        }
+                    },
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Item"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/cache/small": {
+            "get": {
+                "summary": "",
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "headers": {
+                            "x-rb-serial": {
+                                "content": {
+                                    "text/plain": {}
+                                }
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Payload"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/cache/medium": {
+            "get": {
+                "summary": "",
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "headers": {
+                            "x-rb-serial": {
+                                "content": {
+                                    "text/plain": {}
+                                }
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Payload"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/cache/large": {
+            "get": {
+                "summary": "",
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "headers": {
+                            "x-rb-serial": {
+                                "content": {
+                                    "text/plain": {}
+                                }
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Payload"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/cache/vary/one": {
+            "get": {
+                "summary": "The Vary header tells a cache in front of the framework what the answer depends on. The store\nkeys on the route's own list.",
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "headers": {
+                            "x-rb-serial": {
+                                "content": {
+                                    "text/plain": {}
+                                }
+                            },
+                            "Vary": {
+                                "content": {
+                                    "text/plain": {}
+                                }
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Payload"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/cache/vary/many": {
+            "get": {
+                "summary": "",
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "headers": {
+                            "x-rb-serial": {
+                                "content": {
+                                    "text/plain": {}
+                                }
+                            },
+                            "Vary": {
+                                "content": {
+                                    "text/plain": {}
+                                }
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Payload"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/etag/small": {
+            "get": {
+                "summary": "",
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "headers": {
+                            "x-rb-serial": {
+                                "content": {
+                                    "text/plain": {}
+                                }
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Payload"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/etag/large": {
+            "get": {
+                "summary": "",
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "headers": {
+                            "x-rb-serial": {
+                                "content": {
+                                    "text/plain": {}
+                                }
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Payload"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/compressed/small": {
+            "get": {
+                "summary": "",
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "headers": {
+                            "x-rb-serial": {
+                                "content": {
+                                    "text/plain": {}
+                                }
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Payload"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/compressed/large": {
+            "get": {
+                "summary": "",
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "headers": {
+                            "x-rb-serial": {
+                                "content": {
+                                    "text/plain": {}
+                                }
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Payload"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/cors/{**}": {
+            "options": {}
+        },
+        "/cors/small": {
+            "get": {
+                "summary": "",
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "headers": {
+                            "x-rb-serial": {
+                                "content": {
+                                    "text/plain": {}
+                                }
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Payload"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/forms/urlencoded": {
+            "post": {
+                "summary": "",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "size",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "category",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "minPrice",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "maxPrice",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "size",
+                                        "count",
+                                        "items",
+                                        "echo"
+                                    ],
+                                    "properties": {
+                                        "size": {
+                                            "type": "string"
+                                        },
+                                        "count": {
+                                            "type": "integer"
+                                        },
+                                        "items": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Item"
+                                            }
+                                        },
+                                        "echo": {
+                                            "$ref": "#/components/schemas/Search"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/forms/multipart": {
+            "post": {
+                "summary": "",
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Uploaded"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/stream/items": {
+            "get": {
+                "summary": "",
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/x-ndjson": {}
+                        }
+                    }
+                }
+            }
+        },
+        "/sse/medium": {
+            "get": {}
+        },
+        "/template/small": {
+            "get": {
+                "summary": "",
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "description": "Failed to resolve schema for ThymeleafContent. SerializationException: Serializer for class 'ThymeleafContent' is not found.\nPlease ensure that class is marked as '@Serializable' and that the serialization compiler plugin is applied.\n"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/template/medium": {
+            "get": {
+                "summary": "",
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "description": "Failed to resolve schema for ThymeleafContent. SerializationException: Serializer for class 'ThymeleafContent' is not found.\nPlease ensure that class is marked as '@Serializable' and that the serialization compiler plugin is applied.\n"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/static/{**}": {
+            "get": {}
+        },
+        "/health": {
+            "get": {
+                "summary": "The payloads are loaded before Netty listens, so a server that answers has them.",
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "text/plain": {}
+                        }
+                    }
+                }
+            }
+        },
+        "/__meta": {
+            "get": {
+                "summary": "",
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Meta"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "Item": {
+                "type": "object",
+                "title": "Item",
+                "required": [
+                    "id",
+                    "name",
+                    "category",
+                    "priceCents",
+                    "inStock"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "category": {
+                        "type": "string"
+                    },
+                    "priceCents": {
+                        "type": "integer"
+                    },
+                    "inStock": {
+                        "type": "boolean"
+                    }
+                }
+            },
+            "Payload": {
+                "type": "object",
+                "title": "Payload",
+                "required": [
+                    "size",
+                    "count",
+                    "items"
+                ],
+                "properties": {
+                    "size": {
+                        "type": "string"
+                    },
+                    "count": {
+                        "type": "integer"
+                    },
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Item"
+                        }
+                    }
+                }
+            },
+            "One": {
+                "type": "object",
+                "title": "One",
+                "required": [
+                    "one"
+                ],
+                "properties": {
+                    "one": {
+                        "type": "integer"
+                    }
+                }
+            },
+            "Two": {
+                "type": "object",
+                "title": "Two",
+                "required": [
+                    "one",
+                    "two"
+                ],
+                "properties": {
+                    "one": {
+                        "type": "integer"
+                    },
+                    "two": {
+                        "type": "integer"
+                    }
+                }
+            },
+            "Page": {
+                "type": "object",
+                "title": "Page",
+                "required": [
+                    "page"
+                ],
+                "properties": {
+                    "page": {
+                        "type": "integer"
+                    }
+                }
+            },
+            "Search": {
+                "type": "object",
+                "title": "Search",
+                "required": [
+                    "page",
+                    "size",
+                    "status",
+                    "category",
+                    "sort",
+                    "q",
+                    "minPrice",
+                    "maxPrice"
+                ],
+                "properties": {
+                    "page": {
+                        "type": "integer"
+                    },
+                    "size": {
+                        "type": "integer"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "category": {
+                        "type": "string"
+                    },
+                    "sort": {
+                        "type": "string"
+                    },
+                    "q": {
+                        "type": "string"
+                    },
+                    "minPrice": {
+                        "type": "integer"
+                    },
+                    "maxPrice": {
+                        "type": "integer"
+                    }
+                }
+            },
+            "Caller": {
+                "type": "object",
+                "title": "Caller",
+                "required": [
+                    "tenant",
+                    "requestId",
+                    "account"
+                ],
+                "properties": {
+                    "tenant": {
+                        "type": "string"
+                    },
+                    "requestId": {
+                        "type": "string"
+                    },
+                    "account": {
+                        "type": "integer"
+                    }
+                }
+            },
+            "Line": {
+                "type": "object",
+                "title": "Line",
+                "required": [
+                    "productId",
+                    "qty"
+                ],
+                "properties": {
+                    "productId": {
+                        "type": "integer"
+                    },
+                    "qty": {
+                        "type": "integer"
+                    }
+                }
+            },
+            "Order": {
+                "type": "object",
+                "title": "Order",
+                "required": [
+                    "customerId",
+                    "status",
+                    "lines"
+                ],
+                "properties": {
+                    "customerId": {
+                        "type": "integer"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "lines": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Line"
+                        }
+                    }
+                }
+            },
+            "Bound": {
+                "type": "object",
+                "title": "Bound",
+                "required": [
+                    "fields",
+                    "bytes",
+                    "echo"
+                ],
+                "properties": {
+                    "fields": {
+                        "type": "integer"
+                    },
+                    "bytes": {
+                        "type": "integer"
+                    },
+                    "echo": {
+                        "$ref": "#/components/schemas/Order"
+                    }
+                }
+            },
+            "NewItem": {
+                "type": "object",
+                "title": "NewItem",
+                "required": [
+                    "name",
+                    "category",
+                    "priceCents",
+                    "inStock"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "category": {
+                        "type": "string"
+                    },
+                    "priceCents": {
+                        "type": "integer"
+                    },
+                    "inStock": {
+                        "type": "boolean"
+                    }
+                }
+            },
+            "ItemPatch": {
+                "type": "object",
+                "title": "ItemPatch",
+                "properties": {
+                    "priceCents": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "inStock": {
+                        "type": [
+                            "boolean",
+                            "null"
+                        ]
+                    }
+                }
+            },
+            "UploadedFile": {
+                "type": "object",
+                "title": "UploadedFile",
+                "required": [
+                    "name",
+                    "bytes"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "bytes": {
+                        "type": "integer"
+                    }
+                }
+            },
+            "UploadEcho": {
+                "type": "object",
+                "title": "UploadEcho",
+                "required": [
+                    "tenant",
+                    "requestId"
+                ],
+                "properties": {
+                    "tenant": {
+                        "type": "string"
+                    },
+                    "requestId": {
+                        "type": "string"
+                    }
+                }
+            },
+            "Uploaded": {
+                "type": "object",
+                "title": "Uploaded",
+                "required": [
+                    "file",
+                    "echo"
+                ],
+                "properties": {
+                    "file": {
+                        "$ref": "#/components/schemas/UploadedFile"
+                    },
+                    "echo": {
+                        "$ref": "#/components/schemas/UploadEcho"
+                    }
+                }
+            },
+            "Meta": {
+                "type": "object",
+                "title": "Meta",
+                "required": [
+                    "framework",
+                    "runtime",
+                    "adapter",
+                    "serializer"
+                ],
+                "properties": {
+                    "framework": {
+                        "type": "string"
+                    },
+                    "version": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "runtime": {
+                        "type": "string"
+                    },
+                    "adapter": {
+                        "type": "string"
+                    },
+                    "serializer": {
+                        "type": "string"
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  The Kiota client, generated from the document Implementation writes under -Pclient. Ktor
+  recommends no client generator, so the client is Kiota's Java client, through kiota-community's
+  Maven plugin. Kiota's output is committed, and a build without the profile compiles it as it is.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>dev.requestbench</groupId>
+    <artifactId>ktor</artifactId>
+    <version>0.0.0</version>
+  </parent>
+
+  <artifactId>client</artifactId>
+
+  <dependencies>
+    <!-- Not used by the client. It puts Implementation, which writes openapi.json, first in the
+         reactor, and lets mvn -pl Client -am build it. -->
+    <dependency>
+      <groupId>dev.requestbench</groupId>
+      <artifactId>implementation</artifactId>
+      <version>${project.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.microsoft.kiota</groupId>
+      <artifactId>microsoft-kiota-bundle</artifactId>
+      <version>1.9.3</version>
+    </dependency>
+    <dependency>
+      <groupId>jakarta.annotation</groupId>
+      <artifactId>jakarta.annotation-api</artifactId>
+      <version>3.0.0</version>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <sourceDirectory>Kiota</sourceDirectory>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <release>25</release>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+  <profiles>
+    <profile>
+      <id>client</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>io.kiota</groupId>
+            <artifactId>kiota-maven-plugin</artifactId>
+            <version>0.0.39</version>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>generate</goal>
+                </goals>
+              </execution>
+            </executions>
+            <configuration>
+              <!-- The plugin's own default is 1.22.2. -->
+              <kiotaVersion>1.35.0</kiotaVersion>
+              <file>${project.basedir}/openapi.json</file>
+              <targetDirectory>${project.basedir}/Kiota</targetDirectory>
+              <clientClass>KtorClient</clientClass>
+              <namespace>client.kiota</namespace>
+              <cleanOutput>true</cleanOutput>
+              <excludeBackwardCompatible>true</excludeBackwardCompatible>
+              <!-- Ktor documents the routes staticFiles and the CORS plugin add under a tailcard as
+                   /static/{**} and /cors/{**}, a parameter named **, and Kiota writes that name into
+                   the Java it generates as it is. Neither route has a use in a client. -->
+              <excludePath>
+                <path>/static/**</path>
+                <path>/cors/**#OPTIONS</path>
+              </excludePath>
+              <!-- As Kiota's Java quickstart generates it: the client registers no serializers, and
+                   microsoft-kiota-bundle's DefaultRequestAdapter registers Microsoft's. The bundle
+                   carries them at runtime scope, which a client naming them does not compile against. -->
+              <serializers>
+                <serializer>none</serializer>
+              </serializers>
+              <deserializers>
+                <deserializer>none</deserializer>
+              </deserializers>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+</project>
