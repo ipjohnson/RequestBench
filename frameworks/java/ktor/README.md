@@ -98,8 +98,12 @@ on a header nor repeat x-rb-serial. The cache family's plugin is written instead
   with the default providers on `/static` the etag routes would send no ETag.
 - Ktor's `staticFiles` writes `Last-Modified` only when `ConditionalHeaders` is installed, as its
   documentation says.
-- Over HTTP/2, the SSE plugin's answer carries `content-type: text/event-stream` twice. Over HTTP/1.1
-  it carries it once.
+- Over HTTP/2, Ktor's Netty response stores each header name lowercase and looks a name up as it is
+  given, so `call.response.headers["Content-Type"]` finds nothing there. The SSE plugin sets
+  `Content-Type` itself, and Ktor adds the content's type only when it finds none, so over HTTP/2 the
+  SSE answer carries `content-type: text/event-stream` twice. Ktor fixed the same duplicate for
+  HTTP/1.1 in https://youtrack.jetbrains.com/issue/KTOR-6735. The cache plugin reads the headers it
+  keeps by their lowercase names, which both protocols find.
 - The SSE plugin ends each line with CRLF, and adds `Cache-Control: no-store` and
   `X-Accel-Buffering: no` to the answer.
 - `Compression` compresses at the JDK `Deflater`'s default level, 6, and has no setting for it, so
