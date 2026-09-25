@@ -1,0 +1,50 @@
+{
+  "name": "rb-nestjs",
+  "private": true,
+  "type": "module",
+  "comment": "Its own package and lockfile, never a workspace of the repository's, so the versions /__meta reports are the ones this lockfile resolved. Nest's classes are written with decorators, which Node's type stripping does not run, so nest build compiles the source into dist/, and the hosts run that. typescript stays at 6, because the Nest CLI compiles through TypeScript's JavaScript API, which TypeScript 7 does not have. client builds a second time into dist/client/ with @nestjs/swagger's CLI plugin, writes Client/openapi.json from that build, and generates the Kiota client. generate.ts passes --experimental-strip-types because Node 22 needs it. Node 26, which the image runs, accepts it.",
+  "scripts": {
+    "build": "nest build",
+    "start": "node dist/container-h1/main.js",
+    "test": "tsc -p tsconfig.json --noEmit && vitest run",
+    "client": "nest build -c nest-cli.client.json && node dist/client/Client/document.js && node --experimental-strip-types --disable-warning=ExperimentalWarning Client/generate.ts"
+  },
+  "dependencies": {
+    "@codegenie/serverless-express": "^5.0.0",
+    "@fastify/compress": "^9.2.0",
+    "@fastify/etag": "^6.2.0",
+    "@fastify/multipart": "^10.1.2",
+    "@fastify/static": "^10.1.4",
+    "@fastify/view": "^12.0.0",
+    "@nestjs/cache-manager": "^12.0.0",
+    "@nestjs/common": "^12.1.0",
+    "@nestjs/core": "^12.1.0",
+    "@nestjs/mapped-types": "^12.0.0",
+    "@nestjs/platform-express": "^12.1.0",
+    "@nestjs/platform-fastify": "^12.1.0",
+    "@nestjs/serve-static": "^12.0.0",
+    "cache-manager": "^7.2.9",
+    "cacheable": "^2.5.0",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.15.1",
+    "compression": "^1.8.2",
+    "handlebars": "^4.7.9",
+    "hbs": "^4.3.1",
+    "keyv": "^5.6.0",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2"
+  },
+  "devDependencies": {
+    "@microsoft/kiota": "1.35.0",
+    "@microsoft/kiota-bundle": "^1.0.0-preview.108",
+    "@nestjs/cli": "^12.0.7",
+    "@nestjs/swagger": "^12.0.2",
+    "@types/compression": "^1.8.1",
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.6.2",
+    "@types/supertest": "^7.2.1",
+    "supertest": "^7.3.0",
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.2"
+  }
+}

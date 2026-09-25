@@ -1,0 +1,1213 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/health": {
+      "get": {
+        "operationId": "ContractController_health",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Contract"
+        ]
+      }
+    },
+    "/__meta": {
+      "get": {
+        "operationId": "ContractController_meta",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Contract"
+        ]
+      }
+    },
+    "/plaintext": {
+      "get": {
+        "operationId": "BaselineController_plaintext",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Baseline"
+        ]
+      }
+    },
+    "/json/small": {
+      "get": {
+        "operationId": "JsonController_small",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Json"
+        ]
+      }
+    },
+    "/json/medium": {
+      "get": {
+        "operationId": "JsonController_medium",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Json"
+        ]
+      }
+    },
+    "/json/large": {
+      "get": {
+        "operationId": "JsonController_large",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Json"
+        ]
+      }
+    },
+    "/parameters/static/segment/literal": {
+      "get": {
+        "operationId": "ParametersController_static",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Parameters"
+        ]
+      }
+    },
+    "/parameters/{one}/segment/literal": {
+      "get": {
+        "operationId": "ParametersController_one",
+        "parameters": [
+          {
+            "name": "one",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Parameters"
+        ]
+      }
+    },
+    "/parameters/{one}/with-second/{two}": {
+      "get": {
+        "operationId": "ParametersController_two",
+        "parameters": [
+          {
+            "name": "one",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "two",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Parameters"
+        ]
+      }
+    },
+    "/query/one": {
+      "get": {
+        "operationId": "QueryController_one",
+        "parameters": [
+          {
+            "name": "page",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/query/many": {
+      "get": {
+        "operationId": "QueryController_many",
+        "parameters": [
+          {
+            "name": "page",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "size",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "status",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "category",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "q",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "minPrice",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "maxPrice",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/headers": {
+      "get": {
+        "operationId": "HeadersController_unread",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Headers"
+        ]
+      }
+    },
+    "/headers/bind": {
+      "get": {
+        "operationId": "HeadersController_bind",
+        "parameters": [
+          {
+            "name": "x-rb-tenant",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-rb-request-id",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-rb-account",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Headers"
+        ]
+      }
+    },
+    "/body/bind/small": {
+      "post": {
+        "operationId": "BodyController_bindSmall",
+        "parameters": [
+          {
+            "name": "content-length",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Body"
+        ]
+      }
+    },
+    "/body/bind/medium": {
+      "post": {
+        "operationId": "BodyController_bindMedium",
+        "parameters": [
+          {
+            "name": "content-length",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Body"
+        ]
+      }
+    },
+    "/body/validate/small": {
+      "post": {
+        "operationId": "BodyController_validateSmall",
+        "parameters": [
+          {
+            "name": "content-length",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckedOrder"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Body"
+        ]
+      }
+    },
+    "/body/validate/medium": {
+      "post": {
+        "operationId": "BodyController_validateMedium",
+        "parameters": [
+          {
+            "name": "content-length",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckedOrder"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Body"
+        ]
+      }
+    },
+    "/body/validate/first-error": {
+      "post": {
+        "operationId": "BodyController_validateFirstError",
+        "parameters": [
+          {
+            "name": "content-length",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckedOrder"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Body"
+        ]
+      }
+    },
+    "/authorized/small": {
+      "get": {
+        "operationId": "AuthorizedController_small",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Authorized"
+        ]
+      }
+    },
+    "/items": {
+      "post": {
+        "operationId": "ItemsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewItem"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Items"
+        ]
+      }
+    },
+    "/items/{id}": {
+      "get": {
+        "operationId": "ItemsController_read",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Items"
+        ]
+      },
+      "put": {
+        "operationId": "ItemsController_replace",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewItem"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Items"
+        ]
+      },
+      "patch": {
+        "operationId": "ItemsController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateItem"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Items"
+        ]
+      },
+      "delete": {
+        "operationId": "ItemsController_delete",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Items"
+        ]
+      }
+    },
+    "/cache/small": {
+      "get": {
+        "operationId": "CacheController_small",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Cache"
+        ]
+      }
+    },
+    "/cache/medium": {
+      "get": {
+        "operationId": "CacheController_medium",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Cache"
+        ]
+      }
+    },
+    "/cache/large": {
+      "get": {
+        "operationId": "CacheController_large",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Cache"
+        ]
+      }
+    },
+    "/cache/vary/one": {
+      "get": {
+        "operationId": "CacheController_varyOne",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Cache"
+        ]
+      }
+    },
+    "/cache/vary/many": {
+      "get": {
+        "operationId": "CacheController_varyMany",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Cache"
+        ]
+      }
+    },
+    "/etag/small": {
+      "get": {
+        "operationId": "EtagController_small",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Etag"
+        ]
+      }
+    },
+    "/etag/large": {
+      "get": {
+        "operationId": "EtagController_large",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Etag"
+        ]
+      }
+    },
+    "/compressed/small": {
+      "get": {
+        "operationId": "CompressedController_small",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Compressed"
+        ]
+      }
+    },
+    "/compressed/large": {
+      "get": {
+        "operationId": "CompressedController_large",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Compressed"
+        ]
+      }
+    },
+    "/cors/small": {
+      "get": {
+        "operationId": "CorsController_small",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Cors"
+        ]
+      }
+    },
+    "/forms/urlencoded": {
+      "post": {
+        "operationId": "FormsController_urlencoded",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Search"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Forms"
+        ]
+      }
+    },
+    "/forms/multipart": {
+      "post": {
+        "operationId": "UploadsController_multipart",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Uploads"
+        ]
+      }
+    },
+    "/stream/items": {
+      "get": {
+        "operationId": "StreamController_lines",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Stream"
+        ]
+      }
+    },
+    "/sse/medium": {
+      "get": {
+        "operationId": "SseController_medium",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Sse"
+        ]
+      }
+    },
+    "/template/small": {
+      "get": {
+        "operationId": "TemplateController_small",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Template"
+        ]
+      }
+    },
+    "/template/medium": {
+      "get": {
+        "operationId": "TemplateController_medium",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Template"
+        ]
+      }
+    },
+    "/middleware/none": {
+      "get": {
+        "operationId": "MiddlewareController_none",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Middleware"
+        ]
+      }
+    },
+    "/middleware/four": {
+      "get": {
+        "operationId": "MiddlewareController_four",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Middleware"
+        ]
+      }
+    },
+    "/middleware/sixteen": {
+      "get": {
+        "operationId": "MiddlewareController_sixteen",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Middleware"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "NestJS",
+    "description": "",
+    "version": "1.0.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "schemas": {
+      "CheckedLine": {
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "number",
+            "minimum": 1
+          },
+          "qty": {
+            "type": "number",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "productId",
+          "qty"
+        ]
+      },
+      "CheckedOrder": {
+        "type": "object",
+        "properties": {
+          "customerId": {
+            "type": "number",
+            "minimum": 1
+          },
+          "status": {
+            "type": "string"
+          },
+          "lines": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CheckedLine"
+            }
+          }
+        },
+        "required": [
+          "customerId",
+          "status",
+          "lines"
+        ]
+      },
+      "NewItem": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "priceCents": {
+            "type": "number"
+          },
+          "inStock": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "category",
+          "priceCents",
+          "inStock"
+        ]
+      },
+      "UpdateItem": {
+        "type": "object",
+        "properties": {}
+      },
+      "Search": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "number"
+          },
+          "size": {
+            "type": "number"
+          },
+          "status": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "sort": {
+            "type": "string"
+          },
+          "q": {
+            "type": "string"
+          },
+          "minPrice": {
+            "type": "number"
+          },
+          "maxPrice": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "page",
+          "size",
+          "status",
+          "category",
+          "sort",
+          "q",
+          "minPrice",
+          "maxPrice"
+        ]
+      }
+    }
+  }
+}
