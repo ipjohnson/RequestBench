@@ -1,0 +1,82 @@
+{
+  "comment": "Ktor 3.6 on its Netty engine, started by EngineMain from application.conf, in Kotlin, one file per family under Implementation/src/main/kotlin/implementation/routes, each adding its routes and its route-scoped plugins to the routing Application.corpus builds. On container-h2 the same jar runs with -P:ktor.deployment.enableH2c=true, which EngineMain reads as it reads application.conf. There is no lambda-emulator: Ktor has no Lambda adapter, and its documentation never mentions Lambda. The build is Maven, which Ktor's documentation covers beside Gradle, as every other Java framework here builds. The jar names its dependencies in lib/ rather than shading them, so each keeps the manifest /__meta reads its version from. Maven has no lockfile: Ktor's BOM pins every Ktor module, the aggregator pom pins that BOM, Kotlin, logback, JUnit's BOM and every plugin, and nothing resolves a range, so the two poms the image is built from are what pin it. upgrade moves each of those pins to its newest patch release. Ktor ships no response cache, so the cache family's plugin is written on Ktor's plugin API. Client/ holds the OpenAPI document Ktor writes from its routes under -Pclient, with the Ktor compiler plugin, and the Kiota client generated from it. The suite is UnitTests/, JUnit over Ktor's testApplication and over the Kiota client, and never reaches the image.",
+  "framework": "Ktor",
+  "licence": "Apache-2.0",
+  "repo": "https://github.com/ktorio/ktor",
+  "package": "https://central.sonatype.com/artifact/io.ktor/ktor-server-core-jvm",
+  "docs": "https://ktor.io/docs/",
+  "lockfile": ["pom.xml", "Implementation/pom.xml"],
+  "hosts": {
+    "container-h1": { "dockerfile": "container-h1/Dockerfile" },
+    "container-h2": { "dockerfile": "container-h2/Dockerfile" }
+  },
+  "suite": { "argv": ["mvn", "-B", "test"], "paths": ["UnitTests"] },
+  "upgrade": {
+    "argv": ["mvn", "-B", "-N", "versions:update-properties", "-DallowMajorUpdates=false", "-DallowMinorUpdates=false", "-DgenerateBackupPoms=false"]
+  },
+  "client": {
+    "document": "Client/openapi.json",
+    "writer": "Ktor 3.6.0's OpenAPI support: the Ktor compiler plugin infers each route's metadata from its handler while Implementation compiles under -Pclient, and Client/document/Document.kt writes the document Ktor assembles from the routing tree",
+    "generator": "Kiota 1.35.0, through kiota-community's kiota-maven-plugin 0.0.39, because Ktor recommends no generator",
+    "argv": ["mvn", "-B", "-Pclient", "verify", "-pl", "Client", "-am"]
+  },
+  "noHandler": {
+    "cors.preflight": "Ktor's CORS plugin on /cors adds an OPTIONS route under it with an empty handler, and answers the preflight in its validators phase, before that handler runs.",
+    "errors.unmatched": "Ktor's router finds no route for the path and answers 404 with no body.",
+    "errors.wrong_method": "Ktor's router finds routes for /items/{id} and none for POST, and answers 404, because a capture is among the segments it matched."
+  },
+  "mechanisms": {
+    "authorized": {
+      "mechanism": "Ktor's Authentication plugin with a bearer provider, which makes the token the caller's principal, and a route-scoped plugin on the AuthenticationChecked hook, the way Ktor's documentation writes authorization, which answers 403 for any token but settings.json's",
+      "mentions": "AuthenticationChecked"
+    },
+    "baseline": { "builtin": "call.respondText writes the string as text/plain." },
+    "body": {
+      "mechanism": "Ktor's RequestValidation on each validate route, with orderRequest's rules as a validator of the order, which throws RequestValidationException as the body is received. StatusPages answers it with 400 and the reasons as JSON. The first-error route's validator stops at the first rule the order breaks",
+      "mentions": "RequestValidation"
+    },
+    "cache": {
+      "mechanism": "A route-scoped plugin written on Ktor's plugin API, because Ktor ships no response cache. onCall answers from the store before the handler runs, and ResponseBodyReadyForSend keeps the bytes the answer became with the headers the handler wrote, keyed by the path and the route's vary headers, in one store for the process",
+      "mentions": "ResponseBodyReadyForSend"
+    },
+    "compressed": {
+      "mechanism": "Ktor's Compression plugin on the two routes, with its defaults: a body of 200 bytes or more, compressed at the JDK Deflater's default level, 6, which Ktor has no setting for",
+      "mentions": "Compression"
+    },
+    "cors": {
+      "mechanism": "Ktor's CORS plugin, route-scoped on /cors",
+      "mentions": "CORS"
+    },
+    "errors": { "builtin": "Ktor's router answers a path no route matches with 404, and a method /items/{id} has no route for with 404 as well, because a capture is among the segments it matched. A body that is not JSON is Ktor's BadRequestException, which it answers with 400, and the items handlers answer a missing row with 404." },
+    "etag": {
+      "mechanism": "Ktor's ConditionalHeaders plugin on the two routes, with a version provider that tags the body with Ktor's own SHA-1 of the bytes it became. The plugin writes the ETag and answers a matching If-None-Match with 304",
+      "mentions": "ConditionalHeaders"
+    },
+    "forms": { "builtin": "receiveParameters parses the urlencoded form, whose values getOrFail reads by name, and receiveMultipart hands the handler each part of the upload." },
+    "headers": { "builtin": "The handler reads each header by name and converts the account with toIntOrNull, because Ktor binds no header, and throws BadRequestException for a header that is missing or no Int." },
+    "items": {
+      "mechanism": "One route per method on /items/{id}, and Ktor's AutoHeadResponse plugin, which answers HEAD with the GET handler and leaves the body out",
+      "mentions": "AutoHeadResponse"
+    },
+    "json": { "builtin": "ContentNegotiation with kotlinx.serialization's JSON converter encodes the payload, a @Serializable data class." },
+    "middleware": {
+      "mechanism": "No-op route-scoped plugins, four or sixteen of them, installed on the route, each with an empty onCall handler",
+      "mentions": "createRouteScopedPlugin"
+    },
+    "parameters": { "builtin": "Ktor's router captures each segment, and getOrFail converts it to an Int with Ktor's data conversion." },
+    "query": { "builtin": "getOrFail reads each value from the query string Ktor parsed, the numbers converted to Ints." },
+    "sse": {
+      "mechanism": "Ktor's SSE plugin, whose sse route sends each row as the data of one event, encoded by the serialize function the route names",
+      "mentions": "SSE"
+    },
+    "static": {
+      "mechanism": "staticFiles over the payload directory under /static, with ConditionalHeaders on the route, which writes the Last-Modified Ktor's file content carries",
+      "mentions": "staticFiles"
+    },
+    "stream": { "builtin": "respondTextWriter hands the handler a writer over the chunked response, and each row is written and flushed with its newline." },
+    "template": {
+      "mechanism": "Thymeleaf, through Ktor's Thymeleaf plugin, as Ktor's website tutorial renders its pages",
+      "mentions": "Thymeleaf"
+    }
+  }
+}

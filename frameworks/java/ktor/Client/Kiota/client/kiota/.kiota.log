@@ -1,0 +1,5 @@
+Warning: KiotaBuilder OpenAPI warning: #/ - A servers entry (v3) or host + basePath + schemes properties (v2) was not present in the OpenAPI description. The root URL will need to be set manually with the request adapter.
+Error: KiotaBuilder OpenAPI error: #/paths/~1cors~1{**}/options/responses - Responses must contain at least one response
+Error: KiotaBuilder OpenAPI error: #/paths/~1sse~1medium/get/responses - Responses must contain at least one response
+Error: KiotaBuilder OpenAPI error: #/paths/~1static~1{**}/get/responses - Responses must contain at least one response
+Warning: KiotaBuilder No server url found in the OpenAPI document. The base url will need to be set when using the client.
