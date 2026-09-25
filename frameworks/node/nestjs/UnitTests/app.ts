@@ -31,8 +31,9 @@ const payloads = load(directory);
 /*
  * Each application is created with NestFactory, as the hosts create it, rather than with Nest's testing
  * module. The testing module creates every provider before it has an HTTP adapter, so
- * ServeStaticModule finds no adapter and chooses the loader that serves nothing. abortOnError false
- * makes a failure to start throw, where NestFactory would otherwise end the process.
+ * ServeStaticModule finds no adapter and chooses the loader that serves nothing, as
+ * https://github.com/nestjs/serve-static/issues/240 describes. abortOnError false makes a failure to
+ * start throw, where NestFactory would otherwise end the process.
  */
 
 /** The application as container-h1 creates it, on Nest's Express adapter. */

@@ -38,8 +38,9 @@ export async function configureFastify(app: NestFastifyApplication, payloads: Pa
   // origin asked. Given a list, it checks the request's origin.
   app.enableCors({ origin: [cors.origin], methods: [cors.method], allowedHeaders: [cors.header], maxAge: cors.maxAgeSeconds });
   // rb:wiring template.*
-  // The plugin setViewEngine registers, awaited. setViewEngine returns before it registers the plugin,
-  // after a dynamic import it does not wait for, so listen can start first and never settle.
+  // The plugin setViewEngine would register, registered here and waited for. The application's
+  // setViewEngine returns before the adapter has imported the plugin, and drops the promise of its
+  // registration, so listen can start before the plugin is registered and never settle.
   await app.register(fastifyView, { engine: { handlebars: Handlebars }, templates: join(import.meta.dirname, 'views') });
   // rb:end
 }

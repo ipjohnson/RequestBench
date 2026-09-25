@@ -105,18 +105,21 @@ replay.
   forms routes create nothing, so they set 200.
 - Nest starts an SSE answer with an empty line and numbers each event with an `id:` field. It writes
   `Expire: 0`, where the header HTTP defines is `Expires`, beside `Cache-Control`, `Pragma` and
-  `X-Accel-Buffering: no`. It also writes `Connection: keep-alive`, which Node drops over HTTP/2.
+  `X-Accel-Buffering: no`. The typo was raised in https://github.com/nestjs/nest/issues/17588 and is
+  still in 12.1.0.
 - Express's `res.render` adds `_locals` to the object it renders. The template handlers return a copy
   of the payload, so the payload the other handlers return is never changed.
 - Nest's upload interceptors come from `@nestjs/platform-express` and from
   `@nestjs/platform-fastify/multipart`, and each works on its own platform alone. The multipart
   controller is made with the host's `FileInterceptor`.
-- `setViewEngine` on the Fastify adapter registers @fastify/view after a dynamic import it does not
-  wait for, so `listen` can start before the plugin is registered and never settle. `fastify.ts`
-  registers the plugin itself and waits for it.
+- On the Fastify adapter, the application's `setViewEngine` returns before the adapter has imported
+  @fastify/view, and drops the promise of the plugin's registration. `listen` can then start before
+  the plugin is registered and never settle. `fastify.ts` registers the plugin itself and waits for
+  it.
 - Nest's testing module creates every provider before it has an HTTP adapter, so ServeStaticModule
   finds no adapter and chooses the loader that serves nothing. The suite creates each application
-  with `NestFactory`, as the hosts do.
+  with `NestFactory`, as the hosts do and as https://github.com/nestjs/serve-static/issues/240
+  advises.
 - Nest logs each route it maps as the application starts, and nothing per request.
 - The server is one Node process, as Nest's `listen` starts it, on the container's two cores. The
   function on lambda-emulator runs on one core.
