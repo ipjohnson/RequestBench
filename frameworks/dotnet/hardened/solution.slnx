@@ -1,0 +1,8 @@
+<Solution>
+  <Project Path="Implementation/Implementation.csproj" />
+  <Project Path="container-h1/ContainerH1.csproj" />
+  <Project Path="container-h2/ContainerH2.csproj" />
+  <Project Path="lambda-emulator/LambdaEmulator.csproj" />
+  <Project Path="Client/Client.csproj" />
+  <Project Path="UnitTests/UnitTests.csproj" />
+</Solution>

@@ -1,0 +1,2068 @@
+{
+  "openapi": "3.2.0",
+  "info": {
+    "title": "ImplementationLibrary",
+    "version": "1.0.0"
+  },
+  "tags": [
+    {
+      "name": "Authorized"
+    },
+    {
+      "name": "Baseline"
+    },
+    {
+      "name": "Body"
+    },
+    {
+      "name": "Cache"
+    },
+    {
+      "name": "Compressed"
+    },
+    {
+      "name": "Contract"
+    },
+    {
+      "name": "Cors"
+    },
+    {
+      "name": "Etag"
+    },
+    {
+      "name": "Forms"
+    },
+    {
+      "name": "Headers"
+    },
+    {
+      "name": "Items"
+    },
+    {
+      "name": "Json"
+    },
+    {
+      "name": "Middleware"
+    },
+    {
+      "name": "Parameters"
+    },
+    {
+      "name": "Query"
+    },
+    {
+      "name": "Sse"
+    },
+    {
+      "name": "Stream"
+    },
+    {
+      "name": "Template"
+    }
+  ],
+  "paths": {
+    "/__meta": {
+      "get": {
+        "tags": [
+          "Contract"
+        ],
+        "operationId": "meta",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Meta"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/authorized/small": {
+      "get": {
+        "tags": [
+          "Authorized"
+        ],
+        "operationId": "authorizedSmall",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required.",
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "The challenge naming the scheme to authenticate with.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller does not hold what this operation requires.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/body/bind/medium": {
+      "post": {
+        "tags": [
+          "Body"
+        ],
+        "operationId": "bindMedium",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrderRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Bound"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/body/bind/small": {
+      "post": {
+        "tags": [
+          "Body"
+        ],
+        "operationId": "bindSmall",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrderRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Bound"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/body/validate/first-error": {
+      "post": {
+        "tags": [
+          "Body"
+        ],
+        "operationId": "validateFirstError",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrderRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Bound"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request failed validation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-hardened-validation": "stop-on-first-error"
+      }
+    },
+    "/body/validate/medium": {
+      "post": {
+        "tags": [
+          "Body"
+        ],
+        "operationId": "validateMedium",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrderRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Bound"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request failed validation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/body/validate/small": {
+      "post": {
+        "tags": [
+          "Body"
+        ],
+        "operationId": "validateSmall",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrderRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Bound"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request failed validation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cache/large": {
+      "get": {
+        "tags": [
+          "Cache"
+        ],
+        "operationId": "cacheLarge",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cache/medium": {
+      "get": {
+        "tags": [
+          "Cache"
+        ],
+        "operationId": "cacheMedium",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cache/small": {
+      "get": {
+        "tags": [
+          "Cache"
+        ],
+        "operationId": "cacheSmall",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cache/vary/many": {
+      "get": {
+        "tags": [
+          "Cache"
+        ],
+        "operationId": "varyMany",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cache/vary/one": {
+      "get": {
+        "tags": [
+          "Cache"
+        ],
+        "operationId": "varyOne",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/compressed/large": {
+      "get": {
+        "tags": [
+          "Compressed"
+        ],
+        "operationId": "compressedLarge",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/compressed/small": {
+      "get": {
+        "tags": [
+          "Compressed"
+        ],
+        "operationId": "compressedSmall",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cors/small": {
+      "get": {
+        "tags": [
+          "Cors"
+        ],
+        "operationId": "corsSmall",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/etag/large": {
+      "get": {
+        "tags": [
+          "Etag"
+        ],
+        "operationId": "etagLarge",
+        "parameters": [
+          {
+            "name": "If-None-Match",
+            "in": "header",
+            "required": false,
+            "description": "A tag a previous response carried. Matching it is answered 304.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-Modified-Since",
+            "in": "header",
+            "required": false,
+            "description": "When the caller last read this. Unchanged since then is answered 304.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "ETag": {
+                "description": "A tag for this response, to send back in If-None-Match.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "The caller's copy is current; nothing is sent.",
+            "headers": {
+              "ETag": {
+                "description": "The tag the caller already holds, repeated.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/etag/small": {
+      "get": {
+        "tags": [
+          "Etag"
+        ],
+        "operationId": "etagSmall",
+        "parameters": [
+          {
+            "name": "If-None-Match",
+            "in": "header",
+            "required": false,
+            "description": "A tag a previous response carried. Matching it is answered 304.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-Modified-Since",
+            "in": "header",
+            "required": false,
+            "description": "When the caller last read this. Unchanged since then is answered 304.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "ETag": {
+                "description": "A tag for this response, to send back in If-None-Match.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "The caller's copy is current; nothing is sent.",
+            "headers": {
+              "ETag": {
+                "description": "The tag the caller already holds, repeated.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/forms/multipart": {
+      "post": {
+        "tags": [
+          "Forms"
+        ],
+        "operationId": "multipart",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "tenant",
+                  "requestId",
+                  "file"
+                ],
+                "properties": {
+                  "tenant": {
+                    "type": "string"
+                  },
+                  "requestId": {
+                    "type": "string"
+                  },
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Uploaded"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request failed validation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/forms/urlencoded": {
+      "post": {
+        "tags": [
+          "Forms"
+        ],
+        "operationId": "urlencoded",
+        "description": "The eight fields bound into one model, one field per member, as query.many binds them.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Search"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EchoedOfSearch"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request failed validation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/headers": {
+      "get": {
+        "tags": [
+          "Headers"
+        ],
+        "operationId": "unread",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/headers/bind": {
+      "get": {
+        "tags": [
+          "Headers"
+        ],
+        "operationId": "bind",
+        "parameters": [
+          {
+            "name": "x-rb-tenant",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-rb-request-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-rb-account",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EchoedOfHeadersBound"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request failed validation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": [
+          "Contract"
+        ],
+        "operationId": "health",
+        "description": "The payloads are loaded before any host starts, so a server that answers has them. Hardened's own /health/live and /health/ready answer with no body, and the contract asks for one.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/items": {
+      "post": {
+        "tags": [
+          "Items"
+        ],
+        "operationId": "create",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewItem"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "headers": {
+              "Location": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Item"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/items/{id}": {
+      "delete": {
+        "tags": [
+          "Items"
+        ],
+        "operationId": "delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found. A token that fails its route constraint answers this status too, before the handler and with no body.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFound"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Items"
+        ],
+        "operationId": "read",
+        "description": "A GET route answers HEAD too. Hardened runs the handler and sends the headers with no body.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Item"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found. A token that fails its route constraint answers this status too, before the handler and with no body.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFound"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Items"
+        ],
+        "operationId": "update",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ItemPatch"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Item"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found. A token that fails its route constraint answers this status too, before the handler and with no body.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFound"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Items"
+        ],
+        "operationId": "replace",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewItem"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Item"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The path did not name a resource: a token failed its route constraint."
+          }
+        }
+      }
+    },
+    "/json/large": {
+      "get": {
+        "tags": [
+          "Json"
+        ],
+        "operationId": "jsonLarge",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/json/medium": {
+      "get": {
+        "tags": [
+          "Json"
+        ],
+        "operationId": "jsonMedium",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/json/small": {
+      "get": {
+        "tags": [
+          "Json"
+        ],
+        "operationId": "jsonSmall",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/middleware/four": {
+      "get": {
+        "tags": [
+          "Middleware"
+        ],
+        "operationId": "four",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/middleware/none": {
+      "get": {
+        "tags": [
+          "Middleware"
+        ],
+        "operationId": "none",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/middleware/sixteen": {
+      "get": {
+        "tags": [
+          "Middleware"
+        ],
+        "operationId": "sixteen",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/parameters/static/segment/literal": {
+      "get": {
+        "tags": [
+          "Parameters"
+        ],
+        "operationId": "static",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payload"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/parameters/{one}/segment/literal": {
+      "get": {
+        "tags": [
+          "Parameters"
+        ],
+        "operationId": "parametersOne",
+        "parameters": [
+          {
+            "name": "one",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EchoedOfParametersOne"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request failed validation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/parameters/{one}/with-second/{two}": {
+      "get": {
+        "tags": [
+          "Parameters"
+        ],
+        "operationId": "two",
+        "parameters": [
+          {
+            "name": "one",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "two",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EchoedOfParametersTwo"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request failed validation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/plaintext": {
+      "get": {
+        "tags": [
+          "Baseline"
+        ],
+        "operationId": "plaintext",
+        "description": "A string under a declared media type is written unchanged.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/query/many": {
+      "get": {
+        "tags": [
+          "Query"
+        ],
+        "operationId": "many",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "minPrice",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "maxPrice",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EchoedOfSearch"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request failed validation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/query/one": {
+      "get": {
+        "tags": [
+          "Query"
+        ],
+        "operationId": "queryOne",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EchoedOfQueryOne"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request failed validation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sse/medium": {
+      "get": {
+        "tags": [
+          "Sse"
+        ],
+        "operationId": "sseMedium",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Item"
+                  }
+                },
+                "itemSchema": {
+                  "$ref": "#/components/schemas/Item"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/stream/items": {
+      "get": {
+        "tags": [
+          "Stream"
+        ],
+        "operationId": "items",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/x-ndjson": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Item"
+                  }
+                },
+                "itemSchema": {
+                  "$ref": "#/components/schemas/Item"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/template/medium": {
+      "get": {
+        "tags": [
+          "Template"
+        ],
+        "operationId": "templateMedium",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/html; charset=utf-8": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/template/small": {
+      "get": {
+        "tags": [
+          "Template"
+        ],
+        "operationId": "templateSmall",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/html; charset=utf-8": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Bound": {
+        "type": "object",
+        "description": "What a bind or validate row answers: the order back, with the leaves the handler found in it and the bytes it received.",
+        "required": [
+          "fields",
+          "bytes",
+          "echo"
+        ],
+        "properties": {
+          "fields": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "bytes": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "echo": {
+            "$ref": "#/components/schemas/OrderRequest"
+          }
+        }
+      },
+      "EchoedOfHeadersBound": {
+        "type": "object",
+        "description": "A payload with the values a handler bound written back beside its own fields.",
+        "required": [
+          "size",
+          "count",
+          "items",
+          "echo"
+        ],
+        "properties": {
+          "size": {
+            "type": "string"
+          },
+          "count": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Item"
+            }
+          },
+          "echo": {
+            "$ref": "#/components/schemas/HeadersBound"
+          }
+        }
+      },
+      "EchoedOfParametersOne": {
+        "type": "object",
+        "description": "A payload with the values a handler bound written back beside its own fields.",
+        "required": [
+          "size",
+          "count",
+          "items",
+          "echo"
+        ],
+        "properties": {
+          "size": {
+            "type": "string"
+          },
+          "count": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Item"
+            }
+          },
+          "echo": {
+            "$ref": "#/components/schemas/ParametersOne"
+          }
+        }
+      },
+      "EchoedOfParametersTwo": {
+        "type": "object",
+        "description": "A payload with the values a handler bound written back beside its own fields.",
+        "required": [
+          "size",
+          "count",
+          "items",
+          "echo"
+        ],
+        "properties": {
+          "size": {
+            "type": "string"
+          },
+          "count": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Item"
+            }
+          },
+          "echo": {
+            "$ref": "#/components/schemas/ParametersTwo"
+          }
+        }
+      },
+      "EchoedOfQueryOne": {
+        "type": "object",
+        "description": "A payload with the values a handler bound written back beside its own fields.",
+        "required": [
+          "size",
+          "count",
+          "items",
+          "echo"
+        ],
+        "properties": {
+          "size": {
+            "type": "string"
+          },
+          "count": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Item"
+            }
+          },
+          "echo": {
+            "$ref": "#/components/schemas/QueryOne"
+          }
+        }
+      },
+      "EchoedOfSearch": {
+        "type": "object",
+        "description": "A payload with the values a handler bound written back beside its own fields.",
+        "required": [
+          "size",
+          "count",
+          "items",
+          "echo"
+        ],
+        "properties": {
+          "size": {
+            "type": "string"
+          },
+          "count": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Item"
+            }
+          },
+          "echo": {
+            "$ref": "#/components/schemas/Search"
+          }
+        }
+      },
+      "ErrorModel": {
+        "type": "object",
+        "description": "How a refused or failed request is answered when the contract declared no body for it.",
+        "required": [
+          "type",
+          "message",
+          "details"
+        ],
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "details": {
+            "type": "string"
+          }
+        }
+      },
+      "HeadersBound": {
+        "type": "object",
+        "required": [
+          "tenant",
+          "requestId",
+          "account"
+        ],
+        "properties": {
+          "tenant": {
+            "type": "string"
+          },
+          "requestId": {
+            "type": "string"
+          },
+          "account": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "Item": {
+        "type": "object",
+        "description": "One row of items.large, and of every payload made from it.",
+        "required": [
+          "id",
+          "name",
+          "category",
+          "priceCents",
+          "inStock"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "priceCents": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "inStock": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ItemPatch": {
+        "type": "object",
+        "description": "The two fields items.update changes.",
+        "properties": {
+          "priceCents": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          },
+          "inStock": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          }
+        }
+      },
+      "Meta": {
+        "type": "object",
+        "description": "/__meta: what ran, recorded on the result row and never checked.",
+        "required": [
+          "framework",
+          "version",
+          "runtime"
+        ],
+        "properties": {
+          "framework": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "runtime": {
+            "type": "string"
+          },
+          "bootMs": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "NewItem": {
+        "type": "object",
+        "description": "An item as a client creates or replaces one.",
+        "required": [
+          "name",
+          "category",
+          "priceCents",
+          "inStock"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "priceCents": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "inStock": {
+            "type": "boolean"
+          }
+        }
+      },
+      "NotFound": {
+        "type": "object",
+        "required": [
+          "resource",
+          "type",
+          "title",
+          "status"
+        ],
+        "properties": {
+          "resource": {
+            "type": "string"
+          },
+          "detail": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "type": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "OrderLine": {
+        "type": "object",
+        "required": [
+          "productId",
+          "qty"
+        ],
+        "properties": {
+          "productId": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 1
+          },
+          "qty": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 1
+          }
+        }
+      },
+      "OrderRequest": {
+        "type": "object",
+        "description": "The body the bind and validate rows send, carrying the rules orderRequest states as Hardened's constraint attributes. Hardened.Validation.SourceGenerator compiles them into a check that runs before any handler that binds an order, unless the handler marks it [ValidateNever].",
+        "required": [
+          "customerId",
+          "status",
+          "lines"
+        ],
+        "properties": {
+          "customerId": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 1
+          },
+          "status": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lines": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/OrderLine"
+            },
+            "minItems": 1
+          }
+        }
+      },
+      "ParametersOne": {
+        "type": "object",
+        "required": [
+          "one"
+        ],
+        "properties": {
+          "one": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "ParametersTwo": {
+        "type": "object",
+        "required": [
+          "one",
+          "two"
+        ],
+        "properties": {
+          "one": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "two": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "Payload": {
+        "type": "object",
+        "description": "items.small, items.medium or items.large.",
+        "required": [
+          "size",
+          "count",
+          "items"
+        ],
+        "properties": {
+          "size": {
+            "type": "string"
+          },
+          "count": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Item"
+            }
+          }
+        }
+      },
+      "QueryOne": {
+        "type": "object",
+        "required": [
+          "page"
+        ],
+        "properties": {
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "RequestValidationError": {
+        "type": "object",
+        "description": "How a request that failed validation is answered.",
+        "required": [
+          "type",
+          "message",
+          "errors"
+        ],
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "field",
+                "code",
+                "message"
+              ],
+              "properties": {
+                "field": {
+                  "type": "string"
+                },
+                "code": {
+                  "type": "string"
+                },
+                "message": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "Search": {
+        "type": "object",
+        "description": "query.many's eight values, which forms.urlencoded posts as a form. Hardened binds it one field per member, from the query string or from the form, by the member's camelCase name.",
+        "required": [
+          "page",
+          "size",
+          "status",
+          "category",
+          "sort",
+          "q",
+          "minPrice",
+          "maxPrice"
+        ],
+        "properties": {
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "status": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "sort": {
+            "type": "string"
+          },
+          "q": {
+            "type": "string"
+          },
+          "minPrice": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "maxPrice": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "UploadEcho": {
+        "type": "object",
+        "required": [
+          "tenant",
+          "requestId"
+        ],
+        "properties": {
+          "tenant": {
+            "type": "string"
+          },
+          "requestId": {
+            "type": "string"
+          }
+        }
+      },
+      "Uploaded": {
+        "type": "object",
+        "required": [
+          "file",
+          "echo"
+        ],
+        "properties": {
+          "file": {
+            "$ref": "#/components/schemas/UploadedFile"
+          },
+          "echo": {
+            "$ref": "#/components/schemas/UploadEcho"
+          }
+        }
+      },
+      "UploadedFile": {
+        "type": "object",
+        "required": [
+          "name",
+          "bytes"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "bytes": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  }
+}

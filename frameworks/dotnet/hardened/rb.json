@@ -1,0 +1,98 @@
+{
+  "comment": "Hardened 0.40.0-rc1000 on .NET 10, laid out as Hardened's hardened-web template lays out an application. Implementation/ is the library, whose module ImplementationLibrary holds every route, and each host's directory holds a host project that imports it under that host's attribute and starts it. container-h1 and container-h2 run Hardened's Kestrel host, which runs no ASP.NET Core pipeline. lambda-emulator runs Hardened's own API Gateway payload format 2.0 adapter as a Native AOT executable. Every version is in Directory.Packages.props, and each project's packages.lock.json records what it resolved. The suite is UnitTests/, xunit.v3 under Hardened's [ModuleTest], and never reaches an image. upgrade is null because dotnet package update moves every package to its newest release, majors included, and nothing narrows it to patch and minor. Hardened releases on one 0.N.0-rc1000 line, so each release is a major one.",
+  "framework": "Hardened",
+  "licence": "MIT",
+  "repo": "https://github.com/ipjohnson/Hardened.Framework",
+  "package": "https://www.nuget.org/packages/Hardened.Web.Runtime",
+  "docs": "https://ipjohnson.github.io/Hardened.Framework/",
+  "lockfile": [
+    "Implementation/packages.lock.json",
+    "container-h1/packages.lock.json",
+    "container-h2/packages.lock.json",
+    "lambda-emulator/packages.lock.json"
+  ],
+  "hosts": {
+    "container-h1": { "dockerfile": "container-h1/Dockerfile" },
+    "container-h2": { "dockerfile": "container-h2/Dockerfile" },
+    "lambda-emulator": {
+      "dockerfile": "lambda-emulator/Dockerfile",
+      "unsupported": {
+        "sse.medium": "Hardened's Lambda adapter answers in its buffered mode, the default, so the events arrive as one body.",
+        "stream.ndjson": "Hardened's Lambda adapter answers in its buffered mode, the default, so the rows arrive as one body."
+      }
+    }
+  },
+  "suite": { "argv": ["dotnet", "test", "UnitTests"], "paths": ["UnitTests"] },
+  "upgrade": null,
+  "client": {
+    "document": "Client/openapi.json",
+    "writer": "Hardened.Web.SourceGenerator 0.40.0-rc1000, through <HardenedOpenApiOutput> on dotnet build",
+    "generator": "Kiota 1.34.1, a .NET local tool that Client.csproj runs, which Hardened's hardened-web template generates its client with",
+    "argv": ["dotnet", "build", "Client"]
+  },
+  "noHandler": {
+    "cors.preflight": "Hardened's CORS filter answers the preflight before routing, with the policy [Cors<Shop>] names on the route, and no handler runs.",
+    "errors.unmatched": "The routing table answers a path no route matches with 404 and no body.",
+    "errors.wrong_method": "The routing table answers a method the path has no route for with 405, an Allow header and no body."
+  },
+  "mechanisms": {
+    "authorized": {
+      "mechanism": "Hardened's authorization: [Authorize<BearerAuth>] and [AuthorizeGrants] on the route, over a principal source of the application's own that gives the grant to settings.json's bearer token alone",
+      "mentions": "IPrincipalSource"
+    },
+    "baseline": { "builtin": "The handler returns the text, which [Produces(\"text/plain\")] writes unchanged." },
+    "body": {
+      "mechanism": "Hardened's validation: constraint attributes on the order, which Hardened.Validation.SourceGenerator compiles into a check that runs before the handler. The bind routes mark the order [ValidateNever], and the first-error route declares [ValidationMode(ValidationStopMode.StopOnFirstError)]",
+      "dependency": "Hardened.Validation.SourceGenerator",
+      "mentions": "Range"
+    },
+    "cache": {
+      "mechanism": "Hardened's response cache over the in-memory store [HardenedMemoryResponseCache] registers, put on the cache routes with AddGlobalFilter because [CacheResponse<T>] takes its lifetime and vary headers as constants. VaryByHeader keys the vary routes on their headers",
+      "dependency": "Hardened.Requests.Caching.Memory",
+      "mentions": "HardenedMemoryResponseCache"
+    },
+    "compressed": {
+      "mechanism": "Hardened's response compression, [Compress] on the two routes, at gzip's fastest level",
+      "mentions": "ConfigureCompression"
+    },
+    "cors": {
+      "mechanism": "Hardened's CORS filter, with a policy registered from settings.json by AddCorsPolicy<Shop> and required on the /cors route alone by [Cors<Shop>]",
+      "mentions": "AddCorsPolicy"
+    },
+    "errors": {
+      "builtin": "The routing table answers a miss with 404 and a method a path lacks with 405, both with no body. The binder refuses a body it cannot read with the validation 400, and the items handlers return NotFound for a missing row."
+    },
+    "etag": {
+      "builtin": "[ConditionalGet] on each route: Hardened's conditional GET filter hashes the body with SHA-256 and answers a matching If-None-Match with 304."
+    },
+    "forms": {
+      "builtin": "Hardened's form binding: [FromForm] binds the urlencoded fields into the Search model, one field per member, and the multipart fields and the IFormFile by name."
+    },
+    "headers": { "builtin": "[FromHeader] binds each header by name, the account as an int." },
+    "items": { "builtin": "One route per method on /items/{id:int}, the id bound from the path token as an int. The GET route answers HEAD too." },
+    "json": {
+      "mechanism": "A source-generated JsonSerializerContext registered as an IJsonTypeInfoResolver, which every serializer in Hardened's pipeline asks before reflection",
+      "mentions": "JsonContext"
+    },
+    "middleware": {
+      "mechanism": "A filter attribute of the application's own, [Layers(n)], which puts n no-op filters on the route",
+      "mentions": "IExecutionFilter"
+    },
+    "parameters": { "builtin": "Path tokens bound to the handler parameters of the same name, as ints." },
+    "query": {
+      "builtin": "[FromQueryString] binds query.one's page, and query.many's eight values into the Search model, one value per member."
+    },
+    "sse": { "builtin": "[ServerSentEvents] frames the IAsyncEnumerable the handler returns as server-sent events, one row per event." },
+    "static": {
+      "mechanism": "Hardened.Web.StaticContent's mount, [HardenedStaticContent] under /static, over the payload directory ConfigureStaticContent sets",
+      "dependency": "Hardened.Web.StaticContent",
+      "mentions": "StaticContent"
+    },
+    "stream": { "builtin": "The handler returns an IAsyncEnumerable, which Hardened writes as NDJSON, flushing each row." },
+    "template": {
+      "mechanism": "A RazorBlade view named by [Output<T>], built on the base class [Enable<RazorTemplates>] generates",
+      "dependency": "Hardened.Templates.RazorBlade",
+      "mentions": "RazorTemplates"
+    }
+  }
+}

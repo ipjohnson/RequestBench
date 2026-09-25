@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- The host container-h2 runs: Hardened's Kestrel host, which runs no ASP.NET Core pipeline,
+       over Implementation. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Hardened.Shared.Runtime" />
+    <PackageReference Include="Hardened.Web.Runtime" />
+    <PackageReference Include="Hardened.Web.Kestrel.Runtime" />
+    <PackageReference Include="Hardened.Library.SourceGenerator" />
+    <PackageReference Include="Hardened.Web.SourceGenerator" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Implementation/Implementation.csproj" />
+  </ItemGroup>
+</Project>

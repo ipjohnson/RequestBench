@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- The application as a library, as Hardened's hardened-web template writes one. Each host's
+       directory holds a project that imports it under that host's attribute and starts it. -->
+  <PropertyGroup>
+    <!-- The trim and AOT analyzers, because lambda-emulator publishes this library natively. -->
+    <IsAotCompatible>true</IsAotCompatible>
+    <!-- After each compile, the build writes the document the library serves to Client/. The
+         images copy no Client/, so their builds write nothing. -->
+    <HardenedOpenApiOutput Condition="Exists('../Client/Client.csproj')">../Client/openapi.json</HardenedOpenApiOutput>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Hardened.Shared.Runtime" />
+    <PackageReference Include="Hardened.Web.Runtime" />
+    <PackageReference Include="Hardened.Library.SourceGenerator" />
+    <PackageReference Include="Hardened.Web.SourceGenerator" />
+    <PackageReference Include="Hardened.Validation.SourceGenerator" />
+    <PackageReference Include="Hardened.Requests.Caching.Memory" />
+    <PackageReference Include="Hardened.Web.StaticContent" />
+    <PackageReference Include="Hardened.Templates.RazorBlade" />
+    <PackageReference Include="RazorBlade" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- The function lambda-emulator runs: Hardened's API Gateway payload format 2.0 adapter over
+       Implementation, published as a Native AOT executable that is the function's bootstrap. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <PublishAot>true</PublishAot>
+    <!-- The image publishes for linux-x64 or linux-arm64 from a restore locked to
+         packages.lock.json, so every restore resolves the ILCompiler packages for both. Without
+         UseDefaultPublishRuntimeIdentifier the restore would add the machine's own runtime, and the
+         lock file would differ between machines. -->
+    <RuntimeIdentifiers>linux-x64;linux-arm64</RuntimeIdentifiers>
+    <UseDefaultPublishRuntimeIdentifier>false</UseDefaultPublishRuntimeIdentifier>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Hardened.Shared.Runtime" />
+    <PackageReference Include="Hardened.Web.Runtime" />
+    <PackageReference Include="Hardened.Aws.Lambda.Runtime" />
+    <PackageReference Include="Hardened.Aws.Lambda.Http" />
+    <PackageReference Include="Hardened.Library.SourceGenerator" />
+    <PackageReference Include="Hardened.Web.SourceGenerator" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Implementation/Implementation.csproj" />
+  </ItemGroup>
+</Project>

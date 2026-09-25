@@ -1,0 +1,51 @@
+<Project>
+  <!-- One list of versions for every project, as Hardened's templates keep it. Every Hardened
+       package is on one version line, because the generated code and the runtime it calls ship
+       together. -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <HardenedVersion>0.40.0-rc1000</HardenedVersion>
+    <!-- The DependencyModules line Hardened.Shared.Testing depends on. The test runner has to be
+         on the same one. -->
+    <DependencyModulesVersion>1.7.0</DependencyModulesVersion>
+  </PropertyGroup>
+
+  <ItemGroup Label="Hardened">
+    <PackageVersion Include="Hardened.Shared.Runtime" Version="$(HardenedVersion)" />
+    <PackageVersion Include="Hardened.Web.Runtime" Version="$(HardenedVersion)" />
+    <PackageVersion Include="Hardened.Library.SourceGenerator" Version="$(HardenedVersion)" />
+    <PackageVersion Include="Hardened.Web.SourceGenerator" Version="$(HardenedVersion)" />
+    <PackageVersion Include="Hardened.Validation.SourceGenerator" Version="$(HardenedVersion)" />
+    <PackageVersion Include="Hardened.Requests.Caching.Memory" Version="$(HardenedVersion)" />
+    <PackageVersion Include="Hardened.Web.StaticContent" Version="$(HardenedVersion)" />
+    <PackageVersion Include="Hardened.Templates.RazorBlade" Version="$(HardenedVersion)" />
+    <!-- The version Hardened.Templates.RazorBlade is built against. RazorBlade's build files do
+         not flow through that package, so Implementation references it directly. -->
+    <PackageVersion Include="RazorBlade" Version="1.0.0" />
+  </ItemGroup>
+
+  <ItemGroup Label="Hosts">
+    <PackageVersion Include="Hardened.Web.Kestrel.Runtime" Version="$(HardenedVersion)" />
+    <PackageVersion Include="Hardened.Aws.Lambda.Runtime" Version="$(HardenedVersion)" />
+    <PackageVersion Include="Hardened.Aws.Lambda.Http" Version="$(HardenedVersion)" />
+  </ItemGroup>
+
+  <ItemGroup Label="Client">
+    <!-- The runtime the Kiota tool in .config/dotnet-tools.json generates against. The two move
+         together, and Hardened's template pins this pair. -->
+    <PackageVersion Include="Microsoft.Kiota.Bundle" Version="2.0.0" />
+  </ItemGroup>
+
+  <ItemGroup Label="Testing">
+    <PackageVersion Include="Hardened.Shared.Testing" Version="$(HardenedVersion)" />
+    <PackageVersion Include="Hardened.Web.Testing" Version="$(HardenedVersion)" />
+    <PackageVersion Include="Hardened.Web.Kestrel.Testing" Version="$(HardenedVersion)" />
+    <PackageVersion Include="Hardened.Kiota.Testing" Version="$(HardenedVersion)" />
+    <PackageVersion Include="DependencyModules.xUnit4" Version="$(DependencyModulesVersion)" />
+    <!-- xunit.v3 4.x without Microsoft.Testing.Platform v2, which refuses the VSTest `dotnet test`
+         on the .NET 10 SDK. Hardened's own tests take the same package. -->
+    <PackageVersion Include="xunit.v3.mtp-off" Version="4.0.1" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="4.0.0" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.10.1" />
+  </ItemGroup>
+</Project>
