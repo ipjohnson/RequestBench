@@ -1,7 +1,7 @@
 // What the tests are and what each host is, straight from the corpus and the orchestrator,
 // rather than restated here.
 import { HOSTS } from "../../../orchestrator/hosts.ts";
-import type { TestsView } from "./bundleview.ts";
+import { permalink, type TestsView, type TestView } from "./bundleview.ts";
 import type { HostNote, Route } from "./types.ts";
 
 /**
@@ -87,3 +87,34 @@ export function readAgainst(tests: TestsView): Map<string, string[]> {
 /** Where a family's page is, from a page at the site's root or from one a directory below it. */
 export const familyPage = (family: string, from: "root" | "below"): string =>
   `${from === "root" ? "" : "../"}tests/${family}.html`;
+
+/** Links into the corpus's files at its commit. Each is null when that commit cannot be linked. */
+export function corpusLinks(corpus: { view: TestsView; repo: string; linkable: boolean }): {
+  link: (file: string) => string | null;
+  payloadHref: (name: string) => string | null;
+} {
+  const commit = corpus.view.bundle.commit;
+  const link = (file: string): string | null => (corpus.linkable ? permalink(corpus.repo, commit, file) : null);
+  const files = new Set(corpus.view.bundle.files.map((f) => f.path));
+  // A payload with a committed file links to it. A computed one, such as a row, has none.
+  const payloadHref = (name: string): string | null => {
+    const file = [`tests/payloads/${name}`, `tests/payloads/${name}.json`].find((f) => files.has(f));
+    return file ? link(file) : null;
+  };
+  return { link, payloadHref };
+}
+
+/** What a reader is told once above these tests, each note only where one of them needs it. */
+export function legendOf(tests: readonly TestView[]): string[] {
+  const shown = tests.flatMap((t) =>
+    t.calls.flatMap((c) => [c.target, ...c.headers.map((h) => h.value), c.body?.text ?? "", c.expect?.text ?? ""]),
+  );
+  return [
+    shown.some((s) => s.includes("{run.")) &&
+      "A value written {run.name} is drawn once per run and never given to the framework, so it cannot answer from a table.",
+    shown.some((s) => s.includes("{draw.item}")) && "{draw.item} is a row of items.large, picked per request.",
+    tests.some((t) => t.calls.some((c) => c.declared)) &&
+      "A refusal's status is written 4XX. Frameworks refuse with different statuses, so each declares its own in its " +
+        "client-exception, and the test reads it from there.",
+  ].filter((s): s is string => typeof s === "string");
+}

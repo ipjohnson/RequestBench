@@ -1,9 +1,9 @@
-// The tests pages' order: each family in the corpus's order, and each base before the tests
-// read against it.
+// The tests pages: each family in the corpus's order, each base before the tests read against
+// it, the notes above a family's tests, and the links into the corpus.
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
-import { TestsView } from "../src/lib/bundleview.ts";
-import { familiesOf, familyPage, readAgainst } from "../src/lib/corpus.ts";
+import { TestsView, TestView } from "../src/lib/bundleview.ts";
+import { corpusLinks, familiesOf, familyPage, legendOf, readAgainst } from "../src/lib/corpus.ts";
 
 const one = (family: string, base?: string, kind = "performance") => ({
   kind,
@@ -67,4 +67,46 @@ test("readAgainst names the tests read against each base, across families", () =
 test("familyPage is relative to the page that links it", () => {
   assert.equal(familyPage("json", "root"), "tests/json.html");
   assert.equal(familyPage("json", "below"), "../tests/json.html");
+});
+
+describe("legendOf", () => {
+  const call = (target: string, more: Record<string, unknown> = {}) => ({ method: "GET", target, headers: [], status: "200", checks: [], ...more });
+  const calling = (...calls: ReturnType<typeof call>[]) => TestView.parse({ ...one("x"), calls });
+
+  test("says nothing when no test needs it", () => {
+    assert.deepEqual(legendOf([calling(call("/json/small"))]), []);
+  });
+
+  test("explains a value drawn per run, a drawn row and a declared refusal, once each", () => {
+    const legend = legendOf([
+      calling(call("/query?q={run.word}")),
+      calling(call("/items/1", { body: { text: "{draw.item}", bytes: 11, truncated: false } })),
+      calling(call("/body/validate", { status: "4XX", declared: "badRequest" }), call("/x?y={run.word}")),
+    ]);
+    assert.equal(legend.length, 3);
+    assert.match(legend[0]!, /\{run\.name\}/);
+    assert.match(legend[1]!, /\{draw\.item\}/);
+    assert.match(legend[2]!, /4XX/);
+  });
+});
+
+describe("corpusLinks", () => {
+  const files = ["tests/payloads/small.json", "tests/payloads/items.csv"].map((path) => ({ path, role: "payload", bytes: 1, hash: "h" }));
+  const payloads = TestsView.parse({
+    bundle: { bundleVersion: "1", id: "tests", commit: "c0ffee", bundleHash: "h", codeHash: "h", files },
+    tests: {},
+  });
+
+  test("links a committed payload by either name, and not one computed per request", () => {
+    const { payloadHref } = corpusLinks({ view: payloads, repo: "ipjohnson/RequestBench", linkable: true });
+    assert.equal(payloadHref("small"), "https://github.com/ipjohnson/RequestBench/blob/c0ffee/tests/payloads/small.json");
+    assert.equal(payloadHref("items.csv"), "https://github.com/ipjohnson/RequestBench/blob/c0ffee/tests/payloads/items.csv");
+    assert.equal(payloadHref("row"), null);
+  });
+
+  test("links nothing at a commit that cannot be linked", () => {
+    const { link, payloadHref } = corpusLinks({ view: payloads, repo: "ipjohnson/RequestBench", linkable: false });
+    assert.equal(link("tests/json/small.ts"), null);
+    assert.equal(payloadHref("small"), null);
+  });
 });

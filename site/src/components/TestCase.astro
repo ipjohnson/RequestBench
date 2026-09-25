@@ -1,0 +1,74 @@
+---
+// One test as the tests pages show it: what it asks, each call's request and the checks on its
+// answer, and the test's own source.
+import type { TestView } from "../lib/bundleview.ts";
+import TestCall from "./TestCall.astro";
+
+type Props = {
+  id: string;
+  t: TestView;
+  /** The tests read against this one. */
+  readBy: string[];
+  /** Where another test is, from the page this one is on. */
+  hrefOf: (id: string) => string;
+  link: (file: string) => string | null;
+  payloadHref: (name: string) => string | null;
+};
+
+const { id, t, readBy, hrefOf, link, payloadHref } = Astro.props;
+const source = link(t.source.path);
+const primed = (p: { reads: readonly string[] }): string => (p.reads.length ? ` and reads ${p.reads.join(" and ")}` : "");
+---
+
+<section class="panel tcase" id={id}>
+  <div class="tcasehead">
+    <h2>{id}</h2>
+    {
+      t.kind !== "performance" && (
+        <span class="pill" title="A validation test: rb validate checks it, and nothing measures it.">
+          not measured
+        </span>
+      )
+    }
+  </div>
+  {
+    (t.base || readBy.length > 0) && (
+      <p class="tmeta">
+        {t.base && (
+          <span>
+            base <a href={hrefOf(t.base)}>{t.base}</a>
+          </span>
+        )}
+        {readBy.length > 0 && (
+          <span>
+            base of{" "}
+            {readBy.map((other, i) => (
+              <>
+                {i > 0 && ", "}
+                <a href={hrefOf(other)}>{other}</a>
+              </>
+            ))}
+          </span>
+        )}
+      </p>
+    )
+  }
+  <p class="tabout">{t.about}</p>
+  {
+    t.primes.map((p) => (
+      <p class="hint">
+        Before this request, the test sends <code>{`${p.method} ${p.target}`}</code> once{primed(p)}. That request is not
+        measured.
+      </p>
+    ))
+  }
+  {t.calls.map((call) => <TestCall call={call} payloadHref={payloadHref} />)}
+  <details class="tsource">
+    <summary>Test source, {t.source.path}</summary>
+    <div class="sniphead">
+      <span class="loc">{t.source.path}</span>
+      {source && <a href={source}>open on GitHub &rarr;</a>}
+    </div>
+    <pre class="code">{t.source.text}</pre>
+  </details>
+</section>

@@ -1,9 +1,11 @@
 ---
-// The corpus: a card per family, each opening the family's page with every test's request and
-// the checks on its answer.
+// The corpus: a card per family. A card opens the family's tests below its row, each with its
+// request and the checks on its answer. Without a script, or with a modifier key, it opens the
+// family's own page instead.
 import Shell from "../components/Shell.astro";
+import TestCase from "../components/TestCase.astro";
 import "../styles/tests.css";
-import { familiesOf, familyPage } from "../lib/corpus.ts";
+import { corpusLinks, familiesOf, familyPage, legendOf, readAgainst } from "../lib/corpus.ts";
 import { site } from "../lib/site.ts";
 
 const { corpus } = site();
@@ -12,6 +14,10 @@ const total = families.reduce((n, f) => n + f.ids.length, 0);
 const measured = families.reduce((n, f) => n + f.measured, 0);
 const commit = corpus?.view.bundle.commit.slice(0, 12) ?? "";
 const plural = (n: number, word: string): string => `${n} ${word}${n === 1 ? "" : "s"}`;
+const links = corpus ? corpusLinks(corpus) : null;
+const against = corpus ? readAgainst(corpus.view) : new Map<string, string[]>();
+/** Every test is on this page, in its family's section. */
+const hrefOf = (id: string): string => `#${id}`;
 ---
 
 <Shell
@@ -24,7 +30,7 @@ const plural = (n: number, word: string): string => `${n} ${word}${n === 1 ? "" 
   <p class="crumb"><a href="index.html">&larr; results</a></p>
   <h1>Tests</h1>
   {
-    corpus ? (
+    corpus && links ? (
       <>
         <p class="lede">
           Every framework is sent the same {total} tests in {families.length} families. A test is one
@@ -32,26 +38,49 @@ const plural = (n: number, word: string): string => `${n} ${word}${n === 1 ? "" 
           after it passes all {measured} performance tests.
         </p>
         <p class="legend-note">
-          Most tests are read against another test, their base, and differ from it in one thing. A
-          family's page shows each test's request, the answer it expects, and what the difference
-          from its base measures.
+          Most tests are read against another test, their base, and differ from it in one thing. Open a
+          family for each test's request, the answer it expects, and what the difference from its base
+          measures.
         </p>
         <div class="famgrid">
-          {families.map((f) => (
-            <a class="famcard" href={familyPage(f.name, "root")}>
-              <h2>{f.name}</h2>
-              <p class="famcount">
-                {plural(f.ids.length, "test")}
-                {f.measured < f.ids.length && `, ${f.ids.length - f.measured} not measured`}
-              </p>
-              <p class="famabout">{f.about}</p>
-              <p class="famtests">{f.ids.map((id) => id.slice(f.name.length + 1)).join(" · ")}</p>
-            </a>
-          ))}
+          {families.map((f) => {
+            const tests = f.ids.map((id) => ({ id, t: corpus.view.tests[id]! }));
+            const legend = legendOf(tests.map(({ t }) => t));
+            return (
+              <>
+                <a class="famcard" id={f.name} href={familyPage(f.name, "root")} data-family={f.name}>
+                  <h2>{f.name}</h2>
+                  <p class="famcount">
+                    {plural(f.ids.length, "test")}
+                    {f.measured < f.ids.length && `, ${f.ids.length - f.measured} not measured`}
+                  </p>
+                  <p class="famabout">{f.about}</p>
+                  <p class="famtests">{f.ids.map((id) => id.slice(f.name.length + 1)).join(" · ")}</p>
+                </a>
+                <div class="famopen" id={`${f.name}-tests`} role="region" aria-label={`${f.name} tests`} data-tests={f.name} hidden>
+                  {legend.length > 0 && <p class="legend-note">{legend.join(" ")}</p>}
+                  {tests.map(({ id, t }) => (
+                    <TestCase id={id} t={t} readBy={against.get(id) ?? []} hrefOf={hrefOf} link={links.link} payloadHref={links.payloadHref} />
+                  ))}
+                  <p class="famfoot">
+                    <a href={familyPage(f.name, "root")}>{f.name} on its own page</a>
+                    <button type="button" class="chip sm" data-close={f.name}>
+                      Close {f.name}
+                    </button>
+                  </p>
+                </div>
+              </>
+            );
+          })}
         </div>
       </>
     ) : (
       <div class="note">The build could not read the corpus, so there are no tests to show. It says why in its log.</div>
     )
   }
+  <script>
+    import { start } from "../client/families.ts";
+
+    start();
+  </script>
 </Shell>
