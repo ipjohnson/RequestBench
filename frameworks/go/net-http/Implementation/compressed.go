@@ -18,8 +18,8 @@ func compressedRoutes(mux *http.ServeMux, p *Payloads) {
 }
 
 // rb:wiring compressed.*
-// writers are gzip writers at the fastest level, kept for the next answer, which Reset points
-// one at.
+// writers holds gzip writers at the fastest level between answers. Reset points one at the next
+// answer.
 var writers = sync.Pool{New: func() any {
 	w, _ := gzip.NewWriterLevel(nil, gzip.BestSpeed)
 	return w

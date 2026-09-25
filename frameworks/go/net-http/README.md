@@ -53,8 +53,8 @@ corpus id it covers, so `go test ./UnitTests -run '/json.small'` runs one.
 | body | encoding/json decodes the order. On the validate routes the handler checks the order's rules itself, and `errors.Join` puts each broken rule on a line of its own. | encoding/json, by hand |
 | authorized | A handler wrapped around the route compares the bearer token and refuses any other with `http.Error` and 403. | by hand |
 | cache | A handler wrapped around each cache route replays a stored answer, or stores what the handler wrote. | by hand |
-| compressed | A handler wrapped around the `/compressed` routes gzips the answer with compress/gzip at its fastest level. | compress/gzip |
-| etag | The handler hashes the encoded body with SHA-1 for the ETag, and `ServeContent` answers 304 when `If-None-Match` names it. | net/http |
+| compressed | A handler wrapped around the `/compressed` routes gzips the answer with compress/gzip at its fastest level. | compress/gzip, by hand |
+| etag | The handler hashes the encoded body with SHA-1 for the ETag, and `ServeContent` answers 304 when `If-None-Match` names it. | net/http, by hand |
 | template | html/template, embedded with `go:embed`, parsed once, and executed into the response. | html/template |
 | items | One pattern per method on `/items/{id}`. The GET pattern answers HEAD too. | net/http |
 | errors | The ServeMux's 404 and 405, the decoder's 400, and net/http's `NotFound` for a missing row. | net/http |

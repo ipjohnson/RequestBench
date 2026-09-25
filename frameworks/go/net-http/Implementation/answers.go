@@ -19,7 +19,7 @@ func respond(w http.ResponseWriter, status int, value any) {
 }
 
 // refuse answers a request that could not be bound: 400, and the error's own text under error.
-// net/http's http.Error writes text, and a refused body is answered in JSON like every other.
+// http.Error would write the text as text/plain, and the corpus reads a refused body as JSON.
 func refuse(w http.ResponseWriter, err error) {
 	respond(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 }
