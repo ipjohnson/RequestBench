@@ -2,7 +2,7 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 import { fileURLToPath } from "node:url";
-import { permalink, pick, siteView, snippetDoc, unlinkedWhy, verdictOf, type FrameworkView } from "../src/lib/bundleview.ts";
+import { commitUrl, permalink, pick, siteView, snippetDoc, unlinkedWhy, verdictOf, type FrameworkView } from "../src/lib/bundleview.ts";
 
 const ROOT = fileURLToPath(new URL("../..", import.meta.url));
 
@@ -128,6 +128,12 @@ describe("permalink", () => {
     assert.equal(at("a.ts", 3, 9), "https://github.com/ipjohnson/RequestBench/blob/abc/a.ts#L3-L9");
     assert.equal(at("a.ts", 30, 30), "https://github.com/ipjohnson/RequestBench/blob/abc/a.ts#L30");
     assert.equal(at("tests/json/small.ts"), "https://github.com/ipjohnson/RequestBench/blob/abc/tests/json/small.ts");
+  });
+});
+
+describe("commitUrl", () => {
+  test("opens the commit's page", () => {
+    assert.equal(commitUrl("ipjohnson/RequestBench", "abc"), "https://github.com/ipjohnson/RequestBench/commit/abc");
   });
 });
 

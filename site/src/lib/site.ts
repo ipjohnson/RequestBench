@@ -3,7 +3,9 @@
 // Astro imports each page module separately, so this is memoised: the summaries are parsed,
 // the exemplars are trimmed and `rb siteview` is run once for the whole build rather than once
 // per page.
+import { pushed, repoSlug, resolveCommit } from "../../../orchestrator/git.ts";
 import {
+  commitUrl,
   pick,
   siteView,
   snippetDoc,
@@ -52,6 +54,11 @@ export type FrameworkPage = {
 
 export type Site = {
   config: BuildConfig;
+  /**
+   * The commit the build was made from, with a link when a remote branch holds it. Null when git
+   * could not say.
+   */
+  builtFrom: { commit: string; href: string | null } | null;
   runs: Run[];
   /** Each run as its file held it, which is what the data directory publishes. */
   raw: Map<string, unknown>;
@@ -195,6 +202,7 @@ function read(): Site {
 
   return {
     config,
+    builtFrom: builtFrom(config.root, notes),
     runs,
     raw: loaded.raw,
     wire,
@@ -215,6 +223,18 @@ function read(): Site {
       pages: pagesByHost(pages),
     },
   };
+}
+
+/** HEAD, which in the pages workflow is the commit it checked out. */
+function builtFrom(root: string, notes: string[]): Site["builtFrom"] {
+  try {
+    const commit = resolveCommit(root);
+    const repo = repoSlug(root);
+    return { commit, href: repo && pushed(root, commit) ? commitUrl(repo, commit) : null };
+  } catch (error) {
+    notes.push(`the explorer names no commit: ${(error as Error).message}`);
+    return null;
+  }
 }
 
 /** Each host's pages, by framework, as the explorer looks a row's page up. */
