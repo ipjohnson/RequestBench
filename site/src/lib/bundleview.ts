@@ -258,6 +258,8 @@ export function permalink(repo: string, commit: string, file: string, start?: nu
   return `https://github.com/${repo}/blob/${commit}/${file}${frag}`;
 }
 
+export const commitUrl = (repo: string, commit: string): string => `https://github.com/${repo}/commit/${commit}`;
+
 /** One range: where it is, whether it links, and what it says. */
 export type CodePart = { f: string; s: number; e: number; h: string; u: string | null; t: string };
 

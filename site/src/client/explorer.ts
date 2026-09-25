@@ -4,7 +4,6 @@
 // into the page and wires the controls. The one rule it keeps is that a render is a function
 // of the state and nothing else, so the hash reproduces the view exactly.
 import { blendNamed, entriesOf, isBlend, labelOf, sharesOf, testsOfPick, weightsOf, type BlendId } from "../lib/blends.ts";
-import { provenance } from "../lib/catalog.ts";
 import { esc } from "../lib/html.ts";
 import { cell, METRICS, type Unit } from "../lib/metrics.ts";
 import type { PageData } from "../lib/page-data.ts";
@@ -34,9 +33,7 @@ export async function start(rb: PageData): Promise<void> {
       `Could not read the results catalog at ${source.base.href}: ` + `${e instanceof Error ? e.message : String(e)}`;
     return;
   }
-  const { eyebrow, runs } = provenance(data.catalog);
-  el("provenance").textContent = eyebrow;
-  el("nruns").textContent = String(runs);
+  el("nruns").textContent = String(data.catalog.runs.length);
   new Explorer(rb, data).start();
 }
 

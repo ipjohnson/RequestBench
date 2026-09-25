@@ -6,15 +6,15 @@
 // ship forty copies of one number.
 import Shell from "../components/Shell.astro";
 import { BLENDS, labelOf } from "../lib/blends.ts";
-import { provenance } from "../lib/catalog.ts";
 import { jsonScript } from "../lib/html.ts";
 import { site } from "../lib/site.ts";
 
-const { pageData, config } = site();
-// What this build knows. A build pointed at another results site knows nothing yet, and the
-// explorer rewrites both of these once that site's catalog arrives.
-const { eyebrow, runs } = provenance(pageData.boot.catalog);
+const { pageData, config, builtFrom } = site();
+// A build pointed at another results site has no runs yet, and the explorer rewrites the count
+// once that site's catalog arrives.
+const runs = pageData.boot.catalog.runs.length;
 const built = new Date().toISOString().slice(0, 16).replace("T", " ") + " UTC";
+const commit = builtFrom?.commit.slice(0, 12);
 ---
 
 <Shell
@@ -24,7 +24,12 @@ const built = new Date().toISOString().slice(0, 16).replace("T", " ") + " UTC";
   footerLeft="github.com/ipjohnson/RequestBench"
   footerRight={`<span id="nruns">${runs}</span> runs &middot; raw histograms in the run files`}
 >
-  <p class="eyebrow"><span id="provenance">{eyebrow}</span> &middot; built {built}</p>
+  <p class="eyebrow">
+    <span>
+      built {built}
+      {builtFrom && <>{" "}&middot; commit {builtFrom.href ? <a href={builtFrom.href}>{commit}</a> : commit}</>}
+    </span>
+  </p>
   <h1>RequestBench Results</h1>
   <p class="lede">
     Every framework in a run shares one machine and one window, so these are real latencies and

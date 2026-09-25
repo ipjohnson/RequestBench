@@ -73,25 +73,6 @@ export function buildCatalog(runs: Run[], wire: Record<string, WireDoc>, codeKey
   };
 }
 
-/** A version hash as a reader can compare it: the first twelve hex digits. */
-export const shortHash = (v: string): string => v.replace(/^sha256:/, "").slice(0, 12);
-
-/**
- * Which ladder and corpus the page is showing, and how many runs it is showing.
- *
- * Read from the catalog rather than written here, because a page whose results live on
- * another site has no runs at build time and would otherwise say "no runs" above a table of
- * them.
- */
-export function provenance(catalog: Catalog): { eyebrow: string; runs: number } {
-  const ladders = [...new Set(catalog.runs.map((r) => r.ladder).filter(Boolean))].sort();
-  const corpora = [...new Set(catalog.runs.map((r) => r.corpus).filter(Boolean))].map(shortHash).sort();
-  return {
-    eyebrow: ladders.length ? `${ladders.join(" + ")} · corpus ${corpora.join(", ")}` : "no runs",
-    runs: catalog.runs.length,
-  };
-}
-
 /**
  * The newest run per host.
  *

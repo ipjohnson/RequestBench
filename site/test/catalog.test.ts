@@ -1,8 +1,8 @@
-// What the catalog says about each run, and what the page says the catalog holds.
+// What the catalog says about each run, and which runs the page embeds.
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 import { BUCKETS, GROWTH } from "../../traffic-generator/histogram.ts";
-import { buildCatalog, newestPerHost, provenance, runEntry } from "../src/lib/catalog.ts";
+import { newestPerHost, runEntry } from "../src/lib/catalog.ts";
 import type { Run } from "../src/lib/types.ts";
 
 const run = (id: string, host?: string): Run => ({
@@ -50,17 +50,6 @@ describe("runEntry", () => {
     assert.equal(runEntry(measured).hist, "");
     measured.histGrid = { growth: GROWTH, count: BUCKETS };
     assert.equal(runEntry(measured).hist, "2026-09-21T2331Z.x.hist.json.gz");
-  });
-});
-
-describe("provenance", () => {
-  test("names the ladder and the corpus version the page is showing", () => {
-    const c = buildCatalog([run("a", "container-h1")], {}, [], "");
-    assert.deepEqual(provenance(c), { eyebrow: "ladder-v1 · corpus e0135cc870db", runs: 1 });
-  });
-
-  test("an empty catalog says so", () => {
-    assert.deepEqual(provenance(buildCatalog([], {}, [], "")), { eyebrow: "no runs", runs: 0 });
   });
 });
 
