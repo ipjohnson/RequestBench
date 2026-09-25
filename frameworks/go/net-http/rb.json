@@ -1,0 +1,67 @@
+{
+  "comment": "Go 1.27's net/http with no framework, one function per family registering its routes on a ServeMux in the implementation package under Implementation/, and each host's main package in the host's directory. On lambda-emulator the ServeMux answers behind aws-lambda-go-api-proxy's httpadapter, its adapter for a plain http.Handler. Those two Lambda modules are the only ones go.mod requires. The suite is UnitTests/, go test over the ServeMux served by net/http/httptest, and never reaches the image. Each family uses the standard library where it has something (ServeMux patterns, url.Values, encoding/json, html/template, ServeContent, FileServerFS, compress/gzip) and code written for the family where it has nothing: the order's rules, the bearer check, CORS, the gzip wrapper and the response cache. A refusal is 400 with the error's text under error, written with encoding/json's encoder, because the corpus reads a refused body as JSON and http.Error writes text. version in /__meta is the Go release, which net/http ships with. The lockfile is go.mod, which records every module version the build selects, and go.sum, which holds their hashes. upgrade is go get -u ./..., which moves the Lambda modules to their newest release within their major version. The Go release moves by hand, in go.mod and the Dockerfiles.",
+  "framework": "net/http",
+  "licence": "BSD-3-Clause",
+  "repo": "https://github.com/golang/go",
+  "package": "https://pkg.go.dev/net/http",
+  "lockfile": ["go.mod", "go.sum"],
+  "hosts": {
+    "container-h1": { "dockerfile": "container-h1/Dockerfile" },
+    "container-h2": { "dockerfile": "container-h2/Dockerfile" },
+    "lambda-emulator": {
+      "dockerfile": "lambda-emulator/Dockerfile",
+      "unsupported": {
+        "sse.medium": "aws-lambda-go-api-proxy's httpadapter buffers the whole answer, so the events would arrive as one body. Its response writer cannot flush either, and the handler stops at its first Flush.",
+        "stream.ndjson": "aws-lambda-go-api-proxy's httpadapter buffers the whole answer, so the rows would arrive as one body. Its response writer cannot flush either, and the handler stops at its first Flush."
+      }
+    }
+  },
+  "suite": { "argv": ["go", "test", "./..."], "paths": ["UnitTests"] },
+  "upgrade": { "argv": ["go", "get", "-u", "./..."] },
+  "noHandler": {
+    "cors.preflight": "The CORS handler wrapped around the /cors/ pattern answers the preflight before the ServeMux inside it routes the request.",
+    "errors.unmatched": "The ServeMux answers a path no pattern matches with net/http's NotFound, a 404 with a text body.",
+    "errors.wrong_method": "The ServeMux answers a method the path has no pattern for with 405, its text, and an Allow header naming the methods it has."
+  },
+  "mechanisms": {
+    "authorized": {
+      "mechanism": "A handler wrapped around the route that compares the bearer token and refuses any other with http.Error and 403"
+    },
+    "baseline": { "builtin": "The handler writes the text with io.WriteString after setting text/plain." },
+    "body": {
+      "mechanism": "encoding/json decodes the order. On the validate routes the handler checks the order's rules itself, because the standard library has no validator, and errors.Join puts each rule the order breaks on a line of its own. The first-error route stops the check at the first",
+      "mentions": "iter.Seq"
+    },
+    "cache": {
+      "mechanism": "A handler wrapped around each cache route that replays a stored answer and otherwise stores what the handler wrote, keyed by the path and the route's vary headers, one store per process"
+    },
+    "compressed": {
+      "mechanism": "A handler wrapped around the two /compressed routes that gzips the answer with compress/gzip at its fastest level when Accept-Encoding names gzip",
+      "mentions": "gzip.BestSpeed"
+    },
+    "cors": {
+      "mechanism": "A handler wrapped around a ServeMux of its own under /cors/, which answers a preflight itself and adds the CORS headers to an answer for the allowed origin"
+    },
+    "errors": {
+      "builtin": "The ServeMux answers a miss with net/http's 404 text, and a method a path lacks with 405 and an Allow header. A body the decoder cannot read is refused with 400 and the decoder's message, and the items handlers answer a missing row with net/http's NotFound."
+    },
+    "etag": {
+      "mechanism": "The handler encodes the payload into a buffer and hashes it with SHA-1 for the ETag, and net/http's ServeContent answers a matching If-None-Match with 304",
+      "mentions": "http.ServeContent"
+    },
+    "forms": { "builtin": "net/http's ParseForm reads the urlencoded body and FormFile the multipart one, and strconv converts the form's numbers." },
+    "headers": { "builtin": "The three headers are read from net/http's header map, the account converted with strconv." },
+    "items": { "builtin": "One pattern per method on /items/{id}, the id read with PathValue. The GET pattern answers HEAD too." },
+    "json": { "builtin": "encoding/json's encoder writes the payload after the handler sets application/json." },
+    "middleware": { "mechanism": "No-op func(http.Handler) http.Handler layers wrapped around the handler when the route is registered, four or sixteen of them" },
+    "parameters": { "builtin": "PathValue reads each wildcard as a string, which strconv converts." },
+    "query": { "builtin": "net/http parses the query string into url.Values, and strconv converts the numbers." },
+    "sse": { "builtin": "Written by hand, because net/http has no event stream. Each row is one event, flushed through net/http's ResponseController." },
+    "static": { "builtin": "A pattern for everything below /static/ hands each file to net/http's FileServerFS over the payload directory." },
+    "stream": { "builtin": "encoding/json's encoder writes each row and its newline, flushed through net/http's ResponseController." },
+    "template": {
+      "mechanism": "html/template, embedded in the binary and parsed once, executed into the response by the handler",
+      "mentions": "template.ParseFS"
+    }
+  }
+}

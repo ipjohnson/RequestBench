@@ -106,6 +106,13 @@
    },
    "bodyFrom": "captured from frameworks/go/gin/Implementation"
   },
+  "go:net-http": {
+   "status": 400,
+   "body": {
+    "error": "customerId: must be greater than 0"
+   },
+   "bodyFrom": "captured from frameworks/go/net-http/Implementation"
+  },
   "java:helidon-se": {
    "status": 400,
    "body": {
