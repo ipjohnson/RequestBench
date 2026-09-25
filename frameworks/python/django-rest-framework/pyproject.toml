@@ -1,0 +1,31 @@
+# The application's dependencies, the suite's, lambda-emulator's and container-h2's. uv.lock beside it is what uv
+# resolved, which every host's image installs with --locked. Ranges move patch releases alone for
+# 0.x packages, and minor releases too for the rest.
+[project]
+name = "rb-django-rest-framework"
+version = "0"
+requires-python = ">=3.14"
+dependencies = [
+  "django~=6.1",
+  "django-cors-headers~=4.9",
+  "djangorestframework~=3.18",
+  "gunicorn~=26.2",
+]
+
+[dependency-groups]
+dev = ["pytest~=9.1"]
+# apig-wsgi, which turns each Lambda event into a WSGI request for Django on lambda-emulator. Only
+# that host's image installs the group.
+lambda-emulator = ["apig-wsgi~=2.20"]
+# gunicorn's http2 extra, the h2 library its HTTP/2 needs, for container-h2. Only that host's
+# image installs the group.
+container-h2 = ["gunicorn[http2]"]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["UnitTests"]
+pythonpath = ["Implementation", "container-h1"]
+addopts = "--strict-markers"
+markers = ["corpus(*ids): the corpus tests this test holds the framework to"]
