@@ -10,7 +10,7 @@
 // reading as a framework that changed. codeHash leaves out the roles that do not change what
 // runs; bundleHash covers every file.
 //
-// The rules below are bundle-v2. Changing any of them reissues every hash in the series, so a
+// The rules below are bundle-v1. Changing any of them reissues every hash in the series, so a
 // change is a new version:
 //   - the file set comes from git, never a filesystem walk, so an editor backup or a build
 //     artifact cannot enter it
@@ -28,9 +28,7 @@ import { createHash } from "node:crypto";
 import { blob, resolveCommit, tracked } from "./git.ts";
 import { HOST_IDS, type HostId } from "./hosts.ts";
 
-// bundle-v1 read every file under a framework's directory. v2 gives the same hashes at any commit
-// with no host directory in it.
-export const BUNDLE_VERSION = "bundle-v2";
+export const BUNDLE_VERSION = "bundle-v1";
 
 export type FrameworkRole = "source" | "manifest" | "config" | "host" | "contract" | "prose" | "test" | "client";
 export type TestsRole = "test" | "family" | "kit" | "model" | "payload" | "snapshot" | "manifest" | "source" | "prose";

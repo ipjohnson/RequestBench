@@ -76,7 +76,7 @@ describe("metaOf", () => {
   });
 });
 
-const on = (runId: string, cpu: string, cores = 4, ladder = "ladder-v2", corpusVersion = "sha256:a"): Run => ({
+const on = (runId: string, cpu: string, cores = 4, ladder = "ladder-v1", corpusVersion = "sha256:a"): Run => ({
   runId,
   ladder,
   corpusVersion,
@@ -109,7 +109,7 @@ describe("timeline", () => {
   });
 
   test("leaves out runs on another ladder or corpus version, which measured something else", () => {
-    const runs = [on("a", intel, 4, "ladder-v1"), on("b", intel, 4, "ladder-v2", "sha256:old"), on("c", intel), on("d", intel)];
+    const runs = [on("a", intel, 4, "ladder-v2"), on("b", intel, 4, "ladder-v1", "sha256:old"), on("c", intel), on("d", intel)];
     assert.deepEqual(timeline(runs, runs[3]!, machineOf(runs[3]!)).map((r) => r.runId), ["c", "d"]);
   });
 });
@@ -125,7 +125,7 @@ describe("machinesFor", () => {
   });
 
   test("counts only the runs the newest run can be read against", () => {
-    const runs = [on("a", "AMD EPYC 7763", 4, "ladder-v1"), on("b", "INTEL 8573C")];
+    const runs = [on("a", "AMD EPYC 7763", 4, "ladder-v2"), on("b", "INTEL 8573C")];
     assert.deepEqual(machinesFor(runs, runs[1]!), [{ machine: "INTEL 8573C, 4 cores", runs: 1 }]);
   });
 });

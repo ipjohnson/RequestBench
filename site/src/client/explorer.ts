@@ -179,7 +179,7 @@ class Explorer {
     el("meta").textContent =
       this.blendStatus(run) +
       `${run.date ?? ""} · ${run.machine?.cpu ?? "?"}, ${run.machine?.cores ?? "?"} cores · ${hostOf(run)}` +
-      ` · ${run.ladder ?? "rate ladder"} · ${rs.length} rows · click a row for its framework page`;
+      ` · ${rs.length} rows · click a row for its framework page`;
     this.fetchWire(run);
 
     const vc = this.visibleCols();
