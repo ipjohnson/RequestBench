@@ -49,7 +49,7 @@ export const LADDERS = {
    */
   ci: {
     open: {
-      version: "ladder-v2",
+      version: "ladder-v1",
       warmup: { name: "warmup", rps: 1000, settle: 30 },
       rungs: [
         { name: "regular", rps: 1000, settle: 15, seconds: 60, abortDropFraction: 0.05 },
@@ -60,7 +60,7 @@ export const LADDERS = {
       cooldownMs: 500,
     },
     closed: {
-      version: "closed-v2",
+      version: "closed-v1",
       rungs: [{ name: "closed", seconds: 120 }],
       bootSeconds: 90,
       cooldownMs: 500,
