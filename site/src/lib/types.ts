@@ -31,7 +31,6 @@ export const Rung = z.looseObject({
   p50Us: z.number().nullable().optional(),
   p90Us: z.number().nullable().optional(),
   p99Us: z.number().nullable().optional(),
-  p999Us: z.number().nullable().optional(),
 });
 export type Rung = z.infer<typeof Rung>;
 
@@ -75,9 +74,7 @@ export const TestRung = z.looseObject({
   mismatch: z.number().optional(),
   p50Us: z.number().nullable().optional(),
   p90Us: z.number().nullable().optional(),
-  p95Us: z.number().nullable().optional(),
   p99Us: z.number().nullable().optional(),
-  p999Us: z.number().nullable().optional(),
   /** The test's latency histogram on the summary's `binGrid`, counts per bin. */
   bins: z.array(z.number()).optional(),
   /** The same on `histGrid`, fine enough to read a blend's percentiles from. */
@@ -98,7 +95,6 @@ export const FamilyRecord = z.looseObject({
   p50Us: z.number().nullable().optional(),
   p90Us: z.number().nullable().optional(),
   p99Us: z.number().nullable().optional(),
-  p999Us: z.number().nullable().optional(),
 });
 export type FamilyRecord = z.infer<typeof FamilyRecord>;
 

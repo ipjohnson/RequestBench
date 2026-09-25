@@ -143,7 +143,7 @@ export function sharesOf(run: Run, weights: ReadonlyMap<string, number>): Map<st
   return new Map([...byFamily].map(([fam, w]) => [fam, total ? w / total : 0]));
 }
 
-export type BlendStats = { p50Us: number; p90Us: number; p99Us: number; p999Us: number; count: number };
+export type BlendStats = { p50Us: number; p90Us: number; p99Us: number; count: number };
 
 /**
  * One framework's latency over a blend at one rate, read off its tests' histograms merged by
@@ -163,5 +163,5 @@ export function blendStats(f: Framework, rn: string, weights: ReadonlyMap<string
     h.counts.forEach((c, i) => (merged[h.first + i]! += w * c));
   }
   if (!any) return null;
-  return { p50Us: pct(merged, 50), p90Us: pct(merged, 90), p99Us: pct(merged, 99), p999Us: pct(merged, 99.9), count };
+  return { p50Us: pct(merged, 50), p90Us: pct(merged, 90), p99Us: pct(merged, 99), count };
 }

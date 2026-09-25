@@ -86,7 +86,7 @@ describe("blendStats", () => {
   test("reads a blend's percentiles off its tests' histograms merged", () => {
     const s = blendStats(carter, "regular", weightsOf(run, "api", { entries: [], weights: {} }));
     const want = merged({ "json.small": 1, "json.medium": 1 });
-    assert.deepEqual(s, { p50Us: pct(want, 50), p90Us: pct(want, 90), p99Us: pct(want, 99), p999Us: pct(want, 99.9), count: 20 });
+    assert.deepEqual(s, { p50Us: pct(want, 50), p90Us: pct(want, 90), p99Us: pct(want, 99), count: 20 });
   });
 
   test("a weight counts each of a family's answers that many times", () => {

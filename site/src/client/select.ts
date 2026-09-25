@@ -78,8 +78,8 @@ const numberAt = (rec: Record<string, unknown> | undefined, metric: string): num
   return typeof v === "number" ? v : null;
 };
 
-type Latency = "p50Us" | "p90Us" | "p99Us" | "p999Us";
-const isLatency = (m: MetricId): m is Latency => m === "p50Us" || m === "p90Us" || m === "p99Us" || m === "p999Us";
+type Latency = "p50Us" | "p90Us" | "p99Us";
+const isLatency = (m: MetricId): m is Latency => m === "p50Us" || m === "p90Us" || m === "p99Us";
 
 /**
  * A framework's number at blend granularity. What it achieved and dropped belongs to the whole

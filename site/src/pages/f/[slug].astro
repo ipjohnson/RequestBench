@@ -51,7 +51,7 @@ const own = t.tests ?? {};
 const snips = view?.snippets ?? {};
 const exemplars = wire[`${t.language}-${t.name}@${host}`]?.tests ?? {};
 // Every percentile the performance table can show, so each can be read against the base's.
-const PCTS = ["p50Us", "p90Us", "p95Us", "p99Us", "p999Us"];
+const PCTS = ["p50Us", "p90Us", "p99Us"];
 const chainsAt = (id: string, rn: string) => {
   const links = comparedOf(id, routes);
   return Object.fromEntries(PCTS.map((m) => [m, chainWith(links, (e) => testValue(t, e, rn, m), floorFor)]));
