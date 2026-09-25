@@ -31,6 +31,8 @@
     <PackageVersion Include="Hardened.Web.Kestrel.Testing" Version="$(HardenedVersion)" />
     <PackageVersion Include="Hardened.Kiota.Testing" Version="$(HardenedVersion)" />
     <PackageVersion Include="Microsoft.Kiota.Bundle" Version="2.1.2" />
+    <!-- Held below 4.0. Hardened.Shared.Testing.xUnit depends on DependencyModules.xUnit, which
+         takes xunit.v3.extensibility.core below 4.0.0. Hardened.Framework issue 400 asks for 4.x. -->
     <PackageVersion Include="xunit.v3" Version="3.2.2" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="4.0.0" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.10.1" />

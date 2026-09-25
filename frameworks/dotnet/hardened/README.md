@@ -68,16 +68,22 @@ and loads the payloads while the modules are applied, before the server starts. 
   no route prefix. The build-time manifest takes one, but it reads its directory at build time. So
   `UnderStatic`, an `IStaticContentSource`, hands the directory source the path below `/static` and
   declines every other path.
+  [Hardened.Framework issue 398](https://github.com/ipjohnson/Hardened.Framework/issues/398) asks
+  for a run-time prefix.
 - The static content source compresses a text file over 1,000 bytes once, with gzip at
   `CompressionLevel.SmallestSize`, keeps it, and sends it to each request that accepts gzip.
 - `[CacheResponse<T>]` takes its lifetime and its header names as attribute constants. So the module
   puts the same filter on the cache routes with `AddGlobalFilter`, with the lifetime and the vary
   headers settings.json gives, and the routes carry no attribute.
+  [Hardened.Framework issue 399](https://github.com/ipjohnson/Hardened.Framework/issues/399) asks
+  for a way to state them on the route.
 - settings.json sizes the cache in entries, and Hardened's in-memory store is sized in bytes. Its
   default of 100 MB holds every key the cache family stores.
 - The bind routes take `OrderRequest`, which declares no constraint, and the validate routes take
   `ValidatedOrder`. Hardened checks a body against every constraint its type declares, and has no
   setting that turns the check off on one route.
+  [Hardened.Framework issue 401](https://github.com/ipjohnson/Hardened.Framework/issues/401) asks
+  for one.
 - The bind and validate handlers bind `Content-Length` with `[FromHeader]` to answer the bytes they
   received. A request that sends none is refused with 400.
 - Hardened sends every answer whose length it does not know chunked, JSON answers included.
@@ -88,8 +94,12 @@ and loads the payloads while the modules are applied, before the server starts. 
 - Hardened's assemblies carry the version 1.0.0. So `/__meta` reports the `HardenedVersion` that
   `Directory.Packages.props` pins, which `Implementation.csproj` stamps into the assembly as
   metadata. Every restore is locked to that version.
+  [Hardened.Framework issue 397](https://github.com/ipjohnson/Hardened.Framework/issues/397)
+  reports it.
 - Hardened's source generator packages name `Microsoft.CodeAnalysis.CSharp` as a dependency, so
   Roslyn's assemblies are copied into the container hosts' output. Nothing loads them.
+  [Hardened.Framework issue 396](https://github.com/ipjohnson/Hardened.Framework/issues/396)
+  reports it.
 - On lambda-emulator the application answers behind Hardened's own adapter for API Gateway payload
   format 2.0, `Hardened.Aws.Lambda.Http`, whose invocation loop runs on
   `Amazon.Lambda.RuntimeSupport`. The application module there names `[LambdaHttpModule]` in place
@@ -138,4 +148,3 @@ client generated from it.
 What the document leaves out:
 
 - The CORS preflight and `/static` are answered before routing, so no route describes them.
-- The cache filters are put on their routes at startup, so the document does not show them.
