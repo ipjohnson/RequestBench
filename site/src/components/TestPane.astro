@@ -32,7 +32,7 @@ export type PaneTest = {
   page: string | null;
 };
 
-type Pct = "p50Us" | "p95Us" | "p99Us" | "p999Us";
+type Pct = "p50Us" | "p90Us" | "p99Us";
 
 /** How a function framed its answer on lambda-emulator, which the exemplar's `fr` then holds. */
 const LAMBDA_FRAMINGS = new Set(["proxy", "proxy-base64", "stream", "bare"]);
@@ -126,9 +126,8 @@ const measure = (r: PaneRung): { fields: Field[]; measured: boolean } => {
     measured: Object.keys(d).length > 0,
     fields: [
       pct(["p50", "p50Us"]),
-      pct(["p95", "p95Us"]),
+      pct(["p90", "p90Us"]),
       pct(["p99", "p99Us"]),
-      pct(["p99.9", "p999Us"]),
       {
         k: "size",
         m: "sbz",

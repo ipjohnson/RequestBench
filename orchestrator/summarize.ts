@@ -79,7 +79,7 @@ export function trim(counts: ArrayLike<number>): Hist {
   return { first, counts: Array.from({ length: last - first + 1 }, (_, i) => counts[first + i]!) };
 }
 
-const stats = (h: ArrayLike<number>) => ({ p50Us: pct(h, 50), p90Us: pct(h, 90), p95Us: pct(h, 95), p99Us: pct(h, 99), p999Us: pct(h, 99.9) });
+const stats = (h: ArrayLike<number>) => ({ p50Us: pct(h, 50), p90Us: pct(h, 90), p99Us: pct(h, 99) });
 
 export interface RungSummary {
   readonly rps: number;
@@ -94,7 +94,6 @@ export interface RungSummary {
   readonly p50Us: number | null;
   readonly p90Us: number | null;
   readonly p99Us: number | null;
-  readonly p999Us: number | null;
 }
 
 /** A closed-loop rung: what a function sustained answering one event at a time, with nothing offered or dropped. */
@@ -111,7 +110,6 @@ export interface ClosedRungSummary {
   readonly p50Us: number;
   readonly p90Us: number;
   readonly p99Us: number;
-  readonly p999Us: number;
   /** The first invocation the recording timed, which with no settle is the function's first. */
   readonly first?: ClosedRecordedSummary["first"];
   /** Each second of the recording: its invocations and their mean invoke phase. */
@@ -135,15 +133,10 @@ export interface ClosedTestRung extends TestRung {
   readonly spans: Readonly<Record<(typeof SPANS)[number], ReturnType<typeof stats> & { readonly hist: Hist }>>;
 }
 
-type FamilyStats = { count: number; p50Us: number; p90Us: number; p99Us: number; p999Us: number };
+type FamilyStats = { count: number } & ReturnType<typeof stats>;
 
 function familiesOf(byFamily: ReadonlyMap<string, Uint32Array>): Record<string, FamilyStats> {
-  return Object.fromEntries(
-    [...byFamily].map(([fam, h]) => {
-      const s = stats(h);
-      return [fam, { count: h.reduce((a, b) => a + b, 0), p50Us: s.p50Us, p90Us: s.p90Us, p99Us: s.p99Us, p999Us: s.p999Us }];
-    }),
-  );
+  return Object.fromEntries([...byFamily].map(([fam, h]) => [fam, { count: h.reduce((a, b) => a + b, 0), ...stats(h) }]));
 }
 
 function addTo(byFamily: Map<string, Uint32Array>, family: string, overall: Uint32Array, h: Uint32Array): void {
@@ -165,7 +158,7 @@ function openRungs(load: LoadResult | undefined) {
     const declared = load!.load.phases[i]!;
     if (declared.seconds === undefined) continue;
     if (phase.status === "notRun") {
-      rungs[phase.name] = { rps: phase.rps, status: "notRun", completed: false, saturated: false, achievedRps: 0, dropped: 0, errors: 0, mismatch: 0, p50Us: null, p90Us: null, p99Us: null, p999Us: null };
+      rungs[phase.name] = { rps: phase.rps, status: "notRun", completed: false, saturated: false, achievedRps: 0, dropped: 0, errors: 0, mismatch: 0, p50Us: null, p90Us: null, p99Us: null };
       continue;
     }
     const r = phase.recorded;
@@ -202,7 +195,6 @@ function openRungs(load: LoadResult | undefined) {
       p50Us: completed ? pct(overall, 50) : null,
       p90Us: completed ? pct(overall, 90) : null,
       p99Us: completed ? pct(overall, 99) : null,
-      p999Us: completed ? pct(overall, 99.9) : null,
     };
   }
   return { rungs, tests, families };
@@ -251,7 +243,6 @@ function closedRungs(load: ClosedResult) {
       p50Us: pct(overall, 50),
       p90Us: pct(overall, 90),
       p99Us: pct(overall, 99),
-      p999Us: pct(overall, 99.9),
       ...(r.first === undefined ? {} : { first: r.first }),
       ...(r.perSecond === undefined ? {} : { perSecond: r.perSecond }),
     };

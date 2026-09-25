@@ -3,13 +3,12 @@
 // Shared with the framework pages, which have no metric selector and read p50, so the two
 // kinds of page format one number the same way. The ids are the summary's own keys.
 
-export type MetricId = "p50Us" | "p90Us" | "p99Us" | "p999Us" | "achievedRps" | "dropped";
+export type MetricId = "p50Us" | "p90Us" | "p99Us" | "achievedRps" | "dropped";
 
 export const METRICS: Record<MetricId, { label: string; unit: "us" | "" }> = {
   p50Us: { label: "p50", unit: "us" },
   p90Us: { label: "p90", unit: "us" },
   p99Us: { label: "p99", unit: "us" },
-  p999Us: { label: "p99.9", unit: "us" },
   achievedRps: { label: "achieved rps", unit: "" },
   dropped: { label: "dropped", unit: "" },
 };

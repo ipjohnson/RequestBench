@@ -62,7 +62,6 @@ const clip = (s: string, n: number): string => (s.length > n ? `${s.slice(0, n -
                 ["p50", "p50Us", "us"],
                 ["p90", "p90Us", "us"],
                 ["p99", "p99Us", "us"],
-                ["p99.9", "p999Us", "us"],
                 ["samples", "count", ""],
               ] as const
             ).map(([k, m, unit]) => (
