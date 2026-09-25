@@ -1,0 +1,35 @@
+# The test environment, which Loco's request helper boots the application in: production's
+# middleware, and the payload directory above this package where RB_PAYLOADS names none.
+
+logger:
+  enable: false
+  pretty_backtrace: false
+  level: debug
+  format: compact
+
+server:
+  port: 5150
+  host: http://localhost
+  middlewares:
+    compression:
+      enable: true
+    static:
+      enable: true
+      must_exist: false
+      precompressed: false
+      folder:
+        uri: "/static"
+        path: <%= get_env(name="RB_PAYLOADS", default="../../../tests/payloads") %>
+      fallback: <%= get_env(name="RB_PAYLOADS", default="../../../tests/payloads") %>/missing
+    # Off, as it is in production. Outside production, Loco's fallback middleware answers a path no
+    # route matches with a page of its own.
+    fallback:
+      enable: false
+
+# No worker runs. Loco's default mode, BackgroundQueue, refuses to start without a queue to take
+# jobs from, and BackgroundAsync needs none.
+workers:
+  mode: BackgroundAsync
+
+settings:
+  payloads: <%= get_env(name="RB_PAYLOADS", default="../../../tests/payloads") %>
