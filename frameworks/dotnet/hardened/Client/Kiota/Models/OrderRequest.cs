@@ -8,7 +8,7 @@ using System;
 namespace Client.Kiota.Models
 {
     /// <summary>
-    /// The body the bind and validate rows send, carrying the rules orderRequest states as Hardened&apos;s constraint attributes. Hardened.Validation.SourceGenerator compiles them into a check that runs before any handler that binds an order, unless the handler marks it [ValidateNever].
+    /// The body the bind and validate rows send, carrying the rules orderRequest states as ValidationModules constraint attributes. ValidationModules.SourceGenerator compiles them into a check that Hardened runs before any handler that binds an order, unless the handler marks it [ValidateNever].
     /// </summary>
     [global::System.CodeDom.Compiler.GeneratedCode("Kiota", "1.0.0")]
     public partial class OrderRequest : IAdditionalDataHolder, IParsable

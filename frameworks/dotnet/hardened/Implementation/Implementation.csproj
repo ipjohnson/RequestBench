@@ -13,7 +13,7 @@
     <PackageReference Include="Hardened.Web.Runtime" />
     <PackageReference Include="Hardened.Library.SourceGenerator" />
     <PackageReference Include="Hardened.Web.SourceGenerator" />
-    <PackageReference Include="Hardened.Validation.SourceGenerator" />
+    <PackageReference Include="ValidationModules.SourceGenerator" />
     <PackageReference Include="Hardened.Requests.Caching.Memory" />
     <PackageReference Include="Hardened.Web.StaticContent" />
     <PackageReference Include="Hardened.Templates.RazorBlade" />

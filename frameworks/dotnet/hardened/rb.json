@@ -1,5 +1,5 @@
 {
-  "comment": "Hardened 0.40.0-rc1000 on .NET 10, laid out as Hardened's hardened-web template lays out an application. Implementation/ is the library, whose module ImplementationLibrary holds every route, and each host's directory holds a host project that imports it under that host's attribute and starts it. container-h1 and container-h2 run Hardened's Kestrel host, which runs no ASP.NET Core pipeline. lambda-emulator runs Hardened's own API Gateway payload format 2.0 adapter as a Native AOT executable. Every version is in Directory.Packages.props, and each project's packages.lock.json records what it resolved. The suite is UnitTests/, xunit.v3 under Hardened's [ModuleTest], and never reaches an image. upgrade is null because dotnet package update moves every package to its newest release, majors included, and nothing narrows it to patch and minor. Hardened releases on one 0.N.0-rc1000 line, so each release is a major one.",
+  "comment": "Hardened 0.41.0-rc1000 on .NET 10, laid out as Hardened's hardened-web template lays out an application. Implementation/ is the library, whose module ImplementationLibrary holds every route, and each host's directory holds a host project that imports it under that host's attribute and starts it. container-h1 and container-h2 run Hardened's Kestrel host, which runs no ASP.NET Core pipeline. lambda-emulator runs Hardened's own API Gateway payload format 2.0 adapter as a Native AOT executable. Every version is in Directory.Packages.props, and each project's packages.lock.json records what it resolved. The suite is UnitTests/, xunit.v3 under Hardened's [ModuleTest], and never reaches an image. upgrade is null because dotnet package update moves every package to its newest release, majors included, and nothing narrows it to patch and minor. Hardened releases on one 0.N.0-rc1000 line, so each release is a major one.",
   "framework": "Hardened",
   "licence": "MIT",
   "repo": "https://github.com/ipjohnson/Hardened.Framework",
@@ -26,7 +26,7 @@
   "upgrade": null,
   "client": {
     "document": "Client/openapi.json",
-    "writer": "Hardened.Web.SourceGenerator 0.40.0-rc1000, through <HardenedOpenApiOutput> on dotnet build",
+    "writer": "Hardened.Web.SourceGenerator 0.41.0-rc1000, through <HardenedOpenApiOutput> on dotnet build",
     "generator": "Kiota 1.34.1, a .NET local tool that Client.csproj runs, which Hardened's hardened-web template generates its client with",
     "argv": ["dotnet", "build", "Client"]
   },
@@ -42,8 +42,8 @@
     },
     "baseline": { "builtin": "The handler returns the text, which [Produces(\"text/plain\")] writes unchanged." },
     "body": {
-      "mechanism": "Hardened's validation: constraint attributes on the order, which Hardened.Validation.SourceGenerator compiles into a check that runs before the handler. The bind routes mark the order [ValidateNever], and the first-error route declares [ValidationMode(ValidationStopMode.StopOnFirstError)]",
-      "dependency": "Hardened.Validation.SourceGenerator",
+      "mechanism": "Hardened's validation: ValidationModules constraint attributes on the order, which ValidationModules.SourceGenerator compiles into a check that Hardened runs before the handler. The bind routes mark the order [ValidateNever], and the first-error route declares [ValidationMode(ValidationStopMode.StopOnFirstError)]",
+      "dependency": "ValidationModules.SourceGenerator",
       "mentions": "Range"
     },
     "cache": {

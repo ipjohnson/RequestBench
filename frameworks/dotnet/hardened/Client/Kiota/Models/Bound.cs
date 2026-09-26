@@ -17,7 +17,7 @@ namespace Client.Kiota.Models
         public IDictionary<string, object> AdditionalData { get; set; }
         /// <summary>The bytes property</summary>
         public long? Bytes { get; set; }
-        /// <summary>The body the bind and validate rows send, carrying the rules orderRequest states as Hardened&apos;s constraint attributes. Hardened.Validation.SourceGenerator compiles them into a check that runs before any handler that binds an order, unless the handler marks it [ValidateNever].</summary>
+        /// <summary>The body the bind and validate rows send, carrying the rules orderRequest states as ValidationModules constraint attributes. ValidationModules.SourceGenerator compiles them into a check that Hardened runs before any handler that binds an order, unless the handler marks it [ValidateNever].</summary>
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_1_OR_GREATER
 #nullable enable
         public global::Client.Kiota.Models.OrderRequest? Echo { get; set; }

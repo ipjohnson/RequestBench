@@ -4,10 +4,14 @@
        together. -->
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-    <HardenedVersion>0.40.0-rc1000</HardenedVersion>
+    <HardenedVersion>0.41.0-rc1000</HardenedVersion>
     <!-- The DependencyModules line Hardened.Shared.Testing depends on. The test runner has to be
          on the same one. -->
     <DependencyModulesVersion>1.7.0</DependencyModulesVersion>
+    <!-- The ValidationModules line Hardened is built against. Hardened brings
+         ValidationModules.Runtime at this version, and the generator fails the build against a
+         runtime older than itself. -->
+    <ValidationModulesVersion>1.2.0</ValidationModulesVersion>
   </PropertyGroup>
 
   <ItemGroup Label="Hardened">
@@ -15,13 +19,16 @@
     <PackageVersion Include="Hardened.Web.Runtime" Version="$(HardenedVersion)" />
     <PackageVersion Include="Hardened.Library.SourceGenerator" Version="$(HardenedVersion)" />
     <PackageVersion Include="Hardened.Web.SourceGenerator" Version="$(HardenedVersion)" />
-    <PackageVersion Include="Hardened.Validation.SourceGenerator" Version="$(HardenedVersion)" />
     <PackageVersion Include="Hardened.Requests.Caching.Memory" Version="$(HardenedVersion)" />
     <PackageVersion Include="Hardened.Web.StaticContent" Version="$(HardenedVersion)" />
     <PackageVersion Include="Hardened.Templates.RazorBlade" Version="$(HardenedVersion)" />
     <!-- The version Hardened.Templates.RazorBlade is built against. RazorBlade's build files do
          not flow through that package, so Implementation references it directly. -->
     <PackageVersion Include="RazorBlade" Version="1.0.0" />
+  </ItemGroup>
+
+  <ItemGroup Label="Validation">
+    <PackageVersion Include="ValidationModules.SourceGenerator" Version="$(ValidationModulesVersion)" />
   </ItemGroup>
 
   <ItemGroup Label="Hosts">

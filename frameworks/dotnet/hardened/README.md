@@ -1,6 +1,6 @@
 # Hardened
 
-Hardened 0.40.0-rc1000 on .NET 10, answering the RequestBench corpus. The contract every route
+Hardened 0.41.0-rc1000 on .NET 10, answering the RequestBench corpus. The contract every route
 follows is [`frameworks/openapi.json`](../../openapi.json).
 
 Hardened is a .NET framework for HTTP APIs and serverless functions. Its source generators write
@@ -50,7 +50,7 @@ in a test. `PORT` defaults to 8080. `HARDENED_ENVIRONMENT` names Hardened's envi
 | json | The handler returns the payload, and System.Text.Json writes it from the source-generated `JsonContext` the module registers as an `IJsonTypeInfoResolver`. | Hardened |
 | middleware | `[Layers(n)]`, a filter attribute of the application's own, puts n no-op filters on the route. | Hardened's filter pipeline |
 | parameters, query, headers | Path tokens bound by name, `[FromQueryString]` and `[FromHeader]`. query.many binds its eight values into one model. | Hardened |
-| body | Constraint attributes on the order, which Hardened.Validation.SourceGenerator compiles into a check that runs before the handler. The bind routes mark the order `[ValidateNever]`, and the first-error route declares `[ValidationMode(ValidationStopMode.StopOnFirstError)]`. | Hardened |
+| body | ValidationModules constraint attributes on the order, which ValidationModules.SourceGenerator compiles into a check that Hardened runs before the handler. The bind routes mark the order `[ValidateNever]`, and the first-error route declares `[ValidationMode(ValidationStopMode.StopOnFirstError)]`. | Hardened |
 | authorized | `[Authorize<BearerAuth>]` and `[AuthorizeGrants]` on the route. `BearerTokenSource` reads the token and gives the grant to settings.json's token alone. | Hardened, and a principal source by hand |
 | cache | `[CacheResponse<T>]`, put on the routes by `AddGlobalFilter` with settings.json's lifetime, over the store `[HardenedMemoryResponseCache]` registers. `VaryByHeader` keys the vary routes on their headers. | Hardened |
 | compressed | `[Compress]` on the two routes, gzip at its fastest level. | Hardened |

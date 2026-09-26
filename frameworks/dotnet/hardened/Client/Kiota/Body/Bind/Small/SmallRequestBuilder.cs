@@ -34,7 +34,7 @@ namespace Client.Kiota.Body.Bind.Small
         {
         }
         /// <returns>A <see cref="global::Client.Kiota.Models.Bound"/></returns>
-        /// <param name="body">The body the bind and validate rows send, carrying the rules orderRequest states as Hardened&apos;s constraint attributes. Hardened.Validation.SourceGenerator compiles them into a check that runs before any handler that binds an order, unless the handler marks it [ValidateNever].</param>
+        /// <param name="body">The body the bind and validate rows send, carrying the rules orderRequest states as ValidationModules constraint attributes. ValidationModules.SourceGenerator compiles them into a check that Hardened runs before any handler that binds an order, unless the handler marks it [ValidateNever].</param>
         /// <param name="cancellationToken">Cancellation token to use when cancelling requests</param>
         /// <param name="requestConfiguration">Configuration for the request such as headers, query parameters, and middleware options.</param>
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_1_OR_GREATER
@@ -51,7 +51,7 @@ namespace Client.Kiota.Body.Bind.Small
             return await RequestAdapter.SendAsync<global::Client.Kiota.Models.Bound>(requestInfo, global::Client.Kiota.Models.Bound.CreateFromDiscriminatorValue, default, cancellationToken).ConfigureAwait(false);
         }
         /// <returns>A <see cref="RequestInformation"/></returns>
-        /// <param name="body">The body the bind and validate rows send, carrying the rules orderRequest states as Hardened&apos;s constraint attributes. Hardened.Validation.SourceGenerator compiles them into a check that runs before any handler that binds an order, unless the handler marks it [ValidateNever].</param>
+        /// <param name="body">The body the bind and validate rows send, carrying the rules orderRequest states as ValidationModules constraint attributes. ValidationModules.SourceGenerator compiles them into a check that Hardened runs before any handler that binds an order, unless the handler marks it [ValidateNever].</param>
         /// <param name="requestConfiguration">Configuration for the request such as headers, query parameters, and middleware options.</param>
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_1_OR_GREATER
 #nullable enable
