@@ -1,0 +1,2625 @@
+{
+  "framework": "dotnet:minimal-apis",
+  "host": "container-h1",
+  "tests": {
+    "authorized.allowed": {
+      "request": {
+        "method": "GET",
+        "target": "/authorized/small",
+        "headers": [
+          [
+            "authorization",
+            "Bearer 5a7cc77ed0dcb825806b6f872026c317"
+          ]
+        ],
+        "bodyBytes": 0
+      },
+      "response": {
+        "status": 200,
+        "headers": [
+          [
+            "content-type",
+            "application/json; charset=utf-8"
+          ],
+          [
+            "date",
+            "<varies>"
+          ],
+          [
+            "server",
+            "Kestrel"
+          ],
+          [
+            "transfer-encoding",
+            "chunked"
+          ]
+        ],
+        "headerBytes": 148,
+        "framing": "chunked",
+        "bodyBytes": 123,
+        "body": "{\"size\":\"small\",\"count\":1,\"items\":[{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"priceCents\":18928,\"inStock\":true}]}",
+        "truncated": false
+      }
+    },
+    "authorized.denied": {
+      "request": {
+        "method": "GET",
+        "target": "/authorized/small",
+        "headers": [
+          [
+            "authorization",
+            "Bearer 5a7cc77ed0dcb825806b6f872026c310"
+          ]
+        ],
+        "bodyBytes": 0
+      },
+      "response": {
+        "status": 403,
+        "headers": [
+          [
+            "content-type",
+            "application/problem+json"
+          ],
+          [
+            "date",
+            "<varies>"
+          ],
+          [
+            "server",
+            "Kestrel"
+          ],
+          [
+            "transfer-encoding",
+            "chunked"
+          ]
+        ],
+        "headerBytes": 148,
+        "framing": "chunked",
+        "bodyBytes": 129,
+        "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.4\",\"title\":\"Forbidden\",\"status\":403,\"traceId\":\"0HNORERKF5CLC:00000003\"}",
+        "truncated": false
+      }
+    },
+    "baseline.plaintext": {
+      "request": {
+        "method": "GET",
+        "target": "/plaintext",
+        "headers": [],
+        "bodyBytes": 0
+      },
+      "response": {
+        "status": 200,
+        "headers": [
+          [
+            "content-length",
+            "13"
+          ],
+          [
+            "content-type",
+            "text/plain; charset=utf-8"
+          ],
+          [
+            "date",
+            "<varies>"
+          ],
+          [
+            "server",
+            "Kestrel"
+          ]
+        ],
+        "headerBytes": 134,
+        "framing": "content-length",
+        "bodyBytes": 13,
+        "body": "Hello, World!",
+        "truncated": false
+      }
+    },
+    "body.bind_medium": {
+      "request": {
+        "method": "POST",
+        "target": "/body/bind/medium",
+        "headers": [
+          [
+            "content-type",
+            "application/json"
+          ]
+        ],
+        "bodyBytes": 8379,
+        "body": "{\"customerId\":1,\"status\":\"open\",\"lines\":[{\"productId\":1,\"qty\":1},{\"productId\":2,\"qty\":2},{\"productId\":3,\"qty\":3},{\"productId\":4,\"qty\":4},{\"productId\":5,\"qty\":5},{\"productId\":6,\"qty\":1},{\"productId\":7,\"qty\":2},{\"productId\":8,\"qty\":3},{\"productId\":9,\"qty\":4},{\"productId\":10,\"qty\":5},{\"productId\":11,\"qty\":1},{\"productId\":12,\"qty\":2},{\"productId\":13,\"qty\":3},{\"productId\":14,\"qty\":4},{\"productId\":15,\"qty\":5},{\"productId\":16,\"qty\":1},{\"productId\":17,\"qty\":2},{\"productId\":18,\"qty\":3},{\"productId\":19,\"qty\":4},{\"productId\":20,\"qty\":5},{\"productId\":21,\"qty\":1},{\"productId\":22,\"qty\":2},{\"productId\":23,\"qty\":3},{\"productId\":24,\"qty\":4},{\"productId\":25,\"qty\":5},{\"productId\":26,\"qty\":1},{\"productId\":27,\"qty\":2},{\"productId\":28,\"qty\":3},{\"productId\":29,\"qty\":4},{\"productId\":30,\"qty\":5},{\"productId\":31,\"qty\":1},{\"productId\":32,\"qty\":2},{\"productId\":33,\"qty\":3},{\"productId\":34,\"qty\":4},{\"productId\":35,\"qty\":5},{\"productId\":36,\"qty\":1},{\"productId\":37,\"qty\":2},{\"productId\":38,\"qty\":3},{\"productId\":39,\"qty\":4},{\"productId\":40,\"qty\":5},{\"productId\":41,\"qty\":1},{\"productId\":42,\"qty\":2},{\"productId\":43,\"qty\":3},{\"productId\":44,\"qty\":4},{\"productId\":45,\"qty\":5},{\"productId\":46,\"qty\":1},{\"productId\":47,\"qty\":2},{\"productId\":48,\"qty\":3},{\"productId\":49,\"qty\":4},{\"productId\":50,\"qty\":5},{\"productId\":1,\"qty\":1},{\"productId\":2,\"qty\":2},{\"productId\":3,\"qty\":3},{\"productId\":4,\"qty\":4},{\"productId\":5,\"qty\":5},{\"productId\":6,\"qty\":1},{\"productId\":7,\"qty\":2},{\"productId\":8,\"qty\":3},{\"productId\":9,\"qty\":4},{\"productId\":10,\"qty\":5},{\"productId\":11,\"qty\":1},{\"productId\":12,\"qty\":2},{\"productId\":13,\"qty\":3},{\"productId\":14,\"qty\":4},{\"productId\":15,\"qty\":5},{\"productId\":16,\"qty\":1},{\"productId\":17,\"qty\":2},{\"productId\":18,\"qty\":3},{\"productId\":19,\"qty\":4},{\"productId\":20,\"qty\":5},{\"productId\":21,\"qty\":1},{\"productId\":22,\"qty\":2},{\"productId\":23,\"qty\":3},{\"productId\":24,\"qty\":4},{\"productId\":25,\"qty\":5},{\"productId\":26,\"qty\":1},{\"productId\":27,\"qty\":2},{\"productId\":28,\"qty\":3},{\"productId\":29,\"qty\":4},{\"productId\":30,\"qty\":5},{\"productId\":31,\"qty\":1},"
+      },
+      "response": {
+        "status": 200,
+        "headers": [
+          [
+            "content-type",
+            "application/json; charset=utf-8"
+          ],
+          [
+            "date",
+            "<varies>"
+          ],
+          [
+            "server",
+            "Kestrel"
+          ],
+          [
+            "transfer-encoding",
+            "chunked"
+          ]
+        ],
+        "headerBytes": 148,
+        "framing": "chunked",
+        "bodyBytes": 8414,
+        "body": "{\"fields\":674,\"bytes\":8379,\"echo\":{\"customerId\":1,\"status\":\"open\",\"lines\":[{\"productId\":1,\"qty\":1},{\"productId\":2,\"qty\":2},{\"productId\":3,\"qty\":3},{\"productId\":4,\"qty\":4},{\"productId\":5,\"qty\":5},{\"productId\":6,\"qty\":1},{\"productId\":7,\"qty\":2},{\"productId\":8,\"qty\":3},{\"productId\":9,\"qty\":4},{\"productId\":10,\"qty\":5},{\"productId\":11,\"qty\":1},{\"productId\":12,\"qty\":2},{\"productId\":13,\"qty\":3},{\"productId\":14,\"qty\":4},{\"productId\":15,\"qty\":5},{\"productId\":16,\"qty\":1},{\"productId\":17,\"qty\":2},{\"productId\":18,\"qty\":3},{\"productId\":19,\"qty\":4},{\"productId\":20,\"qty\":5},{\"productId\":21,\"qty\":1},{\"productId\":22,\"qty\":2},{\"productId\":23,\"qty\":3},{\"productId\":24,\"qty\":4},{\"productId\":25,\"qty\":5},{\"productId\":26,\"qty\":1},{\"productId\":27,\"qty\":2},{\"productId\":28,\"qty\":3},{\"productId\":29,\"qty\":4},{\"productId\":30,\"qty\":5},{\"productId\":31,\"qty\":1},{\"productId\":32,\"qty\":2},{\"productId\":33,\"qty\":3},{\"productId\":34,\"qty\":4},{\"productId\":35,\"qty\":5},{\"productId\":36,\"qty\":1},{\"productId\":37,\"qty\":2},{\"productId\":38,\"qty\":3},{\"productId\":39,\"qty\":4},{\"productId\":40,\"qty\":5},{\"productId\":41,\"qty\":1},{\"productId\":42,\"qty\":2},{\"productId\":43,\"qty\":3},{\"productId\":44,\"qty\":4},{\"productId\":45,\"qty\":5},{\"productId\":46,\"qty\":1},{\"productId\":47,\"qty\":2},{\"productId\":48,\"qty\":3},{\"productId\":49,\"qty\":4},{\"productId\":50,\"qty\":5},{\"productId\":1,\"qty\":1},{\"productId\":2,\"qty\":2},{\"productId\":3,\"qty\":3},{\"productId\":4,\"qty\":4},{\"productId\":5,\"qty\":5},{\"productId\":6,\"qty\":1},{\"productId\":7,\"qty\":2},{\"productId\":8,\"qty\":3},{\"productId\":9,\"qty\":4},{\"productId\":10,\"qty\":5},{\"productId\":11,\"qty\":1},{\"productId\":12,\"qty\":2},{\"productId\":13,\"qty\":3},{\"productId\":14,\"qty\":4},{\"productId\":15,\"qty\":5},{\"productId\":16,\"qty\":1},{\"productId\":17,\"qty\":2},{\"productId\":18,\"qty\":3},{\"productId\":19,\"qty\":4},{\"productId\":20,\"qty\":5},{\"productId\":21,\"qty\":1},{\"productId\":22,\"qty\":2},{\"productId\":23,\"qty\":3},{\"productId\":24,\"qty\":4},{\"productId\":25,\"qty\":5},{\"productId\":26,\"qty\":1},{\"productId\":27,\"qty\":2},{\"productId\":28,\"qty\":3},{\"productId\":29,\"qty\":4},{\"productId\":30,",
+        "truncated": true
+      }
+    },
+    "body.bind_small": {
+      "request": {
+        "method": "POST",
+        "target": "/body/bind/small",
+        "headers": [
+          [
+            "content-type",
+            "application/json"
+          ]
+        ],
+        "bodyBytes": 66,
+        "body": "{\"customerId\":1,\"status\":\"open\",\"lines\":[{\"productId\":1,\"qty\":1}]}"
+      },
+      "response": {
+        "status": 200,
+        "headers": [
+          [
+            "content-type",
+            "application/json; charset=utf-8"
+          ],
+          [
+            "date",
+            "<varies>"
+          ],
+          [
+            "server",
+            "Kestrel"
+          ],
+          [
+            "transfer-encoding",
+            "chunked"
+          ]
+        ],
+        "headerBytes": 148,
+        "framing": "chunked",
+        "bodyBytes": 97,
+        "body": "{\"fields\":4,\"bytes\":66,\"echo\":{\"customerId\":1,\"status\":\"open\",\"lines\":[{\"productId\":1,\"qty\":1}]}}",
+        "truncated": false
+      }
+    },
+    "body.rejected_all": {
+      "request": {
+        "method": "POST",
+        "target": "/body/validate/small",
+        "headers": [
+          [
+            "content-type",
+            "application/json"
+          ]
+        ],
+        "bodyBytes": 39,
+        "body": "{\"customerId\":0,\"status\":\"\",\"lines\":[]}"
+      },
+      "response": {
+        "status": 400,
+        "headers": [
+          [
+            "content-type",
+            "application/problem+json"
+          ],
+          [
+            "date",
+            "<varies>"
+          ],
+          [
+            "server",
+            "Kestrel"
+          ],
+          [
+            "transfer-encoding",
+            "chunked"
+          ]
+        ],
+        "headerBytes": 150,
+        "framing": "chunked",
+        "bodyBytes": 374,
+        "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.1\",\"title\":\"One or more validation errors occurred.\",\"status\":400,\"errors\":{\"CustomerId\":[\"The field CustomerId must be between 1 and 2147483647.\"],\"Status\":[\"The Status field is required.\"],\"Lines\":[\"The field Lines must be a string or array type with a minimum length of '1'.\"]},\"traceId\":\"0HNORERKF5CLC:0000000B\"}",
+        "truncated": false
+      }
+    },
+    "body.rejected_first": {
+      "request": {
+        "method": "POST",
+        "target": "/body/validate/first-error",
+        "headers": [
+          [
+            "content-type",
+            "application/json"
+          ]
+        ],
+        "bodyBytes": 39,
+        "body": "{\"customerId\":0,\"status\":\"\",\"lines\":[]}"
+      },
+      "response": {
+        "status": 400,
+        "headers": [
+          [
+            "content-type",
+            "application/problem+json"
+          ],
+          [
+            "date",
+            "<varies>"
+          ],
+          [
+            "server",
+            "Kestrel"
+          ],
+          [
+            "transfer-encoding",
+            "chunked"
+          ]
+        ],
+        "headerBytes": 150,
+        "framing": "chunked",
+        "bodyBytes": 242,
+        "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.1\",\"title\":\"One or more validation errors occurred.\",\"status\":400,\"errors\":{\"CustomerId\":[\"The field CustomerId must be between 1 and 2147483647.\"]},\"traceId\":\"0HNORERKF5CLC:0000000D\"}",
+        "truncated": false
+      }
+    },
+    "body.validate_medium": {
+      "request": {
+        "method": "POST",
+        "target": "/body/validate/medium",
+        "headers": [
+          [
+            "content-type",
+            "application/json"
+          ]
+        ],
+        "bodyBytes": 8379,
+        "body": "{\"customerId\":1,\"status\":\"open\",\"lines\":[{\"productId\":1,\"qty\":1},{\"productId\":2,\"qty\":2},{\"productId\":3,\"qty\":3},{\"productId\":4,\"qty\":4},{\"productId\":5,\"qty\":5},{\"productId\":6,\"qty\":1},{\"productId\":7,\"qty\":2},{\"productId\":8,\"qty\":3},{\"productId\":9,\"qty\":4},{\"productId\":10,\"qty\":5},{\"productId\":11,\"qty\":1},{\"productId\":12,\"qty\":2},{\"productId\":13,\"qty\":3},{\"productId\":14,\"qty\":4},{\"productId\":15,\"qty\":5},{\"productId\":16,\"qty\":1},{\"productId\":17,\"qty\":2},{\"productId\":18,\"qty\":3},{\"productId\":19,\"qty\":4},{\"productId\":20,\"qty\":5},{\"productId\":21,\"qty\":1},{\"productId\":22,\"qty\":2},{\"productId\":23,\"qty\":3},{\"productId\":24,\"qty\":4},{\"productId\":25,\"qty\":5},{\"productId\":26,\"qty\":1},{\"productId\":27,\"qty\":2},{\"productId\":28,\"qty\":3},{\"productId\":29,\"qty\":4},{\"productId\":30,\"qty\":5},{\"productId\":31,\"qty\":1},{\"productId\":32,\"qty\":2},{\"productId\":33,\"qty\":3},{\"productId\":34,\"qty\":4},{\"productId\":35,\"qty\":5},{\"productId\":36,\"qty\":1},{\"productId\":37,\"qty\":2},{\"productId\":38,\"qty\":3},{\"productId\":39,\"qty\":4},{\"productId\":40,\"qty\":5},{\"productId\":41,\"qty\":1},{\"productId\":42,\"qty\":2},{\"productId\":43,\"qty\":3},{\"productId\":44,\"qty\":4},{\"productId\":45,\"qty\":5},{\"productId\":46,\"qty\":1},{\"productId\":47,\"qty\":2},{\"productId\":48,\"qty\":3},{\"productId\":49,\"qty\":4},{\"productId\":50,\"qty\":5},{\"productId\":1,\"qty\":1},{\"productId\":2,\"qty\":2},{\"productId\":3,\"qty\":3},{\"productId\":4,\"qty\":4},{\"productId\":5,\"qty\":5},{\"productId\":6,\"qty\":1},{\"productId\":7,\"qty\":2},{\"productId\":8,\"qty\":3},{\"productId\":9,\"qty\":4},{\"productId\":10,\"qty\":5},{\"productId\":11,\"qty\":1},{\"productId\":12,\"qty\":2},{\"productId\":13,\"qty\":3},{\"productId\":14,\"qty\":4},{\"productId\":15,\"qty\":5},{\"productId\":16,\"qty\":1},{\"productId\":17,\"qty\":2},{\"productId\":18,\"qty\":3},{\"productId\":19,\"qty\":4},{\"productId\":20,\"qty\":5},{\"productId\":21,\"qty\":1},{\"productId\":22,\"qty\":2},{\"productId\":23,\"qty\":3},{\"productId\":24,\"qty\":4},{\"productId\":25,\"qty\":5},{\"productId\":26,\"qty\":1},{\"productId\":27,\"qty\":2},{\"productId\":28,\"qty\":3},{\"productId\":29,\"qty\":4},{\"productId\":30,\"qty\":5},{\"productId\":31,\"qty\":1},"
+      },
+      "response": {
+        "status": 200,
+        "headers": [
+          [
+            "content-type",
+            "application/json; charset=utf-8"
+          ],
+          [
+            "date",
+            "<varies>"
+          ],
+          [
+            "server",
+            "Kestrel"
+          ],
+          [
+            "transfer-encoding",
+            "chunked"
+          ]
+        ],
+        "headerBytes": 148,
+        "framing": "chunked",
+        "bodyBytes": 8414,
+        "body": "{\"fields\":674,\"bytes\":8379,\"echo\":{\"customerId\":1,\"status\":\"open\",\"lines\":[{\"productId\":1,\"qty\":1},{\"productId\":2,\"qty\":2},{\"productId\":3,\"qty\":3},{\"productId\":4,\"qty\":4},{\"productId\":5,\"qty\":5},{\"productId\":6,\"qty\":1},{\"productId\":7,\"qty\":2},{\"productId\":8,\"qty\":3},{\"productId\":9,\"qty\":4},{\"productId\":10,\"qty\":5},{\"productId\":11,\"qty\":1},{\"productId\":12,\"qty\":2},{\"productId\":13,\"qty\":3},{\"productId\":14,\"qty\":4},{\"productId\":15,\"qty\":5},{\"productId\":16,\"qty\":1},{\"productId\":17,\"qty\":2},{\"productId\":18,\"qty\":3},{\"productId\":19,\"qty\":4},{\"productId\":20,\"qty\":5},{\"productId\":21,\"qty\":1},{\"productId\":22,\"qty\":2},{\"productId\":23,\"qty\":3},{\"productId\":24,\"qty\":4},{\"productId\":25,\"qty\":5},{\"productId\":26,\"qty\":1},{\"productId\":27,\"qty\":2},{\"productId\":28,\"qty\":3},{\"productId\":29,\"qty\":4},{\"productId\":30,\"qty\":5},{\"productId\":31,\"qty\":1},{\"productId\":32,\"qty\":2},{\"productId\":33,\"qty\":3},{\"productId\":34,\"qty\":4},{\"productId\":35,\"qty\":5},{\"productId\":36,\"qty\":1},{\"productId\":37,\"qty\":2},{\"productId\":38,\"qty\":3},{\"productId\":39,\"qty\":4},{\"productId\":40,\"qty\":5},{\"productId\":41,\"qty\":1},{\"productId\":42,\"qty\":2},{\"productId\":43,\"qty\":3},{\"productId\":44,\"qty\":4},{\"productId\":45,\"qty\":5},{\"productId\":46,\"qty\":1},{\"productId\":47,\"qty\":2},{\"productId\":48,\"qty\":3},{\"productId\":49,\"qty\":4},{\"productId\":50,\"qty\":5},{\"productId\":1,\"qty\":1},{\"productId\":2,\"qty\":2},{\"productId\":3,\"qty\":3},{\"productId\":4,\"qty\":4},{\"productId\":5,\"qty\":5},{\"productId\":6,\"qty\":1},{\"productId\":7,\"qty\":2},{\"productId\":8,\"qty\":3},{\"productId\":9,\"qty\":4},{\"productId\":10,\"qty\":5},{\"productId\":11,\"qty\":1},{\"productId\":12,\"qty\":2},{\"productId\":13,\"qty\":3},{\"productId\":14,\"qty\":4},{\"productId\":15,\"qty\":5},{\"productId\":16,\"qty\":1},{\"productId\":17,\"qty\":2},{\"productId\":18,\"qty\":3},{\"productId\":19,\"qty\":4},{\"productId\":20,\"qty\":5},{\"productId\":21,\"qty\":1},{\"productId\":22,\"qty\":2},{\"productId\":23,\"qty\":3},{\"productId\":24,\"qty\":4},{\"productId\":25,\"qty\":5},{\"productId\":26,\"qty\":1},{\"productId\":27,\"qty\":2},{\"productId\":28,\"qty\":3},{\"productId\":29,\"qty\":4},{\"productId\":30,",
+        "truncated": true
+      }
+    },
+    "body.validate_small": {
+      "request": {
+        "method": "POST",
+        "target": "/body/validate/small",
+        "headers": [
+          [
+            "content-type",
+            "application/json"
+          ]
+        ],
+        "bodyBytes": 66,
+        "body": "{\"customerId\":1,\"status\":\"open\",\"lines\":[{\"productId\":1,\"qty\":1}]}"
+      },
+      "response": {
+        "status": 200,
+        "headers": [
+          [
+            "content-type",
+            "application/json; charset=utf-8"
+          ],
+          [
+            "date",
+            "<varies>"
+          ],
+          [
+            "server",
+            "Kestrel"
+          ],
+          [
+            "transfer-encoding",
+            "chunked"
+          ]
+        ],
+        "headerBytes": 148,
+        "framing": "chunked",
+        "bodyBytes": 97,
+        "body": "{\"fields\":4,\"bytes\":66,\"echo\":{\"customerId\":1,\"status\":\"open\",\"lines\":[{\"productId\":1,\"qty\":1}]}}",
+        "truncated": false
+      }
+    },
+    "cache.large": {
+      "request": {
+        "method": "GET",
+        "target": "/cache/large",
+        "headers": [],
+        "bodyBytes": 0
+      },
+      "response": {
+        "status": 200,
+        "headers": [
+          [
+            "content-type",
+            "application/json; charset=utf-8"
+          ],
+          [
+            "date",
+            "<varies>"
+          ],
+          [
+            "server",
+            "Kestrel"
+          ],
+          [
+            "transfer-encoding",
+            "chunked"
+          ],
+          [
+            "x-rb-serial",
+            "1"
+          ]
+        ],
+        "headerBytes": 164,
+        "framing": "chunked",
+        "bodyBytes": 128510,
+        "body": "{\"size\":\"large\",\"count\":1425,\"items\":[{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"priceCents\":18928,\"inStock\":true},{\"id\":2,\"name\":\"brass-hinge-5716\",\"category\":\"garden\",\"priceCents\":17577,\"inStock\":true},{\"id\":3,\"name\":\"linen-ring-6971\",\"category\":\"kitchen\",\"priceCents\":5540,\"inStock\":true},{\"id\":4,\"name\":\"copper-bolt-9217\",\"category\":\"outdoor\",\"priceCents\":11562,\"inStock\":true},{\"id\":5,\"name\":\"linen-lamp-8288\",\"category\":\"office\",\"priceCents\":1413,\"inStock\":true},{\"id\":6,\"name\":\"copper-pan-9308\",\"category\":\"tools\",\"priceCents\":10795,\"inStock\":true},{\"id\":7,\"name\":\"slate-seed-3051\",\"category\":\"garden\",\"priceCents\":9667,\"inStock\":false},{\"id\":8,\"name\":\"oak-lamp-8662\",\"category\":\"kitchen\",\"priceCents\":18032,\"inStock\":false},{\"id\":9,\"name\":\"amber-hinge-8405\",\"category\":\"outdoor\",\"priceCents\":9566,\"inStock\":true},{\"id\":10,\"name\":\"linen-lamp-9676\",\"category\":\"office\",\"priceCents\":4288,\"inStock\":true},{\"id\":11,\"name\":\"brass-trowel-2042\",\"category\":\"tools\",\"priceCents\":17701,\"inStock\":false},{\"id\":12,\"name\":\"linen-lamp-5542\",\"category\":\"garden\",\"priceCents\":12163,\"inStock\":true},{\"id\":13,\"name\":\"linen-seed-9760\",\"category\":\"kitchen\",\"priceCents\":12305,\"inStock\":false},{\"id\":14,\"name\":\"brass-hinge-4996\",\"category\":\"outdoor\",\"priceCents\":8489,\"inStock\":true},{\"id\":15,\"name\":\"cedar-hinge-8685\",\"category\":\"office\",\"priceCents\":15667,\"inStock\":true},{\"id\":16,\"name\":\"slate-seed-3185\",\"category\":\"tools\",\"priceCents\":4111,\"inStock\":true},{\"id\":17,\"name\":\"cedar-bolt-9891\",\"category\":\"garden\",\"priceCents\":18370,\"inStock\":true},{\"id\":18,\"name\":\"copper-bolt-8081\",\"category\":\"kitchen\",\"priceCents\":14318,\"inStock\":false},{\"id\":19,\"name\":\"amber-seed-4209\",\"category\":\"outdoor\",\"priceCents\":15424,\"inStock\":true},{\"id\":20,\"name\":\"oak-bolt-9982\",\"category\":\"office\",\"priceCents\":9582,\"inStock\":true},{\"id\":21,\"name\":\"slate-bolt-7099\",\"category\":\"tools\",\"priceCents\":6732,\"inStock\":false},{\"id\":22,\"name\":\"brass-seed-9718\",\"category\":\"garden\",\"priceCents\":17198,\"inStock\":true},{\"id\":23,\"name\":\"cedar-desk-4039\",\"category\":\"kitchen\",\"p",
+        "truncated": true
+      }
+    },
+    "cache.medium": {
+      "request": {
+        "method": "GET",
+        "target": "/cache/medium",
+        "headers": [],
+        "bodyBytes": 0
+      },
+      "response": {
+        "status": 200,
+        "headers": [
+          [
+            "content-type",
+            "application/json; charset=utf-8"
+          ],
+          [
+            "date",
+            "<varies>"
+          ],
+          [
+            "server",
+            "Kestrel"
+          ],
+          [
+            "transfer-encoding",
+            "chunked"
+          ],
+          [
+            "x-rb-serial",
+            "2"
+          ]
+        ],
+        "headerBytes": 164,
+        "framing": "chunked",
+        "bodyBytes": 7953,
+        "body": "{\"size\":\"medium\",\"count\":89,\"items\":[{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"priceCents\":18928,\"inStock\":true},{\"id\":2,\"name\":\"brass-hinge-5716\",\"category\":\"garden\",\"priceCents\":17577,\"inStock\":true},{\"id\":3,\"name\":\"linen-ring-6971\",\"category\":\"kitchen\",\"priceCents\":5540,\"inStock\":true},{\"id\":4,\"name\":\"copper-bolt-9217\",\"category\":\"outdoor\",\"priceCents\":11562,\"inStock\":true},{\"id\":5,\"name\":\"linen-lamp-8288\",\"category\":\"office\",\"priceCents\":1413,\"inStock\":true},{\"id\":6,\"name\":\"copper-pan-9308\",\"category\":\"tools\",\"priceCents\":10795,\"inStock\":true},{\"id\":7,\"name\":\"slate-seed-3051\",\"category\":\"garden\",\"priceCents\":9667,\"inStock\":false},{\"id\":8,\"name\":\"oak-lamp-8662\",\"category\":\"kitchen\",\"priceCents\":18032,\"inStock\":false},{\"id\":9,\"name\":\"amber-hinge-8405\",\"category\":\"outdoor\",\"priceCents\":9566,\"inStock\":true},{\"id\":10,\"name\":\"linen-lamp-9676\",\"category\":\"office\",\"priceCents\":4288,\"inStock\":true},{\"id\":11,\"name\":\"brass-trowel-2042\",\"category\":\"tools\",\"priceCents\":17701,\"inStock\":false},{\"id\":12,\"name\":\"linen-lamp-5542\",\"category\":\"garden\",\"priceCents\":12163,\"inStock\":true},{\"id\":13,\"name\":\"linen-seed-9760\",\"category\":\"kitchen\",\"priceCents\":12305,\"inStock\":false},{\"id\":14,\"name\":\"brass-hinge-4996\",\"category\":\"outdoor\",\"priceCents\":8489,\"inStock\":true},{\"id\":15,\"name\":\"cedar-hinge-8685\",\"category\":\"office\",\"priceCents\":15667,\"inStock\":true},{\"id\":16,\"name\":\"slate-seed-3185\",\"category\":\"tools\",\"priceCents\":4111,\"inStock\":true},{\"id\":17,\"name\":\"cedar-bolt-9891\",\"category\":\"garden\",\"priceCents\":18370,\"inStock\":true},{\"id\":18,\"name\":\"copper-bolt-8081\",\"category\":\"kitchen\",\"priceCents\":14318,\"inStock\":false},{\"id\":19,\"name\":\"amber-seed-4209\",\"category\":\"outdoor\",\"priceCents\":15424,\"inStock\":true},{\"id\":20,\"name\":\"oak-bolt-9982\",\"category\":\"office\",\"priceCents\":9582,\"inStock\":true},{\"id\":21,\"name\":\"slate-bolt-7099\",\"category\":\"tools\",\"priceCents\":6732,\"inStock\":false},{\"id\":22,\"name\":\"brass-seed-9718\",\"category\":\"garden\",\"priceCents\":17198,\"inStock\":true},{\"id\":23,\"name\":\"cedar-desk-4039\",\"category\":\"kitchen\",\"pr",
+        "truncated": true
+      }
+    },
+    "cache.small": {
+      "request": {
+        "method": "GET",
+        "target": "/cache/small",
+        "headers": [],
+        "bodyBytes": 0
+      },
+      "response": {
+        "status": 200,
+        "headers": [
+          [
+            "content-type",
+            "application/json; charset=utf-8"
+          ],
+          [
+            "date",
+            "<varies>"
+          ],
+          [
+            "server",
+            "Kestrel"
+          ],
+          [
+            "transfer-encoding",
+            "chunked"
+          ],
+          [
+            "x-rb-serial",
+            "3"
+          ]
+        ],
+        "headerBytes": 164,
+        "framing": "chunked",
+        "bodyBytes": 123,
+        "body": "{\"size\":\"small\",\"count\":1,\"items\":[{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"priceCents\":18928,\"inStock\":true}]}",
+        "truncated": false
+      }
+    },
+    "cache.vary_many": {
+      "request": {
+        "method": "GET",
+        "target": "/cache/vary/many",
+        "headers": [
+          [
+            "x-rb-channel",
+            "web"
+          ],
+          [
+            "x-rb-region",
+            "eu"
+          ],
+          [
+            "x-rb-tenant",
+            "alpha"
+          ]
+        ],
+        "bodyBytes": 0
+      },
+      "response": {
+        "status": 200,
+        "headers": [
+          [
+            "content-type",
+            "application/json; charset=utf-8"
+          ],
+          [
+            "date",
+            "<varies>"
+          ],
+          [
+            "server",
+            "Kestrel"
+          ],
+          [
+            "transfer-encoding",
+            "chunked"
+          ],
+          [
+            "vary",
+            "x-rb-channel, x-rb-region, x-rb-tenant"
+          ],
+          [
+            "x-rb-serial",
+            "4"
+          ]
+        ],
+        "headerBytes": 210,
+        "framing": "chunked",
+        "bodyBytes": 123,
+        "body": "{\"size\":\"small\",\"count\":1,\"items\":[{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"priceCents\":18928,\"inStock\":true}]}",
+        "truncated": false
+      }
+    },
+    "cache.vary_one": {
+      "request": {
+        "method": "GET",
+        "target": "/cache/vary/one",
+        "headers": [
+          [
+            "x-rb-tenant",
+            "alpha"
+          ]
+        ],
+        "bodyBytes": 0
+      },
+      "response": {
+        "status": 200,
+        "headers": [
+          [
+            "content-type",
+            "application/json; charset=utf-8"
+          ],
+          [
+            "date",
+            "<varies>"
+          ],
+          [
+            "server",
+            "Kestrel"
+          ],
+          [
+            "transfer-encoding",
+            "chunked"
+          ],
+          [
+            "vary",
+            "x-rb-tenant"
+          ],
+          [
+            "x-rb-serial",
+            "5"
+          ]
+        ],
+        "headerBytes": 183,
+        "framing": "chunked",
+        "bodyBytes": 123,
+        "body": "{\"size\":\"small\",\"count\":1,\"items\":[{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"priceCents\":18928,\"inStock\":true}]}",
+        "truncated": false
+      }
+    },
+    "compressed.gzip_large": {
+      "request": {
+        "method": "GET",
+        "target": "/compressed/large",
+        "headers": [
+          [
+            "accept-encoding",
+            "gzip"
+          ],
+          [
+            "cache-control",
+            "no-cache"
+          ]
+        ],
+        "bodyBytes": 0
+      },
+      "response": {
+        "status": 200,
+        "headers": [
+          [
+            "content-type",
+            "application/json; charset=utf-8"
+          ],
+          [
+            "date",
+            "<varies>"
+          ],
+          [
+            "server",
+            "Kestrel"
+          ],
+          [
+            "content-encoding",
+            "gzip"
+          ],
+          [
+            "transfer-encoding",
+            "chunked"
+          ],
+          [
+            "vary",
+            "Accept-Encoding"
+          ],
+          [
+            "x-rb-serial",
+            "6"
+          ]
+        ],
+        "headerBytes": 211,
+        "framing": "chunked",
+        "bodyBytes": 31325,
+        "body": "{\"size\":\"large\",\"count\":1425,\"items\":[{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"priceCents\":18928,\"inStock\":true},{\"id\":2,\"name\":\"brass-hinge-5716\",\"category\":\"garden\",\"priceCents\":17577,\"inStock\":true},{\"id\":3,\"name\":\"linen-ring-6971\",\"category\":\"kitchen\",\"priceCents\":5540,\"inStock\":true},{\"id\":4,\"name\":\"copper-bolt-9217\",\"category\":\"outdoor\",\"priceCents\":11562,\"inStock\":true},{\"id\":5,\"name\":\"linen-lamp-8288\",\"category\":\"office\",\"priceCents\":1413,\"inStock\":true},{\"id\":6,\"name\":\"copper-pan-9308\",\"category\":\"tools\",\"priceCents\":10795,\"inStock\":true},{\"id\":7,\"name\":\"slate-seed-3051\",\"category\":\"garden\",\"priceCents\":9667,\"inStock\":false},{\"id\":8,\"name\":\"oak-lamp-8662\",\"category\":\"kitchen\",\"priceCents\":18032,\"inStock\":false},{\"id\":9,\"name\":\"amber-hinge-8405\",\"category\":\"outdoor\",\"priceCents\":9566,\"inStock\":true},{\"id\":10,\"name\":\"linen-lamp-9676\",\"category\":\"office\",\"priceCents\":4288,\"inStock\":true},{\"id\":11,\"name\":\"brass-trowel-2042\",\"category\":\"tools\",\"priceCents\":17701,\"inStock\":false},{\"id\":12,\"name\":\"linen-lamp-5542\",\"category\":\"garden\",\"priceCents\":12163,\"inStock\":true},{\"id\":13,\"name\":\"linen-seed-9760\",\"category\":\"kitchen\",\"priceCents\":12305,\"inStock\":false},{\"id\":14,\"name\":\"brass-hinge-4996\",\"category\":\"outdoor\",\"priceCents\":8489,\"inStock\":true},{\"id\":15,\"name\":\"cedar-hinge-8685\",\"category\":\"office\",\"priceCents\":15667,\"inStock\":true},{\"id\":16,\"name\":\"slate-seed-3185\",\"category\":\"tools\",\"priceCents\":4111,\"inStock\":true},{\"id\":17,\"name\":\"cedar-bolt-9891\",\"category\":\"garden\",\"priceCents\":18370,\"inStock\":true},{\"id\":18,\"name\":\"copper-bolt-8081\",\"category\":\"kitchen\",\"priceCents\":14318,\"inStock\":false},{\"id\":19,\"name\":\"amber-seed-4209\",\"category\":\"outdoor\",\"priceCents\":15424,\"inStock\":true},{\"id\":20,\"name\":\"oak-bolt-9982\",\"category\":\"office\",\"priceCents\":9582,\"inStock\":true},{\"id\":21,\"name\":\"slate-bolt-7099\",\"category\":\"tools\",\"priceCents\":6732,\"inStock\":false},{\"id\":22,\"name\":\"brass-seed-9718\",\"category\":\"garden\",\"priceCents\":17198,\"inStock\":true},{\"id\":23,\"name\":\"cedar-desk-4039\",\"category\":\"kitchen\",\"p",
+        "truncated": true
+      }
+    },
+    "compressed.gzip_small": {
+      "request": {
+        "method": "GET",
+        "target": "/compressed/small",
+        "headers": [
+          [
+            "accept-encoding",
+            "gzip"
+          ],
+          [
+            "cache-control",
+            "no-cache"
+          ]
+        ],
+        "bodyBytes": 0
+      },
+      "response": {
+        "status": 200,
+        "headers": [
+          [
+            "content-type",
+            "application/json; charset=utf-8"
+          ],
+          [
+            "date",
+            "<varies>"
+          ],
+          [
+            "server",
+            "Kestrel"
+          ],
+          [
+            "content-encoding",
+            "gzip"
+          ],
+          [
+            "transfer-encoding",
+            "chunked"
+          ],
+          [
+            "vary",
+            "Accept-Encoding"
+          ],
+          [
+            "x-rb-serial",
+            "8"
+          ]
+        ],
+        "headerBytes": 211,
+        "framing": "chunked",
+        "bodyBytes": 141,
+        "body": "{\"size\":\"small\",\"count\":1,\"items\":[{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"priceCents\":18928,\"inStock\":true}]}",
+        "truncated": false
+      }
+    },
+    "compressed.identity_large": {
+      "request": {
+        "method": "GET",
+        "target": "/compressed/large",
+        "headers": [
+          [
+            "accept-encoding",
+            "identity"
+          ],
+          [
+            "cache-control",
+            "no-cache"
+          ]
+        ],
+        "bodyBytes": 0
+      },
+      "response": {
+        "status": 200,
+        "headers": [
+          [
+            "content-type",
+            "application/json; charset=utf-8"
+          ],
+          [
+            "date",
+            "<varies>"
+          ],
+          [
+            "server",
+            "Kestrel"
+          ],
+          [
+            "transfer-encoding",
+            "chunked"
+          ],
+          [
+            "vary",
+            "Accept-Encoding"
+          ],
+          [
+            "x-rb-serial",
+            "10"
+          ]
+        ],
+        "headerBytes": 188,
+        "framing": "chunked",
+        "bodyBytes": 128510,
+        "body": "{\"size\":\"large\",\"count\":1425,\"items\":[{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"priceCents\":18928,\"inStock\":true},{\"id\":2,\"name\":\"brass-hinge-5716\",\"category\":\"garden\",\"priceCents\":17577,\"inStock\":true},{\"id\":3,\"name\":\"linen-ring-6971\",\"category\":\"kitchen\",\"priceCents\":5540,\"inStock\":true},{\"id\":4,\"name\":\"copper-bolt-9217\",\"category\":\"outdoor\",\"priceCents\":11562,\"inStock\":true},{\"id\":5,\"name\":\"linen-lamp-8288\",\"category\":\"office\",\"priceCents\":1413,\"inStock\":true},{\"id\":6,\"name\":\"copper-pan-9308\",\"category\":\"tools\",\"priceCents\":10795,\"inStock\":true},{\"id\":7,\"name\":\"slate-seed-3051\",\"category\":\"garden\",\"priceCents\":9667,\"inStock\":false},{\"id\":8,\"name\":\"oak-lamp-8662\",\"category\":\"kitchen\",\"priceCents\":18032,\"inStock\":false},{\"id\":9,\"name\":\"amber-hinge-8405\",\"category\":\"outdoor\",\"priceCents\":9566,\"inStock\":true},{\"id\":10,\"name\":\"linen-lamp-9676\",\"category\":\"office\",\"priceCents\":4288,\"inStock\":true},{\"id\":11,\"name\":\"brass-trowel-2042\",\"category\":\"tools\",\"priceCents\":17701,\"inStock\":false},{\"id\":12,\"name\":\"linen-lamp-5542\",\"category\":\"garden\",\"priceCents\":12163,\"inStock\":true},{\"id\":13,\"name\":\"linen-seed-9760\",\"category\":\"kitchen\",\"priceCents\":12305,\"inStock\":false},{\"id\":14,\"name\":\"brass-hinge-4996\",\"category\":\"outdoor\",\"priceCents\":8489,\"inStock\":true},{\"id\":15,\"name\":\"cedar-hinge-8685\",\"category\":\"office\",\"priceCents\":15667,\"inStock\":true},{\"id\":16,\"name\":\"slate-seed-3185\",\"category\":\"tools\",\"priceCents\":4111,\"inStock\":true},{\"id\":17,\"name\":\"cedar-bolt-9891\",\"category\":\"garden\",\"priceCents\":18370,\"inStock\":true},{\"id\":18,\"name\":\"copper-bolt-8081\",\"category\":\"kitchen\",\"priceCents\":14318,\"inStock\":false},{\"id\":19,\"name\":\"amber-seed-4209\",\"category\":\"outdoor\",\"priceCents\":15424,\"inStock\":true},{\"id\":20,\"name\":\"oak-bolt-9982\",\"category\":\"office\",\"priceCents\":9582,\"inStock\":true},{\"id\":21,\"name\":\"slate-bolt-7099\",\"category\":\"tools\",\"priceCents\":6732,\"inStock\":false},{\"id\":22,\"name\":\"brass-seed-9718\",\"category\":\"garden\",\"priceCents\":17198,\"inStock\":true},{\"id\":23,\"name\":\"cedar-desk-4039\",\"category\":\"kitchen\",\"p",
+        "truncated": true
+      }
+    },
+    "compressed.identity_small": {
+      "request": {
+        "method": "GET",
+        "target": "/compressed/small",
+        "headers": [
+          [
+            "accept-encoding",
+            "identity"
+          ],
+          [
+            "cache-control",
+            "no-cache"
+          ]
+        ],
+        "bodyBytes": 0
+      },
+      "response": {
+        "status": 200,
+        "headers": [
+          [
+            "content-type",
+            "application/json; charset=utf-8"
+          ],
+          [
+            "date",
+            "<varies>"
+          ],
+          [
+            "server",
+            "Kestrel"
+          ],
+          [
+            "transfer-encoding",
+            "chunked"
+          ],
+          [
+            "vary",
+            "Accept-Encoding"
+          ],
+          [
+            "x-rb-serial",
+            "12"
+          ]
+        ],
+        "headerBytes": 188,
+        "framing": "chunked",
+        "bodyBytes": 123,
+        "body": "{\"size\":\"small\",\"count\":1,\"items\":[{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"priceCents\":18928,\"inStock\":true}]}",
+        "truncated": false
+      }
+    },
+    "cors.disallowed": {
+      "request": {
+        "method": "OPTIONS",
+        "target": "/cors/small",
+        "headers": [
+          [
+            "origin",
+            "https://elsewhere.example.net"
+          ],
+          [
+            "access-control-request-method",
+            "GET"
+          ],
+          [
+            "access-control-request-headers",
+            "x-rb-tenant"
+          ]
+        ],
+        "bodyBytes": 0
+      },
+      "response": {
+        "status": 204,
+        "headers": [
+          [
+            "date",
+            "<varies>"
+          ],
+          [
+            "server",
+            "Kestrel"
+          ]
+        ],
+        "headerBytes": 81,
+        "framing": "none",
+        "bodyBytes": 0,
+        "body": "",
+        "truncated": false
+      }
+    },
+    "cors.preflight": {
+      "request": {
+        "method": "OPTIONS",
+        "target": "/cors/small",
+        "headers": [
+          [
+            "origin",
+            "https://shop.example.com"
+          ],
+          [
+            "access-control-request-method",
+            "GET"
+          ],
+          [
+            "access-control-request-headers",
+            "x-rb-tenant"
+          ]
+        ],
+        "bodyBytes": 0
+      },
+      "response": {
+        "status": 204,
+        "headers": [
+          [
+            "date",
+            "<varies>"
+          ],
+          [
+            "server",
+            "Kestrel"
+          ],
+          [
+            "access-control-allow-headers",
+            "x-rb-tenant"
+          ],
+          [
+            "access-control-allow-methods",
+            "GET"
+          ],
+          [
+            "access-control-allow-origin",
+            "https://shop.example.com"
+          ],
+          [
+            "access-control-max-age",
+            "600"
+          ],
+          [
+            "vary",
+            "Origin"
+          ]
+        ],
+        "headerBytes": 257,
+        "framing": "none",
+        "bodyBytes": 0,
+        "body": "",
+        "truncated": false
+      }
+    },
+    "cors.request": {
+      "request": {
+        "method": "GET",
+        "target": "/cors/small",
+        "headers": [
+          [
+            "origin",
+            "https://shop.example.com"
+          ],
+          [
+            "x-rb-tenant",
+            "aenqkkmtydxb"
+          ]
+        ],
+        "bodyBytes": 0
+      },
+      "response": {
+        "status": 200,
+        "headers": [
+          [
+            "content-type",
+            "application/json; charset=utf-8"
+          ],
+          [
+            "date",
+            "<varies>"
+          ],
+          [
+            "server",
+            "Kestrel"
+          ],
+          [
+            "access-control-allow-origin",
+            "https://shop.example.com"
+          ],
+          [
+            "transfer-encoding",
+            "chunked"
+          ],
+          [
+            "vary",
+            "Origin"
+          ],
+          [
+            "x-rb-serial",
+            "14"
+          ]
+        ],
+        "headerBytes": 234,
+        "framing": "chunked",
+        "bodyBytes": 123,
+        "body": "{\"size\":\"small\",\"count\":1,\"items\":[{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"priceCents\":18928,\"inStock\":true}]}",
+        "truncated": false
+      }
+    },
+    "cors.scoped": {
+      "request": {
+        "method": "GET",
+        "target": "/json/small",
+        "headers": [
+          [
+            "origin",
+            "https://shop.example.com"
+          ]
+        ],
+        "bodyBytes": 0
+      },
+      "response": {
+        "status": 200,
+        "headers": [
+          [
+            "content-type",
+            "application/json; charset=utf-8"
+          ],
+          [
+            "date",
+            "<varies>"
+          ],
+          [
+            "server",
+            "Kestrel"
+          ],
+          [
+            "transfer-encoding",
+            "chunked"
+          ]
+        ],
+        "headerBytes": 148,
+        "framing": "chunked",
+        "bodyBytes": 123,
+        "body": "{\"size\":\"small\",\"count\":1,\"items\":[{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"priceCents\":18928,\"inStock\":true}]}",
+        "truncated": false
+      }
+    },
+    "cors.vary": {
+      "request": {
+        "method": "GET",
+        "target": "/cors/small",
+        "headers": [
+          [
+            "origin",
+            "https://shop.example.com"
+          ],
+          [
+            "x-rb-tenant",
+            "aenqkkmtydxb"
+          ]
+        ],
+        "bodyBytes": 0
+      },
+      "response": {
+        "status": 200,
+        "headers": [
+          [
+            "content-type",
+            "application/json; charset=utf-8"
+          ],
+          [
+            "date",
+            "<varies>"
+          ],
+          [
+            "server",
+            "Kestrel"
+          ],
+          [
+            "access-control-allow-origin",
+            "https://shop.example.com"
+          ],
+          [
+            "transfer-encoding",
+            "chunked"
+          ],
+          [
+            "vary",
+            "Origin"
+          ],
+          [
+            "x-rb-serial",
+            "25"
+          ]
+        ],
+        "headerBytes": 234,
+        "framing": "chunked",
+        "bodyBytes": 123,
+        "body": "{\"size\":\"small\",\"count\":1,\"items\":[{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"priceCents\":18928,\"inStock\":true}]}",
+        "truncated": false
+      }
+    },
+    "errors.malformed": {
+      "request": {
+        "method": "POST",
+        "target": "/body/validate/small",
+        "headers": [
+          [
+            "content-type",
+            "application/json"
+          ]
+        ],
+        "bodyBytes": 28,
+        "body": "{\"customerId\": 1, \"lines\": ["
+      },
+      "response": {
+        "status": 400,
+        "headers": [
+          [
+            "content-type",
+            "application/problem+json"
+          ],
+          [
+            "date",
+            "<varies>"
+          ],
+          [
+            "server",
+            "Kestrel"
+          ],
+          [
+            "transfer-encoding",
+            "chunked"
+          ]
+        ],
+        "headerBytes": 150,
+        "framing": "chunked",
+        "bodyBytes": 131,
+        "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.1\",\"title\":\"Bad Request\",\"status\":400,\"traceId\":\"0HNORERKF5CLC:00000029\"}",
+        "truncated": false
+      }
+    },
+    "errors.not_found": {
+      "request": {
+        "method": "GET",
+        "target": "/items/999999",
+        "headers": [],
+        "bodyBytes": 0
+      },
+      "response": {
+        "status": 404,
+        "headers": [
+          [
+            "content-type",
+            "application/problem+json"
+          ],
+          [
+            "date",
+            "<varies>"
+          ],
+          [
+            "server",
+            "Kestrel"
+          ],
+          [
+            "transfer-encoding",
+            "chunked"
+          ]
+        ],
+        "headerBytes": 148,
+        "framing": "chunked",
+        "bodyBytes": 129,
+        "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.5\",\"title\":\"Not Found\",\"status\":404,\"traceId\":\"0HNORERKF5CLC:0000002B\"}",
+        "truncated": false
+      }
+    },
+    "errors.unmatched": {
+      "request": {
+        "method": "GET",
+        "target": "/errors/unmatched",
+        "headers": [],
+        "bodyBytes": 0
+      },
+      "response": {
+        "status": 404,
+        "headers": [
+          [
+            "content-type",
+            "application/problem+json"
+          ],
+          [
+            "date",
+            "<varies>"
+          ],
+          [
+            "server",
+            "Kestrel"
+          ],
+          [
+            "transfer-encoding",
+            "chunked"
+          ]
+        ],
+        "headerBytes": 148,
+        "framing": "chunked",
+        "bodyBytes": 129,
+        "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.5\",\"title\":\"Not Found\",\"status\":404,\"traceId\":\"0HNORERKF5CLC:0000002D\"}",
+        "truncated": false
+      }
+    },
+    "errors.wrong_method": {
+      "request": {
+        "method": "POST",
+        "target": "/items/17",
+        "headers": [],
+        "bodyBytes": 0
+      },
+      "response": {
+        "status": 405,
+        "headers": [
+          [
+            "content-type",
+            "application/problem+json"
+          ],
+          [
+            "date",
+            "<varies>"
+          ],
+          [
+            "server",
+            "Kestrel"
+          ],
+          [
+            "allow",
+            "DELETE, GET, HEAD, PATCH, PUT"
+          ],
+          [
+            "transfer-encoding",
+            "chunked"
+          ]
+        ],
+        "headerBytes": 195,
+        "framing": "chunked",
+        "bodyBytes": 138,
+        "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.6\",\"title\":\"Method Not Allowed\",\"status\":405,\"traceId\":\"0HNORERKF5CLC:0000002F\"}",
+        "truncated": false
+      }
+    },
+    "etag.large": {
+      "request": {
+        "method": "GET",
+        "target": "/etag/large",
+        "headers": [],
+        "bodyBytes": 0
+      },
+      "response": {
+        "status": 200,
+        "headers": [
+          [
+            "content-length",
+            "128510"
+          ],
+          [
+            "content-type",
+            "application/json"
+          ],
+          [
+            "date",
+            "<varies>"
+          ],
+          [
+            "server",
+            "Kestrel"
+          ],
+          [
+            "etag",
+            "\"a69ddaf5e59b98817df3b4d78459b8c0670f44fb\""
+          ],
+          [
+            "x-rb-serial",
+            "16"
+          ]
+        ],
+        "headerBytes": 196,
+        "framing": "content-length",
+        "bodyBytes": 128510,
+        "body": "{\"size\":\"large\",\"count\":1425,\"items\":[{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"priceCents\":18928,\"inStock\":true},{\"id\":2,\"name\":\"brass-hinge-5716\",\"category\":\"garden\",\"priceCents\":17577,\"inStock\":true},{\"id\":3,\"name\":\"linen-ring-6971\",\"category\":\"kitchen\",\"priceCents\":5540,\"inStock\":true},{\"id\":4,\"name\":\"copper-bolt-9217\",\"category\":\"outdoor\",\"priceCents\":11562,\"inStock\":true},{\"id\":5,\"name\":\"linen-lamp-8288\",\"category\":\"office\",\"priceCents\":1413,\"inStock\":true},{\"id\":6,\"name\":\"copper-pan-9308\",\"category\":\"tools\",\"priceCents\":10795,\"inStock\":true},{\"id\":7,\"name\":\"slate-seed-3051\",\"category\":\"garden\",\"priceCents\":9667,\"inStock\":false},{\"id\":8,\"name\":\"oak-lamp-8662\",\"category\":\"kitchen\",\"priceCents\":18032,\"inStock\":false},{\"id\":9,\"name\":\"amber-hinge-8405\",\"category\":\"outdoor\",\"priceCents\":9566,\"inStock\":true},{\"id\":10,\"name\":\"linen-lamp-9676\",\"category\":\"office\",\"priceCents\":4288,\"inStock\":true},{\"id\":11,\"name\":\"brass-trowel-2042\",\"category\":\"tools\",\"priceCents\":17701,\"inStock\":false},{\"id\":12,\"name\":\"linen-lamp-5542\",\"category\":\"garden\",\"priceCents\":12163,\"inStock\":true},{\"id\":13,\"name\":\"linen-seed-9760\",\"category\":\"kitchen\",\"priceCents\":12305,\"inStock\":false},{\"id\":14,\"name\":\"brass-hinge-4996\",\"category\":\"outdoor\",\"priceCents\":8489,\"inStock\":true},{\"id\":15,\"name\":\"cedar-hinge-8685\",\"category\":\"office\",\"priceCents\":15667,\"inStock\":true},{\"id\":16,\"name\":\"slate-seed-3185\",\"category\":\"tools\",\"priceCents\":4111,\"inStock\":true},{\"id\":17,\"name\":\"cedar-bolt-9891\",\"category\":\"garden\",\"priceCents\":18370,\"inStock\":true},{\"id\":18,\"name\":\"copper-bolt-8081\",\"category\":\"kitchen\",\"priceCents\":14318,\"inStock\":false},{\"id\":19,\"name\":\"amber-seed-4209\",\"category\":\"outdoor\",\"priceCents\":15424,\"inStock\":true},{\"id\":20,\"name\":\"oak-bolt-9982\",\"category\":\"office\",\"priceCents\":9582,\"inStock\":true},{\"id\":21,\"name\":\"slate-bolt-7099\",\"category\":\"tools\",\"priceCents\":6732,\"inStock\":false},{\"id\":22,\"name\":\"brass-seed-9718\",\"category\":\"garden\",\"priceCents\":17198,\"inStock\":true},{\"id\":23,\"name\":\"cedar-desk-4039\",\"category\":\"kitchen\",\"p",
+        "truncated": true
+      }
+    },
+    "etag.match_large": {
+      "request": {
+        "method": "GET",
+        "target": "/etag/large",
+        "headers": [
+          [
+            "if-none-match",
+            "\"a69ddaf5e59b98817df3b4d78459b8c0670f44fb\""
+          ]
+        ],
+        "bodyBytes": 0
+      },
+      "response": {
+        "status": 304,
+        "headers": [
+          [
+            "date",
+            "<varies>"
+          ],
+          [
+            "server",
+            "Kestrel"
+          ],
+          [
+            "etag",
+            "\"a69ddaf5e59b98817df3b4d78459b8c0670f44fb\""
+          ],
+          [
+            "x-rb-serial",
+            "19"
+          ]
+        ],
+        "headerBytes": 150,
+        "framing": "none",
+        "bodyBytes": 0,
+        "body": "",
+        "truncated": false
+      }
+    },
+    "etag.small": {
+      "request": {
+        "method": "GET",
+        "target": "/etag/small",
+        "headers": [],
+        "bodyBytes": 0
+      },
+      "response": {
+        "status": 200,
+        "headers": [
+          [
+            "content-length",
+            "123"
+          ],
+          [
+            "content-type",
+            "application/json"
+          ],
+          [
+            "date",
+            "<varies>"
+          ],
+          [
+            "server",
+            "Kestrel"
+          ],
+          [
+            "etag",
+            "\"54d88e27589cfa133c812bdd37b28a41872c2b47\""
+          ],
+          [
+            "x-rb-serial",
+            "21"
+          ]
+        ],
+        "headerBytes": 193,
+        "framing": "content-length",
+        "bodyBytes": 123,
+        "body": "{\"size\":\"small\",\"count\":1,\"items\":[{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"priceCents\":18928,\"inStock\":true}]}",
+        "truncated": false
+      }
+    },
+    "etag.stale_large": {
+      "request": {
+        "method": "GET",
+        "target": "/etag/large",
+        "headers": [
+          [
+            "if-none-match",
+            "\"0000000000000000\""
+          ]
+        ],
+        "bodyBytes": 0
+      },
+      "response": {
+        "status": 200,
+        "headers": [
+          [
+            "content-length",
+            "128510"
+          ],
+          [
+            "content-type",
+            "application/json"
+          ],
+          [
+            "date",
+            "<varies>"
+          ],
+          [
+            "server",
+            "Kestrel"
+          ],
+          [
+            "etag",
+            "\"a69ddaf5e59b98817df3b4d78459b8c0670f44fb\""
+          ],
+          [
+            "x-rb-serial",
+            "23"
+          ]
+        ],
+        "headerBytes": 196,
+        "framing": "content-length",
+        "bodyBytes": 128510,
+        "body": "{\"size\":\"large\",\"count\":1425,\"items\":[{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"priceCents\":18928,\"inStock\":true},{\"id\":2,\"name\":\"brass-hinge-5716\",\"category\":\"garden\",\"priceCents\":17577,\"inStock\":true},{\"id\":3,\"name\":\"linen-ring-6971\",\"category\":\"kitchen\",\"priceCents\":5540,\"inStock\":true},{\"id\":4,\"name\":\"copper-bolt-9217\",\"category\":\"outdoor\",\"priceCents\":11562,\"inStock\":true},{\"id\":5,\"name\":\"linen-lamp-8288\",\"category\":\"office\",\"priceCents\":1413,\"inStock\":true},{\"id\":6,\"name\":\"copper-pan-9308\",\"category\":\"tools\",\"priceCents\":10795,\"inStock\":true},{\"id\":7,\"name\":\"slate-seed-3051\",\"category\":\"garden\",\"priceCents\":9667,\"inStock\":false},{\"id\":8,\"name\":\"oak-lamp-8662\",\"category\":\"kitchen\",\"priceCents\":18032,\"inStock\":false},{\"id\":9,\"name\":\"amber-hinge-8405\",\"category\":\"outdoor\",\"priceCents\":9566,\"inStock\":true},{\"id\":10,\"name\":\"linen-lamp-9676\",\"category\":\"office\",\"priceCents\":4288,\"inStock\":true},{\"id\":11,\"name\":\"brass-trowel-2042\",\"category\":\"tools\",\"priceCents\":17701,\"inStock\":false},{\"id\":12,\"name\":\"linen-lamp-5542\",\"category\":\"garden\",\"priceCents\":12163,\"inStock\":true},{\"id\":13,\"name\":\"linen-seed-9760\",\"category\":\"kitchen\",\"priceCents\":12305,\"inStock\":false},{\"id\":14,\"name\":\"brass-hinge-4996\",\"category\":\"outdoor\",\"priceCents\":8489,\"inStock\":true},{\"id\":15,\"name\":\"cedar-hinge-8685\",\"category\":\"office\",\"priceCents\":15667,\"inStock\":true},{\"id\":16,\"name\":\"slate-seed-3185\",\"category\":\"tools\",\"priceCents\":4111,\"inStock\":true},{\"id\":17,\"name\":\"cedar-bolt-9891\",\"category\":\"garden\",\"priceCents\":18370,\"inStock\":true},{\"id\":18,\"name\":\"copper-bolt-8081\",\"category\":\"kitchen\",\"priceCents\":14318,\"inStock\":false},{\"id\":19,\"name\":\"amber-seed-4209\",\"category\":\"outdoor\",\"priceCents\":15424,\"inStock\":true},{\"id\":20,\"name\":\"oak-bolt-9982\",\"category\":\"office\",\"priceCents\":9582,\"inStock\":true},{\"id\":21,\"name\":\"slate-bolt-7099\",\"category\":\"tools\",\"priceCents\":6732,\"inStock\":false},{\"id\":22,\"name\":\"brass-seed-9718\",\"category\":\"garden\",\"priceCents\":17198,\"inStock\":true},{\"id\":23,\"name\":\"cedar-desk-4039\",\"category\":\"kitchen\",\"p",
+        "truncated": true
+      }
+    },
+    "forms.multipart": {
+      "request": {
+        "method": "POST",
+        "target": "/forms/multipart",
+        "headers": [
+          [
+            "content-type",
+            "multipart/form-data; boundary=rb-7c4f1e0a9d"
+          ]
+        ],
+        "bodyBytes": 33067,
+        "body": "--rb-7c4f1e0a9d\r\nContent-Disposition: form-data; name=\"tenant\"\r\n\r\naenqkkmtydxb\r\n--rb-7c4f1e0a9d\r\nContent-Disposition: form-data; name=\"requestId\"\r\n\r\n29c5d5015df1c7bc\r\n--rb-7c4f1e0a9d\r\nContent-Disposition: form-data; name=\"file\"; filename=\"forms.file.txt\"\r\nContent-Type: text/plain\r\n\r\nid,name,category,priceCents,inStock\n1,slate-lamp-6647,tools,18928,true\n2,brass-hinge-5716,garden,17577,true\n3,linen-ring-6971,kitchen,5540,true\n4,copper-bolt-9217,outdoor,11562,true\n5,linen-lamp-8288,office,1413,true\n6,copper-pan-9308,tools,10795,true\n7,slate-seed-3051,garden,9667,false\n8,oak-lamp-8662,kitchen,18032,false\n9,amber-hinge-8405,outdoor,9566,true\n10,linen-lamp-9676,office,4288,true\n11,brass-trowel-2042,tools,17701,false\n12,linen-lamp-5542,garden,12163,true\n13,linen-seed-9760,kitchen,12305,false\n14,brass-hinge-4996,outdoor,8489,true\n15,cedar-hinge-8685,office,15667,true\n16,slate-seed-3185,tools,4111,true\n17,cedar-bolt-9891,garden,18370,true\n18,copper-bolt-8081,kitchen,14318,false\n19,amber-seed-4209,outdoor,15424,true\n20,oak-bolt-9982,office,9582,true\n21,slate-bolt-7099,tools,6732,false\n22,brass-seed-9718,garden,17198,true\n23,cedar-desk-4039,kitchen,7976,false\n24,linen-trowel-1373,outdoor,1366,true\n25,cedar-lamp-2354,office,18280,true\n26,amber-seed-2332,tools,15666,true\n27,brass-seed-2085,garden,9177,true\n28,oak-seed-8609,kitchen,4164,true\n29,amber-trowel-2280,outdoor,10586,true\n30,slate-trowel-8163,office,13854,true\n31,amber-trowel-1862,tools,13591,true\n32,slate-hinge-3427,garden,6583,true\n33,cedar-bolt-3182,kitchen,19042,false\n34,linen-hinge-8815,outdoor,9675,true\n35,steel-hinge-4547,office,10616,true\n36,brass-trowel-7259,tools,8554,false\n37,oak-lamp-5565,garden,12410,true\n38,steel-hinge-8322,kitchen,13667,true\n39,steel-seed-9042,outdoor,8508,false\n40,brass-pan-9823,office,12875,false\n41,slate-hinge-7093,tools,15479,true\n42,amber-trowel-8362,garden,14929,true\n43,slate-trowel-4710,kitchen,19979,true\n44,cedar-trowel-3911,outdoor,7262,true\n45,slate-hinge-5552,office,2450,true\n46,linen-ring-4595,tools,14383,true\n47,linen-pan-7"
+      },
+      "response": {
+        "status": 200,
+        "headers": [
+          [
+            "content-type",
+            "application/json; charset=utf-8"
+          ],
+          [
+            "date",
+            "<varies>"
+          ],
+          [
+            "server",
+            "Kestrel"
+          ],
+          [
+            "transfer-encoding",
+            "chunked"
+          ]
+        ],
+        "headerBytes": 148,
+        "framing": "chunked",
+        "bodyBytes": 112,
+        "body": "{\"file\":{\"name\":\"forms.file.txt\",\"bytes\":32762},\"echo\":{\"tenant\":\"aenqkkmtydxb\",\"requestId\":\"29c5d5015df1c7bc\"}}",
+        "truncated": false
+      }
+    },
+    "forms.urlencoded": {
+      "request": {
+        "method": "POST",
+        "target": "/forms/urlencoded",
+        "headers": [
+          [
+            "content-type",
+            "application/x-www-form-urlencoded"
+          ]
+        ],
+        "bodyBytes": 99,
+        "body": "page=637&size=20&status=open&category=outdoor&sort=total&q=wrtsz+jwsxm&minPrice=5495&maxPrice=51378"
+      },
+      "response": {
+        "status": 200,
+        "headers": [
+          [
+            "content-type",
+            "application/json; charset=utf-8"
+          ],
+          [
+            "date",
+            "<varies>"
+          ],
+          [
+            "server",
+            "Kestrel"
+          ],
+          [
+            "transfer-encoding",
+            "chunked"
+          ]
+        ],
+        "headerBytes": 148,
+        "framing": "chunked",
+        "bodyBytes": 256,
+        "body": "{\"size\":\"small\",\"count\":1,\"items\":[{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"priceCents\":18928,\"inStock\":true}],\"echo\":{\"page\":637,\"size\":20,\"status\":\"open\",\"category\":\"outdoor\",\"sort\":\"total\",\"q\":\"wrtsz jwsxm\",\"minPrice\":5495,\"maxPrice\":51378}}",
+        "truncated": false
+      }
+    },
+    "headers.bind_few": {
+      "request": {
+        "method": "GET",
+        "target": "/headers/bind",
+        "headers": [
+          [
+            "x-rb-tenant",
+            "aenqkkmtydxb"
+          ],
+          [
+            "x-rb-request-id",
+            "29c5d5015df1c7bc"
+          ],
+          [
+            "x-rb-account",
+            "271441"
+          ]
+        ],
+        "bodyBytes": 0
+      },
+      "response": {
+        "status": 200,
+        "headers": [
+          [
+            "content-type",
+            "application/json; charset=utf-8"
+          ],
+          [
+            "date",
+            "<varies>"
+          ],
+          [
+            "server",
+            "Kestrel"
+          ],
+          [
+            "transfer-encoding",
+            "chunked"
+          ]
+        ],
+        "headerBytes": 148,
+        "framing": "chunked",
+        "bodyBytes": 204,
+        "body": "{\"size\":\"small\",\"count\":1,\"items\":[{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"priceCents\":18928,\"inStock\":true}],\"echo\":{\"tenant\":\"aenqkkmtydxb\",\"requestId\":\"29c5d5015df1c7bc\",\"account\":271441}}",
+        "truncated": false
+      }
+    },
+    "headers.bind_many": {
+      "request": {
+        "method": "GET",
+        "target": "/headers/bind",
+        "headers": [
+          [
+            "x-rb-tenant",
+            "aenqkkmtydxb"
+          ],
+          [
+            "x-rb-request-id",
+            "29c5d5015df1c7bc"
+          ],
+          [
+            "x-rb-account",
+            "271441"
+          ],
+          [
+            "x-rb-user-agent",
+            "Mozilla/5.0 (X11; Linux x86_64; rv:130.0) Gecko/20100101 Firefox/130.0"
+          ],
+          [
+            "x-rb-accept",
+            "application/json, text/plain, */*"
+          ],
+          [
+            "x-rb-accept-language",
+            "en-US,en;q=0.5"
+          ],
+          [
+            "x-rb-accept-encoding",
+            "gzip, deflate, br, zstd"
+          ],
+          [
+            "x-rb-referer",
+            "https://shop.example.com/orders?page=2"
+          ],
+          [
+            "x-rb-origin",
+            "https://shop.example.com"
+          ],
+          [
+            "x-rb-sec-fetch-dest",
+            "empty"
+          ],
+          [
+            "x-rb-sec-fetch-mode",
+            "cors"
+          ],
+          [
+            "x-rb-sec-fetch-site",
+            "same-origin"
+          ],
+          [
+            "x-rb-priority",
+            "u=4"
+          ],
+          [
+            "x-rb-pragma",
+            "no-cache"
+          ],
+          [
+            "x-rb-cache-control",
+            "no-cache"
+          ],
+          [
+            "x-rb-te",
+            "trailers"
+          ],
+          [
+            "x-rb-dnt",
+            "1"
+          ],
+          [
+            "x-rb-sec-gpc",
+            "1"
+          ],
+          [
+            "x-rb-forwarded-for",
+            "203.0.113.195, 198.51.100.17"
+          ],
+          [
+            "x-rb-forwarded-proto",
+            "https"
+          ],
+          [
+            "x-rb-forwarded-host",
+            "shop.example.com"
+          ],
+          [
+            "x-rb-forwarded-port",
+            "443"
+          ],
+          [
+            "x-rb-real-ip",
+            "203.0.113.195"
+          ],
+          [
+            "x-rb-via",
+            "1.1 cdn-edge, 1.1 envoy"
+          ],
+          [
+            "x-rb-traceparent",
+            "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"
+          ],
+          [
+            "x-rb-tracestate",
+            "rojo=00f067aa0ba902b7,congo=t61rcWkgMzE"
+          ],
+          [
+            "x-rb-envoy-attempt-count",
+            "1"
+          ],
+          [
+            "x-rb-amzn-trace-id",
+            "Root=1-66e9b7c2-5759e988bd862e3fe1be46a9"
+          ]
+        ],
+        "bodyBytes": 0
+      },
+      "response": {
+        "status": 200,
+        "headers": [
+          [
+            "content-type",
+            "application/json; charset=utf-8"
+          ],
+          [
+            "date",
+            "<varies>"
+          ],
+          [
+            "server",
+            "Kestrel"
+          ],
+          [
+            "transfer-encoding",
+            "chunked"
+          ]
+        ],
+        "headerBytes": 148,
+        "framing": "chunked",
+        "bodyBytes": 204,
+        "body": "{\"size\":\"small\",\"count\":1,\"items\":[{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"priceCents\":18928,\"inStock\":true}],\"echo\":{\"tenant\":\"aenqkkmtydxb\",\"requestId\":\"29c5d5015df1c7bc\",\"account\":271441}}",
+        "truncated": false
+      }
+    },
+    "headers.few": {
+      "request": {
+        "method": "GET",
+        "target": "/headers",
+        "headers": [
+          [
+            "x-rb-tenant",
+            "aenqkkmtydxb"
+          ],
+          [
+            "x-rb-request-id",
+            "29c5d5015df1c7bc"
+          ],
+          [
+            "x-rb-account",
+            "271441"
+          ]
+        ],
+        "bodyBytes": 0
+      },
+      "response": {
+        "status": 200,
+        "headers": [
+          [
+            "content-type",
+            "application/json; charset=utf-8"
+          ],
+          [
+            "date",
+            "<varies>"
+          ],
+          [
+            "server",
+            "Kestrel"
+          ],
+          [
+            "transfer-encoding",
+            "chunked"
+          ]
+        ],
+        "headerBytes": 148,
+        "framing": "chunked",
+        "bodyBytes": 123,
+        "body": "{\"size\":\"small\",\"count\":1,\"items\":[{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"priceCents\":18928,\"inStock\":true}]}",
+        "truncated": false
+      }
+    },
+    "headers.many": {
+      "request": {
+        "method": "GET",
+        "target": "/headers",
+        "headers": [
+          [
+            "x-rb-tenant",
+            "aenqkkmtydxb"
+          ],
+          [
+            "x-rb-request-id",
+            "29c5d5015df1c7bc"
+          ],
+          [
+            "x-rb-account",
+            "271441"
+          ],
+          [
+            "x-rb-user-agent",
+            "Mozilla/5.0 (X11; Linux x86_64; rv:130.0) Gecko/20100101 Firefox/130.0"
+          ],
+          [
+            "x-rb-accept",
+            "application/json, text/plain, */*"
+          ],
+          [
+            "x-rb-accept-language",
+            "en-US,en;q=0.5"
+          ],
+          [
+            "x-rb-accept-encoding",
+            "gzip, deflate, br, zstd"
+          ],
+          [
+            "x-rb-referer",
+            "https://shop.example.com/orders?page=2"
+          ],
+          [
+            "x-rb-origin",
+            "https://shop.example.com"
+          ],
+          [
+            "x-rb-sec-fetch-dest",
+            "empty"
+          ],
+          [
+            "x-rb-sec-fetch-mode",
+            "cors"
+          ],
+          [
+            "x-rb-sec-fetch-site",
+            "same-origin"
+          ],
+          [
+            "x-rb-priority",
+            "u=4"
+          ],
+          [
+            "x-rb-pragma",
+            "no-cache"
+          ],
+          [
+            "x-rb-cache-control",
+            "no-cache"
+          ],
+          [
+            "x-rb-te",
+            "trailers"
+          ],
+          [
+            "x-rb-dnt",
+            "1"
+          ],
+          [
+            "x-rb-sec-gpc",
+            "1"
+          ],
+          [
+            "x-rb-forwarded-for",
+            "203.0.113.195, 198.51.100.17"
+          ],
+          [
+            "x-rb-forwarded-proto",
+            "https"
+          ],
+          [
+            "x-rb-forwarded-host",
+            "shop.example.com"
+          ],
+          [
+            "x-rb-forwarded-port",
+            "443"
+          ],
+          [
+            "x-rb-real-ip",
+            "203.0.113.195"
+          ],
+          [
+            "x-rb-via",
+            "1.1 cdn-edge, 1.1 envoy"
+          ],
+          [
+            "x-rb-traceparent",
+            "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"
+          ],
+          [
+            "x-rb-tracestate",
+            "rojo=00f067aa0ba902b7,congo=t61rcWkgMzE"
+          ],
+          [
+            "x-rb-envoy-attempt-count",
+            "1"
+          ],
+          [
+            "x-rb-amzn-trace-id",
+            "Root=1-66e9b7c2-5759e988bd862e3fe1be46a9"
+          ]
+        ],
+        "bodyBytes": 0
+      },
+      "response": {
+        "status": 200,
+        "headers": [
+          [
+            "content-type",
+            "application/json; charset=utf-8"
+          ],
+          [
+            "date",
+            "<varies>"
+          ],
+          [
+            "server",
+            "Kestrel"
+          ],
+          [
+            "transfer-encoding",
+            "chunked"
+          ]
+        ],
+        "headerBytes": 148,
+        "framing": "chunked",
+        "bodyBytes": 123,
+        "body": "{\"size\":\"small\",\"count\":1,\"items\":[{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"priceCents\":18928,\"inStock\":true}]}",
+        "truncated": false
+      }
+    },
+    "items.create": {
+      "request": {
+        "method": "POST",
+        "target": "/items",
+        "headers": [
+          [
+            "content-type",
+            "application/json"
+          ]
+        ],
+        "bodyBytes": 81,
+        "body": "{\"name\":\"amber-trowel-4410\",\"category\":\"garden\",\"priceCents\":2499,\"inStock\":true}"
+      },
+      "response": {
+        "status": 201,
+        "headers": [
+          [
+            "content-type",
+            "application/json; charset=utf-8"
+          ],
+          [
+            "date",
+            "<varies>"
+          ],
+          [
+            "server",
+            "Kestrel"
+          ],
+          [
+            "location",
+            "/items/1426"
+          ],
+          [
+            "transfer-encoding",
+            "chunked"
+          ]
+        ],
+        "headerBytes": 176,
+        "framing": "chunked",
+        "bodyBytes": 91,
+        "body": "{\"id\":1426,\"name\":\"amber-trowel-4410\",\"category\":\"garden\",\"priceCents\":2499,\"inStock\":true}",
+        "truncated": false
+      }
+    },
+    "items.delete": {
+      "request": {
+        "method": "DELETE",
+        "target": "/items/17",
+        "headers": [],
+        "bodyBytes": 0
+      },
+      "response": {
+        "status": 204,
+        "headers": [
+          [
+            "date",
+            "<varies>"
+          ],
+          [
+            "server",
+            "Kestrel"
+          ]
+        ],
+        "headerBytes": 81,
+        "framing": "none",
+        "bodyBytes": 0,
+        "body": "",
+        "truncated": false
+      }
+    },
+    "items.head": {
+      "request": {
+        "method": "HEAD",
+        "target": "/items/17",
+        "headers": [],
+        "bodyBytes": 0
+      },
+      "response": {
+        "status": 200,
+        "headers": [
+          [
+            "content-type",
+            "application/json; charset=utf-8"
+          ],
+          [
+            "date",
+            "<varies>"
+          ],
+          [
+            "server",
+            "Kestrel"
+          ]
+        ],
+        "headerBytes": 120,
+        "framing": "none",
+        "bodyBytes": 0,
+        "body": "",
+        "truncated": false
+      }
+    },
+    "items.read": {
+      "request": {
+        "method": "GET",
+        "target": "/items/17",
+        "headers": [],
+        "bodyBytes": 0
+      },
+      "response": {
+        "status": 200,
+        "headers": [
+          [
+            "content-type",
+            "application/json; charset=utf-8"
+          ],
+          [
+            "date",
+            "<varies>"
+          ],
+          [
+            "server",
+            "Kestrel"
+          ],
+          [
+            "transfer-encoding",
+            "chunked"
+          ]
+        ],
+        "headerBytes": 148,
+        "framing": "chunked",
+        "bodyBytes": 88,
+        "body": "{\"id\":17,\"name\":\"cedar-bolt-9891\",\"category\":\"garden\",\"priceCents\":18370,\"inStock\":true}",
+        "truncated": false
+      }
+    },
+    "items.replace": {
+      "request": {
+        "method": "PUT",
+        "target": "/items/17",
+        "headers": [
+          [
+            "content-type",
+            "application/json"
+          ]
+        ],
+        "bodyBytes": 81,
+        "body": "{\"name\":\"amber-trowel-4410\",\"category\":\"garden\",\"priceCents\":2499,\"inStock\":true}"
+      },
+      "response": {
+        "status": 200,
+        "headers": [
+          [
+            "content-type",
+            "application/json; charset=utf-8"
+          ],
+          [
+            "date",
+            "<varies>"
+          ],
+          [
+            "server",
+            "Kestrel"
+          ],
+          [
+            "transfer-encoding",
+            "chunked"
+          ]
+        ],
+        "headerBytes": 148,
+        "framing": "chunked",
+        "bodyBytes": 89,
+        "body": "{\"id\":17,\"name\":\"amber-trowel-4410\",\"category\":\"garden\",\"priceCents\":2499,\"inStock\":true}",
+        "truncated": false
+      }
+    },
+    "items.update": {
+      "request": {
+        "method": "PATCH",
+        "target": "/items/17",
+        "headers": [
+          [
+            "content-type",
+            "application/json"
+          ]
+        ],
+        "bodyBytes": 35,
+        "body": "{\"priceCents\":1999,\"inStock\":false}"
+      },
+      "response": {
+        "status": 200,
+        "headers": [
+          [
+            "content-type",
+            "application/json; charset=utf-8"
+          ],
+          [
+            "date",
+            "<varies>"
+          ],
+          [
+            "server",
+            "Kestrel"
+          ],
+          [
+            "transfer-encoding",
+            "chunked"
+          ]
+        ],
+        "headerBytes": 148,
+        "framing": "chunked",
+        "bodyBytes": 88,
+        "body": "{\"id\":17,\"name\":\"cedar-bolt-9891\",\"category\":\"garden\",\"priceCents\":1999,\"inStock\":false}",
+        "truncated": false
+      }
+    },
+    "json.large": {
+      "request": {
+        "method": "GET",
+        "target": "/json/large",
+        "headers": [],
+        "bodyBytes": 0
+      },
+      "response": {
+        "status": 200,
+        "headers": [
+          [
+            "content-type",
+            "application/json; charset=utf-8"
+          ],
+          [
+            "date",
+            "<varies>"
+          ],
+          [
+            "server",
+            "Kestrel"
+          ],
+          [
+            "transfer-encoding",
+            "chunked"
+          ]
+        ],
+        "headerBytes": 148,
+        "framing": "chunked",
+        "bodyBytes": 128510,
+        "body": "{\"size\":\"large\",\"count\":1425,\"items\":[{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"priceCents\":18928,\"inStock\":true},{\"id\":2,\"name\":\"brass-hinge-5716\",\"category\":\"garden\",\"priceCents\":17577,\"inStock\":true},{\"id\":3,\"name\":\"linen-ring-6971\",\"category\":\"kitchen\",\"priceCents\":5540,\"inStock\":true},{\"id\":4,\"name\":\"copper-bolt-9217\",\"category\":\"outdoor\",\"priceCents\":11562,\"inStock\":true},{\"id\":5,\"name\":\"linen-lamp-8288\",\"category\":\"office\",\"priceCents\":1413,\"inStock\":true},{\"id\":6,\"name\":\"copper-pan-9308\",\"category\":\"tools\",\"priceCents\":10795,\"inStock\":true},{\"id\":7,\"name\":\"slate-seed-3051\",\"category\":\"garden\",\"priceCents\":9667,\"inStock\":false},{\"id\":8,\"name\":\"oak-lamp-8662\",\"category\":\"kitchen\",\"priceCents\":18032,\"inStock\":false},{\"id\":9,\"name\":\"amber-hinge-8405\",\"category\":\"outdoor\",\"priceCents\":9566,\"inStock\":true},{\"id\":10,\"name\":\"linen-lamp-9676\",\"category\":\"office\",\"priceCents\":4288,\"inStock\":true},{\"id\":11,\"name\":\"brass-trowel-2042\",\"category\":\"tools\",\"priceCents\":17701,\"inStock\":false},{\"id\":12,\"name\":\"linen-lamp-5542\",\"category\":\"garden\",\"priceCents\":12163,\"inStock\":true},{\"id\":13,\"name\":\"linen-seed-9760\",\"category\":\"kitchen\",\"priceCents\":12305,\"inStock\":false},{\"id\":14,\"name\":\"brass-hinge-4996\",\"category\":\"outdoor\",\"priceCents\":8489,\"inStock\":true},{\"id\":15,\"name\":\"cedar-hinge-8685\",\"category\":\"office\",\"priceCents\":15667,\"inStock\":true},{\"id\":16,\"name\":\"slate-seed-3185\",\"category\":\"tools\",\"priceCents\":4111,\"inStock\":true},{\"id\":17,\"name\":\"cedar-bolt-9891\",\"category\":\"garden\",\"priceCents\":18370,\"inStock\":true},{\"id\":18,\"name\":\"copper-bolt-8081\",\"category\":\"kitchen\",\"priceCents\":14318,\"inStock\":false},{\"id\":19,\"name\":\"amber-seed-4209\",\"category\":\"outdoor\",\"priceCents\":15424,\"inStock\":true},{\"id\":20,\"name\":\"oak-bolt-9982\",\"category\":\"office\",\"priceCents\":9582,\"inStock\":true},{\"id\":21,\"name\":\"slate-bolt-7099\",\"category\":\"tools\",\"priceCents\":6732,\"inStock\":false},{\"id\":22,\"name\":\"brass-seed-9718\",\"category\":\"garden\",\"priceCents\":17198,\"inStock\":true},{\"id\":23,\"name\":\"cedar-desk-4039\",\"category\":\"kitchen\",\"p",
+        "truncated": true
+      }
+    },
+    "json.medium": {
+      "request": {
+        "method": "GET",
+        "target": "/json/medium",
+        "headers": [],
+        "bodyBytes": 0
+      },
+      "response": {
+        "status": 200,
+        "headers": [
+          [
+            "content-type",
+            "application/json; charset=utf-8"
+          ],
+          [
+            "date",
+            "<varies>"
+          ],
+          [
+            "server",
+            "Kestrel"
+          ],
+          [
+            "transfer-encoding",
+            "chunked"
+          ]
+        ],
+        "headerBytes": 148,
+        "framing": "chunked",
+        "bodyBytes": 7953,
+        "body": "{\"size\":\"medium\",\"count\":89,\"items\":[{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"priceCents\":18928,\"inStock\":true},{\"id\":2,\"name\":\"brass-hinge-5716\",\"category\":\"garden\",\"priceCents\":17577,\"inStock\":true},{\"id\":3,\"name\":\"linen-ring-6971\",\"category\":\"kitchen\",\"priceCents\":5540,\"inStock\":true},{\"id\":4,\"name\":\"copper-bolt-9217\",\"category\":\"outdoor\",\"priceCents\":11562,\"inStock\":true},{\"id\":5,\"name\":\"linen-lamp-8288\",\"category\":\"office\",\"priceCents\":1413,\"inStock\":true},{\"id\":6,\"name\":\"copper-pan-9308\",\"category\":\"tools\",\"priceCents\":10795,\"inStock\":true},{\"id\":7,\"name\":\"slate-seed-3051\",\"category\":\"garden\",\"priceCents\":9667,\"inStock\":false},{\"id\":8,\"name\":\"oak-lamp-8662\",\"category\":\"kitchen\",\"priceCents\":18032,\"inStock\":false},{\"id\":9,\"name\":\"amber-hinge-8405\",\"category\":\"outdoor\",\"priceCents\":9566,\"inStock\":true},{\"id\":10,\"name\":\"linen-lamp-9676\",\"category\":\"office\",\"priceCents\":4288,\"inStock\":true},{\"id\":11,\"name\":\"brass-trowel-2042\",\"category\":\"tools\",\"priceCents\":17701,\"inStock\":false},{\"id\":12,\"name\":\"linen-lamp-5542\",\"category\":\"garden\",\"priceCents\":12163,\"inStock\":true},{\"id\":13,\"name\":\"linen-seed-9760\",\"category\":\"kitchen\",\"priceCents\":12305,\"inStock\":false},{\"id\":14,\"name\":\"brass-hinge-4996\",\"category\":\"outdoor\",\"priceCents\":8489,\"inStock\":true},{\"id\":15,\"name\":\"cedar-hinge-8685\",\"category\":\"office\",\"priceCents\":15667,\"inStock\":true},{\"id\":16,\"name\":\"slate-seed-3185\",\"category\":\"tools\",\"priceCents\":4111,\"inStock\":true},{\"id\":17,\"name\":\"cedar-bolt-9891\",\"category\":\"garden\",\"priceCents\":18370,\"inStock\":true},{\"id\":18,\"name\":\"copper-bolt-8081\",\"category\":\"kitchen\",\"priceCents\":14318,\"inStock\":false},{\"id\":19,\"name\":\"amber-seed-4209\",\"category\":\"outdoor\",\"priceCents\":15424,\"inStock\":true},{\"id\":20,\"name\":\"oak-bolt-9982\",\"category\":\"office\",\"priceCents\":9582,\"inStock\":true},{\"id\":21,\"name\":\"slate-bolt-7099\",\"category\":\"tools\",\"priceCents\":6732,\"inStock\":false},{\"id\":22,\"name\":\"brass-seed-9718\",\"category\":\"garden\",\"priceCents\":17198,\"inStock\":true},{\"id\":23,\"name\":\"cedar-desk-4039\",\"category\":\"kitchen\",\"pr",
+        "truncated": true
+      }
+    },
+    "json.small": {
+      "request": {
+        "method": "GET",
+        "target": "/json/small",
+        "headers": [],
+        "bodyBytes": 0
+      },
+      "response": {
+        "status": 200,
+        "headers": [
+          [
+            "content-type",
+            "application/json; charset=utf-8"
+          ],
+          [
+            "date",
+            "<varies>"
+          ],
+          [
+            "server",
+            "Kestrel"
+          ],
+          [
+            "transfer-encoding",
+            "chunked"
+          ]
+        ],
+        "headerBytes": 148,
+        "framing": "chunked",
+        "bodyBytes": 123,
+        "body": "{\"size\":\"small\",\"count\":1,\"items\":[{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"priceCents\":18928,\"inStock\":true}]}",
+        "truncated": false
+      }
+    },
+    "middleware.four": {
+      "request": {
+        "method": "GET",
+        "target": "/middleware/four",
+        "headers": [],
+        "bodyBytes": 0
+      },
+      "response": {
+        "status": 200,
+        "headers": [
+          [
+            "content-type",
+            "application/json; charset=utf-8"
+          ],
+          [
+            "date",
+            "<varies>"
+          ],
+          [
+            "server",
+            "Kestrel"
+          ],
+          [
+            "transfer-encoding",
+            "chunked"
+          ]
+        ],
+        "headerBytes": 148,
+        "framing": "chunked",
+        "bodyBytes": 123,
+        "body": "{\"size\":\"small\",\"count\":1,\"items\":[{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"priceCents\":18928,\"inStock\":true}]}",
+        "truncated": false
+      }
+    },
+    "middleware.none": {
+      "request": {
+        "method": "GET",
+        "target": "/middleware/none",
+        "headers": [],
+        "bodyBytes": 0
+      },
+      "response": {
+        "status": 200,
+        "headers": [
+          [
+            "content-type",
+            "application/json; charset=utf-8"
+          ],
+          [
+            "date",
+            "<varies>"
+          ],
+          [
+            "server",
+            "Kestrel"
+          ],
+          [
+            "transfer-encoding",
+            "chunked"
+          ]
+        ],
+        "headerBytes": 148,
+        "framing": "chunked",
+        "bodyBytes": 123,
+        "body": "{\"size\":\"small\",\"count\":1,\"items\":[{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"priceCents\":18928,\"inStock\":true}]}",
+        "truncated": false
+      }
+    },
+    "middleware.sixteen": {
+      "request": {
+        "method": "GET",
+        "target": "/middleware/sixteen",
+        "headers": [],
+        "bodyBytes": 0
+      },
+      "response": {
+        "status": 200,
+        "headers": [
+          [
+            "content-type",
+            "application/json; charset=utf-8"
+          ],
+          [
+            "date",
+            "<varies>"
+          ],
+          [
+            "server",
+            "Kestrel"
+          ],
+          [
+            "transfer-encoding",
+            "chunked"
+          ]
+        ],
+        "headerBytes": 148,
+        "framing": "chunked",
+        "bodyBytes": 123,
+        "body": "{\"size\":\"small\",\"count\":1,\"items\":[{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"priceCents\":18928,\"inStock\":true}]}",
+        "truncated": false
+      }
+    },
+    "parameters.one": {
+      "request": {
+        "method": "GET",
+        "target": "/parameters/5200/segment/literal",
+        "headers": [],
+        "bodyBytes": 0
+      },
+      "response": {
+        "status": 200,
+        "headers": [
+          [
+            "content-type",
+            "application/json; charset=utf-8"
+          ],
+          [
+            "date",
+            "<varies>"
+          ],
+          [
+            "server",
+            "Kestrel"
+          ],
+          [
+            "transfer-encoding",
+            "chunked"
+          ]
+        ],
+        "headerBytes": 148,
+        "framing": "chunked",
+        "bodyBytes": 143,
+        "body": "{\"size\":\"small\",\"count\":1,\"items\":[{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"priceCents\":18928,\"inStock\":true}],\"echo\":{\"one\":5200}}",
+        "truncated": false
+      }
+    },
+    "parameters.static": {
+      "request": {
+        "method": "GET",
+        "target": "/parameters/static/segment/literal",
+        "headers": [],
+        "bodyBytes": 0
+      },
+      "response": {
+        "status": 200,
+        "headers": [
+          [
+            "content-type",
+            "application/json; charset=utf-8"
+          ],
+          [
+            "date",
+            "<varies>"
+          ],
+          [
+            "server",
+            "Kestrel"
+          ],
+          [
+            "transfer-encoding",
+            "chunked"
+          ]
+        ],
+        "headerBytes": 148,
+        "framing": "chunked",
+        "bodyBytes": 123,
+        "body": "{\"size\":\"small\",\"count\":1,\"items\":[{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"priceCents\":18928,\"inStock\":true}]}",
+        "truncated": false
+      }
+    },
+    "parameters.two": {
+      "request": {
+        "method": "GET",
+        "target": "/parameters/5200/with-second/5449",
+        "headers": [],
+        "bodyBytes": 0
+      },
+      "response": {
+        "status": 200,
+        "headers": [
+          [
+            "content-type",
+            "application/json; charset=utf-8"
+          ],
+          [
+            "date",
+            "<varies>"
+          ],
+          [
+            "server",
+            "Kestrel"
+          ],
+          [
+            "transfer-encoding",
+            "chunked"
+          ]
+        ],
+        "headerBytes": 148,
+        "framing": "chunked",
+        "bodyBytes": 154,
+        "body": "{\"size\":\"small\",\"count\":1,\"items\":[{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"priceCents\":18928,\"inStock\":true}],\"echo\":{\"one\":5200,\"two\":5449}}",
+        "truncated": false
+      }
+    },
+    "query.many": {
+      "request": {
+        "method": "GET",
+        "target": "/query/many?page=637&size=20&status=open&category=outdoor&sort=total&q=wrtsz%20jwsxm&minPrice=5495&maxPrice=51378",
+        "headers": [],
+        "bodyBytes": 0
+      },
+      "response": {
+        "status": 200,
+        "headers": [
+          [
+            "content-type",
+            "application/json; charset=utf-8"
+          ],
+          [
+            "date",
+            "<varies>"
+          ],
+          [
+            "server",
+            "Kestrel"
+          ],
+          [
+            "transfer-encoding",
+            "chunked"
+          ]
+        ],
+        "headerBytes": 148,
+        "framing": "chunked",
+        "bodyBytes": 256,
+        "body": "{\"size\":\"small\",\"count\":1,\"items\":[{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"priceCents\":18928,\"inStock\":true}],\"echo\":{\"page\":637,\"size\":20,\"status\":\"open\",\"category\":\"outdoor\",\"sort\":\"total\",\"q\":\"wrtsz jwsxm\",\"minPrice\":5495,\"maxPrice\":51378}}",
+        "truncated": false
+      }
+    },
+    "query.one": {
+      "request": {
+        "method": "GET",
+        "target": "/query/one?page=637",
+        "headers": [],
+        "bodyBytes": 0
+      },
+      "response": {
+        "status": 200,
+        "headers": [
+          [
+            "content-type",
+            "application/json; charset=utf-8"
+          ],
+          [
+            "date",
+            "<varies>"
+          ],
+          [
+            "server",
+            "Kestrel"
+          ],
+          [
+            "transfer-encoding",
+            "chunked"
+          ]
+        ],
+        "headerBytes": 148,
+        "framing": "chunked",
+        "bodyBytes": 143,
+        "body": "{\"size\":\"small\",\"count\":1,\"items\":[{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"priceCents\":18928,\"inStock\":true}],\"echo\":{\"page\":637}}",
+        "truncated": false
+      }
+    },
+    "sse.medium": {
+      "request": {
+        "method": "GET",
+        "target": "/sse/medium",
+        "headers": [
+          [
+            "accept",
+            "text/event-stream"
+          ]
+        ],
+        "bodyBytes": 0
+      },
+      "response": {
+        "status": 200,
+        "headers": [
+          [
+            "content-type",
+            "text/event-stream"
+          ],
+          [
+            "date",
+            "<varies>"
+          ],
+          [
+            "server",
+            "Kestrel"
+          ],
+          [
+            "cache-control",
+            "no-cache,no-store"
+          ],
+          [
+            "content-encoding",
+            "identity"
+          ],
+          [
+            "pragma",
+            "no-cache"
+          ],
+          [
+            "transfer-encoding",
+            "chunked"
+          ]
+        ],
+        "headerBytes": 214,
+        "framing": "chunked",
+        "bodyBytes": 8538,
+        "body": "data: {\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"priceCents\":18928,\"inStock\":true}\n\ndata: {\"id\":2,\"name\":\"brass-hinge-5716\",\"category\":\"garden\",\"priceCents\":17577,\"inStock\":true}\n\ndata: {\"id\":3,\"name\":\"linen-ring-6971\",\"category\":\"kitchen\",\"priceCents\":5540,\"inStock\":true}\n\ndata: {\"id\":4,\"name\":\"copper-bolt-9217\",\"category\":\"outdoor\",\"priceCents\":11562,\"inStock\":true}\n\ndata: {\"id\":5,\"name\":\"linen-lamp-8288\",\"category\":\"office\",\"priceCents\":1413,\"inStock\":true}\n\ndata: {\"id\":6,\"name\":\"copper-pan-9308\",\"category\":\"tools\",\"priceCents\":10795,\"inStock\":true}\n\ndata: {\"id\":7,\"name\":\"slate-seed-3051\",\"category\":\"garden\",\"priceCents\":9667,\"inStock\":false}\n\ndata: {\"id\":8,\"name\":\"oak-lamp-8662\",\"category\":\"kitchen\",\"priceCents\":18032,\"inStock\":false}\n\ndata: {\"id\":9,\"name\":\"amber-hinge-8405\",\"category\":\"outdoor\",\"priceCents\":9566,\"inStock\":true}\n\ndata: {\"id\":10,\"name\":\"linen-lamp-9676\",\"category\":\"office\",\"priceCents\":4288,\"inStock\":true}\n\ndata: {\"id\":11,\"name\":\"brass-trowel-2042\",\"category\":\"tools\",\"priceCents\":17701,\"inStock\":false}\n\ndata: {\"id\":12,\"name\":\"linen-lamp-5542\",\"category\":\"garden\",\"priceCents\":12163,\"inStock\":true}\n\ndata: {\"id\":13,\"name\":\"linen-seed-9760\",\"category\":\"kitchen\",\"priceCents\":12305,\"inStock\":false}\n\ndata: {\"id\":14,\"name\":\"brass-hinge-4996\",\"category\":\"outdoor\",\"priceCents\":8489,\"inStock\":true}\n\ndata: {\"id\":15,\"name\":\"cedar-hinge-8685\",\"category\":\"office\",\"priceCents\":15667,\"inStock\":true}\n\ndata: {\"id\":16,\"name\":\"slate-seed-3185\",\"category\":\"tools\",\"priceCents\":4111,\"inStock\":true}\n\ndata: {\"id\":17,\"name\":\"cedar-bolt-9891\",\"category\":\"garden\",\"priceCents\":18370,\"inStock\":true}\n\ndata: {\"id\":18,\"name\":\"copper-bolt-8081\",\"category\":\"kitchen\",\"priceCents\":14318,\"inStock\":false}\n\ndata: {\"id\":19,\"name\":\"amber-seed-4209\",\"category\":\"outdoor\",\"priceCents\":15424,\"inStock\":true}\n\ndata: {\"id\":20,\"name\":\"oak-bolt-9982\",\"category\":\"office\",\"priceCents\":9582,\"inStock\":true}\n\ndata: {\"id\":21,\"name\":\"slate-bolt-7099\",\"category\":\"tools\",\"priceCents\":6732,\"inStock\":false}\n\ndata: {\"id\":22,\"name\":\"brass-seed-971",
+        "truncated": true
+      }
+    },
+    "static.file": {
+      "request": {
+        "method": "GET",
+        "target": "/static/items.large.json",
+        "headers": [
+          [
+            "accept-encoding",
+            "gzip"
+          ]
+        ],
+        "bodyBytes": 0
+      },
+      "response": {
+        "status": 200,
+        "headers": [
+          [
+            "content-type",
+            "application/json"
+          ],
+          [
+            "date",
+            "<varies>"
+          ],
+          [
+            "server",
+            "Kestrel"
+          ],
+          [
+            "accept-ranges",
+            "bytes"
+          ],
+          [
+            "content-encoding",
+            "gzip"
+          ],
+          [
+            "etag",
+            "\"1dd4d5b2a6b0791\""
+          ],
+          [
+            "last-modified",
+            "<varies>"
+          ],
+          [
+            "transfer-encoding",
+            "chunked"
+          ],
+          [
+            "vary",
+            "Accept-Encoding"
+          ]
+        ],
+        "headerBytes": 273,
+        "framing": "chunked",
+        "bodyBytes": 31248,
+        "body": "{\"size\":\"large\",\"count\":1425,\"items\":[\n{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"priceCents\":18928,\"inStock\":true},\n{\"id\":2,\"name\":\"brass-hinge-5716\",\"category\":\"garden\",\"priceCents\":17577,\"inStock\":true},\n{\"id\":3,\"name\":\"linen-ring-6971\",\"category\":\"kitchen\",\"priceCents\":5540,\"inStock\":true},\n{\"id\":4,\"name\":\"copper-bolt-9217\",\"category\":\"outdoor\",\"priceCents\":11562,\"inStock\":true},\n{\"id\":5,\"name\":\"linen-lamp-8288\",\"category\":\"office\",\"priceCents\":1413,\"inStock\":true},\n{\"id\":6,\"name\":\"copper-pan-9308\",\"category\":\"tools\",\"priceCents\":10795,\"inStock\":true},\n{\"id\":7,\"name\":\"slate-seed-3051\",\"category\":\"garden\",\"priceCents\":9667,\"inStock\":false},\n{\"id\":8,\"name\":\"oak-lamp-8662\",\"category\":\"kitchen\",\"priceCents\":18032,\"inStock\":false},\n{\"id\":9,\"name\":\"amber-hinge-8405\",\"category\":\"outdoor\",\"priceCents\":9566,\"inStock\":true},\n{\"id\":10,\"name\":\"linen-lamp-9676\",\"category\":\"office\",\"priceCents\":4288,\"inStock\":true},\n{\"id\":11,\"name\":\"brass-trowel-2042\",\"category\":\"tools\",\"priceCents\":17701,\"inStock\":false},\n{\"id\":12,\"name\":\"linen-lamp-5542\",\"category\":\"garden\",\"priceCents\":12163,\"inStock\":true},\n{\"id\":13,\"name\":\"linen-seed-9760\",\"category\":\"kitchen\",\"priceCents\":12305,\"inStock\":false},\n{\"id\":14,\"name\":\"brass-hinge-4996\",\"category\":\"outdoor\",\"priceCents\":8489,\"inStock\":true},\n{\"id\":15,\"name\":\"cedar-hinge-8685\",\"category\":\"office\",\"priceCents\":15667,\"inStock\":true},\n{\"id\":16,\"name\":\"slate-seed-3185\",\"category\":\"tools\",\"priceCents\":4111,\"inStock\":true},\n{\"id\":17,\"name\":\"cedar-bolt-9891\",\"category\":\"garden\",\"priceCents\":18370,\"inStock\":true},\n{\"id\":18,\"name\":\"copper-bolt-8081\",\"category\":\"kitchen\",\"priceCents\":14318,\"inStock\":false},\n{\"id\":19,\"name\":\"amber-seed-4209\",\"category\":\"outdoor\",\"priceCents\":15424,\"inStock\":true},\n{\"id\":20,\"name\":\"oak-bolt-9982\",\"category\":\"office\",\"priceCents\":9582,\"inStock\":true},\n{\"id\":21,\"name\":\"slate-bolt-7099\",\"category\":\"tools\",\"priceCents\":6732,\"inStock\":false},\n{\"id\":22,\"name\":\"brass-seed-9718\",\"category\":\"garden\",\"priceCents\":17198,\"inStock\":true},\n{\"id\":23,\"name\":\"cedar-desk-4039\",",
+        "truncated": true
+      }
+    },
+    "stream.ndjson": {
+      "request": {
+        "method": "GET",
+        "target": "/stream/items",
+        "headers": [],
+        "bodyBytes": 0
+      },
+      "response": {
+        "status": 200,
+        "headers": [
+          [
+            "content-type",
+            "application/x-ndjson"
+          ],
+          [
+            "date",
+            "<varies>"
+          ],
+          [
+            "server",
+            "Kestrel"
+          ],
+          [
+            "transfer-encoding",
+            "chunked"
+          ]
+        ],
+        "headerBytes": 137,
+        "framing": "chunked",
+        "bodyBytes": 7915,
+        "body": "{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"priceCents\":18928,\"inStock\":true}\n{\"id\":2,\"name\":\"brass-hinge-5716\",\"category\":\"garden\",\"priceCents\":17577,\"inStock\":true}\n{\"id\":3,\"name\":\"linen-ring-6971\",\"category\":\"kitchen\",\"priceCents\":5540,\"inStock\":true}\n{\"id\":4,\"name\":\"copper-bolt-9217\",\"category\":\"outdoor\",\"priceCents\":11562,\"inStock\":true}\n{\"id\":5,\"name\":\"linen-lamp-8288\",\"category\":\"office\",\"priceCents\":1413,\"inStock\":true}\n{\"id\":6,\"name\":\"copper-pan-9308\",\"category\":\"tools\",\"priceCents\":10795,\"inStock\":true}\n{\"id\":7,\"name\":\"slate-seed-3051\",\"category\":\"garden\",\"priceCents\":9667,\"inStock\":false}\n{\"id\":8,\"name\":\"oak-lamp-8662\",\"category\":\"kitchen\",\"priceCents\":18032,\"inStock\":false}\n{\"id\":9,\"name\":\"amber-hinge-8405\",\"category\":\"outdoor\",\"priceCents\":9566,\"inStock\":true}\n{\"id\":10,\"name\":\"linen-lamp-9676\",\"category\":\"office\",\"priceCents\":4288,\"inStock\":true}\n{\"id\":11,\"name\":\"brass-trowel-2042\",\"category\":\"tools\",\"priceCents\":17701,\"inStock\":false}\n{\"id\":12,\"name\":\"linen-lamp-5542\",\"category\":\"garden\",\"priceCents\":12163,\"inStock\":true}\n{\"id\":13,\"name\":\"linen-seed-9760\",\"category\":\"kitchen\",\"priceCents\":12305,\"inStock\":false}\n{\"id\":14,\"name\":\"brass-hinge-4996\",\"category\":\"outdoor\",\"priceCents\":8489,\"inStock\":true}\n{\"id\":15,\"name\":\"cedar-hinge-8685\",\"category\":\"office\",\"priceCents\":15667,\"inStock\":true}\n{\"id\":16,\"name\":\"slate-seed-3185\",\"category\":\"tools\",\"priceCents\":4111,\"inStock\":true}\n{\"id\":17,\"name\":\"cedar-bolt-9891\",\"category\":\"garden\",\"priceCents\":18370,\"inStock\":true}\n{\"id\":18,\"name\":\"copper-bolt-8081\",\"category\":\"kitchen\",\"priceCents\":14318,\"inStock\":false}\n{\"id\":19,\"name\":\"amber-seed-4209\",\"category\":\"outdoor\",\"priceCents\":15424,\"inStock\":true}\n{\"id\":20,\"name\":\"oak-bolt-9982\",\"category\":\"office\",\"priceCents\":9582,\"inStock\":true}\n{\"id\":21,\"name\":\"slate-bolt-7099\",\"category\":\"tools\",\"priceCents\":6732,\"inStock\":false}\n{\"id\":22,\"name\":\"brass-seed-9718\",\"category\":\"garden\",\"priceCents\":17198,\"inStock\":true}\n{\"id\":23,\"name\":\"cedar-desk-4039\",\"category\":\"kitchen\",\"priceCents\":7976,\"inStock\":false}\n{\"id\"",
+        "truncated": true
+      }
+    },
+    "template.medium": {
+      "request": {
+        "method": "GET",
+        "target": "/template/medium",
+        "headers": [],
+        "bodyBytes": 0
+      },
+      "response": {
+        "status": 200,
+        "headers": [
+          [
+            "content-type",
+            "text/html; charset=utf-8"
+          ],
+          [
+            "date",
+            "<varies>"
+          ],
+          [
+            "server",
+            "Kestrel"
+          ],
+          [
+            "transfer-encoding",
+            "chunked"
+          ],
+          [
+            "blazor-enhanced-nav",
+            "allow"
+          ]
+        ],
+        "headerBytes": 169,
+        "framing": "chunked",
+        "bodyBytes": 12404,
+        "body": "<!doctype html>\n<html><head><title>items</title></head>\n  <body><h1>medium</h1>\n    <table><thead><tr><th>id</th><th>name</th><th>category</th><th>price</th><th>stock</th></tr></thead>\n      <tbody><tr><td>1</td>\n            <td>slate-lamp-6647</td>\n            <td>tools</td>\n            <td>18928</td>\n            <td>yes</td></tr><tr><td>2</td>\n            <td>brass-hinge-5716</td>\n            <td>garden</td>\n            <td>17577</td>\n            <td>yes</td></tr><tr><td>3</td>\n            <td>linen-ring-6971</td>\n            <td>kitchen</td>\n            <td>5540</td>\n            <td>yes</td></tr><tr><td>4</td>\n            <td>copper-bolt-9217</td>\n            <td>outdoor</td>\n            <td>11562</td>\n            <td>yes</td></tr><tr><td>5</td>\n            <td>linen-lamp-8288</td>\n            <td>office</td>\n            <td>1413</td>\n            <td>yes</td></tr><tr><td>6</td>\n            <td>copper-pan-9308</td>\n            <td>tools</td>\n            <td>10795</td>\n            <td>yes</td></tr><tr><td>7</td>\n            <td>slate-seed-3051</td>\n            <td>garden</td>\n            <td>9667</td>\n            <td>no</td></tr><tr><td>8</td>\n            <td>oak-lamp-8662</td>\n            <td>kitchen</td>\n            <td>18032</td>\n            <td>no</td></tr><tr><td>9</td>\n            <td>amber-hinge-8405</td>\n            <td>outdoor</td>\n            <td>9566</td>\n            <td>yes</td></tr><tr><td>10</td>\n            <td>linen-lamp-9676</td>\n            <td>office</td>\n            <td>4288</td>\n            <td>yes</td></tr><tr><td>11</td>\n            <td>brass-trowel-2042</td>\n            <td>tools</td>\n            <td>17701</td>\n            <td>no</td></tr><tr><td>12</td>\n            <td>linen-lamp-5542</td>\n            <td>garden</td>\n            <td>12163</td>\n            <td>yes</td></tr><tr><td>13</td>\n            <td>linen-seed-9760</td>\n            <td>kitchen</td>\n            <td>12305</td>\n            <td>no</td></tr><tr><td>14</td>\n            <td>brass-hinge-4996</td>\n            <td>outdoor</td>",
+        "truncated": true
+      }
+    },
+    "template.small": {
+      "request": {
+        "method": "GET",
+        "target": "/template/small",
+        "headers": [],
+        "bodyBytes": 0
+      },
+      "response": {
+        "status": 200,
+        "headers": [
+          [
+            "content-type",
+            "text/html; charset=utf-8"
+          ],
+          [
+            "date",
+            "<varies>"
+          ],
+          [
+            "server",
+            "Kestrel"
+          ],
+          [
+            "transfer-encoding",
+            "chunked"
+          ],
+          [
+            "blazor-enhanced-nav",
+            "allow"
+          ]
+        ],
+        "headerBytes": 169,
+        "framing": "chunked",
+        "bodyBytes": 380,
+        "body": "<!doctype html>\n<html><head><title>items</title></head>\n  <body><h1>small</h1>\n    <table><thead><tr><th>id</th><th>name</th><th>category</th><th>price</th><th>stock</th></tr></thead>\n      <tbody><tr><td>1</td>\n            <td>slate-lamp-6647</td>\n            <td>tools</td>\n            <td>18928</td>\n            <td>yes</td></tr></tbody></table>\n    <p>1 rows</p></body></html>",
+        "truncated": false
+      }
+    }
+  }
+}
