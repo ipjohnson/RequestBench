@@ -152,6 +152,31 @@ test("a test with no answers at a rung is left out of its family's percentiles",
   assert.deepEqual([json.p50Us, json.p90Us, json.p99Us, json.count], [small.p50Us, small.p90Us, small.p99Us, 80]);
 });
 
+test("a test a framework has no answers for, where another has, is filled in at its ratio to the frameworks with every test", () => {
+  const measured = (id: string, tests: TestSummary[]) => ({
+    ...run.frameworks[0]!,
+    id,
+    load: { ...load, phases: [phases[0]!, { name: "regular", rps: 100, status: "done", recorded: recorded(tests), unfinished: 0 } satisfies PhaseResult] },
+  });
+  const s = summarize({
+    ...run,
+    frameworks: [
+      measured("node:fastify", [testRow("json.small", "json", 1, { 150: 80 }), testRow("json.large", "json", 4, { 900: 20 })]),
+      measured("node:hono", [testRow("json.small", "json", 1, { 300: 80 })]),
+      // Its json.large is a hundred times fastify's, and hono is not read against it.
+      measured("node:koa", [testRow("json.large", "json", 4, { 90000: 20 })]),
+    ],
+  });
+  const at = (i: number, id: string) => s.frameworks[i]!.tests[id]!.rungs["regular"]!;
+  const [fastify, hono] = s.frameworks.map((f) => f.families["regular"]!["json"]!);
+  for (const k of ["p50Us", "p90Us", "p99Us"] as const) {
+    const plain = Math.sqrt(at(0, "json.small")[k] * at(0, "json.large")[k]);
+    assert.equal(fastify![k], Math.round(plain));
+    assert.equal(hono![k], Math.round((at(1, "json.small")[k] / at(0, "json.small")[k]) * plain));
+  }
+  assert.deepEqual([fastify!.count, fastify!.estimated, hono!.count, hono!.estimated], [100, undefined, 80, 1]);
+});
+
 test("each test's windows travel with it on a completed rung, and the summary names what a window holds", () => {
   const windows = [
     [40, 150, 200, 200],

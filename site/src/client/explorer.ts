@@ -3,7 +3,7 @@
 // Everything that decides what a row says is in select.ts and lib/; this writes the result
 // into the page and wires the controls. The one rule it keeps is that a render is a function
 // of the state and nothing else, so the hash reproduces the view exactly.
-import { entriesOf, isLight, isProfile, profileNamed, sharesOf, testsOfPick, weightsOf, type ProfileId } from "../lib/profiles.ts";
+import { entriesOf, estimateTitle, isLight, isProfile, profileNamed, referencesOf, sharesOf, testsOfPick, weightsOf, type ProfileId } from "../lib/profiles.ts";
 import { esc } from "../lib/html.ts";
 import { cell, METRICS, type Unit } from "../lib/metrics.ts";
 import type { PageData } from "../lib/page-data.ts";
@@ -219,8 +219,13 @@ class Explorer {
                 return `<td class="barcell"><div class="bar" style="width:${w}%;background:${colour[r.language]}"></div></td>`;
               if (c.id === "delta") return deltaCell(r.delta, METRICS[this.st.metric].unit);
               const thin = c.id === "value" && r.thin !== undefined;
-              const extra = c.id === "value" && r.dead ? " dead" : thin ? " thin" : "";
-              const title = thin ? ` title="${esc(thinTitle(r.thin, this.st.metric, METRICS[this.st.metric].label))}"` : "";
+              const est = c.id === "value" && r.estimated !== undefined;
+              const extra = c.id === "value" && r.dead ? " dead" : `${thin ? " thin" : ""}${est ? " est" : ""}`;
+              const why = [
+                thin ? thinTitle(r.thin, this.st.metric, METRICS[this.st.metric].label) : "",
+                est ? estimateTitle(r.estimated ?? 0) : "",
+              ].filter(Boolean);
+              const title = why.length ? ` title="${esc(why.join(" "))}"` : "";
               return `<td class="${c.cls ?? ""}${extra}"${title}>${esc(cell(c.get?.(r), this.unit(c.id)))}</td>`;
             })
             .join("");
@@ -386,15 +391,16 @@ class Explorer {
       const rn = (this.st.rung && rungsOf(run).includes(this.st.rung) ? this.st.rung : pickRung(run, null)) ?? "";
       const profile = profileIn(this.st);
       const weights = weightsOf(run, profile, this.st.pick);
+      const refs = referencesOf(run, rn, weights.keys());
       for (const f of run.frameworks) {
         for (const k of keys) {
           const [kb, det] = k.split("|");
           if (kb !== f.id) continue;
           const at = !det ? undefined : f.tests?.[det] ? f.tests[det]?.rungs?.[rn] : famsAt(f, rn)[det];
           const raw = (at as Record<string, unknown> | undefined)?.[this.st.metric];
-          const v = !det ? profileValue(f, rn, this.st.metric, weights) : typeof raw === "number" ? raw : null;
+          const v = !det ? profileValue(f, rn, this.st.metric, weights, refs) : typeof raw === "number" ? raw : null;
           if (v == null) continue;
-          const thin = (!det ? profileThin(f, rn, this.st.metric, weights) : thinAt(at?.count, this.st.metric)) !== undefined;
+          const thin = (!det ? profileThin(f, rn, this.st.metric, weights, refs) : thinAt(at?.count, this.st.metric)) !== undefined;
           if (!series_.has(k)) series_.set(k, []);
           series_.get(k)?.push({ i, date: run.date ?? "", v, thin, ver: f.version ?? "", adapter: metaOf(f, "adapter") });
         }

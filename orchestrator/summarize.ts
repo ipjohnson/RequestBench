@@ -4,9 +4,10 @@
 // percentiles, and per rung what was offered, achieved and dropped. A port of upstream's
 // harness/summarize.py.
 //
-// Nothing is divided by anything. A rung a framework did not complete publishes what it
-// achieved and dropped and no latency: the generator drops by never sending, so percentiles
-// over what survived would flatter the frameworks that collapse hardest.
+// Nothing is divided by anything, except where a family's mean fills in a test the framework has
+// no answers for, at its ratio to the other frameworks. A rung a framework did not complete
+// publishes what it achieved and dropped and no latency: the generator drops by never sending,
+// so percentiles over what survived would flatter the frameworks that collapse hardest.
 //
 // lambda-emulator's closed loop has one rung and nothing to drop. Its latency is the invoke
 // phase, and each test carries the other spans beside it.
@@ -136,32 +137,87 @@ export interface ClosedTestRung extends TestRung {
   readonly spans: Readonly<Record<(typeof SPANS)[number], ReturnType<typeof stats> & { readonly hist: Hist }>>;
 }
 
-type FamilyStats = { count: number } & ReturnType<typeof stats>;
+type Latency = keyof ReturnType<typeof stats>;
+
+/** `estimated` is how many of the family's tests the percentiles fill in, where there are any. */
+type FamilyStats = { count: number } & ReturnType<typeof stats> & { estimated?: number };
+
+/** What the families are read from: each framework's rungs, and its tests' percentiles at them. */
+interface Measured {
+  readonly rungs: Readonly<Record<string, { readonly completed: boolean }>>;
+  readonly tests: Readonly<Record<string, { readonly family: string; readonly rungs: Readonly<Record<string, TestRung>> }>>;
+}
 
 /**
- * Each family's count as its tests' summed, and its p50, p90 and p99 as the geometric mean of its
- * tests' own. A percentile of their histograms merged would mostly say which test's band sits at
- * that rank. Under a geometric mean a change of 10% in any one test moves the family by the same
- * amount, whatever the test's size. A test with no answers has no percentiles to take, and a
- * family with none has 0, as each of its tests does.
+ * Each framework's families at each rung it completed: a family's count as its tests' summed, and
+ * its p50, p90 and p99 as the geometric mean of its tests' own. A percentile of their histograms
+ * merged would mostly say which test's band sits at that rank. Under a geometric mean a change of
+ * 10% in any one test moves the family by the same amount, whatever the test's size.
+ *
+ * A mean over fewer tests moves with the size of the tests left out. So a test the framework has
+ * no answers for, where another framework has, is filled in at the framework's ratio to the others
+ * on the tests it has: exp(mean ln(x / r) over its tests + mean ln r over all of them). A test's r
+ * is the geometric mean of its percentile over the frameworks that have answers for every test in
+ * the family, or over those that have it where none has them all. With every test that is the
+ * plain mean. `estimated` counts the tests filled in. A test no framework has answers for is left
+ * out, and a family with none of its tests answered has 0, as each of those tests does.
  */
-function familiesOf(byFamily: ReadonlyMap<string, readonly TestRung[]>): Record<string, FamilyStats> {
-  const mean = (rungs: readonly TestRung[], k: keyof ReturnType<typeof stats>): number => {
-    const xs = rungs.map((t) => t[k]).filter((x) => x > 0);
-    return xs.length ? Math.round(Math.exp(xs.reduce((s, x) => s + Math.log(x), 0) / xs.length)) : 0;
+function familiesOf(frameworks: readonly Measured[]): Record<string, Record<string, FamilyStats>>[] {
+  const at = (f: Measured, id: string, rn: string, k: Latency): number | null => {
+    const x = f.tests[id]?.rungs[rn]?.[k];
+    return x !== undefined && x > 0 ? x : null;
   };
-  return Object.fromEntries(
-    [...byFamily].map(([fam, rungs]) => [
-      fam,
-      { count: rungs.reduce((s, t) => s + t.count, 0), p50Us: mean(rungs, "p50Us"), p90Us: mean(rungs, "p90Us"), p99Us: mean(rungs, "p99Us") },
-    ]),
-  );
+  const members = new Map<string, Set<string>>();
+  for (const f of frameworks) for (const [id, t] of Object.entries(f.tests)) members.set(t.family, (members.get(t.family) ?? new Set()).add(id));
+  const refs = new Map<string, ReadonlyMap<string, number>>();
+  /** Each of the family's tests some framework has answers for at the rung, with its r. */
+  const refsOf = (rn: string, fam: string, k: Latency): ReadonlyMap<string, number> => {
+    const key = `${rn} ${fam} ${k}`;
+    const known = refs.get(key);
+    if (known) return known;
+    const answered = [...(members.get(fam) ?? [])].filter((id) => frameworks.some((f) => at(f, id, rn, k) !== null));
+    const every = frameworks.filter((f) => answered.every((id) => at(f, id, rn, k) !== null));
+    const out = new Map(
+      answered.map((id) => {
+        const xs = (every.length ? every : frameworks).flatMap((f) => at(f, id, rn, k) ?? []);
+        return [id, Math.exp(xs.reduce((s, x) => s + Math.log(x), 0) / xs.length)];
+      }),
+    );
+    refs.set(key, out);
+    return out;
+  };
+  return frameworks.map((f) => {
+    const out: Record<string, Record<string, FamilyStats>> = {};
+    for (const [rn, rung] of Object.entries(f.rungs)) {
+      if (!rung.completed) continue;
+      const byFamily = new Map<string, string[]>();
+      for (const [id, t] of Object.entries(f.tests)) if (t.rungs[rn]) byFamily.set(t.family, [...(byFamily.get(t.family) ?? []), id]);
+      out[rn] = Object.fromEntries(
+        [...byFamily].map(([fam, ids]): [string, FamilyStats] => {
+          const mean = (k: Latency): number => {
+            const r = refsOf(rn, fam, k);
+            const own = [...r].flatMap(([id, ref]) => {
+              const x = at(f, id, rn, k);
+              return x === null ? [] : [Math.log(x / ref)];
+            });
+            if (!own.length) return 0;
+            const all = [...r.values()].map((ref) => Math.log(ref));
+            return Math.round(Math.exp(own.reduce((s, v) => s + v, 0) / own.length + all.reduce((s, v) => s + v, 0) / all.length));
+          };
+          const count = ids.reduce((s, id) => s + f.tests[id]!.rungs[rn]!.count, 0);
+          const stats: FamilyStats = { count, p50Us: mean("p50Us"), p90Us: mean("p90Us"), p99Us: mean("p99Us") };
+          const estimated = [...refsOf(rn, fam, "p50Us").keys()].filter((id) => at(f, id, rn, "p50Us") === null).length;
+          return [fam, stats.p50Us > 0 && estimated > 0 ? { ...stats, estimated } : stats];
+        }),
+      );
+    }
+    return out;
+  });
 }
 
 function openRungs(load: LoadResult | undefined) {
   const rungs: Record<string, RungSummary> = {};
   const tests: Record<string, { family: string; heft: Heft; rungs: Record<string, TestRung> }> = {};
-  const families: Record<string, Record<string, FamilyStats>> = {};
 
   // The warmup records nothing and is not a rung.
   for (const [i, phase] of (load?.phases ?? []).entries()) {
@@ -176,7 +232,6 @@ function openRungs(load: LoadResult | undefined) {
     const dropped = r?.dropped ?? phase.settle?.dropped ?? 0;
     const completed = phase.status === "done" && r !== undefined && r.dropped === 0;
     const overall = new Uint32Array(BUCKETS);
-    const byFamily = new Map<string, TestRung[]>();
     if (completed) {
       for (const t of r.tests) {
         const h = decode(t.histB64);
@@ -191,9 +246,7 @@ function openRungs(load: LoadResult | undefined) {
           ...(t.windows === undefined ? {} : { windows: t.windows }),
         };
         (tests[t.id] ??= { family: t.family, heft: t.heft, rungs: {} }).rungs[phase.name] = rung;
-        byFamily.set(t.family, [...(byFamily.get(t.family) ?? []), rung]);
       }
-      families[phase.name] = familiesOf(byFamily);
     }
     rungs[phase.name] = {
       rps: phase.rps,
@@ -209,20 +262,18 @@ function openRungs(load: LoadResult | undefined) {
       p99Us: completed ? pct(overall, 99) : null,
     };
   }
-  return { rungs, tests, families };
+  return { rungs, tests };
 }
 
 function closedRungs(load: ClosedResult) {
   const rungs: Record<string, ClosedRungSummary> = {};
   const tests: Record<string, { family: string; heft: Heft; rungs: Record<string, ClosedTestRung> }> = {};
-  const families: Record<string, Record<string, FamilyStats>> = {};
 
   // The warmup records nothing and is not a rung.
   for (const phase of load.phases) {
     const r = phase.recorded;
     if (r === undefined) continue;
     const overall = new Uint32Array(BUCKETS);
-    const byFamily = new Map<string, TestRung[]>();
     for (const t of r.tests) {
       const h = decode(t.invoke.histB64);
       addInto(overall, h);
@@ -243,9 +294,7 @@ function closedRungs(load: ClosedResult) {
         ...(t.windows === undefined ? {} : { windows: t.windows }),
       };
       (tests[t.id] ??= { family: t.family, heft: t.heft, rungs: {} }).rungs[phase.name] = rung;
-      byFamily.set(t.family, [...(byFamily.get(t.family) ?? []), rung]);
     }
-    families[phase.name] = familiesOf(byFamily);
     rungs[phase.name] = {
       closed: true,
       status: phase.status,
@@ -261,13 +310,13 @@ function closedRungs(load: ClosedResult) {
       ...(r.perSecond === undefined ? {} : { perSecond: r.perSecond }),
     };
   }
-  return { rungs, tests, families };
+  return { rungs, tests };
 }
 
 function summarizeFramework(f: FrameworkRun) {
   const meta = f.meta ?? {};
   const [language, name] = f.id.split(":") as [string, string];
-  const { rungs, tests, families } = f.load !== undefined && isClosed(f.load) ? closedRungs(f.load) : openRungs(f.load);
+  const { rungs, tests } = f.load !== undefined && isClosed(f.load) ? closedRungs(f.load) : openRungs(f.load);
   return {
     id: f.id,
     language,
@@ -285,13 +334,14 @@ function summarizeFramework(f: FrameworkRun) {
     ...(f.error === undefined ? {} : { error: f.error }),
     rungs,
     tests,
-    families,
   };
 }
 
 export type Summary = ReturnType<typeof summarize>;
 
 export function summarize(run: RunFile) {
+  const frameworks = run.frameworks.map(summarizeFramework);
+  const families = familiesOf(frameworks);
   return {
     runId: run.runId,
     date: run.started.slice(0, 10),
@@ -309,6 +359,6 @@ export function summarize(run: RunFile) {
     binGrid: BIN_GRID,
     histGrid: HIST_GRID,
     windowGrid: WINDOW_GRID,
-    frameworks: run.frameworks.map(summarizeFramework),
+    frameworks: frameworks.map((f, i) => ({ ...f, families: families[i]! })),
   };
 }

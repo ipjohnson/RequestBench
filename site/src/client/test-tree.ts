@@ -11,6 +11,7 @@
 // chart under each test's numbers, its histogram or its latency over time.
 import { esc } from "../lib/html.ts";
 import { cell, isMetric, METRICS, type Unit } from "../lib/metrics.ts";
+import { estimateTitle } from "../lib/profiles.ts";
 import { isThin, thinTitle } from "../lib/thin.ts";
 import type { Run, WireDoc } from "../lib/types.ts";
 import { cmpCell, peerPop, unfinished } from "../lib/views.ts";
@@ -258,13 +259,15 @@ function startCompare(changed: () => void): void {
     const own = row.dataset["v"] === undefined ? null : Number(row.dataset["v"]);
     const level = unit === "us" && isMetric(k) ? METRICS[k].label : "";
     const thin = v !== null && isThin(rec?.count, k);
+    // A family's percentile fills in any of its tests the other framework has no answers for.
+    const estimated = unit === "us" && v !== null ? statOf(rec, "estimated") : null;
     const pop = unit && own !== null && v !== null ? peerPop(own, v, unit, name, level, thin || row.dataset["thin"] !== undefined) : null;
     const why =
-      v !== null ? (thin ? thinTitle(rec?.count, k, level) : undefined)
+      v !== null ? [thin ? thinTitle(rec?.count, k, level) : "", estimated ? estimateTitle(estimated) : ""].filter(Boolean).join(" ") || undefined
       : k === "sbz" ? `No captured exchange for ${name}.`
       : (unfinished(name, f.rungs[rn]) ?? `${name} has no number for this at this rate.`);
     const tpl = document.createElement("template");
-    tpl.innerHTML = cmpCell(id, cell(v, unit), pop, why, thin);
+    tpl.innerHTML = cmpCell(id, cell(v, unit), pop, why, thin, Boolean(estimated));
     return tpl.content.firstElementChild instanceof HTMLElement ? tpl.content.firstElementChild : null;
   };
 

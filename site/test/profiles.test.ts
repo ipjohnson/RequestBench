@@ -1,9 +1,9 @@
 // Which tests a profile takes and what it reads off them. A profile's percentiles are the
 // geometric mean of its tests' own, so a change of 10% in any one test moves the profile by the
-// same amount.
+// same amount. A test a framework lacks is filled in at its ratio to the other frameworks.
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
-import { entriesOf, profileNamed, profileStats, sharesOf, testsOfPick, weightsOf } from "../src/lib/profiles.ts";
+import { entriesOf, profileNamed, profileStats, referencesOf, sharesOf, testsOfPick, weightsOf } from "../src/lib/profiles.ts";
 import { testOrder } from "../src/lib/run.ts";
 import type { Framework, Run, TestRecord } from "../src/lib/types.ts";
 
@@ -37,6 +37,10 @@ const run: Run = { runId: "r", frameworks: [carter] };
 /** Equal but for the last places, which a mean taken through logarithms can leave. */
 const near = (actual: number | null, want: number): void =>
   assert.ok(actual !== null && Math.abs(actual - want) < want * 1e-12, `${actual} is not ${want}`);
+
+/** A framework's stats over a profile, read against the frameworks of `within`, by default the framework alone. */
+const statsOf = (f: Framework, rn: string, weights: ReadonlyMap<string, number>, within: Run = { runId: "r", frameworks: [f] }) =>
+  profileStats(f, rn, weights, referencesOf(within, rn, weights.keys()));
 
 describe("weightsOf", () => {
   test("all takes every test the run measured, and a named profile the ones it names", () => {
@@ -92,7 +96,7 @@ describe("profileStats", () => {
   const none = { entries: [], weights: {} };
 
   test("reads each percentile as the geometric mean of its tests' own, from all of their requests", () => {
-    const s = profileStats(carter, "regular", weightsOf(run, "api-all", none));
+    const s = statsOf(carter, "regular", weightsOf(run, "api-all", none));
     near(s.p50Us, 200);
     near(s.p90Us, 300);
     near(s.p99Us, 400);
@@ -100,7 +104,7 @@ describe("profileStats", () => {
   });
 
   test("a family's weight counts each of its tests that many times", () => {
-    const s = profileStats(carter, "regular", weightsOf(run, "custom", { entries: ["json", "template"], weights: { template: 3 } }));
+    const s = statsOf(carter, "regular", weightsOf(run, "custom", { entries: ["json", "template"], weights: { template: 3 } }));
     // (100 × 400 × 6400³)^(1/5)
     near(s.p50Us, 1600);
   });
@@ -108,25 +112,25 @@ describe("profileStats", () => {
   test("custom with every family at weight 1 is All, which takes every test", () => {
     const all = weightsOf(run, "all", none);
     const custom = weightsOf(run, "custom", { entries: entriesOf(run, testOrder(run)), weights: {} });
-    assert.deepEqual(profileStats(carter, "regular", custom), profileStats(carter, "regular", all));
+    assert.deepEqual(statsOf(carter, "regular", custom), statsOf(carter, "regular", all));
     // (100 × 400 × 1600 × 6400)^(1/4)
-    near(profileStats(carter, "regular", all).p50Us, 800);
+    near(statsOf(carter, "regular", all).p50Us, 800);
   });
 
   test("a change of 10% in any one test moves the profile by the same amount, whatever the test's size", () => {
     const all = weightsOf(run, "all", none);
-    const before = profileStats(carter, "regular", all).p50Us!;
+    const before = statsOf(carter, "regular", all).p50Us!;
     for (const id of testOrder(run)) {
       const own = carter.tests[id]!;
       const at = own.rungs!["regular"]!;
       const slower: Framework = { ...carter, tests: { ...carter.tests, [id]: { ...own, rungs: { regular: { ...at, p50Us: at.p50Us! * 1.1 } } } } };
-      near(profileStats(slower, "regular", all).p50Us! / before, 1.1 ** (1 / 4));
+      near(statsOf(slower, "regular", all).p50Us! / before, 1.1 ** (1 / 4));
     }
   });
 
-  test("a test with no answers at the rate is left out", () => {
+  test("a test no framework has answers for at the rate is left out", () => {
     const quiet: Framework = { ...carter, tests: { ...carter.tests, "json.medium": { family: "json", rungs: { regular: { count: 0, p50Us: 0, p90Us: 0, p99Us: 0 } } } } };
-    const s = profileStats(quiet, "regular", weightsOf(run, "api-all", none));
+    const s = statsOf(quiet, "regular", weightsOf(run, "api-all", none));
     near(s.p50Us, 100);
     near(s.p99Us, 200);
   });
@@ -134,8 +138,68 @@ describe("profileStats", () => {
   test("a framework with no percentiles at the rate has no latency", () => {
     const bare: Framework = { ...carter, tests: { "json.small": { family: "json", rungs: { regular: { count: 10 } } } } };
     const pcts = (s: { p50Us: number | null; p90Us: number | null; p99Us: number | null }) => [s.p50Us, s.p90Us, s.p99Us];
-    assert.deepEqual(pcts(profileStats(bare, "regular", weightsOf(run, "all", none))), [null, null, null]);
-    assert.deepEqual(profileStats(carter, "raised", weightsOf(run, "all", none)), { p50Us: null, p90Us: null, p99Us: null, count: 0 });
+    assert.deepEqual(pcts(statsOf(bare, "regular", weightsOf(run, "all", none))), [null, null, null]);
+    assert.deepEqual(statsOf(carter, "raised", weightsOf(run, "all", none)), { p50Us: null, p90Us: null, p99Us: null, count: 0, estimated: 0 });
+  });
+});
+
+describe("a test a framework has no answers for", () => {
+  const none = { entries: [], weights: {} };
+
+  /** carter's tests at `times` its latency, without the ones named. */
+  const scaled = (id: string, times: number, without: readonly string[]): Framework => ({
+    ...carter,
+    id,
+    name: id.split(":")[1]!,
+    tests: Object.fromEntries(
+      Object.entries(carter.tests)
+        .filter(([t]) => !without.includes(t))
+        .map(([t, rec]) => {
+          const at = rec.rungs!["regular"]!;
+          return [t, { ...rec, rungs: { regular: { ...at, p50Us: at.p50Us! * times, p90Us: at.p90Us! * times, p99Us: at.p99Us! * times } } }];
+        }),
+    ),
+  });
+  const hono = scaled("node:hono", 2, ["static.file"]);
+  const koa = scaled("node:koa", 1000, ["json.small"]);
+  const three: Run = { runId: "r", frameworks: [carter, hono, koa] };
+
+  test("is filled in at the framework's ratio to the frameworks that have every test", () => {
+    const s = statsOf(hono, "regular", weightsOf(three, "all", none), three);
+    // Twice carter's 800. A mean over hono's own three tests would be 2 × (100 × 400 × 6400)^(1/3), about 1,270.
+    near(s.p50Us, 1600);
+    near(s.p99Us, 3200);
+    assert.equal(s.estimated, 1);
+  });
+
+  test("leaves a framework with every test at its plain mean", () => {
+    const s = statsOf(carter, "regular", weightsOf(three, "all", none), three);
+    near(s.p50Us, 800);
+    assert.equal(s.estimated, 0);
+  });
+
+  test("counts only in a profile that takes it", () => {
+    const s = statsOf(hono, "regular", weightsOf(three, "api-all", none), three);
+    near(s.p50Us, 400);
+    assert.equal(s.estimated, 0);
+  });
+
+  test("where no framework has every test, reads each test against the frameworks that have it", () => {
+    const koa2 = scaled("node:koa", 2, ["template.small"]);
+    const two: Run = { runId: "r", frameworks: [hono, koa2] };
+    const all = weightsOf(two, "all", none);
+    // Each has three tests at twice carter's, so each is read as twice carter's 800.
+    near(statsOf(hono, "regular", all, two).p50Us, 1600);
+    near(statsOf(koa2, "regular", all, two).p50Us, 1600);
+  });
+
+  test("counts its family's weight, as any other test does", () => {
+    const noTemplate = scaled("node:hono", 2, ["template.small"]);
+    const two: Run = { runId: "r", frameworks: [carter, noTemplate] };
+    const w = weightsOf(two, "custom", { entries: ["json", "template"], weights: { template: 3 } });
+    // Twice carter's (100 × 400 × 6400³)^(1/5).
+    near(statsOf(noTemplate, "regular", w, two).p50Us, 3200);
+    assert.equal(statsOf(noTemplate, "regular", w, two).estimated, 1);
   });
 });
 

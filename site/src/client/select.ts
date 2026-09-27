@@ -2,7 +2,7 @@
 //
 // All of it pure, so what the table shows can be tested rather than looked at. The DOM half
 // is in explorer.ts and does nothing but write what these return.
-import { PROFILES, profileNamed, profileStats, weightsOf } from "../lib/profiles.ts";
+import { PROFILES, profileNamed, profileStats, referencesOf, weightsOf, type References } from "../lib/profiles.ts";
 import { deltaFor } from "../lib/delta.ts";
 import type { MetricId } from "../lib/metrics.ts";
 import { familyOf, famsAt, metaOf, rungLabel, rungsOf, testOrder } from "../lib/run.ts";
@@ -85,13 +85,14 @@ export const isLatency = (m: MetricId): m is Latency => m === "p50Us" || m === "
 /**
  * A framework's number at profile granularity. What it achieved and dropped belongs to the whole
  * mix, so every profile shows the rate's own. A latency is the geometric mean of the profile's
- * tests' own, all's included, and a rate the framework did not complete has none.
+ * tests' own, all's included, with any test it lacks filled in against `refs`, and a rate the
+ * framework did not complete has none.
  */
-export function profileValue(f: Framework, rn: string, metric: MetricId, weights: ReadonlyMap<string, number>): number | null {
+export function profileValue(f: Framework, rn: string, metric: MetricId, weights: ReadonlyMap<string, number>, refs: References): number | null {
   const d = f.rungs[rn];
   if (!isLatency(metric)) return numberAt(d, metric);
   if (!d?.completed) return null;
-  return profileStats(f, rn, weights)[metric];
+  return profileStats(f, rn, weights, refs)[metric];
 }
 
 /**
@@ -99,10 +100,17 @@ export function profileValue(f: Framework, rn: string, metric: MetricId, weights
  * percentile, and undefined where it is not. A profile is thin only when fewer than THIN of its
  * tests' requests lie beyond their own percentiles in all.
  */
-export function profileThin(f: Framework, rn: string, metric: MetricId, weights: ReadonlyMap<string, number>): number | undefined {
+export function profileThin(f: Framework, rn: string, metric: MetricId, weights: ReadonlyMap<string, number>, refs: References): number | undefined {
   if (!isLatency(metric) || !f.rungs[rn]?.completed) return undefined;
-  const { count } = profileStats(f, rn, weights);
+  const { count } = profileStats(f, rn, weights, refs);
   return isThin(count, metric) ? count : undefined;
+}
+
+/** How many of a profile's tests a framework's latency fills in, where it fills any in. */
+export function profileEstimated(f: Framework, rn: string, metric: MetricId, weights: ReadonlyMap<string, number>, refs: References): number | undefined {
+  if (!isLatency(metric) || !f.rungs[rn]?.completed) return undefined;
+  const s = profileStats(f, rn, weights, refs);
+  return s[metric] !== null && s.estimated > 0 ? s.estimated : undefined;
 }
 
 /** The requests a family's or a test's number is read from, where it is a thin percentile. */
@@ -161,6 +169,7 @@ export function rows({ run, st, routes, wireOf }: RowsInput): { rn: string | nul
   const order = testOrder(run);
   const profile = profileIn(st);
   const weights = weightsOf(run, profile, st.pick);
+  const refs = referencesOf(run, rn, weights.keys());
   // At profile granularity a filter that names no profile is a framework's name.
   const byName = st.gran === "profile" && !profileNamed(st.q) ? q : "";
   const only = profile !== "all" ? new Set(weights.keys()) : undefined;
@@ -189,10 +198,11 @@ export function rows({ run, st, routes, wireOf }: RowsInput): { rn: string | nul
         key: f.id,
         label: f.name,
         detail: "",
-        value: profileValue(f, rn, st.metric, weights),
+        value: profileValue(f, rn, st.metric, weights, refs),
         dead: !d.completed,
         n: d.achievedRps ?? null,
-        thin: profileThin(f, rn, st.metric, weights),
+        thin: profileThin(f, rn, st.metric, weights, refs),
+        estimated: profileEstimated(f, rn, st.metric, weights, refs),
       });
     } else if (st.gran === "family") {
       for (const [fam, rec] of Object.entries(famsAt(f, rn))) {
@@ -205,6 +215,7 @@ export function rows({ run, st, routes, wireOf }: RowsInput): { rn: string | nul
           dead: false,
           n: rec.count ?? null,
           thin: numberAt(rec, st.metric) === null ? undefined : thinAt(rec.count, st.metric),
+          estimated: isLatency(st.metric) && numberAt(rec, st.metric) !== null && rec.estimated ? rec.estimated : undefined,
         });
       }
     } else {

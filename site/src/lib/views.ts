@@ -106,11 +106,12 @@ function head(d: number, measurable: boolean, arm: number, base: number, unit: U
  * One number of something the page is compared with, under the same number of its own, hidden
  * until the comparison picks it. `id` is what it belongs to: `base`, or the other framework's
  * page name. Where the difference can be taken, its popup rides along in a template, which
- * test-tree.ts shows on hover and on focus. A thin percentile is hatched.
+ * test-tree.ts shows on hover and on focus. A thin percentile is hatched, and a mean that fills
+ * in a test is marked as an estimate.
  */
-export function cmpCell(id: string, v: string, pop: string | null, title?: string, thin = false): string {
+export function cmpCell(id: string, v: string, pop: string | null, title?: string, thin = false, est = false): string {
   const t = title ? ` title="${esc(title)}"` : "";
-  const cls = thin ? "fb thin" : "fb";
+  const cls = `fb${thin ? " thin" : ""}${est ? " est" : ""}`;
   if (pop === null) return `<span class="${cls}" data-cmp="${esc(id)}"${t} hidden>${esc(v)}</span>`;
   return `<span class="${cls}" data-cmp="${esc(id)}"${t} tabindex="0" hidden>${esc(v)}<template>${pop}</template></span>`;
 }
