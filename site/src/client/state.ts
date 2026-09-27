@@ -29,6 +29,8 @@ export type Row = {
   n: number | null;
   /** The requests `value` is read from, where it is a thin percentile. */
   thin?: number | undefined;
+  /** How many of the mean's tests `value` fills in, where the framework lacks any. */
+  estimated?: number | undefined;
   family?: string;
   delta?: Chain | null;
   hdrz?: number;

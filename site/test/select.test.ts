@@ -263,6 +263,50 @@ describe("a thin percentile", () => {
   });
 });
 
+describe("a mean that fills in a test", () => {
+  const hono: Framework = {
+    id: "node:hono",
+    language: "node",
+    name: "hono",
+    rungs: { regular: { rps: 500, achievedRps: 500, completed: true } },
+    families: { regular: { json: { count: 10, p50Us: 379, estimated: 1 } } },
+    tests: { "json.small": { family: "json", rungs: { regular: { p50Us: 360, count: 10 } } } },
+  };
+  const withHono: Run = { ...run, frameworks: [carter, fastify, hono] };
+
+  test("fills in a profile's test at the framework's ratio to the frameworks with every test, and says how many", () => {
+    const { rows: rs } = rows({ run: withHono, st: st(), routes, wireOf: () => undefined });
+    // Twice carter's json.small, so twice carter's mean.
+    near(rs.find((r) => r.label === "hono")?.value, 2 * Math.sqrt(180 * 200));
+    assert.deepEqual(
+      rs.map((r) => [r.label, r.estimated]),
+      [
+        ["carter", undefined],
+        ["hono", 1],
+        ["fastify", undefined],
+      ],
+    );
+  });
+
+  test("marks a family by what its summary says it filled in", () => {
+    const s = st();
+    s.gran = "family";
+    assert.deepEqual(
+      rows({ run: withHono, st: s, routes, wireOf: () => undefined }).rows.map((r) => [r.label, r.estimated]),
+      [
+        ["carter", undefined],
+        ["hono", 1],
+      ],
+    );
+  });
+
+  test("marks no rate statistic", () => {
+    const s = st();
+    s.metric = "achievedRps";
+    assert.equal(rows({ run: withHono, st: s, routes, wireOf: () => undefined }).rows.find((r) => r.label === "hono")?.estimated, undefined);
+  });
+});
+
 describe("the filter at profile granularity", () => {
   test("a filter that names no profile is a framework's name, read over all", () => {
     const s = st();

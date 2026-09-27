@@ -4,6 +4,7 @@
 // A family row in the explorer is this number, so the pane a family row opens on has to show
 // it. The tests are listed rather than their panes repeated; each links to its own.
 import { cell } from "../lib/metrics.ts";
+import { estimateTitle } from "../lib/profiles.ts";
 import { beyond, beyondLabel, isThin, thinTitle } from "../lib/thin.ts";
 import { deltaCell } from "../lib/views.ts";
 import type { Chain } from "../lib/delta.ts";
@@ -72,6 +73,7 @@ const thinOf = (stats: FamilyRecord | TestRung | undefined, m: string, k: string
               ] as const
             ).map(([k, m, unit]) => {
               const thin = thinOf(r.stats, m, k);
+              const est = unit === "us" && r.stats?.estimated ? estimateTitle(r.stats.estimated) : null;
               return (
                 <div class="frow" data-k={m} data-v={r.stats?.[m] ?? undefined} data-thin={thin ? "" : undefined}>
                   <span class="fk">
@@ -84,11 +86,13 @@ const thinOf = (stats: FamilyRecord | TestRung | undefined, m: string, k: string
                     )}
                   </span>
                   {thin ? (
-                    <span class="fv thin" title={thin} tabindex="0">
+                    <span class={est ? "fv thin est" : "fv thin"} title={est ? `${thin} ${est}` : thin} tabindex="0">
                       {cell(r.stats?.[m], unit)}
                     </span>
                   ) : (
-                    <span class="fv">{cell(r.stats?.[m], unit)}</span>
+                    <span class={est ? "fv est" : "fv"} title={est ?? undefined}>
+                      {cell(r.stats?.[m], unit)}
+                    </span>
                   )}
                 </div>
               );

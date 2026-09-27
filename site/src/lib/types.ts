@@ -81,6 +81,8 @@ export const FamilyRecord = z.looseObject({
   p50Us: z.number().nullable().optional(),
   p90Us: z.number().nullable().optional(),
   p99Us: z.number().nullable().optional(),
+  /** How many of the family's tests the percentiles fill in, where the framework lacks any. A summary from before estimates has none. */
+  estimated: z.number().optional(),
 });
 export type FamilyRecord = z.infer<typeof FamilyRecord>;
 
