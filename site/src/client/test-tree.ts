@@ -304,7 +304,7 @@ function startCompare(changed: () => void): void {
           const title = `What ${name} measured at the same rate in the same run. Hover a number for the difference.`;
           return [keyItem(x, name, title)];
         }
-        // A family is a merge of its tests and never has a base, so its key leaves it out.
+        // A family is a mean of its tests and never has a base, so its key leaves it out.
         if (pane.dataset["fam"] !== undefined) return [];
         if (!base) return [noBase];
         const title = `${base} is this test's base. Hover a number for the difference and each factor between them.`;

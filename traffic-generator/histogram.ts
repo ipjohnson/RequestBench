@@ -57,9 +57,6 @@ const roundHalfEven = (x: number): number => {
  * The p-th percentile, placed inside its bucket rather than at its middle. A midpoint puts every
  * percentile on a grid 2% apart, which is invisible in one number and decides the answer as
  * soon as two are subtracted, as every delta on a framework page is.
- *
- * The summary and the site's blends both read percentiles with this, so a blend of every test
- * gives the rung's own number.
  */
 export function pct(counts: ArrayLike<number>, p: number): number {
   let total = 0;

@@ -1,39 +1,23 @@
-// Which tests a blend takes and what it reads off them. The merge has to give the rung's own
-// number when it takes every test, or a blend and All would disagree about the same answers.
+// Which tests a blend takes and what it reads off them. A blend's percentiles are the geometric
+// mean of its tests' own, so a change of 10% in any one test moves the blend by the same amount.
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
-import { BUCKETS, bucketOf, pct } from "../../traffic-generator/histogram.ts";
 import { blendStats, entriesOf, sharesOf, testsOfPick, weightsOf } from "../src/lib/blends.ts";
 import { testOrder } from "../src/lib/run.ts";
-import type { Framework, Hist, Run, TestRecord } from "../src/lib/types.ts";
+import type { Framework, Run, TestRecord } from "../src/lib/types.ts";
 
-/** The generator's histogram with `n` answers at each latency given. */
-function counts(at: Record<number, number>): number[] {
-  const h = new Array<number>(BUCKETS).fill(0);
-  for (const [us, n] of Object.entries(at)) h[bucketOf(Number(us))]! += n;
-  return h;
-}
-
-/** The same with its empty ends cut off, as a summary carries it. */
-function hist(at: Record<number, number>): Hist {
-  const h = counts(at);
-  const first = h.findIndex((c) => c > 0);
-  let last = h.length - 1;
-  while (h[last] === 0) last--;
-  return { first, counts: h.slice(first, last + 1) };
-}
-
-const LATENCY: Record<string, Record<number, number>> = {
-  "json.small": { 100: 10 },
-  "json.medium": { 200: 8, 260: 2 },
-  "static.file": { 400: 10 },
-  "template.small": { 900: 9, 4000: 1 },
+/** Each test's p50, p90 and p99 at the regular rate, chosen so the means come out round. */
+const LATENCY: Record<string, [number, number, number]> = {
+  "json.small": [100, 150, 200],
+  "json.medium": [400, 600, 800],
+  "static.file": [1600, 2400, 3200],
+  "template.small": [6400, 9600, 12800],
 };
 
-const test_ = (id: string): [string, TestRecord] => [
-  id,
-  { family: id.split(".")[0]!, rungs: { regular: { count: 10, hist: hist(LATENCY[id]!) } } },
-];
+const test_ = (id: string): [string, TestRecord] => {
+  const [p50Us, p90Us, p99Us] = LATENCY[id]!;
+  return [id, { family: id.split(".")[0]!, rungs: { regular: { count: 10, p50Us, p90Us, p99Us } } }];
+};
 
 const carter: Framework = {
   id: "dotnet:carter",
@@ -46,12 +30,9 @@ const carter: Framework = {
 
 const run: Run = { runId: "r", frameworks: [carter] };
 
-/** The generator's histograms of these tests summed, each times its weight. */
-const merged = (weights: Record<string, number>): number[] => {
-  const out = new Array<number>(BUCKETS).fill(0);
-  for (const [id, w] of Object.entries(weights)) counts(LATENCY[id]!).forEach((c, i) => (out[i]! += w * c));
-  return out;
-};
+/** Equal but for the last places, which a mean taken through logarithms can leave. */
+const near = (actual: number | null, want: number): void =>
+  assert.ok(actual !== null && Math.abs(actual - want) < want * 1e-12, `${actual} is not ${want}`);
 
 describe("weightsOf", () => {
   test("All takes every test the run measured, and a named blend the ones it names", () => {
@@ -83,30 +64,52 @@ describe("entriesOf", () => {
 });
 
 describe("blendStats", () => {
-  test("reads a blend's percentiles off its tests' histograms merged", () => {
-    const s = blendStats(carter, "regular", weightsOf(run, "api", { entries: [], weights: {} }));
-    const want = merged({ "json.small": 1, "json.medium": 1 });
-    assert.deepEqual(s, { p50Us: pct(want, 50), p90Us: pct(want, 90), p99Us: pct(want, 99), count: 20 });
+  const none = { entries: [], weights: {} };
+
+  test("reads each percentile as the geometric mean of its tests' own", () => {
+    const s = blendStats(carter, "regular", weightsOf(run, "api", none));
+    near(s.p50Us, 200);
+    near(s.p90Us, 300);
+    near(s.p99Us, 400);
   });
 
-  test("a weight counts each of a family's answers that many times", () => {
+  test("a family's weight counts each of its tests that many times", () => {
     const s = blendStats(carter, "regular", weightsOf(run, "custom", { entries: ["json", "template"], weights: { template: 3 } }));
-    const want = merged({ "json.small": 1, "json.medium": 1, "template.small": 3 });
-    assert.equal(s?.p50Us, pct(want, 50));
-    assert.equal(s?.p90Us, pct(want, 90));
+    // (100 × 400 × 6400³)^(1/5)
+    near(s.p50Us, 1600);
   });
 
-  test("custom with every family at weight 1 is All", () => {
-    const all = weightsOf(run, "all", { entries: [], weights: {} });
+  test("custom with every family at weight 1 is All, which takes every test", () => {
+    const all = weightsOf(run, "all", none);
     const custom = weightsOf(run, "custom", { entries: entriesOf(run, testOrder(run)), weights: {} });
     assert.deepEqual(blendStats(carter, "regular", custom), blendStats(carter, "regular", all));
-    assert.equal(blendStats(carter, "regular", all)?.p50Us, pct(merged({ "json.small": 1, "json.medium": 1, "static.file": 1, "template.small": 1 }), 50));
+    // (100 × 400 × 1600 × 6400)^(1/4)
+    near(blendStats(carter, "regular", all).p50Us, 800);
   });
 
-  test("a framework with no histograms at the rate has no latency", () => {
+  test("a change of 10% in any one test moves the blend by the same amount, whatever the test's size", () => {
+    const all = weightsOf(run, "all", none);
+    const before = blendStats(carter, "regular", all).p50Us!;
+    for (const id of testOrder(run)) {
+      const own = carter.tests[id]!;
+      const at = own.rungs!["regular"]!;
+      const slower: Framework = { ...carter, tests: { ...carter.tests, [id]: { ...own, rungs: { regular: { ...at, p50Us: at.p50Us! * 1.1 } } } } };
+      near(blendStats(slower, "regular", all).p50Us! / before, 1.1 ** (1 / 4));
+    }
+  });
+
+  test("a test with no answers at the rate is left out", () => {
+    const quiet: Framework = { ...carter, tests: { ...carter.tests, "json.medium": { family: "json", rungs: { regular: { count: 0, p50Us: 0, p90Us: 0, p99Us: 0 } } } } };
+    const s = blendStats(quiet, "regular", weightsOf(run, "api", none));
+    near(s.p50Us, 100);
+    near(s.p99Us, 200);
+  });
+
+  test("a framework with no percentiles at the rate has no latency", () => {
     const bare: Framework = { ...carter, tests: { "json.small": { family: "json", rungs: { regular: { count: 10 } } } } };
-    assert.equal(blendStats(bare, "regular", weightsOf(run, "all", { entries: [], weights: {} })), null);
-    assert.equal(blendStats(carter, "raised", weightsOf(run, "all", { entries: [], weights: {} })), null);
+    const nothing = { p50Us: null, p90Us: null, p99Us: null };
+    assert.deepEqual(blendStats(bare, "regular", weightsOf(run, "all", none)), nothing);
+    assert.deepEqual(blendStats(carter, "raised", weightsOf(run, "all", none)), nothing);
   });
 });
 

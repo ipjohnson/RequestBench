@@ -1,7 +1,8 @@
 // A run file collapsed into what the site reads and keeps: per test its heft, per test and per
 // rung the percentiles, a coarse histogram, the generator's own histogram and the count and
-// percentiles of each window of the recording, per family the same merged, and per rung what
-// was offered, achieved and dropped. A port of upstream's harness/summarize.py.
+// percentiles of each window of the recording, per family the geometric mean of its tests'
+// percentiles, and per rung what was offered, achieved and dropped. A port of upstream's
+// harness/summarize.py.
 //
 // Nothing is divided by anything. A rung a framework did not complete publishes what it
 // achieved and dropped and no latency: the generator drops by never sending, so percentiles
@@ -10,7 +11,7 @@
 // lambda-emulator's closed loop has one rung and nothing to drop. Its latency is the invoke
 // phase, and each test carries the other spans beside it.
 import type { Heft } from "@rb/tests/kit";
-import { BUCKETS, GROWTH, LOG_GROWTH, pct } from "../traffic-generator/histogram.ts";
+import { BUCKETS, GROWTH, LOG_GROWTH, addInto, pct } from "../traffic-generator/histogram.ts";
 import {
   WINDOW_SECONDS,
   isClosed,
@@ -32,8 +33,8 @@ export const BIN_GRID = { loUs: 10, perDecade: 8, count: 39 } as const;
 
 /**
  * The generator's grid, which each test's `hist` is counted on: bucket i starts at growth^i µs.
- * A page merges these histograms to read the percentiles of a blend of tests, so the grid is
- * written into every summary like BIN_GRID.
+ * It is written into every summary like BIN_GRID, so a histogram can be read without the
+ * generator's source.
  */
 export const HIST_GRID = { growth: GROWTH, count: BUCKETS } as const;
 
@@ -92,6 +93,7 @@ export interface RungSummary {
   readonly dropped: number;
   readonly errors: number;
   readonly mismatch: number;
+  /** Over every request the rung recorded, which is the mix as it was sent. */
   readonly p50Us: number | null;
   readonly p90Us: number | null;
   readonly p99Us: number | null;
@@ -136,17 +138,24 @@ export interface ClosedTestRung extends TestRung {
 
 type FamilyStats = { count: number } & ReturnType<typeof stats>;
 
-function familiesOf(byFamily: ReadonlyMap<string, Uint32Array>): Record<string, FamilyStats> {
-  return Object.fromEntries([...byFamily].map(([fam, h]) => [fam, { count: h.reduce((a, b) => a + b, 0), ...stats(h) }]));
-}
-
-function addTo(byFamily: Map<string, Uint32Array>, family: string, overall: Uint32Array, h: Uint32Array): void {
-  const fam = byFamily.get(family) ?? new Uint32Array(BUCKETS);
-  for (let b = 0; b < BUCKETS; b++) {
-    overall[b]! += h[b]!;
-    fam[b]! += h[b]!;
-  }
-  byFamily.set(family, fam);
+/**
+ * Each family's count as its tests' summed, and its p50, p90 and p99 as the geometric mean of its
+ * tests' own. A percentile of their histograms merged would mostly say which test's band sits at
+ * that rank. Under a geometric mean a change of 10% in any one test moves the family by the same
+ * amount, whatever the test's size. A test with no answers has no percentiles to take, and a
+ * family with none has 0, as each of its tests does.
+ */
+function familiesOf(byFamily: ReadonlyMap<string, readonly TestRung[]>): Record<string, FamilyStats> {
+  const mean = (rungs: readonly TestRung[], k: keyof ReturnType<typeof stats>): number => {
+    const xs = rungs.map((t) => t[k]).filter((x) => x > 0);
+    return xs.length ? Math.round(Math.exp(xs.reduce((s, x) => s + Math.log(x), 0) / xs.length)) : 0;
+  };
+  return Object.fromEntries(
+    [...byFamily].map(([fam, rungs]) => [
+      fam,
+      { count: rungs.reduce((s, t) => s + t.count, 0), p50Us: mean(rungs, "p50Us"), p90Us: mean(rungs, "p90Us"), p99Us: mean(rungs, "p99Us") },
+    ]),
+  );
 }
 
 function openRungs(load: LoadResult | undefined) {
@@ -167,12 +176,12 @@ function openRungs(load: LoadResult | undefined) {
     const dropped = r?.dropped ?? phase.settle?.dropped ?? 0;
     const completed = phase.status === "done" && r !== undefined && r.dropped === 0;
     const overall = new Uint32Array(BUCKETS);
-    const byFamily = new Map<string, Uint32Array>();
+    const byFamily = new Map<string, TestRung[]>();
     if (completed) {
       for (const t of r.tests) {
         const h = decode(t.histB64);
-        addTo(byFamily, t.family, overall, h);
-        (tests[t.id] ??= { family: t.family, heft: t.heft, rungs: {} }).rungs[phase.name] = {
+        addInto(overall, h);
+        const rung: TestRung = {
           count: t.count,
           errors: t.errors,
           mismatch: t.mismatch,
@@ -181,6 +190,8 @@ function openRungs(load: LoadResult | undefined) {
           hist: trim(h),
           ...(t.windows === undefined ? {} : { windows: t.windows }),
         };
+        (tests[t.id] ??= { family: t.family, heft: t.heft, rungs: {} }).rungs[phase.name] = rung;
+        byFamily.set(t.family, [...(byFamily.get(t.family) ?? []), rung]);
       }
       families[phase.name] = familiesOf(byFamily);
     }
@@ -211,17 +222,17 @@ function closedRungs(load: ClosedResult) {
     const r = phase.recorded;
     if (r === undefined) continue;
     const overall = new Uint32Array(BUCKETS);
-    const byFamily = new Map<string, Uint32Array>();
+    const byFamily = new Map<string, TestRung[]>();
     for (const t of r.tests) {
       const h = decode(t.invoke.histB64);
-      addTo(byFamily, t.family, overall, h);
+      addInto(overall, h);
       const spans = Object.fromEntries(
         SPANS.map((name) => {
           const s = decode(t[name].histB64);
           return [name, { ...stats(s), hist: trim(s) }];
         }),
       ) as ClosedTestRung["spans"];
-      (tests[t.id] ??= { family: t.family, heft: t.heft, rungs: {} }).rungs[phase.name] = {
+      const rung: ClosedTestRung = {
         count: t.count,
         errors: t.errors,
         mismatch: t.mismatch,
@@ -231,6 +242,8 @@ function closedRungs(load: ClosedResult) {
         spans,
         ...(t.windows === undefined ? {} : { windows: t.windows }),
       };
+      (tests[t.id] ??= { family: t.family, heft: t.heft, rungs: {} }).rungs[phase.name] = rung;
+      byFamily.set(t.family, [...(byFamily.get(t.family) ?? []), rung]);
     }
     families[phase.name] = familiesOf(byFamily);
     rungs[phase.name] = {

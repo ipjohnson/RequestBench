@@ -1,7 +1,6 @@
 // What the table shows. Every function here is pure, which is what makes it checkable at all.
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
-import { BUCKETS, bucketOf, pct } from "../../traffic-generator/histogram.ts";
 import { choicesAt, filterFor, pickRung, rateLabel, rows, wireFor, wireKeyFor } from "../src/client/select.ts";
 import { initialState } from "../src/client/state.ts";
 import type { Framework, Route, Run, WireDoc } from "../src/lib/types.ts";
@@ -50,6 +49,10 @@ const run: Run = {
 };
 
 const st = () => initialState("container-h1", ["dotnet", "node"]);
+
+/** Equal but for the last places, which a mean taken through logarithms can leave. */
+const near = (actual: number | null | undefined, want: number): void =>
+  assert.ok(actual != null && Math.abs(actual - want) < want * 1e-12, `${actual} is not ${want}`);
 
 describe("pickRung", () => {
   /** One framework on a three-rate ladder, saturated at the rates marked. */
@@ -112,7 +115,8 @@ describe("rows", () => {
       rs.map((r) => r.label),
       ["carter", "fastify"],
     );
-    assert.equal(rs[0]?.value, 185);
+    // The geometric mean of carter's two tests, not the rate's own 185 µs over every request.
+    near(rs[0]?.value, Math.sqrt(180 * 200));
     assert.equal(rs[0]?.serializer, "System.Text.Json");
   });
 
@@ -165,47 +169,40 @@ describe("rows", () => {
 });
 
 describe("a blend other than All", () => {
-  /** One test's histogram, `n` answers at one latency. */
-  const one = (us: number, n: number) => ({ count: n, hist: { first: bucketOf(us), counts: [n] } });
-  const at = (us: number, n: number): number[] => {
-    const h = new Array<number>(BUCKETS).fill(0);
-    h[bucketOf(us)] = n;
-    return h;
-  };
-  const withHist: Run = {
+  const withTests: Run = {
     ...run,
     frameworks: [
       {
         ...carter,
         tests: {
-          "json.small": { family: "json", rungs: { regular: one(150, 10) } },
-          "template.small": { family: "template", rungs: { regular: one(900, 10) } },
+          "json.small": { family: "json", rungs: { regular: { count: 10, p50Us: 150 } } },
+          "template.small": { family: "template", rungs: { regular: { count: 10, p50Us: 900 } } },
         },
       },
       fastify,
     ],
   };
 
-  test("is read off the histograms of the tests it names", () => {
+  test("is read from the percentiles of the tests it names", () => {
     const s = st();
     s.q = "Web";
-    const carterRow = rows({ run: withHist, st: s, routes, wireOf: () => undefined }).rows.find((r) => r.label === "carter");
-    assert.equal(carterRow?.value, pct(at(900, 10), 50));
+    const carterRow = rows({ run: withTests, st: s, routes, wireOf: () => undefined }).rows.find((r) => r.label === "carter");
+    near(carterRow?.value, 900);
     s.q = "api";
-    assert.equal(rows({ run: withHist, st: s, routes, wireOf: () => undefined }).rows.find((r) => r.label === "carter")?.value, pct(at(150, 10), 50));
+    near(rows({ run: withTests, st: s, routes, wireOf: () => undefined }).rows.find((r) => r.label === "carter")?.value, 150);
   });
 
   test("keeps the whole mix's achieved rate, which no blend changes", () => {
     const s = st();
     s.q = "Web";
     s.metric = "achievedRps";
-    assert.equal(rows({ run: withHist, st: s, routes, wireOf: () => undefined }).rows.find((r) => r.label === "carter")?.value, 500);
+    assert.equal(rows({ run: withTests, st: s, routes, wireOf: () => undefined }).rows.find((r) => r.label === "carter")?.value, 500);
   });
 
-  test("has no latency where the framework has no histograms", () => {
+  test("has no latency where the framework measured none of its tests", () => {
     const s = st();
     s.q = "API";
-    const fastifyRow = rows({ run: withHist, st: s, routes, wireOf: () => undefined }).rows.find((r) => r.label === "fastify");
+    const fastifyRow = rows({ run: withTests, st: s, routes, wireOf: () => undefined }).rows.find((r) => r.label === "fastify");
     assert.equal(fastifyRow?.value, null);
     assert.equal(fastifyRow?.dead, false);
   });
@@ -215,7 +212,7 @@ describe("a blend other than All", () => {
     s.q = "Custom";
     s.pick = { entries: ["json"], weights: {} };
     s.rung = "raised";
-    const carterRow = rows({ run: withHist, st: s, routes, wireOf: () => undefined }).rows.find((r) => r.label === "carter");
+    const carterRow = rows({ run: withTests, st: s, routes, wireOf: () => undefined }).rows.find((r) => r.label === "carter");
     assert.deepEqual([carterRow?.value, carterRow?.dead], [null, true]);
   });
 
@@ -223,7 +220,7 @@ describe("a blend other than All", () => {
     const s = st();
     s.gran = "family";
     s.q = "Web";
-    assert.deepEqual(rows({ run: withHist, st: s, routes, wireOf: () => undefined }).rows, []);
+    assert.deepEqual(rows({ run: withTests, st: s, routes, wireOf: () => undefined }).rows, []);
   });
 });
 
@@ -233,9 +230,10 @@ describe("the filter at blend granularity", () => {
     s.q = "cart";
     const { rows: rs } = rows({ run, st: s, routes, wireOf: () => undefined });
     assert.deepEqual(
-      rs.map((r) => [r.label, r.value]),
-      [["carter", 185]],
+      rs.map((r) => r.label),
+      ["carter"],
     );
+    near(rs[0]?.value, Math.sqrt(180 * 200));
   });
 });
 

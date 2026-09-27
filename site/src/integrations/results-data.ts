@@ -11,7 +11,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { gzipSync } from "node:zlib";
 import type { AstroIntegration } from "astro";
-import { splitHist } from "../lib/hist.ts";
+import { withoutHist } from "../lib/hist.ts";
 import { site } from "../lib/site.ts";
 
 export function resultsData(): AstroIntegration {
@@ -40,9 +40,7 @@ export function resultsData(): AstroIntegration {
           for (const entry of s.catalog.runs) {
             const raw = s.raw.get(entry.id);
             if (!raw) continue;
-            const { run, hist } = splitHist(raw);
-            put(entry.file, run);
-            if (entry.hist) put(entry.hist, hist);
+            put(entry.file, withoutHist(raw));
           }
           for (const [key, meta] of Object.entries(s.catalog.wire)) put(meta.file, s.wire[key]);
           for (const [key, meta] of Object.entries(s.catalog.code)) put(meta.file, s.code[key]);
