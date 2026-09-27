@@ -8,6 +8,7 @@ export default performanceTest({
   path,
   base: "json.small",
   varies: "validators",
+  heft: 1,
   about:
     "The framework hashing the body it is about to send and writing the " +
     "validator it computed onto the response. Read against json.small, the " +

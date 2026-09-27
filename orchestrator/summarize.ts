@@ -1,7 +1,7 @@
-// A run file collapsed into what the site reads and keeps: per test and per rung the
-// percentiles, a coarse histogram, the generator's own histogram and the count and percentiles
-// of each window of the recording, per family the same merged, and per rung what was offered,
-// achieved and dropped. A port of upstream's harness/summarize.py.
+// A run file collapsed into what the site reads and keeps: per test its heft, per test and per
+// rung the percentiles, a coarse histogram, the generator's own histogram and the count and
+// percentiles of each window of the recording, per family the same merged, and per rung what
+// was offered, achieved and dropped. A port of upstream's harness/summarize.py.
 //
 // Nothing is divided by anything. A rung a framework did not complete publishes what it
 // achieved and dropped and no latency: the generator drops by never sending, so percentiles
@@ -9,6 +9,7 @@
 //
 // lambda-emulator's closed loop has one rung and nothing to drop. Its latency is the invoke
 // phase, and each test carries the other spans beside it.
+import type { Heft } from "@rb/tests/kit";
 import { BUCKETS, GROWTH, LOG_GROWTH, pct } from "../traffic-generator/histogram.ts";
 import {
   WINDOW_SECONDS,
@@ -150,7 +151,7 @@ function addTo(byFamily: Map<string, Uint32Array>, family: string, overall: Uint
 
 function openRungs(load: LoadResult | undefined) {
   const rungs: Record<string, RungSummary> = {};
-  const tests: Record<string, { family: string; rungs: Record<string, TestRung> }> = {};
+  const tests: Record<string, { family: string; heft: Heft; rungs: Record<string, TestRung> }> = {};
   const families: Record<string, Record<string, FamilyStats>> = {};
 
   // The warmup records nothing and is not a rung.
@@ -171,7 +172,7 @@ function openRungs(load: LoadResult | undefined) {
       for (const t of r.tests) {
         const h = decode(t.histB64);
         addTo(byFamily, t.family, overall, h);
-        (tests[t.id] ??= { family: t.family, rungs: {} }).rungs[phase.name] = {
+        (tests[t.id] ??= { family: t.family, heft: t.heft, rungs: {} }).rungs[phase.name] = {
           count: t.count,
           errors: t.errors,
           mismatch: t.mismatch,
@@ -202,7 +203,7 @@ function openRungs(load: LoadResult | undefined) {
 
 function closedRungs(load: ClosedResult) {
   const rungs: Record<string, ClosedRungSummary> = {};
-  const tests: Record<string, { family: string; rungs: Record<string, ClosedTestRung> }> = {};
+  const tests: Record<string, { family: string; heft: Heft; rungs: Record<string, ClosedTestRung> }> = {};
   const families: Record<string, Record<string, FamilyStats>> = {};
 
   // The warmup records nothing and is not a rung.
@@ -220,7 +221,7 @@ function closedRungs(load: ClosedResult) {
           return [name, { ...stats(s), hist: trim(s) }];
         }),
       ) as ClosedTestRung["spans"];
-      (tests[t.id] ??= { family: t.family, rungs: {} }).rungs[phase.name] = {
+      (tests[t.id] ??= { family: t.family, heft: t.heft, rungs: {} }).rungs[phase.name] = {
         count: t.count,
         errors: t.errors,
         mismatch: t.mismatch,

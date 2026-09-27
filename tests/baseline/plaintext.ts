@@ -8,6 +8,7 @@ const HELLO = text("Hello, World!", "Hello, World!");
 export default performanceTest({
   id: { family: "baseline", name: "plaintext" },
   path,
+  heft: 1,
   about:
     "The dispatch floor. A fixed string out, with no serialiser in the way, " +
     "so what is left is the framework accepting a connection, matching a " +

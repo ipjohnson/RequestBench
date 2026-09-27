@@ -212,12 +212,16 @@ export class Pipe {
     });
   }
 
-  /** Builds every instance for the wire and opens the load's connections. */
+  /**
+   * Builds every instance for the wire and opens the load's connections. `order` is one cycle of
+   * the load, each slot a test's place in `tests`, which order.ts builds.
+   */
   async open(
     tests: readonly { readonly instances: readonly LoadInstance[] }[],
+    order: readonly number[],
     shape: { readonly workers: number; readonly connections: number; readonly streams: number },
   ): Promise<void> {
-    await this.#command({ op: "open", tests, ...shape }, "ready");
+    await this.#command({ op: "open", tests, order, ...shape }, "ready");
   }
 
   async phase(phase: {

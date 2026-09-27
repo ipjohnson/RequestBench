@@ -8,6 +8,7 @@ export default performanceTest({
   path,
   base: "body.bind_small",
   varies: "size",
+  heft: 3,
   about:
     "A body parsed and bound without being validated. The answer carries a " +
     "count of the leaves it found, which is what says the request was parsed " +

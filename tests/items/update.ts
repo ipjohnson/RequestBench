@@ -8,6 +8,7 @@ export default performanceTest({
   path,
   base: "items.replace",
   varies: "method",
+  heft: 2,
   about:
     "Two fields patched onto a row and answered with the row as it would be. " +
     "The handler has to read the row, merge the body into it and serialise " +

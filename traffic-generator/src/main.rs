@@ -4,10 +4,14 @@
 //!
 //!   {"op":"exchange","id":1,"request":{...},"timeoutMs":10000}
 //!       -> {"id":1,"answer":{...}} or {"id":1,"error":"..."}
-//!   {"op":"open","tests":[...],"workers":4,"connections":256,"streams":1} -> {"kind":"ready"}
+//!   {"op":"open","tests":[...],"order":[0,2,0,1,...],"workers":4,"connections":256,"streams":1}
+//!       -> {"kind":"ready"}
 //!   {"op":"phase","rps":1000,"settle":30000,"total":60000,"abortDropFraction":0.05,"windowSeconds":10}
 //!       -> {"kind":"phase",...}
 //!   {"op":"close"}                                               -> {"kind":"closed"}
+//!
+//! An open's `order` is one cycle of the load, each slot a test's place in `tests`. Every phase
+//! repeats it from its first slot.
 //!
 //! Anything that goes wrong outside an exchange is answered {"kind":"error","message":"..."}.
 //!
@@ -19,6 +23,7 @@
 //!
 //!   traffic-generator --listen <host:port> --protocol lambda-runtime-api
 mod apigw;
+mod cycle;
 mod exchange;
 mod h2c;
 mod histogram;
@@ -39,9 +44,10 @@ use serde_json::{Value, json};
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::task::LocalSet;
 
+use crate::cycle::Cycle;
 use crate::exchange::Exchanger;
 use crate::h2c::Template;
-use crate::load::{Instance, Load, Phased, Schedule, Test, Wire};
+use crate::load::{Instance, Load, Phased, Schedule, Shape, Test, Wire};
 use crate::request::{Protocol, Request, http1};
 use crate::tally::Tally;
 
@@ -106,6 +112,7 @@ struct CompiledTest {
 #[derive(Deserialize)]
 struct Open {
     tests: Vec<CompiledTest>,
+    order: Vec<usize>,
     workers: usize,
     connections: usize,
     /// The requests one connection carries at once, which is 1 over HTTP/1.1.
@@ -202,6 +209,7 @@ async fn run(host: String, port: u16, protocol: Protocol) {
 #[derive(Deserialize)]
 struct LambdaOpen {
     tests: Vec<CompiledTest>,
+    order: Vec<usize>,
 }
 
 #[derive(Deserialize)]
@@ -257,8 +265,8 @@ async fn run_lambda(bind: String) {
                 });
             }
             Some("open") => match events(command) {
-                Ok(tests) => {
-                    env.load(tests);
+                Ok((tests, cycle)) => {
+                    env.load(tests, cycle);
                     say(&json!({ "kind": "ready" }));
                 }
                 Err(message) => say(&json!({ "kind": "error", "message": message })),
@@ -285,7 +293,7 @@ async fn run_lambda(bind: String) {
 }
 
 /// Every instance built into the `/next` answer that carries its event, before anything is timed.
-fn events(command: Value) -> Result<Vec<Vec<lambda::Instance>>, String> {
+fn events(command: Value) -> Result<(Vec<Vec<lambda::Instance>>, Cycle), String> {
     let open: LambdaOpen = serde_json::from_value(command).map_err(|e| format!("a load that does not parse: {e}"))?;
     if open.tests.is_empty() || open.tests.iter().any(|t| t.instances.is_empty()) {
         return Err("a load needs a test, and each test an instance".into());
@@ -306,7 +314,8 @@ fn events(command: Value) -> Result<Vec<Vec<lambda::Instance>>, String> {
         }
         tests.push(instances);
     }
-    Ok(tests)
+    let cycle = Cycle::new(&open.order, tests.len())?;
+    Ok((tests, cycle))
 }
 
 /// Every instance built into its bytes before any thread starts, so nothing is built while a
@@ -335,7 +344,9 @@ async fn open(host: &str, port: u16, protocol: Protocol, authority: &str, comman
         }
         tests.push(Test { instances });
     }
-    Load::open(host.to_string(), port, protocol, tests, open.workers, open.connections, open.streams).await
+    let cycle = Cycle::new(&open.order, tests.len())?;
+    let shape = Shape { workers: open.workers, connections: open.connections, streams: open.streams };
+    Load::open(host.to_string(), port, protocol, tests, cycle, shape).await
 }
 
 /// A phase's threads merged: every test's tally, the settle's, and when it started and ended.

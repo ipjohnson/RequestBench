@@ -8,6 +8,7 @@ export default performanceTest({
   path,
   base: "parameters.static",
   varies: "captures",
+  heft: 1,
   about:
     "One segment captured, bound as an integer and written back. The value is " +
     "drawn per run, so a framework that answered from a table would have had " +

@@ -8,6 +8,7 @@ export default performanceTest({
   path,
   base: "items.create",
   varies: "method",
+  heft: 2,
   about:
     "A whole item put at an id and answered with the item under that id. Read " +
     "against items.create, the difference is the id coming from the path " +

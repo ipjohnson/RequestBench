@@ -7,6 +7,7 @@ export default performanceTest({
   path,
   base: "items.read",
   varies: "method",
+  heft: 1,
   about:
     "A row deleted and answered 204 with no body. Nothing is removed, so " +
     "every instance finds the row it names. Read against items.read, the " +

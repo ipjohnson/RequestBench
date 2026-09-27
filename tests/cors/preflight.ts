@@ -12,6 +12,7 @@ export default performanceTest({
   path,
   base: "baseline.plaintext",
   varies: "preflight",
+  heft: 1,
   about:
     "The question a browser asks before a cross-origin request with a custom " +
     "header, answered by the CORS feature before any handler runs. The " +

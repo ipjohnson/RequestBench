@@ -8,6 +8,7 @@ export default performanceTest({
   path,
   base: "json.small",
   varies: "depth",
+  heft: 1,
   about:
     "Four static segments and no captures. This holds the route depth " +
     "constant for the two rows that capture, so subtracting it leaves the " +

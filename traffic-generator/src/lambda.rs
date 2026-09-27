@@ -10,9 +10,9 @@
 //! t2 to t3. The invoke phase runs from t0 to t3, because Lambda ends it at the next /next.
 //!
 //! The gate and priming send one event at a time through `exchange`, which waits for the runtime
-//! to ask. A phase hands out events as fast as the runtime asks for them, and checks each answer's
-//! status and length against priming after it has handed out the next event, so the check never
-//! sits inside a span.
+//! to ask. A phase hands out events as fast as the runtime asks for them, in the order the load's
+//! cycle gives, and checks each answer's status and length against priming after it has handed
+//! out the next event, so the check never sits inside a span.
 //!
 //! An answer is read as a Function URL's caller reads it. That caller gets no body in an answer to
 //! HEAD, whatever the function posted.
@@ -30,6 +30,7 @@ use tokio::sync::oneshot;
 use tokio::task::LocalSet;
 
 use crate::apigw::{self, Answered};
+use crate::cycle::Cycle;
 use crate::histogram::{BUCKETS, bucket_of};
 use crate::inbound::{Inbound, RequestReader};
 use crate::request::Request;
@@ -263,7 +264,9 @@ pub struct Env {
     current: RefCell<Option<Current>>,
     number: Cell<u64>,
     tests: RefCell<Vec<Vec<Instance>>>,
-    random: Cell<u32>,
+    cycle: RefCell<Option<Cycle>>,
+    /// The phase's next slot in the cycle.
+    slot: Cell<u64>,
     phase: RefCell<Option<Phase>>,
     finished: RefCell<Option<Phase>>,
     progress: Cell<Instant>,
@@ -282,7 +285,8 @@ pub async fn listen(bind: &str) -> Result<(Rc<Env>, u16), String> {
         current: RefCell::new(None),
         number: Cell::new(0),
         tests: RefCell::new(Vec::new()),
-        random: Cell::new(0x9e37_79b9),
+        cycle: RefCell::new(None),
+        slot: Cell::new(0),
         phase: RefCell::new(None),
         finished: RefCell::new(None),
         progress: Cell::new(Instant::now()),
@@ -434,21 +438,13 @@ impl Env {
         *self.current.borrow_mut() = Some(Current::Exchange { number, done: Some(queued.done) });
     }
 
-    /// xorshift32, as the open-loop load picks its tests.
-    fn random(&self) -> f64 {
-        let mut s = self.random.get();
-        s ^= s << 13;
-        s ^= s >> 17;
-        s ^= s << 5;
-        self.random.set(s);
-        s as f64 / 4_294_967_296.0
-    }
-
     fn hand_out(&self, conn: &Rc<Conn>) {
+        let k = self.slot.get();
+        self.slot.set(k + 1);
+        let (test, turn) = self.cycle.borrow().as_ref().expect("the load's cycle").slot(k);
         let mut tests = self.tests.borrow_mut();
-        let test = (self.random() * tests.len() as f64) as usize;
         let instances = &mut tests[test];
-        let instance = (self.random() * instances.len() as f64) as usize;
+        let instance = (turn % instances.len() as u64) as usize;
         let number = self.number.get() + 1;
         self.number.set(number);
         let answer = &mut instances[instance].answer;
@@ -592,8 +588,9 @@ impl Env {
         }))
     }
 
-    pub fn load(&self, tests: Vec<Vec<Instance>>) {
+    pub fn load(&self, tests: Vec<Vec<Instance>>, cycle: Cycle) {
         *self.tests.borrow_mut() = tests;
+        *self.cycle.borrow_mut() = Some(cycle);
     }
 
     /// A closed-loop phase: events handed out as fast as the runtime asks, unrecorded for `settle`
@@ -626,6 +623,7 @@ impl Env {
             done: Some(done),
         });
         self.progress.set(start);
+        self.slot.set(0);
         let waiting = self.waiting.borrow_mut().take();
         if let Some(conn) = waiting.filter(|c| !c.gone.get()) {
             self.hand_out(&conn);
@@ -773,7 +771,7 @@ mod tests {
                     body_bytes: Some(format!(r#"{{"length":0,"path":"{path}"}}"#).len() as u64),
                     head: false,
                 };
-                env.load(vec![vec![instance("/a")], vec![instance("/bb")]]);
+                env.load(vec![vec![instance("/a")], vec![instance("/bb")]], Cycle::new(&[0, 1], 2).unwrap());
                 let report = env.phase(Duration::ZERO, Duration::from_millis(300), Duration::from_millis(100), |_| 0).await.unwrap();
                 // With no settle the first recorded invocation is the first event the runtime answered.
                 let first = &report["firstInvocation"];
@@ -782,6 +780,9 @@ mod tests {
                 let counted: u64 = report["seconds"].as_array().unwrap().iter().map(|s| s[0].as_u64().unwrap()).sum();
                 let recorded: u64 = report["tests"].as_array().unwrap().iter().map(|t| t["count"].as_u64().unwrap()).sum();
                 assert_eq!(counted, recorded);
+                // The cycle alternates the two tests, and every event the phase handed out was recorded.
+                let [a, b] = [0, 1].map(|i| report["tests"][i]["count"].as_u64().unwrap());
+                assert!(a == b || a == b + 1, "{a} and {b}");
                 for test in report["tests"].as_array().unwrap() {
                     assert!(test["count"].as_u64().unwrap() > 10, "{test}");
                     assert_eq!((test["errors"].as_u64(), test["mismatch"].as_u64()), (Some(0), Some(0)), "{test}");

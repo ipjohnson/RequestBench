@@ -8,6 +8,7 @@ export default performanceTest({
   path,
   base: "middleware.none",
   varies: "layers",
+  heft: 1,
   about:
     "Four no-op layers in front of a handler that serialises the small " +
     "payload. Four layers in front of the handler, each calling the next and " +

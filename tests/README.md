@@ -36,6 +36,7 @@ export default performanceTest({
   path,
   base: "json.small",
   varies: "query_params",
+  heft: 1,
   about:
     "One query parameter parsed, coerced to an integer and written back. Read " +
     "against json.small, the difference is the query string being parsed at " +
@@ -52,6 +53,7 @@ export default performanceTest({
 | `about` | What the test measures, and what it is read against. |
 | `base` | Performance tests only. Optional. The test this one is read against. |
 | `varies` | Performance tests only. Required with `base`. The one factor that differs from `base`, named in `factors.ts`. |
+| `heft` | Performance tests only. Required. How much work the test asks of a framework, from 1 to 5, which decides how often the load sends it. See [Heft](#heft). |
 | `request` | A function that sends the request and asserts on the response. |
 | `scope` | Validation tests only. Optional. A function of what a framework's rb.json declares, which says whether the test applies to it. |
 | `leaves` | Validation tests only. Optional. How the test leaves the server changed. |
@@ -127,6 +129,36 @@ each step as the cost of its factor. `factors.ts` says what each factor measures
 a base that is not a performance test, a factor missing from `factors.ts`, a chain of bases that
 loops, and a factor that no test varies.
 
+### Heft
+
+A performance test's `heft` says how much work it asks of a framework, from 1 to 5. The load sends
+a heavier test less often, so the heavy tests do not take most of a framework's time at a rate.
+
+A test's cost is its p50 at 1,000 rps minus the same framework's `baseline.plaintext` p50 in the
+same run. The scale uses the median cost over the frameworks in every language except Python, and
+then the median of six `container-h1` runs, from 2026-09-26T0204Z to 2026-09-27T0209Z. Python's
+frameworks are the slowest by a wide margin, so they do not shape the scale. They are measured like
+every other framework.
+
+| Heft | Cost over `baseline.plaintext` | Calls in each cycle |
+| --- | --- | --- |
+| 1 | Under 16 µs | 10 |
+| 2 | 16 to 100 µs | 6 |
+| 3 | 100 to 400 µs | 3 |
+| 4 | 400 to 1,000 µs | 2 |
+| 5 | 1,000 µs and over | 1 |
+
+The load sends one cycle of the tests, with a slot for each call, and repeats it for as long as a
+rate runs. Smooth weighted round-robin over the five hefts decides which heft fills each slot, with
+each heft weighing its tests times its calls. That spreads the heavy tests among the light ones.
+Each heft gives its slots to its tests in alphabetical turn, and each test's prepared requests take
+turns. `traffic-generator/order.ts` builds the cycle. The order is the same in every run and for
+every framework. A test that a host marks unsupported loses its slots, and the rest keep their
+order.
+
+A new test takes the heft of the tests whose work it is closest to. Once a run has measured its
+cost, its heft moves if the cost falls in another band.
+
 ### Performance and validation tests
 
 A performance test is checked and then measured. Every framework must pass every performance test,
@@ -146,27 +178,28 @@ To add a performance test:
 2. Add it to the `tests` list in `<family>/index.ts`. A test missing from the list never runs.
 3. Give it a `base` and `varies` if it is read against another test. Add a new factor to
    `factors.ts`.
-4. Put any new response data in a committed file in `payloads/`. Give it a model in `models/`, and
+4. Give it a `heft`, as [Heft](#heft) describes.
+5. Put any new response data in a committed file in `payloads/`. Give it a model in `models/`, and
    load it in `payloads/index.ts`.
-5. Add a route to `orchestrator/test/reference.ts` that computes the right answer from the request.
-6. If the reference answers it with a framework's own error body, add the test to `REFUSALS` in
+6. Add a route to `orchestrator/test/reference.ts` that computes the right answer from the request.
+7. If the reference answers it with a framework's own error body, add the test to `REFUSALS` in
    `orchestrator/test/reference.ts`, and its answer to each contract in
    `orchestrator/test/contracts.ts`.
-7. Update the tests that count performance tests. In `traffic-generator/cli.test.ts`, add a stub
+8. Update the tests that count performance tests. In `traffic-generator/cli.test.ts`, add a stub
    route and update `testsLive`. In `orchestrator/test/edges.test.ts`, update the list of tests
    with no base or the count of tests with one.
-8. Run `npm run spec` to regenerate `frameworks/openapi.json`.
-9. Run `git add` on the new files, then `npm run typecheck` and `npm test`.
-10. Add the route to every framework, with a unit test marked `rb:test`, and check each framework
+9. Run `npm run spec` to regenerate `frameworks/openapi.json`.
+10. Run `git add` on the new files, then `npm run typecheck` and `npm test`.
+11. Add the route to every framework, with a unit test marked `rb:test`, and check each framework
     with `npm run rb -- validate`. [frameworks/README.md](../frameworks/README.md) has the steps.
 
-A validation test needs every step except 3 and 7. In step 10, a framework may list it in `skips`
+A validation test needs every step except 3, 4 and 8. In step 11, a framework may list it in `skips`
 instead of passing it.
 
-Every run records the corpus version, a hash of what each performance test sends and asserts, the
-payload files, and the shape of the drawn values. Two runs are comparable only when their versions
-match. Adding a performance test, or changing one's request, assertions or payload, changes the
-version. Changing an `about`, or adding a validation test, does not.
+Every run records the corpus version, a hash of what each performance test sends and asserts, each
+one's heft, the payload files, and the shape of the drawn values. Two runs are comparable only when
+their versions match. Adding a performance test, or changing one's request, assertions, heft or
+payload, changes the version. Changing an `about`, or adding a validation test, does not.
 
 ## Adding a family
 

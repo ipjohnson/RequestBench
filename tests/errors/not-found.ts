@@ -7,6 +7,7 @@ export default performanceTest({
   path,
   base: "items.read",
   varies: "outcome",
+  heft: 1,
   about:
     "A lookup the router matches and the handler refuses, because no row has " +
     "that id. Read against items.read, the difference is the refusal in place " +

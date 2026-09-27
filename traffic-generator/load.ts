@@ -2,7 +2,7 @@
 // builds a load from the ladder and reads the result file, so both shapes are declared here,
 // apart from the CLI that runs them.
 import { z } from "zod";
-import type { RunValues } from "@rb/tests/kit";
+import type { Heft, RunValues } from "@rb/tests/kit";
 import { runValuesSchema } from "@rb/tests/models/parameters";
 
 const ADDRESS = /^([^:]+):(\d+)$/;
@@ -137,6 +137,8 @@ export interface SettleSummary {
 export interface TestSummary extends Percentiles {
   readonly id: string;
   readonly family: string;
+  /** The test's heft, which decided how often the load sent it. */
+  readonly heft: Heft;
   readonly count: number;
   readonly errors: number;
   readonly mismatch: number;
@@ -210,6 +212,8 @@ export interface SpanSummary extends Percentiles {
 export interface ClosedTestSummary {
   readonly id: string;
   readonly family: string;
+  /** The test's heft, which decided how often the load sent it. */
+  readonly heft: Heft;
   readonly count: number;
   readonly errors: number;
   readonly mismatch: number;

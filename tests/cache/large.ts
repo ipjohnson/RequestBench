@@ -8,6 +8,7 @@ export default performanceTest({
   path,
   base: "json.large",
   varies: "response_cache",
+  heft: 3,
   about:
     "The handler skipped and a stored answer written back. Read against " +
     "json.large, the difference is the store answering instead of the " +

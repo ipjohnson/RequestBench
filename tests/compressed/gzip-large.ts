@@ -8,6 +8,7 @@ export default performanceTest({
   path,
   base: "compressed.identity_large",
   varies: "compression",
+  heft: 5,
   about:
     "The middleware compressing a body large enough to be worth it. Read " +
     "against compressed.identity_large, the difference is the compression and " +

@@ -8,6 +8,7 @@ export default performanceTest({
   path,
   base: "json.medium",
   varies: "renderer",
+  heft: 3,
   about:
     "Eighty-nine rows through the same template. Read against template.small, " +
     "the difference is the engine's per-row cost, and against json.medium it " +

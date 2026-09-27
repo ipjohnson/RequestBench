@@ -8,6 +8,7 @@ export default performanceTest({
   path,
   base: "parameters.one",
   varies: "lookup",
+  heft: 1,
   about:
     "One row of the large payload, looked up by the id in the path. The id is " +
     "drawn per request, so each instance reads a different row. Read against " +

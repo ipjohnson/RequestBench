@@ -8,6 +8,7 @@ export default performanceTest({
   path,
   base: "query.one",
   varies: "query_params",
+  heft: 2,
   about:
     "Eight parameters, which is what a real search endpoint carries: a page " +
     "and a size, a sort, a text term and four filters. Read against " +

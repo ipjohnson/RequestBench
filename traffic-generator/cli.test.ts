@@ -13,7 +13,10 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { after, before, test } from "node:test";
 import { fileURLToPath } from "node:url";
+import { idOf } from "@rb/tests/kit";
 import { settings } from "@rb/tests/payloads";
+import { orderOf } from "./order.ts";
+import { select } from "./select.ts";
 
 const VALUES = {
   one: 4821,
@@ -197,7 +200,18 @@ test("every performance test answers the status it declares", async () => {
   assert.equal(regular.recorded.mismatch, 0, stdout);
   assert.equal(regular.recorded.errors, 0, stdout);
   assert.equal(regular.recorded.dropped, 0);
-  for (const t of regular.recorded.tests) assert.ok(t.count > 0, `${t.id} ran no instance`);
+  // The recording is the order's first 600 slots, so every test's count is known.
+  const offered = select(undefined);
+  const order = orderOf(offered);
+  const expected = new Map<string, number>();
+  for (let k = 0; k < 600; k++) {
+    const id = idOf(offered[order[k % order.length]!]!.id);
+    expected.set(id, (expected.get(id) ?? 0) + 1);
+  }
+  for (const t of regular.recorded.tests) {
+    const declared = offered.find((o) => idOf(o.id) === t.id)!;
+    assert.deepEqual([t.count, t.heft], [expected.get(t.id), declared.heft], t.id);
+  }
   // Two seconds fit in one window, which holds every instance its test timed.
   assert.equal(regular.recorded.windowSeconds, 10);
   for (const t of regular.recorded.tests) {

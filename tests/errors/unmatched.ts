@@ -5,6 +5,7 @@ const path = "/errors/unmatched";
 export default performanceTest({
   id: { family: "errors", name: "unmatched" },
   path,
+  heft: 1,
   about:
     "A path no route matches, which is the router's own miss rather than a " +
     "handler's decision. A framework that walks its whole route table before " +

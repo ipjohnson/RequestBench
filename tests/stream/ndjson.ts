@@ -8,6 +8,7 @@ export default performanceTest({
   path,
   base: "json.medium",
   varies: "streaming",
+  heft: 3,
   about:
     "items.medium's 89 rows written one per line as application/x-ndjson. " +
     "There is no Content-Length, which is what shows the body left in parts " +

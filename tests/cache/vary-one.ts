@@ -9,6 +9,7 @@ export default performanceTest({
   path,
   base: "cache.small",
   varies: "cache_key",
+  heft: 1,
   about:
     "The stored answer keyed by a request header as well as by the path. One " +
     "header with two values, picked per instance, so a store that ignores the " +

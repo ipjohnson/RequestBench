@@ -9,6 +9,7 @@ export default performanceTest({
   path,
   base: "cache.vary_one",
   varies: "cache_key",
+  heft: 1,
   about:
     "The same thing keyed on three headers instead of one. Read against " +
     "cache.vary_one, the difference is eight distinct keys where there were " +

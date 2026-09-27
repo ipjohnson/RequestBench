@@ -8,6 +8,7 @@ export default performanceTest({
   path,
   base: "json.small",
   varies: "size",
+  heft: 2,
   about:
     "Eighty-nine rows out, serialised from a body the framework already " +
     "holds. The middle size, where the codec is doing real work and the " +

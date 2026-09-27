@@ -8,6 +8,7 @@ export default performanceTest({
   path,
   base: "json.small",
   varies: "compression_wiring",
+  heft: 1,
   about:
     "The compression middleware installed and declining. The client asks for " +
     "identity, so nothing is compressed and what this row carries is the cost " +

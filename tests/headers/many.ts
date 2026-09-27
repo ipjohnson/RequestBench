@@ -9,6 +9,7 @@ export default performanceTest({
   path,
   base: "headers.few",
   varies: "header_count",
+  heft: 2,
   about:
     "Thirty request headers, still read by nothing. Read against headers.few, " +
     "the difference is the cost of materialising twenty-five more that nobody " +
