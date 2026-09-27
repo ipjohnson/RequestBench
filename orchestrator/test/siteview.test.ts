@@ -114,7 +114,7 @@ test("a mechanism rb.json declares and the code does not bear out is a problem",
   assert.deepEqual(frameworkView(repo, DEMO, head, ENDPOINTS, REQUIRED, "container-h1").problems, []);
 });
 
-test("the tests view carries every test's source, its route, its base and the payloads it names", async () => {
+test("the tests view carries every test's source, its route, its base, its heft and the payloads it names", async () => {
   const { recordings } = await corpusEndpoints(suite);
   const view = testsView(ROOT, undefined, suite, recordings);
   assert.equal(Object.keys(view.tests).length, Object.keys(suite.tests).length);
@@ -124,6 +124,9 @@ test("the tests view carries every test's source, its route, its base and the pa
   assert.deepEqual([large.method, large.path], ["GET", "/json/large"]);
   assert.equal(view.tests["body.bind_small"]!.method, "POST");
   assert.deepEqual([large.base, large.varies], ["json.small", "size"]);
+  assert.equal(large.heft, 4);
+  // A validation test is not measured, so it has no heft.
+  assert.equal("heft" in view.tests["cors.vary"]!, false);
   assert.deepEqual(large.payloads, ["items.large"]);
   assert.equal(view.pushed, false);
   assert.equal(view.factors["size"]?.reads, "a larger response body, same route and same handler");

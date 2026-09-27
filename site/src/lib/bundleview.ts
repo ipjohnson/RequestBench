@@ -115,6 +115,8 @@ export const TestView = z.object({
   kind: z.string(),
   family: z.string(),
   about: z.string().default(""),
+  /** A performance test's heft, from 1 to 5. A view from before hefts has none. */
+  heft: z.number().optional(),
   method: z.string().optional(),
   path: z.string().optional(),
   base: z.string().optional(),

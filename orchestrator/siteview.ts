@@ -7,7 +7,7 @@
 // code that ran in March. The endpoints are the working tree's corpus, as upstream read
 // spec/endpoints.json from the working tree, because a corpus is TypeScript and cannot be
 // imported as it stood at another commit.
-import type { Factor, Suite } from "@rb/tests/kit";
+import type { Factor, Heft, Suite } from "@rb/tests/kit";
 import { frameworkBundle, frameworkDir, frameworkId, testFiles, testsBundle, type Bundle, type FrameworkKey } from "./bundle.ts";
 import { callView, primeView, type CallView, type PrimeView } from "./callview.ts";
 import { endpoints, isPayload, recordAll, subjectOf } from "./corpus.ts";
@@ -112,6 +112,8 @@ export interface TestView {
   readonly kind: "performance" | "validation";
   readonly family: string;
   readonly about: string;
+  /** How much work a performance test asks of a framework, from 1 to 5. */
+  readonly heft?: Heft;
   /** What the call the test is about sends. A test declares its path and leaves the method inside its closure. */
   readonly method?: string;
   readonly path?: string;
@@ -166,6 +168,7 @@ export function testsView(root: string, at: string | undefined, s: Suite, record
       kind: t.kind,
       family: t.id.family,
       about: t.about,
+      ...(t.kind === "performance" ? { heft: t.heft } : {}),
       ...(method === undefined ? {} : { method }),
       ...(t.path === undefined ? {} : { path: t.path }),
       ...(t.kind === "performance" && t.base !== undefined ? { base: t.base, varies: t.varies! } : {}),

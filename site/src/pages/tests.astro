@@ -42,6 +42,19 @@ const hrefOf = (id: string): string => `#${id}`;
           family for each test's request, the answer it expects, and what the difference from its base
           measures.
         </p>
+        {
+          Object.values(corpus.view.tests).some((t) => t.heft !== undefined) && (
+            <p class="legend-note">
+              Each performance test has a heft from 1 to 5, for how much work it asks of a framework. The load
+              sends a heavier test less often, in one fixed order for every framework.{" "}
+              {links.link("tests/README.md") ? (
+                <a href={`${links.link("tests/README.md")}#heft`}>The tests README gives the scale and the order.</a>
+              ) : (
+                "The tests README gives the scale and the order."
+              )}
+            </p>
+          )
+        }
         <div class="famgrid">
           {families.map((f) => {
             const tests = f.ids.map((id) => ({ id, t: corpus.view.tests[id]! }));
