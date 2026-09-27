@@ -6,6 +6,7 @@ import { blendNamed, blendStats, BLENDS, labelOf, weightsOf } from "../lib/blend
 import { deltaFor } from "../lib/delta.ts";
 import type { MetricId } from "../lib/metrics.ts";
 import { familyOf, famsAt, metaOf, rungLabel, rungsOf, testOrder } from "../lib/run.ts";
+import { isThin } from "../lib/thin.ts";
 import type { Framework, Route, Run, WireDoc } from "../lib/types.ts";
 import { blendIn, COLS, type Gran, type Row, type State } from "./state.ts";
 
@@ -94,6 +95,21 @@ export function blendValue(f: Framework, rn: string, metric: MetricId, weights: 
 }
 
 /**
+ * The requests a framework's latency at blend granularity is read from, where it is a thin
+ * percentile, and undefined where it is not. A blend is thin only when fewer than THIN of its
+ * tests' requests lie beyond their own percentiles in all.
+ */
+export function blendThin(f: Framework, rn: string, metric: MetricId, weights: ReadonlyMap<string, number>): number | undefined {
+  if (!isLatency(metric) || !f.rungs[rn]?.completed) return undefined;
+  const { count } = blendStats(f, rn, weights);
+  return isThin(count, metric) ? count : undefined;
+}
+
+/** The requests a family's or a test's number is read from, where it is a thin percentile. */
+export const thinAt = (count: number | undefined, metric: MetricId): number | undefined =>
+  isThin(count, metric) ? count : undefined;
+
+/**
  * Exemplars are keyed <language>-<name>@<host>: the same framework on two hosts puts different
  * things on the wire, which is the point of the host axis.
  */
@@ -176,6 +192,7 @@ export function rows({ run, st, routes, wireOf }: RowsInput): { rn: string | nul
         value: blendValue(f, rn, st.metric, weights),
         dead: !d.completed,
         n: d.achievedRps ?? null,
+        thin: blendThin(f, rn, st.metric, weights),
       });
     } else if (st.gran === "family") {
       for (const [fam, rec] of Object.entries(famsAt(f, rn))) {
@@ -187,6 +204,7 @@ export function rows({ run, st, routes, wireOf }: RowsInput): { rn: string | nul
           value: numberAt(rec, st.metric),
           dead: false,
           n: rec.count ?? null,
+          thin: numberAt(rec, st.metric) === null ? undefined : thinAt(rec.count, st.metric),
         });
       }
     } else {
@@ -205,6 +223,7 @@ export function rows({ run, st, routes, wireOf }: RowsInput): { rn: string | nul
           dead: false,
           n: d.count ?? null,
           delta: deltaFor(f, id, rn, routes, st.metric),
+          thin: numberAt(d, st.metric) === null ? undefined : thinAt(d.count, st.metric),
         });
       }
     }

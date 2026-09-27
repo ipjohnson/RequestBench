@@ -9,10 +9,11 @@ import { cell, METRICS, type Unit } from "../lib/metrics.ts";
 import type { PageData } from "../lib/page-data.ts";
 import { DEFAULT_HOST, familyOf, famsAt, hostOf, machineOf, machinesFor, metaOf, rungsOf, testOrder, timeline } from "../lib/run.ts";
 import { SERIES_DARK, SERIES_LIGHT } from "../lib/series.ts";
+import { thinTitle } from "../lib/thin.ts";
 import type { Run } from "../lib/types.ts";
 import { deltaCell } from "../lib/views.ts";
 import { Data, resolveSource } from "./source.ts";
-import { blendValue, choicesAt, filterFor, isLatency, pickRung, rateLabel, rows, wireKeyFor } from "./select.ts";
+import { blendThin, blendValue, choicesAt, filterFor, isLatency, pickRung, rateLabel, rows, thinAt, wireKeyFor } from "./select.ts";
 import { blendIn, COLS, defaultCols, initialState, pageHref, readHash, writeHash, type Col, type Row, type State } from "./state.ts";
 
 const el = <T extends HTMLElement>(id: string): T => document.getElementById(id) as T;
@@ -215,8 +216,10 @@ class Explorer {
               if (c.id === "bar")
                 return `<td class="barcell"><div class="bar" style="width:${w}%;background:${colour[r.language]}"></div></td>`;
               if (c.id === "delta") return deltaCell(r.delta, METRICS[this.st.metric].unit);
-              const extra = c.id === "value" && r.dead ? " dead" : "";
-              return `<td class="${c.cls ?? ""}${extra}">${esc(cell(c.get?.(r), this.unit(c.id)))}</td>`;
+              const thin = c.id === "value" && r.thin !== undefined;
+              const extra = c.id === "value" && r.dead ? " dead" : thin ? " thin" : "";
+              const title = thin ? ` title="${esc(thinTitle(r.thin, this.st.metric, METRICS[this.st.metric].label))}"` : "";
+              return `<td class="${c.cls ?? ""}${extra}"${title}>${esc(cell(c.get?.(r), this.unit(c.id)))}</td>`;
             })
             .join("");
           const name = href ? `<a href="${esc(href)}">${esc(r.label)}</a>` : esc(r.label);
@@ -370,7 +373,7 @@ class Explorer {
     const cols = series();
     // Each point keeps its run's place on the axis, so a run a framework is missing from leaves a
     // gap rather than moving its later points under earlier dates.
-    const series_ = new Map<string, { i: number; date: string; v: number; ver: string; adapter: string }[]>();
+    const series_ = new Map<string, { i: number; date: string; v: number; thin: boolean; ver: string; adapter: string }[]>();
     for (const [i, run] of runs.entries()) {
       const rn = (this.st.rung && rungsOf(run).includes(this.st.rung) ? this.st.rung : pickRung(run, null)) ?? "";
       const blend = blendIn(this.st);
@@ -383,8 +386,9 @@ class Explorer {
           const raw = (at as Record<string, unknown> | undefined)?.[this.st.metric];
           const v = !det ? blendValue(f, rn, this.st.metric, weights) : typeof raw === "number" ? raw : null;
           if (v == null) continue;
+          const thin = (!det ? blendThin(f, rn, this.st.metric, weights) : thinAt(at?.count, this.st.metric)) !== undefined;
           if (!series_.has(k)) series_.set(k, []);
-          series_.get(k)?.push({ i, date: run.date ?? "", v, ver: f.version ?? "", adapter: metaOf(f, "adapter") });
+          series_.get(k)?.push({ i, date: run.date ?? "", v, thin, ver: f.version ?? "", adapter: metaOf(f, "adapter") });
         }
       }
     }
@@ -426,9 +430,11 @@ class Explorer {
         prev = pt.ver || prev;
         prevAd = pt.adapter;
         const anchor = i === 0 ? "start" : i >= n - 1 ? "end" : "middle";
+        // A thin percentile's dot is faint, as its cell in the table is hatched.
+        const faint = pt.thin ? ` opacity=".35"` : "";
         g += changed
-          ? `<circle cx="${X(i).toFixed(1)}" cy="${Y(pt.v).toFixed(1)}" r="5.5" fill="var(--surface)" stroke="${c}" stroke-width="2"/><text x="${X(i).toFixed(1)}" y="${(Y(pt.v) - 11).toFixed(1)}" fill="${c}" font-size="9" font-family="var(--f-mono)" text-anchor="${anchor}">${esc(label)}</text>`
-          : `<circle cx="${X(i).toFixed(1)}" cy="${Y(pt.v).toFixed(1)}" r="3.2" fill="${c}"/>`;
+          ? `<circle cx="${X(i).toFixed(1)}" cy="${Y(pt.v).toFixed(1)}" r="5.5" fill="var(--surface)" stroke="${c}" stroke-width="2"${faint}/><text x="${X(i).toFixed(1)}" y="${(Y(pt.v) - 11).toFixed(1)}" fill="${c}" font-size="9" font-family="var(--f-mono)" text-anchor="${anchor}">${esc(label)}</text>`
+          : `<circle cx="${X(i).toFixed(1)}" cy="${Y(pt.v).toFixed(1)}" r="3.2" fill="${c}"${faint}/>`;
       });
     });
     const step = Math.max(1, Math.ceil(n / 8));
@@ -441,7 +447,8 @@ class Explorer {
     const legend = live
       .map(([k], i) => `<span><b style="background:${cols[i % cols.length]}"></b>${esc(k.replace("|", " · "))}</span>`)
       .join("");
-    box.innerHTML = `${g}<div class="legend">${legend}<span style="color:var(--ink3)">hollow ring = new framework or adapter version</span></div>`;
+    const faint = live.some(([, pts]) => pts.some((pt) => pt.thin)) ? " · faint dot = thin percentile" : "";
+    box.innerHTML = `${g}<div class="legend">${legend}<span style="color:var(--ink3)">hollow ring = new framework or adapter version${faint}</span></div>`;
   }
 
   /* ---- wiring ---- */

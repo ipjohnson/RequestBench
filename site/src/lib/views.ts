@@ -7,7 +7,11 @@ import type { Chain, Step } from "./delta.ts";
 import { floorFor } from "./delta.ts";
 import { esc } from "./html.ts";
 import { signed, withUnit, type Unit } from "./metrics.ts";
+import { THIN } from "./thin.ts";
 import type { Rung } from "./types.ts";
+
+/** Why a difference is marked when one of its two numbers is a thin percentile. */
+export const THIN_PAIR = `One of the two is a thin percentile: fewer than ${THIN} requests lie beyond it.`;
 
 /**
  * Why a framework has no latencies at a rate it did not complete: what it achieved and dropped
@@ -23,7 +27,8 @@ export function unfinished(name: string, r: Rung | undefined): string | null {
 }
 
 /**
- * The number, and grey with the reason when it is smaller than the instrument can see.
+ * The number, and grey with the reason when it is smaller than the instrument can see. Hatched
+ * when one of the two numbers it is the difference of is a thin percentile.
  *
  * Takes either a whole chain, whose delta is `total` against `root`, or one of its steps,
  * whose delta is `d` against `base`.
@@ -34,11 +39,12 @@ export function deltaCell(x: Chain | Step | null | undefined, unit: Unit): strin
   const against = "root" in x ? x.root : x.base;
   const state = !x.measurable ? "flat" : v > 0 ? "up" : "down";
   const why = x.measurable
-    ? `${signed(v, unit)} over ${against}`
+    ? `${signed(v, unit)} over ${against}.`
     : `${signed(v, unit)} is inside the ${Math.round(floorFor(x.armV, x.baseV))}` +
       `${unit ? ` ${unit}` : ""} the histogram can resolve at this magnitude, so this factor ` +
-      `adds no measurable time`;
-  return `<td class="delta ${state}" title="${esc(why)}">${signed(v, unit)}</td>`;
+      `adds no measurable time.`;
+  const title = x.thin ? `${why} ${THIN_PAIR}` : why;
+  return `<td class="delta ${state}${x.thin ? " thin" : ""}" title="${esc(title)}">${signed(v, unit)}</td>`;
 }
 
 /**
@@ -63,22 +69,26 @@ export function basePop(x: Chain, unit: Unit, factors: Readonly<Record<string, s
       );
     })
     .join("");
-  return head(x.total, x.measurable, x.armV, x.baseV, unit, x.root, level) + steps;
+  return head(x.total, x.measurable, x.armV, x.baseV, unit, x.root, level, x.thin) + steps;
 }
 
 /**
  * The popup on another framework's number: how far this framework's is from it. The two are
  * the same test at the same rate in the same run, so there are no factors between them to
- * list, only the difference and whether the histogram can resolve it.
+ * list, only the difference and whether the histogram can resolve it. `thin` is whether either
+ * number is a thin percentile.
  */
-export function peerPop(own: number, other: number, unit: Unit, name: string, level: string): string {
+export function peerPop(own: number, other: number, unit: Unit, name: string, level: string, thin = false): string {
   const d = own - other;
   const measurable = unit !== "us" || Math.abs(d) >= floorFor(own, other);
-  return head(d, measurable, own, other, unit, name, level);
+  return head(d, measurable, own, other, unit, name, level, thin);
 }
 
-/** A popup's first line, and the note when the difference is inside the histogram's grid. */
-function head(d: number, measurable: boolean, arm: number, base: number, unit: Unit, against: string, level: string): string {
+/**
+ * A popup's first line, the note when the difference is inside the histogram's grid, and the
+ * note when one of the two numbers is thin.
+ */
+function head(d: number, measurable: boolean, arm: number, base: number, unit: Unit, against: string, level: string, thin: boolean): string {
   const n = Math.round(d);
   const state = !measurable || n === 0 ? "flat" : n > 0 ? "up" : "down";
   const note =
@@ -88,7 +98,7 @@ function head(d: number, measurable: boolean, arm: number, base: number, unit: U
         `histogram can resolve at this magnitude, so no measurable time.</p>`;
   return (
     `<p class="bphead"><b class="${state}">${signed(n, unit)}</b> vs ${esc(against)}` +
-    `${level ? ` at ${esc(level)}` : ""}</p>${note}`
+    `${level ? ` at ${esc(level)}` : ""}</p>${note}${thin ? `<p class="bpnote">${esc(THIN_PAIR)}</p>` : ""}`
   );
 }
 
@@ -96,21 +106,23 @@ function head(d: number, measurable: boolean, arm: number, base: number, unit: U
  * One number of something the page is compared with, under the same number of its own, hidden
  * until the comparison picks it. `id` is what it belongs to: `base`, or the other framework's
  * page name. Where the difference can be taken, its popup rides along in a template, which
- * test-tree.ts shows on hover and on focus.
+ * test-tree.ts shows on hover and on focus. A thin percentile is hatched.
  */
-export function cmpCell(id: string, v: string, pop: string | null, title?: string): string {
+export function cmpCell(id: string, v: string, pop: string | null, title?: string, thin = false): string {
   const t = title ? ` title="${esc(title)}"` : "";
-  if (pop === null) return `<span class="fb" data-cmp="${esc(id)}"${t} hidden>${esc(v)}</span>`;
-  return `<span class="fb" data-cmp="${esc(id)}"${t} tabindex="0" hidden>${esc(v)}<template>${pop}</template></span>`;
+  const cls = thin ? "fb thin" : "fb";
+  if (pop === null) return `<span class="${cls}" data-cmp="${esc(id)}"${t} hidden>${esc(v)}</span>`;
+  return `<span class="${cls}" data-cmp="${esc(id)}"${t} tabindex="0" hidden>${esc(v)}<template>${pop}</template></span>`;
 }
 
-/** One of the base's numbers. The base is the one comparison the page renders itself. */
+/** One of the base's numbers. The base is the one comparison the page renders itself. `thin` is whether the base's own number is. */
 export function baseCell(
   v: string,
   x: Chain | null | undefined,
   unit: Unit,
   factors: Readonly<Record<string, string>>,
   level: string,
+  thin = false,
 ): string {
-  return cmpCell("base", v, x ? basePop(x, unit, factors, level) : null);
+  return cmpCell("base", v, x ? basePop(x, unit, factors, level) : null, undefined, thin);
 }

@@ -66,11 +66,12 @@ describe("entriesOf", () => {
 describe("blendStats", () => {
   const none = { entries: [], weights: {} };
 
-  test("reads each percentile as the geometric mean of its tests' own", () => {
+  test("reads each percentile as the geometric mean of its tests' own, from all of their requests", () => {
     const s = blendStats(carter, "regular", weightsOf(run, "api", none));
     near(s.p50Us, 200);
     near(s.p90Us, 300);
     near(s.p99Us, 400);
+    assert.equal(s.count, 20);
   });
 
   test("a family's weight counts each of its tests that many times", () => {
@@ -107,9 +108,9 @@ describe("blendStats", () => {
 
   test("a framework with no percentiles at the rate has no latency", () => {
     const bare: Framework = { ...carter, tests: { "json.small": { family: "json", rungs: { regular: { count: 10 } } } } };
-    const nothing = { p50Us: null, p90Us: null, p99Us: null };
-    assert.deepEqual(blendStats(bare, "regular", weightsOf(run, "all", none)), nothing);
-    assert.deepEqual(blendStats(carter, "raised", weightsOf(run, "all", none)), nothing);
+    const pcts = (s: { p50Us: number | null; p90Us: number | null; p99Us: number | null }) => [s.p50Us, s.p90Us, s.p99Us];
+    assert.deepEqual(pcts(blendStats(bare, "regular", weightsOf(run, "all", none))), [null, null, null]);
+    assert.deepEqual(blendStats(carter, "raised", weightsOf(run, "all", none)), { p50Us: null, p90Us: null, p99Us: null, count: 0 });
   });
 });
 

@@ -10,7 +10,8 @@
 // The rate and the comparison are picked once for the whole panel, beside the tabs. So is the
 // chart under each test's numbers, its histogram or its latency over time.
 import { esc } from "../lib/html.ts";
-import { cell, type Unit } from "../lib/metrics.ts";
+import { cell, isMetric, METRICS, type Unit } from "../lib/metrics.ts";
+import { isThin, thinTitle } from "../lib/thin.ts";
 import type { Run, WireDoc } from "../lib/types.ts";
 import { cmpCell, peerPop, unfinished } from "../lib/views.ts";
 import { addPick, BASE, dropPick, familyAt, frameworkOf, MAX, readVs, statOf, testAt, writeVs, type Pick } from "./compare.ts";
@@ -252,19 +253,18 @@ function startCompare(changed: () => void): void {
     const name = nameOf(id);
     const unit: Unit = k.endsWith("Us") ? "us" : k === "sbz" ? "B" : "";
     // The size is the wire capture's, which no rate changes.
-    const v =
-      k === "sbz"
-        ? (wire.get(id)?.tests[test ?? ""]?.sbz ?? null)
-        : statOf(test ? testAt(f, test, rn) : familyAt(f, pane.dataset["fam"] ?? "", rn), k);
+    const rec = k === "sbz" ? undefined : test ? testAt(f, test, rn) : familyAt(f, pane.dataset["fam"] ?? "", rn);
+    const v = k === "sbz" ? (wire.get(id)?.tests[test ?? ""]?.sbz ?? null) : statOf(rec, k);
     const own = row.dataset["v"] === undefined ? null : Number(row.dataset["v"]);
-    const level = unit === "us" ? (row.querySelector(".fk")?.textContent ?? "") : "";
-    const pop = unit && own !== null && v !== null ? peerPop(own, v, unit, name, level) : null;
+    const level = unit === "us" && isMetric(k) ? METRICS[k].label : "";
+    const thin = v !== null && isThin(rec?.count, k);
+    const pop = unit && own !== null && v !== null ? peerPop(own, v, unit, name, level, thin || row.dataset["thin"] !== undefined) : null;
     const why =
-      v !== null ? undefined
+      v !== null ? (thin ? thinTitle(rec?.count, k, level) : undefined)
       : k === "sbz" ? `No captured exchange for ${name}.`
       : (unfinished(name, f.rungs[rn]) ?? `${name} has no number for this at this rate.`);
     const tpl = document.createElement("template");
-    tpl.innerHTML = cmpCell(id, cell(v, unit), pop, why);
+    tpl.innerHTML = cmpCell(id, cell(v, unit), pop, why, thin);
     return tpl.content.firstElementChild instanceof HTMLElement ? tpl.content.firstElementChild : null;
   };
 

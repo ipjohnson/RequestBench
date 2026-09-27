@@ -27,6 +27,8 @@ export type Row = {
   value: number | null;
   dead: boolean;
   n: number | null;
+  /** The requests `value` is read from, where it is a thin percentile. */
+  thin?: number | undefined;
   family?: string;
   delta?: Chain | null;
   hdrz?: number;

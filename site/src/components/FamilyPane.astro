@@ -4,6 +4,7 @@
 // A family row in the explorer is this number, so the pane a family row opens on has to show
 // it. The tests are listed rather than their panes repeated; each links to its own.
 import { cell } from "../lib/metrics.ts";
+import { beyond, beyondLabel, isThin, thinTitle } from "../lib/thin.ts";
 import { deltaCell } from "../lib/views.ts";
 import type { Chain } from "../lib/delta.ts";
 import type { FamilyRecord, Route, TestRung } from "../lib/types.ts";
@@ -32,6 +33,12 @@ const { fam, size, about, page, routes, rungs } = Astro.props;
 // Cut here rather than in CSS: the table is auto-layout, so a max-width on a cell is advisory
 // and query.many's eight parameters would widen the whole pane.
 const clip = (s: string, n: number): string => (s.length > n ? `${s.slice(0, n - 1)}…` : s);
+
+/** Why a percentile is marked, or null when it is not thin. The family's rests on all its tests' requests. */
+const thinOf = (stats: FamilyRecord | TestRung | undefined, m: string, k: string): string | null => {
+  const v = (stats as Record<string, unknown> | undefined)?.[m];
+  return typeof v === "number" && isThin(stats?.count, m) ? thinTitle(stats?.count, m, k) : null;
+};
 ---
 
 <section class="eppane" data-fam={fam} hidden>
@@ -63,12 +70,29 @@ const clip = (s: string, n: number): string => (s.length > n ? `${s.slice(0, n -
                 ["p99", "p99Us", "us"],
                 ["samples", "count", ""],
               ] as const
-            ).map(([k, m, unit]) => (
-              <div class="frow" data-k={m} data-v={r.stats?.[m] ?? undefined}>
-                <span class="fk">{k}</span>
-                <span class="fv">{cell(r.stats?.[m], unit)}</span>
-              </div>
-            ))}
+            ).map(([k, m, unit]) => {
+              const thin = thinOf(r.stats, m, k);
+              return (
+                <div class="frow" data-k={m} data-v={r.stats?.[m] ?? undefined} data-thin={thin ? "" : undefined}>
+                  <span class="fk">
+                    {k}
+                    {thin && (
+                      <>
+                        {" "}
+                        <span class="fthin">{beyondLabel(beyond(r.stats?.count, m) ?? 0)}</span>
+                      </>
+                    )}
+                  </span>
+                  {thin ? (
+                    <span class="fv thin" title={thin} tabindex="0">
+                      {cell(r.stats?.[m], unit)}
+                    </span>
+                  ) : (
+                    <span class="fv">{cell(r.stats?.[m], unit)}</span>
+                  )}
+                </div>
+              );
+            })}
           </div>
         ) : (
           <p class="empty">Not measured at this rate.</p>
@@ -103,8 +127,14 @@ const clip = (s: string, n: number): string => (s.length > n ? `${s.slice(0, n -
                     ) : (
                       <td class="l route">&mdash;</td>
                     )}
-                    <td>{cell(e.stats?.p50Us, "us")}</td>
-                    <td>{cell(e.stats?.p99Us, "us")}</td>
+                    {(["p50", "p99"] as const).map((k) => {
+                      const thin = thinOf(e.stats, `${k}Us`, k);
+                      return (
+                        <td class={thin ? "thin" : undefined} title={thin ?? undefined}>
+                          {cell(e.stats?.[`${k}Us`], "us")}
+                        </td>
+                      );
+                    })}
                     <Fragment set:html={deltaCell(e.chain, "us")} />
                     <td class="sub">{cell(e.stats?.count)}</td>
                   </tr>

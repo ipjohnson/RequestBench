@@ -12,6 +12,7 @@
 //
 // Both kinds of page take their deltas from here, the framework pages and the explorer's
 // column, so the two cannot drift.
+import { isThin } from "./thin.ts";
 import type { Framework, Route } from "./types.ts";
 
 /**
@@ -43,6 +44,8 @@ export type Step = {
   baseV: number;
   d: number;
   measurable: boolean;
+  /** Either number is a thin percentile, so the difference is as noisy as it is. */
+  thin: boolean;
 };
 
 export type Chain = {
@@ -53,6 +56,8 @@ export type Chain = {
   baseV: number;
   total: number;
   measurable: boolean;
+  /** Either end is a thin percentile. */
+  thin: boolean;
 };
 
 /** One base edge: `arm` is `base` with `factor` varied. */
@@ -101,24 +106,30 @@ export function testValue(f: Framework, id: string, rn: string, metric: string):
   return typeof v === "number" ? v : null;
 }
 
+/** Whether a test's number on `metric` is a thin percentile at this rate. */
+export const testThin = (f: Framework, id: string, rn: string, metric: string): boolean =>
+  isThin(f.tests?.[id]?.rungs?.[rn]?.count, metric);
+
 /**
  * The whole chain plus its total. `null` when the test is a root, or when the run is missing
  * either end: a test the corpus pairs but this run never measured has no delta rather than a
  * delta against nothing.
  */
 export function deltaFor(f: Framework, id: string, rn: string, routes: Routes, metric = "p50Us"): Chain | null {
-  return chainWith(chainOf(id, routes), (e) => testValue(f, e, rn, metric), floorFor);
+  return chainWith(chainOf(id, routes), (e) => testValue(f, e, rn, metric), floorFor, (e) => testThin(f, e, rn, metric));
 }
 
 /**
  * The chain across `links` on any number every test has one of. `floor` is the smallest
  * difference that number can resolve: the histogram's for a percentile, and zero for a byte
- * count, which is exact.
+ * count, which is exact. `thin` says whether a test's number is a thin percentile, which a byte
+ * count never is.
  */
 export function chainWith(
   links: readonly Link[],
   valueOf: (id: string) => number | null,
   floor: (a: number, b: number) => number,
+  thin: (id: string) => boolean = () => false,
 ): Chain | null {
   const steps: Step[] = [];
   for (const s of links) {
@@ -126,7 +137,7 @@ export function chainWith(
     const base = valueOf(s.base);
     if (arm === null || base === null) return null;
     const d = arm - base;
-    steps.push({ ...s, armV: arm, baseV: base, d, measurable: Math.abs(d) >= floor(arm, base) });
+    steps.push({ ...s, armV: arm, baseV: base, d, measurable: Math.abs(d) >= floor(arm, base), thin: thin(s.arm) || thin(s.base) });
   }
   const last = steps[steps.length - 1];
   const first = steps[0];
@@ -139,5 +150,6 @@ export function chainWith(
     baseV: last.baseV,
     total,
     measurable: Math.abs(total) >= floor(first.armV, last.baseV),
+    thin: thin(first.arm) || thin(last.base),
   };
 }
