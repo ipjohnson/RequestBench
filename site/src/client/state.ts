@@ -1,16 +1,16 @@
 // What the explorer is showing, and the columns it can show it in.
 //
 // Every field here is carried in the URL hash, so a view is a link: the host, the rate, the
-// metric, the granularity, the languages, the filter, a custom blend's picks, the columns, the sort
-// and the machine the time axis shows. A framework page opened from a row carries the same fields in
-// its query, for its link back.
-import { blendNamed, type BlendId, type CustomBlend } from "../lib/blends.ts";
+// metric, the granularity, the languages, the filter, a custom profile's picks, the columns, the
+// sort and the machine the time axis shows. A framework page opened from a row carries the same
+// fields in its query, for its link back.
+import { profileNamed, type CustomProfile, type ProfileId } from "../lib/profiles.ts";
 import type { Chain } from "../lib/delta.ts";
 import { isMetric, type MetricId } from "../lib/metrics.ts";
 import type { WireExchange } from "../lib/types.ts";
 
-export type Gran = "blend" | "family" | "test";
-const isGran = (s: string): s is Gran => s === "blend" || s === "family" || s === "test";
+export type Gran = "profile" | "family" | "test";
+const isGran = (s: string): s is Gran => s === "profile" || s === "family" || s === "test";
 
 /** One line of the table: a framework at whatever granularity is on screen. */
 export type Row = {
@@ -55,8 +55,9 @@ export const COLS: Col[] = [
   { id: "adapter", label: "adapter", def: false, cls: "sub", get: (r) => r.adapter || "—" },
   { id: "serializer", label: "serializer", def: false, cls: "sub", get: (r) => r.serializer || "—" },
   { id: "value", label: "", def: true, pin: true, get: (r) => r.value },
-  // Only at test granularity: a family and the blend are means of tests and have no base. Sorting by
-  // it is the cross-framework view, which is where what gzip costs each framework shows.
+  // Only at test granularity: a family and a profile are means of tests and have no base.
+  // Sorting by it is the cross-framework view, which is where what gzip costs each framework
+  // shows.
   { id: "delta", label: "over base", def: true, gran: "test", get: (r) => r.delta?.total ?? null },
   { id: "n", label: "samples", def: true, cls: "sub", get: (r) => r.n },
   { id: "hdrz", label: "header B", def: false, cls: "sub", wire: true, get: (r) => r.hdrz },
@@ -73,8 +74,8 @@ export type State = {
   rung: string | null;
   metric: MetricId;
   gran: Gran;
-  /** Kept when another blend is chosen, so going back to custom finds it as it was left. */
-  pick: CustomBlend;
+  /** Kept when another profile is chosen, so going back to custom finds it as it was left. */
+  pick: CustomProfile;
   sort: { col: string; dir: number };
   q: string;
   cols: Set<string>;
@@ -87,7 +88,7 @@ export const initialState = (host: string, langs: string[]): State => ({
   langs: new Set(langs),
   rung: null,
   metric: "p50Us",
-  gran: "blend",
+  gran: "profile",
   pick: { entries: [], weights: {} },
   sort: { col: "value", dir: 1 },
   q: "",
@@ -96,10 +97,10 @@ export const initialState = (host: string, langs: string[]): State => ({
 });
 
 /**
- * The blend on screen. At blend granularity the filter names one, as it names a family or a test
- * at theirs, and a filter that names none is a framework's name read over All.
+ * The profile on screen. At profile granularity the filter names one, as it names a family or a
+ * test at theirs, and a filter that names none is a framework's name read over all.
  */
-export const blendIn = (st: State): BlendId => (st.gran === "blend" ? (blendNamed(st.q) ?? "all") : "all");
+export const profileIn = (st: State): ProfileId => (st.gran === "profile" ? (profileNamed(st.q) ?? "all") : "all");
 
 export function readHash(st: State, hash: string): void {
   const p = new URLSearchParams(hash.slice(1));
@@ -112,7 +113,9 @@ export function readHash(st: State, hash: string): void {
   const metric = p.get("metric");
   if (metric && isMetric(metric)) st.metric = metric;
   const gran = p.get("gran");
-  if (gran && isGran(gran)) st.gran = gran;
+  // Profiles were called blends, and a link from then still opens on them.
+  if (gran === "blend") st.gran = "profile";
+  else if (gran && isGran(gran)) st.gran = gran;
   const pick = p.get("pick");
   if (pick) st.pick.entries = pick.split(",").filter(Boolean);
   const wt = p.get("wt");

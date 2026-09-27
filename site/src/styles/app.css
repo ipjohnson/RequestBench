@@ -160,7 +160,7 @@ pre.code { font-family: var(--f-mono); font-size: 12px; line-height: 1.55; margi
            padding: 11px 14px; overflow-x: auto; white-space: pre; }
 .how { font-family: var(--f-mono); font-size: 10px; letter-spacing: .08em;
        text-transform: uppercase; color: var(--ink3); }
-/* ---------- custom blend ---------- */
+/* ---------- custom profile ---------- */
 /* A row of its own inside the controls, because it is part of the selector. */
 .controls .picker { flex-basis: 100%; }
 .picker .from { display: flex; flex-wrap: wrap; align-items: center; gap: 6px;

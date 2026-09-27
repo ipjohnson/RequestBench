@@ -109,7 +109,7 @@ describe("rateLabel", () => {
 });
 
 describe("rows", () => {
-  test("blend gives one row per framework, ranked by the metric", () => {
+  test("a profile gives one row per framework, ranked by the metric", () => {
     const { rows: rs } = rows({ run, st: st(), routes, wireOf: () => undefined });
     assert.deepEqual(
       rs.map((r) => r.label),
@@ -168,7 +168,7 @@ describe("rows", () => {
   });
 });
 
-describe("a blend other than All", () => {
+describe("a profile other than all", () => {
   const withTests: Run = {
     ...run,
     frameworks: [
@@ -185,23 +185,23 @@ describe("a blend other than All", () => {
 
   test("is read from the percentiles of the tests it names", () => {
     const s = st();
-    s.q = "Web";
+    s.q = "web-all";
     const carterRow = rows({ run: withTests, st: s, routes, wireOf: () => undefined }).rows.find((r) => r.label === "carter");
     near(carterRow?.value, 900);
-    s.q = "api";
+    s.q = "API-ALL";
     near(rows({ run: withTests, st: s, routes, wireOf: () => undefined }).rows.find((r) => r.label === "carter")?.value, 150);
   });
 
-  test("keeps the whole mix's achieved rate, which no blend changes", () => {
+  test("keeps the whole mix's achieved rate, which no profile changes", () => {
     const s = st();
-    s.q = "Web";
+    s.q = "web-all";
     s.metric = "achievedRps";
     assert.equal(rows({ run: withTests, st: s, routes, wireOf: () => undefined }).rows.find((r) => r.label === "carter")?.value, 500);
   });
 
   test("has no latency where the framework measured none of its tests", () => {
     const s = st();
-    s.q = "API";
+    s.q = "api-all";
     const fastifyRow = rows({ run: withTests, st: s, routes, wireOf: () => undefined }).rows.find((r) => r.label === "fastify");
     assert.equal(fastifyRow?.value, null);
     assert.equal(fastifyRow?.dead, false);
@@ -209,17 +209,17 @@ describe("a blend other than All", () => {
 
   test("has no latency at a rate the framework did not complete", () => {
     const s = st();
-    s.q = "Custom";
+    s.q = "custom";
     s.pick = { entries: ["json"], weights: {} };
     s.rung = "raised";
     const carterRow = rows({ run: withTests, st: s, routes, wireOf: () => undefined }).rows.find((r) => r.label === "carter");
     assert.deepEqual([carterRow?.value, carterRow?.dead], [null, true]);
   });
 
-  test("is chosen only at blend granularity", () => {
+  test("is chosen only at profile granularity", () => {
     const s = st();
     s.gran = "family";
-    s.q = "Web";
+    s.q = "web-all";
     assert.deepEqual(rows({ run: withTests, st: s, routes, wireOf: () => undefined }).rows, []);
   });
 });
@@ -240,14 +240,14 @@ describe("a thin percentile", () => {
     );
   });
 
-  test("marks a family or a blend only when fewer than 10 of its tests' requests lie beyond their own", () => {
+  test("marks a family or a profile only when fewer than 10 of its tests' requests lie beyond their own", () => {
     const s = st();
     // The two tests' 5 requests beyond add up to 10.
     assert.equal(rows({ run, st: s, routes, wireOf: () => undefined }).rows.find((r) => r.label === "carter")?.thin, undefined);
     s.gran = "family";
     assert.equal(rows({ run, st: s, routes, wireOf: () => undefined }).rows[0]?.thin, undefined);
-    s.gran = "blend";
-    s.q = "Custom";
+    s.gran = "profile";
+    s.q = "custom";
     s.pick = { entries: ["json.small"], weights: {} };
     assert.equal(rows({ run, st: s, routes, wireOf: () => undefined }).rows.find((r) => r.label === "carter")?.thin, 10);
   });
@@ -263,8 +263,8 @@ describe("a thin percentile", () => {
   });
 });
 
-describe("the filter at blend granularity", () => {
-  test("a filter that names no blend is a framework's name, read over All", () => {
+describe("the filter at profile granularity", () => {
+  test("a filter that names no profile is a framework's name, read over all", () => {
     const s = st();
     s.q = "cart";
     const { rows: rs } = rows({ run, st: s, routes, wireOf: () => undefined });
@@ -294,7 +294,7 @@ describe("the filter at family and test granularity", () => {
   test("offers the run's families or its test ids, in id order", () => {
     assert.deepEqual(choicesAt(two, "family", "regular"), ["baseline", "json"]);
     assert.deepEqual(choicesAt(two, "test", "regular"), ["baseline.plaintext", "json.medium", "json.small"]);
-    assert.deepEqual(choicesAt(two, "blend", "regular"), ["All", "Web", "API", "Custom"]);
+    assert.deepEqual(choicesAt(two, "profile", "regular"), ["all", "web-all", "web-light", "api-all", "api-light", "api-validation", "custom"]);
   });
 
   test("opens on the run's first family or test when the filter names nothing", () => {
@@ -314,16 +314,16 @@ describe("the filter at family and test granularity", () => {
     assert.equal(filterFor(two, "test", "regular", "medium"), "medium");
   });
 
-  test("opens the blend view on All, keeping a blend or a framework the filter names", () => {
-    assert.equal(filterFor(two, "blend", "regular", ""), "All");
-    assert.equal(filterFor(two, "blend", "regular", "json"), "All");
-    assert.equal(filterFor(two, "blend", "regular", "Web"), "Web");
-    assert.equal(filterFor(two, "blend", "regular", "carter"), "carter");
+  test("opens the profile view on all, keeping a profile or a framework the filter names", () => {
+    assert.equal(filterFor(two, "profile", "regular", ""), "all");
+    assert.equal(filterFor(two, "profile", "regular", "json"), "all");
+    assert.equal(filterFor(two, "profile", "regular", "web-light"), "web-light");
+    assert.equal(filterFor(two, "profile", "regular", "carter"), "carter");
   });
 
-  test("a blend's name opens a family or test view on its first name", () => {
-    assert.equal(filterFor(two, "family", "regular", "All"), "baseline");
-    assert.equal(filterFor(two, "test", "regular", "All"), "baseline.plaintext");
+  test("a profile's name opens a family or test view on its first name", () => {
+    assert.equal(filterFor(two, "family", "regular", "all"), "baseline");
+    assert.equal(filterFor(two, "test", "regular", "all"), "baseline.plaintext");
   });
 
   test("a name from the list selects that test alone", () => {
@@ -358,12 +358,12 @@ describe("wire captures", () => {
     },
   };
 
-  test("a blend sums the bytes and says mixed when the framing is not one thing", () => {
-    assert.deepEqual(wireFor(doc, "blend", ""), { hdrz: 210, bodyz: 440, framing: "mixed" });
+  test("a profile sums the bytes and says mixed when the framing is not one thing", () => {
+    assert.deepEqual(wireFor(doc, "profile", ""), { hdrz: 210, bodyz: 440, framing: "mixed" });
   });
 
-  test("a blend other than All sums only its own tests", () => {
-    assert.deepEqual(wireFor(doc, "blend", "", new Set(["json.medium"])), { hdrz: 110, bodyz: 400, framing: "chunked" });
+  test("a profile other than all sums only its own tests", () => {
+    assert.deepEqual(wireFor(doc, "profile", "", new Set(["json.medium"])), { hdrz: 110, bodyz: 400, framing: "chunked" });
   });
 
   test("a test carries its own exchange", () => {

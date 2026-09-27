@@ -7,7 +7,7 @@
 import Intro from "../components/Intro.astro";
 import Mark from "../components/Mark.astro";
 import Shell from "../components/Shell.astro";
-import { BLENDS, labelOf } from "../lib/blends.ts";
+import { PROFILES } from "../lib/profiles.ts";
 import { jsonScript } from "../lib/html.ts";
 import { site } from "../lib/site.ts";
 
@@ -57,7 +57,7 @@ const commit = builtFrom?.commit.slice(0, 12);
     <div class="ctl">
       <label>Granularity</label>
       <div class="seg" role="group" aria-label="Granularity">
-        <button data-gran="blend">Blend</button>
+        <button data-gran="profile">Profile</button>
         <button data-gran="family">Family</button>
         <button data-gran="test">Test</button>
       </div>
@@ -75,10 +75,10 @@ const commit = builtFrom?.commit.slice(0, 12);
       <div class="seg"><button id="reset" type="button">Reset</button></div>
     </div>
     <div class="ctl picker" id="picker" hidden>
-      <label>Custom blend</label>
+      <label>Custom profile</label>
       <div class="from">
         Start from
-        {BLENDS.filter((b) => b !== "custom").map((b) => <button type="button" class="chip sm" data-from={b}>{labelOf(b)}</button>)}
+        {PROFILES.filter((p) => p !== "custom").map((p) => <button type="button" class="chip sm" data-from={p}>{p}</button>)}
         <button type="button" class="chip sm" data-from="none">None</button>
         <span>Each test counts once, times its family's weight.</span>
       </div>

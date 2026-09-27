@@ -21,10 +21,10 @@ Results: https://ipjohnson.github.io/RequestBench/
 5. The run file records the latencies, the machine, the commit and a hash of each framework's
    files. `npm run rb -- summarize` turns it into the summary the site reads.
 6. The site in [`site/`](site) shows each test's latency and how it moved through the recording,
-   its cost against the test it is read against, and the code that answered it. A blend is a set
-   of tests read together as the geometric mean of their own percentiles: every test, the Web or
-   API tests, or a set the reader picks. The tests pages show each family, and each test's request
-   and the checks its answer has to pass.
+   its cost against the test it is read against, and the code that answered it. A profile is a
+   set of tests read together as the geometric mean of their own percentiles: every test, the web
+   or API tests, the lighter ones among them, the validation tests, or a set the reader picks. The
+   tests pages show each family, and each test's request and the checks its answer has to pass.
 
 ## Principles
 

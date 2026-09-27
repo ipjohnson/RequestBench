@@ -3,7 +3,7 @@
 // Everything that decides what a row says is in select.ts and lib/; this writes the result
 // into the page and wires the controls. The one rule it keeps is that a render is a function
 // of the state and nothing else, so the hash reproduces the view exactly.
-import { blendNamed, entriesOf, isBlend, labelOf, sharesOf, testsOfPick, weightsOf, type BlendId } from "../lib/blends.ts";
+import { entriesOf, isLight, isProfile, profileNamed, sharesOf, testsOfPick, weightsOf, type ProfileId } from "../lib/profiles.ts";
 import { esc } from "../lib/html.ts";
 import { cell, METRICS, type Unit } from "../lib/metrics.ts";
 import type { PageData } from "../lib/page-data.ts";
@@ -13,8 +13,8 @@ import { thinTitle } from "../lib/thin.ts";
 import type { Run } from "../lib/types.ts";
 import { deltaCell } from "../lib/views.ts";
 import { Data, resolveSource } from "./source.ts";
-import { blendThin, blendValue, choicesAt, filterFor, isLatency, pickRung, rateLabel, rows, thinAt, wireKeyFor } from "./select.ts";
-import { blendIn, COLS, defaultCols, initialState, pageHref, readHash, writeHash, type Col, type Row, type State } from "./state.ts";
+import { choicesAt, filterFor, isLatency, pickRung, profileThin, profileValue, rateLabel, rows, thinAt, wireKeyFor } from "./select.ts";
+import { COLS, defaultCols, initialState, pageHref, profileIn, readHash, writeHash, type Col, type Row, type State } from "./state.ts";
 
 const el = <T extends HTMLElement>(id: string): T => document.getElementById(id) as T;
 
@@ -53,10 +53,11 @@ class Explorer {
   /** The families whose tests the custom picker has open. Not part of the view, so not in the hash. */
   private readonly openFams = new Set<string>();
   /**
-   * The last blend other than custom that the filter named. Typing "Custom" passes through text
-   * that names none, so the blend the filter held a keystroke ago is not the one custom was chosen from.
+   * The last profile other than custom that the filter named. Typing "custom" passes through text
+   * that names none, so the profile the filter held a keystroke ago is not the one custom was
+   * chosen from.
    */
-  private fromBlend: BlendId = "all";
+  private fromProfile: ProfileId = "all";
 
   constructor(rb: PageData, data: Data) {
     this.rb = rb;
@@ -70,8 +71,9 @@ class Explorer {
   start(): void {
     this.wire();
     readHash(this.st, location.hash);
-    // The blend view opens on All, which the filter shows, as the others open on a family or test.
-    if (this.st.gran === "blend") this.st.q = filterFor(this.latest(), "blend", null, this.st.q);
+    // The profile view opens on all, which the filter shows, as the others open on a family
+    // or a test.
+    if (this.st.gran === "profile") this.st.q = filterFor(this.latest(), "profile", null, this.st.q);
     this.render();
     void this.data.fetchHost(this.st.host).then((got) => {
       if (got) this.render();
@@ -165,7 +167,7 @@ class Explorer {
 
     this.renderHostNote();
     this.renderRunNote(run);
-    this.renderBlend(run);
+    this.renderProfile(run);
 
     if (!run) {
       el("meta").textContent = this.data.missing(this.st.host) ? "loading this host…" : "no runs for this host yet";
@@ -178,7 +180,7 @@ class Explorer {
     }
 
     el("meta").textContent =
-      this.meanStatus() +
+      this.meanStatus(run) +
       `${run.date ?? ""} · ${run.machine?.cpu ?? "?"}, ${run.machine?.cores ?? "?"} cores · ${hostOf(run)}` +
       ` · ${rs.length} rows · click a row for its framework page`;
     this.fetchWire(run);
@@ -256,27 +258,33 @@ class Explorer {
         (why.length ? `: ${why.map(esc).join("; ")}.` : ".");
   }
 
-  /* ---- the blend ---- */
+  /* ---- the profile ---- */
 
   /** The custom picker. */
-  private renderBlend(run: Run | null): void {
-    const blend = blendIn(this.st);
-    el("picker").hidden = !run || blend !== "custom";
+  private renderProfile(run: Run | null): void {
+    const profile = profileIn(this.st);
+    el("picker").hidden = !run || profile !== "custom";
     if (!run) return;
-    if (blend === "custom") this.renderPicker(run, weightsOf(run, blend, this.st.pick));
+    if (profile === "custom") this.renderPicker(run, weightsOf(run, profile, this.st.pick));
   }
 
-  /** What a blend's or a family's latency is, as the start of the line under the table. */
-  private meanStatus(): string {
+  /**
+   * What a profile's or a family's latency is, as the start of the line under the table. A light
+   * profile over a run from before hefts has no tests, and says why.
+   */
+  private meanStatus(run: Run): string {
     if (!isLatency(this.st.metric)) return "";
     const m = METRICS[this.st.metric].label;
-    if (this.st.gran === "blend") return `${labelOf(blendIn(this.st))} is the geometric mean of each test's ${m} · `;
+    const p = profileIn(this.st);
+    if (this.st.gran === "profile" && isLight(p) && weightsOf(run, p, this.st.pick).size === 0)
+      return `${p} takes its tests by heft, which this run did not record · `;
+    if (this.st.gran === "profile") return `${p} is the geometric mean of each test's ${m} · `;
     if (this.st.gran === "family") return `Each family is the geometric mean of its tests' ${m} · `;
     return "";
   }
 
   /**
-   * The custom blend's families, each with how many of its tests are taken, its weight and its
+   * The custom profile's families, each with how many of its tests are taken, its weight and its
    * share. A family opens to its tests.
    */
   private renderPicker(run: Run, weights: ReadonlyMap<string, number>): void {
@@ -319,7 +327,7 @@ class Explorer {
 
   /**
    * A framework page is per framework and host, but a row's key carries its slice: node:fastify
-   * at blend granularity, node:fastify|json at family. Look the page up by the framework itself,
+   * at profile granularity, node:fastify|json at family. Look the page up by the framework itself,
    * or the link appears on one of the three views and not the other two.
    */
   private pageFor(id: string): string | undefined {
@@ -376,17 +384,17 @@ class Explorer {
     const series_ = new Map<string, { i: number; date: string; v: number; thin: boolean; ver: string; adapter: string }[]>();
     for (const [i, run] of runs.entries()) {
       const rn = (this.st.rung && rungsOf(run).includes(this.st.rung) ? this.st.rung : pickRung(run, null)) ?? "";
-      const blend = blendIn(this.st);
-      const weights = weightsOf(run, blend, this.st.pick);
+      const profile = profileIn(this.st);
+      const weights = weightsOf(run, profile, this.st.pick);
       for (const f of run.frameworks) {
         for (const k of keys) {
           const [kb, det] = k.split("|");
           if (kb !== f.id) continue;
           const at = !det ? undefined : f.tests?.[det] ? f.tests[det]?.rungs?.[rn] : famsAt(f, rn)[det];
           const raw = (at as Record<string, unknown> | undefined)?.[this.st.metric];
-          const v = !det ? blendValue(f, rn, this.st.metric, weights) : typeof raw === "number" ? raw : null;
+          const v = !det ? profileValue(f, rn, this.st.metric, weights) : typeof raw === "number" ? raw : null;
           if (v == null) continue;
-          const thin = (!det ? blendThin(f, rn, this.st.metric, weights) : thinAt(at?.count, this.st.metric)) !== undefined;
+          const thin = (!det ? profileThin(f, rn, this.st.metric, weights) : thinAt(at?.count, this.st.metric)) !== undefined;
           if (!series_.has(k)) series_.set(k, []);
           series_.get(k)?.push({ i, date: run.date ?? "", v, thin, ver: f.version ?? "", adapter: metaOf(f, "adapter") });
         }
@@ -481,19 +489,19 @@ class Explorer {
       this.render();
     };
     el<HTMLInputElement>("q").oninput = (e): void => {
-      const was = this.st.gran === "blend" ? blendNamed(this.st.q) : null;
-      if (was && was !== "custom") this.fromBlend = was;
+      const was = this.st.gran === "profile" ? profileNamed(this.st.q) : null;
+      if (was && was !== "custom") this.fromProfile = was;
       this.st.q = (e.target as HTMLInputElement).value;
-      // Custom opens on the blend it was chosen from, until something has been picked.
+      // Custom opens on the profile it was chosen from, until something has been picked.
       const run = this.latest();
-      if (blendIn(this.st) === "custom" && !this.st.pick.entries.length && run)
-        this.st.pick.entries = entriesOf(run, weightsOf(run, this.fromBlend, this.st.pick).keys());
+      if (profileIn(this.st) === "custom" && !this.st.pick.entries.length && run)
+        this.st.pick.entries = entriesOf(run, weightsOf(run, this.fromProfile, this.st.pick).keys());
       this.render();
     };
     document.querySelectorAll<HTMLButtonElement>(".seg button[data-gran]").forEach((b) => {
       b.onclick = (): void => {
         const g = b.dataset["gran"];
-        if (g === "blend" || g === "family" || g === "test") {
+        if (g === "profile" || g === "family" || g === "test") {
           const run = this.latest();
           this.st.q = filterFor(run, g, pickRung(run, this.st.rung), this.st.q);
           this.st.gran = g;
@@ -513,7 +521,7 @@ class Explorer {
       const from = t.closest<HTMLElement>("[data-from]")?.dataset["from"];
       const run = this.latest();
       if (from === undefined || !run) return;
-      this.st.pick.entries = isBlend(from) ? entriesOf(run, weightsOf(run, from, this.st.pick).keys()) : [];
+      this.st.pick.entries = isProfile(from) ? entriesOf(run, weightsOf(run, from, this.st.pick).keys()) : [];
       this.render();
     };
     el("picker").onchange = (e): void => {

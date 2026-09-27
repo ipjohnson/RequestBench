@@ -2,7 +2,7 @@
 // query, and the page's link back has to put it where the explorer reads it.
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
-import { backHref, initialState, pageHref, readHash, writeHash } from "../src/client/state.ts";
+import { backHref, initialState, pageHref, profileIn, readHash, writeHash } from "../src/client/state.ts";
 
 const langs = ["dotnet", "node", "python"];
 const searchOf = (href: string): string => new URL(href, "https://example.org/").search;
@@ -39,9 +39,9 @@ describe("a row's framework page", () => {
     assert.deepEqual(round, st);
   });
 
-  test("a custom blend's picks and weights ride in the link", () => {
+  test("a custom profile's picks and weights ride in the link", () => {
     const st = initialState("container-h1", langs);
-    st.q = "Custom";
+    st.q = "custom";
     st.pick = { entries: ["json", "static.file"], weights: { json: 2, template: 0 } };
     const round = initialState("container-h1", langs);
     readHash(round, writeHash(st, langs));
@@ -50,8 +50,14 @@ describe("a row's framework page", () => {
 
   test("a weight that is not a number is dropped", () => {
     const st = initialState("container-h1", langs);
-    readHash(st, "#gran=blend&q=Custom&pick=json&wt=json:x,static:-1,template:2");
+    readHash(st, "#gran=profile&q=custom&pick=json&wt=json:x,static:-1,template:2");
     assert.deepEqual(st.pick, { entries: ["json"], weights: { template: 2 } });
+  });
+
+  test("a link from before profiles opens on them", () => {
+    const st = initialState("container-h1", langs);
+    readHash(st, "#gran=blend&q=Web");
+    assert.deepEqual([st.gran, profileIn(st)], ["profile", "web-all"]);
   });
 
   test("a page opened on its own links back to the default view", () => {
