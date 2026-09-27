@@ -79,19 +79,18 @@ const numberAt = (rec: Record<string, unknown> | undefined, metric: string): num
 };
 
 type Latency = "p50Us" | "p90Us" | "p99Us";
-const isLatency = (m: MetricId): m is Latency => m === "p50Us" || m === "p90Us" || m === "p99Us";
+export const isLatency = (m: MetricId): m is Latency => m === "p50Us" || m === "p90Us" || m === "p99Us";
 
 /**
  * A framework's number at blend granularity. What it achieved and dropped belongs to the whole
- * mix, so every blend shows the rate's own. A latency is the rate's own for All, which `weights`
- * leaves null. For another blend it is read off the merged histograms of the blend's tests, and
- * a rate the framework did not complete has none.
+ * mix, so every blend shows the rate's own. A latency is the geometric mean of the blend's tests'
+ * own, All's included, and a rate the framework did not complete has none.
  */
-export function blendValue(f: Framework, rn: string, metric: MetricId, weights: ReadonlyMap<string, number> | null): number | null {
+export function blendValue(f: Framework, rn: string, metric: MetricId, weights: ReadonlyMap<string, number>): number | null {
   const d = f.rungs[rn];
-  if (!weights || !isLatency(metric)) return numberAt(d, metric);
+  if (!isLatency(metric)) return numberAt(d, metric);
   if (!d?.completed) return null;
-  return blendStats(f, rn, weights)?.[metric] ?? null;
+  return blendStats(f, rn, weights)[metric];
 }
 
 /**
@@ -145,10 +144,10 @@ export function rows({ run, st, routes, wireOf }: RowsInput): { rn: string | nul
   const q = st.q.trim().toLowerCase();
   const order = testOrder(run);
   const blend = blendIn(st);
-  const weights = blend !== "all" ? weightsOf(run, blend, st.pick) : null;
+  const weights = weightsOf(run, blend, st.pick);
   // At blend granularity a filter that names no blend is a framework's name.
   const byName = st.gran === "blend" && !blendNamed(st.q) ? q : "";
-  const only = weights ? new Set(weights.keys()) : undefined;
+  const only = blend !== "all" ? new Set(weights.keys()) : undefined;
 
   for (const f of run.frameworks) {
     if (!st.langs.has(f.language)) continue;

@@ -134,6 +134,24 @@ test("the tests' histograms merged give the rung's own percentiles", () => {
   assert.deepEqual([rung.p50Us, rung.p90Us, rung.p99Us], [pct(merged, 50), pct(merged, 90), pct(merged, 99)]);
 });
 
+test("a family's percentiles are the geometric mean of its tests' own, and its count is theirs summed", () => {
+  const f = summarize(run).frameworks[0]!;
+  const small = f.tests["json.small"]!.rungs["regular"]!;
+  const large = f.tests["json.large"]!.rungs["regular"]!;
+  const json = f.families["regular"]!["json"]!;
+  for (const k of ["p50Us", "p90Us", "p99Us"] as const) assert.equal(json[k], Math.round(Math.sqrt(small[k] * large[k])));
+  assert.equal(json.count, small.count + large.count);
+});
+
+test("a test with no answers at a rung is left out of its family's percentiles", () => {
+  const tests = [testRow("json.small", "json", 1, { 150: 60, 200: 20 }), testRow("json.medium", "json", 2, {})];
+  const regular: PhaseResult = { name: "regular", rps: 100, status: "done", recorded: recorded(tests), unfinished: 0 };
+  const f = summarize({ ...run, frameworks: [{ ...run.frameworks[0]!, load: { ...load, phases: [phases[0]!, regular, ...phases.slice(2)] } }] }).frameworks[0]!;
+  const small = f.tests["json.small"]!.rungs["regular"]!;
+  const json = f.families["regular"]!["json"]!;
+  assert.deepEqual([json.p50Us, json.p90Us, json.p99Us, json.count], [small.p50Us, small.p90Us, small.p99Us, 80]);
+});
+
 test("each test's windows travel with it on a completed rung, and the summary names what a window holds", () => {
   const windows = [
     [40, 150, 200, 200],
@@ -235,7 +253,8 @@ test("a closed loop's one rung publishes the invoke phase, and each test carries
   assert.ok("spans" in small);
   assert.deepEqual(Object.keys(small.spans), ["response", "responseLatency", "responseDuration", "runtimeOverhead"]);
   assert.deepEqual([small.hist.first, small.spans.response.hist.first], [bucketOf(60), bucketOf(40)]);
-  assert.equal(f.families["closed"]!["json"]!.count, 100);
+  const large = f.tests["json.large"]!.rungs["closed"]!;
+  assert.deepEqual(f.families["closed"]!["json"], { count: 100, p50Us: Math.round(Math.sqrt(small.p50Us * large.p50Us)), p90Us: Math.round(Math.sqrt(small.p90Us * large.p90Us)), p99Us: Math.round(Math.sqrt(small.p99Us * large.p99Us)) });
   assert.deepEqual([f.tests["json.small"]!.heft, f.tests["json.large"]!.heft], [1, 4]);
 });
 

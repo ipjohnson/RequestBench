@@ -38,8 +38,7 @@ const clip = (s: string, n: number): string => (s.length > n ? `${s.slice(0, n -
   <h2 class="epname">{fam}</h2>
   {about && <p class="hint">{about}</p>}
   <p class="hint">
-    {size} {size === 1 ? "test" : "tests"}. The family's percentiles are read from its tests' histograms merged
-    into one.
+    {size} {size === 1 ? "test" : "tests"}. Each of the family's percentiles is the geometric mean of its tests' own.
     {page && (
       <>
         {" "}

@@ -12,7 +12,7 @@ import { SERIES_DARK, SERIES_LIGHT } from "../lib/series.ts";
 import type { Run } from "../lib/types.ts";
 import { deltaCell } from "../lib/views.ts";
 import { Data, resolveSource } from "./source.ts";
-import { blendValue, choicesAt, filterFor, pickRung, rateLabel, rows, wireKeyFor } from "./select.ts";
+import { blendValue, choicesAt, filterFor, isLatency, pickRung, rateLabel, rows, wireKeyFor } from "./select.ts";
 import { blendIn, COLS, defaultCols, initialState, pageHref, readHash, writeHash, type Col, type Row, type State } from "./state.ts";
 
 const el = <T extends HTMLElement>(id: string): T => document.getElementById(id) as T;
@@ -177,7 +177,7 @@ class Explorer {
     }
 
     el("meta").textContent =
-      this.blendStatus(run) +
+      this.meanStatus() +
       `${run.date ?? ""} · ${run.machine?.cpu ?? "?"}, ${run.machine?.cores ?? "?"} cores · ${hostOf(run)}` +
       ` · ${rs.length} rows · click a row for its framework page`;
     this.fetchWire(run);
@@ -255,26 +255,21 @@ class Explorer {
 
   /* ---- the blend ---- */
 
-  /** The custom picker, and the histograms any blend but All is read from. */
+  /** The custom picker. */
   private renderBlend(run: Run | null): void {
     const blend = blendIn(this.st);
     el("picker").hidden = !run || blend !== "custom";
     if (!run) return;
     if (blend === "custom") this.renderPicker(run, weightsOf(run, blend, this.st.pick));
-    // The time axis reads every run on this host, so every loaded run's histograms are fetched.
-    if (blend !== "all" && this.data.histMissing(this.st.host)) {
-      void this.data.fetchHist(this.st.host).then((got) => {
-        if (got) this.render();
-      });
-    }
   }
 
-  /** Why a blend other than All shows no latency yet, or at all, as the start of the line under the table. */
-  private blendStatus(run: Run): string {
-    const b = blendIn(this.st);
-    if (b === "all") return "";
-    if (!this.data.hasHist(run.runId)) return `${labelOf(b)} is read from each test's histogram, and this run's summary has none · `;
-    return this.data.histMissing(this.st.host) ? `loading the histograms ${labelOf(b)} is read from… · ` : "";
+  /** What a blend's or a family's latency is, as the start of the line under the table. */
+  private meanStatus(): string {
+    if (!isLatency(this.st.metric)) return "";
+    const m = METRICS[this.st.metric].label;
+    if (this.st.gran === "blend") return `${labelOf(blendIn(this.st))} is the geometric mean of each test's ${m} · `;
+    if (this.st.gran === "family") return `Each family is the geometric mean of its tests' ${m} · `;
+    return "";
   }
 
   /**
@@ -379,7 +374,7 @@ class Explorer {
     for (const [i, run] of runs.entries()) {
       const rn = (this.st.rung && rungsOf(run).includes(this.st.rung) ? this.st.rung : pickRung(run, null)) ?? "";
       const blend = blendIn(this.st);
-      const weights = blend !== "all" ? weightsOf(run, blend, this.st.pick) : null;
+      const weights = weightsOf(run, blend, this.st.pick);
       for (const f of run.frameworks) {
         for (const k of keys) {
           const [kb, det] = k.split("|");

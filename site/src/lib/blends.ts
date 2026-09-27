@@ -1,14 +1,18 @@
 // Blends: which tests a row at blend granularity is read over, and how it is read.
 //
-// A blend is a view of one run. The run offered every performance test in one mix, and a blend
-// merges the histograms of the tests it takes from that run. A framework that could not sustain
-// a rate under the mix has no latency at it in any blend, and the rate a blend is shown at is
-// the mix's.
+// A blend is a view of one run. The run offered every performance test in one mix, and a blend's
+// p50, p90 and p99 are the geometric means of the p50s, p90s and p99s of the tests it takes from
+// that run. A framework that could not sustain a rate under the mix has no latency at it in any
+// blend, and the rate a blend is shown at is the mix's.
+//
+// A percentile of the tests' histograms merged would mostly say which test's band sits at that
+// rank, so a blend is a mean. It is geometric because the tests differ too much in size for an
+// arithmetic one, which would mostly follow the heaviest. Under a geometric mean a change of 10%
+// in any one test moves the blend by the same amount.
 //
 // Each test counts once. No traffic share is right for every site, so a named blend says which
 // features a kind of server uses and not how much of each. A custom blend can weight a family,
 // which multiplies each of its tests.
-import { BUCKETS, pct } from "../../../traffic-generator/histogram.ts";
 import { familyOf, testOrder } from "./run.ts";
 import type { Framework, Run } from "./types.ts";
 
@@ -143,25 +147,25 @@ export function sharesOf(run: Run, weights: ReadonlyMap<string, number>): Map<st
   return new Map([...byFamily].map(([fam, w]) => [fam, total ? w / total : 0]));
 }
 
-export type BlendStats = { p50Us: number; p90Us: number; p99Us: number; count: number };
+export type BlendStats = { p50Us: number | null; p90Us: number | null; p99Us: number | null };
 
 /**
- * One framework's latency over a blend at one rate, read off its tests' histograms merged by
- * weight. Null where the framework has no histograms: it did not complete the rate, its summary
- * predates them, or they have not arrived yet.
+ * One framework's latency over a blend at one rate: each percentile the geometric mean of its
+ * tests' own, each test counted its weight times, as exp(Σ w ln x / Σ w). A test with no answers
+ * at the rate has no percentiles and is left out. Null where none of the blend's tests has one,
+ * which is so at a rate the framework did not complete.
  */
-export function blendStats(f: Framework, rn: string, weights: ReadonlyMap<string, number>): BlendStats | null {
-  const merged = new Float64Array(BUCKETS);
-  let count = 0;
-  let any = false;
-  for (const [id, w] of weights) {
-    const rung = f.tests[id]?.rungs?.[rn];
-    const h = rung?.hist;
-    if (!h) continue;
-    any = true;
-    count += rung.count ?? 0;
-    h.counts.forEach((c, i) => (merged[h.first + i]! += w * c));
-  }
-  if (!any) return null;
-  return { p50Us: pct(merged, 50), p90Us: pct(merged, 90), p99Us: pct(merged, 99), count };
+export function blendStats(f: Framework, rn: string, weights: ReadonlyMap<string, number>): BlendStats {
+  const mean = (k: keyof BlendStats): number | null => {
+    let logs = 0;
+    let total = 0;
+    for (const [id, w] of weights) {
+      const x = f.tests[id]?.rungs?.[rn]?.[k];
+      if (x == null || x <= 0) continue;
+      logs += w * Math.log(x);
+      total += w;
+    }
+    return total > 0 ? Math.exp(logs / total) : null;
+  };
+  return { p50Us: mean("p50Us"), p90Us: mean("p90Us"), p99Us: mean("p99Us") };
 }

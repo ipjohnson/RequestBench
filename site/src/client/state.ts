@@ -53,7 +53,7 @@ export const COLS: Col[] = [
   { id: "adapter", label: "adapter", def: false, cls: "sub", get: (r) => r.adapter || "—" },
   { id: "serializer", label: "serializer", def: false, cls: "sub", get: (r) => r.serializer || "—" },
   { id: "value", label: "", def: true, pin: true, get: (r) => r.value },
-  // Only at test granularity: a family and the blend are merges and have no base. Sorting by
+  // Only at test granularity: a family and the blend are means of tests and have no base. Sorting by
   // it is the cross-framework view, which is where what gzip costs each framework shows.
   { id: "delta", label: "over base", def: true, gran: "test", get: (r) => r.delta?.total ?? null },
   { id: "n", label: "samples", def: true, cls: "sub", get: (r) => r.n },

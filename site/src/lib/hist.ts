@@ -1,38 +1,22 @@
-// The generator's histograms a summary carries for each test, and where the site keeps them.
+// What the site leaves out of a run: the generator's histogram a summary carries for each test,
+// and each test's windows.
 //
-// They are most of a summary's bytes, and only a blend other than All reads them. The build
-// publishes them as a document of their own beside the run, and the page carries the run without
-// them. The explorer fetches the document when a blend needs it and puts each histogram back
-// where the summary had it.
-//
-// Each test's windows are left out of the run the same way, and published nowhere. The framework
-// pages draw them when the site is built, and nothing in the browser reads them.
-import { BUCKETS, GROWTH } from "../../../traffic-generator/histogram.ts";
-import type { Hist, Run } from "./types.ts";
+// The histograms are most of a summary's bytes, and nothing on the site reads them: a blend is
+// read from each test's percentiles. The framework pages draw the windows when the site is built,
+// and nothing in the browser reads them.
 
-/** By framework id, then test id, then rung. */
-export type HistDoc = Record<string, Record<string, Record<string, Hist>>>;
-
-/** Whether a run's histograms are counted on the grid this page reads percentiles on. */
-export const histUsable = (run: Run): boolean => run.histGrid?.growth === GROWTH && run.histGrid.count === BUCKETS;
-
-export const hasHist = (run: Run): boolean =>
-  run.frameworks.some((f) => Object.values(f.tests).some((t) => Object.values(t.rungs ?? {}).some((r) => r.hist !== undefined)));
-
-type RawRung = Record<string, unknown> & { hist?: Hist; windows?: unknown };
+type RawRung = Record<string, unknown> & { hist?: unknown; windows?: unknown };
 type RawTest = Record<string, unknown> & { rungs?: Record<string, RawRung> };
-type RawFramework = Record<string, unknown> & { id?: string; tests?: Record<string, RawTest> };
+type RawFramework = Record<string, unknown> & { tests?: Record<string, RawTest> };
 
 /**
- * A summary split into the run without its histograms or windows, and the histograms. It takes the
- * document as it was read, which is what the build publishes, and leaves every other key where it
- * was.
+ * A summary without its histograms or windows, which is the copy the page carries and the build
+ * publishes. It takes the document as it was read, and leaves every other key where it was.
  */
-export function splitHist(raw: unknown): { run: unknown; hist: HistDoc } {
-  const hist: HistDoc = {};
-  if (typeof raw !== "object" || raw === null) return { run: raw, hist };
+export function withoutHist<T>(raw: T): T {
+  if (typeof raw !== "object" || raw === null) return raw;
   const doc = raw as { frameworks?: RawFramework[] };
-  if (!Array.isArray(doc.frameworks)) return { run: raw, hist };
+  if (!Array.isArray(doc.frameworks)) return raw;
   const frameworks = doc.frameworks.map((f) => {
     if (!f.tests) return f;
     const tests = Object.fromEntries(
@@ -40,8 +24,7 @@ export function splitHist(raw: unknown): { run: unknown; hist: HistDoc } {
         if (!t.rungs) return [id, t];
         const rungs = Object.fromEntries(
           Object.entries(t.rungs).map(([rn, rung]) => {
-            const { hist: h, windows: _, ...rest } = rung;
-            if (h && f.id) ((hist[f.id] ??= {})[id] ??= {})[rn] = h;
+            const { hist: _, windows: __, ...rest } = rung;
             return [rn, rest];
           }),
         );
@@ -50,20 +33,5 @@ export function splitHist(raw: unknown): { run: unknown; hist: HistDoc } {
     );
     return { ...f, tests };
   });
-  return { run: { ...doc, frameworks }, hist };
-}
-
-/** The run without its histograms or windows, which is the copy the page carries. */
-export const withoutHist = (run: Run): Run => splitHist(run).run as Run;
-
-/** Each histogram put back on the test and rung it came from. */
-export function attachHist(run: Run, doc: HistDoc): void {
-  for (const f of run.frameworks) {
-    for (const [id, byRung] of Object.entries(doc[f.id] ?? {})) {
-      for (const [rn, h] of Object.entries(byRung)) {
-        const rung = f.tests[id]?.rungs?.[rn];
-        if (rung) rung.hist = h;
-      }
-    }
-  }
+  return { ...doc, frameworks } as T;
 }
