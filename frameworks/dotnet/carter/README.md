@@ -71,9 +71,12 @@ Client section says.
   because the corpus is not a browser session.
 - settings.json sizes the cache in entries, and output caching sizes it in bytes. Its default of
   100 MB holds every key the cache family stores.
-- container-h2 lists `items.head` as unsupported. Over HTTP/2, Kestrel sends the row the handler
-  writes for HEAD as a DATA frame. HTTP/2 allows no content in an answer to HEAD, so the client
-  resets the stream. Over HTTP/1.1 Kestrel leaves the row unwritten.
+- On container-h2, where Kestrel speaks HTTP/2, `Program.cs` sends the body of an answer to HEAD
+  to `Stream.Null` ahead of every other middleware. Over HTTP/2 Kestrel sends that body when it is
+  written through the response PipeWriter, as a JSON result is, and HTTP/2 allows no content in an
+  answer to HEAD, so the client resets the stream. dotnet/aspnetcore#59725 stopped the same over
+  HTTP/1.1, and .NET 11 preview 7 still sends it over HTTP/2. The middleware comes out once
+  Kestrel drops the body itself.
 - On lambda-emulator the application answers behind Amazon.Lambda.AspNetCoreServer.Hosting 2.2,
   which reads API Gateway payload format 2.0. `AddAWSLambdaHosting` in `Program.cs` puts it in
   Kestrel's place only where `AWS_LAMBDA_FUNCTION_NAME` is set, so it does nothing on the other

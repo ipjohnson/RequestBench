@@ -3,6 +3,7 @@ using Carter;
 using Implementation;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.ResponseCompression;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.FileProviders;
 
 // RequestBench target: Carter. One module per corpus family under Routes/, which AddCarter
@@ -66,6 +67,24 @@ builder.Services.AddAuthorization(options => options.AddPolicy(Policies.Token, p
 builder.Services.AddRazorComponents();
 
 WebApplication app = builder.Build();
+
+// Kestrel over HTTP/2 sends the body of an answer to HEAD when the body is written through the
+// response PipeWriter, as a JSON result is, and HTTP/2 allows no content there, so the client
+// resets the stream. dotnet/aspnetcore#59725 stopped this over HTTP/1.1, and it still happens over
+// HTTP/2 in .NET 10 and 11 preview 7. Where Kestrel speaks HTTP/2, which is container-h2, the body
+// of an answer to HEAD goes to Stream.Null instead, until Kestrel drops it itself.
+if (Enum.TryParse(builder.Configuration["Kestrel:EndpointDefaults:Protocols"], out HttpProtocols protocols)
+    && protocols.HasFlag(HttpProtocols.Http2))
+{
+    app.Use((context, next) =>
+    {
+        if (HttpMethods.IsHead(context.Request.Method))
+        {
+            context.Response.Body = Stream.Null;
+        }
+        return next(context);
+    });
+}
 
 app.UseExceptionHandler();
 app.UseStatusCodePages();
