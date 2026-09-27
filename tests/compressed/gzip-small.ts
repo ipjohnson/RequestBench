@@ -8,6 +8,7 @@ export default performanceTest({
   path,
   base: "compressed.identity_small",
   varies: "compression",
+  heft: 2,
   about:
     "The middleware actually asked to compress, on a body too small to " +
     "benefit. Whether a framework bothers is the point, so this row does not " +

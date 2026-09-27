@@ -1,6 +1,6 @@
 // The traffic generator. It offers the corpus's performance tests to one framework in phases,
-// each at a fixed rate, picks a test uniformly for each instance, and records each test's
-// latency from the moment its instance was scheduled.
+// each at a fixed rate, sends them in the order their hefts give (order.ts), and records each
+// test's latency from the moment its instance was scheduled.
 //
 //   node traffic-generator/cli.ts load.json --out result.json
 //   node traffic-generator/cli.ts '{"target":"127.0.0.1:8080","framework":"node:fastify",
@@ -38,6 +38,7 @@ import {
   type ResolvedLoad,
   type SettleSummary,
 } from "./load.ts";
+import { orderOf } from "./order.ts";
 import { Pipe, type PhaseReport } from "./pipe.ts";
 import { UsageError, select } from "./select.ts";
 import { tallyOf, type Tally } from "./tally.ts";
@@ -154,6 +155,7 @@ function recordedSummary(
       return {
         id: idOf(test.id),
         family: test.id.family,
+        heft: test.heft,
         count: t.count,
         errors: t.errors,
         mismatch: t.mismatch,
@@ -264,13 +266,15 @@ async function main(args: string[]): Promise<number> {
     });
     const requests = compiled.reduce((n, test) => n + test.instances.length, 0);
     console.log(`  ${requests} requests prepared, at most ${Math.max(...compiled.map((test) => test.instances.length))} for one test`);
+    const order = orderOf(o.tests);
+    console.log(`  a cycle of ${order.length} requests, repeated through each phase`);
 
     // Every thread and connection is opened before the first phase, and kept for every phase after it.
     const tests = compiled.map((test) => ({
       instances: test.instances.map((i) => ({ request: i.request, label: i.target, accepted: i.accepted, bodyBytes: i.bodyBytes ?? null })),
     }));
     const { workers, connections, streams } = o.load;
-    await pipe.open(tests, { workers, connections, streams });
+    await pipe.open(tests, order, { workers, connections, streams });
     for (const phase of o.load.phases) {
       const ended = phases.some((p) => p.status !== "done");
       const result: PhaseResult = ended

@@ -8,6 +8,7 @@ export default performanceTest({
   path,
   base: "middleware.none",
   varies: "layers",
+  heft: 1,
   about:
     "Sixteen no-op layers in front of a handler that serialises the small " +
     "payload. Sixteen layers, which is where a per-layer cost that looked " +

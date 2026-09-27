@@ -8,6 +8,7 @@ export default performanceTest({
   path,
   base: "headers.few",
   varies: "header_binding",
+  heft: 1,
   about:
     "The same five headers with three of them bound through the framework and " +
     "written back, one as an integer. Read against headers.few, the " +

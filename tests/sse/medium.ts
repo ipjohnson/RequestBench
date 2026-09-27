@@ -8,6 +8,7 @@ export default performanceTest({
   path,
   base: "stream.ndjson",
   varies: "event_stream",
+  heft: 3,
   about:
     "items.medium's 89 rows, each the data of one server-sent event. The request " +
     "carries the Accept header an EventSource sends. Every event is of type " +

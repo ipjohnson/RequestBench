@@ -9,6 +9,7 @@ export default performanceTest({
   path,
   base: "query.many",
   varies: "form",
+  heft: 2,
   about:
     "query.many's eight fields posted as an application/x-www-form-urlencoded " +
     "body instead of a query string, bound and echoed. The answer is exactly " +

@@ -2,6 +2,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
+import type { Heft } from "@rb/tests/kit";
 import { BUCKETS, bucketOf, pct } from "../../traffic-generator/histogram.ts";
 import type { ClosedResult, ClosedTestSummary, LoadResult, PhaseResult, TestSummary } from "../../traffic-generator/load.ts";
 import type { RunFile } from "../measure.ts";
@@ -14,9 +15,9 @@ function hist(at: Record<number, number>): string {
   return Buffer.from(h.buffer).toString("base64");
 }
 
-const testRow = (id: string, family: string, at: Record<number, number>): TestSummary => {
+const testRow = (id: string, family: string, heft: Heft, at: Record<number, number>): TestSummary => {
   const count = Object.values(at).reduce((a, b) => a + b, 0);
-  return { id, family, count, errors: 0, mismatch: 0, dropped: 0, p50Us: 0, p90Us: 0, p99Us: 0, p999Us: 0, histB64: hist(at) };
+  return { id, family, heft, count, errors: 0, mismatch: 0, dropped: 0, p50Us: 0, p90Us: 0, p99Us: 0, p999Us: 0, histB64: hist(at) };
 };
 
 const recorded = (tests: TestSummary[], dropped = 0) => ({
@@ -40,10 +41,10 @@ const phases: PhaseResult[] = [
     name: "regular",
     rps: 100,
     status: "done",
-    recorded: recorded([testRow("json.small", "json", { 150: 60, 200: 20 }), testRow("json.large", "json", { 900: 19, 5000: 1 })]),
+    recorded: recorded([testRow("json.small", "json", 1, { 150: 60, 200: 20 }), testRow("json.large", "json", 4, { 900: 19, 5000: 1 })]),
     unfinished: 0,
   },
-  { name: "raised", rps: 200, status: "done", recorded: recorded([testRow("json.small", "json", { 150: 97 })], 3), unfinished: 0 },
+  { name: "raised", rps: 200, status: "done", recorded: recorded([testRow("json.small", "json", 1, { 150: 97 })], 3), unfinished: 0 },
   { name: "peak", rps: 400, status: "aborted", settle, unfinished: 0 },
   { name: "beyond", rps: 800, status: "notRun" },
 ];
@@ -109,6 +110,7 @@ test("a completed rung publishes every test's percentiles and histogram, and the
   assert.deepEqual(small.bins, rebin(decoded));
   assert.equal(f.rungs["regular"]!.completed, true);
   assert.equal(f.families["regular"]!["json"]!.count, 100);
+  assert.deepEqual([f.tests["json.small"]!.heft, f.tests["json.large"]!.heft], [1, 4]);
 });
 
 test("each test carries the generator's histogram with its empty ends cut off", () => {
@@ -137,7 +139,7 @@ test("each test's windows travel with it on a completed rung, and the summary na
     [40, 150, 200, 200],
     [40, 160, 210, 230],
   ] as const;
-  const small = { ...testRow("json.small", "json", { 150: 60, 200: 20 }), windows };
+  const small = { ...testRow("json.small", "json", 1, { 150: 60, 200: 20 }), windows };
   const regular: PhaseResult = { name: "regular", rps: 100, status: "done", recorded: recorded([small]), unfinished: 0 };
   const windowed = { ...load, phases: [phases[0]!, regular, ...phases.slice(2)] };
   const s = summarize({ ...run, frameworks: [{ ...run.frameworks[0]!, load: windowed }] });
@@ -170,12 +172,13 @@ test("the tests a framework does not support on the run's host travel with it, a
 });
 
 /** A closed-loop test whose invoke phase and response span land where given. */
-const spanRow = (id: string, family: string, invoke: Record<number, number>, response: Record<number, number>): ClosedTestSummary => {
+const spanRow = (id: string, family: string, heft: Heft, invoke: Record<number, number>, response: Record<number, number>): ClosedTestSummary => {
   const count = Object.values(invoke).reduce((a, b) => a + b, 0);
   const span = (at: Record<number, number>) => ({ p50Us: 0, p90Us: 0, p99Us: 0, p999Us: 0, histB64: hist(at) });
   return {
     id,
     family,
+    heft,
     count,
     errors: 0,
     mismatch: 0,
@@ -210,7 +213,7 @@ const closed: ClosedResult = {
         overall: { count: 100, p50Us: 0, p90Us: 0, p99Us: 0, p999Us: 0 },
         first: { id: "json.large", invokeUs: 41000, responseUs: 40000, responseLatencyUs: 39000, responseDurationUs: 1000, runtimeOverheadUs: 1000 },
         perSecond: [{ invocations: 100, meanInvokeUs: 471 }],
-        tests: [spanRow("json.small", "json", { 60: 80 }, { 40: 80 }), spanRow("json.large", "json", { 300: 20 }, { 280: 20 })],
+        tests: [spanRow("json.small", "json", 1, { 60: 80 }, { 40: 80 }), spanRow("json.large", "json", 4, { 300: 20 }, { 280: 20 })],
       },
     },
   ],
@@ -233,12 +236,13 @@ test("a closed loop's one rung publishes the invoke phase, and each test carries
   assert.deepEqual(Object.keys(small.spans), ["response", "responseLatency", "responseDuration", "runtimeOverhead"]);
   assert.deepEqual([small.hist.first, small.spans.response.hist.first], [bucketOf(60), bucketOf(40)]);
   assert.equal(f.families["closed"]!["json"]!.count, 100);
+  assert.deepEqual([f.tests["json.small"]!.heft, f.tests["json.large"]!.heft], [1, 4]);
 });
 
 test("a closed loop's test carries the windows of its invoke phase", () => {
   const windows = [[80, 60, 61, 62]] as const;
   const [phase] = closed.phases;
-  const tests = [{ ...spanRow("json.small", "json", { 60: 80 }, { 40: 80 }), windows }];
+  const tests = [{ ...spanRow("json.small", "json", 1, { 60: 80 }, { 40: 80 }), windows }];
   const windowed: ClosedResult = { ...closed, phases: [{ ...phase!, recorded: { ...phase!.recorded!, windowSeconds: 10, tests } }] };
   const chi = { id: "go:chi", ordinal: 1, bundleHash: "sha256:e", codeHash: "sha256:f", load: windowed };
   const f = summarize({ ...run, host: "lambda-emulator", frameworks: [chi] }).frameworks[0]!;

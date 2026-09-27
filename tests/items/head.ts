@@ -7,6 +7,7 @@ export default performanceTest({
   path,
   base: "items.read",
   varies: "method",
+  heft: 1,
   about:
     "The same lookup asked with HEAD, which the framework answers from its GET " +
     "route with no body. Read against items.read, the difference is the body " +

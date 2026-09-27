@@ -9,6 +9,7 @@ export default performanceTest({
   path,
   base: "headers.bind_few",
   varies: "header_count",
+  heft: 2,
   about:
     "Three headers bound out of thirty instead of out of five. Read against " +
     "headers.bind_few, the difference is whether a framework's binder pays " +

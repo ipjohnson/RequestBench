@@ -7,6 +7,7 @@ export default performanceTest({
   path,
   base: "errors.unmatched",
   varies: "known_path",
+  heft: 1,
   about:
     "A path with routes, asked with a method none of them has. A router that " +
     "matches the path first answers 405, and one that matches the method and " +

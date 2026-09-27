@@ -8,6 +8,7 @@ export default performanceTest({
   path,
   base: "body.bind_small",
   varies: "validation",
+  heft: 2,
   about:
     "The same body checked against a schema before the handler sees it, and " +
     "answered exactly as the bind row answers it. Read against " +

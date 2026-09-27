@@ -2,6 +2,9 @@
 //! on connections of its own, from a start every thread shares. Over HTTP/1.1 a connection
 //! carries one request at a time. Over h2c it carries up to `streams` at once.
 //!
+//! The load's cycle names the test each instance of a phase sends, and each test's own instances
+//! go out in turn, so the sequence is the same in every run whichever thread sends each one.
+//!
 //! An instance is timed from its scheduled moment rather than from when it was sent, which is
 //! the coordinated-omission correction: a backlog in the generator or the framework shows up as
 //! latency instead of quietly vanishing. The instance is bytes built before the load began, so a
@@ -23,6 +26,7 @@ use tokio::net::TcpStream;
 use tokio::sync::{Notify, mpsc};
 use tokio::task::{JoinSet, LocalSet};
 
+use crate::cycle::Cycle;
 use crate::h2c::{self, Template};
 use crate::http1::{Read, Reader};
 use crate::request::Protocol;
@@ -95,6 +99,15 @@ enum FromWorker {
 /// How long a thread waits for what is still in flight once a phase's schedule has run out.
 const DRAIN: Duration = Duration::from_secs(10);
 
+/// The threads a load runs on, and the connections it holds across them.
+#[derive(Clone, Copy)]
+pub struct Shape {
+    pub workers: usize,
+    pub connections: usize,
+    /// The requests one connection carries at once, which is 1 over HTTP/1.1.
+    pub streams: usize,
+}
+
 /// The threads that time every phase, started once so each keeps its connections from one phase
 /// to the next.
 pub struct Load {
@@ -107,6 +120,7 @@ struct Job {
     port: u16,
     protocol: Protocol,
     tests: Arc<Vec<Test>>,
+    cycle: Arc<Cycle>,
     /// This thread takes every `workers`-th instance of a phase, settle and recorded alike, starting at this one.
     index: usize,
     workers: usize,
@@ -114,25 +128,13 @@ struct Job {
     connections: usize,
     /// The requests one connection carries at once. Its in-flight limit is this times `connections`.
     streams: usize,
-    seed: u32,
-}
-
-/// Seeds for the threads, as cli.ts gave its worker threads.
-fn seed_of(i: usize) -> u32 {
-    0x9e37_79b9u32.wrapping_mul(i as u32 + 1)
 }
 
 impl Load {
-    pub async fn open(
-        host: String,
-        port: u16,
-        protocol: Protocol,
-        tests: Vec<Test>,
-        workers: usize,
-        connections: usize,
-        streams: usize,
-    ) -> Result<Load, String> {
+    pub async fn open(host: String, port: u16, protocol: Protocol, tests: Vec<Test>, cycle: Cycle, shape: Shape) -> Result<Load, String> {
+        let Shape { workers, connections, streams } = shape;
         let tests = Arc::new(tests);
+        let cycle = Arc::new(cycle);
         let (to_main, from) = mpsc::unbounded_channel();
         let mut threads = Vec::new();
         for index in 0..workers {
@@ -142,11 +144,11 @@ impl Load {
                 port,
                 protocol,
                 tests: tests.clone(),
+                cycle: cycle.clone(),
                 index,
                 workers,
                 connections: connections.div_ceil(workers),
                 streams,
-                seed: seed_of(index),
             };
             let tx = to_main.clone();
             let handle = std::thread::Builder::new()
@@ -300,7 +302,6 @@ impl PhaseTally {
 
 struct State {
     job: Job,
-    random: Cell<u32>,
     /// Connections waiting for a request, handed out in turn so every connection the load
     /// declares carries traffic.
     free: RefCell<VecDeque<Rc<Conn>>>,
@@ -318,10 +319,8 @@ struct State {
 
 impl State {
     fn new(job: Job) -> Self {
-        let seed = if job.seed == 0 { 1 } else { job.seed };
         State {
             job,
-            random: Cell::new(seed),
             free: RefCell::new(VecDeque::new()),
             live: Cell::new(0),
             h2: RefCell::new(Vec::new()),
@@ -331,17 +330,6 @@ impl State {
             number: Cell::new(0),
             stopped: Cell::new(false),
         }
-    }
-
-    /// xorshift32, so each thread walks the tests and their instances its own way, and every run
-    /// the same way, as worker.ts did.
-    fn random(&self) -> f64 {
-        let mut s = self.random.get();
-        s ^= s << 13;
-        s ^= s >> 17;
-        s ^= s << 5;
-        self.random.set(s);
-        s as f64 / 4_294_967_296.0
     }
 
     /// Opens what the thread is short of and waits for it. Called before the first phase and
@@ -452,7 +440,7 @@ impl State {
 
     fn fire(self: &Rc<Self>, k: u64, at: Instant, settle: u64) {
         let tests = &self.job.tests;
-        let test = (self.random() * tests.len() as f64) as usize;
+        let (test, turn) = self.job.cycle.slot(k);
         let settling = k < settle;
         if self.inflight.get() >= self.job.connections * self.job.streams {
             // Dropped by never being sent, so it enters no histogram. A rate with drops is
@@ -464,7 +452,7 @@ impl State {
             return;
         }
         let instances = &tests[test].instances;
-        let instance = (self.random() * instances.len() as f64) as usize;
+        let instance = (turn % instances.len() as u64) as usize;
         self.inflight.set(self.inflight.get() + 1);
         let pending = Pending { due: at, settle: settling, test, instance, phase: self.number.get(), k };
         if self.job.protocol == Protocol::H2c {
@@ -790,7 +778,12 @@ mod tests {
     }
 
     async fn http1(port: u16, tests: Vec<Test>) -> Load {
-        Load::open("127.0.0.1".into(), port, Protocol::Http1, tests, 1, 1, 1).await.unwrap()
+        Load::open("127.0.0.1".into(), port, Protocol::Http1, tests, one(), Shape { workers: 1, connections: 1, streams: 1 }).await.unwrap()
+    }
+
+    /// The cycle of a load with one test.
+    fn one() -> Cycle {
+        Cycle::new(&[0], 1).unwrap()
     }
 
     fn only(method: &str) -> Vec<Test> {
@@ -848,7 +841,8 @@ mod tests {
                 body_bytes: Some(39),
             }],
         }];
-        let mut load = Load::open("127.0.0.1".into(), port, Protocol::H2c, tests, 2, 4, 4).await.unwrap();
+        let shape = Shape { workers: 2, connections: 4, streams: 4 };
+        let mut load = Load::open("127.0.0.1".into(), port, Protocol::H2c, tests, one(), shape).await.unwrap();
         let mut phased = load.phase(Schedule { rps: 200.0, settle: 0, total: 200, window_seconds: 0.0 }, None).await.unwrap();
         load.close();
         let mut t = Tally::new();
@@ -863,7 +857,8 @@ mod tests {
     async fn every_recorded_instance_counts_in_the_window_it_was_scheduled_in_and_the_settle_in_none() {
         let stub = Stub::start(|_| (OK, false));
         // Enough connections that no instance is dropped while the other tests run beside this one.
-        let mut load = Load::open("127.0.0.1".into(), stub.port, Protocol::Http1, only("GET"), 2, 32, 1).await.unwrap();
+        let shape = Shape { workers: 2, connections: 32, streams: 1 };
+        let mut load = Load::open("127.0.0.1".into(), stub.port, Protocol::Http1, only("GET"), one(), shape).await.unwrap();
         // 200 a second in half-second windows is 100 instances in each, split over two threads.
         let schedule = Schedule { rps: 200.0, settle: 20, total: 400, window_seconds: 0.5 };
         let mut phased = load.phase(schedule, None).await.unwrap();

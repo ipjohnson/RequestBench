@@ -41,6 +41,10 @@ test("a path, a header or an assertion moves it", async () => {
   assert.notEqual(await versionOf(with_("json.small", looser)), base);
 });
 
+test("a heft moves it", async () => {
+  assert.notEqual(await versionOf(with_("json.small", (t) => ({ ...t, heft: 2 }))), base);
+});
+
 test("a payload file moves it, and a validation test does not", async () => {
   const [first, ...rest] = payloads;
   assert.notEqual(await versionOf(suite, [{ ...first!, hash: "0".repeat(64) }, ...rest]), base);

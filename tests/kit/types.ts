@@ -256,11 +256,20 @@ export interface Framework {
   readonly mechanisms: Readonly<Record<string, Mechanism>>;
 }
 
+/**
+ * How much work a performance test asks of a framework, from 1 to 5, by its p50 at 1,000 rps over
+ * `baseline.plaintext`'s in the same run. Heft 2 starts at 16 µs, 3 at 100, 4 at 400 and 5 at
+ * 1,000. tests/README.md says how the scale was measured.
+ */
+export type Heft = 1 | 2 | 3 | 4 | 5;
+
 export interface PerformanceTest {
   readonly kind: "performance";
   readonly id: TestId;
   /** The endpoint this row measures. Declared rather than buried in the closure, because the site and the handler marks both need it. */
   readonly path: string;
+  /** Decides how often the load sends this test: the heavier, the less often. */
+  readonly heft: Heft;
   readonly about: string;
   readonly request: Body;
   /**

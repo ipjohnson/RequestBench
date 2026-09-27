@@ -8,6 +8,7 @@ export default performanceTest({
   path,
   base: "json.small",
   varies: "authorization",
+  heft: 1,
   about:
     "A bearer token the framework's own authorization mechanism has to check " +
     "before the handler runs. Read against json.small, the difference is the " +

@@ -6,6 +6,7 @@ const path = "/json/small";
 export default performanceTest({
   id: { family: "json", name: "small" },
   path,
+  heft: 1,
   about:
     "One row out, serialised from a body the framework already holds. The " +
     "plainest question in the corpus once something has to be serialised. " +

@@ -8,6 +8,7 @@ export default performanceTest({
   path,
   base: "parameters.one",
   varies: "captures",
+  heft: 1,
   about:
     "The same depth with a second capture in it. Read against parameters.one, " +
     "the difference is one more segment the router has to capture and one " +

@@ -31,6 +31,7 @@ export default performanceTest({
   path,
   base: "forms.urlencoded",
   varies: "multipart",
+  heft: 3,
   about:
     "A multipart/form-data upload of two fields and a 32 KB text file. The " +
     "handler echoes the fields and answers the file's name and byte count, so " +

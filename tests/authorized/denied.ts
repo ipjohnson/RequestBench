@@ -8,6 +8,7 @@ export default performanceTest({
   path,
   base: "authorized.allowed",
   varies: "outcome",
+  heft: 2,
   about:
     "The same endpoint refusing. The token differs from the accepted one by " +
     "its last character, so the comparison walks the whole string and this " +

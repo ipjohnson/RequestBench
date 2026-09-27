@@ -8,6 +8,7 @@ export default performanceTest({
   path,
   base: "json.small",
   varies: "renderer",
+  heft: 2,
   about:
     "One row rendered through the framework's own view layer instead of " +
     "serialised. Read against json.small, the difference is the engine, which " +

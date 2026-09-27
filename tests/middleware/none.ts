@@ -8,6 +8,7 @@ export default performanceTest({
   path,
   base: "json.small",
   varies: "route",
+  heft: 1,
   about:
     "No layers in front of a handler that serialises the small payload. A " +
     "different route carrying the same handler, which should cost nothing. It " +

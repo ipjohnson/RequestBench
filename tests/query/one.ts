@@ -8,6 +8,7 @@ export default performanceTest({
   path,
   base: "json.small",
   varies: "query_params",
+  heft: 1,
   about:
     "One query parameter parsed, coerced to an integer and written back. Read " +
     "against json.small, the difference is the query string being parsed at " +

@@ -9,6 +9,7 @@ export default performanceTest({
   path,
   base: "json.small",
   varies: "cors",
+  heft: 1,
   about:
     "The cross-origin request itself, with the origin and the custom header " +
     "the preflight asked about. The feature adds its header and lets the " +

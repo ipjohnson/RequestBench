@@ -8,6 +8,7 @@ export default performanceTest({
   path,
   base: "json.small",
   varies: "size",
+  heft: 4,
   about:
     "Fourteen hundred rows out, serialised from a body the framework already " +
     "holds. The size at which the writer stops being free. Read against " +

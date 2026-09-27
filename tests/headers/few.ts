@@ -6,6 +6,7 @@ const path = "/headers";
 export default performanceTest({
   id: { family: "headers", name: "few" },
   path,
+  heft: 1,
   about:
     "Five request headers, none of which the handler reads. Two of the five " +
     "are what an HTTP client adds itself, and the other three are the ones " +

@@ -14,6 +14,7 @@ import {
   type Percentiles,
   type SpanSummary,
 } from "./load.ts";
+import { orderOf } from "./order.ts";
 import type { ClosedReport, Pipe, WireSpans } from "./pipe.ts";
 import { prepare, type Statuses } from "./prepare.ts";
 import { select } from "./select.ts";
@@ -93,6 +94,7 @@ export async function runClosed(o: ClosedOptions & { readonly phases: readonly C
     compiled.map((test) => ({
       instances: test.instances.map((i) => ({ request: i.request, label: i.target, accepted: i.accepted, bodyBytes: i.bodyBytes ?? null })),
     })),
+    orderOf(tests),
     { workers: 1, connections: 1, streams: 1 },
   );
   const phases: ClosedPhaseResult[] = [];
@@ -122,6 +124,7 @@ export async function runClosed(o: ClosedOptions & { readonly phases: readonly C
       const rows: ClosedTestSummary[] = report.tests.map((t: WireSpans, i) => ({
         id: idOf(tests[i]!.id),
         family: tests[i]!.id.family,
+        heft: tests[i]!.heft,
         count: t.count,
         errors: t.errors,
         mismatch: t.mismatch,

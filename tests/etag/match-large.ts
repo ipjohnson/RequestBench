@@ -7,6 +7,7 @@ export default performanceTest({
   path,
   base: "etag.large",
   varies: "conditional",
+  heft: 4,
   about:
     "The only row that cannot be sent until the framework has answered a " +
     "different one: the validator is the framework's to produce. A 304 saves " +

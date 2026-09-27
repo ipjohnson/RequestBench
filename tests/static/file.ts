@@ -8,6 +8,7 @@ export default performanceTest({
   path,
   base: "json.large",
   varies: "static_file",
+  heft: 4,
   about:
     "items.large.json sent by the framework's static-file feature from the " +
     "payload directory, with its modification time. The request accepts gzip, " +

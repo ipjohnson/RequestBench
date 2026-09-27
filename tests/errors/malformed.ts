@@ -10,6 +10,7 @@ export default performanceTest({
   path,
   base: "body.rejected_all",
   varies: "parse_failure",
+  heft: 2,
   about:
     "A body that is not JSON at all. Read against body.rejected_all, the " +
     "difference is the parser failing rather than the validator refusing, " +

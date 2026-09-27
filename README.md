@@ -108,8 +108,12 @@ performance tests at the rates of one ladder in [`orchestrator/ladder.ts`](orche
 
 If a rate's settle drops more than 5% of its requests, the framework's measurement ends there.
 
-The traffic generator picks a test at random for each request. It is open loop: each request has a
-scheduled moment, and its latency counts from that moment. A backlog in the framework or the
+The traffic generator sends the tests in a fixed cycle that repeats for as long as a rate runs.
+Each test's heft, from 1 to 5, decides how often it comes round, so a heavy test is sent less often
+than a light one. [tests/README.md](tests/README.md#heft) describes the scale and the order. The
+sequence is the same in every run and for every framework, apart from the tests a framework's host
+marks unsupported. The generator is open loop: each request has a scheduled moment, and its latency
+counts from that moment. A backlog in the framework or the
 generator therefore shows up as latency. Requests are built before timing starts. The timing, the
 HTTP/1.1 client that reads each response, and the gate's own requests are the Rust program in
 `traffic-generator/src/`, so the gate checks the bytes the load sends.

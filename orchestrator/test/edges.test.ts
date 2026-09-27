@@ -7,7 +7,7 @@ import { family, performanceTest, suite, validationTest } from "@rb/tests/kit";
 import type { PerformanceTest, Test } from "@rb/tests/kit";
 
 const row = (name: string, edge: { base: string; varies: string } | Record<string, never> = {}) =>
-  performanceTest({ id: { family: "f", name }, path: `/${name}`, about: name, request: (c) => c.get(`/${name}`).ok(), ...edge });
+  performanceTest({ id: { family: "f", name }, path: `/${name}`, heft: 1, about: name, request: (c) => c.get(`/${name}`).ok(), ...edge });
 
 const suiteOf = (tests: Test[], factors: Record<string, { reads: string }> = { size: { reads: "bigger" } }) =>
   suite([family({ name: "f", about: "", comparable: "", tests })], factors);

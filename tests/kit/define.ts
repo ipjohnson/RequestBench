@@ -1,5 +1,5 @@
 import { idOf } from "./types.ts";
-import type { Body, Factor, Family, FamilyName, Framework, PerformanceTest, Suite, Test, TestId, ValidationTest } from "./types.ts";
+import type { Body, Factor, Family, FamilyName, Framework, Heft, PerformanceTest, Suite, Test, TestId, ValidationTest } from "./types.ts";
 
 /**
  * A family and the tests in it. The tests are passed as a list rather than a map
@@ -81,6 +81,7 @@ export function performanceTest(
   d: {
     id: TestId;
     path: string;
+    heft: Heft;
     about: string;
     request: Body;
     scope?: never;

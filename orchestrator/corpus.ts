@@ -3,9 +3,10 @@
 //
 // The version is what makes two runs comparable. It hashes what each performance test sends
 // and asserts, taken from its recording rather than from its source, so correcting an `about`
-// leaves it alone while a changed path, header, assertion or payload moves it. It also hashes
-// the payload files every framework loads and the shape of the values drawn per run, which
-// decide how many bytes go out. Validation tests stay out, which is what makes adding one free.
+// leaves it alone while a changed path, header, assertion or payload moves it. Each test's heft
+// is in it too, because the heft decides how often the load sends the test. It also hashes the
+// payload files every framework loads and the shape of the values drawn per run, which decide
+// how many bytes go out. Validation tests stay out, which is what makes adding one free.
 import { createHash } from "node:crypto";
 import { z } from "zod";
 
@@ -98,8 +99,10 @@ export function corpusVersion(
 ): string {
   const tests = [...recordings.keys()]
     .sort()
-    .filter((id) => s.tests[id]!.kind === "performance")
-    .map((id) => ({ id, path: s.tests[id]!.path, recording: canonical(recordings.get(id)) }));
+    .flatMap((id) => {
+      const test = s.tests[id]!;
+      return test.kind === "performance" ? [{ id, path: test.path, heft: test.heft, recording: canonical(recordings.get(id)) }] : [];
+    });
   const doc = {
     tests,
     payloads: [...payloads].sort((a, b) => (a.path < b.path ? -1 : 1)),
