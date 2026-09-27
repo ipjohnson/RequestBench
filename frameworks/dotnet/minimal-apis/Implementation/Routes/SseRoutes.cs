@@ -8,6 +8,6 @@ public static class SseRoutes
 {
     public static void Map(IEndpointRouteBuilder app)
     {
-        app.MapGet("/sse/medium", (Payloads p) => TypedResults.ServerSentEvents(p.Medium.Items.ToAsyncEnumerable()));
+        app.MapGet("/sse/medium", (Payloads p) => TypedResults.ServerSentEvents(p.Medium.Items.ToAsyncEnumerable())).StreamedOnLambda();
     }
 }

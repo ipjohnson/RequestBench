@@ -114,8 +114,10 @@ Each test the corpus measures carries `[Trait("corpus", "<id>")]`, so `--filter-
   Kestrel's place only where `AWS_LAMBDA_FUNCTION_NAME` is set, so it does nothing on the other
   hosts. It reads and writes the events with `SourceGeneratorLambdaJsonSerializer` over
   `LambdaJsonContext`, the form a native build needs. It buffers the whole answer into one proxy
-  response, so the sse and stream tests are listed as unsupported there. `EnableResponseStreaming`
-  would stream every answer.
+  response. On Lambda an endpoint filter that the sse and stream endpoints add in `Configure()`
+  writes their answers through a Lambda response stream instead. The stream opens at the first
+  write, with the status and headers the answer has by then. `EnableResponseStreaming` would stream
+  every answer.
 - lambda-emulator runs a Native AOT build of the application, as the function's `bootstrap` on the
   `provided:al2023` base image. The container hosts keep the JIT runtime. `/__meta` adds
   `Native AOT` to the runtime, because `RuntimeFeature.IsDynamicCodeSupported` is false in a
@@ -153,10 +155,11 @@ Each test the corpus measures carries `[Trait("corpus", "<id>")]`, so `--filter-
   reads no body in an answer to HEAD, so nothing reads it.
 - On lambda-emulator `/__meta` reports no `bootMs`. The hosting package runs the runtime client's
   loop inside the server's `StartAsync`, so ASP.NET Core never raises `ApplicationStarted`.
-- On lambda-emulator the stream endpoint's answer comes back as a 204. The handler writes the rows
-  to the body itself, and under Amazon.Lambda.AspNetCoreServer `HttpResponse.HasStarted` stays
-  false while it does. FastEndpoints reads that as no answer and sends its automatic 204 after the
-  handler. Its own send methods mark the response started, so no other endpoint is affected.
+- On lambda-emulator `HttpResponse.HasStarted` stays false while the stream endpoint's handler
+  writes the rows, so FastEndpoints reads that as no answer and sends its automatic 204 after the
+  handler. The rows have gone out on the Lambda response stream by then, with the 200 in its
+  prelude, and Lambda ignores the buffered answer, so the caller reads a 200. FastEndpoints' own
+  send methods mark the response started, so no other endpoint is affected.
 
 ## Refusals
 

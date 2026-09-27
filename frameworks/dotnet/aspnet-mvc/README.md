@@ -102,8 +102,12 @@ Client section says.
 - On lambda-emulator the application answers behind Amazon.Lambda.AspNetCoreServer.Hosting 2.2,
   which reads API Gateway payload format 2.0. `AddAWSLambdaHosting` in `Program.cs` puts it in
   Kestrel's place only where `AWS_LAMBDA_FUNCTION_NAME` is set, so it does nothing on the other
-  hosts. It buffers the whole answer into one proxy response, so the sse and stream tests are
-  listed as unsupported there. `EnableResponseStreaming` would stream every answer.
+  hosts. It buffers the whole answer into one proxy response. On Lambda the sse and stream actions'
+  `[LambdaStreamed]`, a resource filter, writes their answers through a Lambda response stream
+  instead. It is a resource filter because the stream action writes its rows itself and the sse
+  action's result writes its events, and only a resource filter runs around both. The stream opens
+  at the first write, with the status and headers the answer has by then. `EnableResponseStreaming`
+  would stream every answer.
 - lambda-emulator runs ASP.NET Core MVC on the JIT runtime, not as a Native AOT build, because
   ASP.NET Core MVC does not support Native AOT.
 - Amazon.Lambda.AspNetCoreServer marks every request https, as a Function URL's requests are.

@@ -20,6 +20,6 @@ public static class StreamRoutes
                 await body.WriteAsync(NewLine);
                 await body.FlushAsync();
             }
-        }, "application/x-ndjson"));
+        }, "application/x-ndjson")).StreamedOnLambda();
     }
 }

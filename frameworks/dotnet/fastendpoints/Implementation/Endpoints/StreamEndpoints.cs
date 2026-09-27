@@ -13,7 +13,11 @@ public sealed class StreamItemsEndpoint(Payloads payloads) : EndpointWithoutRequ
 {
     private static readonly byte[] NewLine = "\n"u8.ToArray();
 
-    public override void Configure() => Get("/stream/items");
+    public override void Configure()
+    {
+        Get("/stream/items");
+        Options(route => route.StreamedOnLambda());
+    }
 
     public override async Task HandleAsync(CancellationToken ct)
     {
