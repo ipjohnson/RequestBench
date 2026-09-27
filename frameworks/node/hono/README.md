@@ -94,9 +94,10 @@ listening. `PORT` defaults to 8080.
   wrong token, goes out chunked, with no `Content-Length`.
 - The server is one Node process, which @hono/node-server starts, on the container's two cores.
   The function on lambda-emulator runs on one core.
-- container-h2 lists `sse.medium` as unsupported. hono's streamSSE sets Transfer-Encoding, which
-  node:http2 refuses as a connection-specific header. The throw escapes @hono/node-server's error
-  handler and ends the process.
+- On container-h2, `container-h2/server.ts` drops Transfer-Encoding and Connection from an answer
+  before @hono/node-server writes it. hono's streamSSE and streamText set both, which belong to
+  HTTP/1.1, and node:http2 refuses them with a throw that escapes the error handler and ends the
+  process. This is honojs/hono#4041.
 - On lambda-emulator the application answers behind `handle()` from `hono/aws-lambda`, Hono's own
   adapter, in place of @hono/node-server. It buffers the whole answer into one proxy response, so
   the sse and stream tests are listed as unsupported there. `streamHandle()` would stream every
