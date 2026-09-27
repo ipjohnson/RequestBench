@@ -116,7 +116,8 @@ const commit = builtFrom?.commit.slice(0, 12);
     Each row is the time that framework took at the offered rate, on the machine and in the window
     named above. A framework that could not sustain a rate has no latency at it: percentiles over
     the requests that survived would flatter the collapse, so what it achieved and what it
-    dropped is shown instead.
+    dropped is shown instead. A hatched number is thin: fewer than 10 of the requests it is read
+    from lie beyond it.
   </div>
 
   <script id="rb-data" type="application/json" set:html={jsonScript(pageData)} />

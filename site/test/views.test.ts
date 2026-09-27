@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 import { deltaFor, type Chain } from "../src/lib/delta.ts";
 import type { Framework, Route } from "../src/lib/types.ts";
-import { baseCell, basePop, cmpCell, peerPop, unfinished } from "../src/lib/views.ts";
+import { baseCell, basePop, cmpCell, deltaCell, peerPop, THIN_PAIR, unfinished } from "../src/lib/views.ts";
 
 const routes: Record<string, Route> = {
   "json.small": { m: "GET", p: "/json/small" },
@@ -19,7 +19,7 @@ const framework = (values: Record<string, number>): Framework => ({
   name: "carter",
   rungs: {},
   families: {},
-  tests: Object.fromEntries(Object.entries(values).map(([id, v]) => [id, { rungs: { regular: { p99Us: v, count: 10 } } }])),
+  tests: Object.fromEntries(Object.entries(values).map(([id, v]) => [id, { rungs: { regular: { p99Us: v, count: 10_000 } } }])),
 });
 
 const chainAt = (values: Record<string, number>, id: string): Chain => {
@@ -99,6 +99,33 @@ describe("peerPop", () => {
 
   test("escapes the name", () => {
     assert.ok(peerPop(2, 1, "B", "a<b>", "").includes("vs a&lt;b&gt;"));
+  });
+});
+
+describe("a difference over a thin percentile", () => {
+  const thin = (): Chain => {
+    const f = framework({ "json.small": 100, "json.large": 400 });
+    f.tests["json.small"]!.rungs!["regular"]!.count = 500;
+    const chain = deltaFor(f, "json.large", "regular", routes, "p99Us");
+    if (!chain) throw new Error("no chain for json.large");
+    return chain;
+  };
+
+  test("is hatched, and its title says why", () => {
+    const html = deltaCell(thin(), "us");
+    assert.match(html, /^<td class="delta up thin" title="\+300 us over json\.small\. One of the two is a thin percentile/);
+  });
+
+  test("says so in its popup", () => {
+    assert.equal(lines(basePop(thin(), "us", factors, "p99"))[1], THIN_PAIR);
+    assert.deepEqual(lines(peerPop(900, 400, "us", "fastify", "p99", true)), ["+500 us vs fastify at p99", THIN_PAIR]);
+  });
+
+  test("hatches a compared number that is thin", () => {
+    assert.equal(
+      cmpCell("node-fastify", "400 us", null, "Thin: 3 of its 308 requests lie beyond this p99, fewer than 10.", true),
+      '<span class="fb thin" data-cmp="node-fastify" title="Thin: 3 of its 308 requests lie beyond this p99, fewer than 10." hidden>400 us</span>',
+    );
   });
 });
 

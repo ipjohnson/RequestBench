@@ -224,6 +224,45 @@ describe("a blend other than All", () => {
   });
 });
 
+describe("a thin percentile", () => {
+  // Each of carter's tests has a p50 over 10 requests, 5 of them beyond it, so each is thin.
+
+  test("marks a test's row with the requests its number is read from", () => {
+    const s = st();
+    s.gran = "test";
+    const { rows: rs } = rows({ run, st: s, routes, wireOf: () => undefined });
+    assert.deepEqual(
+      rs.map((r) => [r.detail, r.thin]),
+      [
+        ["json.small", 10],
+        ["json.medium", 10],
+      ],
+    );
+  });
+
+  test("marks a family or a blend only when fewer than 10 of its tests' requests lie beyond their own", () => {
+    const s = st();
+    // The two tests' 5 requests beyond add up to 10.
+    assert.equal(rows({ run, st: s, routes, wireOf: () => undefined }).rows.find((r) => r.label === "carter")?.thin, undefined);
+    s.gran = "family";
+    assert.equal(rows({ run, st: s, routes, wireOf: () => undefined }).rows[0]?.thin, undefined);
+    s.gran = "blend";
+    s.q = "Custom";
+    s.pick = { entries: ["json.small"], weights: {} };
+    assert.equal(rows({ run, st: s, routes, wireOf: () => undefined }).rows.find((r) => r.label === "carter")?.thin, 10);
+  });
+
+  test("marks no rate statistic", () => {
+    const s = st();
+    s.gran = "test";
+    s.metric = "achievedRps";
+    assert.deepEqual(
+      rows({ run, st: s, routes, wireOf: () => undefined }).rows.map((r) => r.thin),
+      [undefined, undefined],
+    );
+  });
+});
+
 describe("the filter at blend granularity", () => {
   test("a filter that names no blend is a framework's name, read over All", () => {
     const s = st();

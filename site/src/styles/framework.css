@@ -71,6 +71,13 @@ a.epfamname[aria-current="true"] { background: var(--tealsoft); border-left-colo
                   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
 .eppane .frow { outline: 1px solid var(--rule); }
 .eppane .fv { white-space: nowrap; }
+/* On a pane a thin percentile is blurred until it is hovered or focused, so it is read on
+   purpose, and what it rests on is written beside it. */
+.eppane .fv.thin { align-self: start; background: none; filter: blur(4px); cursor: help;
+                   transition: filter .12s; }
+.eppane .fv.thin:hover, .eppane .fv.thin:focus { filter: none; }
+.eppane .fv.thin:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+.fthin { margin-left: 4px; letter-spacing: 0; text-transform: none; }
 
 /* The numbers of whatever the page is compared with, a row per pick under each of the pane's
    own. Each is inside its own cell rather than in a row of its own, so it stays under its
@@ -201,6 +208,7 @@ select.cmpadd:disabled { opacity: .45; cursor: not-allowed; }
 .ephistbar { fill: var(--teal); }
 .ephistmark { stroke: var(--ink3); stroke-width: 1; stroke-dasharray: 2 2; }
 .ephistmarklabel { font-family: var(--f-mono); font-size: 9.5px; fill: var(--ink3); }
+.ephistmark.thin, .ephistmarklabel.thin { opacity: .45; }
 .ephist figcaption { font-size: 12px; color: var(--ink3); margin-top: 6px; }
 
 /* Histogram and Over time: two charts of one test at one rate, under its numbers. Smaller than
@@ -226,6 +234,9 @@ select.cmpadd:disabled { opacity: .45; cursor: not-allowed; }
 .otline { fill: none; stroke: var(--line); stroke-width: 2; stroke-linejoin: round;
           stroke-linecap: round; pointer-events: none; }
 .otdot { fill: var(--line); stroke: var(--surface); stroke-width: 2; pointer-events: none; }
+/* A stretch through a window whose percentile is thin is dashed and faint. */
+.otline.thin { stroke-dasharray: 2 5; opacity: .6; }
+.otdot.thin, .otend.thin { opacity: .5; }
 /* A window is hovered anywhere in its column, which shades to say whose readout is open. */
 .othit { fill: transparent; }
 .othit:hover { fill: var(--surface2); }

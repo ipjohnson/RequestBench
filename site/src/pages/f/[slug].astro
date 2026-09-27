@@ -9,7 +9,7 @@ import TestPane from "../../components/TestPane.astro";
 import FamilyPane from "../../components/FamilyPane.astro";
 import "../../styles/framework.css";
 import { permalink, type Part } from "../../lib/bundleview.ts";
-import { chainWith, comparedOf, deltaFor, floorFor, testValue } from "../../lib/delta.ts";
+import { chainWith, comparedOf, deltaFor, floorFor, testThin, testValue } from "../../lib/delta.ts";
 import { usedSpan, usLabel } from "../../lib/bins.ts";
 import { windowingOf } from "../../lib/windows.ts";
 import { DEFAULT_HOST, familyOf, metaOf, rungLabel, rungsOf, testOrder } from "../../lib/run.ts";
@@ -54,7 +54,7 @@ const exemplars = wire[`${t.language}-${t.name}@${host}`]?.tests ?? {};
 const PCTS = ["p50Us", "p90Us", "p99Us"];
 const chainsAt = (id: string, rn: string) => {
   const links = comparedOf(id, routes);
-  return Object.fromEntries(PCTS.map((m) => [m, chainWith(links, (e) => testValue(t, e, rn, m), floorFor)]));
+  return Object.fromEntries(PCTS.map((m) => [m, chainWith(links, (e) => testValue(t, e, rn, m), floorFor, (e) => testThin(t, e, rn, m))]));
 };
 const sizeOf = (id: string): number | null => exemplars[id]?.sbz ?? null;
 /** The test a pane compares with, when this run measured it: a root has none. */

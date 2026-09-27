@@ -57,6 +57,21 @@ describe("deltaFor", () => {
     );
   });
 
+  test("is thin when either end is a thin percentile, as is each step with a thin end", () => {
+    const f = framework({ "json.small": 100, "json.medium": 160, "compressed.gzip_small": 900 });
+    for (const t of Object.values(f.tests)) t.rungs!["regular"]!.count = 10_000;
+    assert.equal(deltaFor(f, "compressed.gzip_small", "regular", routes)?.thin, false);
+    f.tests["json.small"]!.rungs!["regular"]!.count = 19;
+    const chain = deltaFor(f, "compressed.gzip_small", "regular", routes);
+    assert.equal(chain?.thin, true);
+    assert.deepEqual(
+      chain?.steps.map((s) => s.thin),
+      [false, true],
+    );
+    // A byte count is exact, and never thin.
+    assert.equal(chainWith(chainOf("json.medium", routes), () => 10, () => 0)?.thin, false);
+  });
+
   test("a root carries no delta", () => {
     assert.equal(deltaFor(framework({ "json.small": 100 }), "json.small", "regular", routes), null);
   });

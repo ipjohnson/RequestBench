@@ -9,6 +9,7 @@
 import { binEdge, scaleFor, usLabel } from "../lib/bins.ts";
 import type { BinGrid, TestRung } from "../lib/types.ts";
 import { esc } from "../lib/html.ts";
+import { isThin, thinTitle } from "../lib/thin.ts";
 
 type Props = {
   grid: BinGrid;
@@ -35,13 +36,16 @@ const peak = Math.max(...shares.slice(span.c0, span.c1 + 1), 1);
 const top = peak > 50 ? 100 : peak > 25 ? 50 : peak > 10 ? 25 : peak > 5 ? 10 : 5;
 const y = (v: number): number => M.t + ph - (v / top) * ph;
 
-/** p50 and p99 are what the table leads with, so they are what the shape is annotated against. */
-const marks: { name: string; v: number }[] = [];
-for (const [name, v] of [
-  ["p50", stats?.p50Us],
-  ["p99", stats?.p99Us],
-] as [string, number | null | undefined][]) {
-  if (typeof v === "number" && v > 0) marks.push({ name, v });
+/**
+ * p50 and p99 are what the table leads with, so they are what the shape is annotated against. A
+ * thin one is drawn faint.
+ */
+const marks: { name: string; v: number; thin: string | null }[] = [];
+for (const [name, metric, v] of [
+  ["p50", "p50Us", stats?.p50Us],
+  ["p99", "p99Us", stats?.p99Us],
+] as [string, string, number | null | undefined][]) {
+  if (typeof v === "number" && v > 0) marks.push({ name, v, thin: isThin(total, metric) ? thinTitle(total, metric, name) : null });
 }
 ---
 
@@ -86,8 +90,10 @@ for (const [name, v] of [
         })}
         {marks.map((m) => (
           <Fragment>
-            <line x1={sc.x(m.v)} x2={sc.x(m.v)} y1={M.t} y2={M.t + ph} class="ephistmark" />
-            <text x={sc.x(m.v) + 4} y={M.t + 9} class="ephistmarklabel">
+            <line x1={sc.x(m.v)} x2={sc.x(m.v)} y1={M.t} y2={M.t + ph} class={m.thin ? "ephistmark thin" : "ephistmark"}>
+              {m.thin && <title set:html={esc(m.thin)} />}
+            </line>
+            <text x={sc.x(m.v) + 4} y={M.t + 9} class={m.thin ? "ephistmarklabel thin" : "ephistmarklabel"}>
               {m.name}
             </text>
           </Fragment>

@@ -6,6 +6,7 @@ import TestOverTime from "./TestOverTime.astro";
 import { baseCell } from "../lib/views.ts";
 import { cell, type Unit } from "../lib/metrics.ts";
 import { esc } from "../lib/html.ts";
+import { beyond, beyondLabel, isThin, thinTitle } from "../lib/thin.ts";
 import type { Chain } from "../lib/delta.ts";
 import type { BinGrid, Route, TestRung, WireExchange } from "../lib/types.ts";
 import type { Mechanism, Part, Snippet } from "../lib/bundleview.ts";
@@ -39,7 +40,8 @@ const LAMBDA_FRAMINGS = new Set(["proxy", "proxy-base64", "stream", "bare"]);
 
 /**
  * One column of the performance table. `base` is null when there is no base row. `m` names the
- * statistic and `n` is its number, which another framework's row is read against.
+ * statistic and `n` is its number, which another framework's row is read against. `thin` is how
+ * many requests lie beyond a thin percentile.
  */
 type Field = {
   k: string;
@@ -48,6 +50,7 @@ type Field = {
   v: string;
   title?: string | undefined;
   base: string | null;
+  thin?: number | undefined;
 };
 
 type Props = {
@@ -113,15 +116,20 @@ const {
 const measure = (r: PaneRung): { fields: Field[]; measured: boolean } => {
   const d = r.stats ?? {};
   const b = r.base ?? {};
-  const under = (v: string, x: Chain | null | undefined, unit: Unit, level: string): string | null =>
-    against ? baseCell(v, x, unit, factors, level) : null;
-  const pct = ([k, m]: [string, Pct]): Field => ({
-    k,
-    m,
-    n: d[m],
-    v: cell(d[m], "us"),
-    base: under(cell(b[m], "us"), r.chains[m], "us", k),
-  });
+  const under = (v: string, x: Chain | null | undefined, unit: Unit, level: string, thin = false): string | null =>
+    against ? baseCell(v, x, unit, factors, level, thin) : null;
+  const pct = ([k, m]: [string, Pct]): Field => {
+    const thin = d[m] != null && isThin(d.count, m);
+    return {
+      k,
+      m,
+      n: d[m],
+      v: cell(d[m], "us"),
+      title: thin ? thinTitle(d.count, m, k) : undefined,
+      base: under(cell(b[m], "us"), r.chains[m], "us", k, b[m] != null && isThin(b.count, m)),
+      thin: thin ? (beyond(d.count, m) ?? 0) : undefined,
+    };
+  };
   return {
     measured: Object.keys(d).length > 0,
     fields: [
@@ -187,9 +195,23 @@ const hdrs = (hs: readonly (readonly [string, string])[]): string =>
           {measured ? (
             <div class="fields">
               {fields.map((f) => (
-                <div class="frow" data-k={f.m} data-v={f.n ?? undefined}>
-                  <span class="fk">{f.k}</span>
-                  <span class="fv" title={f.title}>{f.v}</span>
+                <div class="frow" data-k={f.m} data-v={f.n ?? undefined} data-thin={f.thin === undefined ? undefined : ""}>
+                  <span class="fk">
+                    {f.k}
+                    {f.thin !== undefined && (
+                      <>
+                        {" "}
+                        <span class="fthin">{beyondLabel(f.thin)}</span>
+                      </>
+                    )}
+                  </span>
+                  {f.thin === undefined ? (
+                    <span class="fv" title={f.title}>{f.v}</span>
+                  ) : (
+                    <span class="fv thin" title={f.title} tabindex="0">
+                      {f.v}
+                    </span>
+                  )}
                   {f.base !== null && <Fragment set:html={f.base} />}
                 </div>
               ))}

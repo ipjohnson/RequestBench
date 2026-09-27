@@ -147,7 +147,8 @@ export function sharesOf(run: Run, weights: ReadonlyMap<string, number>): Map<st
   return new Map([...byFamily].map(([fam, w]) => [fam, total ? w / total : 0]));
 }
 
-export type BlendStats = { p50Us: number | null; p90Us: number | null; p99Us: number | null };
+/** A blend's percentiles, and `count`, the requests of its tests they are read from. */
+export type BlendStats = { p50Us: number | null; p90Us: number | null; p99Us: number | null; count: number };
 
 /**
  * One framework's latency over a blend at one rate: each percentile the geometric mean of its
@@ -156,7 +157,7 @@ export type BlendStats = { p50Us: number | null; p90Us: number | null; p99Us: nu
  * which is so at a rate the framework did not complete.
  */
 export function blendStats(f: Framework, rn: string, weights: ReadonlyMap<string, number>): BlendStats {
-  const mean = (k: keyof BlendStats): number | null => {
+  const mean = (k: "p50Us" | "p90Us" | "p99Us"): number | null => {
     let logs = 0;
     let total = 0;
     for (const [id, w] of weights) {
@@ -167,5 +168,7 @@ export function blendStats(f: Framework, rn: string, weights: ReadonlyMap<string
     }
     return total > 0 ? Math.exp(logs / total) : null;
   };
-  return { p50Us: mean("p50Us"), p90Us: mean("p90Us"), p99Us: mean("p99Us") };
+  let count = 0;
+  for (const id of weights.keys()) count += f.tests[id]?.rungs?.[rn]?.count ?? 0;
+  return { p50Us: mean("p50Us"), p90Us: mean("p90Us"), p99Us: mean("p99Us"), count };
 }

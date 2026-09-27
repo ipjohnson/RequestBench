@@ -26,6 +26,7 @@ looked at with:
       load.ts         reading the two input directories
       catalog.ts      what results exist and where each document is
       blends.ts       the named blends, and a blend as the geometric mean of its tests' percentiles
+      thin.ts         which percentiles are thin, and what a thin one says
       hist.ts         what a run is published without: each test's histogram and windows
       windows.ts      each test's windows, and the latency range a rate's charts share
       delta.ts        the base chain: one implementation, used by both kinds of page

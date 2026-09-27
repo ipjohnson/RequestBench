@@ -87,6 +87,10 @@ td.delta.up { color: var(--amber); }
 td.delta.down { color: var(--tealtext); }
 td.delta.flat, td.delta.root { color: var(--ink3); }
 td.dead { color: var(--ink3); text-decoration: line-through; }
+/* A thin percentile, which fewer than ten requests lie beyond. It is shown, muted and hatched,
+   so it reads as a number to take lightly rather than as a gap. */
+.thin, td.delta.thin { color: var(--ink3);
+        background-image: repeating-linear-gradient(135deg, var(--rule2) 0 1px, transparent 1px 5px); }
 .barcell { width: 26%; min-width: 120px; }
 .bar { height: 9px; border-radius: 2px; background: var(--teal); min-width: 2px; }
 .bar.b { background: var(--bar); }
