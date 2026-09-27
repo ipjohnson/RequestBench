@@ -2,6 +2,7 @@
 // One test as the tests pages show it: what it asks, each call's request and the checks on its
 // answer, and the test's own source.
 import type { TestView } from "../lib/bundleview.ts";
+import { HEFT_TITLE } from "../lib/corpus.ts";
 import TestCall from "./TestCall.astro";
 
 type Props = {
@@ -27,6 +28,13 @@ const primed = (p: { reads: readonly string[] }): string => (p.reads.length ? ` 
       t.kind !== "performance" && (
         <span class="pill" title="A validation test: rb validate checks it, and nothing measures it.">
           not measured
+        </span>
+      )
+    }
+    {
+      t.heft !== undefined && (
+        <span class="pill" title={HEFT_TITLE}>
+          heft {t.heft}
         </span>
       )
     }

@@ -4,6 +4,7 @@
 import TestHistogram from "./TestHistogram.astro";
 import TestOverTime from "./TestOverTime.astro";
 import { baseCell } from "../lib/views.ts";
+import { HEFT_TITLE } from "../lib/corpus.ts";
 import { cell, type Unit } from "../lib/metrics.ts";
 import { esc } from "../lib/html.ts";
 import { beyond, beyondLabel, isThin, thinTitle } from "../lib/thin.ts";
@@ -56,6 +57,8 @@ type Field = {
 type Props = {
   id: string;
   route: Route | undefined;
+  /** The test's heft as the run recorded it. A run from before hefts has none. */
+  heft: number | undefined;
   rungs: PaneRung[];
   grid: BinGrid | undefined;
   /** How the run's windows are laid out, or null when it has none. */
@@ -92,6 +95,7 @@ type Props = {
 const {
   id,
   route,
+  heft,
   rungs,
   grid,
   windowing,
@@ -176,7 +180,19 @@ const hdrs = (hs: readonly (readonly [string, string])[]): string =>
 
 <section class="eppane" data-ep={id} data-base={against ?? undefined} hidden={!first}>
   <h2 class="epname">{id}</h2>
-  <p class="leafroute"><span class="verb">{route?.m ?? ""}</span> {route?.p ?? ""}</p>
+  <p class="leafroute">
+    <span class="verb">{route?.m ?? ""}</span> {route?.p ?? ""}
+    {
+      heft !== undefined && (
+        <>
+          {" "}
+          <span class="pill" title={HEFT_TITLE}>
+            heft {heft}
+          </span>
+        </>
+      )
+    }
+  </p>
 
   <div class="perfhead">
     <h3 class="childcap">Performance</h3>

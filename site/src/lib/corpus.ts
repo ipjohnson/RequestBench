@@ -104,6 +104,9 @@ export function corpusLinks(corpus: { view: TestsView; repo: string; linkable: b
   return { link, payloadHref };
 }
 
+/** What a test's heft is, as its title says wherever the heft is shown. */
+export const HEFT_TITLE = "How much work the test asks of a framework, from 1 to 5. The load sends a heavier test less often.";
+
 /** What a reader is told once above these tests, each note only where one of them needs it. */
 export function legendOf(tests: readonly TestView[]): string[] {
   const shown = tests.flatMap((t) =>

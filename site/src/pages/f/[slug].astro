@@ -417,6 +417,7 @@ const unsupported = Object.entries(t.unsupported ?? {}).sort(([a], [b]) => (a < 
                 <TestPane
                   id={id}
                   route={routes[id]}
+                  heft={own[id]?.heft}
                   rungs={rates.map((r) => ({
                     rn: r.rn,
                     stats: own[id]?.rungs?.[r.rn],

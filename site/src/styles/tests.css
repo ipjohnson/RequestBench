@@ -35,6 +35,7 @@
 .testindex td.route { word-break: break-all; }
 .testindex td.id { font-family: var(--f-mono); font-size: 12.5px; white-space: nowrap; }
 .testindex td.differs { color: var(--ink2); min-width: 220px; }
+.testindex td.heft { font-family: var(--f-mono); font-size: 12.5px; }
 .testindex .pill { margin-left: 7px; }
 .tcase { scroll-margin-top: 16px; }
 .tcasehead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; margin: 0 0 6px; }

@@ -70,6 +70,8 @@ export type TestRung = z.infer<typeof TestRung>;
 
 export const TestRecord = z.looseObject({
   family: z.string().optional(),
+  /** How much work the test asks of a framework, from 1 to 5. A summary from before hefts has none. */
+  heft: z.number().optional(),
   rungs: z.record(z.string(), TestRung).optional(),
 });
 export type TestRecord = z.infer<typeof TestRecord>;

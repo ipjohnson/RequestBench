@@ -4,7 +4,7 @@
 import Shell from "../../components/Shell.astro";
 import TestCase from "../../components/TestCase.astro";
 import "../../styles/tests.css";
-import { corpusLinks, familiesOf, familyPage, legendOf, readAgainst, type FamilyEntry } from "../../lib/corpus.ts";
+import { corpusLinks, familiesOf, familyPage, HEFT_TITLE, legendOf, readAgainst, type FamilyEntry } from "../../lib/corpus.ts";
 import { site } from "../../lib/site.ts";
 
 export function getStaticPaths() {
@@ -46,6 +46,7 @@ const comparable = `${family.comparable.charAt(0).toLowerCase()}${family.compara
       <thead>
         <tr>
           <th>test</th>
+          <th title={HEFT_TITLE}>heft</th>
           <th>request</th>
           <th>base</th>
           <th>what differs from the base</th>
@@ -59,6 +60,7 @@ const comparable = `${family.comparable.charAt(0).toLowerCase()}${family.compara
                 <a href={`#${id}`}>{id}</a>
                 {t.kind !== "performance" && <span class="pill">not measured</span>}
               </td>
+              <td class="heft">{t.heft ?? ""}</td>
               <td class="route">
                 <span class="verb">{t.method ?? ""}</span> {t.path ?? ""}
               </td>
