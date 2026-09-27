@@ -84,6 +84,10 @@ export const languageName = (language: string): string => LANGUAGE_NAMES[languag
 export const familyOf = (run: Run, id: string): string =>
   run.frameworks.map((f) => f.tests?.[id]?.family).find(Boolean) ?? id.split(".")[0] ?? id;
 
+/** A test's heft as the run recorded it, or undefined where the run is from before hefts. */
+export const heftOf = (run: Run, id: string): number | undefined =>
+  run.frameworks.map((f) => f.tests?.[id]?.heft).find((h) => h !== undefined);
+
 /** A framework's families at one rung. A rung it did not complete has none. */
 export const famsAt = (f: Framework, rn: string): Record<string, FamilyRecord> => f.families?.[rn] ?? {};
 

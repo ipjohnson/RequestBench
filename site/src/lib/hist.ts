@@ -1,7 +1,7 @@
 // What the site leaves out of a run: the generator's histogram a summary carries for each test,
 // and each test's windows.
 //
-// The histograms are most of a summary's bytes, and nothing on the site reads them: a blend is
+// The histograms are most of a summary's bytes, and nothing on the site reads them: a profile is
 // read from each test's percentiles. The framework pages draw the windows when the site is built,
 // and nothing in the browser reads them.
 

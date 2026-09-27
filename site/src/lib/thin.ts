@@ -2,7 +2,7 @@
 // beyond it, such as a p99 over fewer than 1,000 requests or a p90 over fewer than 100. The site
 // shows it all the same, and marks it.
 //
-// A family's or a blend's percentile is the geometric mean of its tests' own, so it is read from
+// A family's or a profile's percentile is the geometric mean of its tests' own, so it is read from
 // all of their requests. The requests beyond each test's own percentile add up, and the mean is
 // thin only when their total is under THIN, however thin each test's is.
 
