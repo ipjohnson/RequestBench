@@ -128,8 +128,9 @@ Logging is Django's default. Under uvicorn it writes nothing for a 4xx while `DE
 - uvicorn speaks only HTTP/1.1, so on container-h2 the application runs on Hypercorn 0.18. Django's
   ASGI deployment guide covers Hypercorn beside uvicorn. The numbers on container-h2 therefore
   measure another server as well as another protocol. Read against container-h1's, they compare both
-  at once. Django implements no ASGI lifespan, and Hypercorn has no setting to skip it, so each
-  worker logs once that it carries on without one.
+  at once. Hypercorn ends an HTTP/2 connection after 1,000 requests by default, and uvicorn never
+  does, so `server.py` lifts the limit. Django implements no ASGI lifespan, and Hypercorn has no
+  setting to skip it, so each worker logs once that it carries on without one.
 
 ## Refusals
 

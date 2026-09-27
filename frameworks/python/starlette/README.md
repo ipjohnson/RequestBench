@@ -113,7 +113,9 @@ the worker that accepted it, and the gate sends each test's two requests on one 
 - uvicorn speaks only HTTP/1.1, so on container-h2 the application runs on Hypercorn 0.18.
   Starlette's documentation names uvicorn and points to the ASGI specification's list of servers,
   which lists Hypercorn. The numbers on container-h2 therefore measure another server as well as
-  another protocol. Read against container-h1's, they compare both at once.
+  another protocol. Read against container-h1's, they compare both at once. Hypercorn ends an HTTP/2
+  connection after 1,000 requests by default, and uvicorn never does, so `server.py` lifts the
+  limit.
 
 ## Refusals
 
