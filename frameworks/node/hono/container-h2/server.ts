@@ -13,7 +13,20 @@ const directory = process.env["RB_PAYLOADS"];
 if (directory === undefined) throw new Error("RB_PAYLOADS has to name the payload directory");
 
 const app = build(load(directory));
-const server = serve({ fetch: app.fetch, createServer, hostname: "0.0.0.0", port: Number(process.env["PORT"] ?? 8080) }, () => {
+
+// hono's streamSSE and streamText set Transfer-Encoding and Connection, which belong to HTTP/1.1.
+// node:http2 refuses them with a throw that escapes @hono/node-server's error handler and ends the
+// process, so an answer carrying them drops them here. This is honojs/hono#4041.
+const fetch: typeof app.fetch = async (request, ...rest) => {
+  const response = await app.fetch(request, ...rest);
+  if (response.headers.has("transfer-encoding")) {
+    response.headers.delete("transfer-encoding");
+    response.headers.delete("connection");
+  }
+  return response;
+};
+
+const server = serve({ fetch, createServer, hostname: "0.0.0.0", port: Number(process.env["PORT"] ?? 8080) }, () => {
   // performance.now() counts from the start of the process.
   boot.ms = Math.round(performance.now() * 10) / 10;
 });
