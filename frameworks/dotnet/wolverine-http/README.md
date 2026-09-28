@@ -1,6 +1,6 @@
 # Wolverine.HTTP
 
-Wolverine.HTTP (WolverineFx.Http 6.39.1) on ASP.NET Core 10, answering the RequestBench corpus.
+Wolverine.HTTP (WolverineFx.Http 6.41.0) on ASP.NET Core 10, answering the RequestBench corpus.
 The contract every route follows is [`frameworks/openapi.json`](../../openapi.json).
 
 Wolverine.HTTP routes a static method marked `[WolverineGet]` or one of its siblings, and

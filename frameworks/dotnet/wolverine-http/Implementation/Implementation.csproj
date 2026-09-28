@@ -10,8 +10,8 @@
     <!-- lambda-emulator's adapter, with Amazon.Lambda.RuntimeSupport as its runtime client. It does
          nothing outside Lambda, so every host builds with it. -->
     <PackageReference Include="Amazon.Lambda.AspNetCoreServer.Hosting" Version="2.2.1" />
-    <PackageReference Include="WolverineFx.Http" Version="6.39.1" />
-    <PackageReference Include="WolverineFx.Http.FluentValidation" Version="6.39.1" />
+    <PackageReference Include="WolverineFx.Http" Version="6.41.0" />
+    <PackageReference Include="WolverineFx.Http.FluentValidation" Version="6.41.0" />
     <PackageReference Include="FluentValidation" Version="12.1.1" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.12" />
     <PackageReference Include="Microsoft.Extensions.ApiDescription.Server" Version="10.0.12">
