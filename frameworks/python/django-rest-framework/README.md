@@ -19,10 +19,10 @@ DRF's views are synchronous, so Django serves them over WSGI here, where
 | `Implementation/` | The application. `wsgi.py` is what each worker loads, `settings.py` configures Django and DRF and loads the payloads, `urls.py` routes every path, `renderers.py` holds the two renderers DRF does not ship, and `views/` holds one module per corpus family. |
 | `container-h1/` | How container-h1 starts it. `server.py` starts gunicorn with two workers, and `Dockerfile` builds the image. |
 | `container-h2/` | How container-h2 starts it. `server.py` starts gunicorn as container-h1's does, serving HTTP/2 with prior knowledge and no TLS, and `Dockerfile` builds the image with the `container-h2` group, which adds gunicorn's http2 extra. |
-| `lambda-emulator/` | How lambda-emulator starts it. `server.py` is the handler's module, which puts Django's WSGI application behind apig-wsgi for awslambdaric, the runtime client, and `Dockerfile` builds the function on the `python:3.14` base image, with the packages and the application together in the task root. |
+| `lambda-emulator/` | How lambda-emulator starts it. `server.py` starts gunicorn with Django's WSGI application on one worker, `start.sh` starts the Lambda Web Adapter beside it, and `Dockerfile` builds the function on the `python:3.14` base image, with the packages and the application together in the task root and the adapter in `/opt/extensions`. |
 | `UnitTests/` | pytest tests of the wiring, sending each request through DRF's `APIClient`. |
 | `client-exception/` | How the corpus reads DRF's error bodies. |
-| `pyproject.toml` | The dependencies, the suite's dependencies, lambda-emulator's adapter as a group of its own, and pytest's settings. |
+| `pyproject.toml` | The dependencies, the suite's dependencies, container-h2's as a group of its own, and pytest's settings. |
 | `uv.lock` | What uv resolved, which each host's image installs. |
 
 ## Building, running and testing
@@ -139,16 +139,19 @@ in the same place.
 - `JSONRenderer` writes no space after a separator and leaves non-ASCII unescaped, so items.large
   goes out as 128,510 bytes, where the file holds 129,937 and `django-asgi`'s `JsonResponse` writes
   142,764.
-- On lambda-emulator the application answers behind apig-wsgi 2.20, which reads API Gateway payload
-  format 2.0 and hands Django each event as a WSGI request. apig-wsgi buffers the whole answer into
-  one proxy response, so the sse and stream tests are listed as unsupported there.
-- apig-wsgi keeps only the last value of a response header the application repeats, other than
-  `Set-Cookie`. No answer here repeats one.
-- On lambda-emulator the runtime client puts its log handler on the root logger, so the warning
-  Django logs for each 4xx, such as `Not Found: /items/999999`, is written to the function's output.
-  Under gunicorn no handler takes them.
-- The function on lambda-emulator is one process on one thread, which answers one event at a time,
-  so `/__meta` reports one worker and one thread there.
+- On lambda-emulator the application runs on gunicorn, as on container-h1, behind the Lambda Web
+  Adapter 1.1.0. The adapter asks the Runtime API for each event, sends it to gunicorn on loopback as
+  an HTTP request, and streams gunicorn's answer back, because the function sets
+  `AWS_LWA_INVOKE_MODE=response_stream`. So every answer goes out as a Lambda response stream.
+  awslambdaric, Python's runtime client, posts every answer whole, and apig-wsgi has no streaming
+  path.
+- Lambda starts each extension in `/opt/extensions` itself. lambda-emulator starts none, so
+  `lambda-emulator/start.sh` starts the adapter beside the server. The adapter registers with the
+  Extensions API and waits on its `event/next` for as long as the function runs.
+- The adapter asks for the first event once `/health` answers, so the function's Init phase includes
+  gunicorn's start.
+- The function answers one event at a time, so gunicorn runs one worker with one thread there, and
+  `/__meta` reports them.
 - gunicorn 26.2 serves HTTP/2 with prior knowledge and no TLS through `http2_cleartext`, which needs
   the h2 library from its http2 extra. It serves it only to a peer in `forwarded_allow_ips`. On
   container-h2 a published port's peer is Docker's gateway, so every peer is trusted. gunicorn then

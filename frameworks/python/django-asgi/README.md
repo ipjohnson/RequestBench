@@ -16,10 +16,10 @@ header, so the views do both, and a `django.forms.Form` binds and validates ever
 | `Implementation/` | The application. `asgi.py` is what each worker imports, `settings.py` configures Django and loads the payloads, `urls.py` routes every path, and `views/` holds one module per corpus family. |
 | `container-h1/` | How container-h1 starts it. `server.py` starts uvicorn with two workers, and `Dockerfile` builds the image. |
 | `container-h2/` | How container-h2 starts it. `server.py` starts Hypercorn with two workers, which answers HTTP/2 with prior knowledge, and `Dockerfile` builds the image with the `container-h2` group, which adds Hypercorn. |
-| `lambda-emulator/` | How lambda-emulator starts it. `server.py` is the handler's module, which puts Django's ASGI application behind Mangum for awslambdaric, the runtime client, and `Dockerfile` builds the function on the `python:3.14` base image, with the packages and the application together in the task root. |
+| `lambda-emulator/` | How lambda-emulator starts it. `server.py` starts uvicorn with Django's ASGI application in one process, `start.sh` starts the Lambda Web Adapter beside it, and `Dockerfile` builds the function on the `python:3.14` base image, with the packages and the application together in the task root and the adapter in `/opt/extensions`. |
 | `UnitTests/` | pytest tests of the wiring, sending each request through Django's AsyncClient. |
 | `client-exception/` | How the corpus reads Django's error bodies. |
-| `pyproject.toml` | The dependencies, the suite's dependencies, lambda-emulator's adapter as a group of its own, and pytest's settings. |
+| `pyproject.toml` | The dependencies, the suite's dependencies, container-h2's as a group of its own, and pytest's settings. |
 | `uv.lock` | What uv resolved, which each host's image installs. |
 
 ## Building, running and testing
@@ -105,26 +105,27 @@ Logging is Django's default. Under uvicorn it writes nothing for a 4xx while `DE
   bytes, into each gzip header, so a compressed answer's length changes from one answer to the next.
 - Django answers every error it writes itself, the 404, 400 and 403, with an HTML page, whatever
   the request accepts.
-- Django implements no ASGI lifespan and refuses any scope but HTTP, so `server.py` tells uvicorn
-  not to ask, and `lambda-emulator/server.py` tells Mangum.
+- Django implements no ASGI lifespan and refuses any scope but HTTP, so each host's `server.py` tells
+  uvicorn not to ask.
 - `django.views.static.serve` is a synchronous view, so Django runs it in a thread. Under ASGI
   Django reads the file it answers with to its end, in a thread, before it sends any of it, and
   warns once in each worker that it consumed a synchronous iterator. Django documents `serve` for
   development. WhiteNoise, the usual answer in production, is a synchronous middleware, and while
   one is installed Django runs every request on every route through a thread.
 - A required `BooleanField` refuses `False`, so the items forms declare `inStock` not required.
-- On lambda-emulator the application answers behind Mangum 0.22, which reads API Gateway payload
-  format 2.0. Mangum buffers the whole answer into one proxy response, so the sse and stream tests
-  are listed as unsupported there.
-- Mangum posts the body Django writes for HEAD, where uvicorn leaves it unwritten. A Function URL's
-  caller reads no body in an answer to HEAD, so nothing reads it.
-- Mangum runs every event on asyncio's own event loop, so uvloop, which uvicorn picks on
-  container-h1, goes unused on lambda-emulator.
-- On lambda-emulator the runtime client puts its log handler on the root logger, so the warning
-  Django logs for each 4xx it answers, such as `Not Found: /items/999999`, is written to the
-  function's output, with the traceback of a `BadRequest`. Under uvicorn no handler takes them.
-- The function on lambda-emulator is one process, which answers one event at a time, so `/__meta`
-  reports one worker there.
+- On lambda-emulator the application runs on uvicorn, as on container-h1, behind the Lambda Web
+  Adapter 1.1.0. The adapter asks the Runtime API for each event, sends it to uvicorn on loopback as
+  an HTTP request, and streams uvicorn's answer back, because the function sets
+  `AWS_LWA_INVOKE_MODE=response_stream`. So every answer goes out as a Lambda response stream.
+  awslambdaric, Python's runtime client, posts every answer whole, and Mangum has no streaming
+  path.
+- Lambda starts each extension in `/opt/extensions` itself. lambda-emulator starts none, so
+  `lambda-emulator/start.sh` starts the adapter beside the server. The adapter registers with the
+  Extensions API and waits on its `event/next` for as long as the function runs.
+- The adapter asks for the first event once `/health` answers, so the function's Init phase includes
+  uvicorn's start.
+- The function is one process, which answers one event at a time, so uvicorn runs no workers of its
+  own there, and `/__meta` reports one worker.
 - uvicorn speaks only HTTP/1.1, so on container-h2 the application runs on Hypercorn 0.18. Django's
   ASGI deployment guide covers Hypercorn beside uvicorn. The numbers on container-h2 therefore
   measure another server as well as another protocol. Read against container-h1's, they compare both

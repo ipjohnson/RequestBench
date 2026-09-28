@@ -1,4 +1,4 @@
-"""The application each gunicorn worker loads, and the one apig-wsgi hands each Lambda event to.
+"""The application each gunicorn worker loads, on every host.
 Setting Django up reads settings.py, which loads the payloads RB_PAYLOADS names."""
 import os
 

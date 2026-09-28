@@ -1,25 +1,23 @@
-"""RequestBench framework: FastAPI as a Lambda function, behind Mangum.
+"""RequestBench framework: FastAPI as a Lambda function, served by uvicorn behind the Lambda Web
+Adapter.
 
-The base image's runtime client, awslambdaric, imports this module from the task root and calls
-handler with each event it asks the Runtime API for. Mangum turns the event, an API Gateway payload
-format 2.0 request, into an ASGI request for the application, and the answer into a proxy response.
+start.sh starts the adapter beside this process. The adapter asks the Runtime API for each event,
+sends it to uvicorn on loopback as an HTTP request, and streams uvicorn's answer back.
 """
 import os
 from importlib.metadata import version
 
-# A function is one process, which answers one event at a time. It is set before main is imported,
-# because routes/contract.py imports it from this module.
+import uvicorn
+
+# A function is one process, which answers one event at a time, so uvicorn runs the application in
+# this process rather than in workers of its own.
 WORKERS = 1
-# What /__meta names as the adapter. contract.py imports it with WORKERS.
-ADAPTER = f"Mangum {version('mangum')}"
+# What /__meta names as the adapter. contract.py imports it with WORKERS. The Dockerfile names the
+# Lambda Web Adapter it copies in.
+ADAPTER = f"uvicorn {version('uvicorn')} behind {os.environ['RB_LAMBDA_ADAPTER']}"
 
-if "RB_PAYLOADS" not in os.environ:
-    raise RuntimeError("RB_PAYLOADS has to name the payload directory")
-
-from mangum import Mangum  # noqa: E402
-
-from main import app  # noqa: E402
-
-# Mangum runs the ASGI lifespan's startup and shutdown around every event rather than once. The
-# application registers nothing for either, so lifespan is off, as Mangum's README examples set it.
-handler = Mangum(app, lifespan="off")
+if __name__ == "__main__":
+    if "RB_PAYLOADS" not in os.environ:
+        raise SystemExit("RB_PAYLOADS has to name the payload directory")
+    # No access log, as on container-h1.
+    uvicorn.run("main:app", host="127.0.0.1", port=int(os.environ["AWS_LWA_PORT"]), workers=WORKERS, access_log=False)

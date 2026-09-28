@@ -133,12 +133,18 @@ without one argument, the handler, so the Dockerfile ends with a `CMD` of one wo
 own Lambda adapter turns each event into a request for the application, and each answer into a
 proxy response.
 
+Where neither the language's runtime client nor an adapter for it can stream an answer, as for
+Python, the function runs the framework's own server behind the Lambda Web Adapter. Lambda starts
+each extension in `/opt/extensions` itself, and the traffic generator starts none, so the image's
+entrypoint starts the adapter beside the server. The adapter registers with the Extensions API,
+which the traffic generator answers, and asks the Runtime API for each event in the runtime's place.
+
 The orchestrator starts the traffic generator's Lambda Runtime API first, and the function after
 it. The function is ready when its runtime asks for its first event. It gets these settings:
 
 | Setting | Value |
 | --- | --- |
-| `AWS_LAMBDA_RUNTIME_API` | The traffic generator's address. On Linux the function shares the host's network, and it listens on nothing. |
+| `AWS_LAMBDA_RUNTIME_API` | The traffic generator's address. On Linux the function shares the host's network, and it listens on nothing but loopback, where a server behind the Lambda Web Adapter answers it. |
 | `AWS_LAMBDA_FUNCTION_MEMORY_SIZE` | The host's memory, `512` or `1024`. Several runtimes size their heap from it. |
 | The rest of Lambda's variables | The function's name, version, log group and log stream, its initialization type and region, as `FUNCTION_ENV` in `orchestrator/container.ts` lists them |
 | `RB_HOST` | `lambda-emulator-512` or `lambda-emulator-1024` |

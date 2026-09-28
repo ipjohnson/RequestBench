@@ -15,11 +15,11 @@ converts it before the handler runs. A declared return type is serialized by Pyd
 | `Implementation/` | The application. `main.py` is what each worker imports, `app.py` builds the application, and `routes/` holds one module per corpus family. |
 | `container-h1/` | How container-h1 starts it. `server.py` starts uvicorn with two workers, and `Dockerfile` builds the image. |
 | `container-h2/` | How container-h2 starts it. `server.py` starts Hypercorn with two workers, which answers HTTP/2 with prior knowledge, and `Dockerfile` builds the image with the `container-h2` group, which adds Hypercorn. |
-| `lambda-emulator/` | How lambda-emulator starts it. `server.py` is the handler's module, which puts the application behind Mangum for awslambdaric, the runtime client, and `Dockerfile` builds the function on the `python:3.14` base image, with the packages and the application together in the task root. |
+| `lambda-emulator/` | How lambda-emulator starts it. `server.py` starts uvicorn in one process, `start.sh` starts the Lambda Web Adapter beside it, and `Dockerfile` builds the function on the `python:3.14` base image, with the packages and the application together in the task root and the adapter in `/opt/extensions`. |
 | `UnitTests/` | pytest tests of the wiring, sending each request through Starlette's TestClient. |
 | `Client/` | The OpenAPI document FastAPI builds from the routes, and the TypeScript client Hey API generates from it, with its own `package.json`. |
 | `client-exception/` | How the corpus reads FastAPI's error bodies. |
-| `pyproject.toml` | The dependencies, the suite's dependencies, lambda-emulator's adapter as a group of its own, and pytest's settings. |
+| `pyproject.toml` | The dependencies, the suite's dependencies, container-h2's as a group of its own, and pytest's settings. |
 | `uv.lock` | What uv resolved, which each host's image installs. |
 
 ## Building, running and testing
@@ -88,19 +88,19 @@ the worker that accepted it, and the gate sends each test's two requests on one 
   at level 1 instead, the fastest level every framework here compresses at.
 - uvicorn writes one access-log line per request by default. `server.py` turns that off, because
   no other framework in the corpus logs a request.
-- On lambda-emulator the application answers behind Mangum 0.22, which reads API Gateway payload
-  format 2.0. Mangum buffers the whole answer into one proxy response, so the sse and stream tests
-  are listed as unsupported there.
-- Mangum runs the ASGI lifespan's startup and shutdown around every event rather than once, so
-  `lambda-emulator/server.py` turns the lifespan off. The application registers nothing for either.
-- Mangum posts whatever the application writes for HEAD, where uvicorn leaves the body unwritten. A
-  Function URL's caller reads no body in an answer to HEAD, so nothing reads it.
-- Mangum writes `Content-Type: application/json` on an answer that has none, such as the 204 of
-  `items.delete`.
-- Mangum runs every event on asyncio's own event loop, so uvloop, which uvicorn picks on
-  container-h1, goes unused on lambda-emulator.
-- The function on lambda-emulator is one process, which answers one event at a time, so `/__meta`
-  reports one worker there.
+- On lambda-emulator the application runs on uvicorn, as on container-h1, behind the Lambda Web
+  Adapter 1.1.0. The adapter asks the Runtime API for each event, sends it to uvicorn on loopback as
+  an HTTP request, and streams uvicorn's answer back, because the function sets
+  `AWS_LWA_INVOKE_MODE=response_stream`. So every answer goes out as a Lambda response stream.
+  awslambdaric, Python's runtime client, posts every answer whole, and Mangum has no streaming
+  path.
+- Lambda starts each extension in `/opt/extensions` itself. lambda-emulator starts none, so
+  `lambda-emulator/start.sh` starts the adapter beside the server. The adapter registers with the
+  Extensions API and waits on its `event/next` for as long as the function runs.
+- The adapter asks for the first event once `/health` answers, so the function's Init phase includes
+  uvicorn's start.
+- The function is one process, which answers one event at a time, so uvicorn runs no workers of its
+  own there, and `/__meta` reports one worker.
 - uvicorn speaks only HTTP/1.1, so on container-h2 the application runs on Hypercorn 0.18. FastAPI's
   deployment documentation names Hypercorn as the ASGI server with HTTP/2. The numbers on
   container-h2 therefore measure another server as well as another protocol. Read against

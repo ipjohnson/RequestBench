@@ -16,6 +16,10 @@
 //!
 //! An answer is read as a Function URL's caller reads it. That caller gets no body in an answer to
 //! HEAD, whatever the function posted.
+//!
+//! An extension, such as the Lambda Web Adapter in front of a framework's own server, registers
+//! with the Extensions API and then waits on its `event/next`. This server sends an extension no
+//! events, so that request waits for as long as the function runs.
 use std::cell::{Cell, RefCell};
 use std::collections::VecDeque;
 use std::rc::Rc;
@@ -38,6 +42,9 @@ use crate::request::Request;
 const NEXT: &str = "/2018-06-01/runtime/invocation/next";
 const INVOCATION: &str = "/2018-06-01/runtime/invocation/";
 const INIT_ERROR: &str = "/2018-06-01/runtime/init/error";
+const EXTENSION_REGISTER: &str = "/2020-01-01/extension/register";
+const EXTENSION_NEXT: &str = "/2020-01-01/extension/event/next";
+const EXTENSION_ID: &str = "00000000-0000-4000-8000-00000000e0e0";
 const ID_PREFIX: &str = "00000000-0000-4000-8000-";
 const DEADLINE: &str = "Lambda-Runtime-Deadline-Ms: ";
 const ARN: &str = "arn:aws:lambda:us-east-1:000000000000:function:rb";
@@ -54,6 +61,16 @@ static INVALID: LazyLock<Vec<u8>> =
     LazyLock::new(|| reply("400 Bad Request", r#"{"errorMessage":"Invalid request ID","errorType":"InvalidRequestID"}"#));
 static NOT_FOUND: LazyLock<Vec<u8>> =
     LazyLock::new(|| reply("404 Not Found", r#"{"errorMessage":"no such route","errorType":"NotFound"}"#));
+/// A registration's answer: the identifier the extension sends with its later requests, and the
+/// function it joined.
+static REGISTERED: LazyLock<Vec<u8>> = LazyLock::new(|| {
+    let body = r#"{"functionName":"rb","functionVersion":"$LATEST","handler":"rb"}"#;
+    format!(
+        "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nLambda-Extension-Identifier: {EXTENSION_ID}\r\nContent-Length: {}\r\n\r\n{body}",
+        body.len()
+    )
+    .into_bytes()
+});
 
 fn reply(status: &str, body: &str) -> Vec<u8> {
     format!("HTTP/1.1 {status}\r\nContent-Type: application/json\r\nContent-Length: {}\r\n\r\n{body}", body.len()).into_bytes()
@@ -367,6 +384,10 @@ impl Env {
         self.progress.set(now);
         match (inbound.method.as_str(), inbound.path.as_str()) {
             ("GET", NEXT) => self.next(conn, now),
+            ("POST", EXTENSION_REGISTER) => write(conn, &REGISTERED),
+            // Lambda sends an extension only the events it subscribed to. The Lambda Web Adapter
+            // subscribes to none, so its request waits here for as long as the function runs.
+            ("GET", EXTENSION_NEXT) => {}
             ("POST", INIT_ERROR) => {
                 write(conn, &ACCEPTED);
                 *self.init_error.borrow_mut() = Some(String::from_utf8_lossy(&inbound.body).into_owned());
@@ -731,6 +752,36 @@ mod tests {
         });
     }
 
+    /// An extension on a thread of its own that registers and asks for its next event, as the Lambda
+    /// Web Adapter does. It reports its registration's answer, then whether a second passed with
+    /// nothing more from the server.
+    fn extension(port: u16, registered: oneshot::Sender<String>, waited: oneshot::Sender<bool>) {
+        std::thread::spawn(move || {
+            let mut s = std::net::TcpStream::connect(("127.0.0.1", port)).unwrap();
+            let mut buf = Vec::new();
+            let events = r#"{ "events": [] }"#;
+            let register = format!(
+                "POST /2020-01-01/extension/register HTTP/1.1\r\nHost: api\r\nLambda-Extension-Name: lambda-adapter\r\n\
+                 Content-Length: {}\r\n\r\n{events}",
+                events.len()
+            );
+            s.write_all(register.as_bytes()).unwrap();
+            let (head, _) = message(&mut s, &mut buf).unwrap();
+            let id = head.lines().find_map(|l| l.strip_prefix("Lambda-Extension-Identifier: ")).map(str::to_string);
+            let next = format!(
+                "GET /2020-01-01/extension/event/next HTTP/1.1\r\nHost: api\r\nLambda-Extension-Identifier: {}\r\n\r\n",
+                id.unwrap_or_default()
+            );
+            s.write_all(next.as_bytes()).unwrap();
+            registered.send(head).unwrap();
+            s.set_read_timeout(Some(Duration::from_secs(1))).unwrap();
+            let mut byte = [0u8; 1];
+            let quiet =
+                matches!(s.read(&mut byte), Err(e) if matches!(e.kind(), std::io::ErrorKind::WouldBlock | std::io::ErrorKind::TimedOut));
+            waited.send(quiet).unwrap();
+        });
+    }
+
     fn get(target: &str) -> Request {
         Request { method: "GET".into(), target: target.into(), headers: vec![], body: None }
     }
@@ -753,6 +804,26 @@ mod tests {
                 let head = Request { method: "HEAD".into(), ..get("/items/17") };
                 let answer = env.exchange(&head, Duration::from_secs(5)).await.unwrap();
                 assert_eq!((answer["status"].as_u64(), answer["bodyBytes"].as_u64()), (Some(200), Some(0)));
+            })
+            .await;
+    }
+
+    #[tokio::test]
+    async fn an_extension_registers_and_waits_on_its_next_event_while_the_runtime_answers() {
+        LocalSet::new()
+            .run_until(async {
+                let (env, port) = listen("127.0.0.1:0").await.unwrap();
+                let (registered, registration) = oneshot::channel();
+                let (waited, quiet) = oneshot::channel();
+                extension(port, registered, waited);
+                let head = registration.await.unwrap();
+                assert!(head.starts_with("HTTP/1.1 200"), "{head}");
+                assert!(head.contains(&format!("Lambda-Extension-Identifier: {EXTENSION_ID}")), "{head}");
+                runtime(port);
+                env.init(Duration::from_secs(5)).await.unwrap();
+                let answer = env.exchange(&get("/json/small"), Duration::from_secs(5)).await.unwrap();
+                assert_eq!(answer["status"], 200);
+                assert!(quiet.await.unwrap(), "the server answered the extension's event/next");
             })
             .await;
     }

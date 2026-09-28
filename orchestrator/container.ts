@@ -212,8 +212,8 @@ export interface RunningFunction {
  * A lambda-emulator host: the function's image, whose base image execs the runtime's bootstrap
  * because AWS_LAMBDA_RUNTIME_API is set, pointed at the Runtime API the traffic generator serves on
  * `apiPort`. On Linux it shares the host's network, so the runtime reaches the server over
- * loopback with no bridge or NAT on the path, and a function listens on nothing. It runs on one
- * core, the first of RB_SUT_CPUS or a quota of one, in the host's `memoryMb`.
+ * loopback with no bridge or NAT on the path, and a function listens on nothing but loopback. It
+ * runs on one core, the first of RB_SUT_CPUS or a quota of one, in the host's `memoryMb`.
  */
 export function startFunction(root: string, built: Built, f: FrameworkKey, host: HostId, apiPort: number, b: Budget = budget()): RunningFunction {
   const { memoryMb }: Host = HOSTS[host];
