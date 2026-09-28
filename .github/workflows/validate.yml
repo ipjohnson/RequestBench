@@ -155,7 +155,7 @@ jobs:
           cache: npm
       - run: npm ci --no-audit --no-fund
       - if: matrix.framework.language == 'dotnet'
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@v6
         with:
           global-json-file: ${{ matrix.framework.dir }}/global.json
       - if: matrix.framework.language == 'go'
@@ -184,7 +184,7 @@ jobs:
           cache: maven
           cache-dependency-path: ${{ matrix.framework.dir }}/**/pom.xml
       - if: matrix.framework.language == 'python'
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v7
       - if: matrix.framework.language == 'rust'
         uses: dtolnay/rust-toolchain@stable
       - if: matrix.framework.language == 'rust'
