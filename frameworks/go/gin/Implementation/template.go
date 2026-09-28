@@ -22,4 +22,6 @@ func templateRoutes(r *gin.Engine, p *Payloads) {
 	r.GET("/template/small", func(c *gin.Context) { c.HTML(http.StatusOK, "items.tmpl", &p.Small) })
 
 	r.GET("/template/medium", func(c *gin.Context) { c.HTML(http.StatusOK, "items.tmpl", &p.Medium) })
+
+	r.GET("/template/large", func(c *gin.Context) { c.HTML(http.StatusOK, "items.tmpl", &p.Large) })
 }

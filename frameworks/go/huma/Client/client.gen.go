@@ -60,6 +60,14 @@ type EchoedParametersOne struct {
 	Size  string        `json:"size"`
 }
 
+// EchoedParametersThree defines model for EchoedParametersThree.
+type EchoedParametersThree struct {
+	Count int64           `json:"count"`
+	Echo  ParametersThree `json:"echo"`
+	Items *[]Item         `json:"items"`
+	Size  string          `json:"size"`
+}
+
 // EchoedParametersTwo defines model for EchoedParametersTwo.
 type EchoedParametersTwo struct {
 	Count int64         `json:"count"`
@@ -175,6 +183,13 @@ type ParametersOne struct {
 	One int64 `json:"one"`
 }
 
+// ParametersThree defines model for ParametersThree.
+type ParametersThree struct {
+	One   int64 `json:"one"`
+	Three int64 `json:"three"`
+	Two   int64 `json:"two"`
+}
+
 // ParametersTwo defines model for ParametersTwo.
 type ParametersTwo struct {
 	One int64 `json:"one"`
@@ -288,6 +303,9 @@ type GetQueryOneParams struct {
 	Page *int64 `form:"page,omitempty" json:"page,omitempty"`
 }
 
+// PostBodyBindLargeJSONRequestBody defines body for PostBodyBindLarge for application/json ContentType.
+type PostBodyBindLargeJSONRequestBody = Order
+
 // PostBodyBindMediumJSONRequestBody defines body for PostBodyBindMedium for application/json ContentType.
 type PostBodyBindMediumJSONRequestBody = Order
 
@@ -296,6 +314,9 @@ type PostBodyBindSmallJSONRequestBody = Order
 
 // PostBodyValidateFirstErrorJSONRequestBody defines body for PostBodyValidateFirstError for application/json ContentType.
 type PostBodyValidateFirstErrorJSONRequestBody = Order
+
+// PostBodyValidateLargeJSONRequestBody defines body for PostBodyValidateLarge for application/json ContentType.
+type PostBodyValidateLargeJSONRequestBody = CheckedOrder
 
 // PostBodyValidateMediumJSONRequestBody defines body for PostBodyValidateMedium for application/json ContentType.
 type PostBodyValidateMediumJSONRequestBody = CheckedOrder
@@ -397,6 +418,20 @@ type ClientInterface interface {
 	// Corresponds with GET /authorized/small (the `GetAuthorizedSmall` operationId).
 	GetAuthorizedSmall(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// PostBodyBindLargeWithBody Post body bind large
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /body/bind/large (the `PostBodyBindLarge` operationId).
+	PostBodyBindLargeWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PostBodyBindLarge Post body bind large
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /body/bind/large (the `PostBodyBindLarge` operationId).
+	PostBodyBindLarge(ctx context.Context, body PostBodyBindLargeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// PostBodyBindMediumWithBody Post body bind medium
 	//
 	// Takes any type of body and a specified content type.
@@ -438,6 +473,20 @@ type ClientInterface interface {
 	//
 	// Corresponds with POST /body/validate/first-error (the `PostBodyValidateFirstError` operationId).
 	PostBodyValidateFirstError(ctx context.Context, body PostBodyValidateFirstErrorJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PostBodyValidateLargeWithBody Post body validate large
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /body/validate/large (the `PostBodyValidateLarge` operationId).
+	PostBodyValidateLargeWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PostBodyValidateLarge Post body validate large
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /body/validate/large (the `PostBodyValidateLarge` operationId).
+	PostBodyValidateLarge(ctx context.Context, body PostBodyValidateLargeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// PostBodyValidateMediumWithBody Post body validate medium
 	//
@@ -645,6 +694,11 @@ type ClientInterface interface {
 	// Corresponds with GET /parameters/{one}/with-second/{two} (the `GetParametersByOneWithSecondByTwo` operationId).
 	GetParametersByOneWithSecondByTwo(ctx context.Context, one int64, two int64, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// GetParametersByOneByTwoByThree Get parameters by one by two by three
+	//
+	// Corresponds with GET /parameters/{one}/{two}/{three} (the `GetParametersByOneByTwoByThree` operationId).
+	GetParametersByOneByTwoByThree(ctx context.Context, one int64, two int64, three int64, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// ListPlaintext List plaintext
 	//
 	// Corresponds with GET /plaintext (the `ListPlaintext` operationId).
@@ -668,6 +722,11 @@ type ClientInterface interface {
 	// Corresponds with GET /stream/items (the `GetStreamItems` operationId).
 	GetStreamItems(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// ListTemplateLarge List template large
+	//
+	// Corresponds with GET /template/large (the `ListTemplateLarge` operationId).
+	ListTemplateLarge(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// ListTemplateMedium List template medium
 	//
 	// Corresponds with GET /template/medium (the `ListTemplateMedium` operationId).
@@ -684,6 +743,40 @@ type ClientInterface interface {
 // Corresponds with GET /authorized/small (the `GetAuthorizedSmall` operationId).
 func (c *Client) GetAuthorizedSmall(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetAuthorizedSmallRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// PostBodyBindLargeWithBody Post body bind large
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /body/bind/large (the `PostBodyBindLarge` operationId).
+func (c *Client) PostBodyBindLargeWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostBodyBindLargeRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// PostBodyBindLarge Post body bind large
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /body/bind/large (the `PostBodyBindLarge` operationId).
+func (c *Client) PostBodyBindLarge(ctx context.Context, body PostBodyBindLargeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostBodyBindLargeRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -786,6 +879,40 @@ func (c *Client) PostBodyValidateFirstErrorWithBody(ctx context.Context, content
 // Corresponds with POST /body/validate/first-error (the `PostBodyValidateFirstError` operationId).
 func (c *Client) PostBodyValidateFirstError(ctx context.Context, body PostBodyValidateFirstErrorJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostBodyValidateFirstErrorRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// PostBodyValidateLargeWithBody Post body validate large
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /body/validate/large (the `PostBodyValidateLarge` operationId).
+func (c *Client) PostBodyValidateLargeWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostBodyValidateLargeRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// PostBodyValidateLarge Post body validate large
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /body/validate/large (the `PostBodyValidateLarge` operationId).
+func (c *Client) PostBodyValidateLarge(ctx context.Context, body PostBodyValidateLargeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostBodyValidateLargeRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -1362,6 +1489,21 @@ func (c *Client) GetParametersByOneWithSecondByTwo(ctx context.Context, one int6
 	return c.Client.Do(req)
 }
 
+// GetParametersByOneByTwoByThree Get parameters by one by two by three
+//
+// Corresponds with GET /parameters/{one}/{two}/{three} (the `GetParametersByOneByTwoByThree` operationId).
+func (c *Client) GetParametersByOneByTwoByThree(ctx context.Context, one int64, two int64, three int64, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetParametersByOneByTwoByThreeRequest(c.Server, one, two, three)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 // ListPlaintext List plaintext
 //
 // Corresponds with GET /plaintext (the `ListPlaintext` operationId).
@@ -1435,6 +1577,21 @@ func (c *Client) GetStreamItems(ctx context.Context, reqEditors ...RequestEditor
 	return c.Client.Do(req)
 }
 
+// ListTemplateLarge List template large
+//
+// Corresponds with GET /template/large (the `ListTemplateLarge` operationId).
+func (c *Client) ListTemplateLarge(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListTemplateLargeRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 // ListTemplateMedium List template medium
 //
 // Corresponds with GET /template/medium (the `ListTemplateMedium` operationId).
@@ -1488,6 +1645,46 @@ func NewGetAuthorizedSmallRequest(server string) (*http.Request, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	return req, nil
+}
+
+// NewPostBodyBindLargeRequest calls the generic PostBodyBindLarge builder with application/json body
+func NewPostBodyBindLargeRequest(server string, body PostBodyBindLargeJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPostBodyBindLargeRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewPostBodyBindLargeRequestWithBody constructs an http.Request for the PostBodyBindLarge method, with any body, and a specified content type
+func NewPostBodyBindLargeRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/body/bind/large")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
 
 	return req, nil
 }
@@ -1593,6 +1790,46 @@ func NewPostBodyValidateFirstErrorRequestWithBody(server string, contentType str
 	}
 
 	operationPath := fmt.Sprintf("/body/validate/first-error")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewPostBodyValidateLargeRequest calls the generic PostBodyValidateLarge builder with application/json body
+func NewPostBodyValidateLargeRequest(server string, body PostBodyValidateLargeJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPostBodyValidateLargeRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewPostBodyValidateLargeRequestWithBody constructs an http.Request for the PostBodyValidateLarge method, with any body, and a specified content type
+func NewPostBodyValidateLargeRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/body/validate/large")
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -2684,6 +2921,54 @@ func NewGetParametersByOneWithSecondByTwoRequest(server string, one int64, two i
 	return req, nil
 }
 
+// NewGetParametersByOneByTwoByThreeRequest constructs an http.Request for the GetParametersByOneByTwoByThree method
+func NewGetParametersByOneByTwoByThreeRequest(server string, one int64, two int64, three int64) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "one", one, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "integer", Format: "int64"})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "two", two, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "integer", Format: "int64"})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam2 string
+
+	pathParam2, err = runtime.StyleParamWithOptions("simple", false, "three", three, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "integer", Format: "int64"})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/parameters/%s/%s/%s", pathParam0, pathParam1, pathParam2)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewListPlaintextRequest constructs an http.Request for the ListPlaintext method
 func NewListPlaintextRequest(server string) (*http.Request, error) {
 	var err error
@@ -2957,6 +3242,33 @@ func NewGetStreamItemsRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
+// NewListTemplateLargeRequest constructs an http.Request for the ListTemplateLarge method
+func NewListTemplateLargeRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/template/large")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewListTemplateMediumRequest constructs an http.Request for the ListTemplateMedium method
 func NewListTemplateMediumRequest(server string) (*http.Request, error) {
 	var err error
@@ -3062,6 +3374,20 @@ type ClientWithResponsesInterface interface {
 	// Corresponds with GET /authorized/small (the `GetAuthorizedSmall` operationId).
 	GetAuthorizedSmallWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetAuthorizedSmallResponse, error)
 
+	// PostBodyBindLargeWithBodyWithResponse Post body bind large
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /body/bind/large (the `PostBodyBindLarge` operationId).
+	PostBodyBindLargeWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostBodyBindLargeResponse, error)
+
+	// PostBodyBindLargeWithResponse Post body bind large
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /body/bind/large (the `PostBodyBindLarge` operationId).
+	PostBodyBindLargeWithResponse(ctx context.Context, body PostBodyBindLargeJSONRequestBody, reqEditors ...RequestEditorFn) (*PostBodyBindLargeResponse, error)
+
 	// PostBodyBindMediumWithBodyWithResponse Post body bind medium
 	//
 	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
@@ -3103,6 +3429,20 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with POST /body/validate/first-error (the `PostBodyValidateFirstError` operationId).
 	PostBodyValidateFirstErrorWithResponse(ctx context.Context, body PostBodyValidateFirstErrorJSONRequestBody, reqEditors ...RequestEditorFn) (*PostBodyValidateFirstErrorResponse, error)
+
+	// PostBodyValidateLargeWithBodyWithResponse Post body validate large
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /body/validate/large (the `PostBodyValidateLarge` operationId).
+	PostBodyValidateLargeWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostBodyValidateLargeResponse, error)
+
+	// PostBodyValidateLargeWithResponse Post body validate large
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /body/validate/large (the `PostBodyValidateLarge` operationId).
+	PostBodyValidateLargeWithResponse(ctx context.Context, body PostBodyValidateLargeJSONRequestBody, reqEditors ...RequestEditorFn) (*PostBodyValidateLargeResponse, error)
 
 	// PostBodyValidateMediumWithBodyWithResponse Post body validate medium
 	//
@@ -3356,6 +3696,13 @@ type ClientWithResponsesInterface interface {
 	// Corresponds with GET /parameters/{one}/with-second/{two} (the `GetParametersByOneWithSecondByTwo` operationId).
 	GetParametersByOneWithSecondByTwoWithResponse(ctx context.Context, one int64, two int64, reqEditors ...RequestEditorFn) (*GetParametersByOneWithSecondByTwoResponse, error)
 
+	// GetParametersByOneByTwoByThreeWithResponse Get parameters by one by two by three
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /parameters/{one}/{two}/{three} (the `GetParametersByOneByTwoByThree` operationId).
+	GetParametersByOneByTwoByThreeWithResponse(ctx context.Context, one int64, two int64, three int64, reqEditors ...RequestEditorFn) (*GetParametersByOneByTwoByThreeResponse, error)
+
 	// ListPlaintextWithResponse List plaintext
 	//
 	// Returns a wrapper object for the known response body format(s).
@@ -3388,6 +3735,13 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with GET /stream/items (the `GetStreamItems` operationId).
 	GetStreamItemsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetStreamItemsResponse, error)
+
+	// ListTemplateLargeWithResponse List template large
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /template/large (the `ListTemplateLarge` operationId).
+	ListTemplateLargeWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListTemplateLargeResponse, error)
 
 	// ListTemplateMediumWithResponse List template medium
 	//
@@ -3446,6 +3800,54 @@ func (r GetAuthorizedSmallResponse) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r GetAuthorizedSmallResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type PostBodyBindLargeResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *BoundOrder
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *ErrorModel
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r PostBodyBindLargeResponse) GetJSON200() *BoundOrder {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r PostBodyBindLargeResponse) GetApplicationproblemJSONDefault() *ErrorModel {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r PostBodyBindLargeResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r PostBodyBindLargeResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PostBodyBindLargeResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r PostBodyBindLargeResponse) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -3590,6 +3992,54 @@ func (r PostBodyValidateFirstErrorResponse) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r PostBodyValidateFirstErrorResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type PostBodyValidateLargeResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *BoundCheckedOrder
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *ErrorModel
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r PostBodyValidateLargeResponse) GetJSON200() *BoundCheckedOrder {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r PostBodyValidateLargeResponse) GetApplicationproblemJSONDefault() *ErrorModel {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r PostBodyValidateLargeResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r PostBodyValidateLargeResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PostBodyValidateLargeResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r PostBodyValidateLargeResponse) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -5112,6 +5562,54 @@ func (r GetParametersByOneWithSecondByTwoResponse) ContentType() string {
 	return ""
 }
 
+type GetParametersByOneByTwoByThreeResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *EchoedParametersThree
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *ErrorModel
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetParametersByOneByTwoByThreeResponse) GetJSON200() *EchoedParametersThree {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r GetParametersByOneByTwoByThreeResponse) GetApplicationproblemJSONDefault() *ErrorModel {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r GetParametersByOneByTwoByThreeResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetParametersByOneByTwoByThreeResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetParametersByOneByTwoByThreeResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetParametersByOneByTwoByThreeResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 // ListPlaintextResponse200Headers the declared response headers of an HTTP 200 response for ListPlaintext
 type ListPlaintextResponse200Headers struct {
 	ContentType *string
@@ -5345,6 +5843,61 @@ func (r GetStreamItemsResponse) ContentType() string {
 	return ""
 }
 
+// ListTemplateLargeResponse200Headers the declared response headers of an HTTP 200 response for ListTemplateLarge
+type ListTemplateLargeResponse200Headers struct {
+	ContentType *string
+}
+
+type ListTemplateLargeResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *string
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *ErrorModel
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *ListTemplateLargeResponse200Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListTemplateLargeResponse) GetJSON200() *string {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r ListTemplateLargeResponse) GetApplicationproblemJSONDefault() *ErrorModel {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r ListTemplateLargeResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListTemplateLargeResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListTemplateLargeResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListTemplateLargeResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 // ListTemplateMediumResponse200Headers the declared response headers of an HTTP 200 response for ListTemplateMedium
 type ListTemplateMediumResponse200Headers struct {
 	ContentType *string
@@ -5468,6 +6021,32 @@ func (c *ClientWithResponses) GetAuthorizedSmallWithResponse(ctx context.Context
 	return ParseGetAuthorizedSmallResponse(rsp)
 }
 
+// PostBodyBindLargeWithBodyWithResponse Post body bind large
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /body/bind/large (the `PostBodyBindLarge` operationId).
+func (c *ClientWithResponses) PostBodyBindLargeWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostBodyBindLargeResponse, error) {
+	rsp, err := c.PostBodyBindLargeWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostBodyBindLargeResponse(rsp)
+}
+
+// PostBodyBindLargeWithResponse Post body bind large
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /body/bind/large (the `PostBodyBindLarge` operationId).
+func (c *ClientWithResponses) PostBodyBindLargeWithResponse(ctx context.Context, body PostBodyBindLargeJSONRequestBody, reqEditors ...RequestEditorFn) (*PostBodyBindLargeResponse, error) {
+	rsp, err := c.PostBodyBindLarge(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostBodyBindLargeResponse(rsp)
+}
+
 // PostBodyBindMediumWithBodyWithResponse Post body bind medium
 //
 // Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
@@ -5544,6 +6123,32 @@ func (c *ClientWithResponses) PostBodyValidateFirstErrorWithResponse(ctx context
 		return nil, err
 	}
 	return ParsePostBodyValidateFirstErrorResponse(rsp)
+}
+
+// PostBodyValidateLargeWithBodyWithResponse Post body validate large
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /body/validate/large (the `PostBodyValidateLarge` operationId).
+func (c *ClientWithResponses) PostBodyValidateLargeWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostBodyValidateLargeResponse, error) {
+	rsp, err := c.PostBodyValidateLargeWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostBodyValidateLargeResponse(rsp)
+}
+
+// PostBodyValidateLargeWithResponse Post body validate large
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /body/validate/large (the `PostBodyValidateLarge` operationId).
+func (c *ClientWithResponses) PostBodyValidateLargeWithResponse(ctx context.Context, body PostBodyValidateLargeJSONRequestBody, reqEditors ...RequestEditorFn) (*PostBodyValidateLargeResponse, error) {
+	rsp, err := c.PostBodyValidateLarge(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostBodyValidateLargeResponse(rsp)
 }
 
 // PostBodyValidateMediumWithBodyWithResponse Post body validate medium
@@ -6014,6 +6619,19 @@ func (c *ClientWithResponses) GetParametersByOneWithSecondByTwoWithResponse(ctx 
 	return ParseGetParametersByOneWithSecondByTwoResponse(rsp)
 }
 
+// GetParametersByOneByTwoByThreeWithResponse Get parameters by one by two by three
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /parameters/{one}/{two}/{three} (the `GetParametersByOneByTwoByThree` operationId).
+func (c *ClientWithResponses) GetParametersByOneByTwoByThreeWithResponse(ctx context.Context, one int64, two int64, three int64, reqEditors ...RequestEditorFn) (*GetParametersByOneByTwoByThreeResponse, error) {
+	rsp, err := c.GetParametersByOneByTwoByThree(ctx, one, two, three, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetParametersByOneByTwoByThreeResponse(rsp)
+}
+
 // ListPlaintextWithResponse List plaintext
 //
 // Returns a wrapper object for the known response body format(s).
@@ -6077,6 +6695,19 @@ func (c *ClientWithResponses) GetStreamItemsWithResponse(ctx context.Context, re
 	return ParseGetStreamItemsResponse(rsp)
 }
 
+// ListTemplateLargeWithResponse List template large
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /template/large (the `ListTemplateLarge` operationId).
+func (c *ClientWithResponses) ListTemplateLargeWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListTemplateLargeResponse, error) {
+	rsp, err := c.ListTemplateLarge(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListTemplateLargeResponse(rsp)
+}
+
 // ListTemplateMediumWithResponse List template medium
 //
 // Returns a wrapper object for the known response body format(s).
@@ -6119,6 +6750,39 @@ func ParseGetAuthorizedSmallResponse(rsp *http.Response) (*GetAuthorizedSmallRes
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest Payload
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest ErrorModel
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParsePostBodyBindLargeResponse parses an HTTP response from a PostBodyBindLargeWithResponse call
+func ParsePostBodyBindLargeResponse(rsp *http.Response) (*PostBodyBindLargeResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PostBodyBindLargeResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest BoundOrder
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -6218,6 +6882,39 @@ func ParsePostBodyValidateFirstErrorResponse(rsp *http.Response) (*PostBodyValid
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest BoundOrder
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest ErrorModel
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParsePostBodyValidateLargeResponse parses an HTTP response from a PostBodyValidateLargeWithResponse call
+func ParsePostBodyValidateLargeResponse(rsp *http.Response) (*PostBodyValidateLargeResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PostBodyValidateLargeResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest BoundCheckedOrder
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -7406,6 +8103,39 @@ func ParseGetParametersByOneWithSecondByTwoResponse(rsp *http.Response) (*GetPar
 	return response, nil
 }
 
+// ParseGetParametersByOneByTwoByThreeResponse parses an HTTP response from a GetParametersByOneByTwoByThreeWithResponse call
+func ParseGetParametersByOneByTwoByThreeResponse(rsp *http.Response) (*GetParametersByOneByTwoByThreeResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetParametersByOneByTwoByThreeResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest EchoedParametersThree
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest ErrorModel
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseListPlaintextResponse parses an HTTP response from a ListPlaintextWithResponse call
 func ParseListPlaintextResponse(rsp *http.Response) (*ListPlaintextResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -7568,6 +8298,52 @@ func ParseGetStreamItemsResponse(rsp *http.Response) (*GetStreamItemsResponse, e
 		}
 		response.ApplicationproblemJSONDefault = &dest
 
+	}
+
+	return response, nil
+}
+
+// ParseListTemplateLargeResponse parses an HTTP response from a ListTemplateLargeWithResponse call
+func ParseListTemplateLargeResponse(rsp *http.Response) (*ListTemplateLargeResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListTemplateLargeResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest string
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest ErrorModel
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers ListTemplateLargeResponse200Headers
+		if values := rsp.Header.Values("Content-Type"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Type", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentType = &value
+		}
+		response.Headers200 = &headers
 	}
 
 	return response, nil

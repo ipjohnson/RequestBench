@@ -83,9 +83,13 @@ func bodyRoutes(r chi.Router) {
 
 	r.Post("/body/bind/medium", bind)
 
+	r.Post("/body/bind/large", bind)
+
 	r.Post("/body/validate/small", validated)
 
 	r.Post("/body/validate/medium", validated)
+
+	r.Post("/body/validate/large", validated)
 
 	r.Post("/body/validate/first-error", validatedToFirstError)
 }

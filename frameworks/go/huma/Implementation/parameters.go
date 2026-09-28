@@ -15,6 +15,12 @@ type ParametersTwo struct {
 	Two int `json:"two"`
 }
 
+type ParametersThree struct {
+	One   int `json:"one"`
+	Two   int `json:"two"`
+	Three int `json:"three"`
+}
+
 // parametersRoutes bind path parameters into typed input fields. humago registers each operation
 // as a ServeMux pattern, and the ServeMux answers the static segment with its own route, because
 // it is more specific than the {one} wildcard.
@@ -34,5 +40,14 @@ func parametersRoutes(api huma.API, p *Payloads) {
 		Two int `path:"two"`
 	}) (*EchoedOutput[ParametersTwo], error) {
 		return &EchoedOutput[ParametersTwo]{Body: Echoed[ParametersTwo]{&p.Small, ParametersTwo{One: in.One, Two: in.Two}}}, nil
+	})
+
+	huma.Get(api, "/parameters/{one}/{two}/{three}", func(ctx context.Context, in *struct {
+		One   int `path:"one"`
+		Two   int `path:"two"`
+		Three int `path:"three"`
+	}) (*EchoedOutput[ParametersThree], error) {
+		body := Echoed[ParametersThree]{&p.Small, ParametersThree{One: in.One, Two: in.Two, Three: in.Three}}
+		return &EchoedOutput[ParametersThree]{Body: body}, nil
 	})
 }

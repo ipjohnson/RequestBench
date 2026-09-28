@@ -89,9 +89,13 @@ func bodyRoutes(e *echo.Echo) {
 
 	e.POST("/body/bind/medium", bind)
 
+	e.POST("/body/bind/large", bind)
+
 	e.POST("/body/validate/small", validated)
 
 	e.POST("/body/validate/medium", validated)
+
+	e.POST("/body/validate/large", validated)
 
 	e.POST("/body/validate/first-error", validatedToFirstError)
 }

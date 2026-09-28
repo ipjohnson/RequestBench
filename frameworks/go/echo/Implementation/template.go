@@ -23,4 +23,6 @@ func templateRoutes(e *echo.Echo, p *Payloads) {
 	e.GET("/template/small", func(c *echo.Context) error { return c.Render(http.StatusOK, "items.tmpl", &p.Small) })
 
 	e.GET("/template/medium", func(c *echo.Context) error { return c.Render(http.StatusOK, "items.tmpl", &p.Medium) })
+
+	e.GET("/template/large", func(c *echo.Context) error { return c.Render(http.StatusOK, "items.tmpl", &p.Large) })
 }

@@ -6,13 +6,15 @@ import (
 	"testing"
 )
 
-// rb:test body.bind_small,body.bind_medium,body.validate_small,body.validate_medium
+// rb:test body.bind_small,body.bind_medium,body.bind_large,body.validate_small,body.validate_medium,body.validate_large
 func TestAnOrderIsAnsweredWithItsLeavesItsLengthAndItself(t *testing.T) {
 	for _, row := range []struct{ id, path, file string }{
 		{"body.bind_small", "/body/bind/small", "order.small.json"},
 		{"body.bind_medium", "/body/bind/medium", "order.medium.json"},
+		{"body.bind_large", "/body/bind/large", "order.large.json"},
 		{"body.validate_small", "/body/validate/small", "order.small.json"},
 		{"body.validate_medium", "/body/validate/medium", "order.medium.json"},
+		{"body.validate_large", "/body/validate/large", "order.large.json"},
 	} {
 		t.Run(row.id, func(t *testing.T) {
 			body := file(t, row.file)

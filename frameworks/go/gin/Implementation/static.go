@@ -7,6 +7,6 @@ import (
 // staticRoutes serve the payload directory with gin's Static, which registers GET and HEAD on
 // /static/*filepath and hands the file to net/http's FileServer.
 func staticRoutes(r *gin.Engine, p *Payloads) {
-	// rb:handler static.file
+	// rb:handler static.large,static.medium,static.small
 	r.Static("/static", p.Directory)
 }

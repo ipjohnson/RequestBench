@@ -15,6 +15,12 @@ type ParametersTwo struct {
 	Two int `uri:"two" json:"two"`
 }
 
+type ParametersThree struct {
+	One   int `uri:"one" json:"one"`
+	Two   int `uri:"two" json:"two"`
+	Three int `uri:"three" json:"three"`
+}
+
 // parametersRoutes bind router captures with ShouldBindUri, which converts each to the integer
 // its field declares. Gin's tree prefers the static segment of the static route.
 func parametersRoutes(r *gin.Engine, p *Payloads) {
@@ -36,5 +42,14 @@ func parametersRoutes(r *gin.Engine, p *Payloads) {
 			return
 		}
 		c.JSON(http.StatusOK, Echoed[ParametersTwo]{&p.Small, captured})
+	})
+
+	r.GET("/parameters/:one/:two/:three", func(c *gin.Context) {
+		var captured ParametersThree
+		if err := c.ShouldBindUri(&captured); err != nil {
+			refuse(c, err)
+			return
+		}
+		c.JSON(http.StatusOK, Echoed[ParametersThree]{&p.Small, captured})
 	})
 }

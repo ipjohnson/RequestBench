@@ -70,9 +70,13 @@ func bodyRoutes(api huma.API) {
 
 	huma.Post(api, "/body/bind/medium", bind, parseOnly)
 
+	huma.Post(api, "/body/bind/large", bind, parseOnly)
+
 	huma.Post(api, "/body/validate/small", validated)
 
 	huma.Post(api, "/body/validate/medium", validated)
+
+	huma.Post(api, "/body/validate/large", validated)
 
 	huma.Post(api, "/body/validate/first-error", validatedToFirstError)
 }

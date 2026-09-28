@@ -116,7 +116,7 @@ corpus id it covers, so `go test ./UnitTests -run '/json.small'` runs one.
   `docker stop` ends it at once, with no graceful shutdown.
 - A struct tag such as `json:"items"` reads as the route literal `/items`, so the create route
   carries an `rb:handler` mark. The GET pattern on `/items/{id}` is marked for `items.head` too,
-  and the `/static/` pattern for `static.file`, because neither names what its test sends.
+  and the `/static/` pattern for the three static tests, because neither names what its test sends.
 
 ## Refusals
 

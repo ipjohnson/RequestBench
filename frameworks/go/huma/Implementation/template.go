@@ -34,4 +34,6 @@ func templateRoutes(api huma.API, p *Payloads) {
 	huma.Get(api, "/template/small", rendered(&p.Small))
 
 	huma.Get(api, "/template/medium", rendered(&p.Medium))
+
+	huma.Get(api, "/template/large", rendered(&p.Large))
 }

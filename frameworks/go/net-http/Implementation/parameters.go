@@ -14,6 +14,12 @@ type ParametersTwo struct {
 	Two int `json:"two"`
 }
 
+type ParametersThree struct {
+	One   int `json:"one"`
+	Two   int `json:"two"`
+	Three int `json:"three"`
+}
+
 // parametersRoutes read the pattern's wildcards with PathValue, which hands them back as strings,
 // and convert them with strconv. The literal static segment is more specific than the {one}
 // wildcard, so the ServeMux answers it with its own route.
@@ -41,5 +47,24 @@ func parametersRoutes(mux *http.ServeMux, p *Payloads) {
 			return
 		}
 		respond(w, http.StatusOK, Echoed[ParametersTwo]{&p.Small, ParametersTwo{One: one, Two: two}})
+	})
+
+	mux.HandleFunc("GET /parameters/{one}/{two}/{three}", func(w http.ResponseWriter, r *http.Request) {
+		one, err := strconv.Atoi(r.PathValue("one"))
+		if err != nil {
+			refuse(w, err)
+			return
+		}
+		two, err := strconv.Atoi(r.PathValue("two"))
+		if err != nil {
+			refuse(w, err)
+			return
+		}
+		three, err := strconv.Atoi(r.PathValue("three"))
+		if err != nil {
+			refuse(w, err)
+			return
+		}
+		respond(w, http.StatusOK, Echoed[ParametersThree]{&p.Small, ParametersThree{One: one, Two: two, Three: three}})
 	})
 }
