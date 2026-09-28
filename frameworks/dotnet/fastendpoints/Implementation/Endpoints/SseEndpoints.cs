@@ -11,7 +11,11 @@ namespace Implementation.Endpoints;
 // rb:handler sse.medium
 public sealed class SseMediumEndpoint(Payloads payloads) : EndpointWithoutRequest
 {
-    public override void Configure() => Get("/sse/medium");
+    public override void Configure()
+    {
+        Get("/sse/medium");
+        Options(route => route.StreamedOnLambda());
+    }
 
     public override Task HandleAsync(CancellationToken ct) =>
         Send.EventStreamAsync(payloads.Medium.Items.Select(row => new StreamItem("message", row)).ToAsyncEnumerable(), ct);

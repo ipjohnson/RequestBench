@@ -23,14 +23,24 @@ namespace Internal.Generated.WolverineHandlers
 
 
 
-        public override System.Threading.Tasks.Task Handle(Microsoft.AspNetCore.Http.HttpContext httpContext)
+        public override async System.Threading.Tasks.Task Handle(Microsoft.AspNetCore.Http.HttpContext httpContext)
         {
             System.Diagnostics.Activity.Current?.SetTag("handler.type", "Implementation.Endpoints.SseEndpoints");
-            
-            // The actual HTTP request handler execution
-            var serverSentEventsResultOfItem = Implementation.Endpoints.SseEndpoints.Medium(_payloads);
+            await using var lambdaStreamBody = Implementation.LambdaStreaming.Before(httpContext);
+            try
+            {
+                
+                // The actual HTTP request handler execution
+                var serverSentEventsResultOfItem = Implementation.Endpoints.SseEndpoints.Medium(_payloads);
 
-            return serverSentEventsResultOfItem.ExecuteAsync(httpContext);
+                await serverSentEventsResultOfItem.ExecuteAsync(httpContext).ConfigureAwait(false);
+            }
+
+            finally
+            {
+                await Implementation.LambdaStreaming.FinallyAsync(lambdaStreamBody).ConfigureAwait(false);
+            }
+
         }
 
     }

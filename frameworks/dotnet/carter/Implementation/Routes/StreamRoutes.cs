@@ -21,6 +21,6 @@ public sealed class StreamRoutes : ICarterModule
                 await body.WriteAsync(NewLine);
                 await body.FlushAsync();
             }
-        }, "application/x-ndjson"));
+        }, "application/x-ndjson")).StreamedOnLambda();
     }
 }

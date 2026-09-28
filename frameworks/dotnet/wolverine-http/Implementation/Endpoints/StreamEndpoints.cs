@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Wolverine.Attributes;
 using Wolverine.Http;
 
 namespace Implementation.Endpoints;
@@ -13,6 +14,7 @@ public static class StreamEndpoints
     private static readonly byte[] NewLine = "\n"u8.ToArray();
 
     [WolverineGet("/stream/items")]
+    [Middleware(typeof(LambdaStreaming))]
     public static IResult Items(Payloads p) => Results.Stream(async body =>
     {
         foreach (Item row in p.Medium.Items)

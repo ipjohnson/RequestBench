@@ -126,8 +126,11 @@ this Mac, against about 280 ms through `app.Run()`, because it finds its command
 - On lambda-emulator the application answers behind Amazon.Lambda.AspNetCoreServer.Hosting 2.2,
   which reads API Gateway payload format 2.0. `AddAWSLambdaHosting` in `Program.cs` puts it in
   Kestrel's place only where `AWS_LAMBDA_FUNCTION_NAME` is set, so it does nothing on the other
-  hosts. It buffers the whole answer into one proxy response, so the sse and stream tests are
-  listed as unsupported there. `EnableResponseStreaming` would stream every answer.
+  hosts. It buffers the whole answer into one proxy response. On Lambda the `LambdaStreaming`
+  middleware on the sse and stream endpoints writes their answers through a Lambda response stream
+  instead. Its `Before` puts the stream in place of the response body, and its `Finally` ends the
+  stream once the answer is written. The stream opens at the first write, with the status and
+  headers the answer has by then. `EnableResponseStreaming` would stream every answer.
 - Amazon.Lambda.AspNetCoreServer marks every request https, as a Function URL's requests are.
   ASP.NET Core's response compression leaves an HTTPS answer uncompressed unless `EnableForHttps`
   is set, so `Program.cs` sets it. The container hosts are plain HTTP, where it changes nothing.

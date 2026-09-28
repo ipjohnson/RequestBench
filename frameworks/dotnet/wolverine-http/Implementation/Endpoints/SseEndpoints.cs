@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Http.HttpResults;
+using Wolverine.Attributes;
 using Wolverine.Http;
 
 namespace Implementation.Endpoints;
@@ -11,5 +12,6 @@ namespace Implementation.Endpoints;
 public static class SseEndpoints
 {
     [WolverineGet("/sse/medium")]
+    [Middleware(typeof(LambdaStreaming))]
     public static ServerSentEventsResult<Item> Medium(Payloads p) => TypedResults.ServerSentEvents(p.Medium.Items.ToAsyncEnumerable());
 }

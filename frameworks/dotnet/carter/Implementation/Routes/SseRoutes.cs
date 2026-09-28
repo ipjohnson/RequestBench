@@ -10,6 +10,6 @@ public sealed class SseRoutes : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapGet("/sse/medium", (Payloads p) => TypedResults.ServerSentEvents(p.Medium.Items.ToAsyncEnumerable()));
+        app.MapGet("/sse/medium", (Payloads p) => TypedResults.ServerSentEvents(p.Medium.Items.ToAsyncEnumerable())).StreamedOnLambda();
     }
 }

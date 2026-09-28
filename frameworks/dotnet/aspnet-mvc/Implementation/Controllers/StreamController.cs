@@ -14,6 +14,7 @@ public sealed class StreamController(Payloads payloads) : ControllerBase
     private static readonly byte[] NewLine = "\n"u8.ToArray();
 
     [HttpGet("/stream/items")]
+    [LambdaStreamed]
     public async Task Rows()
     {
         Response.ContentType = "application/x-ndjson";

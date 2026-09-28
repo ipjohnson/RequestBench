@@ -12,5 +12,6 @@ namespace Implementation.Controllers;
 public sealed class SseController(Payloads payloads) : ControllerBase
 {
     [HttpGet("/sse/medium")]
+    [LambdaStreamed]
     public ServerSentEventsResult<Item> Medium() => TypedResults.ServerSentEvents(payloads.Medium.Items.ToAsyncEnumerable());
 }
