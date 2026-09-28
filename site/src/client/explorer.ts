@@ -12,11 +12,15 @@ import { SERIES_DARK, SERIES_LIGHT } from "../lib/series.ts";
 import { thinTitle } from "../lib/thin.ts";
 import type { Run } from "../lib/types.ts";
 import { deltaCell } from "../lib/views.ts";
+import { Combobox, type Group } from "./combobox.ts";
 import { Data, resolveSource } from "./source.ts";
 import { choicesAt, filterFor, isLatency, pickRung, profileThin, profileValue, rateLabel, rows, thinAt, wireKeyFor } from "./select.ts";
-import { COLS, defaultCols, initialState, pageHref, profileIn, readHash, writeHash, type Col, type Row, type State } from "./state.ts";
+import { COLS, defaultCols, initialState, pageHref, profileIn, readHash, writeHash, type Col, type Gran, type Row, type State } from "./state.ts";
 
 const el = <T extends HTMLElement>(id: string): T => document.getElementById(id) as T;
+
+/** What the filter's list calls the names it offers at each granularity. */
+const NAMES: Readonly<Record<Gran, string>> = { profile: "Profiles", family: "Families", test: "Tests" };
 
 const series = (): string[] =>
   (matchMedia("(prefers-color-scheme: dark)").matches && document.documentElement.dataset["theme"] !== "light") ||
@@ -46,8 +50,8 @@ class Explorer {
   /** Wire captures already asked for, so a render while one is in flight does not ask again. */
   private readonly wireAsked = new Set<string>();
   private ownHash = "";
-  /** The filter's suggestions as last written. */
-  private qopts = "";
+  /** The filter's field and its list of suggestions. */
+  private filter: Combobox | null = null;
   /** The custom picker as last written, so a render that changes nothing in it leaves it alone. */
   private pickHtml = "";
   /** The families whose tests the custom picker has open. Not part of the view, so not in the hash. */
@@ -120,6 +124,31 @@ class Explorer {
     return COLS.filter((c) => (c.pin || this.st.cols.has(c.id)) && this.forGran(c));
   }
 
+  /** The filter's suggestions: the names at this granularity, then the frameworks in the languages shown. */
+  private filterGroups(): Group[] {
+    const run = this.latest();
+    const names = choicesAt(run, this.st.gran, pickRung(run, this.st.rung)).map((value) => ({ value }));
+    const frameworks = (run?.frameworks ?? [])
+      .filter((f) => this.st.langs.has(f.language))
+      .map((f) => ({ value: f.name, hint: f.language }))
+      .sort((a, b) => a.value.localeCompare(b.value));
+    return [
+      { label: NAMES[this.st.gran], choices: names },
+      { label: "Frameworks", choices: frameworks },
+    ];
+  }
+
+  private setFilter(q: string): void {
+    const was = this.st.gran === "profile" ? profileNamed(this.st.q) : null;
+    if (was && was !== "custom") this.fromProfile = was;
+    this.st.q = q;
+    // Custom opens on the profile it was chosen from, until something has been picked.
+    const run = this.latest();
+    if (profileIn(this.st) === "custom" && !this.st.pick.entries.length && run)
+      this.st.pick.entries = entriesOf(run, weightsOf(run, this.fromProfile, this.st.pick).keys());
+    this.render();
+  }
+
   /* ---- render ---- */
 
   render = (): void => {
@@ -158,12 +187,7 @@ class Explorer {
     const q = el<HTMLInputElement>("q");
     q.value = this.st.q;
     q.placeholder = `${this.st.gran} or framework`;
-    // Written only when the names change, so typing in the filter does not rebuild the list
-    // it is suggesting from.
-    const opts = choicesAt(run, this.st.gran, rn)
-      .map((c) => `<option value="${esc(c)}"></option>`)
-      .join("");
-    if (opts !== this.qopts) el("qopts").innerHTML = this.qopts = opts;
+    this.filter?.refresh();
 
     this.renderHostNote();
     this.renderRunNote(run);
@@ -494,16 +518,14 @@ class Explorer {
       if (v in METRICS) this.st.metric = v as State["metric"];
       this.render();
     };
-    el<HTMLInputElement>("q").oninput = (e): void => {
-      const was = this.st.gran === "profile" ? profileNamed(this.st.q) : null;
-      if (was && was !== "custom") this.fromProfile = was;
-      this.st.q = (e.target as HTMLInputElement).value;
-      // Custom opens on the profile it was chosen from, until something has been picked.
-      const run = this.latest();
-      if (profileIn(this.st) === "custom" && !this.st.pick.entries.length && run)
-        this.st.pick.entries = entriesOf(run, weightsOf(run, this.fromProfile, this.st.pick).keys());
-      this.render();
-    };
+    el<HTMLInputElement>("q").oninput = (e): void => this.setFilter((e.target as HTMLInputElement).value);
+    this.filter = new Combobox(el("qcombo"), {
+      groups: () => this.filterGroups(),
+      current: () => this.st.q,
+      pick: (value) => this.setFilter(value),
+      keep: true,
+      cleared: () => this.setFilter(""),
+    });
     document.querySelectorAll<HTMLButtonElement>(".seg button[data-gran]").forEach((b) => {
       b.onclick = (): void => {
         const g = b.dataset["gran"];

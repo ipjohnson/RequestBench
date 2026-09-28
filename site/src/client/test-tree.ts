@@ -15,6 +15,7 @@ import { estimateTitle } from "../lib/profiles.ts";
 import { isThin, thinTitle } from "../lib/thin.ts";
 import type { Run, WireDoc } from "../lib/types.ts";
 import { cmpCell, peerPop, unfinished } from "../lib/views.ts";
+import { Combobox, type Choice, type Group } from "./combobox.ts";
 import { addPick, BASE, dropPick, familyAt, frameworkOf, MAX, readVs, statOf, testAt, writeVs, type Pick } from "./compare.ts";
 import { fetchJson } from "./fetch-json.ts";
 
@@ -210,13 +211,15 @@ export function startTree(): void {
  */
 function startCompare(changed: () => void): void {
   const ctl = document.querySelector<HTMLElement>(".cmp");
-  const add = ctl?.querySelector<HTMLSelectElement>(".cmpadd");
+  const add = ctl?.querySelector<HTMLElement>(".cmpadd");
+  const input = add?.querySelector<HTMLInputElement>("input");
   const chips = ctl?.querySelector<HTMLElement>(".cmpchips");
   const status = ctl?.querySelector<HTMLElement>(".cmpstatus");
-  if (!ctl || !add || !chips || !status) return;
+  if (!ctl || !add || !input || !chips || !status) return;
 
-  const opts = new Map([...add.options].filter((o) => o.value).map((o) => [o.value, o]));
-  const nameOf = (id: string): string => opts.get(id)?.dataset["name"] ?? id;
+  const groups = JSON.parse(add.dataset["choices"] ?? "[]") as Group[];
+  const opts = new Map(groups.flatMap((g) => g.choices).map((c): [string, Choice & { wire?: string }] => [c.value, c]));
+  const nameOf = (id: string): string => opts.get(id)?.label ?? id;
   const panes = [...document.querySelectorAll<HTMLElement>(".eppane")];
   let picks = readVs(location.search, new Set(opts.keys()));
 
@@ -228,7 +231,7 @@ function startCompare(changed: () => void): void {
   const wire = new Map<string, WireDoc | null>();
   const wireRead = new Map<string, Promise<void>>();
   const readWire = async (id: string): Promise<void> => {
-    const at = opts.get(id)?.dataset["wire"];
+    const at = opts.get(id)?.wire;
     wire.set(id, at ? await fetchJson<WireDoc>(new URL(at, location.href)).catch(() => null) : null);
   };
   const load = (ids: string[]): Promise<unknown> =>
@@ -329,11 +332,10 @@ function startCompare(changed: () => void): void {
         );
       })
       .join("");
-    for (const o of opts.values()) o.disabled = picks.some((x) => x.id === o.value);
     const full = picks.length >= MAX;
-    add.disabled = full;
-    add.title = full ? `${MAX} at most. Remove one to pick another.` : "";
-    add.value = "";
+    input.disabled = full;
+    input.title = full ? `${MAX} at most. Remove one to pick another.` : "";
+    combo.refresh();
   };
 
   let generation = 0;
@@ -361,8 +363,11 @@ function startCompare(changed: () => void): void {
     void apply();
   };
 
-  add.addEventListener("change", () => {
-    if (add.value) set(addPick(picks, add.value));
+  // A framework already picked stays listed, and cannot be picked again.
+  const combo = new Combobox(add, {
+    groups: () => groups.map((g) => ({ label: g.label, choices: g.choices.map((c) => ({ ...c, disabled: picks.some((x) => x.id === c.value) })) })),
+    pick: (id) => set(addPick(picks, id)),
+    keep: false,
   });
   chips.addEventListener("click", (ev) => {
     const chip = ev.target instanceof Element ? ev.target.closest<HTMLElement>(".cmpchip") : null;
@@ -371,7 +376,8 @@ function startCompare(changed: () => void): void {
     set(dropPick(picks, chip.dataset["id"] ?? ""));
     // The chip is gone, so focus goes to the one that took its place rather than to the page.
     const next = chips.children[i] ?? chips.children[i - 1];
-    (next instanceof HTMLElement ? next : add).focus();
+    if (next instanceof HTMLElement) next.focus();
+    else combo.focus();
   });
 
   ctl.hidden = false;
