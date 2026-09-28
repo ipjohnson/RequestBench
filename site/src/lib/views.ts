@@ -8,10 +8,25 @@ import { floorFor } from "./delta.ts";
 import { esc } from "./html.ts";
 import { signed, withUnit, type Unit } from "./metrics.ts";
 import { THIN } from "./thin.ts";
-import type { Rung } from "./types.ts";
+import type { Rung, TestRung } from "./types.ts";
 
 /** Why a difference is marked when one of its two numbers is a thin percentile. */
 export const THIN_PAIR = `One of the two is a thin percentile: fewer than ${THIN} requests lie beyond it.`;
+
+/** A number of runs or seconds as a sentence reads it, to a tenth where it is not whole. */
+const few = (n: number): string => Number(n.toFixed(1)).toLocaleString("en-GB");
+
+/**
+ * What a cache test's store did at one rate, as its pane says it under the numbers: how often
+ * the handler ran, beside how often one store that keeps each answer its lifetime would run it,
+ * and how old the oldest answer was.
+ */
+export function cacheLine(cache: NonNullable<TestRung["cache"]>): string {
+  const ran = `The handler ran ${few(cache.handlerRuns)} ${cache.handlerRuns === 1 ? "time" : "times"} for ${cache.keys} keys`;
+  const one = `one store that keeps each answer ${cache.lifetimeSeconds} seconds would run it ${few(cache.oneStore)} times`;
+  const oldest = cache.oldestMs === null ? "" : ` The oldest answer was ${few(cache.oldestMs / 1000)} seconds old.`;
+  return `${ran}, where ${one}.${oldest}`;
+}
 
 /**
  * Why a framework has no latencies at a rate it did not complete: what it achieved and dropped

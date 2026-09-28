@@ -61,6 +61,10 @@ export interface WireTally {
   readonly windows: readonly string[];
   readonly firstError: string | null;
   readonly firstMismatch: string | null;
+  /** The distinct x-rb-serial values the answers carried, sorted, for a test whose serials are counted. */
+  readonly serials: readonly string[];
+  /** How old the oldest of those answers was when it arrived, in milliseconds. */
+  readonly oldestMs: number | null;
 }
 
 /** One test's invocations in a closed-loop phase: each span's histogram in histogram.ts's layout, as base64. */
@@ -79,6 +83,10 @@ export interface WireSpans {
   readonly responseLatency: string;
   readonly responseDuration: string;
   readonly runtimeOverhead: string;
+  /** The distinct x-rb-serial values the answers carried, sorted, for a test whose serials are counted. */
+  readonly serials: readonly string[];
+  /** How old the oldest of those answers was when it arrived, in milliseconds. */
+  readonly oldestMs: number | null;
 }
 
 /** A closed-loop phase on the Runtime API. Times are nanoseconds on the program's own clock. */
@@ -217,7 +225,7 @@ export class Pipe {
    * the load, each slot a test's place in `tests`, which order.ts builds.
    */
   async open(
-    tests: readonly { readonly instances: readonly LoadInstance[] }[],
+    tests: readonly { readonly instances: readonly LoadInstance[]; readonly serials: boolean }[],
     order: readonly number[],
     shape: { readonly workers: number; readonly connections: number; readonly streams: number },
   ): Promise<void> {

@@ -192,6 +192,18 @@ test("each test's windows travel with it on a completed rung, and the summary na
   assert.equal("windows" in summarize(run).frameworks[0]!.tests["json.small"]!.rungs["regular"]!, false);
 });
 
+test("a cache test carries how often its handler ran beside what one store expiring on time would run", () => {
+  const cache = { keys: 4, handlerRuns: 9, oldestMs: 29_800 };
+  const small = { ...testRow("cache.small", "cache", 1, { 30: 100 }), cache };
+  const regular: PhaseResult = { name: "regular", rps: 100, status: "done", recorded: recorded([small]), unfinished: 0 };
+  const counted = { ...load, phases: [phases[0]!, regular, ...phases.slice(2)] };
+  const s = summarize({ ...run, frameworks: [{ ...run.frameworks[0]!, load: counted }] });
+  // Four keys, each run once per lifetime of 30 seconds over the rung's recorded seconds.
+  const seconds = (regular as { recorded: { seconds: number } }).recorded.seconds;
+  assert.deepEqual(s.frameworks[0]!.tests["cache.small"]!.rungs["regular"]!.cache, { ...cache, lifetimeSeconds: 30, oneStore: (4 * seconds) / 30 });
+  assert.equal("cache" in summarize(run).frameworks[0]!.tests["json.small"]!.rungs["regular"]!, false);
+});
+
 test("a rung with drops, an aborted rung and a rung never run publish no latency", () => {
   const f = summarize(run).frameworks[0]!;
   const raised = f.rungs["raised"]!;

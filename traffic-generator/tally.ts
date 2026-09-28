@@ -14,6 +14,9 @@ export interface Tally {
   readonly windows: readonly Uint32Array[];
   readonly firstError: string | undefined;
   readonly firstMismatch: string | undefined;
+  /** The distinct x-rb-serial values the answers carried, for a test whose serials are counted. */
+  readonly serials: readonly string[];
+  readonly oldestMs: number | null;
 }
 
 function histOf(b64: string): Uint32Array {
@@ -33,5 +36,7 @@ export function tallyOf(t: WireTally): Tally {
     windows: t.windows.map(histOf),
     firstError: t.firstError ?? undefined,
     firstMismatch: t.firstMismatch ?? undefined,
+    serials: t.serials,
+    oldestMs: t.oldestMs,
   };
 }

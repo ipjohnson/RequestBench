@@ -7,6 +7,7 @@ import { idOf } from "@rb/tests/kit";
 import { BUCKETS, addInto, countOf, percentile, windowOf } from "./histogram.ts";
 import {
   WINDOW_SECONDS,
+  cacheSummary,
   type ClosedPhase,
   type ClosedPhaseResult,
   type ClosedResult,
@@ -16,7 +17,7 @@ import {
 } from "./load.ts";
 import { orderOf } from "./order.ts";
 import type { ClosedReport, Pipe, WireSpans } from "./pipe.ts";
-import { prepare, type Statuses } from "./prepare.ts";
+import { prepare, serialsOf, type Statuses } from "./prepare.ts";
 import { select } from "./select.ts";
 
 export interface ClosedOptions {
@@ -93,11 +94,14 @@ export async function runClosed(o: ClosedOptions & { readonly phases: readonly C
   await o.pipe.open(
     compiled.map((test) => ({
       instances: test.instances.map((i) => ({ request: i.request, label: i.target, accepted: i.accepted, bodyBytes: i.bodyBytes ?? null })),
+      serials: serialsOf(test),
     })),
     orderOf(tests),
     { workers: 1, connections: 1, streams: 1 },
   );
   const phases: ClosedPhaseResult[] = [];
+  // Every x-rb-serial value the load has read, so a value is a run of the handler in the phase it first arrives in.
+  const seen = new Set<string>();
   for (const phase of o.phases) {
     o.log(`${phase.name}: a closed loop${phase.settle === undefined ? "" : `, ${phase.settle}s to settle`}${phase.seconds === undefined ? "" : `, ${phase.seconds}s recorded`}`);
     const report = await o.pipe.closedPhase({
@@ -106,6 +110,7 @@ export async function runClosed(o: ClosedOptions & { readonly phases: readonly C
       windowSeconds: WINDOW_SECONDS,
     });
     const settled = report.settle;
+    for (const s of settled.serials) seen.add(s);
     const settle =
       phase.settle === undefined
         ? {}
@@ -136,6 +141,7 @@ export async function runClosed(o: ClosedOptions & { readonly phases: readonly C
         responseDuration: span(t.responseDuration),
         runtimeOverhead: span(t.runtimeOverhead),
         windows: t.windows.map((w) => windowOf(decode(w))),
+        ...(serialsOf(compiled[i]!) ? { cache: cacheSummary(t, compiled[i]!.instances.length, seen) } : {}),
       }));
       const overall = new Uint32Array(BUCKETS);
       for (const t of report.tests) addInto(overall, decode(t.invoke));

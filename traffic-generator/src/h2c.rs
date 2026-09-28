@@ -81,10 +81,12 @@ pub struct Answer {
     /// Kept only when asked for.
     pub headers: Option<HeaderMap>,
     pub body: Option<Vec<u8>>,
+    /// The answer's x-rb-serial, when asked for.
+    pub serial: Option<String>,
 }
 
 /// One request on the connection, and its whole answer.
-pub async fn fetch(send: &SendRequest<Bytes>, template: &Template, keep: bool) -> Result<Answer, String> {
+pub async fn fetch(send: &SendRequest<Bytes>, template: &Template, keep: bool, serial: bool) -> Result<Answer, String> {
     let mut ready = send.clone().ready().await.map_err(|e| e.to_string())?;
     let (response, mut stream) = ready.send_request(template.request(), template.body.is_none()).map_err(|e| e.to_string())?;
     if let Some(body) = &template.body {
@@ -92,7 +94,8 @@ pub async fn fetch(send: &SendRequest<Bytes>, template: &Template, keep: bool) -
     }
     let (parts, mut body) = response.await.map_err(|e| e.to_string())?.into_parts();
     let (body_bytes, kept) = read_body(&mut body, keep).await?;
-    Ok(Answer { status: parts.status.as_u16(), body_bytes, headers: keep.then_some(parts.headers), body: kept })
+    let serial = if serial { parts.headers.get("x-rb-serial").and_then(|v| v.to_str().ok()).map(str::to_string) } else { None };
+    Ok(Answer { status: parts.status.as_u16(), body_bytes, headers: keep.then_some(parts.headers), body: kept, serial })
 }
 
 async fn send_body(stream: &mut SendStream<Bytes>, mut body: Bytes) -> Result<(), String> {
@@ -186,7 +189,7 @@ pub mod tests {
                 let (send, _driver) = connect("127.0.0.1", port).await.unwrap();
                 let post = request("POST", Some(r#"{"a":1}"#));
                 let template = Template::new(&post, post.body().unwrap(), &format!("127.0.0.1:{port}")).unwrap();
-                let answer = fetch(&send, &template, true).await.unwrap();
+                let answer = fetch(&send, &template, true, false).await.unwrap();
                 assert_eq!(answer.status, 200);
                 let body = String::from_utf8(answer.body.unwrap()).unwrap();
                 assert_eq!(body, r#"{"method":"POST","path":"/echo","length":7}"#);
@@ -195,7 +198,7 @@ pub mod tests {
 
                 let head = request("HEAD", None);
                 let template = Template::new(&head, None, "h").unwrap();
-                let answer = fetch(&send, &template, false).await.unwrap();
+                let answer = fetch(&send, &template, false, false).await.unwrap();
                 assert_eq!((answer.status, answer.body_bytes), (200, 0));
             })
             .await;

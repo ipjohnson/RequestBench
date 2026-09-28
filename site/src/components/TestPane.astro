@@ -3,7 +3,7 @@
 // and the tests that hold it.
 import TestHistogram from "./TestHistogram.astro";
 import TestOverTime from "./TestOverTime.astro";
-import { baseCell } from "../lib/views.ts";
+import { baseCell, cacheLine } from "../lib/views.ts";
 import { HEFT_TITLE } from "../lib/corpus.ts";
 import { cell, type Unit } from "../lib/metrics.ts";
 import { esc } from "../lib/html.ts";
@@ -235,6 +235,7 @@ const hdrs = (hs: readonly (readonly [string, string])[]): string =>
           ) : (
             <p class="empty">Not measured at this rate.</p>
           )}
+          {measured && r.stats?.cache && <p class="cachenote">{cacheLine(r.stats.cache)}</p>}
           {shape && overTime ? (
             <div class="epchart">
               <div class="epcharttabs" role="tablist" aria-label={`How to read ${id}'s latency`}>
