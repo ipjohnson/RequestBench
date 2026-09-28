@@ -27,6 +27,13 @@ test("parameters.two: both captures are echoed as integers", async () => {
   assert.deepEqual(response.body, expected.withEcho("items.small.json", { one: run.one, two: run.two }));
 });
 
+// rb:test parameters.three
+test("parameters.three: all three captures are echoed as integers", async () => {
+  const response = await request(app).get(`/parameters/${run.one}/${run.two}/${run.three}`);
+
+  assert.deepEqual(response.body, expected.withEcho("items.small.json", { one: run.one, two: run.two, three: run.three }));
+});
+
 test("nothing checks a capture, so one that is not a number is written back as null", async () => {
   const response = await request(app).get("/parameters/four/segment/literal");
 

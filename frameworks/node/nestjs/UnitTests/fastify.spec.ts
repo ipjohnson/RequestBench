@@ -97,17 +97,19 @@ test('forms.multipart: on Fastify, the multipart FileInterceptor reads the file 
   expect(response.body).toEqual({ file: { name: 'forms.file.txt', bytes: file.length }, echo: { tenant: run.tenant, requestId: run.requestId } });
 });
 
-// rb:test static.file
-test('static.file: on Fastify, ServeStaticModule serves the file through @fastify/static', async () => {
-  const file = expected.bytes('items.large.json');
+// rb:test static.small,static.medium,static.large
+for (const [id, name] of [['static.small', 'items.small.json'], ['static.medium', 'items.medium.json'], ['static.large', 'items.large.json']] as const) {
+  test(`${id}: on Fastify, ServeStaticModule serves the file through @fastify/static`, async () => {
+    const file = expected.bytes(name);
 
-  const response = await request(app.getHttpServer()).get('/static/items.large.json');
+    const response = await request(app.getHttpServer()).get(`/static/${name}`);
 
-  expect(response.status).toBe(200);
-  expect(response.headers['content-type']).toMatch(/^application\/json/);
-  expect(response.headers['last-modified']).toBeDefined();
-  expect(response.text).toBe(file.toString('utf8'));
-});
+    expect(response.status).toBe(200);
+    expect(response.headers['content-type']).toMatch(/^application\/json/);
+    expect(response.headers['last-modified']).toBeDefined();
+    expect(response.text).toBe(file.toString('utf8'));
+  });
+}
 
 // rb:test stream.ndjson
 test('stream.ndjson: on Fastify, the StreamableFile goes out a row per line, with no length', async () => {

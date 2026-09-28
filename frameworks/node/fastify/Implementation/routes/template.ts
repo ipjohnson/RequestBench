@@ -19,6 +19,8 @@ const template: Routes = async (app, { payloads: p }) => {
   app.get("/template/small", async (_request, reply) => reply.viewAsync("items.ejs", p.small));
 
   app.get("/template/medium", async (_request, reply) => reply.viewAsync("items.ejs", p.medium));
+
+  app.get("/template/large", async (_request, reply) => reply.viewAsync("items.ejs", p.large));
 };
 
 export default template;

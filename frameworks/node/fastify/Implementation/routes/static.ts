@@ -5,7 +5,7 @@ import type { Routes } from "../app.ts";
 
 /** static: @fastify/static, registered in this family's plugin, serving the payload directory. */
 const files: Routes = async (app, { payloads: p }) => {
-  // rb:handler static.file
+  // rb:handler static.large,static.medium,static.small
   // rb:wiring static.*
   await app.register(fastifyStatic, { root: p.directory, prefix: "/static/" });
 };

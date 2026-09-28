@@ -28,6 +28,13 @@ test('parameters.two: both captures are echoed as numbers', async () => {
   expect(response.body).toEqual(expected.withEcho('items.small.json', { one: run.one, two: run.two }));
 });
 
+// rb:test parameters.three
+test('parameters.three: all three captures are echoed as numbers', async () => {
+  const response = await request(app.getHttpServer()).get(`/parameters/${run.one}/${run.two}/${run.three}`);
+
+  expect(response.body).toEqual(expected.withEcho('items.small.json', { one: run.one, two: run.two, three: run.three }));
+});
+
 test('a capture that is no integer is refused by ParseIntPipe', async () => {
   const response = await request(app.getHttpServer()).get('/parameters/four/segment/literal');
 

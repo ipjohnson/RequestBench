@@ -61,6 +61,8 @@ const body: Routes = async (app) => {
 
   app.post<{ Body: Order }>("/body/bind/medium", answers(bound), async (request) => boundOf(request));
 
+  app.post<{ Body: Order }>("/body/bind/large", answers(bound), async (request) => boundOf(request));
+
   // rb:wiring body.*
   const validated = { schema: { body: order, response: { 200: bound } } };
 
@@ -68,7 +70,9 @@ const body: Routes = async (app) => {
 
   app.post<{ Body: Order }>("/body/validate/medium", validated, async (request) => boundOf(request));
 
-  // The same schema as the other two. Fastify's ajv reports the first failure on every route.
+  app.post<{ Body: Order }>("/body/validate/large", validated, async (request) => boundOf(request));
+
+  // The same schema as the other three. Fastify's ajv reports the first failure on every route.
   app.post<{ Body: Order }>("/body/validate/first-error", validated, async (request) => boundOf(request));
 };
 

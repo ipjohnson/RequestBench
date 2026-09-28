@@ -2,8 +2,9 @@ import type { Routes } from "../app.ts";
 
 /**
  * parameters: router captures, each echoed back as an integer. @koa/router runs the matching
- * routes in the order they were registered, so the static path is registered first and answers
- * before the capturing route that also matches it.
+ * routes in the order they were registered, so each path is registered before the capturing
+ * routes that also match it, and answers first. The three captures match every path here, so
+ * they come last.
  */
 const parameters: Routes = (router, { payloads: p }) => {
   // rb:wiring parameters.*
@@ -18,6 +19,10 @@ const parameters: Routes = (router, { payloads: p }) => {
     ctx.state.two = Number(value);
     return next();
   });
+  router.param("three", (value, ctx, next) => {
+    ctx.state.three = Number(value);
+    return next();
+  });
   // rb:end
 
   router.get("/parameters/static/segment/literal", (ctx) => {
@@ -30,6 +35,10 @@ const parameters: Routes = (router, { payloads: p }) => {
 
   router.get("/parameters/:one/with-second/:two", (ctx) => {
     ctx.body = { ...p.small, echo: { one: ctx.state.one, two: ctx.state.two } };
+  });
+
+  router.get("/parameters/:one/:two/:three", (ctx) => {
+    ctx.body = { ...p.small, echo: { one: ctx.state.one, two: ctx.state.two, three: ctx.state.three } };
   });
 };
 

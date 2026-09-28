@@ -16,7 +16,7 @@ const PREFIX = "/static";
 const files: Routes = (app, p) => {
   const file = (id: string) => join(p.directory, id.slice(PREFIX.length));
 
-  // rb:handler static.file
+  // rb:handler static.large,static.medium,static.small
   // rb:wiring static.*
   app.get(`${PREFIX}/**`, (event) =>
     serveStatic(event, {

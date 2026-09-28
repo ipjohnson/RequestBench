@@ -69,11 +69,15 @@ const body: Routes = (app) => {
 
   app.post("/body/bind/medium", parse, bound);
 
+  app.post("/body/bind/large", parse, bound);
+
   app.post("/body/validate/small", parse, everyError, bound);
 
   app.post("/body/validate/medium", parse, everyError, bound);
 
-  // The same rules as the other two, run one chain at a time, so the first failure ends the check.
+  app.post("/body/validate/large", parse, everyError, bound);
+
+  // The same rules as the other three, run one chain at a time, so the first failure ends the check.
   app.post("/body/validate/first-error", parse, firstError, bound);
 };
 

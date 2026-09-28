@@ -59,12 +59,19 @@ const body: Routes = (router, { app }) => {
 
   router.post("/body/bind/medium", parse, bound);
 
+  router.post("/body/bind/large", parse, bound);
+
   router.post("/body/validate/small", parse, verified, (ctx) => {
     ctx.verifyParams(order);
     bound(ctx);
   });
 
   router.post("/body/validate/medium", parse, verified, (ctx) => {
+    ctx.verifyParams(order);
+    bound(ctx);
+  });
+
+  router.post("/body/validate/large", parse, verified, (ctx) => {
     ctx.verifyParams(order);
     bound(ctx);
   });

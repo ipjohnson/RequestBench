@@ -31,6 +31,13 @@ export class BodyController {
     return bound(order, length);
   }
 
+  // rb:handler body.bind_large
+  @Post('bind/large')
+  @HttpCode(200)
+  bindLarge(@Body() order: Order, @Headers('content-length') length?: string) {
+    return bound(order, length);
+  }
+
   // rb:handler body.validate_small,body.rejected_all,errors.malformed
   @Post('validate/small')
   @HttpCode(200)
@@ -42,6 +49,13 @@ export class BodyController {
   @Post('validate/medium')
   @HttpCode(200)
   validateMedium(@Body(ValidationPipe) order: CheckedOrder, @Headers('content-length') length?: string) {
+    return bound(order, length);
+  }
+
+  // rb:handler body.validate_large
+  @Post('validate/large')
+  @HttpCode(200)
+  validateLarge(@Body(ValidationPipe) order: CheckedOrder, @Headers('content-length') length?: string) {
     return bound(order, length);
   }
 

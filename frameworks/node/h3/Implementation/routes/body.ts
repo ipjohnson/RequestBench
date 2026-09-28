@@ -53,9 +53,13 @@ const body: Routes = (app) => {
 
   app.post("/body/bind/medium", async (event) => boundOf(event, (await readBody<Order>(event))!));
 
+  app.post("/body/bind/large", async (event) => boundOf(event, (await readBody<Order>(event))!));
+
   app.post("/body/validate/small", async (event) => boundOf(event, await readValidatedBody(event, order)));
 
   app.post("/body/validate/medium", async (event) => boundOf(event, await readValidatedBody(event, order)));
+
+  app.post("/body/validate/large", async (event) => boundOf(event, await readValidatedBody(event, order)));
 
   app.post("/body/validate/first-error", async (event) => boundOf(event, (await readValidatedBody(event, firstError)) as Order));
 };

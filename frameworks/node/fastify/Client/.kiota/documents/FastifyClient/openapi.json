@@ -212,6 +212,71 @@
         }
       }
     },
+    "/body/bind/large": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "fields": {
+                      "type": "integer"
+                    },
+                    "bytes": {
+                      "type": "integer"
+                    },
+                    "echo": {
+                      "type": "object",
+                      "properties": {
+                        "customerId": {
+                          "type": "integer",
+                          "exclusiveMinimum": 0
+                        },
+                        "status": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "lines": {
+                          "type": "array",
+                          "minItems": 1,
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "productId": {
+                                "type": "integer",
+                                "exclusiveMinimum": 0
+                              },
+                              "qty": {
+                                "type": "integer",
+                                "exclusiveMinimum": 0
+                              }
+                            },
+                            "required": [
+                              "productId",
+                              "qty"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "customerId",
+                        "status",
+                        "lines"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/body/validate/small": {
       "post": {
         "requestBody": {
@@ -326,6 +391,119 @@
       }
     },
     "/body/validate/medium": {
+      "post": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "customerId": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0
+                  },
+                  "status": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "lines": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "productId": {
+                          "type": "integer",
+                          "exclusiveMinimum": 0
+                        },
+                        "qty": {
+                          "type": "integer",
+                          "exclusiveMinimum": 0
+                        }
+                      },
+                      "required": [
+                        "productId",
+                        "qty"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": [
+                  "customerId",
+                  "status",
+                  "lines"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "fields": {
+                      "type": "integer"
+                    },
+                    "bytes": {
+                      "type": "integer"
+                    },
+                    "echo": {
+                      "type": "object",
+                      "properties": {
+                        "customerId": {
+                          "type": "integer",
+                          "exclusiveMinimum": 0
+                        },
+                        "status": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "lines": {
+                          "type": "array",
+                          "minItems": 1,
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "productId": {
+                                "type": "integer",
+                                "exclusiveMinimum": 0
+                              },
+                              "qty": {
+                                "type": "integer",
+                                "exclusiveMinimum": 0
+                              }
+                            },
+                            "required": [
+                              "productId",
+                              "qty"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "customerId",
+                        "status",
+                        "lines"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/body/validate/large": {
       "post": {
         "requestBody": {
           "required": true,
@@ -1932,6 +2110,98 @@
         }
       }
     },
+    "/parameters/{one}/{two}/{three}": {
+      "get": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "path",
+            "name": "one",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "path",
+            "name": "two",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "path",
+            "name": "three",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "size": {
+                      "type": "string"
+                    },
+                    "count": {
+                      "type": "integer"
+                    },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "category": {
+                            "type": "string"
+                          },
+                          "priceCents": {
+                            "type": "integer"
+                          },
+                          "inStock": {
+                            "type": "boolean"
+                          }
+                        }
+                      }
+                    },
+                    "echo": {
+                      "type": "object",
+                      "properties": {
+                        "one": {
+                          "type": "integer"
+                        },
+                        "two": {
+                          "type": "integer"
+                        },
+                        "three": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "one",
+                        "two",
+                        "three"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/query/one": {
       "get": {
         "parameters": [
@@ -2180,6 +2450,15 @@
       }
     },
     "/template/medium": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/template/large": {
       "get": {
         "responses": {
           "200": {

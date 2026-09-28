@@ -10,7 +10,7 @@ import type { Routes } from "../app.ts";
  */
 const files: Routes = (router, { payloads: p }) => {
   // rb:wiring static.*
-  // rb:handler static.file
+  // rb:handler static.large,static.medium,static.small
   router.get("/static/:name", async (ctx) => {
     await send(ctx, ctx.params["name"] ?? "", { root: p.directory });
   });

@@ -209,6 +209,52 @@
         ]
       }
     },
+    "/parameters/{one}/{two}/{three}": {
+      "get": {
+        "operationId": "ParametersController_three",
+        "parameters": [
+          {
+            "name": "one",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "two",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "three",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Parameters"
+        ]
+      }
+    },
     "/query/one": {
       "get": {
         "operationId": "QueryController_one",
@@ -438,6 +484,29 @@
         ]
       }
     },
+    "/body/bind/large": {
+      "post": {
+        "operationId": "BodyController_bindLarge",
+        "parameters": [
+          {
+            "name": "content-length",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Body"
+        ]
+      }
+    },
     "/body/validate/small": {
       "post": {
         "operationId": "BodyController_validateSmall",
@@ -474,6 +543,39 @@
     "/body/validate/medium": {
       "post": {
         "operationId": "BodyController_validateMedium",
+        "parameters": [
+          {
+            "name": "content-length",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckedOrder"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Body"
+        ]
+      }
+    },
+    "/body/validate/large": {
+      "post": {
+        "operationId": "BodyController_validateLarge",
         "parameters": [
           {
             "name": "content-length",
@@ -1030,6 +1132,27 @@
     "/template/medium": {
       "get": {
         "operationId": "TemplateController_medium",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Template"
+        ]
+      }
+    },
+    "/template/large": {
+      "get": {
+        "operationId": "TemplateController_large",
         "parameters": [],
         "responses": {
           "200": {

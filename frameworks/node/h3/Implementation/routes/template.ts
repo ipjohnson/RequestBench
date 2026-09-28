@@ -20,6 +20,8 @@ const template: Routes = (app, p) => {
   app.get("/template/small", () => html(raw(page(p.small))));
 
   app.get("/template/medium", () => html(raw(page(p.medium))));
+
+  app.get("/template/large", () => html(raw(page(p.large))));
 };
 
 export default template;

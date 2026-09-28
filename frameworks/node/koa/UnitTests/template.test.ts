@@ -3,8 +3,8 @@ import { test } from "node:test";
 
 import { client, expected, normal } from "./app.ts";
 
-// rb:test template.small,template.medium
-for (const [id, size] of [["template.small", "small"], ["template.medium", "medium"]] as const) {
+// rb:test template.small,template.medium,template.large
+for (const [id, size] of [["template.small", "small"], ["template.medium", "medium"], ["template.large", "large"]] as const) {
   test(`${id}: the payload is rendered by the EJS template`, async () => {
     const response = await client.get(`/template/${size}`);
 

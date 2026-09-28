@@ -18,6 +18,8 @@ const template: Routes = (app, p) => {
   app.get("/template/small", (_request, response) => response.render("items", { ...p.small }));
 
   app.get("/template/medium", (_request, response) => response.render("items", { ...p.medium }));
+
+  app.get("/template/large", (_request, response) => response.render("items", { ...p.large }));
 };
 
 export default template;
