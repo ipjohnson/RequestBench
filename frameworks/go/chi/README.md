@@ -18,7 +18,7 @@ family where neither does.
 | `Implementation/views/` | The template, compiled into the binary. |
 | `container-h1/` | How container-h1 starts it. `main.go` is the main package that loads the payloads and serves over HTTP/1.1, and `Dockerfile` builds the image. |
 | `container-h2/` | How container-h2 starts it. `main.go` serves over HTTP/2 with prior knowledge through net/http's `Server.Protocols`, and `Dockerfile` builds the image. |
-| `lambda-emulator/` | How lambda-emulator starts it. `main.go` hands the router to aws-lambda-go-api-proxy's `httpadapter`, which aws-lambda-go's runtime client gives each event, and `Dockerfile` builds the function on the `provided.al2023` base image. |
+| `lambda-emulator/` | How lambda-emulator starts it. `main.go` hands the router to aws-lambda-go-api-proxy's `httpadapter`, and the sse and stream routes to aws-lambda-go's `lambdaurl`, and aws-lambda-go's runtime client gives each event to one of the two. `Dockerfile` builds the function on the `provided.al2023` base image. |
 | `UnitTests/` | go test tests of the wiring, sending each request to the router served by `net/http/httptest`. |
 | `client-exception/` | How the corpus reads chi's error bodies. |
 | `go.mod` | The module, and every module version the build selects. |
@@ -101,8 +101,12 @@ corpus id it covers, so `go test ./UnitTests -run '/json.small'` runs one.
   on lambda-emulator runs on one core, and so on one thread.
 - On lambda-emulator the router answers behind aws-lambda-go-api-proxy 0.16's `httpadapter.NewV2`,
   which reads API Gateway payload format 2.0. It buffers the whole answer into one proxy response,
-  and its response writer cannot flush. The sse and stream handlers stop at their first `Flush`, so
-  both tests are listed as unsupported there.
+  and its response writer cannot flush. So `main.go` sends the sse and stream routes through
+  aws-lambda-go's `lambdaurl.Wrap` instead, which streams the answer, and every other request
+  through httpadapter. aws-lambda-go streams any answer that is an `io.Reader` and no JSON, as
+  lambdaurl's is. lambdaurl's writer has no `Flush` either, and the handlers stop at their first
+  one, so `main.go` gives it a `Flush` that does nothing. Each write already goes straight to the
+  runtime client.
 - httpadapter posts whatever a handler writes for HEAD. A Function URL's caller reads no body in an
   answer to HEAD, so nothing reads it.
 - The function is built with `-tags lambda.norpc`, as AWS builds a Go function for

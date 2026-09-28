@@ -19,7 +19,7 @@ for the family or net/http where it has nothing.
 | `Implementation/views/` | The template, compiled into the binary. |
 | `container-h1/` | How container-h1 starts it. `main.go` is the main package that loads the payloads and serves the ServeMux over HTTP/1.1, and `Dockerfile` builds the image. |
 | `container-h2/` | How container-h2 starts it. `main.go` serves over HTTP/2 with prior knowledge through net/http's `Server.Protocols`, and `Dockerfile` builds the image. |
-| `lambda-emulator/` | How lambda-emulator starts it. `main.go` hands the ServeMux to aws-lambda-go-api-proxy's `httpadapter`, which aws-lambda-go's runtime client gives each event, and `Dockerfile` builds the function on the `provided.al2023` base image. |
+| `lambda-emulator/` | How lambda-emulator starts it. `main.go` hands the ServeMux to aws-lambda-go-api-proxy's `httpadapter`, and the sse and stream routes to aws-lambda-go's `lambdaurl`, and aws-lambda-go's runtime client gives each event to one of the two. `Dockerfile` builds the function on the `provided.al2023` base image. |
 | `UnitTests/` | go test tests of the wiring, through humatest, Huma's test utility. |
 | `Client/` | The OpenAPI document Huma writes, and the Go client oapi-codegen generates from it. `go generate ./Client` rewrites both. |
 | `client-exception/` | How the corpus reads the error bodies. |
@@ -111,7 +111,12 @@ fully. The suite tests the client against the Implementation.
 - Huma has no Lambda adapter. On lambda-emulator the ServeMux answers behind aws-lambda-go-api-proxy
   0.16's `httpadapter.NewV2`, which reads API Gateway payload format 2.0.
 - httpadapter buffers the whole answer into one proxy response, and its response writer cannot
-  flush, so the sse and stream tests are listed as unsupported on lambda-emulator.
+  flush. So `main.go` sends the sse and stream routes through aws-lambda-go's `lambdaurl.Wrap`
+  instead, which streams the answer, and every other request through httpadapter. aws-lambda-go
+  streams any answer that is an `io.Reader` and no JSON, as lambdaurl's is. lambdaurl's writer has
+  no `Flush` and no write deadline. `main.go` gives it a `Flush` that does nothing, since each write
+  already goes straight to the runtime client, and a `SetWriteDeadline` that does nothing, without
+  which Huma's sse package logs a line for every event.
 - The function is built with `-tags lambda.norpc`, as AWS builds a Go function for
   `provided.al2023`. The tag leaves out the RPC mode of the retired go1.x runtime.
 - The server is PID 1 in its container. The Go runtime installs its own handler for SIGTERM, so

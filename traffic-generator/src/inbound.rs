@@ -19,6 +19,16 @@ impl Inbound {
     pub fn header(&self, name: &str) -> Option<&str> {
         self.headers.iter().find(|(n, _)| n == name).map(|(_, v)| v.as_str())
     }
+
+    /// Whether an answer posted to `/response` is streamed. Most runtime clients say so with
+    /// `Lambda-Runtime-Function-Response-Mode`. aws-lambda-go never sends that header, and marks a
+    /// streamed answer by its content type alone.
+    pub fn streamed(&self) -> bool {
+        self.header("lambda-runtime-function-response-mode") == Some("streaming")
+            || self.header("content-type").is_some_and(|t| {
+                t.split(';').next().unwrap_or_default().trim().eq_ignore_ascii_case("application/vnd.awslambda.http-integration-response")
+            })
+    }
 }
 
 #[derive(Default)]
@@ -128,6 +138,15 @@ mod tests {
                 assert!(got[0].body == b"{}" || got[0].body == b"abcd");
             }
         }
+    }
+
+    #[test]
+    fn an_answer_is_streamed_by_its_response_mode_or_by_the_content_type_aws_lambda_go_sends() {
+        let answers = b"POST /r HTTP/1.1\r\nLambda-Runtime-Function-Response-Mode: streaming\r\nContent-Length: 0\r\n\r\n\
+POST /r HTTP/1.1\r\nContent-Type: application/vnd.awslambda.http-integration-response\r\nContent-Length: 0\r\n\r\n\
+POST /r HTTP/1.1\r\nContent-Type: application/json\r\nContent-Length: 0\r\n\r\n";
+        let got = RequestReader::default().feed(answers, Instant::now()).unwrap();
+        assert_eq!(got.iter().map(Inbound::streamed).collect::<Vec<_>>(), [true, true, false]);
     }
 
     #[test]
