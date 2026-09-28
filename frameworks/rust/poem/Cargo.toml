@@ -40,11 +40,12 @@ path = "UnitTests/main.rs"
 bytes = "1.12.1"
 cached = "4.0.0"
 futures-util = "0.3.34"
+# lambda-emulator's runtime client, at the version poem-lambda 5.1.4 pins and with its default
+# features, because main.rs is a copy of poem-lambda's run that streams the sse and stream answers.
+lambda_http = { version = "0.15.1", optional = true }
 # The allocator every Rust framework here runs on, in place of the system one.
 mimalloc = "0.1.52"
 poem = { version = "3.1.12", features = ["compression", "multipart", "sse", "static-files"] }
-# lambda-emulator's adapter, poem's own, over lambda_http's runtime client.
-poem-lambda = { version = "5.1.4", optional = true }
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.151"
 sha1 = "0.11.0"
@@ -66,4 +67,4 @@ codegen-units = 1
 
 [features]
 # lambda-emulator's function. Only its binary turns it on.
-lambda-emulator = ["dep:poem-lambda"]
+lambda-emulator = ["dep:lambda_http"]

@@ -19,7 +19,7 @@ where Loco has one, and axum's, which Loco's prelude hands a controller, where L
 | `assets/views/` | `items.html`, the Tera template the template family renders. |
 | `container-h1/` | `main.rs`, Loco's command line as Loco's starter writes it, and the `Dockerfile` that builds the image, which runs `server start`. |
 | `container-h2/` | The same `main.rs`, built with axum's `http2` feature, and its `Dockerfile`. |
-| `lambda-emulator/` | `main.rs`, which boots the application and hands its router to lambda_http, and the `Dockerfile` that builds the function on the `provided:al2023` base image. |
+| `lambda-emulator/` | `main.rs`, which boots the application and hands its router to lambda_http, through its `StreamAdapter` for the sse and stream routes and its `Adapter` for every other request, and the `Dockerfile` that builds the function on the `provided:al2023` base image. |
 | `UnitTests/` | The suite. Loco's request helper boots the application in its test environment and serves it to axum-test's `TestServer` in process. |
 | `client-exception/` | How the corpus reads Loco's error bodies. |
 | `Cargo.toml`, `Cargo.lock` | The one package: the library, the three binaries and the suite. |
@@ -54,7 +54,9 @@ in HTTP/2, and one that does not in HTTP/1.1. No `serve` override is needed.
 
 Loco has no Lambda adapter. `lambda-emulator/main.rs` loads the production config and boots the
 application with the `App`'s `Hooks::boot`, as `start` does, and hands the router it builds to
-lambda_http rather than serving it on a port.
+lambda_http rather than serving it on a port. It sends the sse and stream routes through
+lambda_http's `StreamAdapter`, which streams the answer, and every other request through its
+`Adapter`, which answers it whole as lambda_http's `run` does.
 
 ## How each family is wired
 
