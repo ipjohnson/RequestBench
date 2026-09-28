@@ -10,7 +10,8 @@
 // the host's `dir` names, and describes it in the rb.json entry of that name. Hosts that run the
 // same image under different limits, as the two Lambda hosts do, share a `dir`. Every host offers
 // every test; a framework that cannot answer one on a host lists it under that entry's
-// `unsupported`.
+// `unsupported`. A framework that cannot run on one of the hosts sharing a `dir` names it in
+// rb.json's `optOut`.
 
 export interface Host {
   readonly id: string;
@@ -95,3 +96,12 @@ export const entryOf = <E>(entries: Readonly<Record<string, E>>, host: HostId): 
 
 /** The hosts a framework implements: each host whose `dir` its rb.json has an entry for. */
 export const hostsOf = (entries: Readonly<Record<string, unknown>>): HostId[] => HOST_IDS.filter((h) => Object.hasOwn(entries, HOSTS[h].dir));
+
+/** What of an rb.json says where a framework runs. */
+interface Placed {
+  readonly hosts: Readonly<Record<string, unknown>>;
+  readonly optOut?: Readonly<Record<string, string>> | undefined;
+}
+
+/** Whether a framework is validated and measured on `host`: it implements the host and does not opt out of it. */
+export const runsOn = (rb: Placed, host: HostId): boolean => Object.hasOwn(rb.hosts, HOSTS[host].dir) && !Object.hasOwn(rb.optOut ?? {}, host);

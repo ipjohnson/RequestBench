@@ -98,6 +98,10 @@ Every host offers every test. A test the framework cannot answer on a host goes 
 `unsupported` in rb.json, with the reason. The gate reports it as unsupported and never sends it,
 and the load leaves it out.
 
+A framework that cannot run on one host whose directory it has, such as one of the two Lambda
+hosts, names the host in rb.json's `optOut`, with the reason. Nothing validates or measures it
+there, and `npm run rb -- list` leaves the host out of its line.
+
 ## The container
 
 The image is built from the framework's directory alone, with the Dockerfile in the host's
@@ -168,6 +172,7 @@ rb.json declares what the framework is and how to build, test and upgrade it.
 | `suite` | How to run the framework's own tests. `argv` is the command, and `paths` are the directories that hold the tests. `cwd` and `env` are optional. |
 | `upgrade` | A command that moves the pinned versions within their ranges, or `null` if they are moved by hand. |
 | `client` | Optional. How `Client/` is written. See [Client](#client). |
+| `optOut` | Optional. Hosts the framework is not validated or measured on although `hosts` has their directory, each with the reason. See [Hosts](#hosts). |
 | `skips` | Optional. Validation tests the framework does not pass, each with the reason. |
 | `noHandler` | Optional. Performance tests the framework answers without a handler of its own, each with what answers it. The usual ones are a router's 404 and 405 and a CORS preflight. |
 | `mechanisms` | One entry for each family. An entry either names what wires the family in `mechanism`, with optional `dependency` and `mentions`, or says in `builtin` why there is no wiring to show. See [Wiring](#wiring). |
