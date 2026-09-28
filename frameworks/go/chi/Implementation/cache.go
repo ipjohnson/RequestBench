@@ -16,16 +16,16 @@ import (
 // requests for it arrive together, and keeps the answer, headers included, for the TTL. The
 // handler writes x-rb-serial, so a replayed answer repeats the serial it was stored with.
 func cacheRoutes(r chi.Router, p *Payloads) error {
-	settings := p.Settings.Cache
-	one := headerNames(settings.Vary.One)
-	many := headerNames(settings.Vary.Many)
+	one := []string{"x-rb-tenant"}
+	many := []string{"x-rb-channel", "x-rb-region", "x-rb-tenant"}
 	// rb:wiring cache.*
-	// One in-memory store for the process, sized in entries, as stampede's README builds one.
-	store, err := memcache.NewBackend(uint32(settings.Capacity))
+	// One in-memory store for the process, sized in entries, as stampede's README builds one. It has
+	// room for the cache family's 52 keys, each kept 30 seconds.
+	store, err := memcache.NewBackend(64)
 	if err != nil {
 		return err
 	}
-	ttl := time.Duration(settings.TTLSeconds) * time.Second
+	ttl := 30 * time.Second
 	byPath := stampede.Handler(slog.Default(), store, ttl)
 	byTenant := stampede.Handler(slog.Default(), store, ttl, stampede.WithHTTPCacheKeyRequestHeaders(one))
 	byAll := stampede.Handler(slog.Default(), store, ttl, stampede.WithHTTPCacheKeyRequestHeaders(many))

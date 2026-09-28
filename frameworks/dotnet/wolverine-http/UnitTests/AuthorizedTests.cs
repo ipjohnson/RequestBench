@@ -6,9 +6,9 @@ public sealed class AuthorizedTests(WolverineApp app)
     // rb:test authorized.allowed
     [Fact]
     [Trait("corpus", "authorized.allowed")]
-    public async Task The_settings_token_is_let_through()
+    public async Task The_token_is_let_through()
     {
-        IScenarioResult result = await Ask($"Bearer {(string)Expected.Settings["token"]!}", HttpStatusCode.OK);
+        IScenarioResult result = await Ask("Bearer 5a7cc77ed0dcb825806b6f872026c317", HttpStatusCode.OK);
 
         Answer.Is(Expected.Json("items.small.json"), result);
     }
@@ -18,7 +18,7 @@ public sealed class AuthorizedTests(WolverineApp app)
     [Trait("corpus", "authorized.denied")]
     public async Task A_token_one_character_off_is_forbidden_with_no_body()
     {
-        IScenarioResult result = await Ask($"Bearer {(string)Expected.Settings["wrongToken"]!}", HttpStatusCode.Forbidden);
+        IScenarioResult result = await Ask("Bearer 5a7cc77ed0dcb825806b6f872026c310", HttpStatusCode.Forbidden);
 
         Assert.Empty(Answer.Bytes(result));
     }

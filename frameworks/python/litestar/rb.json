@@ -43,7 +43,7 @@
       "dependency": "msgspec"
     },
     "cache": {
-      "mechanism": "Litestar's response cache, turned on per route with cache=True, expiring after ttlSeconds by the application's ResponseCacheConfig, over its default MemoryStore in each worker, with a key builder for the vary routes"
+      "mechanism": "Litestar's response cache, turned on per route with cache=30, which keeps an answer 30 seconds, over its default MemoryStore in each worker, with a key builder for the vary routes"
     },
     "compressed": { "mechanism": "Litestar's CompressionMiddleware on the family's Router, at its default minimum size and gzip's fastest level" },
     "cors": { "mechanism": "Litestar's CORSConfig, as the application's cors_config" },

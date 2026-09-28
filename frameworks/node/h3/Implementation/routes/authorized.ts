@@ -19,7 +19,7 @@ function requireToken(token: string): Middleware {
 
 /** authorized: h3 has no bearer authorization of its own, so the check is middleware on the route. */
 const authorized: Routes = (app, p) => {
-  app.get("/authorized/small", () => p.small, { middleware: [requireToken(p.settings.token)] });
+  app.get("/authorized/small", () => p.small, { middleware: [requireToken("5a7cc77ed0dcb825806b6f872026c317")] });
 };
 
 export default authorized;

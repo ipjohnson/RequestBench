@@ -99,7 +99,7 @@ in the same place.
 | headers | The view reads `request.headers` by name and converts the account with `int()`. | by hand |
 | query | A `Serializer` over `request.query_params`, which binds and converts each value. | DRF |
 | body | `JSONParser` parses the order into `request.data`, and a `Serializer` binds it, with types alone on the bind routes and orderRequest's rules on the validate routes. | DRF |
-| authorized | A permission class on the view, which compares the bearer token with settings.json's. | DRF, by hand |
+| authorized | A permission class on the view, which compares the bearer token with the one it names. | DRF, by hand |
 | cache | `cache_page` over LocMemCache, with `vary_on_headers` on the vary routes. | Django |
 | compressed | `gzip_page`, at its fixed threshold of 200 bytes and gzip level 6. | Django |
 | etag | `ConditionalGetMiddleware`, scoped to the two functions with `decorator_from_middleware`. | Django |

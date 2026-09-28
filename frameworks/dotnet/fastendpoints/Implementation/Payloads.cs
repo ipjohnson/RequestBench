@@ -9,16 +9,6 @@ public sealed record Item(int Id, string Name, string Category, int PriceCents, 
 /// <summary>items.small, items.medium or items.large.</summary>
 public sealed record Payload(string Size, int Count, IReadOnlyList<Item> Items);
 
-/// <summary>The values the framework configures itself from, as settings.json holds them.</summary>
-public sealed record Settings(string Token, string WrongToken, string StaleEtag, CacheSettings Cache, CorsSettings Cors);
-
-public sealed record CacheSettings(int Capacity, int TtlSeconds, VarySettings Vary);
-
-/// <summary>The values each vary row is keyed on, by header.</summary>
-public sealed record VarySettings(IReadOnlyDictionary<string, string[]> One, IReadOnlyDictionary<string, string[]> Many);
-
-public sealed record CorsSettings(string Origin, string Method, string Header, int MaxAgeSeconds);
-
 /// <summary>
 /// The committed payloads, read from the directory RB_PAYLOADS names before the server
 /// starts, so a missing or broken file stops the boot rather than failing a request. The
@@ -34,8 +24,6 @@ public sealed class Payloads
 
     public required Payload Large { get; init; }
 
-    public required Settings Settings { get; init; }
-
     private IReadOnlyDictionary<int, Item> Rows { get; init; } = new Dictionary<int, Item>();
 
     public static Payloads Load(string directory)
@@ -49,7 +37,6 @@ public sealed class Payloads
             Small = Read(directory, "items.small.json", JsonContext.Default.Payload),
             Medium = Read(directory, "items.medium.json", JsonContext.Default.Payload),
             Large = large,
-            Settings = Read(directory, "settings.json", JsonContext.Default.Settings),
             Rows = large.Items.ToDictionary(row => row.Id),
         };
     }

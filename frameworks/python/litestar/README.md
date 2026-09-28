@@ -65,7 +65,7 @@ one connection, so `replayed()` holds. Under load each worker fills its own stor
 | headers | Handler parameters declared with `HeaderParameter`, the account as an `int`. | Litestar |
 | body | The order as the `data` parameter, a Struct with types alone on the bind routes and orderRequest's rules as msgspec constraints on the validate routes. | Litestar, msgspec |
 | authorized | A guard on the route that raises `PermissionDeniedException`. | Litestar |
-| cache | Litestar's response cache, turned on per route with `cache=True` and expiring after `ttlSeconds` by the application's `ResponseCacheConfig`, over the default `MemoryStore`, with a key builder for the vary routes. | Litestar |
+| cache | Litestar's response cache, turned on per route with `cache=30`, which keeps an answer 30 seconds, over the default `MemoryStore`, with a key builder for the vary routes. | Litestar |
 | compressed | `CompressionMiddleware` on the family's Router, at its default minimum size and gzip's fastest level. | Litestar |
 | etag | An `ASGIMiddleware` on the family's Router that hashes the body with SHA-1 and answers 304 when `If-None-Match` names it. | by hand |
 | template | A Jinja2 template rendered by `JinjaTemplateEngine` through the application's `TemplateConfig`. | Litestar, Jinja2 |

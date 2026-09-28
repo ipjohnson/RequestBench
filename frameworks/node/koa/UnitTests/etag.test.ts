@@ -29,7 +29,7 @@ test("etag.match_large: a matching If-None-Match is answered 304 with no body, a
 
 // rb:test etag.stale_large
 test("etag.stale_large: a tag that does not match is answered in full", async () => {
-  const { staleEtag } = expected.json("settings.json") as { staleEtag: string };
+  const staleEtag = '"0000000000000000"';
 
   const response = await get("large", { "if-none-match": staleEtag });
 

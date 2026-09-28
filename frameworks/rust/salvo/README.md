@@ -56,7 +56,7 @@ container runs two workers under its two-CPU budget, whichever way the budget is
 | parameters, query | `parse_params` and `parse_queries`, which bind the captures and the query string into a struct, the numbers as integers. | Salvo |
 | headers | `parse_headers`, which binds the three headers into a struct by their names. | Salvo |
 | body | `parse_json` binds the order. On the validate routes the handler then runs the validator crate's rules and refuses with 422 and Salvo's RFC 9457 problem details, validator's errors as their `errors` member. | validator and Salvo |
-| authorized | A hoop on the route that answers Salvo's 403 unless Authorization is settings.json's bearer token. | by hand |
+| authorized | A hoop on the route that answers Salvo's 403 unless Authorization is one bearer token. | by hand |
 | cache | salvo-cache's `Cache` hoop on each cache route, over a `MokaStore` with a time to live, keyed by Salvo's `RequestIssuer` and, on a vary route, the headers it varies on. | Salvo |
 | compressed | The `Compression` hoop on the compressed routes, gzip at its fastest level and its default threshold. | Salvo |
 | etag | The `CachingHeaders` hoop on the two routes, which hashes the answer with xxh3 and answers 304 when If-None-Match names it. | Salvo |

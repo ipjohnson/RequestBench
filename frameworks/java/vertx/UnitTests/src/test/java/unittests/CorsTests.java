@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test;
 
 class CorsTests extends VertxApp {
 
-    private static final String ORIGIN = Expected.settings().getJsonObject("cors").getString("origin");
+    private static final String ORIGIN = "https://shop.example.com";
 
     // rb:test cors.preflight
     @Test

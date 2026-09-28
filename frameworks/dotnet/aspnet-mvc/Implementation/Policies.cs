@@ -7,7 +7,4 @@ public static class Policies
 
     public const string Token = "token";
 
-    public const string VaryOne = "vary-one";
-
-    public const string VaryMany = "vary-many";
 }

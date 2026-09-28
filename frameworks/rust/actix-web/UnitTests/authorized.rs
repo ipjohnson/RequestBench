@@ -1,12 +1,12 @@
 use actix_web::http::StatusCode;
 
-use crate::support::{app, expected, header, json, payloads};
+use crate::support::{app, expected, header, json};
 
 // rb:test authorized.allowed
-/// authorized.allowed: settings.json's bearer token reaches the handler.
+/// authorized.allowed: the one bearer token reaches the handler.
 #[actix_web::test]
 async fn the_token_reaches_the_handler() {
-    let token = format!("Bearer {}", payloads().settings.token);
+    let token = "Bearer 5a7cc77ed0dcb825806b6f872026c317".to_owned();
 
     let response = app().await.get_with("/authorized/small", &[("authorization", &token)]).await;
 
@@ -19,7 +19,7 @@ async fn the_token_reaches_the_handler() {
 /// 403 before the handler runs.
 #[actix_web::test]
 async fn another_token_is_forbidden() {
-    let token = format!("Bearer {}", expected("settings.json")["wrongToken"].as_str().unwrap());
+    let token = "Bearer 5a7cc77ed0dcb825806b6f872026c310".to_owned();
 
     let response = app().await.get_with("/authorized/small", &[("authorization", &token)]).await;
 

@@ -18,7 +18,7 @@ if (directory === undefined) throw new Error('RB_PAYLOADS has to name the payloa
 const payloads = load(directory);
 
 const app = await NestFactory.create<NestExpressApplication>(AppModule.register(payloads, express));
-configureExpress(app, payloads);
+configureExpress(app);
 await app.init();
 
 export const handler = serverlessExpress({ app: app.getHttpAdapter().getInstance() });

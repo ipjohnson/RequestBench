@@ -1,13 +1,13 @@
 use serde_json::json as literal;
 use warp::http::StatusCode;
 
-use crate::support::{app, expected, get_with, json, payloads};
+use crate::support::{app, expected, get_with, json};
 
 // rb:test authorized.allowed
-/// authorized.allowed: settings.json's bearer token reaches the handler.
+/// authorized.allowed: the one bearer token reaches the handler.
 #[tokio::test]
 async fn the_token_reaches_the_handler() {
-    let token = format!("Bearer {}", payloads().settings.token);
+    let token = "Bearer 5a7cc77ed0dcb825806b6f872026c317".to_owned();
 
     let response = get_with(&app(), "/authorized/small", &[("authorization", &token)]).await;
 
@@ -20,7 +20,7 @@ async fn the_token_reaches_the_handler() {
 /// runs, and the recover handler answers 403 in the rejections example's form.
 #[tokio::test]
 async fn another_token_is_forbidden() {
-    let token = format!("Bearer {}", expected("settings.json")["wrongToken"].as_str().unwrap());
+    let token = "Bearer 5a7cc77ed0dcb825806b6f872026c310".to_owned();
 
     let response = get_with(&app(), "/authorized/small", &[("authorization", &token)]).await;
 

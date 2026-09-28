@@ -32,10 +32,6 @@ final class Expected {
         return Buffer.buffer(bytes(file)).toJsonObject();
     }
 
-    static JsonObject settings() {
-        return json("settings.json");
-    }
-
     /** A payload with an echo object beside its own fields, as a binding handler answers. */
     static JsonObject withEcho(String file, JsonObject echo) {
         return json(file).put("echo", echo);

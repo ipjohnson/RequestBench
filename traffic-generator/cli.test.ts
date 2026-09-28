@@ -14,7 +14,7 @@ import { join } from "node:path";
 import { after, before, test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { idOf } from "@rb/tests/kit";
-import { settings } from "@rb/tests/payloads";
+import { CORS as cors, TOKEN as token } from "@rb/tests/models/configuration";
 import { orderOf } from "./order.ts";
 import { select } from "./select.ts";
 
@@ -38,7 +38,6 @@ const ETAG = '"stub"';
 
 /** The stub's refusals: 400 for a bad body, and 404 for a path or a method it has no route for. */
 const STATUSES = { rejected: 400, malformed: 400, notFound: 404, wrongMethod: 404 };
-const { token, cors } = settings.value;
 
 type Answer = number | readonly [number, Record<string, string>] | readonly [number, Record<string, string>, string];
 type Route = readonly [RegExp, (m: RegExpExecArray, req: http.IncomingMessage, url: URL, body: string) => Answer];

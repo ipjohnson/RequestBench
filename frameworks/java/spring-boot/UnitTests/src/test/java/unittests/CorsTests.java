@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test;
 
 class CorsTests extends SpringApp {
 
-    private static final String ORIGIN = Expected.settings().get("cors").get("origin").asString();
+    private static final String ORIGIN = "https://shop.example.com";
 
     // rb:test cors.preflight
     @Test

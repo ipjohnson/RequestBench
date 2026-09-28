@@ -14,12 +14,10 @@ def blueprint(p: Payloads) -> Blueprint:
     application, which leaves an answer alone unless its route's policy allows the request's
     origin. The application's own policy names no origin, so no other route answers with CORS
     headers. The handler writes x-rb-serial, so its absence on a preflight shows no handler ran."""
-    settings = p.settings["cors"]
     routes = Blueprint("cors")
 
     # rb:wiring cors.*
-    policy = cors(origin=settings["origin"], allow_methods=[settings["method"]], allow_headers=[settings["header"]],
-                  max_age=settings["maxAgeSeconds"])
+    policy = cors(origin="https://shop.example.com", allow_methods=["GET"], allow_headers=["x-rb-tenant"], max_age=600)
 
     @routes.get("/cors/small")
     @answers(Payload, "items.small")

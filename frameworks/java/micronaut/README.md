@@ -47,14 +47,14 @@ into `implementation-0.0.0.jar`, which the image runs. It keeps the plain jar as
 | middleware | No-op `@RequestFilter` methods, four or sixteen, each a filter of its own, in a `@ServerFilter` class whose pattern is the route's path. | Micronaut |
 | parameters, query, headers | `@PathVariable`, `@QueryValue` and `@Header` parameters, and query.many's eight values bound into a record as a `@RequestBean`. | Micronaut |
 | body | Micronaut Serialization binds the order record. `@Valid` runs its Bean Validation constraints through micronaut-validation, and Micronaut refuses a body that breaks one with 400. | Micronaut and micronaut-validation |
-| authorized | micronaut-security on `/authorized` alone, with a `TokenValidator` that gives settings.json's bearer token the role the route's `@Secured` asks for. | micronaut-security |
-| cache | `@Cacheable` on a bean's methods, over one Caffeine cache per route, sized and aged by settings.json. | micronaut-cache |
+| authorized | micronaut-security on `/authorized` alone, with a `TokenValidator` that gives one bearer token the role the route's `@Secured` asks for. | micronaut-security |
+| cache | `@Cacheable` on a bean's methods, over one Caffeine cache per route, sized and aged by `micronaut.caches` in `application.properties`. | micronaut-cache |
 | compressed | The Netty server's compression on the whole server, at gzip's fastest level, set in `application.properties`. | Micronaut |
 | etag | A `@ResponseFilter` on `/etag/**` hashes the serialised body with SHA-1 and answers a matching `If-None-Match` with 304. | by hand |
 | template | Thymeleaf, through Micronaut Views. The handler returns a `ModelAndView`, and micronaut-views' body writer renders it. | Micronaut Views |
 | items | One handler per method on `/items/{id}`. `@Get` registers a HEAD route beside the GET. | Micronaut |
 | errors | The router's 404 and 405, the parser's 400, and the 404 Micronaut answers for a handler that returns null, each written by Micronaut's default error processor. | Micronaut |
-| cors | Micronaut's `CorsFilter`, with a configuration built from settings.json when Micronaut creates the server's CORS configuration. | Micronaut |
+| cors | Micronaut's `CorsFilter`, with one configuration under `micronaut.server.cors` in `application.properties`. | Micronaut |
 | forms | Micronaut binds the urlencoded form to query.many's record, and the multipart parts to the handler's parameters, the file part as a `CompletedFileUpload`. | Micronaut |
 | stream | The handler returns a `Publisher` of each row's JSON and a newline, and Micronaut writes each element as a chunk. | Micronaut |
 | sse | The handler returns a `Publisher` of `Event`, and Micronaut writes each one's data as JSON, as one event. | Micronaut |
@@ -66,8 +66,8 @@ into `implementation-0.0.0.jar`, which the image runs. It keeps the plain jar as
   `micronaut.security.filter.pattern` names others. `application.properties` sets it to
   `/authorized/**`, so no other route pays for the filter or is refused by it.
 - micronaut-security answers a refused request with 401 when it is anonymous and with 403 when it
-  is authenticated. `SettingsToken` authenticates every bearer token and gives the role to
-  settings.json's token alone, so a token one character off is refused with 403. A request with no
+  is authenticated. `OneToken` authenticates every bearer token and gives the role to the one
+  token it names, so a token one character off is refused with 403. A request with no
   token is refused with 401.
 - micronaut-validation reports every rule a body breaks and has no mode that stops at the first.
   The first-error route binds a record of its own, `FirstErrorOrder`, whose group sequence
@@ -82,8 +82,8 @@ into `implementation-0.0.0.jar`, which the image runs. It keeps the plain jar as
 - Micronaut writes to a response while it answers with it, so one stored response cannot answer
   several requests. The cache stores the payload and the serial it was written with, and each cache
   handler builds its answer from them. Without a configuration, micronaut-cache creates a cache the
-  first time a method names it, with no size limit and no expiry. `CacheRoutes.Caches` configures
-  one per route from settings.json's capacity and TTL.
+  first time a method names it, with no size limit and no expiry. `application.properties`
+  configures one per route, 64 entries each kept 30 seconds.
 - The Netty server compresses an answer when the client asks for gzip, the type is text-based, and
   the length is unknown or at least 1 KB. `/compressed/small`'s 123 bytes go out as they are. The
   compression covers the whole server, so every answer pays the check of the request's
@@ -91,10 +91,9 @@ into `implementation-0.0.0.jar`, which the image runs. It keeps the plain jar as
 - Micronaut computes no ETag for an answer a handler returns, so that family's filter is written
   for it. It serialises the payload the handler returned and sends those bytes as the body, so the
   payload is serialised once.
-- Micronaut's CORS configuration names origins and no path, so the policy covers every route. The
-  per-route `@CrossOrigin` takes its policy as annotation constants, which would copy
-  settings.json's policy into the source. rb.json skips cors.scoped for that reason. `CorsFilter`
-  is on every route, and a request with no Origin header skips it.
+- Micronaut's CORS configuration names origins and no path, so the policy covers every route, and
+  rb.json skips cors.scoped. `CorsFilter` is on every route, and a request with no Origin header
+  skips it.
 - Without a policy for the request's origin, `CorsFilter` refuses a cross-origin request with 403
   when the server is addressed as localhost or 127.x, to stop a page on another origin from
   reaching a server on the reader's machine. cors.disallowed's preflight gets that 403.

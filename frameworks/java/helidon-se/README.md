@@ -55,7 +55,7 @@ Helidon's service registry.
 | middleware | No-op routes, four or sixteen, each registered for its one path ahead of the handler, passing the request on with `res.next()`. | Helidon |
 | parameters, query, headers | The handler reads the path's parameters, the parsed query and the headers by name, and Helidon's mapper converts the numbers with `asInt()`. | Helidon |
 | body | Helidon JSON Binding reads the order record on every route. The validate routes check it with Helidon Validation's `TypeValidation`, and the routing's error handler answers a `ValidationException` with 400. | Helidon JSON Binding and Helidon Validation |
-| authorized | Helidon Security, through `SecurityFeature.secure()` on the route. `HeaderAtnProvider` takes the bearer token as the user, and an authorization provider permits settings.json's token alone. Helidon Security answers a denial with 403. | Helidon Security |
+| authorized | Helidon Security, through `SecurityFeature.secure()` on the route. `HeaderAtnProvider` takes the bearer token as the user, and an authorization provider permits one token alone. Helidon Security answers a denial with 403. | Helidon Security |
 | cache | A store and a replay in the handler, keyed by the path and the route's vary headers. | by hand |
 | compressed | Helidon's content encoding on the server's listener, with gzip alone, at the fastest level. | Helidon |
 | etag | The handler hashes the JSON it is about to send with SHA-1 into the ETag, and answers 304 when If-None-Match names it. | by hand |
@@ -113,8 +113,8 @@ Helidon's service registry.
 - Helidon closes the connection after it refuses a body Helidon JSON Binding cannot read, because
   the binding's `HttpException` does not ask to keep it, so errors.malformed pays for a reconnect
   each time under load.
-- The cache store holds every key it is asked for, so settings.json's capacity is not applied. The
-  cache family stores 52 keys. An answer is built again once settings.json's TTL has passed.
+- The cache store holds every key it is asked for, and the cache family stores 52. An answer is
+  built again once 30 seconds have passed.
 - Helidon's test extension gives the suite's server builder the features Helidon's service registry
   holds, a `CorsFeature` that allows every origin among them. `Main.setup` sets the server's feature
   list whole, which replaces them.

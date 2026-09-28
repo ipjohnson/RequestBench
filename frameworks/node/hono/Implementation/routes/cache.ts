@@ -27,8 +27,8 @@ interface Stored {
 /**
  * hono/cache keeps answers in the Web Cache API, which Workers and Deno have and Node does not. This
  * is the part of that API it calls, caches.open and a cache's match and put, over a Map. The store
- * holds settings.json's capacity in entries, drops the oldest to make room, and lets an entry go
- * after settings.json's TTL.
+ * holds the number of entries it is given, drops the oldest to make room, and lets an entry go
+ * after the lifetime it is given.
  */
 function storage(capacity: number, ttlSeconds: number): { open(cacheName: string): Promise<Store> } {
   const entries = new Map<string, Stored>();
@@ -58,7 +58,9 @@ function storage(capacity: number, ttlSeconds: number): { open(cacheName: string
  * The handler writes x-rb-serial, so a replayed answer repeats the serial it was stored with.
  */
 const cache: Routes = (app, p) => {
-  const { capacity, ttlSeconds, vary } = p.settings.cache;
+  // Room for the cache family's 52 keys, each kept 30 seconds.
+  const capacity = 64;
+  const ttlSeconds = 30;
 
   // rb:wiring cache.*
   globalThis.caches ??= storage(capacity, ttlSeconds);
@@ -74,9 +76,9 @@ const cache: Routes = (app, p) => {
   app.get("/cache/large/:key", stored(), (c) => fresh(c, p.large));
 
   // hono/cache writes the Vary header itself, from the headers the route names.
-  app.get("/cache/vary/one/:key", stored(Object.keys(vary.one)), (c) => fresh(c, p.small));
+  app.get("/cache/vary/one/:key", stored(["x-rb-tenant"]), (c) => fresh(c, p.small));
 
-  app.get("/cache/vary/many/:key", stored(Object.keys(vary.many)), (c) => fresh(c, p.small));
+  app.get("/cache/vary/many/:key", stored(["x-rb-channel", "x-rb-region", "x-rb-tenant"]), (c) => fresh(c, p.small));
 };
 
 export default cache;

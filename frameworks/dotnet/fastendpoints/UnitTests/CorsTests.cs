@@ -2,7 +2,7 @@ namespace UnitTests;
 
 public sealed class CorsTests(App app) : TestBase<App>
 {
-    private static readonly string Origin = (string)Expected.Settings["cors"]!["origin"]!;
+    private const string Origin = "https://shop.example.com";
 
     // rb:test cors.preflight
     [Fact]

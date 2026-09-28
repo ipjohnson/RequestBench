@@ -1,4 +1,5 @@
 use std::sync::{Arc, Mutex};
+use std::time::Duration;
 
 use actix_web::body::{MessageBody, to_bytes};
 use actix_web::dev::{ServiceRequest, ServiceResponse};
@@ -11,8 +12,13 @@ use actix_web::{Error, HttpResponse};
 use cached::{Cached, LruTtlCache};
 
 use crate::Payloads;
-use crate::payloads::CacheSettings;
 use crate::serial;
+
+/// Room for the cache family's 52 keys.
+const CAPACITY: usize = 64;
+
+/// How long a stored answer is replayed.
+const LIFETIME: Duration = Duration::from_secs(30);
 
 /// The path and the values of the request headers a route varies on.
 type Key = (Uri, Vec<Option<HeaderValue>>);
@@ -27,8 +33,8 @@ struct Stored {
 }
 
 /// One route's store, with the request headers the route varies on. HttpServer builds an App per
-/// worker thread, and every one of them holds the same store through the Arc. It holds
-/// settings.json's capacity in entries, each for settings.json's time to live.
+/// worker thread, and every one of them holds the same store through the Arc. It holds CAPACITY
+/// entries, each for LIFETIME.
 #[derive(Clone)]
 pub struct Store {
     entries: Arc<Mutex<LruTtlCache<Key, Stored>>>,
@@ -36,9 +42,9 @@ pub struct Store {
 }
 
 impl Store {
-    fn new(settings: &CacheSettings, on: Vec<HeaderName>) -> Store {
-        let entries = LruTtlCache::builder().max_size(settings.capacity).ttl_secs(settings.ttl_seconds).build();
-        Store { entries: Arc::new(Mutex::new(entries.expect("settings.json's cache has a capacity and a time to live"))), on: on.into() }
+    fn new(on: Vec<HeaderName>) -> Store {
+        let entries = LruTtlCache::builder().max_size(CAPACITY).ttl_secs(LIFETIME.as_secs()).build();
+        Store { entries: Arc::new(Mutex::new(entries.expect("the cache has a capacity and a time to live"))), on: on.into() }
     }
 
     fn key(&self, request: &ServiceRequest) -> Key {
@@ -81,13 +87,13 @@ pub struct Stores {
 }
 
 impl Stores {
-    pub fn new(settings: &CacheSettings) -> Stores {
+    pub fn new() -> Stores {
         Stores {
-            small: Store::new(settings, vec![]),
-            medium: Store::new(settings, vec![]),
-            large: Store::new(settings, vec![]),
-            vary_one: Store::new(settings, names(settings.vary.one.keys())),
-            vary_many: Store::new(settings, names(settings.vary.many.keys())),
+            small: Store::new(vec![]),
+            medium: Store::new(vec![]),
+            large: Store::new(vec![]),
+            vary_one: Store::new(vec![HeaderName::from_static("x-rb-tenant")]),
+            vary_many: Store::new(vec![HeaderName::from_static("x-rb-channel"), HeaderName::from_static("x-rb-region"), HeaderName::from_static("x-rb-tenant")]),
         }
     }
 }
@@ -107,9 +113,6 @@ pub fn configure(cfg: &mut ServiceConfig, p: &'static Payloads, stores: &Stores)
         .service(web::resource("/cache/vary/many/{key}").route(web::get().to(move || { let vary = vary_many.clone(); async move { HttpResponse::Ok().insert_header(serial::fresh()).insert_header((VARY, vary)).json(&p.small) } })).wrap(from_fn(move |request, next| replay(many.clone(), request, next))));
 }
 
-fn names<'a>(keys: impl Iterator<Item = &'a String>) -> Vec<HeaderName> {
-    keys.map(|key| HeaderName::from_bytes(key.as_bytes()).expect("settings.json's vary keys are header names")).collect()
-}
 
 fn listed(names: &[HeaderName]) -> HeaderValue {
     let joined = names.iter().map(HeaderName::as_str).collect::<Vec<_>>().join(", ");

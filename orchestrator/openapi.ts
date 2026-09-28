@@ -13,6 +13,7 @@ import { z } from "zod";
 import suite from "@rb/tests";
 import type { Method, Payload, RunValues, Test } from "@rb/tests/kit";
 import { CACHE_KEYS, CACHE_LIFETIME_SECONDS } from "@rb/tests/models/cache";
+import { TOKEN } from "@rb/tests/models/configuration";
 import { runValues } from "@rb/tests/models/parameters";
 import { LARGE } from "@rb/tests/models/payload";
 import * as published from "@rb/tests/payloads";
@@ -686,7 +687,7 @@ function info(version: string): Obj {
       `x-rb-serial is the Unix time in milliseconds the handler ran at, a bar, and a part no other run of a handler serving the port writes, such as ${code("1790000000000|42")}. A process that serves alone can count its runs, and one of several workers adds its process id or writes a random number. A stored answer replayed from a cache carries the value it was stored with, and a cache keeps an answer for ${CACHE_LIFETIME_SECONDS} seconds.`,
       "An answer of 400 or above carries the framework's own error body, which has to be non-empty JSON. The corpus reads a refusal only through the framework's frameworks/<language>/<name>/client-exception/index.ts. That declaration gives four statuses, which this document writes as 4XX and names by field: rejected, malformed, notFound and wrongMethod. It also says whether a rejection names every bad field or only the first.",
       "A path's own description names any request sent there that no route may answer.",
-      "The values a framework configures itself from are in tests/payloads/settings.json. They are the bearer token, the CORS policy attached to /cors, and the cache's capacity, lifetime and vary headers.",
+      "A framework configures the bearer token, the CORS policy on /cors, and its cache's lifetime and vary headers where it usually configures them. tests/README.md states the values.",
       "The harness passes PORT and RB_HOST. /health and /__meta are the contract's own and are not tests.",
     ].join("\n\n"),
   };
@@ -701,7 +702,7 @@ const header = {
     },
   ],
   securitySchemes: {
-    bearer: { type: "http", scheme: "bearer", description: "The token is token in tests/payloads/settings.json." },
+    bearer: { type: "http", scheme: "bearer", description: `The token is ${code(TOKEN)}.` },
   },
   paths: {
     "/health": {

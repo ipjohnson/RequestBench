@@ -11,7 +11,7 @@ from payloads import Payloads
 # rb:wiring authorized.*
 class BearerToken(AuthenticationBackend):
     """Starlette's authentication backend hook, run by AuthenticationMiddleware before the endpoint.
-    A request whose bearer token is settings.json's is authenticated. Any other request is left
+    A request whose bearer token is the one it is given is authenticated. Any other request is left
     unauthenticated, and `requires` refuses it with Starlette's own 403."""
 
     def __init__(self, token: str) -> None:
@@ -42,6 +42,6 @@ def routes(p: Payloads) -> list[BaseRoute]:
         return JSONResponse(p.small)
 
     # rb:wiring authorized.*
-    authenticated = [Middleware(AuthenticationMiddleware, backend=BearerToken(p.settings["token"]))]
+    authenticated = [Middleware(AuthenticationMiddleware, backend=BearerToken("5a7cc77ed0dcb825806b6f872026c317"))]
 
     return [Route("/authorized/small", small, middleware=authenticated)]

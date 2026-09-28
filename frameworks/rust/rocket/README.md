@@ -61,7 +61,7 @@ reads the cgroup's CPU quota, so the container runs two workers under its two-CP
 | parameters, query | `<segment>` captures bound by `FromParam`, `?<page>` bound as an integer and `?<search..>` bound into a struct by `FromForm`. | Rocket |
 | headers | A request guard of this application's own reads the three headers, because Rocket has no header binder. | by hand |
 | body | `Json` binds the order. On the validate routes, a `Validated` data guard of this application's own runs the validator crate's rules after `Json` has bound the body and fails with 422, and a catcher on `/body` answers with validator's errors as JSON. | by hand, over validator |
-| authorized | A request guard that fails with 403 unless Authorization is settings.json's bearer token. | Rocket |
+| authorized | A request guard that fails with 403 unless Authorization is one bearer token. | Rocket |
 | cache | A `Handler` wrapped around each cache route's own, which answers from an LRU with a time to live before that handler runs, keyed by the path and the headers the route varies on. | by hand, over cached |
 | compressed | rocket_async_compression's `Compress` responder around the answer, gzip at its fastest level. | rocket_async_compression |
 | etag | rocket-etag-if-none-match's guard reads If-None-Match, and the handler hashes the body with entity-tag's XXH3 and answers 304 when the tag matches. | rocket-etag-if-none-match and entity-tag |

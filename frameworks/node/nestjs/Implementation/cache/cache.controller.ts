@@ -1,8 +1,9 @@
 import { Controller, Get, Inject, Param, UseInterceptors } from '@nestjs/common';
+import { CacheTTL } from '@nestjs/cache-manager';
 
 import { PAYLOADS, type Payload, type Payloads } from '../payloads.js';
 import { serial } from '../serial.js';
-import { type Answer, AnswerInterceptor, VaryCacheInterceptor, VaryOn } from './answer.js';
+import { type Answer, AnswerInterceptor, VARIES, VaryCacheInterceptor, VaryOn } from './answer.js';
 
 /**
  * cache: the handler skipped and a stored answer written back. AnswerInterceptor is outermost, so it
@@ -12,6 +13,7 @@ import { type Answer, AnswerInterceptor, VaryCacheInterceptor, VaryOn } from './
 @Controller('cache')
 // rb:wiring cache.*
 @UseInterceptors(AnswerInterceptor, VaryCacheInterceptor)
+@CacheTTL(30_000)
 export class CacheController {
   constructor(@Inject(PAYLOADS) private readonly payloads: Payloads) {}
 
@@ -19,7 +21,7 @@ export class CacheController {
     const headers: Record<string, string> = { 'x-rb-serial': serial() };
     // The Vary header tells a cache in front of the framework what the answer depends on. The store
     // keys on the route's own list.
-    if (vary !== undefined) headers['vary'] = Object.keys(this.payloads.settings.cache.vary[vary]).join(', ');
+    if (vary !== undefined) headers['vary'] = VARIES[vary].join(', ');
     return { headers, body };
   }
 

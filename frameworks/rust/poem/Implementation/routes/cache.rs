@@ -9,26 +9,30 @@ use poem::http::{HeaderMap, HeaderName, HeaderValue, StatusCode, Uri};
 use poem::web::Json;
 use poem::{Endpoint, EndpointExt, IntoResponse, Middleware, Request, Response, Result, Route, get};
 
-use crate::payloads::CacheSettings;
 use crate::{Payloads, serial};
+
+/// Room for the cache family's 52 keys.
+const CAPACITY: usize = 64;
+
+/// How long a stored answer is replayed.
+const LIFETIME: Duration = Duration::from_secs(30);
 
 /// cache: the handler skipped and a stored answer written back. The handler writes x-rb-serial, so
 /// a replayed answer repeats the serial it was stored with. A vary route's key adds its headers.
 pub fn add(route: Route, p: &'static Payloads) -> Route {
-    let settings = &p.settings.cache;
-    let one = names(settings.vary.one.keys());
-    let many = names(settings.vary.many.keys());
+    let one = vec![HeaderName::from_static("x-rb-tenant")];
+    let many = vec![HeaderName::from_static("x-rb-channel"), HeaderName::from_static("x-rb-region"), HeaderName::from_static("x-rb-tenant")];
     let vary_one = listed(&one);
     let vary_many = listed(&many);
 
     route
-        .at("/cache/small/:key", get(make_sync(move |_| serial::fresh(Json(&p.small)))).with(Stored::new(settings, vec![])))
-        .at("/cache/medium/:key", get(make_sync(move |_| serial::fresh(Json(&p.medium)))).with(Stored::new(settings, vec![])))
-        .at("/cache/large/:key", get(make_sync(move |_| serial::fresh(Json(&p.large)))).with(Stored::new(settings, vec![])))
+        .at("/cache/small/:key", get(make_sync(move |_| serial::fresh(Json(&p.small)))).with(Stored::new(vec![])))
+        .at("/cache/medium/:key", get(make_sync(move |_| serial::fresh(Json(&p.medium)))).with(Stored::new(vec![])))
+        .at("/cache/large/:key", get(make_sync(move |_| serial::fresh(Json(&p.large)))).with(Stored::new(vec![])))
         // The Vary header tells a cache in front of the framework what the answer depends on. The
         // store keys on the route's own list, not on this header.
-        .at("/cache/vary/one/:key", get(make_sync(move |_| serial::fresh(Json(&p.small)).with_header(VARY, vary_one.clone()))).with(Stored::new(settings, one)))
-        .at("/cache/vary/many/:key", get(make_sync(move |_| serial::fresh(Json(&p.small)).with_header(VARY, vary_many.clone()))).with(Stored::new(settings, many)))
+        .at("/cache/vary/one/:key", get(make_sync(move |_| serial::fresh(Json(&p.small)).with_header(VARY, vary_one.clone()))).with(Stored::new(one)))
+        .at("/cache/vary/many/:key", get(make_sync(move |_| serial::fresh(Json(&p.small)).with_header(VARY, vary_many.clone()))).with(Stored::new(many)))
 }
 
 // rb:wiring cache.*
@@ -53,7 +57,7 @@ impl Kept {
 
 /// A poem Middleware in front of one route, because poem ships no response cache. It answers from
 /// its store before the handler runs, and stores a 2xx the handler answers, in cached's LruTtlCache
-/// with settings.json's capacity in entries and its time to live, the store axum-response-cache
+/// with CAPACITY entries, each for LIFETIME, the store axum-response-cache
 /// keeps for axum.
 struct Stored {
     on: Arc<[HeaderName]>,
@@ -61,8 +65,8 @@ struct Stored {
 }
 
 impl Stored {
-    fn new(settings: &CacheSettings, on: Vec<HeaderName>) -> Stored {
-        let store = LruTtlCache::new(settings.capacity, Duration::from_secs(settings.ttl_seconds));
+    fn new(on: Vec<HeaderName>) -> Stored {
+        let store = LruTtlCache::new(CAPACITY, LIFETIME);
         Stored { on: on.into(), store: Arc::new(Mutex::new(store)) }
     }
 }
@@ -102,9 +106,6 @@ impl<E: Endpoint> Endpoint for StoredEndpoint<E> {
 }
 // rb:end
 
-fn names<'a>(keys: impl Iterator<Item = &'a String>) -> Vec<HeaderName> {
-    keys.map(|key| HeaderName::from_bytes(key.as_bytes()).expect("settings.json's vary keys are header names")).collect()
-}
 
 fn listed(names: &[HeaderName]) -> HeaderValue {
     let joined = names.iter().map(HeaderName::as_str).collect::<Vec<_>>().join(", ");

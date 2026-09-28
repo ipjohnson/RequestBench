@@ -10,7 +10,6 @@ import java.util.concurrent.TimeUnit;
 import implementation.Payload;
 import implementation.Payloads;
 import implementation.Serial;
-import implementation.Settings;
 import io.javalin.config.JavalinConfig;
 import io.javalin.http.Context;
 import io.javalin.http.Header;
@@ -39,20 +38,18 @@ public final class CacheRoutes {
 
     private final Map<String, Stored> store = new ConcurrentHashMap<>();
 
-    private final int capacity;
+    /** Room for the cache family's 52 keys. */
+    private final int capacity = 64;
 
-    private final long ttlNanos;
+    private final long ttlNanos = TimeUnit.SECONDS.toNanos(30);
 
     public CacheRoutes(Payloads p) {
         this.p = p;
-        Settings.Cache cache = p.settings().cache();
-        List<String> one = List.copyOf(cache.vary().one().keySet());
-        List<String> many = List.copyOf(cache.vary().many().keySet());
+        List<String> one = List.of("x-rb-tenant");
+        List<String> many = List.of("x-rb-channel", "x-rb-region", "x-rb-tenant");
         this.keyedOn = Map.of("/cache/vary/one", one, "/cache/vary/many", many);
         this.varyOne = String.join(", ", one);
         this.varyMany = String.join(", ", many);
-        this.capacity = cache.capacity();
-        this.ttlNanos = TimeUnit.SECONDS.toNanos(cache.ttlSeconds());
     }
 
     public void register(JavalinConfig config) {
@@ -82,8 +79,8 @@ public final class CacheRoutes {
     }
 
     /**
-     * Stores what the route answered, for settings.json's TTL. A full store drops one entry to take
-     * another, whichever the map yields first.
+     * Stores what the route answered, for 30 seconds. A full store drops one entry to take another,
+     * whichever the map yields first.
      */
     private void keep(Context ctx) throws IOException {
         if (ctx.statusCode() != 200 || ctx.resultInputStream() == null) {

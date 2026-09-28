@@ -20,7 +20,6 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 Payloads payloads = Payloads.Load(Environment.GetEnvironmentVariable("RB_PAYLOADS")
     ?? throw new InvalidOperationException("RB_PAYLOADS has to name the payload directory"));
-Settings settings = payloads.Settings;
 int port = int.TryParse(Environment.GetEnvironmentVariable("PORT"), out int parsed) ? parsed : 8080;
 
 builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
@@ -46,9 +45,9 @@ builder.Services.AddProblemDetails();
 // DisableValidation, so only the validate routes pay for validation, as in Carter.
 builder.Services.AddValidation();
 // rb:wiring cache.*
-// settings.json's capacity counts entries, and this store is sized in bytes. Its default of
-// 100 MB holds every key the cache family stores many times over.
-builder.Services.AddOutputCache(options => options.DefaultExpirationTimeSpan = TimeSpan.FromSeconds(settings.Cache.TtlSeconds));
+// The store is sized in bytes. Its default of 100 MB holds the cache family's 52 keys many times
+// over. Each route sets how long it keeps an answer.
+builder.Services.AddOutputCache();
 // rb:wiring compressed.*
 // A Function URL's requests are HTTPS, and ASP.NET Core compresses an answer to HTTPS only with
 // EnableForHttps. The container hosts are plain HTTP, where it changes nothing.
@@ -60,15 +59,15 @@ builder.Services.Configure<GzipCompressionProviderOptions>(options => options.Le
 // A policy listing exactly one origin sends no Vary: Origin, although its answer differs by
 // origin. A policy that decides by predicate always sends it.
 builder.Services.AddCors(options => options.AddPolicy(Policies.Cors, policy => policy
-    .SetIsOriginAllowed(origin => origin == settings.Cors.Origin)
-    .WithMethods(settings.Cors.Method)
-    .WithHeaders(settings.Cors.Header)
-    .SetPreflightMaxAge(TimeSpan.FromSeconds(settings.Cors.MaxAgeSeconds))));
+    .SetIsOriginAllowed(origin => origin == "https://shop.example.com")
+    .WithMethods("GET")
+    .WithHeaders("x-rb-tenant")
+    .SetPreflightMaxAge(TimeSpan.FromSeconds(600))));
 // rb:wiring authorized.*
 builder.Services.AddAuthentication().AddScheme<AuthenticationSchemeOptions, BearerToken>(BearerToken.SchemeName, _ => { });
 builder.Services.AddAuthorization(options => options.AddPolicy(Policies.Token, policy => policy
     .AddAuthenticationSchemes(BearerToken.SchemeName)
-    .RequireClaim(BearerToken.TokenClaim, settings.Token)));
+    .RequireClaim(BearerToken.TokenClaim, "5a7cc77ed0dcb825806b6f872026c317")));
 // rb:end
 // rb:wiring template.*
 // ASP.NET Core marks Razor components as unsupported under Native AOT. The one component here

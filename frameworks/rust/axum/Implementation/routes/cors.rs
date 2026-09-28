@@ -11,11 +11,6 @@ use crate::serial;
 /// cors: tower-http's CORS layer on this family's router and nowhere else. It answers a preflight
 /// before the router reaches a handler, so the handler's x-rb-serial is absent from it.
 pub fn router(p: &'static Payloads) -> Router {
-    let cors = &p.settings.cors;
-    let origin = HeaderValue::from_str(&cors.origin).expect("settings.json's cors.origin is a header value");
-    let method = Method::from_bytes(cors.method.as_bytes()).expect("settings.json's cors.method is a method");
-    let header = HeaderName::from_bytes(cors.header.as_bytes()).expect("settings.json's cors.header is a header name");
-
     Router::new()
         .route("/cors/small", get(move || async move { (serial::fresh(), Json(&p.small)) }))
         // rb:wiring cors.*
@@ -24,9 +19,9 @@ pub fn router(p: &'static Payloads) -> Router {
         // also wraps the 405 the route answers OPTIONS with and sees the preflight.
         .layer(
             CorsLayer::new()
-                .allow_origin(AllowOrigin::list([origin]))
-                .allow_methods([method])
-                .allow_headers([header])
-                .max_age(Duration::from_secs(cors.max_age_seconds)),
+                .allow_origin(AllowOrigin::list([HeaderValue::from_static("https://shop.example.com")]))
+                .allow_methods([Method::GET])
+                .allow_headers([HeaderName::from_static("x-rb-tenant")])
+                .max_age(Duration::from_secs(600)),
         )
 }

@@ -34,7 +34,7 @@ public sealed class EtagTests(App app) : TestBase<App>
     [Trait("corpus", "etag.stale_large")]
     public async Task A_validator_it_never_issued_is_answered_in_full()
     {
-        using HttpResponseMessage response = await ConditionalAsync((string)Expected.Settings["staleEtag"]!);
+        using HttpResponseMessage response = await ConditionalAsync("\"0000000000000000\"");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         await Answer.IsAsync(Expected.Json("items.large.json"), response);

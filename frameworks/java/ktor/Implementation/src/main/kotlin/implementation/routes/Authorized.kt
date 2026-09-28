@@ -37,7 +37,7 @@ private val TokenCheck = createRouteScopedPlugin("TokenCheck", ::TokenCheckConfi
 
 /**
  * authorized: Ktor's Authentication plugin reads the bearer token, and makes it the caller's identity.
- * The TokenCheck plugin then refuses any token but settings.json's with 403. A request with no bearer
+ * The TokenCheck plugin then refuses any token but the one it is given with 403. A request with no bearer
  * token is not authenticated, which Ktor answers with 401.
  */
 fun Application.authorized(p: Payloads) {
@@ -50,7 +50,7 @@ fun Application.authorized(p: Payloads) {
     // rb:end
     routing {
         authenticate("token") {
-            install(TokenCheck) { token = p.settings.token }
+            install(TokenCheck) { token = "5a7cc77ed0dcb825806b6f872026c317" }
             get("/authorized/small") { call.respond(p.small) }
         }
     }

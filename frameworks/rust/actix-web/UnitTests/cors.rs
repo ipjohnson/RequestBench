@@ -3,11 +3,9 @@ use actix_web::dev::ServiceResponse;
 use actix_web::http::StatusCode;
 use actix_web::test::TestRequest;
 
-use crate::support::{app, expected, header, json, payloads};
+use crate::support::{app, expected, header, json};
 
-fn origin() -> &'static str {
-    &payloads().settings.cors.origin
-}
+const ORIGIN: &str = "https://shop.example.com";
 
 async fn preflight(from: &str) -> ServiceResponse<impl MessageBody> {
     let request = TestRequest::default()
@@ -23,10 +21,10 @@ async fn preflight(from: &str) -> ServiceResponse<impl MessageBody> {
 /// cors.preflight: the middleware answers the preflight before any handler, so no x-rb-serial.
 #[actix_web::test]
 async fn the_middleware_answers_a_preflight_before_any_handler() {
-    let response = preflight(origin()).await;
+    let response = preflight(ORIGIN).await;
 
     assert_eq!(response.status(), StatusCode::OK);
-    assert_eq!(header(&response, "access-control-allow-origin"), Some(origin()));
+    assert_eq!(header(&response, "access-control-allow-origin"), Some(ORIGIN));
     assert_eq!(header(&response, "access-control-allow-headers"), Some("x-rb-tenant"));
     assert_eq!(header(&response, "access-control-max-age"), Some("600"));
     assert_eq!(header(&response, "x-rb-serial"), None);
@@ -48,9 +46,9 @@ async fn a_preflight_from_another_origin_is_not_allowed() {
 /// Origin.
 #[actix_web::test]
 async fn the_request_itself_reaches_the_handler_and_varies_on_origin() {
-    let response = app().await.get_with("/cors/small", &[("origin", origin()), ("x-rb-tenant", "qwertyuiopas")]).await;
+    let response = app().await.get_with("/cors/small", &[("origin", ORIGIN), ("x-rb-tenant", "qwertyuiopas")]).await;
 
-    assert_eq!(header(&response, "access-control-allow-origin"), Some(origin()));
+    assert_eq!(header(&response, "access-control-allow-origin"), Some(ORIGIN));
     assert_eq!(header(&response, "vary"), Some("Origin, Access-Control-Request-Method, Access-Control-Request-Headers"));
     assert!(header(&response, "x-rb-serial").is_some());
     assert_eq!(json(response).await, expected("items.small.json"));
@@ -60,7 +58,7 @@ async fn the_request_itself_reaches_the_handler_and_varies_on_origin() {
 /// cors.scoped: a route outside /cors gets no policy.
 #[actix_web::test]
 async fn a_route_outside_cors_gets_no_policy() {
-    let response = app().await.get_with("/json/small", &[("origin", origin())]).await;
+    let response = app().await.get_with("/json/small", &[("origin", ORIGIN)]).await;
 
     assert_eq!(response.status(), StatusCode::OK);
     assert_eq!(header(&response, "access-control-allow-origin"), None);

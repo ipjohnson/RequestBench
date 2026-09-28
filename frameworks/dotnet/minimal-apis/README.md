@@ -90,8 +90,7 @@ Client section says.
   predicate instead, which always sends it.
 - Form binding requires an antiforgery token by default. The two form routes turn that off,
   because the corpus is not a browser session.
-- settings.json sizes the cache in entries, and output caching sizes it in bytes. Its default of
-  100 MB holds every key the cache family stores.
+- Output caching sizes its store in bytes. Its default of 100 MB holds the cache family's 52 keys.
 - Minimal APIs have no package of their own. They ship in the ASP.NET Core shared framework, which
   the image takes from the aspnet runtime image. `/__meta` reports the version of that shared
   framework, and rb.json's `package` is that image's registry page. On lambda-emulator the native

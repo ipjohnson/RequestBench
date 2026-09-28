@@ -33,7 +33,7 @@
     "argv": ["mvn", "-B", "-Pclient", "clean", "compile", "-pl", "Client", "-am"]
   },
   "skips": {
-    "cors.scoped": "Micronaut's CORS configuration names origins and no path, so the policy covers every route. The per-route @CrossOrigin takes its policy as annotation constants, which would copy settings.json's policy into the source."
+    "cors.scoped": "Micronaut's CORS configuration names origins and no path, so the policy covers every route."
   },
   "noHandler": {
     "cors.preflight": "Micronaut's CorsFilter answers the preflight before the router runs, and no handler runs.",
@@ -45,7 +45,7 @@
   },
   "mechanisms": {
     "authorized": {
-      "mechanism": "micronaut-security, with its filter scoped to /authorized in application.properties. A TokenValidator gives settings.json's bearer token the role @Secured asks for and any other token none, and micronaut-security answers an authenticated request that @Secured refuses with 403",
+      "mechanism": "micronaut-security, with its filter scoped to /authorized in application.properties. A TokenValidator gives one bearer token the role @Secured asks for and any other token none, and micronaut-security answers an authenticated request that @Secured refuses with 403",
       "dependency": "micronaut-security",
       "mentions": "TokenValidator"
     },
@@ -56,7 +56,7 @@
       "mentions": "jakarta.validation"
     },
     "cache": {
-      "mechanism": "micronaut-cache over Caffeine: @Cacheable on a bean's methods, which return the payload and the serial the handler answers with, and one cache per route, sized and aged by settings.json",
+      "mechanism": "micronaut-cache over Caffeine: @Cacheable on a bean's methods, which return the payload and the serial the handler answers with, and one cache per route, sized and aged by micronaut.caches in application.properties",
       "dependency": "micronaut-cache-caffeine",
       "mentions": "Cacheable"
     },
@@ -65,8 +65,8 @@
       "mentions": "compression-level"
     },
     "cors": {
-      "mechanism": "Micronaut's CorsFilter, with a configuration built from settings.json when the server's CORS configuration is created. The configuration covers every route",
-      "mentions": "CorsOriginConfiguration"
+      "mechanism": "Micronaut's CorsFilter, with one configuration under micronaut.server.cors in application.properties, which covers every route",
+      "mentions": "micronaut.server.cors"
     },
     "errors": {
       "builtin": "Micronaut's router answers a path with no route with 404 and a method the path lacks with 405, and a body the parser cannot read is a 400. A handler that returns null for a missing row is a 404. Micronaut's default error processor writes each body."

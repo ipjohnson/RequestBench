@@ -45,7 +45,7 @@ class EtagTests {
     @Test
     @Tag("etag.stale_large")
     void aValidatorItNeverIssuedIsAnsweredInFull() {
-        Response response = get("/etag/large", "if-none-match", Expected.settings().get("staleEtag").asText());
+        Response response = get("/etag/large", "if-none-match", "\"0000000000000000\"");
 
         assertEquals(200, response.statusCode());
         Answer.is(Expected.json("items.large.json"), response);

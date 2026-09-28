@@ -14,11 +14,11 @@ import (
 // store and the middleware in front of each route are written for it. The handler writes
 // x-rb-serial, so a replayed answer repeats the serial it was stored with.
 func cacheRoutes(e *echo.Echo, p *Payloads) {
-	settings := p.Settings.Cache
-	one := headerNames(settings.Vary.One)
-	many := headerNames(settings.Vary.Many)
+	one := []string{"x-rb-tenant"}
+	many := []string{"x-rb-channel", "x-rb-region", "x-rb-tenant"}
 	// rb:wiring cache.*
-	store := newStore(settings.Capacity, time.Duration(settings.TTLSeconds)*time.Second)
+	// Room for the cache family's 52 keys, each kept 30 seconds.
+	store := newStore(64, 30*time.Second)
 
 	e.GET("/cache/small/:key", fresh(&p.Small), replay(store, nil))
 
@@ -109,7 +109,7 @@ type stored struct {
 	expires time.Time
 }
 
-// store is one per process, sized in entries and aged by settings.json. A full store drops one
+// store is one per process, sized in entries and aged by cacheRoutes. A full store drops one
 // entry to take another, whichever the map yields first.
 type store struct {
 	mu       sync.RWMutex

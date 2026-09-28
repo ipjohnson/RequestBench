@@ -33,43 +33,12 @@ class Payload(Camel):
 # rb:end
 
 
-class Vary(Camel):
-    """The values each vary row is keyed on, by header."""
-
-    one: dict[str, list[str]]
-    many: dict[str, list[str]]
-
-
-class CacheSettings(Camel):
-    capacity: int
-    ttl_seconds: int
-    vary: Vary
-
-
-class CorsSettings(Camel):
-    origin: str
-    method: str
-    header: str
-    max_age_seconds: int
-
-
-class Settings(Camel):
-    """The values the framework configures itself from, as settings.json holds them."""
-
-    token: str
-    wrong_token: str
-    stale_etag: str
-    cache: CacheSettings
-    cors: CorsSettings
-
-
 @dataclass(frozen=True)
 class Payloads:
     directory: Path
     small: Payload
     medium: Payload
     large: Payload
-    settings: Settings
     rows: dict[int, Item]
 
     def row(self, id: int) -> Item | None:
@@ -85,6 +54,5 @@ def load(directory: str) -> Payloads:
         small=msgspec.json.decode((root / "items.small.json").read_bytes(), type=Payload),
         medium=msgspec.json.decode((root / "items.medium.json").read_bytes(), type=Payload),
         large=large,
-        settings=msgspec.json.decode((root / "settings.json").read_bytes(), type=Settings),
         rows={row.id: row for row in large.items},
     )

@@ -64,7 +64,7 @@ Lambda.
 | parameters, query | `getOrFail`, which reads each value by name and converts the numbers with Ktor's data conversion. | Ktor |
 | headers | The handler reads each header by name and converts the account itself, because Ktor binds no header. | by hand |
 | body | `call.receive` binds the order through `ContentNegotiation`. On the validate routes, `RequestValidation` checks it as it is received, and `StatusPages` answers its exception with 400. | Ktor |
-| authorized | The `Authentication` plugin's bearer provider, and a route-scoped plugin on the `AuthenticationChecked` hook that answers 403 for any token but settings.json's, as Ktor's documentation writes authorization. | Ktor |
+| authorized | The `Authentication` plugin's bearer provider, and a route-scoped plugin on the `AuthenticationChecked` hook that answers 403 for any token but the one it is given, as Ktor's documentation writes authorization. | Ktor |
 | cache | A route-scoped plugin that replays a stored answer in `onCall` and stores the answer in `ResponseBodyReadyForSend`, one store for the process. | by hand, on Ktor's plugin API |
 | compressed | The `Compression` plugin on the two routes, with its defaults. | Ktor |
 | etag | The `ConditionalHeaders` plugin on the two routes, with a version provider that tags the body with Ktor's own SHA-1 of it. | Ktor |

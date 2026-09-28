@@ -4,7 +4,7 @@ namespace Implementation.Routes;
 
 /// <summary>
 /// authorized: ASP.NET Core's authorization, which Carter routes use as minimal APIs do. The
-/// token policy runs before the handler and forbids a token that is not settings.json's.
+/// token policy runs before the handler and forbids any token but the one it names.
 /// </summary>
 public sealed class AuthorizedRoutes : ICarterModule
 {

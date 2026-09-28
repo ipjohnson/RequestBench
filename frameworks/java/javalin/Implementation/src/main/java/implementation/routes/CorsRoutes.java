@@ -3,7 +3,6 @@ package implementation.routes;
 import implementation.Payload;
 import implementation.Payloads;
 import implementation.Serial;
-import implementation.Settings;
 import io.javalin.config.JavalinConfig;
 import io.javalin.http.Context;
 import io.javalin.openapi.OpenApi;
@@ -25,15 +24,14 @@ public final class CorsRoutes {
     }
 
     public void register(JavalinConfig config) {
-        Settings.Cors cors = p.settings().cors();
         // The plugin has no list of methods or headers. It answers a preflight from an allowed origin
         // with the method and the headers the preflight asked for.
         // rb:handler cors.disallowed
         // rb:wiring cors.*
         config.bundledPlugins.enableCors(plugin -> plugin.addRule(rule -> {
             rule.path = "/cors/*";
-            rule.allowHost(cors.origin());
-            rule.maxAge = cors.maxAgeSeconds();
+            rule.allowHost("https://shop.example.com");
+            rule.maxAge = 600;
         }));
         config.routes.get("/cors/small", this::small);
     }

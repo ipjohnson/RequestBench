@@ -14,14 +14,13 @@ import (
 // because it stores the response's headers, so a replayed answer repeats the serial it was
 // stored with.
 func cacheRoutes(app *fiber.App, p *Payloads) {
-	settings := p.Settings.Cache
-	one := headerNames(settings.Vary.One)
-	many := headerNames(settings.Vary.Many)
+	one := []string{"x-rb-tenant"}
+	many := []string{"x-rb-channel", "x-rb-region", "x-rb-tenant"}
 	// rb:wiring cache.*
-	// One store for the process. It is sized in bytes, and settings.json's capacity in entries
-	// has no setting to go to.
+	// One store for the process, keeping each answer 30 seconds. It is sized in bytes, and its
+	// default of 1 MB holds the cache family's 52 answers.
 	replayed := cache.New(cache.Config{
-		Expiration:           time.Duration(settings.TTLSeconds) * time.Second,
+		Expiration:           30 * time.Second,
 		StoreResponseHeaders: true,
 	})
 

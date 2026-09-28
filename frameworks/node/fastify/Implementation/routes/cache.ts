@@ -29,17 +29,19 @@ const keyed = {
  * so a replayed answer repeats the serial it was stored with.
  */
 const cache: Routes = async (app, { payloads: p }) => {
-  const { capacity, ttlSeconds, vary } = p.settings.cache;
-  const one = Object.keys(vary.one);
-  const many = Object.keys(vary.many);
+  // Room for the cache family's 52 keys, each kept 30 seconds.
+  const capacity = 64;
+  const ttlSeconds = 30;
+  const one = ["x-rb-tenant"];
+  const many = ["x-rb-channel", "x-rb-region", "x-rb-tenant"];
 
   // rb:wiring cache.*
   /**
    * Fastify ships no response cache, and @fastify/caching sets cache headers and hands out a
    * store without replaying anything. The replay is two hooks in this family's plugin, so they
    * run on these routes alone: onRequest answers from the store before the handler, and onSend
-   * stores what the handler's reply serialised. The store holds settings.json's capacity in
-   * entries, and drops the oldest to make room.
+   * stores what the handler's reply serialised. The store holds 64 entries,
+   * and drops the oldest to make room.
    */
   const store = new Map<string, Stored>();
 

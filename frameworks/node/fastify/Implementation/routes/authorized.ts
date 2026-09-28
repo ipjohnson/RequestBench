@@ -6,7 +6,7 @@ import { answers, payload } from "../schemas.ts";
 // rb:wiring authorized.*
 /**
  * The token check, as an onRequest hook on the route, which runs before the body is read and
- * before the handler. A token that is not settings.json's is refused with 403 by
+ * before the handler. Any other token is refused with 403 by
  * @fastify/sensible, whose error Fastify's error handler writes.
  */
 function requireToken(token: string): onRequestHookHandler {
@@ -23,7 +23,7 @@ function requireToken(token: string): onRequestHookHandler {
  * token with 401 where the corpus asks for 403, so the check is a hook on the route.
  */
 const authorized: Routes = async (app, { payloads: p }) => {
-  app.get("/authorized/small", { ...answers(payload), onRequest: requireToken(p.settings.token) }, async () => p.small);
+  app.get("/authorized/small", { ...answers(payload), onRequest: requireToken("5a7cc77ed0dcb825806b6f872026c317") }, async () => p.small);
 };
 
 export default authorized;

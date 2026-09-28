@@ -28,10 +28,6 @@ pub fn with_echo(name: &str, echo: Value) -> Value {
     payload
 }
 
-pub fn settings() -> Value {
-    expected("settings.json")
-}
-
 /// A JSON body posted with its type and its length, as a client sends it.
 pub async fn post_json(server: &TestServer, path: &str, body: Vec<u8>) -> axum_test::TestResponse {
     server.post(path).content_type("application/json").add_header(CONTENT_LENGTH, body.len()).bytes(body.into()).await

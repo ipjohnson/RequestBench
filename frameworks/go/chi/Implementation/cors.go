@@ -10,14 +10,13 @@ import (
 // route and before any handler runs. The handler writes x-rb-serial, so its absence on a
 // preflight shows the middleware answered alone.
 func corsRoutes(r chi.Router, p *Payloads) {
-	policy := p.Settings.Cors
 	r.Route("/cors", func(r chi.Router) {
 		// rb:wiring cors.*
 		r.Use(cors.Handler(cors.Options{
-			AllowedOrigins: []string{policy.Origin},
-			AllowedMethods: []string{policy.Method},
-			AllowedHeaders: []string{policy.Header},
-			MaxAge:         policy.MaxAgeSeconds,
+			AllowedOrigins: []string{"https://shop.example.com"},
+			AllowedMethods: []string{"GET"},
+			AllowedHeaders: []string{"x-rb-tenant"},
+			MaxAge:         600,
 		}))
 
 		// rb:handler cors.request

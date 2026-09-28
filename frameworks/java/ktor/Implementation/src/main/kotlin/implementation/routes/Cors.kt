@@ -9,7 +9,6 @@ import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import io.ktor.server.routing.route
-import java.net.URI
 
 /**
  * cors: Ktor's CORS plugin on /cors alone. It answers a preflight before any handler runs, and adds
@@ -17,15 +16,13 @@ import java.net.URI
  * a preflight shows the plugin answered alone.
  */
 fun Route.cors(p: Payloads) {
-    val cors = p.settings.cors
     route("/cors") {
         // rb:wiring cors.*
         install(CORS) {
-            val origin = URI(cors.origin)
-            allowHost(origin.authority, schemes = listOf(origin.scheme))
-            allowMethod(HttpMethod.parse(cors.method))
-            allowHeader(cors.header)
-            maxAgeInSeconds = cors.maxAgeSeconds
+            allowHost("shop.example.com", schemes = listOf("https"))
+            allowMethod(HttpMethod.Get)
+            allowHeader("x-rb-tenant")
+            maxAgeInSeconds = 600
         }
         // rb:handler cors.request,cors.vary
         get("/small") { call.fresh(); call.respond(p.small) }

@@ -101,8 +101,7 @@ Each test the corpus measures carries `[Trait("corpus", "<id>")]`, so `--filter-
   predicate instead, which always sends it.
 - FastEndpoints checks an antiforgery token only on an endpoint that calls `EnableAntiforgery()`,
   so the form endpoints need nothing turned off.
-- settings.json sizes the cache in entries, and output caching sizes it in bytes. Its default of
-  100 MB holds every key the cache family stores.
+- Output caching sizes its store in bytes. Its default of 100 MB holds the cache family's 52 keys.
 - On container-h2, where Kestrel speaks HTTP/2, `Program.cs` sends the body of an answer to HEAD
   to `Stream.Null` ahead of every other middleware. Over HTTP/2 Kestrel sends that body when it is
   written through the response PipeWriter, as a JSON result is, and HTTP/2 allows no content in an

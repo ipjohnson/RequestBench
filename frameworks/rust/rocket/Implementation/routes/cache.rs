@@ -10,8 +10,14 @@ use rocket::serde::json::Json;
 use rocket::{Build, Data, Request, Responder, Response, Rocket, State, get, routes};
 
 use crate::Payloads;
-use crate::payloads::{CacheSettings, Payload};
+use crate::payloads::Payload;
 use crate::serial::Fresh;
+
+/// Room for the cache family's 52 keys.
+const CAPACITY: usize = 64;
+
+/// How long a stored answer is replayed.
+const LIFETIME: Duration = Duration::from_secs(30);
 
 /// An answer with the Vary header, which tells a cache in front of the framework what the answer
 /// depends on. The store keys on the route's own list, not on this header.
@@ -21,8 +27,8 @@ struct Varied<R> {
     vary: Header<'static>,
 }
 
-fn varied<'a, R>(inner: R, on: impl Iterator<Item = &'a String>) -> Varied<R> {
-    Varied { inner, vary: Header::new("Vary", on.map(String::as_str).collect::<Vec<_>>().join(", ")) }
+fn varied<R>(inner: R, on: &'static str) -> Varied<R> {
+    Varied { inner, vary: Header::new("Vary", on) }
 }
 
 /// cache: the handler skipped and a stored answer written back. The handler writes x-rb-serial,
@@ -44,22 +50,21 @@ fn large(p: &State<Payloads>) -> Fresh<Json<&Payload>> {
 
 #[get("/cache/vary/one/<_>")]
 fn vary_one(p: &State<Payloads>) -> Fresh<Varied<Json<&Payload>>> {
-    Fresh::new(varied(Json(&p.small), p.settings.cache.vary.one.keys()))
+    Fresh::new(varied(Json(&p.small), "x-rb-tenant"))
 }
 
 #[get("/cache/vary/many/<_>")]
 fn vary_many(p: &State<Payloads>) -> Fresh<Varied<Json<&Payload>>> {
-    Fresh::new(varied(Json(&p.small), p.settings.cache.vary.many.keys()))
+    Fresh::new(varied(Json(&p.small), "x-rb-channel, x-rb-region, x-rb-tenant"))
 }
 
-pub fn stage(rocket: Rocket<Build>, p: &Payloads) -> Rocket<Build> {
-    let settings = &p.settings.cache;
-    let one: Vec<String> = settings.vary.one.keys().cloned().collect();
-    let many: Vec<String> = settings.vary.many.keys().cloned().collect();
+pub fn stage(rocket: Rocket<Build>, _: &Payloads) -> Rocket<Build> {
+    let one = ["x-rb-tenant".to_owned()];
+    let many = ["x-rb-channel".to_owned(), "x-rb-region".to_owned(), "x-rb-tenant".to_owned()];
     rocket
-        .mount("/", stored(routes![small, medium, large], &[], settings))
-        .mount("/", stored(routes![vary_one], &one, settings))
-        .mount("/", stored(routes![vary_many], &many, settings))
+        .mount("/", stored(routes![small, medium, large], &[]))
+        .mount("/", stored(routes![vary_one], &one))
+        .mount("/", stored(routes![vary_many], &many))
 }
 
 // rb:wiring cache.*
@@ -87,7 +92,7 @@ impl Answer {
 /// A store in front of one route. Rocket runs nothing around a handler but the handler itself,
 /// and the handler the route attribute generates is a value an application may replace, so the
 /// store is a Handler that wraps it. It answers from the store before that handler runs, and
-/// stores a 200 the handler answers, with settings.json's capacity in entries and its time to live.
+/// stores a 200 the handler answers, with CAPACITY entries, each for LIFETIME.
 #[derive(Clone)]
 struct Stored {
     route: Box<dyn Handler>,
@@ -119,9 +124,9 @@ impl Handler for Stored {
 }
 
 /// Each route's handler wrapped in a store of its own.
-fn stored(routes: Vec<Route>, on: &[String], settings: &CacheSettings) -> Vec<Route> {
+fn stored(routes: Vec<Route>, on: &[String]) -> Vec<Route> {
     let wrap = |mut route: Route| {
-        let store = LruTtlCache::new(settings.capacity, Duration::from_secs(settings.ttl_seconds));
+        let store = LruTtlCache::new(CAPACITY, LIFETIME);
         route.handler = Box::new(Stored { route: route.handler.clone(), on: on.into(), store: Arc::new(Mutex::new(store)) });
         route
     };

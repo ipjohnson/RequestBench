@@ -33,7 +33,7 @@
       "mechanism": "MVC's model validation: DataAnnotations on the order and line types, which [ApiController] runs before the action and refuses with its automatic 400. The bind actions bind a subtype marked [ValidateNever]. The first-error action's filter checks one property at a time with DataAnnotations, because they cannot stop at the first failure"
     },
     "cache": {
-      "mechanism": "ASP.NET Core output caching, which MVC reads from [OutputCache] on each action, with a named policy for each vary row that varies by its request headers"
+      "mechanism": "ASP.NET Core output caching, which MVC reads from [OutputCache] on each action, whose Duration keeps an answer 30 seconds and whose VaryByHeaderNames adds a vary row's request headers to the key"
     },
     "compressed": {
       "mechanism": "ASP.NET Core's response compression middleware on the whole application, at gzip's fastest level"

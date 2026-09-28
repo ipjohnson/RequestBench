@@ -17,7 +17,8 @@ import { gzipSync } from "node:zlib";
 import type { Draw, Exceptions, Json, RunValues } from "@rb/tests/kit";
 import { CACHE_KEYS } from "@rb/tests/models/cache";
 import { orderRequest } from "@rb/tests/models/order-request";
-import { items, settings } from "@rb/tests/payloads";
+import { CORS, TOKEN } from "@rb/tests/models/configuration";
+import { items } from "@rb/tests/payloads";
 import type { Request, Response, Transport } from "../validate.ts";
 
 const REFUSAL_IDS = ["authorized.denied", "body.rejected_all", "body.rejected_first", "errors.malformed", "errors.unmatched"] as const;
@@ -78,7 +79,7 @@ const etagOf = (body: Uint8Array) => `"${createHash("sha1").update(body).digest(
 const small = items.small.value;
 const sized = { small, medium: items.medium.value, large: items.large.value } as const;
 const rows = items.large.value.items;
-const cors = settings.value.cors;
+const cors = CORS;
 const PAYLOADS = join(import.meta.dirname, "../../tests/payloads");
 
 const echoed = (echo: Record<string, unknown>) => json({ ...small, echo });
@@ -164,7 +165,7 @@ export function corpusReference(contract: Contract) {
     ["POST", /^\/body\/validate\/(?:small|medium|large)$/, (req) => ordered(req, "body.rejected_all")],
     ["POST", /^\/body\/validate\/first-error$/, (req) => ordered(req, "body.rejected_first")],
     ["GET", /^\/authorized\/small$/, (req) =>
-      req.headers["authorization"] === `Bearer ${settings.value.token}` ? json(small) : own("authorized.denied")],
+      req.headers["authorization"] === `Bearer ${TOKEN}` ? json(small) : own("authorized.denied")],
     ["GET", /^\/(?:compressed|etag)\/(small|medium|large)$/, (_, m) => json(sized[m[1] as keyof typeof sized])],
     ["GET", /^\/cache\/(small|medium|large)\/[\w-]+$/, (_, m) => json(sized[m[1] as keyof typeof sized])],
     ["GET", /^\/cache\/vary\/(?:one|many)\/[\w-]+$/, () => json(small)],

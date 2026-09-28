@@ -3,14 +3,14 @@ use implementation::app::App;
 use loco_rs::testing::request::request;
 use serde_json::{Value, json};
 
-use crate::support::{expected, settings};
+use crate::support::expected;
 
 // rb:test authorized.allowed
-/// authorized.allowed: settings.json's token reaches the handler.
+/// authorized.allowed: the one token reaches the handler.
 #[tokio::test]
 async fn the_token_reaches_the_handler() {
     request::<App, _, _>(|server, _| async move {
-        let token = settings()["token"].as_str().unwrap().to_owned();
+        let token = "5a7cc77ed0dcb825806b6f872026c317".to_owned();
 
         let response = server.get("/authorized/small").add_header("authorization", format!("Bearer {token}")).await;
 
@@ -25,7 +25,7 @@ async fn the_token_reaches_the_handler() {
 #[tokio::test]
 async fn another_token_is_refused() {
     request::<App, _, _>(|server, _| async move {
-        let wrong = settings()["wrongToken"].as_str().unwrap().to_owned();
+        let wrong = "5a7cc77ed0dcb825806b6f872026c310".to_owned();
 
         let response = server.get("/authorized/small").add_header("authorization", format!("Bearer {wrong}")).await;
 

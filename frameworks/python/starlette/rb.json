@@ -32,7 +32,7 @@
   },
   "mechanisms": {
     "authorized": {
-      "mechanism": "Starlette's AuthenticationMiddleware on the route, with a backend that authenticates settings.json's bearer token, and requires, which refuses any other request with 403"
+      "mechanism": "Starlette's AuthenticationMiddleware on the route, with a backend that authenticates one bearer token, and requires, which refuses any other request with 403"
     },
     "baseline": { "builtin": "The endpoint returns a PlainTextResponse." },
     "body": {

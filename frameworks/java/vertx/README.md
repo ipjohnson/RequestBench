@@ -55,7 +55,7 @@ per core, so two of the four serve.
 | middleware | No-op handlers chained on the route, four or sixteen, each calling `next()`. | Vert.x Web |
 | parameters, query, headers | A `ValidationHandler` on the route declares each value with a schema of its type, and the handler reads the typed value from `RequestParameters`. | vertx-web-validation |
 | body | `BodyHandler` buffers the body. The bind routes parse it with `RequestBody.asJsonObject`. On the validate routes a `ValidationHandler` parses it and checks it against orderRequest's rules as a vertx-json-schema schema, and refuses a body that breaks one with 400. | vertx-web-validation and vertx-json-schema |
-| authorized | `SimpleAuthenticationHandler` makes the bearer token the user, and `AuthorizationHandler` requires a permission that only settings.json's token is granted, on `/authorized/*` alone. | Vert.x Web and vertx-auth |
+| authorized | `SimpleAuthenticationHandler` makes the bearer token the user, and `AuthorizationHandler` requires a permission that only one token is granted, on `/authorized/*` alone. | Vert.x Web and vertx-auth |
 | cache | A handler in front of each cache route replays a stored answer, or lets the route's handler build one and keeps it, in a local map of Vert.x's shared data. | by hand |
 | compressed | The HTTP server's compression, on every connection, gzip at level 1, the fastest. | Vert.x core |
 | etag | The handler hashes the encoded body with SHA-1 and sets the tag with `RoutingContext.etag`, and `RoutingContext.isFresh` decides the 304. | Vert.x Web, the hash by hand |
@@ -95,8 +95,8 @@ per core, so two of the four serve.
   a refusal reads the same from one start to the next.
 - vertx-auth has no provider for an opaque token. `SimpleAuthenticationHandler` is Vert.x Web's
   handler for an application's own check, and it makes the token the user without judging it. The
-  `AuthorizationProvider` in `AuthorizedRoutes` grants the route's permission to settings.json's
-  token, and `AuthorizationHandler` refuses a user without it with 403. A request with no bearer
+  `AuthorizationProvider` in `AuthorizedRoutes` grants the route's permission to the one token it
+  names, and `AuthorizationHandler` refuses a user without it with 403. A request with no bearer
   token is not authenticated, which is 401.
 - Vert.x Web logs a failure that reaches the router with no failure handler as an unhandled
   exception. The authorized routes send theirs to Vert.x Web's `ErrorHandler`, so a denied request
@@ -107,8 +107,9 @@ per core, so two of the four serve.
 - `CorsHandler` sends `Vary: Origin` only for a policy with more than one origin or a pattern. The
   one origin is given as a pattern that matches it alone. The handler answers a preflight with 204.
 - Vert.x Web ships no response cache, and a handler cannot read what another handler wrote, so the
-  cache routes' handlers hand their answer to the store. The store is sized in entries and aged by
-  settings.json, and a full store drops whichever entry its key set yields first.
+  cache routes' handlers hand their answer to the store. The store holds 64 entries, room for the
+  family's 52 keys, each for 30 seconds, and a full store drops whichever entry its key set yields
+  first.
 - Vert.x has no support for server-sent events. Vert.x Web's SockJS handler has an EventSource
   transport, which carries SockJS's own framing, so the handler writes the events itself.
 - `BodyHandler` writes a multipart body's file part to a file under the JVM's temporary directory

@@ -6,7 +6,6 @@ import { bindEcho } from "#models/bind-echo";
 import { item, itemPatch, newItem } from "#models/item";
 import { orderRequest } from "#models/order-request";
 import { LARGE, payloadLarge, payloadMedium, payloadSmall } from "#models/payload";
-import { settings as settingsModel } from "#models/settings";
 import { upload as uploadModel } from "#models/upload";
 
 /**
@@ -53,8 +52,6 @@ export const order = {
    */
   invalid: json("order.invalid", JSON.parse(read("order.invalid.json")) as Json),
 };
-
-export const settings = load("settings", settingsModel);
 
 export const forms = {
   /** The file part forms.multipart uploads, under this filename. */

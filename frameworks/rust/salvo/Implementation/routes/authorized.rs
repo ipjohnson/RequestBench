@@ -6,10 +6,10 @@ use crate::Payloads;
 use crate::answers::Serialised;
 
 /// authorized: a bearer-token check hooped onto this one route. It compares the Authorization
-/// header with settings.json's bearer token before the handler runs, and refuses any other value,
+/// header with one bearer token before the handler runs, and refuses any other value,
 /// or none, with 403.
 pub fn router(p: &'static Payloads) -> Router {
-    let token = HeaderValue::from_str(&format!("Bearer {}", p.settings.token)).expect("the bearer token is a header value");
+    let token = HeaderValue::from_static("Bearer 5a7cc77ed0dcb825806b6f872026c317");
 
     Router::with_path("/authorized/small").hoop(Bearer(token)).get(Serialised(&p.small))
 }

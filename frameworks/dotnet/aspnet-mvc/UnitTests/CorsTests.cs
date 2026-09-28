@@ -2,7 +2,7 @@ namespace UnitTests;
 
 public sealed class CorsTests(MvcApp app) : IClassFixture<MvcApp>
 {
-    private static readonly string Origin = (string)Expected.Settings["cors"]!["origin"]!;
+    private const string Origin = "https://shop.example.com";
 
     // rb:test cors.preflight
     [Fact]

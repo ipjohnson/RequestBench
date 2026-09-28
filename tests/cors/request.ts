@@ -1,8 +1,9 @@
 import { performanceTest } from "#kit";
-import { items, settings } from "#payloads";
+import { CORS } from "#models/configuration";
+import { items } from "#payloads";
 
 const path = "/cors/small";
-const cors = settings.value.cors;
+const cors = CORS;
 
 export default performanceTest({
   id: { family: "cors", name: "request" },

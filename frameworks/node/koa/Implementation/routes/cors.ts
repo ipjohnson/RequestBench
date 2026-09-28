@@ -10,13 +10,13 @@ import { fresh } from "../serial.ts";
  * preflight shows the middleware answered alone.
  */
 const corsFamily: Routes = (router, { payloads: p }) => {
-  const { origin, method, header, maxAgeSeconds } = p.settings.cors;
+  const origin = "https://shop.example.com";
 
   // rb:wiring cors.*
-  // The origin as a function that names settings.json's origin only when the request comes from
+  // The origin as a function that names the allowed origin only when the request comes from
   // it. Given a string, @koa/cors writes that origin on every answer whichever origin asked, and
   // given a function that returns nothing, it adds no headers and passes the request on.
-  const allowed = cors({ origin: (ctx) => (ctx.get("origin") === origin ? origin : ""), allowMethods: [method], allowHeaders: [header], maxAge: maxAgeSeconds });
+  const allowed = cors({ origin: (ctx) => (ctx.get("origin") === origin ? origin : ""), allowMethods: ["GET"], allowHeaders: ["x-rb-tenant"], maxAge: 600 });
 
   // @koa/router runs a route's middleware only for a method the route has, so the preflight has a
   // route of its own, which @koa/cors answers alone.

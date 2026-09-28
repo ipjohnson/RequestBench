@@ -8,10 +8,10 @@ use poem::{Endpoint, EndpointExt, Error, Middleware, Request, Result, Route, get
 use crate::Payloads;
 
 /// authorized: a poem middleware on this one route. It compares the bearer token in the
-/// Authorization header with settings.json's before the handler runs, and refuses any other
+/// Authorization header with the one it names before the handler runs, and refuses any other
 /// token, or none, with 403.
 pub fn add(route: Route, p: &'static Payloads) -> Route {
-    route.at("/authorized/small", get(make_sync(move |_| Json(&p.small))).with(Token(&p.settings.token)))
+    route.at("/authorized/small", get(make_sync(move |_| Json(&p.small))).with(Token("5a7cc77ed0dcb825806b6f872026c317")))
 }
 
 // rb:wiring authorized.*

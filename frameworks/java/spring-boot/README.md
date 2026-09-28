@@ -46,14 +46,14 @@ plain jar that UnitTests compiles against.
 | middleware | No-op servlet filters, four or sixteen, each registered for its one path. | the Servlet API, through Spring Boot |
 | parameters, query, headers | `@PathVariable`, `@RequestParam` and `@RequestHeader` parameters, and query.many's eight values bound into a record through its constructor. | Spring MVC |
 | body | Jackson binds the order record. `@Valid` runs its Bean Validation constraints through Hibernate Validator, and Spring MVC refuses a body that breaks one with 400. | Spring MVC and Hibernate Validator |
-| authorized | Spring Security on `/authorized` alone, with a rule that permits settings.json's bearer token and denies any other. | Spring Security |
+| authorized | Spring Security on `/authorized` alone, with a rule that permits one bearer token and denies any other. | Spring Security |
 | cache | `@Cacheable` on each handler, over Caffeine, which `spring.cache.caffeine.spec` sizes and ages. | Spring and Caffeine |
 | compressed | Tomcat's compression on the whole connector, turned on in `application.properties`. | Tomcat |
 | etag | `ShallowEtagHeaderFilter` registered for `/etag/*`, which hashes the written body with MD5 and answers a matching `If-None-Match` with 304. | Spring |
 | template | Thymeleaf, through Spring MVC's view resolution. | Thymeleaf |
 | items | One handler per method on `/items/{id}`. Spring MVC answers HEAD with the GET handler. | Spring MVC |
 | errors | DispatcherServlet's 404 and 405, Jackson's 400 and the items handlers' `ResponseStatusException`, each written by Boot's error page. | Spring Boot |
-| cors | Spring MVC's CORS support, mapped to `/cors/**`. | Spring MVC |
+| cors | Spring MVC's CORS support, from `@CrossOrigin` on the handler. | Spring MVC |
 | forms | Tomcat parses both bodies into request parameters. The form binds to query.many's record, and the file part arrives as a `MultipartFile`. | Spring MVC |
 | stream | `StreamingResponseBody`, writing and flushing one row per line. | Spring MVC |
 | sse | `SseEmitter`, one event per row. | Spring MVC |
@@ -94,7 +94,7 @@ plain jar that UnitTests compiles against.
   request. Both are Tomcat's defaults and are left alone.
 - Boot's default cache provider, a `ConcurrentMapCacheManager`, never expires an entry and has no
   size limit. Caffeine takes its place, and `spring.cache.caffeine.spec` in
-  `application.properties` gives each cache settings.json's capacity and lifetime.
+  `application.properties` gives each cache a capacity of 64 and a lifetime of 30 seconds.
 - The container runs `java -jar` as PID 1 with the collector and heap the JVM chooses. The JVM
   reads the container's CPU quota, counts 2 CPUs under `--cpus 2` and chooses G1. On SIGTERM it
   runs Spring's graceful shutdown and exits in under a second.

@@ -50,7 +50,7 @@ class EtagTests extends HelidonApp {
     @Test
     @Tag("etag.stale_large")
     void aValidatorItNeverIssuedIsAnsweredInFull() throws Exception {
-        HttpResponse<byte[]> response = get("/etag/large", "if-none-match", Expected.settings().get("staleEtag").asText());
+        HttpResponse<byte[]> response = get("/etag/large", "if-none-match", "\"0000000000000000\"");
 
         assertEquals(200, response.statusCode());
         Answer.is(Expected.json("items.large.json"), response);

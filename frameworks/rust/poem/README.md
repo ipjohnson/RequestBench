@@ -55,7 +55,7 @@ container runs two workers under its two-CPU budget, whichever way the budget is
 | parameters, query | The `Path` and `Query` extractors, which convert the numbers to integers. | poem |
 | headers | The handler reads the three headers from the `HeaderMap` extractor, because poem's `TypedHeader` binds only the headers the headers crate defines. | poem |
 | body | `Json` binds the order. On the validate routes the handler runs the validator crate's rules and refuses with 400 and validator's errors as JSON. | validator |
-| authorized | A poem `Middleware` on the route, as poem's basic-auth example writes one, which answers 403 unless the bearer token is settings.json's. | poem |
+| authorized | A poem `Middleware` on the route, as poem's basic-auth example writes one, which answers 403 unless the bearer token is the one it names. | poem |
 | cache | A poem `Middleware` on each cache route over cached's `LruTtlCache`, keyed by the path and the headers the route varies on. | by hand, over cached |
 | compressed | The `Compression` middleware on the compressed routes, gzip at its fastest level. | poem |
 | etag | A function middleware around the two routes that hashes the answer with SHA-1 and answers 304 when If-None-Match names it. | by hand |
@@ -93,7 +93,7 @@ container runs two workers under its two-CPU budget, whichever way the budget is
   streams what it compresses, so a compressed answer has no Content-Length, and it sends no
   `Vary: Accept-Encoding`.
 - poem's `Cors` writes `Vary: Origin` only for an origin it matched by a pattern or a function,
-  never for one it lists. settings.json names one origin, so the answer does not say it varies by
+  never for one it lists. The policy names one origin, so the answer does not say it varies by
   origin, and rb.json skips `cors.vary`.
 - poem's `Cors` answers any request from an origin the policy does not name with 403 and
   `request-origin not allowed` as text, the request itself as well as its preflight, so the

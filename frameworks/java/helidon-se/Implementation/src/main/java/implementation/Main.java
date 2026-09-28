@@ -48,8 +48,8 @@ public final class Main {
         // features() replaces the list. The suite's server builder arrives holding the features
         // Helidon's service registry found, a CorsFeature that allows every origin among them.
         server.featuresDiscoverServices(false)
-                .features(List.of(CorsRoutes.feature(p.settings().cors()),
-                                  AuthorizedRoutes.feature(p.settings().token()),
+                .features(List.of(CorsRoutes.feature(),
+                                  AuthorizedRoutes.feature(),
                                   StaticRoutes.feature(p.directory())))
                 .contentEncoding(CompressedRoutes.encoding())
                 // Helidon writes the last chunk of a chunked answer in a write of its own. With

@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, HashMap};
+use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -26,39 +26,6 @@ pub struct Payload {
 }
 // rb:end
 
-/// The values the framework configures itself from, as settings.json holds them.
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct Settings {
-    pub token: String,
-    pub cache: CacheSettings,
-    pub cors: CorsSettings,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct CacheSettings {
-    pub capacity: usize,
-    pub ttl_seconds: u64,
-    pub vary: VarySettings,
-}
-
-/// The values each vary row is keyed on, by header.
-#[derive(Debug, Deserialize)]
-pub struct VarySettings {
-    pub one: BTreeMap<String, Vec<String>>,
-    pub many: BTreeMap<String, Vec<String>>,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct CorsSettings {
-    pub origin: String,
-    pub method: String,
-    pub header: String,
-    pub max_age_seconds: usize,
-}
-
 /// The committed payloads, read from the directory RB_PAYLOADS names before Rocket ignites, so a
 /// missing or broken file stops the boot rather than failing a request. Rocket keeps them as
 /// managed state for the life of the process, and they are serialised on every request.
@@ -68,7 +35,6 @@ pub struct Payloads {
     pub small: Payload,
     pub medium: Payload,
     pub large: Payload,
-    pub settings: Settings,
     rows: HashMap<i64, usize>,
 }
 
@@ -81,7 +47,6 @@ impl Payloads {
             small: read(&dir, "items.small.json")?,
             medium: read(&dir, "items.medium.json")?,
             large,
-            settings: read(&dir, "settings.json")?,
             rows,
             dir,
         })

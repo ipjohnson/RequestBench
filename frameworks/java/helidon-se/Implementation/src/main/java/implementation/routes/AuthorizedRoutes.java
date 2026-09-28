@@ -35,17 +35,17 @@ public final class AuthorizedRoutes implements HttpFeature {
      * every route, which builds a security context for each request whether the route asks for
      * security or not.
      */
-    public static SecurityFeature feature(String token) {
+    public static SecurityFeature feature() {
         Security security = Security.builder()
                 .addAuthenticationProvider(HeaderAtnProvider.builder()
                         .atnTokenHandler(TokenHandler.builder().tokenHeader("Authorization").tokenPrefix("Bearer ").build())
                         .build())
-                .addAuthorizationProvider(new PermitToken(token))
+                .addAuthorizationProvider(new PermitToken("5a7cc77ed0dcb825806b6f872026c317"))
                 .build();
         return SecurityFeature.builder().security(security).build();
     }
 
-    /** Permits the user when its name is settings.json's token, and denies any other. */
+    /** Permits the user when its name is the token given, and denies any other. */
     private record PermitToken(String token) implements AuthorizationProvider {
 
         @Override

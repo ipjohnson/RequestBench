@@ -12,7 +12,7 @@ if (directory === undefined) throw new Error('RB_PAYLOADS has to name the payloa
 const payloads = load(directory);
 
 const app = await NestFactory.create<NestFastifyApplication>(AppModule.register(payloads, fastify), new FastifyAdapter({ http2: true }));
-await configureFastify(app, payloads);
+await configureFastify(app);
 // Nest's shutdown hooks close the application on SIGTERM. As the container's first process, Node has
 // no default action for it, and docker stop would wait out its timeout.
 app.enableShutdownHooks();

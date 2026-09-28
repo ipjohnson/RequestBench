@@ -13,8 +13,13 @@ use axum::{Json, Router};
 use cached::{Cached, LruTtlCache};
 
 use crate::Payloads;
-use crate::payloads::CacheSettings;
 use crate::serial;
+
+/// Room for the cache family's 52 keys.
+const CAPACITY: usize = 64;
+
+/// How long a stored answer is replayed.
+const LIFETIME: Duration = Duration::from_secs(30);
 
 /// The path and the values of the request headers a route varies on.
 type Key = (Uri, Vec<Option<HeaderValue>>);
@@ -22,20 +27,19 @@ type Key = (Uri, Vec<Option<HeaderValue>>);
 /// cache: the handler skipped and a stored answer written back. The handler writes x-rb-serial, so
 /// a replayed answer repeats the serial it was stored with. A vary route's key adds its headers.
 pub fn router(p: &'static Payloads) -> Router {
-    let settings = &p.settings.cache;
-    let one = names(settings.vary.one.keys());
-    let many = names(settings.vary.many.keys());
+    let one = vec![HeaderName::from_static("x-rb-tenant")];
+    let many = vec![HeaderName::from_static("x-rb-channel"), HeaderName::from_static("x-rb-region"), HeaderName::from_static("x-rb-tenant")];
     let vary_one = listed(&one);
     let vary_many = listed(&many);
 
     Router::new()
-        .route("/cache/small/{key}", get(move || async move { (serial::fresh(), Json(&p.small)) }).layer(from_fn_with_state(store(settings, vec![]), replay)))
-        .route("/cache/medium/{key}", get(move || async move { (serial::fresh(), Json(&p.medium)) }).layer(from_fn_with_state(store(settings, vec![]), replay)))
-        .route("/cache/large/{key}", get(move || async move { (serial::fresh(), Json(&p.large)) }).layer(from_fn_with_state(store(settings, vec![]), replay)))
+        .route("/cache/small/{key}", get(move || async move { (serial::fresh(), Json(&p.small)) }).layer(from_fn_with_state(store(vec![]), replay)))
+        .route("/cache/medium/{key}", get(move || async move { (serial::fresh(), Json(&p.medium)) }).layer(from_fn_with_state(store(vec![]), replay)))
+        .route("/cache/large/{key}", get(move || async move { (serial::fresh(), Json(&p.large)) }).layer(from_fn_with_state(store(vec![]), replay)))
         // The Vary header tells a cache in front of the framework what the answer depends on. The
         // store keys on the route's own list, not on this header.
-        .route("/cache/vary/one/{key}", get(move || async move { (serial::fresh(), [(VARY, vary_one)], Json(&p.small)) }).layer(from_fn_with_state(store(settings, one), replay)))
-        .route("/cache/vary/many/{key}", get(move || async move { (serial::fresh(), [(VARY, vary_many)], Json(&p.small)) }).layer(from_fn_with_state(store(settings, many), replay)))
+        .route("/cache/vary/one/{key}", get(move || async move { (serial::fresh(), [(VARY, vary_one)], Json(&p.small)) }).layer(from_fn_with_state(store(one), replay)))
+        .route("/cache/vary/many/{key}", get(move || async move { (serial::fresh(), [(VARY, vary_many)], Json(&p.small)) }).layer(from_fn_with_state(store(many), replay)))
 }
 
 // rb:wiring cache.*
@@ -46,16 +50,16 @@ struct Stored {
     body: Bytes,
 }
 
-/// One route's store: cached's LruTtlCache, holding settings.json's capacity in entries for its time
-/// to live, and the headers the route varies on.
+/// One route's store: cached's LruTtlCache, holding CAPACITY entries for LIFETIME, and the headers
+/// the route varies on.
 #[derive(Clone)]
 struct Store {
     entries: Arc<Mutex<LruTtlCache<Key, Stored>>>,
     on: Arc<[HeaderName]>,
 }
 
-fn store(settings: &CacheSettings, on: Vec<HeaderName>) -> Store {
-    let entries = LruTtlCache::new(settings.capacity, Duration::from_secs(settings.ttl_seconds));
+fn store(on: Vec<HeaderName>) -> Store {
+    let entries = LruTtlCache::new(CAPACITY, LIFETIME);
     Store { entries: Arc::new(Mutex::new(entries)), on: on.into() }
 }
 
@@ -81,9 +85,6 @@ async fn replay(State(store): State<Store>, request: Request, next: Next) -> Res
 }
 // rb:end
 
-fn names<'a>(keys: impl Iterator<Item = &'a String>) -> Vec<HeaderName> {
-    keys.map(|key| HeaderName::from_bytes(key.as_bytes()).expect("settings.json's vary keys are header names")).collect()
-}
 
 fn listed(names: &[HeaderName]) -> HeaderValue {
     let joined = names.iter().map(HeaderName::as_str).collect::<Vec<_>>().join(", ");

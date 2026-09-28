@@ -35,7 +35,7 @@ public sealed class EtagTests(MvcApp app) : IClassFixture<MvcApp>
     [Trait("corpus", "etag.stale_large")]
     public async Task A_validator_it_never_issued_is_answered_in_full()
     {
-        using HttpResponseMessage response = await Conditional(app.CreateClient(), (string)Expected.Settings["staleEtag"]!);
+        using HttpResponseMessage response = await Conditional(app.CreateClient(), "\"0000000000000000\"");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         await Answer.Is(Expected.Json("items.large.json"), response);

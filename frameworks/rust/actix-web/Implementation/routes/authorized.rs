@@ -8,11 +8,11 @@ use crate::Payloads;
 
 /// authorized: actix-web-httpauth's bearer middleware on this one resource. It reads the bearer
 /// token from the Authorization header before the handler runs and hands it to the validator,
-/// which refuses any token but settings.json's with 403.
+/// which refuses any token but the one it names with 403.
 pub fn configure(cfg: &mut ServiceConfig, p: &'static Payloads) {
     // rb:wiring authorized.*
     let bearer = HttpAuthentication::bearer(move |request: ServiceRequest, credentials: BearerAuth| async move {
-        if credentials.token() == p.settings.token { Ok(request) } else { Err((ErrorForbidden("the bearer token is not the one this route accepts"), request)) }
+        if credentials.token() == "5a7cc77ed0dcb825806b6f872026c317" { Ok(request) } else { Err((ErrorForbidden("the bearer token is not the one this route accepts"), request)) }
     });
 
     cfg.service(web::resource("/authorized/small").wrap(bearer).route(web::get().to(move || async move { web::Json(&p.small) })));

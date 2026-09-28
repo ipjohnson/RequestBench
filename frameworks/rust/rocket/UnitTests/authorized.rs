@@ -1,13 +1,13 @@
 use rocket::http::Status;
 
-use crate::support::{client, expected, get, json, payloads};
+use crate::support::{client, expected, get, json};
 
 // rb:test authorized.allowed
-/// authorized.allowed: settings.json's bearer token passes the guard and reaches the handler.
+/// authorized.allowed: the one bearer token passes the guard and reaches the handler.
 #[test]
 fn the_token_reaches_the_handler() {
     let client = client();
-    let token = format!("Bearer {}", payloads().settings.token);
+    let token = "Bearer 5a7cc77ed0dcb825806b6f872026c317".to_owned();
 
     let response = get(&client, "/authorized/small", &[("authorization", &token)]);
 
@@ -21,7 +21,7 @@ fn the_token_reaches_the_handler() {
 #[test]
 fn another_token_is_forbidden() {
     let client = client();
-    let token = format!("Bearer {}", expected("settings.json")["wrongToken"].as_str().unwrap());
+    let token = "Bearer 5a7cc77ed0dcb825806b6f872026c310".to_owned();
 
     let response = get(&client, "/authorized/small", &[("authorization", &token)]);
 

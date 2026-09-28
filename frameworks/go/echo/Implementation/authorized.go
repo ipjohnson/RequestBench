@@ -7,10 +7,10 @@ import (
 )
 
 // authorizedRoutes put a middleware in front of the handler that refuses any bearer token but
-// settings.json's. Echo's KeyAuth middleware refuses a wrong key with 401 and the corpus asks for
+// the one it is given. Echo's KeyAuth middleware refuses a wrong key with 401 and the corpus asks for
 // 403, so the middleware is the application's, returning Echo's own 403 error.
 func authorizedRoutes(e *echo.Echo, p *Payloads) {
-	e.GET("/authorized/small", func(c *echo.Context) error { return c.JSON(http.StatusOK, &p.Small) }, requireToken(p.Settings.Token))
+	e.GET("/authorized/small", func(c *echo.Context) error { return c.JSON(http.StatusOK, &p.Small) }, requireToken("5a7cc77ed0dcb825806b6f872026c317"))
 }
 
 // rb:wiring authorized.*

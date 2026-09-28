@@ -10,13 +10,13 @@ P = settings.PAYLOADS
 # rb:wiring authorized.*
 class BearerToken(BasePermission):
     """A permission class is how DRF refuses a request before the view runs, and a refusal from one
-    is DRF's 403. This one compares the bearer token with settings.json's. DRF's TokenAuthentication
+    is DRF's 403. This one compares the bearer token with the one it names. DRF's TokenAuthentication
     looks its tokens up in a database table and answers a wrong one with 401. A request with no token
     is refused the same way as a wrong one."""
 
     def has_permission(self, request, view):
         scheme, _, credentials = request.headers.get("authorization", "").partition(" ")
-        return scheme.lower() == "bearer" and constant_time_compare(credentials, P.settings["token"])
+        return scheme.lower() == "bearer" and constant_time_compare(credentials, "5a7cc77ed0dcb825806b6f872026c317")
 # rb:end
 
 

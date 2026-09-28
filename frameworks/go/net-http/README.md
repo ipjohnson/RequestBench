@@ -91,8 +91,8 @@ corpus id it covers, so `go test ./UnitTests -run '/json.small'` runs one.
   with a tag the handler has set. It also answers a Range request on the etag routes and writes
   `Accept-Ranges: bytes`, and its 304 carries the ETag and drops `Content-Type`.
 - net/http stores no answers, so the cache family's store and wrapper are written for it. The
-  store is sized in entries and aged by settings.json, and a full store drops whichever entry the
-  map yields first.
+  store holds 64 entries, room for the family's 52 keys, each for 30 seconds. A full store drops
+  whichever entry the map yields first.
 - The CORS wrapper answers every preflight with 204, and writes the allow headers only for the
   allowed origin. It lists the policy's method and header whatever the preflight asked for, and
   writes `Vary: Origin` on every answer under `/cors/`.

@@ -1,7 +1,6 @@
 /**
  * Headers the corpus sends that no framework reads. The values a framework
- * configures itself from, such as the token and the vary values, are published in
- * tests/payloads/settings.json instead.
+ * configures itself with, such as the token, are in configuration.ts instead.
  */
 
 /**

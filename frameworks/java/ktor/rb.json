@@ -27,7 +27,7 @@
   },
   "mechanisms": {
     "authorized": {
-      "mechanism": "Ktor's Authentication plugin with a bearer provider, which makes the token the caller's principal, and a route-scoped plugin on the AuthenticationChecked hook, the way Ktor's documentation writes authorization, which answers 403 for any token but settings.json's",
+      "mechanism": "Ktor's Authentication plugin with a bearer provider, which makes the token the caller's principal, and a route-scoped plugin on the AuthenticationChecked hook, the way Ktor's documentation writes authorization, which answers 403 for any token but the one it is given",
       "mentions": "AuthenticationChecked"
     },
     "baseline": { "builtin": "call.respondText writes the string as text/plain." },

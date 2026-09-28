@@ -131,7 +131,7 @@ Every refusal is Starlette's or SpecTree's own. Nothing reshapes it.
 - A path no route matches is Starlette's 404, as text.
 - A missing row is an `HTTPException` with 404, and a method `/items/{id}` has no function for is
   `HTTPEndpoint`'s 405, both as text.
-- A token that is not settings.json's leaves the request unauthenticated, and `requires` answers
+- Any other token leaves the request unauthenticated, and `requires` answers
   403 as text. A request with no token is refused the same way.
 
 ## Client

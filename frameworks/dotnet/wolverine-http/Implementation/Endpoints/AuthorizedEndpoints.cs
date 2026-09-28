@@ -5,8 +5,8 @@ namespace Implementation.Endpoints;
 
 /// <summary>
 /// authorized: ASP.NET Core's authorization. Wolverine copies the endpoint method's attributes onto
-/// the route, so the token policy runs before the handler and forbids a token that is not
-/// settings.json's.
+/// the route, so the token policy runs before the handler and forbids any token but the one it
+/// names.
 /// </summary>
 public static class AuthorizedEndpoints
 {

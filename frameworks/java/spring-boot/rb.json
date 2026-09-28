@@ -38,7 +38,7 @@
   },
   "mechanisms": {
     "authorized": {
-      "mechanism": "Spring Security, with its filter registered for /authorized alone and a rule that permits settings.json's bearer token and denies any other, which Spring Security answers with 403",
+      "mechanism": "Spring Security, with its filter registered for /authorized alone and a rule that permits one bearer token and denies any other, which Spring Security answers with 403",
       "dependency": "spring-boot-starter-security",
       "mentions": "SecurityFilterChain"
     },
@@ -58,8 +58,8 @@
       "mentions": "server.compression"
     },
     "cors": {
-      "mechanism": "Spring MVC's CORS support, mapped to /cors/** alone by a WebMvcConfigurer",
-      "mentions": "addCorsMappings"
+      "mechanism": "Spring MVC's CORS support, from @CrossOrigin on the /cors/small handler alone",
+      "mentions": "CrossOrigin"
     },
     "errors": {
       "builtin": "DispatcherServlet answers a path with no handler with 404 and a method the path lacks with 405, Jackson failing to read a body is a 400, and Boot's error page writes each body. The items handlers raise ResponseStatusException for a missing row, which Boot's error page answers with 404."

@@ -2,7 +2,7 @@ namespace Implementation.Routes;
 
 /// <summary>
 /// authorized: ASP.NET Core's authorization, required on this one route. The token policy runs
-/// before the handler and forbids a token that is not settings.json's.
+/// before the handler and forbids any token but the one it names.
 /// </summary>
 public static class AuthorizedRoutes
 {

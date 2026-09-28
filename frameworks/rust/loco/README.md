@@ -68,14 +68,14 @@ lambda_http's `StreamAdapter`, which streams the answer, and every other request
 | parameters, query | axum's `Path` and `Query` extractors, from Loco's prelude, bind each value, the numbers as integers. | axum |
 | headers | The handler reads the three headers from axum's `HeaderMap`, the account parsed as an integer, and refuses a header that is missing or no integer with Loco's `bad_request`. | Loco, axum |
 | body | The validator crate's rules, derived on the order and run by Loco's `JsonValidateWithMessage` extractor before the handler. The first-error route checks one field at a time by hand. The bind routes take the order through Loco's `Json` and never run the rules. | Loco, validator |
-| authorized | An extractor of the application's own checks settings.json's bearer token before the handler runs, and refuses any other token with Loco's error JSON and 403. | by hand, on Loco's `Error` |
-| cache | Loco's in-memory cache, `ctx.cache`, sized by settings.json when the context is made. Each handler keeps its answer there, with the serial it wrote, keyed by the path and the route's vary headers, for settings.json's time to live. | by hand, on Loco's cache |
+| authorized | An extractor of the application's own checks one bearer token before the handler runs, and refuses any other token with Loco's error JSON and 403. | by hand, on Loco's `Error` |
+| cache | Loco's in-memory cache, `ctx.cache`, sized by the config file's cache block. Each handler keeps its answer there, with the serial it wrote, keyed by the path and the route's vary headers, for 30 seconds. | by hand, on Loco's cache |
 | compressed | Loco's compression middleware, turned on in the config file. | Loco, tower-http |
 | etag | Loco's etag middleware, on by default, answers 304 for the tag a handler set. The handlers hash their JSON with SHA-1 and set the tag with `RenderBuilder::etag`. | Loco, sha1 |
 | template | Loco's Tera view engine over `assets/views`, rendered per request with `format::render().view`. | Loco, Tera |
 | items | One handler per method on `/items/{id}`, the id bound by `Path` and each body by Loco's `Json`. A missing row is Loco's `not_found`. axum answers HEAD with the GET handler. | Loco |
 | errors | axum's router answers a path or a method with no route. Loco's `Json` refuses a body that is not JSON, and the items handlers' `not_found` a missing row. | Loco, axum |
-| cors | Loco's `Cors`, its cors middleware's settings, made into the middleware's layer with settings.json's policy and added to the cors routes alone with `Routes::layer`. | Loco |
+| cors | Loco's `Cors`, its cors middleware's settings, made into the middleware's layer with the one policy and added to the cors routes alone with `Routes::layer`. | Loco |
 | forms | axum's `Form` and `Multipart` extractors, from Loco's prelude. | axum |
 | stream | `Body::from_stream`, one row and its newline per chunk, as the body of the response Loco's `RenderBuilder` hands over. | axum |
 | sse | axum's `Sse` response, each row the data of one event. Loco has no SSE response of its own. | axum |

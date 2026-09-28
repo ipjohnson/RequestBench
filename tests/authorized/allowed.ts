@@ -1,5 +1,6 @@
 import { performanceTest } from "#kit";
-import { items, settings } from "#payloads";
+import { TOKEN } from "#models/configuration";
+import { items } from "#payloads";
 
 const path = "/authorized/small";
 
@@ -15,5 +16,5 @@ export default performanceTest({
     "check and the plumbing that carries it, not the crypto, which this " +
     "family leaves out.",
 
-  request: (c) => c.get(path).header("authorization", `Bearer ${settings.value.token}`).okWith(items.small),
+  request: (c) => c.get(path).header("authorization", `Bearer ${TOKEN}`).okWith(items.small),
 });

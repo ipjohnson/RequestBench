@@ -10,7 +10,9 @@ import { fresh } from "../serial.ts";
  * replayed answer repeats the serial it was stored with.
  */
 const cache: Routes = (app, p) => {
-  const { capacity, ttlSeconds, vary } = p.settings.cache;
+  // Room for the cache family's 52 keys, each kept 30 seconds.
+  const capacity = 64;
+  const ttlSeconds = 30;
 
   // rb:wiring cache.*
   /**
@@ -19,7 +21,7 @@ const cache: Routes = (app, p) => {
    * is wrapped in ocache's defineCachedHandler, which runs on that route alone. It keys an entry on
    * the path and the headers `varies` names, and names those headers in Vary. h3's toResponse turns
    * the handler's answer into the Response it stores, with the x-rb-serial the handler staged. One
-   * store holds settings.json's capacity in entries, for all five routes.
+   * store holds 64 entries, for all five routes.
    */
   const storage = createMemoryStorage({ maxSize: capacity });
 
@@ -33,9 +35,9 @@ const cache: Routes = (app, p) => {
 
   app.get("/cache/large/:key", cached((event) => fresh(event, p.large)));
 
-  app.get("/cache/vary/one/:key", cached((event) => fresh(event, p.small), Object.keys(vary.one)));
+  app.get("/cache/vary/one/:key", cached((event) => fresh(event, p.small), ["x-rb-tenant"]));
 
-  app.get("/cache/vary/many/:key", cached((event) => fresh(event, p.small), Object.keys(vary.many)));
+  app.get("/cache/vary/many/:key", cached((event) => fresh(event, p.small), ["x-rb-channel", "x-rb-region", "x-rb-tenant"]));
 };
 
 export default cache;

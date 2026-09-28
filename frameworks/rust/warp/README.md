@@ -56,7 +56,7 @@ container runs two workers under its two-CPU budget, whichever way the budget is
 | parameters, query | The `path!` and `query` filters, which convert the numbers to integers. | warp |
 | headers | The `header` filter, once per header, which converts the account to an integer. | warp |
 | body | The `body::json` filter binds the order. On the validate routes, the validator crate's rules run next and reject the body, and the recover handler answers 400 with validator's report. | validator |
-| authorized | A filter on the route that compares the Authorization header with settings.json's bearer token and rejects any other, which the recover handler answers with 403. | by hand |
+| authorized | A filter on the route that compares the Authorization header with one bearer token and rejects any other, which the recover handler answers with 403. | by hand |
 | cache | A store in front of each cache route's handler, over cached's `LruTtlCache` with a time to live, keyed by the key in the path and the headers the route varies on. | by hand, over cached |
 | compressed | `compression::gzip` around the compressed routes when the request lists gzip, at zlib's default level. | warp |
 | etag | A filter after the two routes' handlers that hashes the answer with SHA-1 and answers 304 when If-None-Match names it. | by hand |

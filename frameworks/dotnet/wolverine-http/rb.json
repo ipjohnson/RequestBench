@@ -35,7 +35,7 @@
       "mentions": "UseFluentValidationProblemDetailMiddleware"
     },
     "cache": {
-      "mechanism": "ASP.NET Core output caching, [OutputCache] naming a policy on each endpoint, the vary policies varied by the request headers the row names"
+      "mechanism": "ASP.NET Core output caching, [OutputCache] on each endpoint, whose Duration keeps an answer 30 seconds and whose VaryByHeaderNames adds a vary row's request headers to the key"
     },
     "compressed": {
       "mechanism": "ASP.NET Core's response compression middleware on the whole application, at gzip's fastest level"

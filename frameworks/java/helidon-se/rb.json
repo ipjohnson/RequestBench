@@ -21,7 +21,7 @@
   },
   "mechanisms": {
     "authorized": {
-      "mechanism": "Helidon Security in front of the route through SecurityFeature.secure(). HeaderAtnProvider takes the bearer token as the user, and an authorization provider of the port's permits settings.json's token alone, which Helidon Security answers with 403 when it denies",
+      "mechanism": "Helidon Security in front of the route through SecurityFeature.secure(). HeaderAtnProvider takes the bearer token as the user, and an authorization provider of the port's permits one token alone, which Helidon Security answers with 403 when it denies",
       "dependency": "helidon-webserver-security",
       "mentions": "SecurityFeature"
     },
@@ -32,7 +32,7 @@
       "mentions": "io.helidon.validation"
     },
     "cache": {
-      "mechanism": "A store and a replay written for the family, because Helidon SE has no response cache. The first request for a key stores the answer's body with its x-rb-serial, keyed by the path and the route's vary headers, and later ones are answered from the store until settings.json's TTL has passed"
+      "mechanism": "A store and a replay written for the family, because Helidon SE has no response cache. The first request for a key stores the answer's body with its x-rb-serial, keyed by the path and the route's vary headers, and later ones are answered from the store until 30 seconds have passed"
     },
     "compressed": {
       "mechanism": "Helidon's content encoding on the server's listener, which covers every route, with gzip alone at the fastest level. GzipEncoding has no setting for the level, so a ContentEncoding of the port's wraps it and deflates at Deflater.BEST_SPEED",

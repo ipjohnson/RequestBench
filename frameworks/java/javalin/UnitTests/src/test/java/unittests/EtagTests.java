@@ -49,7 +49,7 @@ class EtagTests extends JavalinApp {
     @Tag("etag.stale_large")
     void aValidatorItNeverIssuedIsAnsweredInFull() {
         JavalinTest.test(app(), (server, client) -> {
-            Response response = client.get("/etag/large", request -> request.header("if-none-match", Expected.settings().get("staleEtag").asText()));
+            Response response = client.get("/etag/large", request -> request.header("if-none-match", "\"0000000000000000\""));
 
             assertEquals(200, response.code());
             Answer.is(Expected.json("items.large.json"), response);

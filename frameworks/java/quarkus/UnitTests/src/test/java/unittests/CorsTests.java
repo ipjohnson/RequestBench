@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test;
 @QuarkusTest
 class CorsTests {
 
-    private static final String ORIGIN = Expected.settings().get("cors").get("origin").asText();
+    private static final String ORIGIN = "https://shop.example.com";
 
     // rb:test cors.preflight
     @Test

@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Test;
 
 class CorsTests extends JavalinApp {
 
-    private static final String ORIGIN = Expected.settings().get("cors").get("origin").asText();
+    private static final String ORIGIN = "https://shop.example.com";
 
     private static final Pattern VARY_ORIGIN = Pattern.compile("(^|,)\\s*origin\\s*(,|$)", Pattern.CASE_INSENSITIVE);
 

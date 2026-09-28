@@ -11,12 +11,10 @@ import { serial } from "../serial.ts";
  * handler writes x-rb-serial, so its absence on a preflight shows the middleware answered alone.
  */
 const corsRoutes: Routes = (app, p) => {
-  const { origin, method, header, maxAgeSeconds } = p.settings.cors;
-
   // rb:wiring cors.*
   // The origin as a list of one. Given a string, the middleware writes it on every answer, whichever
   // origin asked. Given a list, it checks the request's origin, and adds Vary: Origin either way.
-  const policy = cors({ origin: [origin], methods: [method], allowedHeaders: [header], maxAge: maxAgeSeconds });
+  const policy = cors({ origin: ["https://shop.example.com"], methods: ["GET"], allowedHeaders: ["x-rb-tenant"], maxAge: 600 });
 
   // rb:handler cors.preflight,cors.disallowed
   app.options("/cors/small", policy);

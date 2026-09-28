@@ -1,12 +1,12 @@
 use salvo::http::StatusCode;
 
-use crate::support::{expected, get_with, json, payloads, service, status};
+use crate::support::{expected, get_with, json, service, status};
 
 // rb:test authorized.allowed
-/// authorized.allowed: settings.json's bearer token reaches the handler.
+/// authorized.allowed: the one bearer token reaches the handler.
 #[tokio::test]
 async fn the_token_reaches_the_handler() {
-    let token = format!("Bearer {}", payloads().settings.token);
+    let token = "Bearer 5a7cc77ed0dcb825806b6f872026c317".to_owned();
 
     let response = get_with(&service(), "/authorized/small", &[("authorization", &token)]).await;
 
@@ -18,7 +18,7 @@ async fn the_token_reaches_the_handler() {
 /// authorized.denied: a token that differs in its last character is refused before the handler runs.
 #[tokio::test]
 async fn another_token_is_forbidden() {
-    let token = format!("Bearer {}", expected("settings.json")["wrongToken"].as_str().unwrap());
+    let token = "Bearer 5a7cc77ed0dcb825806b6f872026c310".to_owned();
 
     let response = get_with(&service(), "/authorized/small", &[("authorization", &token)]).await;
 

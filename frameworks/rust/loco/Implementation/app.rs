@@ -1,11 +1,8 @@
-use std::sync::Arc;
-
 use async_trait::async_trait;
 use loco_rs::app::{AppContext, Hooks, Initializer};
 use loco_rs::bgworker::Queue;
 use loco_rs::boot::{BootResult, StartMode, create_app};
-use loco_rs::cache::drivers::inmem;
-use loco_rs::config::{Config, InMemCacheConfig};
+use loco_rs::config::Config;
 use loco_rs::controller::AppRoutes;
 use loco_rs::environment::Environment;
 use loco_rs::task::Tasks;
@@ -38,25 +35,19 @@ impl Hooks for App {
 
     /// The payloads, loaded before the server starts, so a missing or broken file stops the boot
     /// rather than failing a request. They go in Loco's shared store, which a handler extracts
-    /// them from, and they size the cache.
+    /// them from.
     async fn after_context(ctx: AppContext) -> Result<AppContext> {
         let settings: Settings = ctx.config.settings()?;
         let payloads = Payloads::load(&settings.payloads).map_err(Error::Message)?;
         ctx.shared_store.insert(payloads);
-        // rb:wiring cache.*
-        // Loco's in-memory cache, holding settings.json's capacity in entries. The config file's
-        // cache block would hold a number of its own.
-        let cache = inmem::new(&InMemCacheConfig { max_capacity: payloads.settings.cache.capacity as u64 });
-        Ok(ctx.into_builder().cache(Arc::new(cache)).build())
-        // rb:end
+        Ok(ctx)
     }
 
     async fn initializers(_ctx: &AppContext) -> Result<Vec<Box<dyn Initializer>>> {
         Ok(vec![Box::new(initializers::view_engine::ViewEngineInitializer)])
     }
 
-    fn routes(ctx: &AppContext) -> AppRoutes {
-        let p: &'static Payloads = ctx.shared_store.get().expect("after_context stored the payloads");
+    fn routes(_ctx: &AppContext) -> AppRoutes {
         AppRoutes::with_default_routes()
             .add_route(controllers::contract::routes())
             .add_route(controllers::baseline::routes())
@@ -71,7 +62,7 @@ impl Hooks for App {
             .add_route(controllers::cache::routes())
             .add_route(controllers::etag::routes())
             .add_route(controllers::compressed::routes())
-            .add_route(controllers::cors::routes(p))
+            .add_route(controllers::cors::routes())
             .add_route(controllers::forms::routes())
             .add_route(controllers::stream::routes())
             .add_route(controllers::sse::routes())

@@ -15,7 +15,6 @@ class Payloads:
     small: Json
     medium: Json
     large: Json
-    settings: Json
     rows: dict[int, Json]
 
     def row(self, id: int) -> Json | None:
@@ -35,6 +34,5 @@ def load(directory: str) -> Payloads:
         small=read("items.small.json"),
         medium=read("items.medium.json"),
         large=large,
-        settings=read("settings.json"),
         rows={row["id"]: row for row in large["items"]},
     )
