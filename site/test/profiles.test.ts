@@ -8,13 +8,13 @@ import { testOrder } from "../src/lib/run.ts";
 import type { Framework, Run, TestRecord } from "../src/lib/types.ts";
 
 /** Each test's heft. */
-const HEFT: Record<string, number> = { "json.small": 1, "json.medium": 2, "static.file": 4, "template.small": 2 };
+const HEFT: Record<string, number> = { "json.small": 1, "json.medium": 2, "static.large": 4, "template.small": 2 };
 
 /** Each test's p50, p90 and p99 at the regular rate, chosen so the means come out round. */
 const LATENCY: Record<string, [number, number, number]> = {
   "json.small": [100, 150, 200],
   "json.medium": [400, 600, 800],
-  "static.file": [1600, 2400, 3200],
+  "static.large": [1600, 2400, 3200],
   "template.small": [6400, 9600, 12800],
 };
 
@@ -45,7 +45,7 @@ const statsOf = (f: Framework, rn: string, weights: ReadonlyMap<string, number>,
 describe("weightsOf", () => {
   test("all takes every test the run measured, and a named profile the ones it names", () => {
     assert.deepEqual([...weightsOf(run, "all", { entries: [], weights: {} }).keys()], testOrder(run));
-    assert.deepEqual([...weightsOf(run, "web-all", { entries: [], weights: {} }).keys()], ["static.file", "template.small"]);
+    assert.deepEqual([...weightsOf(run, "web-all", { entries: [], weights: {} }).keys()], ["static.large", "template.small"]);
     assert.deepEqual([...weightsOf(run, "api-all", { entries: [], weights: {} }).keys()], ["json.medium", "json.small"]);
     assert.deepEqual([...weightsOf(run, "api-validation", { entries: [], weights: {} }).keys()], []);
   });
@@ -62,11 +62,11 @@ describe("weightsOf", () => {
   });
 
   test("a custom entry is a family or a test, and a family's weight multiplies each of its tests", () => {
-    const w = weightsOf(run, "custom", { entries: ["json", "static.file"], weights: { json: 2 } });
+    const w = weightsOf(run, "custom", { entries: ["json", "static.large"], weights: { json: 2 } });
     assert.deepEqual([...w], [
       ["json.medium", 2],
       ["json.small", 2],
-      ["static.file", 1],
+      ["static.large", 1],
     ]);
   });
 
@@ -86,7 +86,7 @@ describe("profileNamed", () => {
 
 describe("entriesOf", () => {
   test("a family whose every test is taken is written as the family", () => {
-    assert.deepEqual(entriesOf(run, ["json.small", "json.medium", "static.file"]), ["json", "static"]);
+    assert.deepEqual(entriesOf(run, ["json.small", "json.medium", "static.large"]), ["json", "static"]);
     assert.deepEqual(entriesOf(run, ["json.small"]), ["json.small"]);
     assert.deepEqual(testsOfPick(run, entriesOf(run, ["json.small", "template.small"])), ["json.small", "template.small"]);
   });
@@ -160,7 +160,7 @@ describe("a test a framework has no answers for", () => {
         }),
     ),
   });
-  const hono = scaled("node:hono", 2, ["static.file"]);
+  const hono = scaled("node:hono", 2, ["static.large"]);
   const koa = scaled("node:koa", 1000, ["json.small"]);
   const three: Run = { runId: "r", frameworks: [carter, hono, koa] };
 

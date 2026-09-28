@@ -21,6 +21,7 @@ import { select } from "./select.ts";
 const VALUES = {
   one: 4821,
   two: 1375,
+  three: 6204,
   tenant: "qwertyuiopas",
   requestId: "0123456789abcdef",
   account: 482913,
@@ -74,8 +75,8 @@ const ROUTES: readonly Route[] = [
     () => 200,
   ],
   [/^GET \/authorized\/small$/, (_, req) => (req.headers.authorization === `Bearer ${token}` ? 200 : 403)],
-  [/^POST \/body\/bind\/(small|medium)$/, (_, __, ___, body) => (validated(body) === 200 ? 200 : 500)],
-  [/^POST \/body\/validate\/(small|medium|first-error)$/, (_, __, ___, body) => validated(body)],
+  [/^POST \/body\/bind\/(small|medium|large)$/, (_, __, ___, body) => (validated(body) === 200 ? 200 : 500)],
+  [/^POST \/body\/validate\/(small|medium|large|first-error)$/, (_, __, ___, body) => validated(body)],
   [/^GET \/etag\/(small|large)$/, (_, req) => (req.headers["if-none-match"] === ETAG ? 304 : [200, { etag: ETAG }])],
   // Host and Connection are two of the five, and of the thirty.
   [/^GET \/headers$/, (_, req) => ([10, 60].includes(req.rawHeaders.length) ? 200 : 500)],
@@ -87,6 +88,8 @@ const ROUTES: readonly Route[] = [
   [/^GET \/parameters\/(\d+)\/segment\/literal$/, (m) => (id(m[1]) === VALUES.one ? 200 : 500)],
   [/^GET \/parameters\/(\d+)\/with-second\/(\d+)$/, (m) =>
     (id(m[1]) === VALUES.one && id(m[2]) === VALUES.two ? 200 : 500)],
+  [/^GET \/parameters\/(\d+)\/(\d+)\/(\d+)$/, (m) =>
+    (id(m[1]) === VALUES.one && id(m[2]) === VALUES.two && id(m[3]) === VALUES.three ? 200 : 500)],
   [/^GET \/query\/one$/, (_, __, url) => (url.searchParams.get("page") === String(VALUES.page) ? 200 : 500)],
   [/^GET \/query\/many$/, (_, req, url) => {
     const q = url.searchParams;
@@ -106,7 +109,7 @@ const ROUTES: readonly Route[] = [
     return MANY.every((name) => form.get(name) === String(VALUES[name])) ? 200 : 500;
   }],
   [/^POST \/forms\/multipart$/, (_, __, ___, body) => (body.includes(`\r\n\r\n${VALUES.tenant}\r\n`) ? 200 : 500)],
-  [/^GET \/(stream\/items|static\/items\.large\.json)$/, () => 200],
+  [/^GET \/(stream\/items|static\/items\.(small|medium|large)\.json)$/, () => 200],
   [/^GET \/sse\/medium$/, (_, req) => (req.headers.accept === "text/event-stream" ? 200 : 500)],
 ];
 
@@ -191,7 +194,7 @@ test("every performance test answers the status it declares", async () => {
   delay = 0;
   const { code, result, stdout } = await generate(load([{ name: "regular", rps: 300, seconds: 2 }], { workers: 2 }));
   assert.equal(code, 0, stdout);
-  assert.equal(result.testsLive, 56);
+  assert.equal(result.testsLive, 62);
   assert.deepEqual(result.load.values, VALUES);
   const [regular] = result.phases;
   assert.equal(regular.status, "done");

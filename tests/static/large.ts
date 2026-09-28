@@ -1,10 +1,10 @@
 import { performanceTest } from "#kit";
-import { file } from "#payloads";
+import { files } from "#payloads";
 
 const path = "/static/items.large.json";
 
 export default performanceTest({
-  id: { family: "static", name: "file" },
+  id: { family: "static", name: "large" },
   path,
   base: "json.large",
   varies: "static_file",
@@ -14,14 +14,14 @@ export default performanceTest({
     "payload directory, with its modification time. The request accepts gzip, " +
     "as a browser's does, and the body is compared byte for byte after " +
     "decoding, so the file may go out as it is or compressed. This is the one " +
-    "row where serving the file's bytes is the point. Last-Modified is checked " +
-    "rather than an ETag, because Go's file server sends no ETag.",
+    "family where serving the file's bytes is the point. Last-Modified is " +
+    "checked rather than an ETag, because Go's file server sends no ETag.",
 
   request: (c) =>
     c
       .get(path)
       .header("accept-encoding", "gzip")
-      .okWith(file)
+      .okWith(files.large)
       .hasHeader("content-type", /^application\/json/)
       .hasHeader("last-modified"),
 });

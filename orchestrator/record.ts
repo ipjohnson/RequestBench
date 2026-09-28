@@ -66,6 +66,7 @@ function sentinel<T extends string | number>(value: T, placeholder: string): T {
 const RUN: RunValues = {
   one: sentinel(900001, "{run.one}"),
   two: sentinel(900002, "{run.two}"),
+  three: sentinel(900008, "{run.three}"),
   tenant: sentinel("__rb_tenant__", "{run.tenant}"),
   requestId: sentinel("__rb_request_id__", "{run.requestId}"),
   account: sentinel(900003, "{run.account}"),

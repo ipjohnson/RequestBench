@@ -46,6 +46,7 @@ export const items = {
 export const order = {
   small: load("order.small", orderRequest),
   medium: load("order.medium", orderRequest),
+  large: load("order.large", orderRequest),
   /**
    * An order that binds and breaks all three of orderRequest's rules, so a framework's
    * validator refuses it rather than its parser. It matches no model.
@@ -106,6 +107,7 @@ function bound(name: string, sent: Payload<Order>) {
 export const bind = {
   small: bound("bind.small", order.small),
   medium: bound("bind.medium", order.medium),
+  large: bound("bind.large", order.large),
 };
 
 /** What forms.multipart answers beside its echo. */
@@ -138,6 +140,7 @@ function page(p: Payload<Items>): Payload<string> {
 export const pages = {
   small: page(items.small),
   medium: page(items.medium),
+  large: page(items.large),
 };
 
 /** items.medium's rows, one per line, which stream.ndjson writes. */
@@ -146,5 +149,9 @@ export const stream = lines("items.medium, one row per line", items.medium.value
 /** items.medium's rows, one per event, which sse.medium sends. */
 export const sse = events("items.medium, one row per event", items.medium.value.items, [items.medium]);
 
-/** items.large.json as it is committed, which static.file serves byte for byte. */
-export const file = text("items.large.json", read("items.large.json"));
+/** The item files as they are committed, which the static rows serve byte for byte. */
+export const files = {
+  small: text("items.small.json", read("items.small.json")),
+  medium: text("items.medium.json", read("items.medium.json")),
+  large: text("items.large.json", read("items.large.json")),
+};

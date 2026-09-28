@@ -244,13 +244,14 @@ whole string. Its numbers compare across every framework.
 ### body
 
 `body` measures the JSON body parser and the validator. The request is an order with a customer
-id, a status and a list of lines, sent at two sizes. One route parses and binds the order without
-validating it. Its answer carries a count of the values it found and the bytes it received, which
-shows the body was parsed rather than copied back. Another route validates the same order against
-a schema and answers the same way, so the difference between the two is the validator alone. The
-family also measures refusals, with an order that parses but breaks every rule. One route reports
-every bad field and another stops at the first, which compares the two error contracts. Its
-numbers compare across every framework.
+id, a status and a list of lines, sent at three sizes. The largest is about 40 KB, under every
+framework's default limit on a body. One route parses and binds the order without validating it.
+Its answer carries a count of the values it found and the bytes it received, which shows the body
+was parsed rather than copied back. Another route validates the same order against a schema and
+answers the same way, so the difference between the two is the validator alone. The family also
+measures refusals, with an order that parses but breaks every rule. One route reports every bad
+field and another stops at the first, which compares the two error contracts. Its numbers compare
+across every framework.
 
 ### cache
 
@@ -363,12 +364,14 @@ says so in its README. Its numbers compare across every framework.
 
 ### static
 
-`static` measures the framework's static-file feature. It serves `items.large.json` from the
-payload directory, with its `Last-Modified`, to a request that accepts gzip as a browser's does.
-The body is compared byte for byte after decoding, so the file may go out as it is or compressed.
-The `json` family serializes the same rows, so the difference is a file served against rows
-serialized. This is the one family where serving a file's bytes is the point. `Last-Modified` is checked rather than an ETag,
-because Go's file server sends no ETag. Its numbers compare across every framework.
+`static` measures the framework's static-file feature. It serves `items.small.json`,
+`items.medium.json` and `items.large.json` from the payload directory, with their `Last-Modified`,
+to a request that accepts gzip as a browser's does. The body is compared byte for byte after
+decoding, so a file may go out as it is or compressed. The `json` family serializes the same rows
+at each size, so the difference is a file served against rows serialized. The small file shows the
+feature's own cost per request. This is the one family where serving a file's bytes is the point.
+`Last-Modified` is checked rather than an ETag, because Go's file server sends no ETag. Its numbers
+compare across every framework.
 
 ### stream
 

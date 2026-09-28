@@ -39,7 +39,7 @@ export const isLight = (p: ProfileId): p is keyof typeof LIGHT_OF => p in LIGHT_
  * is the reader's.
  */
 export const NAMED = {
-  // A server-rendered website: rendered pages, a static file, gzip, conditional requests, a form
+  // A server-rendered website: rendered pages, static files, gzip, conditional requests, a form
   // post, the thirty headers a browser sends, and the two kinds of 404.
   "web-all": {
     tests: [
@@ -54,7 +54,10 @@ export const NAMED = {
       "forms.urlencoded",
       "headers.many",
       "middleware.four",
-      "static.file",
+      "static.large",
+      "static.medium",
+      "static.small",
+      "template.large",
       "template.medium",
       "template.small",
     ],
@@ -66,6 +69,7 @@ export const NAMED = {
       "authorized.allowed",
       "authorized.denied",
       "body.rejected_all",
+      "body.validate_large",
       "body.validate_medium",
       "body.validate_small",
       "cors.preflight",
@@ -85,6 +89,7 @@ export const NAMED = {
       "json.small",
       "middleware.four",
       "parameters.one",
+      "parameters.three",
       "parameters.two",
       "query.many",
       "query.one",
@@ -93,7 +98,14 @@ export const NAMED = {
   // A JSON API's checks on what it is sent: bodies validated and refused, and a body that is not
   // JSON at all.
   "api-validation": {
-    tests: ["body.rejected_all", "body.rejected_first", "body.validate_medium", "body.validate_small", "errors.malformed"],
+    tests: [
+      "body.rejected_all",
+      "body.rejected_first",
+      "body.validate_large",
+      "body.validate_medium",
+      "body.validate_small",
+      "errors.malformed",
+    ],
   },
 } as const satisfies Record<string, { readonly tests: readonly string[] }>;
 
