@@ -28,15 +28,15 @@ class Stored:
 def blueprint(p: Payloads) -> Blueprint:
     """cache: the handler skipped and a stored answer written back. The handler writes x-rb-serial,
     so a replayed answer repeats the serial it was stored with."""
-    settings = p.settings["cache"]
-    one = tuple(settings["vary"]["one"])
-    many = tuple(settings["vary"]["many"])
+    one = ("x-rb-tenant",)
+    many = ("x-rb-channel", "x-rb-region", "x-rb-tenant")
 
     routes = Blueprint("cache")
 
     # rb:wiring cache.*
-    # Each worker holds a store of its own, sized in entries by settings.json.
-    store: TTLCache = TTLCache(maxsize=settings["capacity"], ttl=settings["ttlSeconds"])
+    # Each worker holds a store of its own, with room for the cache family's 52 keys, each kept 30
+    # seconds.
+    store: TTLCache = TTLCache(maxsize=64, ttl=30)
 
     @routes.on_request
     async def replay(request):

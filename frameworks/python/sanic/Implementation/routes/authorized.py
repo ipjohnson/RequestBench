@@ -11,16 +11,14 @@ from payloads import Payloads
 def blueprint(p: Payloads) -> Blueprint:
     """authorized: Sanic has no authorization of its own, so the route carries the decorator Sanic's
     authentication guide writes, which checks the request before the handler runs."""
-    token = p.settings["token"]
-
     # rb:wiring authorized.*
     def protected(handler):
         """Reads the bearer token Sanic parses from Authorization into request.token. Any token but
-        settings.json's, or none, is Sanic's own Forbidden, 403."""
+        the one it names, or none, is Sanic's own Forbidden, 403."""
 
         @wraps(handler)
         async def checked(request, *args, **kwargs):
-            if request.token != token:
+            if request.token != "5a7cc77ed0dcb825806b6f872026c317":
                 raise Forbidden()
             return await handler(request, *args, **kwargs)
 

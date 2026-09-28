@@ -12,8 +12,6 @@ def routes(p: Payloads) -> list[BaseRoute]:
     """cors: Starlette's CORSMiddleware on a Mount at /cors. It answers a preflight before any route
     inside is matched, and adds its headers to the request itself. The endpoint writes x-rb-serial,
     so its absence on a preflight shows the middleware answered alone."""
-    settings = p.settings["cors"]
-
     # rb:handler cors.request
     async def small(request: Request) -> Response:
         """
@@ -26,7 +24,7 @@ def routes(p: Payloads) -> list[BaseRoute]:
     # an OPTIONS request to a GET route, which the router answers with 405 first. A Mount's
     # middleware runs before the routes inside it are matched.
     # rb:wiring cors.*
-    policy = Middleware(CORSMiddleware, allow_origins=[settings["origin"]], allow_methods=[settings["method"]],
-                        allow_headers=[settings["header"]], max_age=settings["maxAgeSeconds"])
+    policy = Middleware(CORSMiddleware, allow_origins=["https://shop.example.com"], allow_methods=["GET"],
+                        allow_headers=["x-rb-tenant"], max_age=600)
 
     return [Mount("/cors", routes=[Route("/small", small)], middleware=[policy])]

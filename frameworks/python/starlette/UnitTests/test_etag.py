@@ -29,7 +29,7 @@ def test_a_matching_if_none_match_is_304_with_no_body_after_the_endpoint_ran(cli
 # rb:test etag.stale_large
 @pytest.mark.corpus("etag.stale_large")
 def test_a_tag_that_does_not_match_is_answered_in_full(client):
-    response = client.get("/etag/large", headers={"if-none-match": expected.json("settings.json")["staleEtag"]})
+    response = client.get("/etag/large", headers={"if-none-match": '"0000000000000000"'})
 
     assert response.status_code == 200
     assert response.json() == expected.json("items.large.json")

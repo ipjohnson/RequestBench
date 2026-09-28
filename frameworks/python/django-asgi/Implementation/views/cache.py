@@ -11,30 +11,25 @@ from serial import fresh
 # one view: it answers from the store before the view runs, and stores what the view answered. The
 # view writes x-rb-serial, so a replayed answer repeats the serial it was stored with.
 P = settings.PAYLOADS
-# rb:wiring cache.*
-TTL = P.settings["cache"]["ttlSeconds"]
-ONE = tuple(P.settings["cache"]["vary"]["one"])
-MANY = tuple(P.settings["cache"]["vary"]["many"])
-# rb:end
 
 
 # rb:handler cache.small
 @require_GET
-@cache_page(TTL)
+@cache_page(30)
 async def small(request, key):
     return fresh(JsonResponse(P.small))
 
 
 # rb:handler cache.medium
 @require_GET
-@cache_page(TTL)
+@cache_page(30)
 async def medium(request, key):
     return fresh(JsonResponse(P.medium))
 
 
 # rb:handler cache.large
 @require_GET
-@cache_page(TTL)
+@cache_page(30)
 async def large(request, key):
     return fresh(JsonResponse(P.large))
 
@@ -43,15 +38,15 @@ async def large(request, key):
 # of the request headers Vary names.
 # rb:handler cache.vary_one
 @require_GET
-@cache_page(TTL)
-@vary_on_headers(*ONE)
+@cache_page(30)
+@vary_on_headers("x-rb-tenant")
 async def vary_one(request, key):
     return fresh(JsonResponse(P.small))
 
 
 # rb:handler cache.vary_many
 @require_GET
-@cache_page(TTL)
-@vary_on_headers(*MANY)
+@cache_page(30)
+@vary_on_headers("x-rb-channel", "x-rb-region", "x-rb-tenant")
 async def vary_many(request, key):
     return fresh(JsonResponse(P.small))

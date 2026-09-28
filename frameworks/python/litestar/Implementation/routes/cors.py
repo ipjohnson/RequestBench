@@ -7,13 +7,12 @@ from serial import fresh
 
 
 # rb:wiring cors.*
-def config(p: Payloads) -> CORSConfig:
-    """settings.json's policy, as the application's cors_config. Litestar takes CORS on the
+def config() -> CORSConfig:
+    """The one policy, as the application's cors_config. Litestar takes CORS on the
     application alone, so the policy covers every route, and its middleware answers a preflight to
     any path before the router matches one."""
-    settings = p.settings.cors
-    return CORSConfig(allow_origins=[settings.origin], allow_methods=[settings.method], allow_headers=[settings.header],
-                      max_age=settings.max_age_seconds)
+    return CORSConfig(allow_origins=["https://shop.example.com"], allow_methods=["GET"], allow_headers=["x-rb-tenant"],
+                      max_age=600)
 # rb:end
 
 

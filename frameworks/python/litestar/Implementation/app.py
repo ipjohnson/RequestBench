@@ -1,5 +1,4 @@
 from litestar import Litestar
-from litestar.config.response_cache import ResponseCacheConfig
 from litestar.openapi import OpenAPIConfig
 from litestar.static_files import create_static_files_router
 
@@ -45,12 +44,7 @@ def build(p: Payloads, openapi_config: OpenAPIConfig | None = None) -> Litestar:
             # rb:wiring static.*
             create_static_files_router(path="/static", directories=[p.directory]),
         ],
-        cors_config=cors.config(p),
-        # rb:wiring cache.*
-        # Each cached route expires its answers after ttlSeconds. The store is the application's
-        # default MemoryStore, one in each worker, which holds every key it is given until each
-        # expires, so settings.json's capacity has nothing to set.
-        response_cache_config=ResponseCacheConfig(default_expiration=p.settings.cache.ttl_seconds),
+        cors_config=cors.config(),
         template_config=template.CONFIG,
         openapi_config=openapi_config,
     )

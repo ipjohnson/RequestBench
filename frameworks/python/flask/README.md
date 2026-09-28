@@ -99,7 +99,7 @@ fills its own store.
 - Flask-Caching's `SimpleCache` pickles what it stores. A replayed answer is a response unpickled on
   every hit, not stored bytes written back.
 - Flask-CORS writes `Vary: Origin` only when the policy allows more than one origin or a pattern.
-  settings.json names one origin, so an answer that differs by Origin says nothing of it, and
+  The policy names one origin, so an answer that differs by Origin says nothing of it, and
   `cors.vary` is skipped.
 - Flask-Compress adds `Vary: Accept-Encoding` to every answer it looks at, compressed or not.
 - gunicorn's gthread worker closes a connection that has been idle for 2 seconds, its `keepalive`

@@ -10,11 +10,9 @@ def blueprint(p: Payloads) -> Blueprint:
     """cors: Flask-CORS on this family's blueprint, which adds its headers after the view, and to the
     OPTIONS answer Flask writes itself for every route. The view writes x-rb-serial, so its absence
     on a preflight shows no view ran."""
-    settings = p.settings["cors"]
     routes = Blueprint("cors", __name__)
     # rb:wiring cors.*
-    CORS(routes, origins=[settings["origin"]], methods=[settings["method"]], allow_headers=[settings["header"]],
-         max_age=settings["maxAgeSeconds"])
+    CORS(routes, origins=["https://shop.example.com"], methods=["GET"], allow_headers=["x-rb-tenant"], max_age=600)
 
     # rb:handler cors.request
     @routes.get("/cors/small")

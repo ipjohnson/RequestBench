@@ -12,16 +12,15 @@ from serial import fresh
 def blueprint(p: Payloads) -> Blueprint:
     """cache: the view skipped and a stored answer written back. The view writes x-rb-serial, so a
     replayed answer repeats the serial it was stored with."""
-    settings = p.settings["cache"]
-    one = tuple(settings["vary"]["one"])
-    many = tuple(settings["vary"]["many"])
+    one = ("x-rb-tenant",)
+    many = ("x-rb-channel", "x-rb-region", "x-rb-tenant")
     routes = Blueprint("cache", __name__)
 
     # rb:wiring cache.*
     # Flask-Caching's SimpleCache keeps the store in the worker's memory, so each worker holds its
-    # own, sized in entries by settings.json. It stores what the view returned, here the response.
-    cache = Cache(config={"CACHE_TYPE": "SimpleCache", "CACHE_THRESHOLD": settings["capacity"],
-                          "CACHE_DEFAULT_TIMEOUT": settings["ttlSeconds"]})
+    # own, with room for the cache family's 52 keys. It stores what the view returned, here the
+    # response, for the timeout the view's decorator names.
+    cache = Cache(config={"CACHE_TYPE": "SimpleCache", "CACHE_THRESHOLD": 64})
 
     @routes.record_once
     def install(state: BlueprintSetupState) -> None:
@@ -35,29 +34,29 @@ def blueprint(p: Payloads) -> Blueprint:
     # rb:end
 
     @routes.get("/cache/small/<key>")
-    @cache.cached()
+    @cache.cached(timeout=30)
     def small(key: str) -> Response:
         return fresh(jsonify(p.small))
 
     @routes.get("/cache/medium/<key>")
-    @cache.cached()
+    @cache.cached(timeout=30)
     def medium(key: str) -> Response:
         return fresh(jsonify(p.medium))
 
     @routes.get("/cache/large/<key>")
-    @cache.cached()
+    @cache.cached(timeout=30)
     def large(key: str) -> Response:
         return fresh(jsonify(p.large))
 
     # The Vary header tells a cache in front of the framework what the answer depends on. The store
     # keys on the route's own list, not on this header.
     @routes.get("/cache/vary/one/<key>")
-    @cache.cached(make_cache_key=keyed_on(one))
+    @cache.cached(timeout=30, make_cache_key=keyed_on(one))
     def vary_one(key: str) -> Response:
         return varying(p.small, one)
 
     @routes.get("/cache/vary/many/<key>")
-    @cache.cached(make_cache_key=keyed_on(many))
+    @cache.cached(timeout=30, make_cache_key=keyed_on(many))
     def vary_many(key: str) -> Response:
         return varying(p.small, many)
 

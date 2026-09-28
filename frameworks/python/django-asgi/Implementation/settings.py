@@ -1,5 +1,5 @@
-"""Django's settings, which each worker reads when asgi.py sets Django up. Several are made from
-settings.json, so the payloads are loaded here, before the worker accepts a connection."""
+"""Django's settings, which each worker reads when asgi.py sets Django up. The payloads are loaded
+here too, before the worker accepts a connection."""
 import os
 from pathlib import Path
 
@@ -38,22 +38,22 @@ TEMPLATES = [{
 
 # The store cache_page writes into, one in each worker. cache_page keeps a second entry for each
 # path, naming the request headers that path varies on, and LocMemCache counts both against
-# MAX_ENTRIES. So the capacity is settings.json's, plus one for each of the 20 cached paths, five
-# routes by four keys.
+# MAX_ENTRIES. So the capacity is room for the cache family's 52 keys, plus one for each of the 20
+# cached paths, five routes by four keys.
 CACHED_PATHS = 20
 # rb:wiring cache.*
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-        "OPTIONS": {"MAX_ENTRIES": PAYLOADS.settings["cache"]["capacity"] + CACHED_PATHS},
+        "OPTIONS": {"MAX_ENTRIES": 64 + CACHED_PATHS},
     },
 }
 
-# django-cors-headers' policy, from settings.json, on the paths CORS_URLS_REGEX matches alone.
+# django-cors-headers' policy, on the paths CORS_URLS_REGEX matches alone.
 # rb:wiring cors.*
 CORS_URLS_REGEX = r"^/cors/"
-CORS_ALLOWED_ORIGINS = [PAYLOADS.settings["cors"]["origin"]]
-CORS_ALLOW_METHODS = [PAYLOADS.settings["cors"]["method"]]
-CORS_ALLOW_HEADERS = [PAYLOADS.settings["cors"]["header"]]
-CORS_PREFLIGHT_MAX_AGE = PAYLOADS.settings["cors"]["maxAgeSeconds"]
+CORS_ALLOWED_ORIGINS = ["https://shop.example.com"]
+CORS_ALLOW_METHODS = ["GET"]
+CORS_ALLOW_HEADERS = ["x-rb-tenant"]
+CORS_PREFLIGHT_MAX_AGE = 600
 # rb:end

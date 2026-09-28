@@ -20,7 +20,7 @@
   "suite": { "argv": ["uv", "run", "--locked", "pytest"], "paths": ["UnitTests"] },
   "upgrade": { "argv": ["uv", "lock", "--upgrade"] },
   "skips": {
-    "cors.vary": "Flask-CORS writes Vary: Origin only when the policy allows more than one origin or a pattern, and settings.json names one origin."
+    "cors.vary": "Flask-CORS writes Vary: Origin only when the policy allows more than one origin or a pattern, and the policy names one origin."
   },
   "noHandler": {
     "cors.preflight": "Flask answers OPTIONS itself on every route, and Flask-CORS on the cors blueprint adds the policy to that answer. No view runs.",

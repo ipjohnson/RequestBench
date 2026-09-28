@@ -7,9 +7,8 @@ from serial import fresh
 def router(p: Payloads) -> Router:
     """cache: the handler skipped and a stored answer written back, by Litestar's response cache. The
     handler writes x-rb-serial, so a replayed answer repeats the serial it was stored with."""
-    settings = p.settings.cache
-    one = tuple(settings.vary.one)
-    many = tuple(settings.vary.many)
+    one = ("x-rb-tenant",)
+    many = ("x-rb-channel", "x-rb-region", "x-rb-tenant")
 
     # rb:wiring cache.*
     def keyed_on(names: tuple[str, ...]):
@@ -23,29 +22,30 @@ def router(p: Payloads) -> Router:
     # rb:end
 
     # rb:wiring cache.*
-    # cache=True turns the application's response cache on for the route, for the expiry the
-    # application's ResponseCacheConfig sets. The cache answers from its store before the handler
-    # runs, and stores what the handler answered.
-    @get("/cache/small/{key:str}", cache=True)
+    # cache=30 turns the application's response cache on for the route and keeps an answer 30
+    # seconds. The cache answers from its store before the handler runs, and stores what the handler
+    # answered. The store is the application's default MemoryStore, one in each worker, which holds
+    # every key it is given until each expires.
+    @get("/cache/small/{key:str}", cache=30)
     async def small(key: str) -> Response[Payload]:
         return Response(p.small, headers=fresh())
     # rb:end
 
-    @get("/cache/medium/{key:str}", cache=True)
+    @get("/cache/medium/{key:str}", cache=30)
     async def medium(key: str) -> Response[Payload]:
         return Response(p.medium, headers=fresh())
 
-    @get("/cache/large/{key:str}", cache=True)
+    @get("/cache/large/{key:str}", cache=30)
     async def large(key: str) -> Response[Payload]:
         return Response(p.large, headers=fresh())
 
     # The Vary header tells a cache in front of the framework what the answer depends on. The store
     # keys on the route's own list, not on this header.
-    @get("/cache/vary/one/{key:str}", cache=True, cache_key_builder=keyed_on(one))
+    @get("/cache/vary/one/{key:str}", cache=30, cache_key_builder=keyed_on(one))
     async def vary_one(key: str) -> Response[Payload]:
         return Response(p.small, headers={**fresh(), "vary": ", ".join(one)})
 
-    @get("/cache/vary/many/{key:str}", cache=True, cache_key_builder=keyed_on(many))
+    @get("/cache/vary/many/{key:str}", cache=30, cache_key_builder=keyed_on(many))
     async def vary_many(key: str) -> Response[Payload]:
         return Response(p.small, headers={**fresh(), "vary": ", ".join(many)})
 

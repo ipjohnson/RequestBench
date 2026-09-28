@@ -9,11 +9,10 @@ def application(p: Payloads) -> FastAPI:
     """cors: a sub-application that app.py mounts at /cors. Starlette's CORSMiddleware on it answers a
     preflight before any route is matched, and adds its headers to the request itself. The handler
     writes x-rb-serial, so its absence on a preflight shows the middleware answered alone."""
-    settings = p.settings.cors
     cors = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
     # rb:wiring cors.*
-    cors.add_middleware(CORSMiddleware, allow_origins=[settings.origin], allow_methods=[settings.method],
-                        allow_headers=[settings.header], max_age=settings.max_age_seconds)
+    cors.add_middleware(CORSMiddleware, allow_origins=["https://shop.example.com"], allow_methods=["GET"],
+                        allow_headers=["x-rb-tenant"], max_age=600)
 
     # rb:handler cors.request
     @cors.get("/small")

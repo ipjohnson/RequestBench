@@ -26,7 +26,7 @@
   },
   "mechanisms": {
     "authorized": {
-      "mechanism": "A view decorator that reads the bearer token and raises Django's PermissionDenied for any but settings.json's, which Django answers with its own 403 before the view runs"
+      "mechanism": "A view decorator that reads the bearer token and raises Django's PermissionDenied for any but the one it names, which Django answers with its own 403 before the view runs"
     },
     "baseline": { "builtin": "The view returns an HttpResponse holding the string." },
     "body": {

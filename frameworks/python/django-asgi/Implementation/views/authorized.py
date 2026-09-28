@@ -12,14 +12,12 @@ P = settings.PAYLOADS
 # rb:wiring authorized.*
 def require_token(view):
     """Django checks no bearer token of its own. This decorator reads the token from the
-    Authorization header and raises PermissionDenied for any but settings.json's, which Django
+    Authorization header and raises PermissionDenied for any but the one it names, which Django
     answers with its own 403 before the view runs. A request with no token is refused the same way."""
-    token = P.settings["token"]
-
     @wraps(view)
     async def guarded(request, *args, **kwargs):
         scheme, _, credentials = request.headers.get("authorization", "").partition(" ")
-        if scheme.lower() != "bearer" or not constant_time_compare(credentials, token):
+        if scheme.lower() != "bearer" or not constant_time_compare(credentials, "5a7cc77ed0dcb825806b6f872026c317"):
             raise PermissionDenied
         return await view(request, *args, **kwargs)
 

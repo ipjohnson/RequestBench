@@ -12,15 +12,15 @@ from serial import fresh
 def router(p: Payloads) -> APIRouter:
     """cache: the handler skipped and a stored answer written back. The handler writes
     x-rb-serial, so a replayed answer repeats the serial it was stored with."""
-    settings = p.settings.cache
-    one = tuple(settings.vary.one)
-    many = tuple(settings.vary.many)
+    one = ("x-rb-tenant",)
+    many = ("x-rb-channel", "x-rb-region", "x-rb-tenant")
     # By route name, which FastAPI takes from the handler.
     varies = {"vary_one": one, "vary_many": many}
 
     # rb:wiring cache.*
-    # Each worker holds a store of its own, sized in entries by settings.json.
-    store: TTLCache = TTLCache(maxsize=settings.capacity, ttl=settings.ttl_seconds)
+    # Each worker holds a store of its own, with room for the cache family's 52 keys, each kept 30
+    # seconds.
+    store: TTLCache = TTLCache(maxsize=64, ttl=30)
 
     class Replayed(APIRoute):
         """FastAPI ships no response cache, and a route class is its hook around the whole handling

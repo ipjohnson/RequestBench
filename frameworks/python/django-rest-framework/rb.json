@@ -26,7 +26,7 @@
   },
   "mechanisms": {
     "authorized": {
-      "mechanism": "A DRF permission class on the view, which compares the bearer token with settings.json's and refuses any other with DRF's 403 before the view runs"
+      "mechanism": "A DRF permission class on the view, which compares the bearer token with the one it names and refuses any other with DRF's 403 before the view runs"
     },
     "baseline": { "mechanism": "PlainTextRenderer on the view, the custom renderer DRF's renderer guide writes as its example, which sends the string as text/plain" },
     "body": {

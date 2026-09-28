@@ -9,14 +9,12 @@ from payloads import Payload, Payloads
 def router(p: Payloads) -> APIRouter:
     """authorized: FastAPI's bearer scheme reads the token, and a dependency on the route compares it
     before the handler runs."""
-    token = p.settings.token
-
     # rb:wiring authorized.*
     bearer = HTTPBearer()
 
     async def require_token(credentials: Annotated[HTTPAuthorizationCredentials, Depends(bearer)]) -> None:
-        """A request with no bearer token is HTTPBearer's own 401. Any token but settings.json's is 403."""
-        if credentials.credentials != token:
+        """A request with no bearer token is HTTPBearer's own 401. Any other token is 403."""
+        if credentials.credentials != "5a7cc77ed0dcb825806b6f872026c317":
             raise HTTPException(status_code=403)
     # rb:end
 

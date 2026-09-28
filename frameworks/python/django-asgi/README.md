@@ -75,7 +75,7 @@ Logging is Django's default. Under uvicorn it writes nothing for a 4xx while `DE
 | headers | The view reads `request.headers` by name and converts the account with `int()`. | by hand |
 | query | A `Form` over `request.GET`, which binds and converts each value. | Django |
 | body | The view parses the JSON, and a `Form` with a form per line holds the order to orderRequest's rules on the validate routes. | Django |
-| authorized | A view decorator that raises `PermissionDenied` for any token but settings.json's. | Django, by hand |
+| authorized | A view decorator that raises `PermissionDenied` for any token but the one it names. | Django, by hand |
 | cache | `cache_page` over LocMemCache, with `vary_on_headers` on the vary routes. | Django |
 | compressed | `gzip_page`, at its fixed threshold of 200 bytes and gzip level 6. | Django |
 | etag | `ConditionalGetMiddleware`, scoped to the two views with `decorator_from_middleware`. | Django |

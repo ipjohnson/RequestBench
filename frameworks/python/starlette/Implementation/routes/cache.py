@@ -16,13 +16,13 @@ type Endpoint = Callable[[Request], Awaitable[Response]]
 def routes(p: Payloads) -> list[BaseRoute]:
     """cache: the endpoint skipped and a stored answer written back. The endpoint writes x-rb-serial,
     so a replayed answer repeats the serial it was stored with."""
-    settings = p.settings["cache"]
-    one = tuple(settings["vary"]["one"])
-    many = tuple(settings["vary"]["many"])
+    one = ("x-rb-tenant",)
+    many = ("x-rb-channel", "x-rb-region", "x-rb-tenant")
 
     # rb:wiring cache.*
-    # Each worker holds a store of its own, sized in entries by settings.json.
-    store: TTLCache = TTLCache(maxsize=settings["capacity"], ttl=settings["ttlSeconds"])
+    # Each worker holds a store of its own, with room for the cache family's 52 keys, each kept 30
+    # seconds.
+    store: TTLCache = TTLCache(maxsize=64, ttl=30)
 
     def replayed(on: tuple[str, ...] = ()) -> Callable[[Endpoint], Endpoint]:
         """Starlette ships no response cache, so this is wired by hand, as a decorator on the
