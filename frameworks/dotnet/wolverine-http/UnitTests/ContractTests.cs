@@ -21,7 +21,7 @@ public sealed class ContractTests(WolverineApp app)
         JsonNode meta = Answer.Json(result);
 
         Assert.Equal("Wolverine.HTTP", (string?)meta["framework"]);
-        Assert.Equal("6.39.1", (string?)meta["version"]);
+        Assert.Equal("6.41.0", (string?)meta["version"]);
         Assert.StartsWith(".NET 10", (string?)meta["runtime"]);
     }
 }
