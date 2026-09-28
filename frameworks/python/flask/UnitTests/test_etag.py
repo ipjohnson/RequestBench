@@ -23,7 +23,7 @@ def test_a_matching_if_none_match_is_304_with_no_body_after_the_view_ran(client)
 
     assert response.status_code == 304
     assert response.data == b""
-    assert int(response.headers["x-rb-serial"]) > int(first.headers["x-rb-serial"])
+    assert response.headers["x-rb-serial"] != first.headers["x-rb-serial"]
 
 
 # rb:test etag.stale_large

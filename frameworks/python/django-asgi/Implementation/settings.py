@@ -38,8 +38,9 @@ TEMPLATES = [{
 
 # The store cache_page writes into, one in each worker. cache_page keeps a second entry for each
 # path, naming the request headers that path varies on, and LocMemCache counts both against
-# MAX_ENTRIES. So the capacity is settings.json's, plus one for each of the five cached paths.
-CACHED_PATHS = 5
+# MAX_ENTRIES. So the capacity is settings.json's, plus one for each of the 20 cached paths, five
+# routes by four keys.
+CACHED_PATHS = 20
 # rb:wiring cache.*
 CACHES = {
     "default": {

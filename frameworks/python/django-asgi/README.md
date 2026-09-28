@@ -45,9 +45,9 @@ the host has. Django's ASGI deployment documentation lists Daphne, Hypercorn and
 has no worker count of its own, and uvicorn's supervisor does.
 
 Each worker keeps its own state. The `x-rb-serial` counter and the cache family's LocMemCache are
-both per worker, so two workers answering one path can carry different serials. A connection stays
-with the worker that accepted it, and the gate sends each test's two requests on one connection, so
-`fresh()` and `replayed()` hold. Under load each worker fills its own store.
+both per worker, and the serial carries the worker's process id, so no two workers write one value.
+A connection stays with the worker that accepted it, and the gate sends each test's two requests on
+one connection, so `replayed()` holds. Under load each worker fills its own store.
 
 ## Settings
 

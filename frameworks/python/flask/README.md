@@ -55,9 +55,9 @@ for the container's two cores. A worker runs Python on one core at a time, so mo
 queue for it.
 
 Each worker keeps its own state. The `x-rb-serial` counter and the cache family's store are both per
-worker, so two workers answering one path can carry different serials. The gate sends each test's two
-requests on one connection, so `fresh()` and `replayed()` hold. Under load each worker fills its own
-store.
+worker, and the serial carries the worker's process id, so no two workers write one value. The gate
+sends each test's two requests on one connection, so `replayed()` holds. Under load each worker
+fills its own store.
 
 ## How each family is wired
 

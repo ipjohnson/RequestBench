@@ -26,27 +26,27 @@ def router(p: Payloads) -> Router:
     # cache=True turns the application's response cache on for the route, for the expiry the
     # application's ResponseCacheConfig sets. The cache answers from its store before the handler
     # runs, and stores what the handler answered.
-    @get("/cache/small", cache=True)
-    async def small() -> Response[Payload]:
+    @get("/cache/small/{key:str}", cache=True)
+    async def small(key: str) -> Response[Payload]:
         return Response(p.small, headers=fresh())
     # rb:end
 
-    @get("/cache/medium", cache=True)
-    async def medium() -> Response[Payload]:
+    @get("/cache/medium/{key:str}", cache=True)
+    async def medium(key: str) -> Response[Payload]:
         return Response(p.medium, headers=fresh())
 
-    @get("/cache/large", cache=True)
-    async def large() -> Response[Payload]:
+    @get("/cache/large/{key:str}", cache=True)
+    async def large(key: str) -> Response[Payload]:
         return Response(p.large, headers=fresh())
 
     # The Vary header tells a cache in front of the framework what the answer depends on. The store
     # keys on the route's own list, not on this header.
-    @get("/cache/vary/one", cache=True, cache_key_builder=keyed_on(one))
-    async def vary_one() -> Response[Payload]:
+    @get("/cache/vary/one/{key:str}", cache=True, cache_key_builder=keyed_on(one))
+    async def vary_one(key: str) -> Response[Payload]:
         return Response(p.small, headers={**fresh(), "vary": ", ".join(one)})
 
-    @get("/cache/vary/many", cache=True, cache_key_builder=keyed_on(many))
-    async def vary_many() -> Response[Payload]:
+    @get("/cache/vary/many/{key:str}", cache=True, cache_key_builder=keyed_on(many))
+    async def vary_many(key: str) -> Response[Payload]:
         return Response(p.small, headers={**fresh(), "vary": ", ".join(many)})
 
     return Router(path="/", route_handlers=[small, medium, large, vary_one, vary_many])

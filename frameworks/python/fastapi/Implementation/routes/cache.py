@@ -47,27 +47,27 @@ def router(p: Payloads) -> APIRouter:
 
     routes = APIRouter(route_class=Replayed)
 
-    @routes.get("/cache/small")
-    async def small(response: Response) -> Payload:
+    @routes.get("/cache/small/{key}")
+    async def small(response: Response, key: str) -> Payload:
         return fresh(response, p.small)
 
-    @routes.get("/cache/medium")
-    async def medium(response: Response) -> Payload:
+    @routes.get("/cache/medium/{key}")
+    async def medium(response: Response, key: str) -> Payload:
         return fresh(response, p.medium)
 
-    @routes.get("/cache/large")
-    async def large(response: Response) -> Payload:
+    @routes.get("/cache/large/{key}")
+    async def large(response: Response, key: str) -> Payload:
         return fresh(response, p.large)
 
     # The Vary header tells a cache in front of the framework what the answer depends on. The store
     # keys on the route's own list, not on this header.
-    @routes.get("/cache/vary/one")
-    async def vary_one(response: Response) -> Payload:
+    @routes.get("/cache/vary/one/{key}")
+    async def vary_one(response: Response, key: str) -> Payload:
         response.headers["vary"] = ", ".join(one)
         return fresh(response, p.small)
 
-    @routes.get("/cache/vary/many")
-    async def vary_many(response: Response) -> Payload:
+    @routes.get("/cache/vary/many/{key}")
+    async def vary_many(response: Response, key: str) -> Payload:
         response.headers["vary"] = ", ".join(many)
         return fresh(response, p.small)
 

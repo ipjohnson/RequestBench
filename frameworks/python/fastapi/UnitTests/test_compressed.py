@@ -34,7 +34,7 @@ def test_identity_is_answered_as_it_is_and_the_handler_runs_every_time(client, s
 
     assert "content-encoding" not in second.headers
     assert second.json() == expected.json(f"items.{size}.json")
-    assert int(second.headers["x-rb-serial"]) > int(first.headers["x-rb-serial"])
+    assert second.headers["x-rb-serial"] != first.headers["x-rb-serial"]
 
 
 def test_a_route_outside_the_family_is_not_compressed(client):

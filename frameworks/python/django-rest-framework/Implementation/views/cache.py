@@ -23,21 +23,21 @@ MANY = tuple(P.settings["cache"]["vary"]["many"])
 # rb:handler cache.small
 @api_view(["GET"])
 @cache_page(TTL)
-def small(request):
+def small(request, key):
     return fresh(Response(P.small))
 
 
 # rb:handler cache.medium
 @api_view(["GET"])
 @cache_page(TTL)
-def medium(request):
+def medium(request, key):
     return fresh(Response(P.medium))
 
 
 # rb:handler cache.large
 @api_view(["GET"])
 @cache_page(TTL)
-def large(request):
+def large(request, key):
     return fresh(Response(P.large))
 
 
@@ -47,7 +47,7 @@ def large(request):
 @api_view(["GET"])
 @cache_page(TTL)
 @vary_on_headers(*ONE)
-def vary_one(request):
+def vary_one(request, key):
     return fresh(Response(P.small))
 
 
@@ -55,5 +55,5 @@ def vary_one(request):
 @api_view(["GET"])
 @cache_page(TTL)
 @vary_on_headers(*MANY)
-def vary_many(request):
+def vary_many(request, key):
     return fresh(Response(P.small))
