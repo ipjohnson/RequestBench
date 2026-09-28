@@ -83,6 +83,8 @@ const RUN: RunValues = {
 /** A real row, because a test builds the row it expects from the id, but one no literal in a path spells. */
 const ITEM = sentinel(1417, "{draw.item}");
 
+const KEY = sentinel("__rb_key__", "{draw.key}");
+
 /** What `etag()` reads back, standing for the validator the framework answered with. */
 export const ETAG = '"{etag}"';
 
@@ -195,6 +197,7 @@ export function recorder(): { client: Client; recording: Recording } {
     // combination, so what matters is that the values differ rather than what they are.
     choice: <T>(values: readonly T[]) => (recording.choices.push(values), drew("choice", values[0] as T)),
     item: () => drew("item", ITEM),
+    key: () => drew("key", KEY),
   };
 
   const client: Client = {

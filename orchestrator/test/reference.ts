@@ -5,7 +5,7 @@
 // published data rather than from what a test expects, so a test that names the wrong
 // payload for its path fails here. What a framework writes in its own words, which is
 // every error body, comes from the error contract it answers as, one of those in
-// contracts.ts. An ETag hashed from the body and a serial that advances when a
+// contracts.ts. An ETag hashed from the body and a serial that is new when a
 // handler runs and repeats when a stored answer is replayed are written the way a
 // correct framework writes them. Those halves are only as strong as the checks in the
 // tests that read them.
@@ -15,6 +15,7 @@ import { join } from "node:path";
 import { gzipSync } from "node:zlib";
 
 import type { Draw, Exceptions, Json, RunValues } from "@rb/tests/kit";
+import { CACHE_KEYS } from "@rb/tests/models/cache";
 import { orderRequest } from "@rb/tests/models/order-request";
 import { items, settings } from "@rb/tests/payloads";
 import type { Request, Response, Transport } from "../validate.ts";
@@ -57,6 +58,7 @@ export const RUN: RunValues = {
 export const DRAW: Draw = {
   choice: <T>(values: readonly T[]) => values[0] as T,
   item: () => 17,
+  key: () => CACHE_KEYS[0],
 };
 
 interface Reply {
@@ -163,8 +165,9 @@ export function corpusReference(contract: Contract) {
     ["POST", /^\/body\/validate\/first-error$/, (req) => ordered(req, "body.rejected_first")],
     ["GET", /^\/authorized\/small$/, (req) =>
       req.headers["authorization"] === `Bearer ${settings.value.token}` ? json(small) : own("authorized.denied")],
-    ["GET", /^\/(?:cache|compressed|etag)\/(small|medium|large)$/, (_, m) => json(sized[m[1] as keyof typeof sized])],
-    ["GET", /^\/cache\/vary\/(?:one|many)$/, () => json(small)],
+    ["GET", /^\/(?:compressed|etag)\/(small|medium|large)$/, (_, m) => json(sized[m[1] as keyof typeof sized])],
+    ["GET", /^\/cache\/(small|medium|large)\/[\w-]+$/, (_, m) => json(sized[m[1] as keyof typeof sized])],
+    ["GET", /^\/cache\/vary\/(?:one|many)\/[\w-]+$/, () => json(small)],
     ["GET", /^\/template\/(small|medium|large)$/, (_, m) => page(sized[m[1] as keyof typeof sized])],
 
     ["GET", /^\/items\/(\d+)$/, (_, m) => {
@@ -231,7 +234,8 @@ export function corpusReference(contract: Contract) {
   /** A fresh process for one test: its own serial counter and its own response cache. */
   function transport(): Transport {
     let counter = 0;
-    const stored = new Map<string, number>();
+    const serial = () => `${Date.now()}|${(counter += 1)}`;
+    const stored = new Map<string, string>();
 
     return async (req: Request): Promise<Response> => {
       const url = new URL(req.target, "http://reference");
@@ -255,13 +259,13 @@ export function corpusReference(contract: Contract) {
       const headers: Record<string, string> = { ...reply.headers };
       let body = typeof reply.body === "string" ? utf8(reply.body) : (reply.body ?? new Uint8Array(0));
 
-      if (reply.status === 200 && /^\/(?:etag|compressed|cors)\//.test(path)) headers["x-rb-serial"] = String(++counter);
+      if (reply.status === 200 && /^\/(?:etag|compressed|cors)\//.test(path)) headers["x-rb-serial"] = serial();
       if (reply.status === 200 && path.startsWith("/cache/")) {
         const vary = Object.entries(req.headers).filter(([k]) => k.startsWith("x-rb-")).map(([k, v]) => `${k}=${v}`);
         const key = [path, ...vary.sort()].join("|");
         let s = stored.get(key);
-        if (s === undefined) stored.set(key, (s = ++counter));
-        headers["x-rb-serial"] = String(s);
+        if (s === undefined) stored.set(key, (s = serial()));
+        headers["x-rb-serial"] = s;
       }
       if (reply.status === 200 && path.startsWith("/etag/")) {
         const tag = etagOf(body);

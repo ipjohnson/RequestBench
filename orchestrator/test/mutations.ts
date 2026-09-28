@@ -135,8 +135,8 @@ export function mistakesFor(a: Assert): Mistake[] {
       return [
         {
           breaks: "replayed",
-          what: "the serial advances, so nothing was stored",
-          apply: (r, first) => withHeader(r, "x-rb-serial", String(Number(first?.headers["x-rb-serial"]) + 1)),
+          what: "the serial changes, so nothing was stored",
+          apply: (r) => withHeader(r, "x-rb-serial", `${Date.now()}|rb-other`),
         },
       ];
     case "sameBodyAs":

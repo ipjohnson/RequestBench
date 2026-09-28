@@ -77,8 +77,11 @@ export default performanceTest({
 | `fresh()`, `replayed()` | The handler ran for this request, or a stored response was replayed instead. |
 
 The error assertions read the status and the field names through the framework's
-`client-exception`. `fresh()` and `replayed()` read `x-rb-serial`, a counter the handler increments
-each time it runs.
+`client-exception`. `fresh()` and `replayed()` read `x-rb-serial`, which a handler writes each time
+it runs: the Unix time in milliseconds, a bar, and a part no other run of a handler serving the port
+writes, such as `1790000000000|42`. A framework that serves from one process counts its runs. One
+with several worker processes adds its process id or writes a random number, because each process's
+count starts at the same value.
 
 `c.run` holds values drawn once per run and never given to a framework. `c.draw` picks a value for
 each request, such as a row id. `c.once(key, make)` runs a priming request once per framework,
@@ -256,11 +259,16 @@ across every framework.
 ### cache
 
 `cache` measures the framework's response cache: the handler skipped and a stored response
-replayed. Some responses are keyed by path alone, and others by request headers too, which
-multiplies the entries the store holds. Each test asserts that the response was replayed rather
-than produced by the handler. `settings.json` gives the cache's capacity, its lifetime and the
-header values. Several frameworks have no response cache of their own and use a package chosen for
-them, so the numbers compare across cache stores rather than across frameworks.
+replayed. Each route takes one of four keys as its last path segment, and the vary routes are keyed
+by request headers too, which multiplies the entries the store holds: four for each of the three
+sizes, eight for `cache.vary_one` and thirty-two for `cache.vary_many`, 52 in all. A stored answer
+lives 30 seconds. Each test asserts that the response was replayed rather than produced by the
+handler. Under load the traffic generator counts how often each test's handler ran, from the
+`x-rb-serial` values it had not seen before, and how old the oldest answer it was sent was. One
+store that expires on time runs the handler once per key every 30 seconds, about twice per key in a
+60-second rung. `settings.json` gives the cache's capacity, its lifetime and the header values.
+Several frameworks have no response cache of their own and use a package chosen for them, so the
+numbers compare across cache stores rather than across frameworks.
 
 ### compressed
 

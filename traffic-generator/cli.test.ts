@@ -71,7 +71,7 @@ function validated(body: string): Answer {
 
 const ROUTES: readonly Route[] = [
   [
-    /^GET \/(plaintext|(json|cache|compressed|middleware|template)\/\w+|cache\/vary\/(one|many)|parameters\/static\/segment\/literal)$/,
+    /^GET \/(plaintext|(json|compressed|middleware|template)\/\w+|cache\/(small|medium|large|vary\/one|vary\/many)\/k\d|parameters\/static\/segment\/literal)$/,
     () => 200,
   ],
   [/^GET \/authorized\/small$/, (_, req) => (req.headers.authorization === `Bearer ${token}` ? 200 : 403)],

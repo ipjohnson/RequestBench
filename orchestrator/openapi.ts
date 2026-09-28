@@ -12,6 +12,7 @@ import { z } from "zod";
 
 import suite from "@rb/tests";
 import type { Method, Payload, RunValues, Test } from "@rb/tests/kit";
+import { CACHE_KEYS, CACHE_LIFETIME_SECONDS } from "@rb/tests/models/cache";
 import { runValues } from "@rb/tests/models/parameters";
 import { LARGE } from "@rb/tests/models/payload";
 import * as published from "@rb/tests/payloads";
@@ -151,7 +152,7 @@ function schemaSet(models: ReadonlyMap<z.ZodType, string>) {
 }
 
 /** A draw that fills a path segment, by the name its tests give it. A run value keeps its own. */
-const PATH_NAMES: Readonly<Record<string, string>> = { "draw.item": "id" };
+const PATH_NAMES: Readonly<Record<string, string>> = { "draw.item": "id", "draw.key": "key" };
 
 const nameOf = (placeholder: string) => PATH_NAMES[placeholder] ?? placeholder.replace(/^(?:run|draw)\./, "");
 
@@ -324,6 +325,15 @@ export function openapi(c: Corpus): Obj {
 
   function pathParameter(placeholder: string, echoed: boolean): Obj {
     const name = nameOf(placeholder);
+    if (placeholder === "draw.key") {
+      return {
+        name,
+        in: "path",
+        required: true,
+        description: `The key the answer is stored under, drawn per request from ${list(CACHE_KEYS.map(code), "and")}.`,
+        schema: { type: "string", enum: [...CACHE_KEYS] },
+      };
+    }
     if (placeholder === "draw.item") {
       return {
         name,
@@ -496,7 +506,7 @@ export function openapi(c: Corpus): Obj {
         out.push(`the body is ${code(shown(a.payload))}${echo.length === 0 ? "" : ` with an echo of ${list([...echo], "and")}`}${coding}`);
       } else if (a.kind === "emptyBody") out.push("no body");
       else if (a.kind === "noHeader") out.push(`no ${a.name}`);
-      else if (a.kind === "fresh") out.push("x-rb-serial advances");
+      else if (a.kind === "fresh") out.push("x-rb-serial is new");
       else if (a.kind === "replayed") out.push("x-rb-serial repeats");
       else if (a.kind === "rejected") {
         const first = a.fields.length === 1 ? "" : `, or one of them where the declaration says reports ${code('"first"')}`;
@@ -519,7 +529,7 @@ export function openapi(c: Corpus): Obj {
     for (const s of from) {
       for (const a of s.call.asserts) {
         if (a.kind === "hasHeader" && a.name.toLowerCase() !== "content-type") add(a.name.toLowerCase(), { id: s.id, match: a.match });
-        else if (a.kind === "fresh" || a.kind === "replayed") add("x-rb-serial", { id: s.id, match: /^\d+$/, serial: a.kind });
+        else if (a.kind === "fresh" || a.kind === "replayed") add("x-rb-serial", { id: s.id, match: /^\d+\|[^|\s]+$/, serial: a.kind });
         else if (a.kind === "bodyIs" && a.options.compressed === true) add("content-encoding", { id: s.id, match: "gzip" });
       }
     }
@@ -534,10 +544,10 @@ export function openapi(c: Corpus): Obj {
       const ids = [...new Set(entries.map((e) => e.id))];
       const sentences: string[] = [];
       if (entries.some((e) => e.serial === "fresh")) {
-        sentences.push("One counter for the whole process, which the handler increments and writes. It has to be larger than on the last answer that carried it.");
+        sentences.push("The Unix time in milliseconds the handler ran at, a bar, and a part no other run of a handler serving the port writes. It has to differ from every value an earlier answer carried.");
       }
       if (entries.some((e) => e.serial === "replayed")) {
-        sentences.push("The value the stored answer was written with. Every later request for the same cache key has to repeat it.");
+        sentences.push("The value the stored answer was written with. Every later request for the same cache key has to repeat it until the answer expires.");
       }
       if (schema.const === undefined && schema.pattern === undefined) {
         for (const m of matches) if (m !== undefined) sentences.push(`It ${describeMatch(m)}.`);
@@ -673,7 +683,7 @@ function info(version: string): Obj {
       "Every body the corpus compares is a payload. The harness copies tests/payloads/ into the container and names the directory in RB_PAYLOADS. Load every file before /health answers 200, keep the parsed objects in the framework's own types, and serialise them on every request. Compute nothing ahead of a request.",
       "An example on each body names the payload it is, and holds no value. When the payload is a committed file, the example links to it, such as items.large to tests/payloads/items.large.json. That file is the exact answer. A computed answer, such as a row, a rendered page or the bind answer, has no file. Its example names the payloads it is computed from, and tests/payloads/index.ts computes it.",
       "A value written {run.name} is drawn once per run and never given to the framework. A handler binds it as the type its schema gives and writes it back in an echo object beside the payload's own fields.",
-      "x-rb-serial is one counter for the whole process. A handler that writes it increments it and writes the new value. A stored answer replayed from a cache carries the value it was stored with.",
+      `x-rb-serial is the Unix time in milliseconds the handler ran at, a bar, and a part no other run of a handler serving the port writes, such as ${code("1790000000000|42")}. A process that serves alone can count its runs, and one of several workers adds its process id or writes a random number. A stored answer replayed from a cache carries the value it was stored with, and a cache keeps an answer for ${CACHE_LIFETIME_SECONDS} seconds.`,
       "An answer of 400 or above carries the framework's own error body, which has to be non-empty JSON. The corpus reads a refusal only through the framework's frameworks/<language>/<name>/client-exception/index.ts. That declaration gives four statuses, which this document writes as 4XX and names by field: rejected, malformed, notFound and wrongMethod. It also says whether a rejection names every bad field or only the first.",
       "A path's own description names any request sent there that no route may answer.",
       "The values a framework configures itself from are in tests/payloads/settings.json. They are the bearer token, the CORS policy attached to /cors, and the cache's capacity, lifetime and vary headers.",

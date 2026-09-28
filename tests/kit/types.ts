@@ -156,6 +156,12 @@ export interface Draw {
    * reads a different row rather than the one the first instance read.
    */
   item(): number;
+
+  /**
+   * One of the keys a cache route takes, per instance, so the instances of a
+   * cache test ask for every key and a store has to hold them all.
+   */
+  key(): string;
 }
 
 export interface Client {

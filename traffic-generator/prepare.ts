@@ -25,6 +25,7 @@ import type {
   RunValues,
 } from "@rb/tests/kit";
 import { idOf } from "@rb/tests/kit";
+import { CACHE_KEYS } from "@rb/tests/models/cache";
 import { LARGE } from "@rb/tests/models/payload";
 import type { Exchanged, Pipe, WireRequest } from "./pipe.ts";
 
@@ -138,6 +139,7 @@ function sweep(index: number, count: number, sizes: readonly number[] | undefine
   return {
     draw: {
       item: () => 1 + pick(LARGE),
+      key: () => CACHE_KEYS[pick(CACHE_KEYS.length)]!,
       choice: <T>(values: readonly T[]): T => values[pick(values.length)] as T,
     },
     sizes: seen,

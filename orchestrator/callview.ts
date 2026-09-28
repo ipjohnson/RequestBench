@@ -131,7 +131,7 @@ function checkedHeaders(asserts: readonly Assert[]): CheckedHeader[] {
   for (const a of asserts) {
     if (a.kind === "hasHeader") out.push({ name: a.name.toLowerCase(), rule: describeMatch(a.match) });
     else if (a.kind === "noHeader") out.push({ name: a.name.toLowerCase(), rule: "is absent" });
-    else if (a.kind === "fresh") out.push({ name: "x-rb-serial", rule: "advances, so the handler ran" });
+    else if (a.kind === "fresh") out.push({ name: "x-rb-serial", rule: "is new, so the handler ran" });
     else if (a.kind === "replayed") out.push({ name: "x-rb-serial", rule: "repeats, so a stored answer was replayed" });
     else if (a.kind === "bodyIs" && a.options.compressed === true) out.push({ name: "content-encoding", rule: `is ${code("gzip")}` });
     else if (a.kind === "bodyIs" && a.options.compressed === false) {

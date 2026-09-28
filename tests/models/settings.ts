@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { CACHE_LIFETIME_SECONDS } from "#models/cache";
 
 /** Two values, so a store that ignores the header holds one entry where two keys were sent. */
 const values = z.array(z.string().min(1)).min(2);
@@ -17,7 +18,7 @@ export const settings = z.strictObject({
   cache: z.strictObject({
     /** Enough entries for every key the cache family stores, so nothing is evicted mid-run. */
     capacity: z.number().int().positive(),
-    ttlSeconds: z.number().int().positive(),
+    ttlSeconds: z.literal(CACHE_LIFETIME_SECONDS),
     /** The values each vary row is keyed on, by header. */
     vary: z.strictObject({
       one: z.strictObject({ "x-rb-tenant": values }),

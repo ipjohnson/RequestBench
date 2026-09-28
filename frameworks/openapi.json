@@ -2,8 +2,8 @@
   "openapi": "3.1.1",
   "info": {
     "title": "RequestBench corpus",
-    "version": "0cad9e5769f3",
-    "description": "Generated from the corpus in tests/ by orchestrator/openapi.ts. Do not edit it. Run npm run spec after changing a test or a payload. npm test fails while this file is out of date.\n\nIt is the same for every framework. Each operation is what one or more tests send. Its summary names the tests, and its description gives each test's file and quotes its about.\n\nEvery body the corpus compares is a payload. The harness copies tests/payloads/ into the container and names the directory in RB_PAYLOADS. Load every file before /health answers 200, keep the parsed objects in the framework's own types, and serialise them on every request. Compute nothing ahead of a request.\n\nAn example on each body names the payload it is, and holds no value. When the payload is a committed file, the example links to it, such as items.large to tests/payloads/items.large.json. That file is the exact answer. A computed answer, such as a row, a rendered page or the bind answer, has no file. Its example names the payloads it is computed from, and tests/payloads/index.ts computes it.\n\nA value written {run.name} is drawn once per run and never given to the framework. A handler binds it as the type its schema gives and writes it back in an echo object beside the payload's own fields.\n\nx-rb-serial is one counter for the whole process. A handler that writes it increments it and writes the new value. A stored answer replayed from a cache carries the value it was stored with.\n\nAn answer of 400 or above carries the framework's own error body, which has to be non-empty JSON. The corpus reads a refusal only through the framework's frameworks/<language>/<name>/client-exception/index.ts. That declaration gives four statuses, which this document writes as 4XX and names by field: rejected, malformed, notFound and wrongMethod. It also says whether a rejection names every bad field or only the first.\n\nA path's own description names any request sent there that no route may answer.\n\nThe values a framework configures itself from are in tests/payloads/settings.json. They are the bearer token, the CORS policy attached to /cors, and the cache's capacity, lifetime and vary headers.\n\nThe harness passes PORT and RB_HOST. /health and /__meta are the contract's own and are not tests."
+    "version": "d079dbff0f9a",
+    "description": "Generated from the corpus in tests/ by orchestrator/openapi.ts. Do not edit it. Run npm run spec after changing a test or a payload. npm test fails while this file is out of date.\n\nIt is the same for every framework. Each operation is what one or more tests send. Its summary names the tests, and its description gives each test's file and quotes its about.\n\nEvery body the corpus compares is a payload. The harness copies tests/payloads/ into the container and names the directory in RB_PAYLOADS. Load every file before /health answers 200, keep the parsed objects in the framework's own types, and serialise them on every request. Compute nothing ahead of a request.\n\nAn example on each body names the payload it is, and holds no value. When the payload is a committed file, the example links to it, such as items.large to tests/payloads/items.large.json. That file is the exact answer. A computed answer, such as a row, a rendered page or the bind answer, has no file. Its example names the payloads it is computed from, and tests/payloads/index.ts computes it.\n\nA value written {run.name} is drawn once per run and never given to the framework. A handler binds it as the type its schema gives and writes it back in an echo object beside the payload's own fields.\n\nx-rb-serial is the Unix time in milliseconds the handler ran at, a bar, and a part no other run of a handler serving the port writes, such as `1790000000000|42`. A process that serves alone can count its runs, and one of several workers adds its process id or writes a random number. A stored answer replayed from a cache carries the value it was stored with, and a cache keeps an answer for 30 seconds.\n\nAn answer of 400 or above carries the framework's own error body, which has to be non-empty JSON. The corpus reads a refusal only through the framework's frameworks/<language>/<name>/client-exception/index.ts. That declaration gives four statuses, which this document writes as 4XX and names by field: rejected, malformed, notFound and wrongMethod. It also says whether a rejection names every bad field or only the first.\n\nA path's own description names any request sent there that no route may answer.\n\nThe values a framework configures itself from are in tests/payloads/settings.json. They are the bearer token, the CORS policy attached to /cors, and the cache's capacity, lifetime and vary headers.\n\nThe harness passes PORT and RB_HOST. /health and /__meta are the contract's own and are not tests."
   },
   "servers": [
     {
@@ -31,7 +31,7 @@
     },
     {
       "name": "cache",
-      "description": "The framework's response cache: the handler skipped and a stored answer replayed, keyed by path and by request header.\n\nComparable across stores rather than across frameworks. Several frameworks ship no response cache and run a package chosen for them, so a ranking that carried these rows would be ranking the package."
+      "description": "The framework's response cache: the handler skipped and a stored answer replayed, keyed by a path segment and by request header, and kept for 30 seconds.\n\nComparable across stores rather than across frameworks. Several frameworks ship no response cache and run a package chosen for them, so a ranking that carried these rows would be ranking the package."
     },
     {
       "name": "compressed",
@@ -485,13 +485,30 @@
         }
       }
     },
-    "/cache/large": {
+    "/cache/large/{key}": {
       "get": {
-        "operationId": "getCacheLarge",
+        "operationId": "getCacheLargeKey",
         "summary": "cache.large",
-        "description": "**cache.large** (tests/cache/large.ts). The handler skipped and a stored answer written back. Read against json.large, the difference is the store answering instead of the framework, which is why this row asserts the serial repeated rather than advanced.",
+        "description": "**cache.large** (tests/cache/large.ts). The handler skipped and a stored answer written back, under one of four keys the path names. Read against json.large, the difference is the store answering instead of the framework, which is why this row asserts the serial repeated rather than changed.",
         "tags": [
           "cache"
+        ],
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "description": "The key the answer is stored under, drawn per request from `k1`, `k2`, `k3` and `k4`.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "k1",
+                "k2",
+                "k3",
+                "k4"
+              ]
+            }
+          }
         ],
         "responses": {
           "200": {
@@ -499,10 +516,10 @@
             "headers": {
               "x-rb-serial": {
                 "required": true,
-                "description": "The value the stored answer was written with. Every later request for the same cache key has to repeat it. Checked by cache.large.",
+                "description": "The value the stored answer was written with. Every later request for the same cache key has to repeat it until the answer expires. Checked by cache.large.",
                 "schema": {
                   "type": "string",
-                  "pattern": "^\\d+$"
+                  "pattern": "^\\d+\\|[^|\\s]+$"
                 }
               }
             },
@@ -524,13 +541,30 @@
         }
       }
     },
-    "/cache/medium": {
+    "/cache/medium/{key}": {
       "get": {
-        "operationId": "getCacheMedium",
+        "operationId": "getCacheMediumKey",
         "summary": "cache.medium",
-        "description": "**cache.medium** (tests/cache/medium.ts). The handler skipped and a stored answer written back. Read against json.medium, the difference is the store answering instead of the framework, which is why this row asserts the serial repeated rather than advanced.",
+        "description": "**cache.medium** (tests/cache/medium.ts). The handler skipped and a stored answer written back, under one of four keys the path names. Read against json.medium, the difference is the store answering instead of the framework, which is why this row asserts the serial repeated rather than changed.",
         "tags": [
           "cache"
+        ],
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "description": "The key the answer is stored under, drawn per request from `k1`, `k2`, `k3` and `k4`.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "k1",
+                "k2",
+                "k3",
+                "k4"
+              ]
+            }
+          }
         ],
         "responses": {
           "200": {
@@ -538,10 +572,10 @@
             "headers": {
               "x-rb-serial": {
                 "required": true,
-                "description": "The value the stored answer was written with. Every later request for the same cache key has to repeat it. Checked by cache.medium.",
+                "description": "The value the stored answer was written with. Every later request for the same cache key has to repeat it until the answer expires. Checked by cache.medium.",
                 "schema": {
                   "type": "string",
-                  "pattern": "^\\d+$"
+                  "pattern": "^\\d+\\|[^|\\s]+$"
                 }
               }
             },
@@ -563,13 +597,30 @@
         }
       }
     },
-    "/cache/small": {
+    "/cache/small/{key}": {
       "get": {
-        "operationId": "getCacheSmall",
+        "operationId": "getCacheSmallKey",
         "summary": "cache.small",
-        "description": "**cache.small** (tests/cache/small.ts). The handler skipped and a stored answer written back. Read against json.small, the difference is the store answering instead of the framework, which is why this row asserts the serial repeated rather than advanced.",
+        "description": "**cache.small** (tests/cache/small.ts). The handler skipped and a stored answer written back, under one of four keys the path names. Read against json.small, the difference is the store answering instead of the framework, which is why this row asserts the serial repeated rather than changed.",
         "tags": [
           "cache"
+        ],
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "description": "The key the answer is stored under, drawn per request from `k1`, `k2`, `k3` and `k4`.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "k1",
+                "k2",
+                "k3",
+                "k4"
+              ]
+            }
+          }
         ],
         "responses": {
           "200": {
@@ -577,10 +628,10 @@
             "headers": {
               "x-rb-serial": {
                 "required": true,
-                "description": "The value the stored answer was written with. Every later request for the same cache key has to repeat it. Checked by cache.small.",
+                "description": "The value the stored answer was written with. Every later request for the same cache key has to repeat it until the answer expires. Checked by cache.small.",
                 "schema": {
                   "type": "string",
-                  "pattern": "^\\d+$"
+                  "pattern": "^\\d+\\|[^|\\s]+$"
                 }
               }
             },
@@ -602,13 +653,30 @@
         }
       }
     },
-    "/cache/vary/many": {
+    "/cache/vary/many/{key}": {
       "get": {
-        "operationId": "getCacheVaryMany",
+        "operationId": "getCacheVaryManyKey",
         "summary": "cache.vary_many",
-        "description": "**cache.vary_many** (tests/cache/vary-many.ts). The same thing keyed on three headers instead of one. Read against cache.vary_one, the difference is eight distinct keys where there were two, which is what a store has to be sized against rather than what it costs to read. It sends `x-rb-channel` set per request to `web` or `app`, `x-rb-region` set per request to `eu` or `us` and `x-rb-tenant` set per request to `alpha` or `beta`.",
+        "description": "**cache.vary_many** (tests/cache/vary-many.ts). The same thing keyed on three headers instead of one. Read against cache.vary_one, the difference is thirty-two distinct keys where there were eight, which is what a store has to be sized against rather than what it costs to read. It sends `x-rb-channel` set per request to `web` or `app`, `x-rb-region` set per request to `eu` or `us` and `x-rb-tenant` set per request to `alpha` or `beta`.",
         "tags": [
           "cache"
+        ],
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "description": "The key the answer is stored under, drawn per request from `k1`, `k2`, `k3` and `k4`.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "k1",
+                "k2",
+                "k3",
+                "k4"
+              ]
+            }
+          }
         ],
         "responses": {
           "200": {
@@ -616,10 +684,10 @@
             "headers": {
               "x-rb-serial": {
                 "required": true,
-                "description": "The value the stored answer was written with. Every later request for the same cache key has to repeat it. Checked by cache.vary_many.",
+                "description": "The value the stored answer was written with. Every later request for the same cache key has to repeat it until the answer expires. Checked by cache.vary_many.",
                 "schema": {
                   "type": "string",
-                  "pattern": "^\\d+$"
+                  "pattern": "^\\d+\\|[^|\\s]+$"
                 }
               }
             },
@@ -641,13 +709,30 @@
         }
       }
     },
-    "/cache/vary/one": {
+    "/cache/vary/one/{key}": {
       "get": {
-        "operationId": "getCacheVaryOne",
+        "operationId": "getCacheVaryOneKey",
         "summary": "cache.vary_one",
-        "description": "**cache.vary_one** (tests/cache/vary-one.ts). The stored answer keyed by a request header as well as by the path. One header with two values, picked per instance, so a store that ignores the vary header holds one entry where the plan sent two keys. It sends `x-rb-tenant` set per request to `alpha` or `beta`.",
+        "description": "**cache.vary_one** (tests/cache/vary-one.ts). The stored answer keyed by a request header as well as by the path. One header with two values, picked per instance, so a store that ignores the vary header holds four entries where the plan sent eight keys. It sends `x-rb-tenant` set per request to `alpha` or `beta`.",
         "tags": [
           "cache"
+        ],
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "description": "The key the answer is stored under, drawn per request from `k1`, `k2`, `k3` and `k4`.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "k1",
+                "k2",
+                "k3",
+                "k4"
+              ]
+            }
+          }
         ],
         "responses": {
           "200": {
@@ -655,10 +740,10 @@
             "headers": {
               "x-rb-serial": {
                 "required": true,
-                "description": "The value the stored answer was written with. Every later request for the same cache key has to repeat it. Checked by cache.vary_one.",
+                "description": "The value the stored answer was written with. Every later request for the same cache key has to repeat it until the answer expires. Checked by cache.vary_one.",
                 "schema": {
                   "type": "string",
-                  "pattern": "^\\d+$"
+                  "pattern": "^\\d+\\|[^|\\s]+$"
                 }
               }
             },
@@ -690,7 +775,7 @@
         ],
         "responses": {
           "200": {
-            "description": "compressed.gzip_large: the body is `items.large`, gzip-encoded, x-rb-serial advances.\n\ncompressed.identity_large: the body is `items.large`, with no content coding, x-rb-serial advances.",
+            "description": "compressed.gzip_large: the body is `items.large`, gzip-encoded, x-rb-serial is new.\n\ncompressed.identity_large: the body is `items.large`, with no content coding, x-rb-serial is new.",
             "headers": {
               "content-encoding": {
                 "required": false,
@@ -702,10 +787,10 @@
               },
               "x-rb-serial": {
                 "required": true,
-                "description": "One counter for the whole process, which the handler increments and writes. It has to be larger than on the last answer that carried it. Checked by compressed.gzip_large and compressed.identity_large.",
+                "description": "The Unix time in milliseconds the handler ran at, a bar, and a part no other run of a handler serving the port writes. It has to differ from every value an earlier answer carried. Checked by compressed.gzip_large and compressed.identity_large.",
                 "schema": {
                   "type": "string",
-                  "pattern": "^\\d+$"
+                  "pattern": "^\\d+\\|[^|\\s]+$"
                 }
               }
             },
@@ -737,14 +822,14 @@
         ],
         "responses": {
           "200": {
-            "description": "compressed.gzip_small: the body is `items.small`, x-rb-serial advances.\n\ncompressed.identity_small: the body is `items.small`, with no content coding, x-rb-serial advances.",
+            "description": "compressed.gzip_small: the body is `items.small`, x-rb-serial is new.\n\ncompressed.identity_small: the body is `items.small`, with no content coding, x-rb-serial is new.",
             "headers": {
               "x-rb-serial": {
                 "required": true,
-                "description": "One counter for the whole process, which the handler increments and writes. It has to be larger than on the last answer that carried it. Checked by compressed.gzip_small and compressed.identity_small.",
+                "description": "The Unix time in milliseconds the handler ran at, a bar, and a part no other run of a handler serving the port writes. It has to differ from every value an earlier answer carried. Checked by compressed.gzip_small and compressed.identity_small.",
                 "schema": {
                   "type": "string",
-                  "pattern": "^\\d+$"
+                  "pattern": "^\\d+\\|[^|\\s]+$"
                 }
               }
             },
@@ -776,7 +861,7 @@
         ],
         "responses": {
           "200": {
-            "description": "cors.request: the body is `items.small`, x-rb-serial advances.\n\ncors.vary: any body.",
+            "description": "cors.request: the body is `items.small`, x-rb-serial is new.\n\ncors.vary: any body.",
             "headers": {
               "access-control-allow-origin": {
                 "required": true,
@@ -788,10 +873,10 @@
               },
               "x-rb-serial": {
                 "required": true,
-                "description": "One counter for the whole process, which the handler increments and writes. It has to be larger than on the last answer that carried it. Checked by cors.request.",
+                "description": "The Unix time in milliseconds the handler ran at, a bar, and a part no other run of a handler serving the port writes. It has to differ from every value an earlier answer carried. Checked by cors.request.",
                 "schema": {
                   "type": "string",
-                  "pattern": "^\\d+$"
+                  "pattern": "^\\d+\\|[^|\\s]+$"
                 }
               },
               "vary": {
@@ -903,7 +988,7 @@
         ],
         "responses": {
           "200": {
-            "description": "etag.large: the body is `items.large`, x-rb-serial advances.\n\netag.stale_large: the body is `items.large`, x-rb-serial advances.",
+            "description": "etag.large: the body is `items.large`, x-rb-serial is new.\n\netag.stale_large: the body is `items.large`, x-rb-serial is new.",
             "headers": {
               "etag": {
                 "required": true,
@@ -914,10 +999,10 @@
               },
               "x-rb-serial": {
                 "required": true,
-                "description": "One counter for the whole process, which the handler increments and writes. It has to be larger than on the last answer that carried it. Checked by etag.large and etag.stale_large.",
+                "description": "The Unix time in milliseconds the handler ran at, a bar, and a part no other run of a handler serving the port writes. It has to differ from every value an earlier answer carried. Checked by etag.large and etag.stale_large.",
                 "schema": {
                   "type": "string",
-                  "pattern": "^\\d+$"
+                  "pattern": "^\\d+\\|[^|\\s]+$"
                 }
               }
             },
@@ -952,7 +1037,7 @@
         ],
         "responses": {
           "200": {
-            "description": "etag.small: the body is `items.small`, x-rb-serial advances.",
+            "description": "etag.small: the body is `items.small`, x-rb-serial is new.",
             "headers": {
               "etag": {
                 "required": true,
@@ -963,10 +1048,10 @@
               },
               "x-rb-serial": {
                 "required": true,
-                "description": "One counter for the whole process, which the handler increments and writes. It has to be larger than on the last answer that carried it. Checked by etag.small.",
+                "description": "The Unix time in milliseconds the handler ran at, a bar, and a part no other run of a handler serving the port writes. It has to differ from every value an earlier answer carried. Checked by etag.small.",
                 "schema": {
                   "type": "string",
-                  "pattern": "^\\d+$"
+                  "pattern": "^\\d+\\|[^|\\s]+$"
                 }
               }
             },
