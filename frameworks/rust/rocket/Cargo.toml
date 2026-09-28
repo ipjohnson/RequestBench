@@ -38,7 +38,7 @@ path = "UnitTests/main.rs"
 
 [dependencies]
 # lambda-emulator's function writes every body in base64, as lambda-web does.
-base64 = { version = "0.22.1", optional = true }
+base64 = { version = "0.23.1", optional = true }
 cached = "4.0.0"
 # The weak hasher, so an ETag comes from the crate the If-None-Match guard is built on.
 entity-tag = { version = "0.2.0", features = ["weak-hasher"] }
