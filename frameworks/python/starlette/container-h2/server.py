@@ -7,6 +7,7 @@ binds the socket and starts the workers, and each worker imports main, loads the
 accepts from that socket. A connection that opens with the HTTP/2 preface is answered in HTTP/2.
 """
 import os
+import sys
 from importlib.metadata import version
 from pathlib import Path
 
@@ -32,5 +33,8 @@ if __name__ == "__main__":
     config.worker_class = "uvloop"
     # No access log, as on container-h1. No other framework in the corpus logs a request.
     config.accesslog = None
+    # No limit on the requests one connection carries, as on container-h1. Hypercorn's default ends
+    # an HTTP/2 connection after 1,000, and each of the load's connections carries more in a rung.
+    config.keep_alive_max_requests = sys.maxsize
     config.application_path = f"{IMPLEMENTATION / 'main'}:app"
     raise SystemExit(run(config))
