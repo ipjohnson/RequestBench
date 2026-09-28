@@ -63,7 +63,7 @@ validator = { version = "0.20.0", features = ["derive"] }
 # Loco's testing feature, whose request helper boots the application in its test environment.
 loco-rs = { version = "1.2.0", default-features = false, features = ["cli", "cache_inmem", "testing"] }
 # The axum-test that helper serves the application with, named for its multipart form.
-axum-test = "17.3.0"
+axum-test = "21.1.0"
 flate2 = "1.1.10"
 
 # Whole-program optimisation, as upstream measured every Rust framework. The image build pays for
