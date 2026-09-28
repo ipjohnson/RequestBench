@@ -6,6 +6,7 @@ from kiota_abstractions.request_adapter import RequestAdapter
 from typing import Any, Optional, TYPE_CHECKING, Union
 
 if TYPE_CHECKING:
+    from .item.with_two_item_request_builder import WithTwoItemRequestBuilder
     from .segment.segment_request_builder import SegmentRequestBuilder
     from .with_second.with_second_request_builder import WithSecondRequestBuilder
 
@@ -21,6 +22,20 @@ class WithOneItemRequestBuilder(BaseRequestBuilder):
         Returns: None
         """
         super().__init__(request_adapter, "{+baseurl}/parameters/{one}", path_parameters)
+    
+    def by_two(self,two: int) -> WithTwoItemRequestBuilder:
+        """
+        Gets an item from the Kiota.parameters.item.item collection
+        param two: Unique identifier of the item
+        Returns: WithTwoItemRequestBuilder
+        """
+        if two is None:
+            raise TypeError("two cannot be null.")
+        from .item.with_two_item_request_builder import WithTwoItemRequestBuilder
+
+        url_tpl_params = get_path_parameters(self.path_parameters)
+        url_tpl_params["two"] = two
+        return WithTwoItemRequestBuilder(self.request_adapter, url_tpl_params)
     
     @property
     def segment(self) -> SegmentRequestBuilder:

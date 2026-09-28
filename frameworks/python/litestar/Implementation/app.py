@@ -41,7 +41,7 @@ def build(p: Payloads, openapi_config: OpenAPIConfig | None = None) -> Litestar:
             baseline, json, middleware, parameters, query, headers, body, authorized, items, cache, compressed, etag,
             cors, forms, stream, sse, template, contract,
         )] + [
-            # rb:handler static.file
+            # rb:handler static.large,static.medium,static.small
             # rb:wiring static.*
             create_static_files_router(path="/static", directories=[p.directory]),
         ],

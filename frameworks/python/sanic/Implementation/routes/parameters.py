@@ -16,12 +16,22 @@ class Two(Camel):
     two: int
 
 
+class Three(Camel):
+    one: int
+    two: int
+    three: int
+
+
 class EchoedOne(Payload):
     echo: One
 
 
 class EchoedTwo(Payload):
     echo: Two
+
+
+class EchoedThree(Payload):
+    echo: Three
 
 
 def blueprint(p: Payloads) -> Blueprint:
@@ -43,5 +53,10 @@ def blueprint(p: Payloads) -> Blueprint:
     @answers(EchoedTwo, "items.small, with both captures")
     async def two(request, one: int, two: int):
         return json(echoed(p.small, {"one": one, "two": two}))
+
+    @routes.get("/parameters/<one:int>/<two:int>/<three:int>")
+    @answers(EchoedThree, "items.small, with the three captures")
+    async def three(request, one: int, two: int, three: int):
+        return json(echoed(p.small, {"one": one, "two": two, "three": three}))
 
     return routes

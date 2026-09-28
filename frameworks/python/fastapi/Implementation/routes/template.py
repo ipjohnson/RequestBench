@@ -24,6 +24,10 @@ def router(p: Payloads) -> APIRouter:
     async def medium(request: Request) -> HTMLResponse:
         return page(request, p.medium)
 
+    @routes.get("/template/large", response_class=HTMLResponse)
+    async def large(request: Request) -> HTMLResponse:
+        return page(request, p.large)
+
     return routes
 
 

@@ -43,7 +43,7 @@ def build(p: Payloads) -> Sanic:
         app.blueprint(family.blueprint(p))
     for layered in middleware.blueprints(p):
         app.blueprint(layered)
-    # rb:handler static.file
+    # rb:handler static.large,static.medium,static.small
     # rb:wiring static.*
     app.static("/static", p.directory)
     return app

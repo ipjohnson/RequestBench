@@ -22,4 +22,8 @@ def blueprint(p: Payloads) -> Blueprint:
     def two(one: int, two: int) -> Json:
         return echoed(p.small, {"one": one, "two": two})
 
+    @routes.get("/parameters/<int:one>/<int:two>/<int:three>")
+    def three(one: int, two: int, three: int) -> Json:
+        return echoed(p.small, {"one": one, "two": two, "three": three})
+
     return routes

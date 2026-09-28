@@ -9,13 +9,17 @@ def post(client, path: str, body: bytes):
     return client.post(path, data=body, content_type=JSON)
 
 
-# rb:test body.bind_small,body.bind_medium,body.validate_small,body.validate_medium
-@pytest.mark.corpus("body.bind_small", "body.bind_medium", "body.validate_small", "body.validate_medium")
+# rb:test body.bind_small,body.bind_medium,body.bind_large,body.validate_small,body.validate_medium,body.validate_large
+@pytest.mark.corpus(
+    "body.bind_small", "body.bind_medium", "body.bind_large", "body.validate_small", "body.validate_medium", "body.validate_large"
+)
 @pytest.mark.parametrize(("path", "file"), [
     ("/body/bind/small", "order.small.json"),
     ("/body/bind/medium", "order.medium.json"),
+    ("/body/bind/large", "order.large.json"),
     ("/body/validate/small", "order.small.json"),
     ("/body/validate/medium", "order.medium.json"),
+    ("/body/validate/large", "order.large.json"),
 ])
 def test_an_order_is_answered_with_its_leaves_its_length_and_itself(client, path, file):
     body = expected.raw(file)

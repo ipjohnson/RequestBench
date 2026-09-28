@@ -7,6 +7,7 @@ from typing import Any, Optional, TYPE_CHECKING, Union
 
 if TYPE_CHECKING:
     from .first_error.first_error_request_builder import FirstErrorRequestBuilder
+    from .large.large_request_builder import LargeRequestBuilder
     from .medium.medium_request_builder import MediumRequestBuilder
     from .small.small_request_builder import SmallRequestBuilder
 
@@ -31,6 +32,15 @@ class ValidateRequestBuilder(BaseRequestBuilder):
         from .first_error.first_error_request_builder import FirstErrorRequestBuilder
 
         return FirstErrorRequestBuilder(self.request_adapter, self.path_parameters)
+    
+    @property
+    def large(self) -> LargeRequestBuilder:
+        """
+        The large property
+        """
+        from .large.large_request_builder import LargeRequestBuilder
+
+        return LargeRequestBuilder(self.request_adapter, self.path_parameters)
     
     @property
     def medium(self) -> MediumRequestBuilder:

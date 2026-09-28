@@ -31,7 +31,7 @@ def build(p: Payloads) -> Flask:
     parser's and the items handlers'.
     """
     # Flask's own static route, /static/<path:filename>, serves the payload directory.
-    # rb:handler static.file
+    # rb:handler static.large,static.medium,static.small
     app = Flask(__name__, static_folder=p.directory, static_url_path="/static")
     for family in (baseline, json, middleware, parameters, query, headers, body, authorized, items, cache, etag, compressed, cors, forms, stream, sse, template, contract):
         app.register_blueprint(family.blueprint(p))

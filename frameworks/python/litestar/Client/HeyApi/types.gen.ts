@@ -60,6 +60,16 @@ export type EchoedRoutesParametersOne = {
 };
 
 /**
+ * Echoed[Three]
+ */
+export type EchoedRoutesParametersThree = {
+    size: string;
+    count: number;
+    items: Array<Item>;
+    echo: Three;
+};
+
+/**
  * Echoed[Two]
  */
 export type EchoedRoutesParametersTwo = {
@@ -179,6 +189,15 @@ export type Search = {
     q: string;
     minPrice: number;
     maxPrice: number;
+};
+
+/**
+ * Three
+ */
+export type Three = {
+    one: number;
+    two: number;
+    three: number;
 };
 
 /**
@@ -417,6 +436,41 @@ export type ParametersOneWithSecondTwoTwoResponses = {
 
 export type ParametersOneWithSecondTwoTwoResponse = ParametersOneWithSecondTwoTwoResponses[keyof ParametersOneWithSecondTwoTwoResponses];
 
+export type ParametersOneTwoThreeThreeData = {
+    body?: never;
+    path: {
+        one: number;
+        two: number;
+        three: number;
+    };
+    query?: never;
+    url: '/parameters/{one}/{two}/{three}';
+};
+
+export type ParametersOneTwoThreeThreeErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?: null | {
+            [key: string]: unknown;
+        } | Array<unknown>;
+    };
+};
+
+export type ParametersOneTwoThreeThreeError = ParametersOneTwoThreeThreeErrors[keyof ParametersOneTwoThreeThreeErrors];
+
+export type ParametersOneTwoThreeThreeResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: EchoedRoutesParametersThree;
+};
+
+export type ParametersOneTwoThreeThreeResponse = ParametersOneTwoThreeThreeResponses[keyof ParametersOneTwoThreeThreeResponses];
+
 export type QueryOneOneData = {
     body?: never;
     path?: never;
@@ -604,6 +658,37 @@ export type BodyBindMediumBindMediumResponses = {
 
 export type BodyBindMediumBindMediumResponse = BodyBindMediumBindMediumResponses[keyof BodyBindMediumBindMediumResponses];
 
+export type BodyBindLargeBindLargeData = {
+    body: Order;
+    path?: never;
+    query?: never;
+    url: '/body/bind/large';
+};
+
+export type BodyBindLargeBindLargeErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?: null | {
+            [key: string]: unknown;
+        } | Array<unknown>;
+    };
+};
+
+export type BodyBindLargeBindLargeError = BodyBindLargeBindLargeErrors[keyof BodyBindLargeBindLargeErrors];
+
+export type BodyBindLargeBindLargeResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: BoundRoutesBodyOrder;
+};
+
+export type BodyBindLargeBindLargeResponse = BodyBindLargeBindLargeResponses[keyof BodyBindLargeBindLargeResponses];
+
 export type BodyValidateSmallValidateSmallData = {
     body: CheckedOrder;
     path?: never;
@@ -665,6 +750,37 @@ export type BodyValidateMediumValidateMediumResponses = {
 };
 
 export type BodyValidateMediumValidateMediumResponse = BodyValidateMediumValidateMediumResponses[keyof BodyValidateMediumValidateMediumResponses];
+
+export type BodyValidateLargeValidateLargeData = {
+    body: CheckedOrder;
+    path?: never;
+    query?: never;
+    url: '/body/validate/large';
+};
+
+export type BodyValidateLargeValidateLargeErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?: null | {
+            [key: string]: unknown;
+        } | Array<unknown>;
+    };
+};
+
+export type BodyValidateLargeValidateLargeError = BodyValidateLargeValidateLargeErrors[keyof BodyValidateLargeValidateLargeErrors];
+
+export type BodyValidateLargeValidateLargeResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: BoundRoutesBodyCheckedOrder;
+};
+
+export type BodyValidateLargeValidateLargeResponse = BodyValidateLargeValidateLargeResponses[keyof BodyValidateLargeValidateLargeResponses];
 
 export type BodyValidateFirstErrorValidateFirstErrorData = {
     body: CheckedOrder;
@@ -1190,6 +1306,22 @@ export type TemplateMediumMediumResponses = {
 };
 
 export type TemplateMediumMediumResponse = TemplateMediumMediumResponses[keyof TemplateMediumMediumResponses];
+
+export type TemplateLargeLargeData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/template/large';
+};
+
+export type TemplateLargeLargeResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: string;
+};
+
+export type TemplateLargeLargeResponse = TemplateLargeLargeResponses[keyof TemplateLargeLargeResponses];
 
 export type HealthHealthData = {
     body?: never;

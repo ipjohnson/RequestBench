@@ -88,12 +88,20 @@ def router(p: Payloads) -> APIRouter:
     async def bind_medium(order: Order, request: Request) -> Bound:
         return Bound.of(order, request)
 
+    @routes.post("/body/bind/large")
+    async def bind_large(order: Order, request: Request) -> Bound:
+        return Bound.of(order, request)
+
     @routes.post("/body/validate/small")
     async def validate_small(order: CheckedOrder, request: Request) -> Bound:
         return Bound.of(order, request)
 
     @routes.post("/body/validate/medium")
     async def validate_medium(order: CheckedOrder, request: Request) -> Bound:
+        return Bound.of(order, request)
+
+    @routes.post("/body/validate/large")
+    async def validate_large(order: CheckedOrder, request: Request) -> Bound:
         return Bound.of(order, request)
 
     # The dependency has checked every rule by the time the order is bound.

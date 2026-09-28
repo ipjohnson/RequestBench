@@ -16,3 +16,9 @@ async def small(request):
 @require_GET
 async def medium(request):
     return render(request, "items.html", P.medium)
+
+
+# rb:handler template.large
+@require_GET
+async def large(request):
+    return render(request, "items.html", P.large)

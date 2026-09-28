@@ -317,6 +317,93 @@
         "deprecated": false
       }
     },
+    "/parameters/{one}/{two}/{three}": {
+      "get": {
+        "summary": "Three",
+        "operationId": "ParametersOneTwoThreeThree",
+        "parameters": [
+          {
+            "name": "one",
+            "in": "path",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "two",
+            "in": "path",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "three",
+            "in": "path",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Echoed_routes.parameters.Three_"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
+    },
     "/query/one": {
       "get": {
         "summary": "One",
@@ -779,6 +866,74 @@
         "deprecated": false
       }
     },
+    "/body/bind/large": {
+      "post": {
+        "summary": "BindLarge",
+        "operationId": "BodyBindLargeBindLarge",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Order"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Bound_routes.body.Order_"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
+    },
     "/body/validate/small": {
       "post": {
         "summary": "ValidateSmall",
@@ -851,6 +1006,74 @@
       "post": {
         "summary": "ValidateMedium",
         "operationId": "BodyValidateMediumValidateMedium",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckedOrder"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Bound_routes.body.CheckedOrder_"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/body/validate/large": {
+      "post": {
+        "summary": "ValidateLarge",
+        "operationId": "BodyValidateLargeValidateLarge",
         "requestBody": {
           "content": {
             "application/json": {
@@ -1833,6 +2056,26 @@
         "deprecated": false
       }
     },
+    "/template/large": {
+      "get": {
+        "summary": "Large",
+        "operationId": "TemplateLargeLarge",
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
+    },
     "/health": {
       "get": {
         "summary": "Health",
@@ -2023,6 +2266,33 @@
           "size"
         ],
         "title": "Echoed[One]"
+      },
+      "Echoed_routes.parameters.Three_": {
+        "properties": {
+          "size": {
+            "type": "string"
+          },
+          "count": {
+            "type": "integer"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Item"
+            },
+            "type": "array"
+          },
+          "echo": {
+            "$ref": "#/components/schemas/Three"
+          }
+        },
+        "type": "object",
+        "required": [
+          "count",
+          "echo",
+          "items",
+          "size"
+        ],
+        "title": "Echoed[Three]"
       },
       "Echoed_routes.parameters.Two_": {
         "properties": {
@@ -2323,6 +2593,26 @@
           "status"
         ],
         "title": "Search"
+      },
+      "Three": {
+        "properties": {
+          "one": {
+            "type": "integer"
+          },
+          "two": {
+            "type": "integer"
+          },
+          "three": {
+            "type": "integer"
+          }
+        },
+        "type": "object",
+        "required": [
+          "one",
+          "three",
+          "two"
+        ],
+        "title": "Three"
       },
       "Two": {
         "properties": {

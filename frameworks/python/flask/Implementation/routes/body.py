@@ -89,6 +89,11 @@ def blueprint(p: Payloads) -> Blueprint:
     def bind_medium(body: Order) -> Json:
         return bound(body)
 
+    @routes.post("/body/bind/large")
+    @validate()
+    def bind_large(body: Order) -> Json:
+        return bound(body)
+
     @routes.post("/body/validate/small")
     @validate()
     def validate_small(body: CheckedOrder) -> Json:
@@ -97,6 +102,11 @@ def blueprint(p: Payloads) -> Blueprint:
     @routes.post("/body/validate/medium")
     @validate()
     def validate_medium(body: CheckedOrder) -> Json:
+        return bound(body)
+
+    @routes.post("/body/validate/large")
+    @validate()
+    def validate_large(body: CheckedOrder) -> Json:
         return bound(body)
 
     @routes.post("/body/validate/first-error")

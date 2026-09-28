@@ -27,7 +27,11 @@ def router(p: Payloads) -> Router:
     async def medium() -> Template:
         return page(p.medium)
 
-    return Router(path="/", route_handlers=[small, medium])
+    @get("/template/large")
+    async def large() -> Template:
+        return page(p.large)
+
+    return Router(path="/", route_handlers=[small, medium, large])
 
 
 def page(payload: Payload) -> Template:

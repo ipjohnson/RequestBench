@@ -21,6 +21,11 @@ def blueprint(p: Payloads) -> Blueprint:
     async def medium(request):
         return await page(request, p.medium)
 
+    @routes.get("/template/large")
+    @answers(str, "items.large as a page", media="text/html")
+    async def large(request):
+        return await page(request, p.large)
+
     return routes
 
 

@@ -11,6 +11,8 @@ from pathlib import Path
 
 CLIENT = Path(__file__).resolve().parent
 sys.path.insert(0, str(CLIENT.parent / "Implementation"))
+# The host module /__meta reads its adapter from, as the suite's pythonpath has it.
+sys.path.insert(0, str(CLIENT.parent / "container-h1"))
 
 from litestar.openapi import OpenAPIConfig  # noqa: E402
 

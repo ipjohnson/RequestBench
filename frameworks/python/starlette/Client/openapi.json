@@ -146,6 +146,40 @@
           }
         ]
       },
+      "EchoedThree": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Payload"
+          },
+          {
+            "type": "object",
+            "required": [
+              "echo"
+            ],
+            "properties": {
+              "echo": {
+                "type": "object",
+                "required": [
+                  "one",
+                  "two",
+                  "three"
+                ],
+                "properties": {
+                  "one": {
+                    "type": "integer"
+                  },
+                  "two": {
+                    "type": "integer"
+                  },
+                  "three": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
       "EchoedPage": {
         "allOf": [
           {
@@ -723,6 +757,48 @@
         }
       }
     },
+    "/parameters/{one}/{two}/{three}": {
+      "get": {
+        "parameters": [
+          {
+            "name": "one",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "two",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "three",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "items.small and the three captures",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EchoedThree"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/query/one": {
       "get": {
         "parameters": [
@@ -956,6 +1032,35 @@
         }
       }
     },
+    "/body/bind/large": {
+      "post": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Order"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The order bound",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Bound"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/Refused"
+          }
+        }
+      }
+    },
     "/body/validate/small": {
       "post": {
         "requestBody": {
@@ -986,6 +1091,35 @@
       }
     },
     "/body/validate/medium": {
+      "post": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckedOrder"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The order bound and checked",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Bound"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/Refused"
+          }
+        }
+      }
+    },
+    "/body/validate/large": {
       "post": {
         "requestBody": {
           "required": true,
@@ -1561,6 +1695,22 @@
         "responses": {
           "200": {
             "description": "items.medium rendered",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/template/large": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "items.large rendered",
             "content": {
               "text/html": {
                 "schema": {

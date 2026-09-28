@@ -13,6 +13,12 @@ class Two(Camel):
     two: int
 
 
+class Three(Camel):
+    one: int
+    two: int
+    three: int
+
+
 def router(p: Payloads) -> APIRouter:
     """parameters: path captures, each bound as the int its parameter declares."""
     routes = APIRouter()
@@ -30,5 +36,10 @@ def router(p: Payloads) -> APIRouter:
     @routes.get("/parameters/{one}/with-second/{two}")
     async def two(one: int, two: int) -> Echoed[Two]:
         return Echoed[Two].of(p.small, Two(one=one, two=two))
+
+    # Last, because it matches every path above.
+    @routes.get("/parameters/{one}/{two}/{three}")
+    async def three(one: int, two: int, three: int) -> Echoed[Three]:
+        return Echoed[Three].of(p.small, Three(one=one, two=two, three=three))
 
     return routes

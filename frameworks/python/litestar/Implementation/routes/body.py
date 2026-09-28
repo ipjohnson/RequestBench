@@ -67,6 +67,10 @@ def router(p: Payloads) -> Router:
     async def bind_medium(data: Order, request: Request) -> Bound[Order]:
         return Bound[Order].of(data, request)
 
+    @post("/body/bind/large", status_code=200)
+    async def bind_large(data: Order, request: Request) -> Bound[Order]:
+        return Bound[Order].of(data, request)
+
     @post("/body/validate/small", status_code=200)
     async def validate_small(data: CheckedOrder, request: Request) -> Bound[CheckedOrder]:
         return Bound[CheckedOrder].of(data, request)
@@ -75,9 +79,16 @@ def router(p: Payloads) -> Router:
     async def validate_medium(data: CheckedOrder, request: Request) -> Bound[CheckedOrder]:
         return Bound[CheckedOrder].of(data, request)
 
+    @post("/body/validate/large", status_code=200)
+    async def validate_large(data: CheckedOrder, request: Request) -> Bound[CheckedOrder]:
+        return Bound[CheckedOrder].of(data, request)
+
     # The same Struct as the validate routes, because msgspec already stops at the first failure.
     @post("/body/validate/first-error", status_code=200)
     async def validate_first_error(data: CheckedOrder, request: Request) -> Bound[CheckedOrder]:
         return Bound[CheckedOrder].of(data, request)
 
-    return Router(path="/", route_handlers=[bind_small, bind_medium, validate_small, validate_medium, validate_first_error])
+    return Router(
+        path="/",
+        route_handlers=[bind_small, bind_medium, bind_large, validate_small, validate_medium, validate_large, validate_first_error],
+    )

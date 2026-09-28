@@ -144,6 +144,34 @@ export const Echoed_routes_parameters_One_Schema = {
     title: 'Echoed[One]'
 } as const;
 
+export const Echoed_routes_parameters_Three_Schema = {
+    properties: {
+        size: {
+            type: 'string'
+        },
+        count: {
+            type: 'integer'
+        },
+        items: {
+            items: {
+                $ref: '#/components/schemas/Item'
+            },
+            type: 'array'
+        },
+        echo: {
+            $ref: '#/components/schemas/Three'
+        }
+    },
+    type: 'object',
+    required: [
+        'count',
+        'echo',
+        'items',
+        'size'
+    ],
+    title: 'Echoed[Three]'
+} as const;
+
 export const Echoed_routes_parameters_Two_Schema = {
     properties: {
         size: {
@@ -455,6 +483,27 @@ export const SearchSchema = {
         'status'
     ],
     title: 'Search'
+} as const;
+
+export const ThreeSchema = {
+    properties: {
+        one: {
+            type: 'integer'
+        },
+        two: {
+            type: 'integer'
+        },
+        three: {
+            type: 'integer'
+        }
+    },
+    type: 'object',
+    required: [
+        'one',
+        'three',
+        'two'
+    ],
+    title: 'Three'
 } as const;
 
 export const TwoSchema = {

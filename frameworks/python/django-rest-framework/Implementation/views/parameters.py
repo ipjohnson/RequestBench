@@ -25,3 +25,9 @@ def one(request, one: int):
 @api_view(["GET"])
 def two(request, one: int, two: int):
     return Response(echoed(P.small, {"one": one, "two": two}))
+
+
+# rb:handler parameters.three
+@api_view(["GET"])
+def three(request, one: int, two: int, three: int):
+    return Response(echoed(P.small, {"one": one, "two": two, "three": three}))
