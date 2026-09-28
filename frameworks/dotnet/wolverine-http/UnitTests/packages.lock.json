@@ -152,8 +152,8 @@
       },
       "JasperFx": {
         "type": "Transitive",
-        "resolved": "2.73.2",
-        "contentHash": "K/F0fvgtFlBkxV6Tf+hkC6OiniG35tuCyRUZVH9H7A+h173hEdbVgz7ppVu6akv5IQ+mfKY0Gxe9ZweliDToIw==",
+        "resolved": "2.74.0",
+        "contentHash": "HAQNeLQ+sz5k2lUPZSTbIqY07cKOkX10PgMwkYZG0ldDjt7q9cTcUS+5KMb+mdUGEEpm2EBPIfPOB/jhfGFVsw==",
         "dependencies": {
           "FastExpressionCompiler": "5.4.1",
           "ImTools": "4.0.0",
@@ -168,16 +168,16 @@
       },
       "JasperFx.Events": {
         "type": "Transitive",
-        "resolved": "2.73.2",
-        "contentHash": "B+lEwW9yMcDkgV8IzDCDM+W8uWiiXQgBNuLWf6b6WlOYb09PYN1WR2D/g9GcpihFYYnkFXj//ywc00C/9FBCiw==",
+        "resolved": "2.74.0",
+        "contentHash": "q/sf/Hokbuv6FaoIewt0yf5gdU43vhln8yYF5WHF3mHIeNnaIj34MTMD/5j+QC2it4KolKH7rPP2uDkSasS8UQ==",
         "dependencies": {
-          "JasperFx": "2.73.2"
+          "JasperFx": "2.74.0"
         }
       },
       "JasperFx.SourceGenerator": {
         "type": "Transitive",
-        "resolved": "2.73.2",
-        "contentHash": "nqzo5cklKgxm+DDHKUWlCq4Dhpvrz2CM7T6KJjZAPAeJTUK/0lnxzkdRMPYIX1QOs8fwq+rwjAXLXecaP7lntw=="
+        "resolved": "2.74.0",
+        "contentHash": "NbvpPmtnJoiP74nxDnxa+jmEh+KUezt260SBZKRzVGM2qaeqNfodVu1AgG+AptX4lK22ihAtME0ui6M0QSTz0w=="
       },
       "Microsoft.AspNetCore.Authentication.JwtBearer": {
         "type": "Transitive",
@@ -708,13 +708,13 @@
       },
       "WolverineFx": {
         "type": "Transitive",
-        "resolved": "6.39.1",
-        "contentHash": "8fH1riv/f0xscobUrxnkiFgDFgkqI18ixhHAtoHklJNczCvxCHFpag3snHEzu2v6ldRfpLQG1YUERWWkCEJazw==",
+        "resolved": "6.41.0",
+        "contentHash": "mVlx3qnfK78W5f2fpQHNDKX6lG0Z2UZ936mTTH4ExHjeYsBi3TP9bzYDbjhN58/xCEQrgijCgqISB+BgYFbTYQ==",
         "dependencies": {
           "Cronos": "0.11.0",
-          "JasperFx": "2.73.2",
-          "JasperFx.Events": "2.73.2",
-          "JasperFx.SourceGenerator": "2.73.2",
+          "JasperFx": "2.74.0",
+          "JasperFx.Events": "2.74.0",
+          "JasperFx.SourceGenerator": "2.74.0",
           "Microsoft.Extensions.Caching.Memory": "10.0.0",
           "Microsoft.Extensions.Configuration": "10.0.0",
           "Microsoft.Extensions.Configuration.Abstractions": "10.0.0",
@@ -729,30 +729,30 @@
       },
       "WolverineFx.FluentValidation": {
         "type": "Transitive",
-        "resolved": "6.39.1",
-        "contentHash": "suRInQziUra8NG839AfvkG13j/5fImlcTnDmlZx/8hAAGt9DUtzexfK1uOIdSdQAewePEGCNhflOf5yNy6K+uA==",
+        "resolved": "6.41.0",
+        "contentHash": "+qg428/V/HaHbcSJpJJeKj0ECQkbxuQFUZYDtlfj5h3FKPgm1I+y9ImzsoB2ZZVe9lSqsAyPLpUY74JIFfaB9A==",
         "dependencies": {
           "FluentValidation": "12.0.0",
-          "WolverineFx": "6.39.1"
+          "WolverineFx": "6.41.0"
         }
       },
       "WolverineFx.Http": {
         "type": "Transitive",
-        "resolved": "6.39.1",
-        "contentHash": "LaT85HoDA1dQrfI/nSZQKpqMf42xhfzaqu1OAzqwiYrVlQ957HrwAGCArGmLhNq0ch75Z3AsAOoAmrd155JkUQ==",
+        "resolved": "6.41.0",
+        "contentHash": "551qF6A64biSGdytH8otCJJU/xTPNKNJw4hI9h6IwGRfAjKbsT/zuCmgqy/yTwZIvwQzEhodzNr6IeKgIgQRXA==",
         "dependencies": {
           "Asp.Versioning.Abstractions": "[10.0.0, 11.0.0)",
-          "JasperFx.SourceGenerator": "2.73.2",
-          "WolverineFx": "6.39.1"
+          "JasperFx.SourceGenerator": "2.74.0",
+          "WolverineFx": "6.41.0"
         }
       },
       "WolverineFx.Http.FluentValidation": {
         "type": "Transitive",
-        "resolved": "6.39.1",
-        "contentHash": "HWy3nGlehDN/HLUVj4qMC649ZFO2RdkR80+IaK4wo9GkVAtYgkVK16FDeaD+VU3zXZ1VyMV19mZRThkplFFmjw==",
+        "resolved": "6.41.0",
+        "contentHash": "H8xb3311E/y8b10v7XHeNz3/mJ0nSGNMOP88f6XvYb9M0nBoPXr12TX15x7CDW4u/fZiq4KDf8Xr7QVbkokSiQ==",
         "dependencies": {
-          "WolverineFx.FluentValidation": "6.39.1",
-          "WolverineFx.Http": "6.39.1"
+          "WolverineFx.FluentValidation": "6.41.0",
+          "WolverineFx.Http": "6.41.0"
         }
       },
       "xunit.abstractions": {
@@ -807,8 +807,8 @@
           "Amazon.Lambda.AspNetCoreServer.Hosting": "[2.2.1, )",
           "FluentValidation": "[12.1.1, )",
           "Microsoft.AspNetCore.OpenApi": "[10.0.12, )",
-          "WolverineFx.Http": "[6.39.1, )",
-          "WolverineFx.Http.FluentValidation": "[6.39.1, )"
+          "WolverineFx.Http": "[6.41.0, )",
+          "WolverineFx.Http.FluentValidation": "[6.41.0, )"
         }
       }
     }
