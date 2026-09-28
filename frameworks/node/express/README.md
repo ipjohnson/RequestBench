@@ -15,7 +15,7 @@ an application, and a sub-application mounted on a path has its own.
 | --- | --- |
 | `Implementation/` | The application, in TypeScript. `app.ts` builds it, `routes/` holds one module per corpus family, and `views/` holds the Pug view. |
 | `container-h1/` | How container-h1 starts it. `server.ts` loads the payloads and listens, and `Dockerfile` builds the image. |
-| `lambda-emulator/` | How lambda-emulator starts it. `handler.mjs` exports the handler the Lambda runtime hands each event, the application behind @codegenie/serverless-express, and `Dockerfile` builds the function on the `nodejs:26-preview` base image. The runtime imports a handler's module only as `.js`, `.mjs` or `.cjs`, so `handler.mjs` is JavaScript, and Node strips the types of the application it imports. |
+| `lambda-emulator/` | How lambda-emulator starts it. `handler.mjs` exports the handler the Lambda runtime hands each event, the application behind @h4ad/serverless-adapter's `AwsStreamHandler`, and `Dockerfile` builds the function on the `nodejs:26-preview` base image. The runtime imports a handler's module only as `.js`, `.mjs` or `.cjs`, so `handler.mjs` is JavaScript, and Node strips the types of the application it imports. |
 | `UnitTests/` | node:test tests of the wiring, sending each request through supertest. |
 | `client-exception/` | How the corpus reads the validate routes' refusals. |
 | `package.json` | The dependencies, and the scripts that start, check and test the Implementation. |
@@ -92,22 +92,20 @@ the application is built, and so does the suite.
   The function on lambda-emulator runs on one core.
 - Express implements no container-h2. Its request and response extend node:http's, and node:http2's
   compatibility API does not carry them, so the application stops on its first HTTP/2 request.
-- On lambda-emulator the application answers behind @codegenie/serverless-express 5.0. Express's
-  documentation names no Lambda adapter. The serverless-express line, which began as AWS's
-  aws-serverless-express, is installed more than serverless-http, which Express applications also
-  use.
-- @codegenie/serverless-express buffers the whole answer into one proxy response, and it has no
-  streaming mode. The sse and stream tests are listed as unsupported on lambda-emulator.
-- On lambda-emulator Express's final handler answers 500 where it would answer 404. Before it
-  writes, on-finished listens on the request's socket, and the adapter's request carries a socket
-  stub with no `on` method, so the final handler throws. `errors.unmatched` and
-  `errors.wrong_method` are listed as unsupported there. This is
-  https://github.com/CodeGenieApp/serverless-express/issues/698.
-- The adapter takes an answer's headers from `getHeaders()`. Headers handed to `writeHead` when none
-  was set before never reach it, because Express swaps the response's prototype for its own and so
-  drops the adapter's `writeHead`. The cache middleware replays a stored answer that way, so on
-  lambda-emulator a replay arrives with no headers, and the cache tests are listed as unsupported
-  there.
+- On lambda-emulator the application answers behind @h4ad/serverless-adapter 4.4 and its
+  `AwsStreamHandler`. Express's documentation names no Lambda adapter. The two that Express
+  applications install most, the serverless-express line, which began as AWS's
+  aws-serverless-express, and serverless-http, have no streaming mode. @h4ad/serverless-adapter
+  began as a refactoring of serverless-express, and its last release is from December 2024.
+- `AwsStreamHandler` wraps the handler in the Node runtime's `awslambda.streamifyResponse`, and the
+  runtime streams every answer of such a handler, so every answer goes out as a Lambda response
+  stream. The adapter reads the head Node writes for the answer, so the prelude carries Node's
+  Date and Connection headers beside the application's.
+- @h4ad/serverless-adapter 4.4 never finishes an answer with no body that the application sends
+  after an `await`, because its response never calls back the write Node waits on. Express writes
+  every bodiless answer the corpus asks for without awaiting anything first, so no test waits on
+  it. This is fixed in https://github.com/H4ad/serverless-adapter/pull/393, which no release
+  carries yet.
 - The function is built on `public.ecr.aws/lambda/nodejs:26-preview`, because container-h1 runs
   Node 26 and Lambda's Node 26 runtime is still a preview. The runtime logs a warning saying so when
   it starts.
