@@ -1,5 +1,5 @@
 {
-  "comment": "Express 5 on Node 26, one module per family under Implementation/routes, in TypeScript that Node runs without a build step. Express's documentation names no Lambda adapter, and the ones Express's ecosystem installs most cannot stream, so on lambda-emulator the application answers behind @h4ad/serverless-adapter's AwsStreamHandler, which streams every answer. The suite is UnitTests/, node:test through supertest, and never reaches the image. install-ci-test is npm ci then npm test, because the suite needs node_modules and the typechecker. upgrade is npm update, which moves package-lock.json within the ranges package.json states. Express has no validation and its documentation names no library, so the validate routes run express-validator, the one written for Express, and answer its errors as its guide does. Express ships no response cache, so the cache family's middleware is written for it.",
+  "comment": "Express 5 on Node 26, one module per family under Implementation/routes, in TypeScript that Node runs without a build step. Express's documentation names no Lambda adapter, so on lambda-emulator the application answers behind @h4ad/serverless-adapter's DefaultHandler, which answers each event whole. The suite is UnitTests/, node:test through supertest, and never reaches the image. install-ci-test is npm ci then npm test, because the suite needs node_modules and the typechecker. upgrade is npm update, which moves package-lock.json within the ranges package.json states. Express has no validation and its documentation names no library, so the validate routes run express-validator, the one written for Express, and answer its errors as its guide does. Express ships no response cache, so the cache family's middleware is written for it.",
   "framework": "Express",
   "licence": "MIT",
   "repo": "https://github.com/expressjs/express",
@@ -8,7 +8,18 @@
   "lockfile": ["package-lock.json"],
   "hosts": {
     "container-h1": { "dockerfile": "container-h1/Dockerfile" },
-    "lambda-emulator": { "dockerfile": "lambda-emulator/Dockerfile" }
+    "lambda-emulator": {
+      "dockerfile": "lambda-emulator/Dockerfile",
+      "unsupported": {
+        "sse.medium": "@h4ad/serverless-adapter's DefaultHandler buffers the whole answer, so the events arrive as one body.",
+        "stream.ndjson": "@h4ad/serverless-adapter's DefaultHandler buffers the whole answer, so the rows arrive as one body.",
+        "cache.small": "@h4ad/serverless-adapter reads the answer's headers from getHeaders(). Its response overrides writeHead to keep the headers handed to it, but Express swaps the response's prototype for its own and so drops that override. The cache middleware replays a stored answer through writeHead, so the replay arrives without its headers, x-rb-serial among them.",
+        "cache.medium": "@h4ad/serverless-adapter reads the answer's headers from getHeaders(). Its response overrides writeHead to keep the headers handed to it, but Express swaps the response's prototype for its own and so drops that override. The cache middleware replays a stored answer through writeHead, so the replay arrives without its headers, x-rb-serial among them.",
+        "cache.large": "@h4ad/serverless-adapter reads the answer's headers from getHeaders(). Its response overrides writeHead to keep the headers handed to it, but Express swaps the response's prototype for its own and so drops that override. The cache middleware replays a stored answer through writeHead, so the replay arrives without its headers, x-rb-serial among them.",
+        "cache.vary_one": "@h4ad/serverless-adapter reads the answer's headers from getHeaders(). Its response overrides writeHead to keep the headers handed to it, but Express swaps the response's prototype for its own and so drops that override. The cache middleware replays a stored answer through writeHead, so the replay arrives without its headers, x-rb-serial among them.",
+        "cache.vary_many": "@h4ad/serverless-adapter reads the answer's headers from getHeaders(). Its response overrides writeHead to keep the headers handed to it, but Express swaps the response's prototype for its own and so drops that override. The cache middleware replays a stored answer through writeHead, so the replay arrives without its headers, x-rb-serial among them."
+      }
+    }
   },
   "suite": { "argv": ["npm", "install-ci-test"], "paths": ["UnitTests"] },
   "upgrade": { "argv": ["npm", "update"] },
