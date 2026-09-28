@@ -49,7 +49,7 @@
       "mentions": "jakarta.validation"
     },
     "cache": {
-      "mechanism": "Quarkus's cache: @CacheResult on each resource method, which returns a Uni of the whole answer with the x-rb-serial it was written with, keyed by the method's arguments, over the extension's default Caffeine caches",
+      "mechanism": "Quarkus's cache: @CacheResult on each resource method, which returns a Uni of the whole answer with the x-rb-serial it was written with, keyed by the method's arguments, over the extension's Caffeine caches, which application.properties sizes and ages",
       "dependency": "quarkus-cache",
       "mentions": "CacheResult"
     },

@@ -1122,7 +1122,8 @@ public class DefaultApi {
         return localVarCall;
     }
     /**
-     * Build call for cacheLargeGet
+     * Build call for cacheLargeKeyGet
+     * @param key  (required)
      * @param _callback Callback for upload/download progress
      * @return Call to execute
      * @throws ApiException If fail to serialize the request body object
@@ -1133,7 +1134,7 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public okhttp3.Call cacheLargeGetCall(final ApiCallback _callback) throws ApiException {
+    public okhttp3.Call cacheLargeKeyGetCall(@jakarta.annotation.Nonnull String key, final ApiCallback _callback) throws ApiException {
         String basePath = null;
         // Operation Servers
         String[] localBasePaths = new String[] {  };
@@ -1150,7 +1151,8 @@ public class DefaultApi {
         Object localVarPostBody = null;
 
         // create path and map variables
-        String localVarPath = "/cache/large";
+        String localVarPath = "/cache/large/{key}"
+            .replace("{" + "key" + "}", localVarApiClient.escapeString(key.toString()));
 
         List<Pair> localVarQueryParams = new ArrayList<Pair>();
         List<Pair> localVarCollectionQueryParams = new ArrayList<Pair>();
@@ -1178,14 +1180,20 @@ public class DefaultApi {
     }
 
     @SuppressWarnings("rawtypes")
-    private okhttp3.Call cacheLargeGetValidateBeforeCall(final ApiCallback _callback) throws ApiException {
-        return cacheLargeGetCall(_callback);
+    private okhttp3.Call cacheLargeKeyGetValidateBeforeCall(@jakarta.annotation.Nonnull String key, final ApiCallback _callback) throws ApiException {
+        // verify the required parameter 'key' is set
+        if (key == null) {
+            throw new ApiException("Missing the required parameter 'key' when calling cacheLargeKeyGet(Async)");
+        }
+
+        return cacheLargeKeyGetCall(key, _callback);
 
     }
 
     /**
      * 
      * 
+     * @param key  (required)
      * @return Payload
      * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
      * @http.response.details
@@ -1195,14 +1203,15 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public Payload cacheLargeGet() throws ApiException {
-        ApiResponse<Payload> localVarResp = cacheLargeGetWithHttpInfo();
+    public Payload cacheLargeKeyGet(@jakarta.annotation.Nonnull String key) throws ApiException {
+        ApiResponse<Payload> localVarResp = cacheLargeKeyGetWithHttpInfo(key);
         return localVarResp.getData();
     }
 
     /**
      * 
      * 
+     * @param key  (required)
      * @return ApiResponse&lt;Payload&gt;
      * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
      * @http.response.details
@@ -1212,8 +1221,8 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public ApiResponse<Payload> cacheLargeGetWithHttpInfo() throws ApiException {
-        okhttp3.Call localVarCall = cacheLargeGetValidateBeforeCall(null);
+    public ApiResponse<Payload> cacheLargeKeyGetWithHttpInfo(@jakarta.annotation.Nonnull String key) throws ApiException {
+        okhttp3.Call localVarCall = cacheLargeKeyGetValidateBeforeCall(key, null);
         Type localVarReturnType = new TypeToken<Payload>(){}.getType();
         return localVarApiClient.execute(localVarCall, localVarReturnType);
     }
@@ -1221,6 +1230,7 @@ public class DefaultApi {
     /**
      *  (asynchronously)
      * 
+     * @param key  (required)
      * @param _callback The callback to be executed when the API call finishes
      * @return The request call
      * @throws ApiException If fail to process the API call, e.g. serializing the request body object
@@ -1231,15 +1241,16 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public okhttp3.Call cacheLargeGetAsync(final ApiCallback<Payload> _callback) throws ApiException {
+    public okhttp3.Call cacheLargeKeyGetAsync(@jakarta.annotation.Nonnull String key, final ApiCallback<Payload> _callback) throws ApiException {
 
-        okhttp3.Call localVarCall = cacheLargeGetValidateBeforeCall(_callback);
+        okhttp3.Call localVarCall = cacheLargeKeyGetValidateBeforeCall(key, _callback);
         Type localVarReturnType = new TypeToken<Payload>(){}.getType();
         localVarApiClient.executeAsync(localVarCall, localVarReturnType, _callback);
         return localVarCall;
     }
     /**
-     * Build call for cacheMediumGet
+     * Build call for cacheMediumKeyGet
+     * @param key  (required)
      * @param _callback Callback for upload/download progress
      * @return Call to execute
      * @throws ApiException If fail to serialize the request body object
@@ -1250,7 +1261,7 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public okhttp3.Call cacheMediumGetCall(final ApiCallback _callback) throws ApiException {
+    public okhttp3.Call cacheMediumKeyGetCall(@jakarta.annotation.Nonnull String key, final ApiCallback _callback) throws ApiException {
         String basePath = null;
         // Operation Servers
         String[] localBasePaths = new String[] {  };
@@ -1267,7 +1278,8 @@ public class DefaultApi {
         Object localVarPostBody = null;
 
         // create path and map variables
-        String localVarPath = "/cache/medium";
+        String localVarPath = "/cache/medium/{key}"
+            .replace("{" + "key" + "}", localVarApiClient.escapeString(key.toString()));
 
         List<Pair> localVarQueryParams = new ArrayList<Pair>();
         List<Pair> localVarCollectionQueryParams = new ArrayList<Pair>();
@@ -1295,14 +1307,20 @@ public class DefaultApi {
     }
 
     @SuppressWarnings("rawtypes")
-    private okhttp3.Call cacheMediumGetValidateBeforeCall(final ApiCallback _callback) throws ApiException {
-        return cacheMediumGetCall(_callback);
+    private okhttp3.Call cacheMediumKeyGetValidateBeforeCall(@jakarta.annotation.Nonnull String key, final ApiCallback _callback) throws ApiException {
+        // verify the required parameter 'key' is set
+        if (key == null) {
+            throw new ApiException("Missing the required parameter 'key' when calling cacheMediumKeyGet(Async)");
+        }
+
+        return cacheMediumKeyGetCall(key, _callback);
 
     }
 
     /**
      * 
      * 
+     * @param key  (required)
      * @return Payload
      * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
      * @http.response.details
@@ -1312,14 +1330,15 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public Payload cacheMediumGet() throws ApiException {
-        ApiResponse<Payload> localVarResp = cacheMediumGetWithHttpInfo();
+    public Payload cacheMediumKeyGet(@jakarta.annotation.Nonnull String key) throws ApiException {
+        ApiResponse<Payload> localVarResp = cacheMediumKeyGetWithHttpInfo(key);
         return localVarResp.getData();
     }
 
     /**
      * 
      * 
+     * @param key  (required)
      * @return ApiResponse&lt;Payload&gt;
      * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
      * @http.response.details
@@ -1329,8 +1348,8 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public ApiResponse<Payload> cacheMediumGetWithHttpInfo() throws ApiException {
-        okhttp3.Call localVarCall = cacheMediumGetValidateBeforeCall(null);
+    public ApiResponse<Payload> cacheMediumKeyGetWithHttpInfo(@jakarta.annotation.Nonnull String key) throws ApiException {
+        okhttp3.Call localVarCall = cacheMediumKeyGetValidateBeforeCall(key, null);
         Type localVarReturnType = new TypeToken<Payload>(){}.getType();
         return localVarApiClient.execute(localVarCall, localVarReturnType);
     }
@@ -1338,6 +1357,7 @@ public class DefaultApi {
     /**
      *  (asynchronously)
      * 
+     * @param key  (required)
      * @param _callback The callback to be executed when the API call finishes
      * @return The request call
      * @throws ApiException If fail to process the API call, e.g. serializing the request body object
@@ -1348,15 +1368,16 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public okhttp3.Call cacheMediumGetAsync(final ApiCallback<Payload> _callback) throws ApiException {
+    public okhttp3.Call cacheMediumKeyGetAsync(@jakarta.annotation.Nonnull String key, final ApiCallback<Payload> _callback) throws ApiException {
 
-        okhttp3.Call localVarCall = cacheMediumGetValidateBeforeCall(_callback);
+        okhttp3.Call localVarCall = cacheMediumKeyGetValidateBeforeCall(key, _callback);
         Type localVarReturnType = new TypeToken<Payload>(){}.getType();
         localVarApiClient.executeAsync(localVarCall, localVarReturnType, _callback);
         return localVarCall;
     }
     /**
-     * Build call for cacheSmallGet
+     * Build call for cacheSmallKeyGet
+     * @param key  (required)
      * @param _callback Callback for upload/download progress
      * @return Call to execute
      * @throws ApiException If fail to serialize the request body object
@@ -1367,7 +1388,7 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public okhttp3.Call cacheSmallGetCall(final ApiCallback _callback) throws ApiException {
+    public okhttp3.Call cacheSmallKeyGetCall(@jakarta.annotation.Nonnull String key, final ApiCallback _callback) throws ApiException {
         String basePath = null;
         // Operation Servers
         String[] localBasePaths = new String[] {  };
@@ -1384,7 +1405,8 @@ public class DefaultApi {
         Object localVarPostBody = null;
 
         // create path and map variables
-        String localVarPath = "/cache/small";
+        String localVarPath = "/cache/small/{key}"
+            .replace("{" + "key" + "}", localVarApiClient.escapeString(key.toString()));
 
         List<Pair> localVarQueryParams = new ArrayList<Pair>();
         List<Pair> localVarCollectionQueryParams = new ArrayList<Pair>();
@@ -1412,14 +1434,20 @@ public class DefaultApi {
     }
 
     @SuppressWarnings("rawtypes")
-    private okhttp3.Call cacheSmallGetValidateBeforeCall(final ApiCallback _callback) throws ApiException {
-        return cacheSmallGetCall(_callback);
+    private okhttp3.Call cacheSmallKeyGetValidateBeforeCall(@jakarta.annotation.Nonnull String key, final ApiCallback _callback) throws ApiException {
+        // verify the required parameter 'key' is set
+        if (key == null) {
+            throw new ApiException("Missing the required parameter 'key' when calling cacheSmallKeyGet(Async)");
+        }
+
+        return cacheSmallKeyGetCall(key, _callback);
 
     }
 
     /**
      * 
      * 
+     * @param key  (required)
      * @return Payload
      * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
      * @http.response.details
@@ -1429,14 +1457,15 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public Payload cacheSmallGet() throws ApiException {
-        ApiResponse<Payload> localVarResp = cacheSmallGetWithHttpInfo();
+    public Payload cacheSmallKeyGet(@jakarta.annotation.Nonnull String key) throws ApiException {
+        ApiResponse<Payload> localVarResp = cacheSmallKeyGetWithHttpInfo(key);
         return localVarResp.getData();
     }
 
     /**
      * 
      * 
+     * @param key  (required)
      * @return ApiResponse&lt;Payload&gt;
      * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
      * @http.response.details
@@ -1446,8 +1475,8 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public ApiResponse<Payload> cacheSmallGetWithHttpInfo() throws ApiException {
-        okhttp3.Call localVarCall = cacheSmallGetValidateBeforeCall(null);
+    public ApiResponse<Payload> cacheSmallKeyGetWithHttpInfo(@jakarta.annotation.Nonnull String key) throws ApiException {
+        okhttp3.Call localVarCall = cacheSmallKeyGetValidateBeforeCall(key, null);
         Type localVarReturnType = new TypeToken<Payload>(){}.getType();
         return localVarApiClient.execute(localVarCall, localVarReturnType);
     }
@@ -1455,6 +1484,7 @@ public class DefaultApi {
     /**
      *  (asynchronously)
      * 
+     * @param key  (required)
      * @param _callback The callback to be executed when the API call finishes
      * @return The request call
      * @throws ApiException If fail to process the API call, e.g. serializing the request body object
@@ -1465,15 +1495,16 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public okhttp3.Call cacheSmallGetAsync(final ApiCallback<Payload> _callback) throws ApiException {
+    public okhttp3.Call cacheSmallKeyGetAsync(@jakarta.annotation.Nonnull String key, final ApiCallback<Payload> _callback) throws ApiException {
 
-        okhttp3.Call localVarCall = cacheSmallGetValidateBeforeCall(_callback);
+        okhttp3.Call localVarCall = cacheSmallKeyGetValidateBeforeCall(key, _callback);
         Type localVarReturnType = new TypeToken<Payload>(){}.getType();
         localVarApiClient.executeAsync(localVarCall, localVarReturnType, _callback);
         return localVarCall;
     }
     /**
-     * Build call for cacheVaryManyGet
+     * Build call for cacheVaryManyKeyGet
+     * @param key  (required)
      * @param xRbChannel  (optional)
      * @param xRbRegion  (optional)
      * @param xRbTenant  (optional)
@@ -1487,7 +1518,7 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public okhttp3.Call cacheVaryManyGetCall(@jakarta.annotation.Nullable String xRbChannel, @jakarta.annotation.Nullable String xRbRegion, @jakarta.annotation.Nullable String xRbTenant, final ApiCallback _callback) throws ApiException {
+    public okhttp3.Call cacheVaryManyKeyGetCall(@jakarta.annotation.Nonnull String key, @jakarta.annotation.Nullable String xRbChannel, @jakarta.annotation.Nullable String xRbRegion, @jakarta.annotation.Nullable String xRbTenant, final ApiCallback _callback) throws ApiException {
         String basePath = null;
         // Operation Servers
         String[] localBasePaths = new String[] {  };
@@ -1504,7 +1535,8 @@ public class DefaultApi {
         Object localVarPostBody = null;
 
         // create path and map variables
-        String localVarPath = "/cache/vary/many";
+        String localVarPath = "/cache/vary/many/{key}"
+            .replace("{" + "key" + "}", localVarApiClient.escapeString(key.toString()));
 
         List<Pair> localVarQueryParams = new ArrayList<Pair>();
         List<Pair> localVarCollectionQueryParams = new ArrayList<Pair>();
@@ -1547,14 +1579,20 @@ public class DefaultApi {
     }
 
     @SuppressWarnings("rawtypes")
-    private okhttp3.Call cacheVaryManyGetValidateBeforeCall(@jakarta.annotation.Nullable String xRbChannel, @jakarta.annotation.Nullable String xRbRegion, @jakarta.annotation.Nullable String xRbTenant, final ApiCallback _callback) throws ApiException {
-        return cacheVaryManyGetCall(xRbChannel, xRbRegion, xRbTenant, _callback);
+    private okhttp3.Call cacheVaryManyKeyGetValidateBeforeCall(@jakarta.annotation.Nonnull String key, @jakarta.annotation.Nullable String xRbChannel, @jakarta.annotation.Nullable String xRbRegion, @jakarta.annotation.Nullable String xRbTenant, final ApiCallback _callback) throws ApiException {
+        // verify the required parameter 'key' is set
+        if (key == null) {
+            throw new ApiException("Missing the required parameter 'key' when calling cacheVaryManyKeyGet(Async)");
+        }
+
+        return cacheVaryManyKeyGetCall(key, xRbChannel, xRbRegion, xRbTenant, _callback);
 
     }
 
     /**
      * 
      * 
+     * @param key  (required)
      * @param xRbChannel  (optional)
      * @param xRbRegion  (optional)
      * @param xRbTenant  (optional)
@@ -1567,14 +1605,15 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public Payload cacheVaryManyGet(@jakarta.annotation.Nullable String xRbChannel, @jakarta.annotation.Nullable String xRbRegion, @jakarta.annotation.Nullable String xRbTenant) throws ApiException {
-        ApiResponse<Payload> localVarResp = cacheVaryManyGetWithHttpInfo(xRbChannel, xRbRegion, xRbTenant);
+    public Payload cacheVaryManyKeyGet(@jakarta.annotation.Nonnull String key, @jakarta.annotation.Nullable String xRbChannel, @jakarta.annotation.Nullable String xRbRegion, @jakarta.annotation.Nullable String xRbTenant) throws ApiException {
+        ApiResponse<Payload> localVarResp = cacheVaryManyKeyGetWithHttpInfo(key, xRbChannel, xRbRegion, xRbTenant);
         return localVarResp.getData();
     }
 
     /**
      * 
      * 
+     * @param key  (required)
      * @param xRbChannel  (optional)
      * @param xRbRegion  (optional)
      * @param xRbTenant  (optional)
@@ -1587,8 +1626,8 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public ApiResponse<Payload> cacheVaryManyGetWithHttpInfo(@jakarta.annotation.Nullable String xRbChannel, @jakarta.annotation.Nullable String xRbRegion, @jakarta.annotation.Nullable String xRbTenant) throws ApiException {
-        okhttp3.Call localVarCall = cacheVaryManyGetValidateBeforeCall(xRbChannel, xRbRegion, xRbTenant, null);
+    public ApiResponse<Payload> cacheVaryManyKeyGetWithHttpInfo(@jakarta.annotation.Nonnull String key, @jakarta.annotation.Nullable String xRbChannel, @jakarta.annotation.Nullable String xRbRegion, @jakarta.annotation.Nullable String xRbTenant) throws ApiException {
+        okhttp3.Call localVarCall = cacheVaryManyKeyGetValidateBeforeCall(key, xRbChannel, xRbRegion, xRbTenant, null);
         Type localVarReturnType = new TypeToken<Payload>(){}.getType();
         return localVarApiClient.execute(localVarCall, localVarReturnType);
     }
@@ -1596,6 +1635,7 @@ public class DefaultApi {
     /**
      *  (asynchronously)
      * 
+     * @param key  (required)
      * @param xRbChannel  (optional)
      * @param xRbRegion  (optional)
      * @param xRbTenant  (optional)
@@ -1609,15 +1649,16 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public okhttp3.Call cacheVaryManyGetAsync(@jakarta.annotation.Nullable String xRbChannel, @jakarta.annotation.Nullable String xRbRegion, @jakarta.annotation.Nullable String xRbTenant, final ApiCallback<Payload> _callback) throws ApiException {
+    public okhttp3.Call cacheVaryManyKeyGetAsync(@jakarta.annotation.Nonnull String key, @jakarta.annotation.Nullable String xRbChannel, @jakarta.annotation.Nullable String xRbRegion, @jakarta.annotation.Nullable String xRbTenant, final ApiCallback<Payload> _callback) throws ApiException {
 
-        okhttp3.Call localVarCall = cacheVaryManyGetValidateBeforeCall(xRbChannel, xRbRegion, xRbTenant, _callback);
+        okhttp3.Call localVarCall = cacheVaryManyKeyGetValidateBeforeCall(key, xRbChannel, xRbRegion, xRbTenant, _callback);
         Type localVarReturnType = new TypeToken<Payload>(){}.getType();
         localVarApiClient.executeAsync(localVarCall, localVarReturnType, _callback);
         return localVarCall;
     }
     /**
-     * Build call for cacheVaryOneGet
+     * Build call for cacheVaryOneKeyGet
+     * @param key  (required)
      * @param xRbTenant  (optional)
      * @param _callback Callback for upload/download progress
      * @return Call to execute
@@ -1629,7 +1670,7 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public okhttp3.Call cacheVaryOneGetCall(@jakarta.annotation.Nullable String xRbTenant, final ApiCallback _callback) throws ApiException {
+    public okhttp3.Call cacheVaryOneKeyGetCall(@jakarta.annotation.Nonnull String key, @jakarta.annotation.Nullable String xRbTenant, final ApiCallback _callback) throws ApiException {
         String basePath = null;
         // Operation Servers
         String[] localBasePaths = new String[] {  };
@@ -1646,7 +1687,8 @@ public class DefaultApi {
         Object localVarPostBody = null;
 
         // create path and map variables
-        String localVarPath = "/cache/vary/one";
+        String localVarPath = "/cache/vary/one/{key}"
+            .replace("{" + "key" + "}", localVarApiClient.escapeString(key.toString()));
 
         List<Pair> localVarQueryParams = new ArrayList<Pair>();
         List<Pair> localVarCollectionQueryParams = new ArrayList<Pair>();
@@ -1679,14 +1721,20 @@ public class DefaultApi {
     }
 
     @SuppressWarnings("rawtypes")
-    private okhttp3.Call cacheVaryOneGetValidateBeforeCall(@jakarta.annotation.Nullable String xRbTenant, final ApiCallback _callback) throws ApiException {
-        return cacheVaryOneGetCall(xRbTenant, _callback);
+    private okhttp3.Call cacheVaryOneKeyGetValidateBeforeCall(@jakarta.annotation.Nonnull String key, @jakarta.annotation.Nullable String xRbTenant, final ApiCallback _callback) throws ApiException {
+        // verify the required parameter 'key' is set
+        if (key == null) {
+            throw new ApiException("Missing the required parameter 'key' when calling cacheVaryOneKeyGet(Async)");
+        }
+
+        return cacheVaryOneKeyGetCall(key, xRbTenant, _callback);
 
     }
 
     /**
      * 
      * 
+     * @param key  (required)
      * @param xRbTenant  (optional)
      * @return Payload
      * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
@@ -1697,14 +1745,15 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public Payload cacheVaryOneGet(@jakarta.annotation.Nullable String xRbTenant) throws ApiException {
-        ApiResponse<Payload> localVarResp = cacheVaryOneGetWithHttpInfo(xRbTenant);
+    public Payload cacheVaryOneKeyGet(@jakarta.annotation.Nonnull String key, @jakarta.annotation.Nullable String xRbTenant) throws ApiException {
+        ApiResponse<Payload> localVarResp = cacheVaryOneKeyGetWithHttpInfo(key, xRbTenant);
         return localVarResp.getData();
     }
 
     /**
      * 
      * 
+     * @param key  (required)
      * @param xRbTenant  (optional)
      * @return ApiResponse&lt;Payload&gt;
      * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
@@ -1715,8 +1764,8 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public ApiResponse<Payload> cacheVaryOneGetWithHttpInfo(@jakarta.annotation.Nullable String xRbTenant) throws ApiException {
-        okhttp3.Call localVarCall = cacheVaryOneGetValidateBeforeCall(xRbTenant, null);
+    public ApiResponse<Payload> cacheVaryOneKeyGetWithHttpInfo(@jakarta.annotation.Nonnull String key, @jakarta.annotation.Nullable String xRbTenant) throws ApiException {
+        okhttp3.Call localVarCall = cacheVaryOneKeyGetValidateBeforeCall(key, xRbTenant, null);
         Type localVarReturnType = new TypeToken<Payload>(){}.getType();
         return localVarApiClient.execute(localVarCall, localVarReturnType);
     }
@@ -1724,6 +1773,7 @@ public class DefaultApi {
     /**
      *  (asynchronously)
      * 
+     * @param key  (required)
      * @param xRbTenant  (optional)
      * @param _callback The callback to be executed when the API call finishes
      * @return The request call
@@ -1735,9 +1785,9 @@ public class DefaultApi {
         <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
      </table>
      */
-    public okhttp3.Call cacheVaryOneGetAsync(@jakarta.annotation.Nullable String xRbTenant, final ApiCallback<Payload> _callback) throws ApiException {
+    public okhttp3.Call cacheVaryOneKeyGetAsync(@jakarta.annotation.Nonnull String key, @jakarta.annotation.Nullable String xRbTenant, final ApiCallback<Payload> _callback) throws ApiException {
 
-        okhttp3.Call localVarCall = cacheVaryOneGetValidateBeforeCall(xRbTenant, _callback);
+        okhttp3.Call localVarCall = cacheVaryOneKeyGetValidateBeforeCall(key, xRbTenant, _callback);
         Type localVarReturnType = new TypeToken<Payload>(){}.getType();
         localVarApiClient.executeAsync(localVarCall, localVarReturnType, _callback);
         return localVarCall;

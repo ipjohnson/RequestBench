@@ -883,9 +883,19 @@
                 }
             }
         },
-        "/cache/small": {
+        "/cache/small/{key}": {
             "get": {
                 "summary": "",
+                "parameters": [
+                    {
+                        "name": "key",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "",
@@ -907,9 +917,19 @@
                 }
             }
         },
-        "/cache/medium": {
+        "/cache/medium/{key}": {
             "get": {
                 "summary": "",
+                "parameters": [
+                    {
+                        "name": "key",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "",
@@ -931,9 +951,19 @@
                 }
             }
         },
-        "/cache/large": {
+        "/cache/large/{key}": {
             "get": {
                 "summary": "",
+                "parameters": [
+                    {
+                        "name": "key",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "",
@@ -955,9 +985,19 @@
                 }
             }
         },
-        "/cache/vary/one": {
+        "/cache/vary/one/{key}": {
             "get": {
                 "summary": "The Vary header tells a cache in front of the framework what the answer depends on. The store\nkeys on the route's own list.",
+                "parameters": [
+                    {
+                        "name": "key",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "",
@@ -984,9 +1024,19 @@
                 }
             }
         },
-        "/cache/vary/many": {
+        "/cache/vary/many/{key}": {
             "get": {
                 "summary": "",
+                "parameters": [
+                    {
+                        "name": "key",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "",

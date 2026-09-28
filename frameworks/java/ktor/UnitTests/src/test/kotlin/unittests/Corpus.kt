@@ -7,6 +7,8 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.server.config.MapApplicationConfig
 import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.testApplication
+import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 
@@ -25,3 +27,12 @@ fun corpusTest(block: suspend ApplicationTestBuilder.() -> Unit) = testApplicati
 }
 
 suspend fun HttpResponse.json(): JsonElement = Json.parseToJsonElement(bodyAsText())
+
+/** x-rb-serial, after checking it starts with the Unix time in milliseconds it was written at. */
+fun HttpResponse.serial(): String {
+    val serial = headers["x-rb-serial"].toString()
+    val form = assertNotNull(Regex("""(\d+)\|\d+""").matchEntire(serial), "x-rb-serial $serial is not <time stamp>|<count>")
+    val age = System.currentTimeMillis() - form.groupValues[1].toLong()
+    assertTrue(age in 0..<60_000, "x-rb-serial $serial was written $age ms ago")
+    return serial
+}

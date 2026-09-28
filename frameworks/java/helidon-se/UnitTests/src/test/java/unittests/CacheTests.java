@@ -19,22 +19,23 @@ class CacheTests extends HelidonApp {
     @Tag("cache.medium")
     @Tag("cache.large")
     @ValueSource(strings = {"small", "medium", "large"})
-    void aSecondRequestIsTheStoredAnswer(String size) throws Exception {
-        long first = Answer.serial(get("/cache/" + size));
-        var second = get("/cache/" + size);
+    void aSecondRequestForAKeyIsItsStoredAnswer(String size) throws Exception {
+        String first = Answer.serial(get("/cache/" + size + "/k1"));
+        var second = get("/cache/" + size + "/k1");
 
         Answer.is(Expected.json("items." + size + ".json"), second);
         assertEquals(first, Answer.serial(second));
+        assertNotEquals(first, Answer.serial(get("/cache/" + size + "/k2")));
     }
 
     // rb:test cache.vary_one
     @Test
     @Tag("cache.vary_one")
     void oneVaryHeaderKeysTheStore() throws Exception {
-        long alpha = Answer.serial(get("/cache/vary/one", "x-rb-tenant", "alpha"));
-        long beta = Answer.serial(get("/cache/vary/one", "x-rb-tenant", "beta"));
+        String alpha = Answer.serial(get("/cache/vary/one/k1", "x-rb-tenant", "alpha"));
+        String beta = Answer.serial(get("/cache/vary/one/k1", "x-rb-tenant", "beta"));
 
-        assertEquals(alpha, Answer.serial(get("/cache/vary/one", "x-rb-tenant", "alpha")));
+        assertEquals(alpha, Answer.serial(get("/cache/vary/one/k1", "x-rb-tenant", "alpha")));
         assertNotEquals(alpha, beta);
     }
 
@@ -45,15 +46,15 @@ class CacheTests extends HelidonApp {
         String[] webEuAlpha = {"x-rb-channel", "web", "x-rb-region", "eu", "x-rb-tenant", "alpha"};
         String[] webEuBeta = {"x-rb-channel", "web", "x-rb-region", "eu", "x-rb-tenant", "beta"};
 
-        long first = Answer.serial(get("/cache/vary/many", webEuAlpha));
+        String first = Answer.serial(get("/cache/vary/many/k1", webEuAlpha));
 
-        assertEquals(first, Answer.serial(get("/cache/vary/many", webEuAlpha)));
-        assertNotEquals(first, Answer.serial(get("/cache/vary/many", webEuBeta)));
+        assertEquals(first, Answer.serial(get("/cache/vary/many/k1", webEuAlpha)));
+        assertNotEquals(first, Answer.serial(get("/cache/vary/many/k1", webEuBeta)));
     }
 
     @Test
     void theAnswerSaysWhatItVariesOn() throws Exception {
-        String vary = Answer.header(get("/cache/vary/many"), "vary");
+        String vary = Answer.header(get("/cache/vary/many/k1"), "vary");
 
         assertEquals(Set.of("x-rb-channel", "x-rb-region", "x-rb-tenant"), Set.of(vary.split(",\\s*")));
     }

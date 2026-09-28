@@ -54,7 +54,7 @@ copies it.
 | parameters, query, headers | `@RestPath`, `@RestQuery` and `@RestHeader` parameters, and query.many's eight values bound into a record as a `@BeanParam`. | Quarkus REST |
 | body | Jackson binds the order record. `@Valid` runs its Bean Validation constraints through Hibernate Validator, and Quarkus refuses a body that breaks one with its violation report. | quarkus-hibernate-validator |
 | authorized | A permission in `application.properties` puts `/authorized/*` under `BearerTokenPolicy`, an `HttpSecurityPolicy` that permits settings.json's bearer token and denies any other. | quarkus-security |
-| cache | `@CacheResult` on each resource method, over the extension's default Caffeine caches. | quarkus-cache |
+| cache | `@CacheResult` on each resource method, over the extension's Caffeine caches, which `application.properties` sizes and ages. | quarkus-cache |
 | compressed | Quarkus's HTTP compression, on for the whole server, at gzip's fastest level. | Quarkus, over Vert.x |
 | etag | Jakarta REST's `Request.evaluatePreconditions` answers a matching `If-None-Match` with 304. The handler hashes the serialised body with SHA-1 for the tag. | Jakarta REST, and the hash by hand |
 | template | Qute, with a type-safe `@CheckedTemplate`. | quarkus-rest-qute |
@@ -98,11 +98,9 @@ copies it.
   a time in declaration order and stops at the first that fails.
 - The cache routes return a `Uni`. `@CacheResult` waits for a plain return value by blocking, which
   the I/O thread refuses, and for a `Uni` it stores the item. What it stores is the whole answer,
-  so a replay carries the `x-rb-serial` it was written with. A lone argument is the key itself,
-  and the cache takes no null key, so `/cache/vary/one` keys a request with no `x-rb-tenant` as
-  empty.
-- The Caffeine caches have no expiry and no size limit, so settings.json's capacity and TTL are not
-  applied. The ladder's load lasts about four minutes, well inside the hour the TTL gives.
+  so a replay carries the `x-rb-serial` it was written with.
+- The extension's Caffeine caches have no expiry and no size limit of their own.
+  `application.properties` gives every cache settings.json's capacity and lifetime.
 - `quarkus.http.static-dir` reads its directory while the application is built and packages every
   file in it, which would copy the payloads into the build. The `/static/*` route is the Router
   observer Quarkus's HTTP reference shows, with Vert.x's `StaticHandler` over `RB_PAYLOADS`.

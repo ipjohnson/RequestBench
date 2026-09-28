@@ -135,9 +135,15 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BodyRoutes.Bound_OrderRequest_"
-  /cache/large:
+  /cache/large/{key}:
     get:
       operationId: large
+      parameters:
+      - name: key
+        in: path
+        required: true
+        schema:
+          type: string
       responses:
         "200":
           description: large 200 response
@@ -145,9 +151,15 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Payload"
-  /cache/medium:
+  /cache/medium/{key}:
     get:
       operationId: medium
+      parameters:
+      - name: key
+        in: path
+        required: true
+        schema:
+          type: string
       responses:
         "200":
           description: medium 200 response
@@ -155,9 +167,15 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Payload"
-  /cache/small:
+  /cache/small/{key}:
     get:
       operationId: small_1
+      parameters:
+      - name: key
+        in: path
+        required: true
+        schema:
+          type: string
       responses:
         "200":
           description: small_1 200 response
@@ -165,10 +183,15 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Payload"
-  /cache/vary/many:
+  /cache/vary/many/{key}:
     get:
       operationId: varyMany
       parameters:
+      - name: key
+        in: path
+        required: true
+        schema:
+          type: string
       - name: x-rb-channel
         in: header
         schema:
@@ -191,10 +214,15 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Payload"
-  /cache/vary/one:
+  /cache/vary/one/{key}:
     get:
       operationId: varyOne
       parameters:
+      - name: key
+        in: path
+        required: true
+        schema:
+          type: string
       - name: x-rb-tenant
         in: header
         schema:

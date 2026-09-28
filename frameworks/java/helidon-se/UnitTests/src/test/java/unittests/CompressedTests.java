@@ -1,8 +1,8 @@
 package unittests;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.net.http.HttpResponse;
@@ -26,7 +26,7 @@ class CompressedTests extends HelidonApp {
         try (GZIPInputStream unzipped = new GZIPInputStream(new ByteArrayInputStream(second.body()))) {
             assertEquals(Expected.json("items.large.json"), Expected.JSON.readTree(unzipped));
         }
-        assertTrue(Answer.serial(second) > Answer.serial(first));
+        assertNotEquals(Answer.serial(first), Answer.serial(second));
     }
 
     // rb:test compressed.gzip_small

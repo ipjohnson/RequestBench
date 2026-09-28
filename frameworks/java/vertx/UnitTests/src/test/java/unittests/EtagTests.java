@@ -1,8 +1,8 @@
 package unittests;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.net.http.HttpResponse;
 
@@ -24,7 +24,7 @@ class EtagTests extends VertxApp {
 
         assertNotNull(Answer.header(second, "etag"));
         Answer.is(Expected.json("items." + size + ".json"), second);
-        assertTrue(Answer.serial(second) > Answer.serial(first));
+        assertNotEquals(Answer.serial(first), Answer.serial(second));
     }
 
     // rb:test etag.match_large

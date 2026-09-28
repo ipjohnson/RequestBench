@@ -1,23 +1,27 @@
 package client.kiota.cache.vary.one;
 
-import client.kiota.models.Payload;
+import client.kiota.cache.vary.one.item.WithKeyItemRequestBuilder;
 import com.microsoft.kiota.BaseRequestBuilder;
-import com.microsoft.kiota.BaseRequestConfiguration;
-import com.microsoft.kiota.HttpMethod;
 import com.microsoft.kiota.RequestAdapter;
-import com.microsoft.kiota.RequestInformation;
-import com.microsoft.kiota.RequestOption;
-import com.microsoft.kiota.serialization.Parsable;
-import com.microsoft.kiota.serialization.ParsableFactory;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
 /**
  * Builds and executes requests for operations under /cache/vary/one
  */
 @jakarta.annotation.Generated("com.microsoft.kiota")
 public class OneRequestBuilder extends BaseRequestBuilder {
+    /**
+     * Gets an item from the client.kiota.cache.vary.one.item collection
+     * @param key Unique identifier of the item
+     * @return a {@link WithKeyItemRequestBuilder}
+     */
+    @jakarta.annotation.Nonnull
+    public WithKeyItemRequestBuilder byKey(@jakarta.annotation.Nonnull final String key) {
+        Objects.requireNonNull(key);
+        final HashMap<String, Object> urlTplParams = new HashMap<String, Object>(this.pathParameters);
+        urlTplParams.put("key", key);
+        return new WithKeyItemRequestBuilder(urlTplParams, requestAdapter);
+    }
     /**
      * Instantiates a new {@link OneRequestBuilder} and sets the default values.
      * @param pathParameters Path parameters for the request
@@ -33,59 +37,5 @@ public class OneRequestBuilder extends BaseRequestBuilder {
      */
     public OneRequestBuilder(@jakarta.annotation.Nonnull final String rawUrl, @jakarta.annotation.Nonnull final RequestAdapter requestAdapter) {
         super(requestAdapter, "{+baseurl}/cache/vary/one", rawUrl);
-    }
-    /**
-     * The Vary header tells a cache in front of the framework what the answer depends on. The storekeys on the route&apos;s own list.
-     * @return a {@link Payload}
-     */
-    @jakarta.annotation.Nullable
-    public Payload get() {
-        return get(null);
-    }
-    /**
-     * The Vary header tells a cache in front of the framework what the answer depends on. The storekeys on the route&apos;s own list.
-     * @param requestConfiguration Configuration for the request such as headers, query parameters, and middleware options.
-     * @return a {@link Payload}
-     */
-    @jakarta.annotation.Nullable
-    public Payload get(@jakarta.annotation.Nullable final java.util.function.Consumer<GetRequestConfiguration> requestConfiguration) {
-        final RequestInformation requestInfo = toGetRequestInformation(requestConfiguration);
-        return this.requestAdapter.send(requestInfo, null, Payload::createFromDiscriminatorValue);
-    }
-    /**
-     * The Vary header tells a cache in front of the framework what the answer depends on. The storekeys on the route&apos;s own list.
-     * @return a {@link RequestInformation}
-     */
-    @jakarta.annotation.Nonnull
-    public RequestInformation toGetRequestInformation() {
-        return toGetRequestInformation(null);
-    }
-    /**
-     * The Vary header tells a cache in front of the framework what the answer depends on. The storekeys on the route&apos;s own list.
-     * @param requestConfiguration Configuration for the request such as headers, query parameters, and middleware options.
-     * @return a {@link RequestInformation}
-     */
-    @jakarta.annotation.Nonnull
-    public RequestInformation toGetRequestInformation(@jakarta.annotation.Nullable final java.util.function.Consumer<GetRequestConfiguration> requestConfiguration) {
-        final RequestInformation requestInfo = new RequestInformation(HttpMethod.GET, urlTemplate, pathParameters);
-        requestInfo.configure(requestConfiguration, GetRequestConfiguration::new);
-        requestInfo.headers.tryAdd("Accept", "application/json");
-        return requestInfo;
-    }
-    /**
-     * Returns a request builder with the provided arbitrary URL. Using this method means any other path or query parameters are ignored.
-     * @param rawUrl The raw URL to use for the request builder.
-     * @return a {@link OneRequestBuilder}
-     */
-    @jakarta.annotation.Nonnull
-    public OneRequestBuilder withUrl(@jakarta.annotation.Nonnull final String rawUrl) {
-        Objects.requireNonNull(rawUrl);
-        return new OneRequestBuilder(rawUrl, requestAdapter);
-    }
-    /**
-     * Configuration for the request such as headers, query parameters, and middleware options.
-     */
-    @jakarta.annotation.Generated("com.microsoft.kiota")
-    public class GetRequestConfiguration extends BaseRequestConfiguration {
     }
 }

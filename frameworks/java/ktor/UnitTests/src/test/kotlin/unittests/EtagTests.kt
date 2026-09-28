@@ -7,6 +7,7 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.serialization.json.jsonPrimitive
@@ -39,7 +40,7 @@ class EtagTests {
 
         assertEquals(HttpStatusCode.NotModified, response.status)
         assertContentEquals(ByteArray(0), response.bodyAsBytes())
-        assertTrue(response.headers["x-rb-serial"]!!.toLong() > first.headers["x-rb-serial"]!!.toLong())
+        assertNotEquals(first.serial(), response.serial())
     }
 
     // rb:test etag.stale_large

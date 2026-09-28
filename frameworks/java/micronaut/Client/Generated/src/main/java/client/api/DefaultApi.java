@@ -160,10 +160,14 @@ public interface DefaultApi {
     /**
      * large
      *
+     * @param key (required)
+     *
      * @return large 200 response (status code 200)
      */
-    @Get("/cache/large")
-    Mono<@Valid Payload> large();
+    @Get("/cache/large/{key}")
+    Mono<@Valid Payload> large(
+        @PathVariable("key") @NotNull String key
+    );
 
     /**
      * large1
@@ -235,10 +239,14 @@ public interface DefaultApi {
     /**
      * medium
      *
+     * @param key (required)
+     *
      * @return medium 200 response (status code 200)
      */
-    @Get("/cache/medium")
-    Mono<@Valid Payload> medium();
+    @Get("/cache/medium/{key}")
+    Mono<@Valid Payload> medium(
+        @PathVariable("key") @NotNull String key
+    );
 
     /**
      * medium1
@@ -371,10 +379,14 @@ public interface DefaultApi {
     /**
      * small1
      *
+     * @param key (required)
+     *
      * @return small_1 200 response (status code 200)
      */
-    @Get("/cache/small")
-    Mono<@Valid Payload> small1();
+    @Get("/cache/small/{key}")
+    Mono<@Valid Payload> small1(
+        @PathVariable("key") @NotNull String key
+    );
 
     /**
      * small2
@@ -539,14 +551,16 @@ public interface DefaultApi {
     /**
      * varyMany
      *
+     * @param key (required)
      * @param xrbChannel (optional)
      * @param xrbRegion (optional)
      * @param xrbTenant (optional)
      *
      * @return varyMany 200 response (status code 200)
      */
-    @Get("/cache/vary/many")
+    @Get("/cache/vary/many/{key}")
     Mono<@Valid Payload> varyMany(
+        @PathVariable("key") @NotNull String key,
         @Header("x-rb-channel") @Nullable String xrbChannel,
         @Header("x-rb-region") @Nullable String xrbRegion,
         @Header("x-rb-tenant") @Nullable String xrbTenant
@@ -555,12 +569,14 @@ public interface DefaultApi {
     /**
      * varyOne
      *
+     * @param key (required)
      * @param xrbTenant (optional)
      *
      * @return varyOne 200 response (status code 200)
      */
-    @Get("/cache/vary/one")
+    @Get("/cache/vary/one/{key}")
     Mono<@Valid Payload> varyOne(
+        @PathVariable("key") @NotNull String key,
         @Header("x-rb-tenant") @Nullable String xrbTenant
     );
 }

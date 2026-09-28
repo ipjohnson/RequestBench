@@ -47,7 +47,7 @@ plain jar that UnitTests compiles against.
 | parameters, query, headers | `@PathVariable`, `@RequestParam` and `@RequestHeader` parameters, and query.many's eight values bound into a record through its constructor. | Spring MVC |
 | body | Jackson binds the order record. `@Valid` runs its Bean Validation constraints through Hibernate Validator, and Spring MVC refuses a body that breaks one with 400. | Spring MVC and Hibernate Validator |
 | authorized | Spring Security on `/authorized` alone, with a rule that permits settings.json's bearer token and denies any other. | Spring Security |
-| cache | `@Cacheable` on each handler, over Boot's default `ConcurrentMapCacheManager`. | Spring |
+| cache | `@Cacheable` on each handler, over Caffeine, which `spring.cache.caffeine.spec` sizes and ages. | Spring and Caffeine |
 | compressed | Tomcat's compression on the whole connector, turned on in `application.properties`. | Tomcat |
 | etag | `ShallowEtagHeaderFilter` registered for `/etag/*`, which hashes the written body with MD5 and answers a matching `If-None-Match` with 304. | Spring |
 | template | Thymeleaf, through Spring MVC's view resolution. | Thymeleaf |
@@ -92,9 +92,9 @@ plain jar that UnitTests compiles against.
 - Tomcat closes the connection after a 400, so errors.malformed and the two body.rejected rows pay
   for a reconnect each time under load. It also closes a keep-alive connection after its 100th
   request. Both are Tomcat's defaults and are left alone.
-- The simple cache provider has no expiry and no size limit, so settings.json's capacity and TTL
-  are not applied. The ladder's load lasts about four minutes, well inside the hour the TTL
-  gives.
+- Boot's default cache provider, a `ConcurrentMapCacheManager`, never expires an entry and has no
+  size limit. Caffeine takes its place, and `spring.cache.caffeine.spec` in
+  `application.properties` gives each cache settings.json's capacity and lifetime.
 - The container runs `java -jar` as PID 1 with the collector and heap the JVM chooses. The JVM
   reads the container's CPU quota, counts 2 CPUs under `--cpus 2` and chooses G1. On SIGTERM it
   runs Spring's graceful shutdown and exits in under a second.

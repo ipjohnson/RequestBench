@@ -7,6 +7,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -14,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
  * cache: Spring's cache abstraction, which stores what a @Cacheable method returned and returns
  * it again without running the method. Each handler returns the whole answer as a ResponseEntity,
  * so what is stored carries the x-rb-serial it was written with. A route's cache is keyed by the
- * method's arguments, and the vary routes take their headers as arguments for that reason.
+ * method's arguments, which are the key in the path and, on the vary routes, the headers.
  */
 @RestController
 public class CacheRoutes {
@@ -31,33 +32,34 @@ public class CacheRoutes {
         this.varyMany = String.join(", ", p.settings().cache().vary().many().keySet());
     }
 
-    @GetMapping("/cache/small")
+    @GetMapping("/cache/small/{key}")
     @Cacheable("cache.small")
-    public ResponseEntity<Payload> small() {
+    public ResponseEntity<Payload> small(@PathVariable String key) {
         return stored(p.small(), null);
     }
 
-    @GetMapping("/cache/medium")
+    @GetMapping("/cache/medium/{key}")
     @Cacheable("cache.medium")
-    public ResponseEntity<Payload> medium() {
+    public ResponseEntity<Payload> medium(@PathVariable String key) {
         return stored(p.medium(), null);
     }
 
-    @GetMapping("/cache/large")
+    @GetMapping("/cache/large/{key}")
     @Cacheable("cache.large")
-    public ResponseEntity<Payload> large() {
+    public ResponseEntity<Payload> large(@PathVariable String key) {
         return stored(p.large(), null);
     }
 
-    @GetMapping("/cache/vary/one")
+    @GetMapping("/cache/vary/one/{key}")
     @Cacheable("cache.vary_one")
-    public ResponseEntity<Payload> varyOne(@RequestHeader(name = "x-rb-tenant", required = false) String tenant) {
+    public ResponseEntity<Payload> varyOne(@PathVariable String key, @RequestHeader(name = "x-rb-tenant", required = false) String tenant) {
         return stored(p.small(), varyOne);
     }
 
-    @GetMapping("/cache/vary/many")
+    @GetMapping("/cache/vary/many/{key}")
     @Cacheable("cache.vary_many")
-    public ResponseEntity<Payload> varyMany(@RequestHeader(name = "x-rb-channel", required = false) String channel,
+    public ResponseEntity<Payload> varyMany(@PathVariable String key,
+                                            @RequestHeader(name = "x-rb-channel", required = false) String channel,
                                             @RequestHeader(name = "x-rb-region", required = false) String region,
                                             @RequestHeader(name = "x-rb-tenant", required = false) String tenant) {
         return stored(p.small(), varyMany);

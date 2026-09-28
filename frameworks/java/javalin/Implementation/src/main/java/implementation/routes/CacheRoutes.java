@@ -30,7 +30,7 @@ public final class CacheRoutes {
 
     private final Payloads p;
 
-    /** The request headers each vary route is keyed on, by path. */
+    /** The request headers each vary route is keyed on, by the path above the key. */
     private final Map<String, List<String>> keyedOn;
 
     private final String varyOne;
@@ -60,11 +60,11 @@ public final class CacheRoutes {
         config.routes.before("/cache/*", this::replay);
         config.routes.after("/cache/*", this::keep);
         // rb:end
-        config.routes.get("/cache/small", this::small);
-        config.routes.get("/cache/medium", this::medium);
-        config.routes.get("/cache/large", this::large);
-        config.routes.get("/cache/vary/one", this::varyOne);
-        config.routes.get("/cache/vary/many", this::varyMany);
+        config.routes.get("/cache/small/{key}", this::small);
+        config.routes.get("/cache/medium/{key}", this::medium);
+        config.routes.get("/cache/large/{key}", this::large);
+        config.routes.get("/cache/vary/one/{key}", this::varyOne);
+        config.routes.get("/cache/vary/many/{key}", this::varyMany);
     }
 
     // rb:wiring cache.*
@@ -104,11 +104,12 @@ public final class CacheRoutes {
 
     /** The path, and the value of each header the route is keyed on. */
     private String key(Context ctx) {
-        List<String> names = keyedOn.get(ctx.path());
+        String path = ctx.path();
+        List<String> names = keyedOn.get(path.substring(0, path.lastIndexOf('/')));
         if (names == null) {
-            return ctx.path();
+            return path;
         }
-        StringBuilder key = new StringBuilder(ctx.path());
+        StringBuilder key = new StringBuilder(path);
         for (String name : names) {
             key.append('\n').append(ctx.header(name));
         }
@@ -117,7 +118,8 @@ public final class CacheRoutes {
     // rb:end
 
     // rb:handler cache.small
-    @OpenApi(path = "/cache/small",
+    @OpenApi(path = "/cache/small/{key}",
+            pathParams = @OpenApiParam(name = "key", required = true),
             responses = @OpenApiResponse(status = "200", content = @OpenApiContent(from = Payload.class)))
     private void small(Context ctx) {
         Serial.write(ctx);
@@ -125,7 +127,8 @@ public final class CacheRoutes {
     }
 
     // rb:handler cache.medium
-    @OpenApi(path = "/cache/medium",
+    @OpenApi(path = "/cache/medium/{key}",
+            pathParams = @OpenApiParam(name = "key", required = true),
             responses = @OpenApiResponse(status = "200", content = @OpenApiContent(from = Payload.class)))
     private void medium(Context ctx) {
         Serial.write(ctx);
@@ -133,7 +136,8 @@ public final class CacheRoutes {
     }
 
     // rb:handler cache.large
-    @OpenApi(path = "/cache/large",
+    @OpenApi(path = "/cache/large/{key}",
+            pathParams = @OpenApiParam(name = "key", required = true),
             responses = @OpenApiResponse(status = "200", content = @OpenApiContent(from = Payload.class)))
     private void large(Context ctx) {
         Serial.write(ctx);
@@ -143,7 +147,8 @@ public final class CacheRoutes {
     // The Vary header tells a cache in front of the framework what the answer depends on. The store
     // keys on the route's own list of headers, not on this header.
     // rb:handler cache.vary_one
-    @OpenApi(path = "/cache/vary/one",
+    @OpenApi(path = "/cache/vary/one/{key}",
+            pathParams = @OpenApiParam(name = "key", required = true),
             headers = @OpenApiParam(name = "x-rb-tenant"),
             responses = @OpenApiResponse(status = "200", content = @OpenApiContent(from = Payload.class)))
     private void varyOne(Context ctx) {
@@ -153,7 +158,8 @@ public final class CacheRoutes {
     }
 
     // rb:handler cache.vary_many
-    @OpenApi(path = "/cache/vary/many",
+    @OpenApi(path = "/cache/vary/many/{key}",
+            pathParams = @OpenApiParam(name = "key", required = true),
             headers = {@OpenApiParam(name = "x-rb-channel"), @OpenApiParam(name = "x-rb-region"), @OpenApiParam(name = "x-rb-tenant")},
             responses = @OpenApiResponse(status = "200", content = @OpenApiContent(from = Payload.class)))
     private void varyMany(Context ctx) {
