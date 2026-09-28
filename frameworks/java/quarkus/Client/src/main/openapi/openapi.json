@@ -153,6 +153,27 @@
           }
         }
       },
+      "EchoedThree" : {
+        "type" : "object",
+        "properties" : {
+          "size" : {
+            "type" : "string"
+          },
+          "count" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Item"
+            }
+          },
+          "echo" : {
+            "$ref" : "#/components/schemas/Three"
+          }
+        }
+      },
       "EchoedTwo" : {
         "type" : "object",
         "properties" : {
@@ -410,6 +431,23 @@
           }
         }
       },
+      "Three" : {
+        "type" : "object",
+        "properties" : {
+          "one" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "two" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "three" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        }
+      },
       "Two" : {
         "type" : "object",
         "properties" : {
@@ -498,6 +536,37 @@
         },
         "summary" : "Small",
         "tags" : [ "Authorized Routes" ]
+      }
+    },
+    "/body/bind/large" : {
+      "post" : {
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/OrderRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/BoundOrderRequest"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Bad Request"
+          }
+        },
+        "summary" : "Bind Large",
+        "tags" : [ "Body Routes" ]
       }
     },
     "/body/bind/medium" : {
@@ -590,6 +659,37 @@
           }
         },
         "summary" : "Validate First Error",
+        "tags" : [ "Body Routes" ]
+      }
+    },
+    "/body/validate/large" : {
+      "post" : {
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/OrderRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/BoundOrderRequest"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Bad Request"
+          }
+        },
+        "summary" : "Validate Large",
         "tags" : [ "Body Routes" ]
       }
     },
@@ -1373,6 +1473,49 @@
         "tags" : [ "Parameters Routes" ]
       }
     },
+    "/parameters/{one}/{two}/{three}" : {
+      "get" : {
+        "parameters" : [ {
+          "name" : "one",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        }, {
+          "name" : "three",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        }, {
+          "name" : "two",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/EchoedThree"
+                }
+              }
+            }
+          }
+        },
+        "summary" : "Three",
+        "tags" : [ "Parameters Routes" ]
+      }
+    },
     "/plaintext" : {
       "get" : {
         "responses" : {
@@ -1525,6 +1668,24 @@
         },
         "summary" : "Items",
         "tags" : [ "Stream Routes" ]
+      }
+    },
+    "/template/large" : {
+      "get" : {
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "text/html" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/io.quarkus.qute.TemplateInstance"
+                }
+              }
+            }
+          }
+        },
+        "summary" : "Large",
+        "tags" : [ "Template Routes" ]
       }
     },
     "/template/medium" : {

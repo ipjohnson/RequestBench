@@ -32,8 +32,10 @@ public final class BodyRoutes {
     public void register(JavalinConfig config) {
         config.routes.post("/body/bind/small", this::bindSmall);
         config.routes.post("/body/bind/medium", this::bindMedium);
+        config.routes.post("/body/bind/large", this::bindLarge);
         config.routes.post("/body/validate/small", this::validateSmall);
         config.routes.post("/body/validate/medium", this::validateMedium);
+        config.routes.post("/body/validate/large", this::validateLarge);
         config.routes.post("/body/validate/first-error", this::validateFirstError);
     }
 
@@ -55,6 +57,15 @@ public final class BodyRoutes {
         ctx.json(Bound.of(ctx.bodyAsClass(OrderRequest.class), ctx));
     }
 
+    // rb:handler body.bind_large
+    @OpenApi(path = "/body/bind/large",
+            methods = HttpMethod.POST,
+            requestBody = @OpenApiRequestBody(content = @OpenApiContent(from = OrderRequest.class), required = true),
+            responses = @OpenApiResponse(status = "200", content = @OpenApiContent(from = Bound.class)))
+    private void bindLarge(Context ctx) {
+        ctx.json(Bound.of(ctx.bodyAsClass(OrderRequest.class), ctx));
+    }
+
     // rb:handler body.validate_small,body.rejected_all,errors.malformed
     @OpenApi(path = "/body/validate/small",
             methods = HttpMethod.POST,
@@ -70,6 +81,15 @@ public final class BodyRoutes {
             requestBody = @OpenApiRequestBody(content = @OpenApiContent(from = OrderRequest.class), required = true),
             responses = {@OpenApiResponse(status = "200", content = @OpenApiContent(from = Bound.class)), @OpenApiResponse(status = "400")})
     private void validateMedium(Context ctx) {
+        ctx.json(Bound.of(OrderRequest.validated(ctx), ctx));
+    }
+
+    // rb:handler body.validate_large
+    @OpenApi(path = "/body/validate/large",
+            methods = HttpMethod.POST,
+            requestBody = @OpenApiRequestBody(content = @OpenApiContent(from = OrderRequest.class), required = true),
+            responses = {@OpenApiResponse(status = "200", content = @OpenApiContent(from = Bound.class)), @OpenApiResponse(status = "400")})
+    private void validateLarge(Context ctx) {
         ctx.json(Bound.of(OrderRequest.validated(ctx), ctx));
     }
 

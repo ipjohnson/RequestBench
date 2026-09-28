@@ -13,7 +13,7 @@ public final class StaticRoutes {
 
     private StaticRoutes() {}
 
-    // rb:handler static.file
+    // rb:handler static.large,static.medium,static.small
     // rb:wiring static.*
     public static StaticContentFeature feature(Path payloads) {
         return StaticContentFeature.create(builder -> builder.addPath(path -> path.location(payloads).context("/static")));

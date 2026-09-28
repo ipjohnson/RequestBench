@@ -43,6 +43,11 @@ public final class TemplateRoutes implements HttpFeature {
             res.headers().contentType(MediaTypes.TEXT_HTML);
             res.send(page(p.medium()));
         });
+
+        routing.get("/template/large", (req, res) -> {
+            res.headers().contentType(MediaTypes.TEXT_HTML);
+            res.send(page(p.large()));
+        });
     }
 
     // rb:wiring template.*

@@ -9,17 +9,22 @@ import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.response.Response;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 @QuarkusTest
 class StaticTests {
 
-    // rb:test static.file
-    @Test
-    @Tag("static.file")
-    void theFileIsSentAsItIsWithItsLengthAndAge() {
-        Response response = get("/static/items.large.json");
+    // rb:test static.small,static.medium,static.large
+    @ParameterizedTest
+    @Tag("static.small")
+    @Tag("static.medium")
+    @Tag("static.large")
+    @ValueSource(strings = {"items.small.json", "items.medium.json", "items.large.json"})
+    void theFileIsSentAsItIsWithItsLengthAndAge(String name) {
+        Response response = get("/static/" + name);
 
-        byte[] file = Expected.bytes("items.large.json");
+        byte[] file = Expected.bytes(name);
         assertArrayEquals(file, response.asByteArray());
         assertEquals("application/json", response.contentType());
         assertEquals(String.valueOf(file.length), response.header("content-length"));

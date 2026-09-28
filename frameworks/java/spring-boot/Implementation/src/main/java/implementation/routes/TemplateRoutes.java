@@ -30,6 +30,11 @@ public class TemplateRoutes {
         return page(model, p.medium());
     }
 
+    @GetMapping("/template/large")
+    public String large(Model model) {
+        return page(model, p.large());
+    }
+
     // rb:wiring template.*
     /** The view name Thymeleaf's view resolver finds as templates/items-page.html, and its model. */
     private static String page(Model model, Payload payload) {

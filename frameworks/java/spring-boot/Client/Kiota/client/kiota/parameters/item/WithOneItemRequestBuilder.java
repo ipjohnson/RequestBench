@@ -1,5 +1,6 @@
 package client.kiota.parameters.item;
 
+import client.kiota.parameters.item.item.WithTwoItemRequestBuilder;
 import client.kiota.parameters.item.segment.SegmentRequestBuilder;
 import client.kiota.parameters.item.withsecond.WithSecondRequestBuilder;
 import com.microsoft.kiota.BaseRequestBuilder;
@@ -26,6 +27,18 @@ public class WithOneItemRequestBuilder extends BaseRequestBuilder {
     @jakarta.annotation.Nonnull
     public WithSecondRequestBuilder withSecond() {
         return new WithSecondRequestBuilder(pathParameters, requestAdapter);
+    }
+    /**
+     * Gets an item from the client.kiota.parameters.item.item collection
+     * @param two Unique identifier of the item
+     * @return a {@link WithTwoItemRequestBuilder}
+     */
+    @jakarta.annotation.Nonnull
+    public WithTwoItemRequestBuilder byTwo(@jakarta.annotation.Nonnull final Integer two) {
+        Objects.requireNonNull(two);
+        final HashMap<String, Object> urlTplParams = new HashMap<String, Object>(this.pathParameters);
+        urlTplParams.put("two", two);
+        return new WithTwoItemRequestBuilder(urlTplParams, requestAdapter);
     }
     /**
      * Instantiates a new {@link WithOneItemRequestBuilder} and sets the default values.

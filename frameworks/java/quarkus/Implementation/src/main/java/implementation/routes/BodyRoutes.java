@@ -42,6 +42,13 @@ public class BodyRoutes {
         return Bound.of(order, order.lines().size(), headers);
     }
 
+    // rb:handler body.bind_large
+    @POST
+    @Path("bind/large")
+    public Bound<OrderRequest> bindLarge(OrderRequest order, HttpHeaders headers) {
+        return Bound.of(order, order.lines().size(), headers);
+    }
+
     // rb:handler body.validate_small,body.rejected_all,errors.malformed
     @POST
     @Path("validate/small")
@@ -53,6 +60,13 @@ public class BodyRoutes {
     @POST
     @Path("validate/medium")
     public Bound<OrderRequest> validateMedium(@Valid OrderRequest order, HttpHeaders headers) {
+        return Bound.of(order, order.lines().size(), headers);
+    }
+
+    // rb:handler body.validate_large
+    @POST
+    @Path("validate/large")
+    public Bound<OrderRequest> validateLarge(@Valid OrderRequest order, HttpHeaders headers) {
         return Bound.of(order, order.lines().size(), headers);
     }
 

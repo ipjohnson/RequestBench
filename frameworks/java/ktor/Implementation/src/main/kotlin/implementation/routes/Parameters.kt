@@ -14,6 +14,9 @@ data class One(val one: Int)
 @Serializable
 data class Two(val one: Int, val two: Int)
 
+@Serializable
+data class Three(val one: Int, val two: Int, val three: Int)
+
 /**
  * parameters: path captures, each converted to an Int by getOrFail, which runs Ktor's data conversion
  * and refuses a value that is missing or does not convert with 400. Ktor's router tries a constant
@@ -26,5 +29,9 @@ fun Route.parameters(p: Payloads) {
     }
     get("/parameters/{one}/with-second/{two}") {
         call.respond(p.small.echoed(Two(call.parameters.getOrFail<Int>("one"), call.parameters.getOrFail<Int>("two"))))
+    }
+    get("/parameters/{one}/{two}/{three}") {
+        val captured = Three(call.parameters.getOrFail<Int>("one"), call.parameters.getOrFail<Int>("two"), call.parameters.getOrFail<Int>("three"))
+        call.respond(p.small.echoed(captured))
     }
 }

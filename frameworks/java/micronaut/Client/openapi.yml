@@ -23,6 +23,22 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Payload"
+  /body/bind/large:
+    post:
+      operationId: bindLarge
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrderRequest"
+        required: true
+      responses:
+        "200":
+          description: bindLarge 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BodyRoutes.Bound_OrderRequest_"
   /body/bind/medium:
     post:
       operationId: bindMedium
@@ -71,6 +87,22 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BodyRoutes.Bound_FirstErrorOrder_"
+  /body/validate/large:
+    post:
+      operationId: validateLarge
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrderRequest"
+        required: true
+      responses:
+        "200":
+          description: validateLarge 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BodyRoutes.Bound_OrderRequest_"
   /body/validate/medium:
     post:
       operationId: validateMedium
@@ -521,6 +553,35 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Echoed_ParametersRoutes.Two_"
+  /parameters/{one}/{two}/{three}:
+    get:
+      operationId: three
+      parameters:
+      - name: one
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int32
+      - name: two
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int32
+      - name: three
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        "200":
+          description: three 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Echoed_ParametersRoutes.Three_"
   /plaintext:
     get:
       operationId: plaintext
@@ -637,6 +698,16 @@ paths:
                 items:
                   type: string
                   format: binary
+  /template/large:
+    get:
+      operationId: large_4
+      responses:
+        "200":
+          description: large_4 200 response
+          content:
+            text/html:
+              schema:
+                $ref: "#/components/schemas/ModelAndView_Payload_"
   /template/medium:
     get:
       operationId: medium_3
@@ -757,6 +828,27 @@ components:
             $ref: "#/components/schemas/Item"
         echo:
           $ref: "#/components/schemas/ParametersRoutes.One"
+      description: A payload with the values a handler bound written back beside its
+        own fields.
+    Echoed_ParametersRoutes.Three_:
+      required:
+      - count
+      - echo
+      - items
+      - size
+      type: object
+      properties:
+        size:
+          type: string
+        count:
+          type: integer
+          format: int32
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Item"
+        echo:
+          $ref: "#/components/schemas/ParametersRoutes.Three"
       description: A payload with the values a handler bound written back beside its
         own fields.
     Echoed_ParametersRoutes.Two_:
@@ -932,7 +1024,9 @@ components:
           format: int32
         inStock:
           type: boolean
-      description: "One row of items.large, and of every payload made from it."
+      description: "One row of items.large, and of every payload made from it. The\
+        \ template reads each row's properties through Thymeleaf's OGNL, which uses\
+        \ reflection, so a native image has to keep them reflectively accessible."
     ItemsRoutes.ItemPatch:
       required:
       - inStock
@@ -1019,6 +1113,22 @@ components:
       type: object
       properties:
         one:
+          type: integer
+          format: int32
+    ParametersRoutes.Three:
+      required:
+      - one
+      - three
+      - two
+      type: object
+      properties:
+        one:
+          type: integer
+          format: int32
+        two:
+          type: integer
+          format: int32
+        three:
           type: integer
           format: int32
     ParametersRoutes.Two:

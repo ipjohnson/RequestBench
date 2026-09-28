@@ -20,6 +20,8 @@ public final class ParametersRoutes {
 
     public record Two(int one, int two) {}
 
+    public record Three(int one, int two, int three) {}
+
     private final Payloads p;
 
     public ParametersRoutes(Payloads p) {
@@ -27,11 +29,12 @@ public final class ParametersRoutes {
     }
 
     public void register(JavalinConfig config) {
-        // Before the capture, because Javalin answers with the first route that matches, and
-        // /parameters/{one}/segment/literal matches this path too.
+        // Each route before the captures that match its path too, because Javalin answers with
+        // the first route that matches. /parameters/{one}/{two}/{three} matches all three.
         config.routes.get("/parameters/static/segment/literal", this::literal);
         config.routes.get("/parameters/{one}/segment/literal", this::one);
         config.routes.get("/parameters/{one}/with-second/{two}", this::two);
+        config.routes.get("/parameters/{one}/{two}/{three}", this::three);
     }
 
     // rb:handler parameters.static
@@ -57,5 +60,19 @@ public final class ParametersRoutes {
             responses = @OpenApiResponse(status = "200", content = @OpenApiContent(from = Echoed.class)))
     private void two(Context ctx) {
         ctx.json(Echoed.of(p.small(), new Two(ctx.pathParamAsClass("one", Integer.class).get(), ctx.pathParamAsClass("two", Integer.class).get())));
+    }
+
+    // rb:handler parameters.three
+    @OpenApi(path = "/parameters/{one}/{two}/{three}",
+            pathParams = {
+                @OpenApiParam(name = "one", type = Integer.class, required = true),
+                @OpenApiParam(name = "two", type = Integer.class, required = true),
+                @OpenApiParam(name = "three", type = Integer.class, required = true)},
+            responses = @OpenApiResponse(status = "200", content = @OpenApiContent(from = Echoed.class)))
+    private void three(Context ctx) {
+        int one = ctx.pathParamAsClass("one", Integer.class).get();
+        int two = ctx.pathParamAsClass("two", Integer.class).get();
+        int three = ctx.pathParamAsClass("three", Integer.class).get();
+        ctx.json(Echoed.of(p.small(), new Three(one, two, three)));
     }
 }

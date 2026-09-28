@@ -31,6 +31,11 @@ public class TemplateRoutes {
         return page(p.medium());
     }
 
+    @Get(value = "/template/large", produces = MediaType.TEXT_HTML)
+    public ModelAndView<Payload> large() {
+        return page(p.large());
+    }
+
     // rb:wiring template.*
     /** The view Thymeleaf finds as views/items-page.html, and its model. */
     private static ModelAndView<Payload> page(Payload payload) {

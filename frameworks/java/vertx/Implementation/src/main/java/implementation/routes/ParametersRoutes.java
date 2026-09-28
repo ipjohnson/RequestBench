@@ -15,8 +15,9 @@ import io.vertx.json.schema.SchemaRepository;
 
 /**
  * parameters: router captures, each declared on a ValidationHandler with an integer schema, which
- * parses it before the route's handler reads it back typed. The static route is added first,
- * because Vert.x Web tries routes in order and :one/segment/literal matches its path too.
+ * parses it before the route's handler reads it back typed. Vert.x Web tries routes in order, so
+ * each route is added before any capture that also matches its path: the static route first,
+ * because :one/segment/literal matches its path, and the three captures last.
  */
 public final class ParametersRoutes {
 
@@ -32,6 +33,9 @@ public final class ParametersRoutes {
 
         router.get("/parameters/:one/with-second/:two").handler(captures(schemas, "one", "two"))
                 .handler(ctx -> ctx.json(Payloads.echoed(p.small(), bound(ctx, "one", "two"))));
+
+        router.get("/parameters/:one/:two/:three").handler(captures(schemas, "one", "two", "three"))
+                .handler(ctx -> ctx.json(Payloads.echoed(p.small(), bound(ctx, "one", "two", "three"))));
     }
 
     // rb:wiring parameters.*

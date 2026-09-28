@@ -1,5 +1,6 @@
 package client.kiota.template;
 
+import client.kiota.template.large.LargeRequestBuilder;
 import client.kiota.template.medium.MediumRequestBuilder;
 import client.kiota.template.small.SmallRequestBuilder;
 import com.microsoft.kiota.BaseRequestBuilder;
@@ -11,6 +12,14 @@ import java.util.Objects;
  */
 @jakarta.annotation.Generated("com.microsoft.kiota")
 public class TemplateRequestBuilder extends BaseRequestBuilder {
+    /**
+     * The large property
+     * @return a {@link LargeRequestBuilder}
+     */
+    @jakarta.annotation.Nonnull
+    public LargeRequestBuilder large() {
+        return new LargeRequestBuilder(pathParameters, requestAdapter);
+    }
     /**
      * The medium property
      * @return a {@link MediumRequestBuilder}

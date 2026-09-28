@@ -24,7 +24,7 @@ import io.micronaut.core.annotation.Nullable;
 import jakarta.annotation.Generated;
 
 /**
- * One row of items.large, and of every payload made from it.
+ * One row of items.large, and of every payload made from it. The template reads each row's properties through Thymeleaf's OGNL, which uses reflection, so a native image has to keep them reflectively accessible.
  */
 @JsonPropertyOrder({
     Item.JSON_PROPERTY_ID,

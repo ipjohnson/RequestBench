@@ -34,6 +34,17 @@ class ParametersTests {
         assertEquals(Expected.withEcho("items.small.json", echo), client.get("/parameters/${Expected.ONE}/with-second/${Expected.TWO}").json())
     }
 
+    // rb:test parameters.three
+    @Test
+    @Tag("parameters.three")
+    fun `all three captures are echoed as Ints`() = corpusTest {
+        val echo = buildJsonObject {
+            put("one", JsonPrimitive(Expected.ONE)); put("two", JsonPrimitive(Expected.TWO)); put("three", JsonPrimitive(Expected.THREE))
+        }
+
+        assertEquals(Expected.withEcho("items.small.json", echo), client.get("/parameters/${Expected.ONE}/${Expected.TWO}/${Expected.THREE}").json())
+    }
+
     @Test
     fun `a capture that is not an Int is refused with 400`() = corpusTest {
         assertEquals(HttpStatusCode.BadRequest, client.get("/parameters/four/segment/literal").status)

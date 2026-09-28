@@ -31,6 +31,15 @@ class ParametersTests extends VertxApp {
         Answer.is(Expected.withEcho("items.small.json", echo), get("/parameters/4821/with-second/7390"));
     }
 
+    // rb:test parameters.three
+    @Test
+    @Tag("parameters.three")
+    void threeCapturesAreBoundAsIntegers() throws Exception {
+        JsonObject echo = new JsonObject().put("one", 4821).put("two", 7390).put("three", 1563);
+
+        Answer.is(Expected.withEcho("items.small.json", echo), get("/parameters/4821/7390/1563"));
+    }
+
     @Test
     void aCaptureThatIsNotAnIntegerIsRefusedByTheValidationHandler() throws Exception {
         assertEquals(400, get("/parameters/abc/segment/literal").statusCode());

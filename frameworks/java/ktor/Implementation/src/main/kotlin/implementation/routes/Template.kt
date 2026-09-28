@@ -17,4 +17,5 @@ private fun page(payload: Payload) =
 fun Route.template(p: Payloads) {
     get("/template/small") { call.respond(page(p.small)) }
     get("/template/medium") { call.respond(page(p.medium)) }
+    get("/template/large") { call.respond(page(p.large)) }
 }

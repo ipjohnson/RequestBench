@@ -25,4 +25,11 @@ class ParametersTests extends MicronautApp {
     void twoCapturesAreBoundAsIntegers() throws Exception {
         Answer.is(Expected.withEcho("items.small.json", Expected.object("one", 4821, "two", 7390)), get("/parameters/4821/with-second/7390"));
     }
+
+    // rb:test parameters.three
+    @Test
+    @Tag("parameters.three")
+    void threeCapturesAreBoundAsIntegers() throws Exception {
+        Answer.is(Expected.withEcho("items.small.json", Expected.object("one", 4821, "two", 7390, "three", 1563)), get("/parameters/4821/7390/1563"));
+    }
 }

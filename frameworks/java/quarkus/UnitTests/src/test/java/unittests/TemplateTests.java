@@ -13,11 +13,12 @@ import org.junit.jupiter.params.provider.ValueSource;
 @QuarkusTest
 class TemplateTests {
 
-    // rb:test template.small,template.medium
+    // rb:test template.small,template.medium,template.large
     @ParameterizedTest
     @Tag("template.small")
     @Tag("template.medium")
-    @ValueSource(strings = {"small", "medium"})
+    @Tag("template.large")
+    @ValueSource(strings = {"small", "medium", "large"})
     void quteRendersThePayloadAsTheCorpusPage(String size) {
         Response response = get("/template/" + size);
 

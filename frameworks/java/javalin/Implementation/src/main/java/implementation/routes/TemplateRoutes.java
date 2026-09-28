@@ -31,6 +31,7 @@ public final class TemplateRoutes {
         config.fileRenderer(new JavalinMustache());
         config.routes.get("/template/small", this::small);
         config.routes.get("/template/medium", this::medium);
+        config.routes.get("/template/large", this::large);
     }
 
     // rb:handler template.small
@@ -45,6 +46,13 @@ public final class TemplateRoutes {
             responses = @OpenApiResponse(status = "200", content = @OpenApiContent(from = String.class, mimeType = "text/html")))
     private void medium(Context ctx) {
         ctx.render(PAGE, model(p.medium()));
+    }
+
+    // rb:handler template.large
+    @OpenApi(path = "/template/large",
+            responses = @OpenApiResponse(status = "200", content = @OpenApiContent(from = String.class, mimeType = "text/html")))
+    private void large(Context ctx) {
+        ctx.render(PAGE, model(p.large()));
     }
 
     private static Map<String, Object> model(Payload payload) {

@@ -80,8 +80,8 @@ per core, so two of the four serve.
 - Vert.x compresses on the HTTP server alone, so the compressor sits in every connection's
   pipeline and every answer passes through it. It compresses at any size when the request asks for
   gzip, so `/compressed/small` goes out as 133 gzipped bytes for its 123. With it on, Vert.x sends
-  a file through Netty's `ChunkedWriteHandler` rather than a zero-copy `FileRegion`, so static.file
-  pays for it too.
+  a file through Netty's `ChunkedWriteHandler` rather than a zero-copy `FileRegion`, so the static
+  tests pay for it too.
 - vertx-json-schema's default output, Flag, stops at the first failure and reports only that the
   body is invalid. The repository is set to Basic output, which lists every error, each with the
   JSON pointer of the value it is about.

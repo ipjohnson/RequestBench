@@ -19,6 +19,8 @@ public class ParametersRoutes {
 
     public record Two(int one, int two) {}
 
+    public record Three(int one, int two, int three) {}
+
     private final Payloads p;
 
     ParametersRoutes(Payloads p) {
@@ -44,5 +46,12 @@ public class ParametersRoutes {
     @Path("{one}/with-second/{two}")
     public Echoed<Two> two(@RestPath int one, @RestPath int two) {
         return Echoed.of(p.small(), new Two(one, two));
+    }
+
+    // rb:handler parameters.three
+    @GET
+    @Path("{one}/{two}/{three}")
+    public Echoed<Three> three(@RestPath int one, @RestPath int two, @RestPath int three) {
+        return Echoed.of(p.small(), new Three(one, two, three));
     }
 }

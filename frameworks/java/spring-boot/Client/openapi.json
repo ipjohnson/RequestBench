@@ -45,6 +45,34 @@
         "tags" : [ "authorized-routes" ]
       }
     },
+    "/body/bind/large" : {
+      "post" : {
+        "operationId" : "bindLarge",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/OrderRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/BoundOrderRequest"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "body-routes" ]
+      }
+    },
     "/body/bind/medium" : {
       "post" : {
         "operationId" : "bindMedium",
@@ -120,6 +148,34 @@
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/BoundFirstErrorOrder"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "body-routes" ]
+      }
+    },
+    "/body/validate/large" : {
+      "post" : {
+        "operationId" : "validateLarge",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/OrderRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/BoundOrderRequest"
                 }
               }
             },
@@ -878,6 +934,49 @@
         "tags" : [ "parameters-routes" ]
       }
     },
+    "/parameters/{one}/{two}/{three}" : {
+      "get" : {
+        "operationId" : "three",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "one",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }, {
+          "in" : "path",
+          "name" : "two",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }, {
+          "in" : "path",
+          "name" : "three",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/EchoedThree"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "parameters-routes" ]
+      }
+    },
     "/plaintext" : {
       "get" : {
         "operationId" : "plaintext",
@@ -1086,6 +1185,27 @@
           },
           "echo" : {
             "$ref" : "#/components/schemas/Search"
+          },
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Item"
+            }
+          },
+          "size" : {
+            "type" : "string"
+          }
+        }
+      },
+      "EchoedThree" : {
+        "type" : "object",
+        "properties" : {
+          "count" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "echo" : {
+            "$ref" : "#/components/schemas/Three"
           },
           "items" : {
             "type" : "array",
@@ -1320,6 +1440,23 @@
         }
       },
       "StreamingResponseBody" : { },
+      "Three" : {
+        "type" : "object",
+        "properties" : {
+          "one" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "three" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "two" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
       "Two" : {
         "type" : "object",
         "properties" : {

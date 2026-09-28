@@ -65,9 +65,13 @@ public final class BodyRoutes {
 
         router.post("/body/bind/medium").handler(body).handler(BodyRoutes::bind);
 
+        router.post("/body/bind/large").handler(body).handler(BodyRoutes::bind);
+
         router.post("/body/validate/small").handler(body).handler(order).handler(BodyRoutes::validated);
 
         router.post("/body/validate/medium").handler(body).handler(order).handler(BodyRoutes::validated);
+
+        router.post("/body/validate/large").handler(body).handler(order).handler(BodyRoutes::validated);
 
         router.post("/body/validate/first-error").handler(body)
                 .handler(field(oneAtATime, "customerId", customerId()))

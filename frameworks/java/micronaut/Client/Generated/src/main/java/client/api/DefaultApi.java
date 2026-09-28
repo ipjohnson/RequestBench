@@ -20,6 +20,7 @@ import client.model.BodyRoutesBoundOrderRequest;
 import client.model.ContractRoutesMeta;
 import client.model.EchoedHeadersRoutesBound;
 import client.model.EchoedParametersRoutesOne;
+import client.model.EchoedParametersRoutesThree;
 import client.model.EchoedParametersRoutesTwo;
 import client.model.EchoedQueryRoutesOne;
 import client.model.EchoedSearch;
@@ -60,6 +61,18 @@ public interface DefaultApi {
         @Header("x-rb-tenant") @NotNull String xrbTenant,
         @Header("x-rb-request-id") @NotNull String xrbRequestId,
         @Header("x-rb-account") @NotNull Integer xrbAccount
+    );
+
+    /**
+     * bindLarge
+     *
+     * @param orderRequest (required)
+     *
+     * @return bindLarge 200 response (status code 200)
+     */
+    @Post("/body/bind/large")
+    Mono<@Valid BodyRoutesBoundOrderRequest> bindLarge(
+        @Body @NotNull @Valid OrderRequest orderRequest
     );
 
     /**
@@ -175,6 +188,15 @@ public interface DefaultApi {
      */
     @Get("/json/large")
     Mono<@Valid Payload> large3();
+
+    /**
+     * large4
+     *
+     * @return large_4 200 response (status code 200)
+     */
+    @Get("/template/large")
+    @Consumes("text/html")
+    Mono<@Valid ModelAndViewPayload> large4();
 
     /**
      * literal
@@ -396,6 +418,22 @@ public interface DefaultApi {
     Mono<@Valid ModelAndViewPayload> small6();
 
     /**
+     * three
+     *
+     * @param one (required)
+     * @param two (required)
+     * @param three (required)
+     *
+     * @return three 200 response (status code 200)
+     */
+    @Get("/parameters/{one}/{two}/{three}")
+    Mono<@Valid EchoedParametersRoutesThree> three(
+        @PathVariable("one") @NotNull Integer one,
+        @PathVariable("two") @NotNull Integer two,
+        @PathVariable("three") @NotNull Integer three
+    );
+
+    /**
      * two
      *
      * @param one (required)
@@ -460,6 +498,18 @@ public interface DefaultApi {
     @Post("/body/validate/first-error")
     Mono<@Valid BodyRoutesBoundFirstErrorOrder> validateFirstError(
         @Body @NotNull @Valid FirstErrorOrder firstErrorOrder
+    );
+
+    /**
+     * validateLarge
+     *
+     * @param orderRequest (required)
+     *
+     * @return validateLarge 200 response (status code 200)
+     */
+    @Post("/body/validate/large")
+    Mono<@Valid BodyRoutesBoundOrderRequest> validateLarge(
+        @Body @NotNull @Valid OrderRequest orderRequest
     );
 
     /**

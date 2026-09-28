@@ -14,7 +14,7 @@ import io.ktor.server.routing.route
  * installs the etag routes' body tag too, which tags no file.
  */
 fun Route.statics(p: Payloads) {
-    // rb:handler static.file
+    // rb:handler static.large,static.medium,static.small
     // rb:wiring static.*
     route("/static") {
         install(ConditionalHeaders, bodyTag)
