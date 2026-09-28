@@ -20,7 +20,7 @@
   },
   "mechanisms": {
     "authorized": {
-      "mechanism": "tower-http's ValidateRequestHeaderLayer on the route, which answers 403 unless Authorization is settings.json's bearer token",
+      "mechanism": "tower-http's ValidateRequestHeaderLayer on the route, which answers 403 unless Authorization is one bearer token",
       "dependency": "tower-http",
       "mentions": "ValidateRequestHeaderLayer"
     },

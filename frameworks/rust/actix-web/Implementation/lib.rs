@@ -36,7 +36,7 @@ pub use payloads::Payloads;
 /// thread, so the response cache's stores are made here, once, and every App the function
 /// configures shares them. The suite hands requests to an App it configures the same way.
 pub fn routes(p: &'static Payloads) -> impl Fn(&mut ServiceConfig) + Clone + Send + 'static {
-    let stores = routes::cache::Stores::new(&p.settings.cache);
+    let stores = routes::cache::Stores::new();
     move |cfg| {
         routes::contract::configure(cfg);
         routes::authorized::configure(cfg, p);

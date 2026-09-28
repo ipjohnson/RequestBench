@@ -26,6 +26,14 @@ server:
     fallback:
       enable: false
 
+# rb:wiring cache.*
+# Loco's in-memory cache, which the cache routes keep their answers in, with room for the cache
+# family's 52 keys.
+cache:
+  kind: InMem
+  max_capacity: 64
+# rb:end
+
 # No worker runs. Loco's default mode, BackgroundQueue, refuses to start without a queue to take
 # jobs from, and BackgroundAsync needs none.
 workers:

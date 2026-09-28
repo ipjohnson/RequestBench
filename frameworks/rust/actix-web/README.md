@@ -57,7 +57,7 @@ App from the function `routes` returns.
 | parameters, query | The `Path` and `Query` extractors, which bind into a struct and convert the numbers to integers. | actix-web |
 | headers | The `Header` extractor, over an implementation of actix-web's `Header` trait for each of the three headers. | actix-web |
 | body | `Json` binds the order. On the validate routes, an extractor written here parses it with actix-web's `JsonBody` and runs the validator crate's rules first, refusing with 400 and validator's errors as JSON. | validator, and an extractor by hand |
-| authorized | actix-web-httpauth's bearer middleware on the resource, whose validator answers 403 unless the token is settings.json's. | actix-web-httpauth |
+| authorized | actix-web-httpauth's bearer middleware on the resource, whose validator answers 403 unless the token is the one it names. | actix-web-httpauth |
 | cache | A `from_fn` middleware written here, around each cache route's resource, over a `cached` LRU with a time to live, keyed by the path and the headers the route varies on. | by hand |
 | compressed | `Compress` around the /compressed scope, gzip at flate2's fast level. | actix-web |
 | etag | actix-middleware-etag's `Etag` around the /etag scope, which hashes the answer with xxh3 and answers 304 when If-None-Match names it. | actix-middleware-etag |

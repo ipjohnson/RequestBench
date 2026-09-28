@@ -1,11 +1,9 @@
 use rocket::http::{Header, Status};
 use rocket::local::blocking::{Client, LocalResponse};
 
-use crate::support::{client, expected, get, header, json, payloads};
+use crate::support::{client, expected, get, header, json};
 
-fn origin() -> String {
-    payloads().settings.cors.origin
-}
+const ORIGIN: &str = "https://shop.example.com";
 
 fn preflight<'c>(client: &'c Client, from: &str) -> LocalResponse<'c> {
     client
@@ -22,10 +20,10 @@ fn preflight<'c>(client: &'c Client, from: &str) -> LocalResponse<'c> {
 fn the_crate_answers_a_preflight_before_any_handler() {
     let client = client();
 
-    let response = preflight(&client, &origin());
+    let response = preflight(&client, &ORIGIN);
 
     assert_eq!(response.status(), Status::Ok);
-    assert_eq!(header(&response, "access-control-allow-origin"), Some(origin()));
+    assert_eq!(header(&response, "access-control-allow-origin").as_deref(), Some(ORIGIN));
     assert_eq!(header(&response, "access-control-allow-headers").map(|h| h.to_lowercase()).as_deref(), Some("x-rb-tenant"));
     assert_eq!(header(&response, "access-control-max-age").as_deref(), Some("600"));
     assert_eq!(header(&response, "x-rb-serial"), None);
@@ -48,9 +46,9 @@ fn a_preflight_from_another_origin_is_not_allowed() {
 fn the_request_itself_reaches_the_handler() {
     let client = client();
 
-    let response = get(&client, "/cors/small", &[("origin", &origin()), ("x-rb-tenant", "qwertyuiopas")]);
+    let response = get(&client, "/cors/small", &[("origin", &ORIGIN), ("x-rb-tenant", "qwertyuiopas")]);
 
-    assert_eq!(header(&response, "access-control-allow-origin"), Some(origin()));
+    assert_eq!(header(&response, "access-control-allow-origin").as_deref(), Some(ORIGIN));
     assert!(header(&response, "x-rb-serial").is_some());
     assert_eq!(json(response), expected("items.small.json"));
 }
@@ -62,7 +60,7 @@ fn the_request_itself_reaches_the_handler() {
 fn the_answer_does_not_vary_on_origin() {
     let client = client();
 
-    let response = get(&client, "/cors/small", &[("origin", &origin())]);
+    let response = get(&client, "/cors/small", &[("origin", &ORIGIN)]);
 
     assert_eq!(header(&response, "vary"), None);
 }
@@ -73,7 +71,7 @@ fn the_answer_does_not_vary_on_origin() {
 fn a_route_outside_cors_gets_no_policy() {
     let client = client();
 
-    let response = get(&client, "/json/small", &[("origin", &origin())]);
+    let response = get(&client, "/json/small", &[("origin", &ORIGIN)]);
 
     assert_eq!(response.status(), Status::Ok);
     assert_eq!(header(&response, "access-control-allow-origin"), None);

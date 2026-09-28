@@ -14,7 +14,7 @@
   "suite": { "argv": ["cargo", "test", "--locked"], "paths": ["UnitTests"] },
   "upgrade": { "argv": ["cargo", "update"] },
   "skips": {
-    "cors.vary": "rocket_cors writes Vary: Origin only when it allows every origin and echoes the one that asked, and settings.json names one."
+    "cors.vary": "rocket_cors writes Vary: Origin only when it allows every origin and echoes the one that asked, and the policy names one."
   },
   "noHandler": {
     "cors.preflight": "rocket_cors's catch-all OPTIONS route, mounted under /cors, answers the preflight, and no handler of this application runs.",
@@ -23,7 +23,7 @@
   },
   "mechanisms": {
     "authorized": {
-      "mechanism": "A request guard on the route, which Rocket resolves before the handler and which fails with 403 unless Authorization is settings.json's bearer token. Rocket's default catcher answers the 403"
+      "mechanism": "A request guard on the route, which Rocket resolves before the handler and which fails with 403 unless Authorization is one bearer token. Rocket's default catcher answers the 403"
     },
     "baseline": { "builtin": "The handler returns the string, which Rocket sends as text/plain." },
     "body": {

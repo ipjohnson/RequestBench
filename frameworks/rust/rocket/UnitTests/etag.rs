@@ -41,7 +41,7 @@ fn a_matching_tag_is_not_modified() {
 #[test]
 fn a_stale_tag_is_answered_in_full() {
     let client = client();
-    let stale = expected("settings.json")["staleEtag"].as_str().unwrap().to_owned();
+    let stale = "\"0000000000000000\"".to_owned();
 
     let response = get(&client, "/etag/large", &[("if-none-match", &stale)]);
 

@@ -40,7 +40,7 @@ async fn a_matching_tag_is_not_modified() {
 /// etag.stale_large: a tag that does not match is answered in full.
 #[actix_web::test]
 async fn a_stale_tag_is_answered_in_full() {
-    let stale = expected("settings.json")["staleEtag"].as_str().unwrap().to_owned();
+    let stale = "\"0000000000000000\"".to_owned();
 
     let response = app().await.get_with("/etag/large", &[("if-none-match", &stale)]).await;
 

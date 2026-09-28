@@ -3,27 +3,28 @@ use implementation::app::App;
 use loco_rs::testing::request::request;
 use serde_json::Value;
 
-use crate::support::{expected, settings};
+use crate::support::expected;
+
+const ORIGIN: &str = "https://shop.example.com";
 
 // rb:test cors.preflight
 /// cors.preflight: the layer on the cors routes answers the preflight, and no handler runs.
 #[tokio::test]
 async fn the_layer_answers_the_preflight() {
     request::<App, _, _>(|server, _| async move {
-        let cors = settings()["cors"].clone();
-        let origin = cors["origin"].as_str().unwrap().to_owned();
+        let origin = ORIGIN.to_owned();
 
         let response = server
             .method(Method::OPTIONS, "/cors/small")
             .add_header("origin", origin.clone())
-            .add_header("access-control-request-method", cors["method"].as_str().unwrap().to_owned())
-            .add_header("access-control-request-headers", cors["header"].as_str().unwrap().to_owned())
+            .add_header("access-control-request-method", "GET")
+            .add_header("access-control-request-headers", "x-rb-tenant")
             .await;
 
         response.assert_status_ok();
         assert_eq!(response.header("access-control-allow-origin"), origin.as_str());
-        assert_eq!(response.header("access-control-allow-headers"), cors["header"].as_str().unwrap());
-        assert_eq!(response.header("access-control-max-age"), cors["maxAgeSeconds"].to_string().as_str());
+        assert_eq!(response.header("access-control-allow-headers"), "x-rb-tenant");
+        assert_eq!(response.header("access-control-max-age"), "600");
         assert_eq!(response.maybe_header("x-rb-serial"), None);
     })
     .await;
@@ -34,12 +35,11 @@ async fn the_layer_answers_the_preflight() {
 #[tokio::test]
 async fn another_origin_is_not_allowed() {
     request::<App, _, _>(|server, _| async move {
-        let cors = settings()["cors"].clone();
 
         let response = server
             .method(Method::OPTIONS, "/cors/small")
             .add_header("origin", "https://elsewhere.example.net")
-            .add_header("access-control-request-method", cors["method"].as_str().unwrap().to_owned())
+            .add_header("access-control-request-method", "GET")
             .await;
 
         assert_eq!(response.maybe_header("access-control-allow-origin"), None);
@@ -52,7 +52,7 @@ async fn another_origin_is_not_allowed() {
 #[tokio::test]
 async fn the_request_reaches_the_handler() {
     request::<App, _, _>(|server, _| async move {
-        let origin = settings()["cors"]["origin"].as_str().unwrap().to_owned();
+        let origin = ORIGIN.to_owned();
 
         let response = server.get("/cors/small").add_header("origin", origin.clone()).await;
 
@@ -70,7 +70,7 @@ async fn the_request_reaches_the_handler() {
 #[tokio::test]
 async fn a_route_outside_cors_gets_no_policy() {
     request::<App, _, _>(|server, _| async move {
-        let origin = settings()["cors"]["origin"].as_str().unwrap().to_owned();
+        let origin = ORIGIN.to_owned();
 
         let response = server.get("/json/small").add_header("origin", origin).await;
 

@@ -14,7 +14,7 @@
   "suite": { "argv": ["cargo", "test", "--locked"], "paths": ["UnitTests"] },
   "upgrade": { "argv": ["cargo", "update"] },
   "skips": {
-    "cors.vary": "poem's Cors writes Vary: Origin only for an origin it matched by a pattern or a function, never for one it lists, and settings.json names one."
+    "cors.vary": "poem's Cors writes Vary: Origin only for an origin it matched by a pattern or a function, never for one it lists, and the policy names one."
   },
   "noHandler": {
     "cors.preflight": "poem's Cors middleware on the /cors route answers the preflight, and no handler runs.",
@@ -23,7 +23,7 @@
   },
   "mechanisms": {
     "authorized": {
-      "mechanism": "A poem Middleware on the route, written as poem's basic-auth example writes one, which answers 403 unless the bearer token in Authorization is settings.json's",
+      "mechanism": "A poem Middleware on the route, written as poem's basic-auth example writes one, which answers 403 unless the bearer token in Authorization is the one it names",
       "dependency": "poem",
       "mentions": "Middleware"
     },

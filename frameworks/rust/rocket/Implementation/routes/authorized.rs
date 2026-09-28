@@ -18,16 +18,15 @@ impl<'r> FromRequest<'r> for Bearer {
     type Error = ();
 
     async fn from_request(request: &'r Request<'_>) -> request::Outcome<Self, ()> {
-        let token = &request.rocket().state::<Payloads>().expect("the payloads are managed").settings.token;
         match request.headers().get_one("authorization").and_then(|v| v.strip_prefix("Bearer ")) {
-            Some(given) if given == token => Outcome::Success(Bearer),
+            Some("5a7cc77ed0dcb825806b6f872026c317") => Outcome::Success(Bearer),
             _ => Outcome::Error((Status::Forbidden, ())),
         }
     }
 }
 // rb:end
 
-/// authorized: the bearer guard on this one route, with settings.json's token.
+/// authorized: the bearer guard on this one route, with its one token.
 #[get("/authorized/small")]
 fn small(_bearer: Bearer, p: &State<Payloads>) -> Json<&Payload> {
     Json(&p.small)

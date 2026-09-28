@@ -28,7 +28,7 @@
   },
   "mechanisms": {
     "authorized": {
-      "mechanism": "A filter on the route, written here, that compares the Authorization header with settings.json's bearer token and rejects any other with a rejection of the application's own, which the recover handler answers with 403. warp's own header::exact answers a value that differs with 400",
+      "mechanism": "A filter on the route, written here, that compares the Authorization header with one bearer token and rejects any other with a rejection of the application's own, which the recover handler answers with 403. warp's own header::exact answers a value that differs with 400",
       "mentions": "reject::custom"
     },
     "baseline": { "builtin": "The handler returns the string, which warp sends as text/plain." },

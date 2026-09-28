@@ -20,7 +20,7 @@
   },
   "mechanisms": {
     "authorized": {
-      "mechanism": "actix-web-httpauth's bearer middleware on the resource, which reads the token before the handler and hands it to a validator that refuses any token but settings.json's with 403",
+      "mechanism": "actix-web-httpauth's bearer middleware on the resource, which reads the token before the handler and hands it to a validator that refuses any token but the one it names with 403",
       "dependency": "actix-web-httpauth",
       "mentions": "HttpAuthentication"
     },

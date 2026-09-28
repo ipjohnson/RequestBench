@@ -8,7 +8,7 @@ use loco_rs::prelude::*;
 use crate::Payloads;
 
 // rb:wiring authorized.*
-/// settings.json's bearer token, checked by an extractor before the handler runs, as Loco's own
+/// One bearer token, checked by an extractor before the handler runs, as Loco's own
 /// auth extractors check a JWT or an API key. Those look a user up in a database, which this
 /// application has none of. Any other token is refused with Loco's error JSON and 403.
 pub struct Bearer;
@@ -16,10 +16,9 @@ pub struct Bearer;
 impl FromRequestParts<AppContext> for Bearer {
     type Rejection = Error;
 
-    async fn from_request_parts(parts: &mut Parts, ctx: &AppContext) -> Result<Self> {
-        let p: &'static Payloads = ctx.shared_store.get().ok_or(Error::InternalServerError)?;
+    async fn from_request_parts(parts: &mut Parts, _: &AppContext) -> Result<Self> {
         let token = parts.headers.get(AUTHORIZATION).and_then(|value| value.to_str().ok()).and_then(|value| value.strip_prefix("Bearer "));
-        if token == Some(p.settings.token.as_str()) {
+        if token == Some("5a7cc77ed0dcb825806b6f872026c317") {
             Ok(Bearer)
         } else {
             Err(Error::CustomError(StatusCode::FORBIDDEN, ErrorDetail::new("forbidden", "The bearer token is not one this application accepts")))

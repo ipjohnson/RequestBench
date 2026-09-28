@@ -13,7 +13,7 @@ impl Reject for Invalid {}
 // rb:end
 
 // rb:wiring authorized.*
-/// A request without settings.json's bearer token.
+/// A request without the one bearer token the route accepts.
 #[derive(Debug)]
 pub struct Forbidden;
 

@@ -23,7 +23,7 @@
   },
   "mechanisms": {
     "authorized": {
-      "mechanism": "An extractor of the application's own, which checks settings.json's bearer token before the handler runs, as Loco's own auth extractors check a JWT or an API key against a user in a database, which this application has none of. Any other token is refused with Loco's error JSON and 403",
+      "mechanism": "An extractor of the application's own, which checks one bearer token before the handler runs, as Loco's own auth extractors check a JWT or an API key against a user in a database, which this application has none of. Any other token is refused with Loco's error JSON and 403",
       "mentions": "FromRequestParts"
     },
     "baseline": { "builtin": "Loco's format::text writes the string as text/plain." },
@@ -33,7 +33,7 @@
       "mentions": "Validate"
     },
     "cache": {
-      "mechanism": "Loco's in-memory cache, ctx.cache, sized by settings.json when the context is made. Loco ships no response cache, so each handler keeps its answer there with the serial it wrote, keyed by the path and the headers the route varies on, for settings.json's time to live",
+      "mechanism": "Loco's in-memory cache, ctx.cache, sized by the config file's cache block. Loco ships no response cache, so each handler keeps its answer there with the serial it wrote, keyed by the path and the headers the route varies on, for 30 seconds",
       "mentions": "ctx.cache"
     },
     "compressed": {
@@ -41,7 +41,7 @@
       "mentions": "compression"
     },
     "cors": {
-      "mechanism": "Loco's Cors, its cors middleware's settings, made into the middleware's layer with settings.json's policy and added to the cors routes alone with Loco's Routes::layer",
+      "mechanism": "Loco's Cors, its cors middleware's settings, made into the middleware's layer with the one policy and added to the cors routes alone with Loco's Routes::layer",
       "mentions": "Cors"
     },
     "errors": { "builtin": "axum's router answers a path no route matches with 404 and a method a path has no route for with 405, both with no body. Loco's Json extractor refuses a body that is not JSON with 400, and the items handlers answer a missing row with Loco's not_found, both with Loco's error JSON." },

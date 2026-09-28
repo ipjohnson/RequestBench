@@ -53,7 +53,7 @@ container runs two workers under its two-CPU budget, whichever way the budget is
 | parameters, query | The `Path` and `Query` extractors, which convert the numbers to integers. | axum |
 | headers | The handler reads the three headers from the `HeaderMap` extractor, because axum has no header binder. | axum |
 | body | `Json` binds the order. On the validate routes, `ValidatedJson`, an extractor of the port's own, runs the validator crate's rules first and refuses with 400 and validator's errors as JSON. | validator, and an extractor by hand |
-| authorized | `ValidateRequestHeaderLayer::has_header_value` on the route, which answers 403 unless Authorization is settings.json's bearer token. | tower-http |
+| authorized | `ValidateRequestHeaderLayer::has_header_value` on the route, which answers 403 unless Authorization is one bearer token. | tower-http |
 | cache | A `from_fn` layer on each cache route, over cached's `LruTtlCache`, an LRU with a time to live, keyed by the path and the headers the route varies on. | cached, and a layer by hand |
 | compressed | `CompressionLayer` on the compressed routes, gzip at its fastest level and the default threshold. | tower-http |
 | etag | A `from_fn` layer on the two routes that hashes the answer with SHA-1 and answers 304 when If-None-Match names it. | by hand |

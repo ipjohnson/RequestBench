@@ -19,7 +19,7 @@
   },
   "mechanisms": {
     "authorized": {
-      "mechanism": "A hoop on the route, written by hand because Salvo's basic-auth and jwt-auth hoops refuse with 401, which answers Salvo's 403 StatusError unless Authorization is settings.json's bearer token"
+      "mechanism": "A hoop on the route, written by hand because Salvo's basic-auth and jwt-auth hoops refuse with 401, which answers Salvo's 403 StatusError unless Authorization is one bearer token"
     },
     "baseline": { "builtin": "The handler returns the string, which Salvo writes as text/plain." },
     "body": {
@@ -28,7 +28,7 @@
       "mentions": "Validate"
     },
     "cache": {
-      "mechanism": "salvo-cache's Cache hoop on each cache route over a MokaStore sized from settings.json, keyed by Salvo's RequestIssuer and, on a vary route, the headers it varies on",
+      "mechanism": "salvo-cache's Cache hoop on each cache route over a MokaStore of 64 entries, each kept 30 seconds, keyed by Salvo's RequestIssuer and, on a vary route, the headers it varies on",
       "dependency": "salvo-cache",
       "mentions": "Cache::new"
     },

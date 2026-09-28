@@ -15,15 +15,13 @@ fn small<'r>(cors: Guard<'r>, p: &'r State<Payloads>) -> Responder<Fresh<Json<&'
     cors.responder(Fresh::new(Json(&p.small)))
 }
 
-pub fn stage(rocket: Rocket<Build>, p: &Payloads) -> Rocket<Build> {
-    let cors = &p.settings.cors;
-    let method = cors.method.parse::<Method>().expect("settings.json's cors.method is a method");
+pub fn stage(rocket: Rocket<Build>, _: &Payloads) -> Rocket<Build> {
     // rb:wiring cors.*
     let policy = CorsOptions {
-        allowed_origins: AllowedOrigins::some_exact(&[&cors.origin]),
-        allowed_methods: [method.into()].into_iter().collect(),
-        allowed_headers: AllowedHeaders::some(&[&cors.header]),
-        max_age: Some(cors.max_age_seconds),
+        allowed_origins: AllowedOrigins::some_exact(&["https://shop.example.com"]),
+        allowed_methods: [Method::Get.into()].into_iter().collect(),
+        allowed_headers: AllowedHeaders::some(&["x-rb-tenant"]),
+        max_age: Some(600),
         ..Default::default()
     };
     rocket

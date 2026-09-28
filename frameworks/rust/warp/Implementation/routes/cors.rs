@@ -8,9 +8,8 @@ use crate::{Payloads, Routes, answer, serial};
 /// first, and the filter answers a preflight there before the handler, so the handler's
 /// x-rb-serial is absent from it.
 pub fn routes(p: &'static Payloads) -> Routes {
-    let cors = &p.settings.cors;
     // rb:wiring cors.*
-    let policy = warp::cors().allow_origin(cors.origin.as_str()).allow_method(cors.method.as_str()).allow_header(cors.header.as_str()).max_age(Duration::from_secs(cors.max_age_seconds));
+    let policy = warp::cors().allow_origin("https://shop.example.com").allow_method("GET").allow_header("x-rb-tenant").max_age(Duration::from_secs(600));
 
     // rb:handler cors.request
     answer(warp::path!("cors" / "small").and(warp::get().map(move || serial::fresh(warp::reply::json(&p.small))).with(policy))).boxed()

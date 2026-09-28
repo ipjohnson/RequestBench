@@ -3,7 +3,7 @@ use implementation::app::App;
 use loco_rs::testing::request::request;
 use serde_json::Value;
 
-use crate::support::{expected, settings};
+use crate::support::expected;
 
 // rb:test etag.small,etag.large
 /// etag.small and etag.large: the answer carries the tag of its bytes.
@@ -42,7 +42,7 @@ async fn a_matching_tag_is_304() {
 #[tokio::test]
 async fn a_stale_tag_is_answered_in_full() {
     request::<App, _, _>(|server, _| async move {
-        let stale = settings()["staleEtag"].as_str().unwrap().to_owned();
+        let stale = "\"0000000000000000\"".to_owned();
 
         let response = server.get("/etag/large").add_header("if-none-match", stale).await;
 
