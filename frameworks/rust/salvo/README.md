@@ -1,6 +1,6 @@
 # Salvo
 
-Salvo 0.96.0 on tokio 1.53 and hyper 1, answering the RequestBench corpus. The contract every route
+Salvo 1.0.0 on tokio 1.53 and hyper 1, answering the RequestBench corpus. The contract every route
 follows is [`frameworks/openapi.json`](../../openapi.json).
 
 Salvo is a web framework built on hyper and tokio. Its routes are a tree of routers, each matching

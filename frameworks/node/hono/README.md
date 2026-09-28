@@ -1,6 +1,6 @@
 # Hono
 
-Hono 4.13.8 on Node.js 26, served by @hono/node-server 2.1.1, answering the RequestBench corpus.
+Hono 4.13.9 on Node.js 26, served by @hono/node-server 2.1.1, answering the RequestBench corpus.
 The contract every route follows is [`frameworks/openapi.json`](../../openapi.json).
 
 Hono is an HTTP framework built on the web standard Request and Response. A router matches each

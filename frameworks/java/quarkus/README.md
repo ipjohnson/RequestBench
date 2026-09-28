@@ -1,6 +1,6 @@
 # Quarkus
 
-Quarkus 3.39.4 with Quarkus REST on Vert.x 4.5, running on Java 25, answering the RequestBench
+Quarkus 3.39.5 with Quarkus REST on Vert.x 4.5, running on Java 25, answering the RequestBench
 corpus. The contract every route follows is [`frameworks/openapi.json`](../../openapi.json).
 
 Quarkus builds the application ahead of time from the extensions Implementation's pom names, and
