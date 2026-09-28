@@ -144,6 +144,55 @@
         }
       }
     },
+    "/body/bind/large": {
+      "post": {
+        "tags": [
+          "Body"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnvalidatedOrder"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnvalidatedOrder"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnvalidatedOrder"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/Bound"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Bound"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Bound"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/body/validate/small": {
       "post": {
         "tags": [
@@ -194,6 +243,55 @@
       }
     },
     "/body/validate/medium": {
+      "post": {
+        "tags": [
+          "Body"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrderRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrderRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrderRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/Bound"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Bound"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Bound"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/body/validate/large": {
       "post": {
         "tags": [
           "Body"
@@ -1431,6 +1529,76 @@
         }
       }
     },
+    "/parameters/{one}/{two}/{three}": {
+      "get": {
+        "tags": [
+          "Parameters"
+        ],
+        "parameters": [
+          {
+            "name": "one",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
+            "name": "two",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
+            "name": "three",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/EchoedOfParametersThree"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EchoedOfParametersThree"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EchoedOfParametersThree"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/query/one": {
       "get": {
         "tags": [
@@ -1703,6 +1871,38 @@
               },
               {
                 "$ref": "#/components/schemas/ParametersOne"
+              }
+            ]
+          }
+        }
+      },
+      "EchoedOfParametersThree": {
+        "type": "object",
+        "properties": {
+          "size": {
+            "type": "string"
+          },
+          "count": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Item"
+            }
+          },
+          "echo": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ParametersThree"
               }
             ]
           }
@@ -2015,6 +2215,40 @@
         "type": "object",
         "properties": {
           "one": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "ParametersThree": {
+        "required": [
+          "one",
+          "two",
+          "three"
+        ],
+        "type": "object",
+        "properties": {
+          "one": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "two": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "three": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
               "integer",

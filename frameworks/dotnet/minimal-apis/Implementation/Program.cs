@@ -72,7 +72,7 @@ builder.Services.AddAuthorization(options => options.AddPolicy(Policies.Token, p
 // rb:end
 // rb:wiring template.*
 // ASP.NET Core marks Razor components as unsupported under Native AOT. The one component here
-// renders statically, and lambda-emulator's native build answers both template tests.
+// renders statically, and lambda-emulator's native build answers every template test.
 #pragma warning disable IL2026
 builder.Services.AddRazorComponents();
 #pragma warning restore IL2026
@@ -103,8 +103,8 @@ app.UseStatusCodePages();
 // Ahead of the output cache, so a stored answer is kept as written and compressed for each
 // request that asks.
 app.UseResponseCompression();
-// static.file: ASP.NET Core's static-file feature, serving the payload directory.
-// rb:handler static.file
+// static: ASP.NET Core's static-file feature, serving the payload directory.
+// rb:handler static.large,static.medium,static.small
 // rb:wiring static.*
 app.UseStaticFiles(new StaticFileOptions
 {

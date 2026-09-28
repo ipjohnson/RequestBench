@@ -23,11 +23,17 @@ public sealed class BodyController : ControllerBase
     [HttpPost("/body/bind/medium")]
     public Bound BindMedium(UnvalidatedOrder order) => Bound.Of(order, Request);
 
+    [HttpPost("/body/bind/large")]
+    public Bound BindLarge(UnvalidatedOrder order) => Bound.Of(order, Request);
+
     [HttpPost("/body/validate/small")]
     public Bound ValidateSmall(OrderRequest order) => Bound.Of(order, Request);
 
     [HttpPost("/body/validate/medium")]
     public Bound ValidateMedium(OrderRequest order) => Bound.Of(order, Request);
+
+    [HttpPost("/body/validate/large")]
+    public Bound ValidateLarge(OrderRequest order) => Bound.Of(order, Request);
 
     [HttpPost("/body/validate/first-error")]
     [FirstError]

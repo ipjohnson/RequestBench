@@ -24,6 +24,14 @@ public sealed class BindMediumEndpoint : Endpoint<OrderRequest, Bound>
     public override Task HandleAsync(OrderRequest req, CancellationToken ct) => Send.OkAsync(Bound.Of(req, HttpContext.Request), ct);
 }
 
+// rb:handler body.bind_large
+public sealed class BindLargeEndpoint : Endpoint<OrderRequest, Bound>
+{
+    public override void Configure() => Post("/body/bind/large");
+
+    public override Task HandleAsync(OrderRequest req, CancellationToken ct) => Send.OkAsync(Bound.Of(req, HttpContext.Request), ct);
+}
+
 // rb:handler body.validate_small,body.rejected_all,errors.malformed
 public sealed class ValidateSmallEndpoint : Endpoint<CheckedOrder, Bound>
 {
@@ -36,6 +44,14 @@ public sealed class ValidateSmallEndpoint : Endpoint<CheckedOrder, Bound>
 public sealed class ValidateMediumEndpoint : Endpoint<CheckedOrder, Bound>
 {
     public override void Configure() => Post("/body/validate/medium");
+
+    public override Task HandleAsync(CheckedOrder req, CancellationToken ct) => Send.OkAsync(Bound.Of(req, HttpContext.Request), ct);
+}
+
+// rb:handler body.validate_large
+public sealed class ValidateLargeEndpoint : Endpoint<CheckedOrder, Bound>
+{
+    public override void Configure() => Post("/body/validate/large");
 
     public override Task HandleAsync(CheckedOrder req, CancellationToken ct) => Send.OkAsync(Bound.Of(req, HttpContext.Request), ct);
 }

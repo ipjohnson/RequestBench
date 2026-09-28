@@ -17,4 +17,7 @@ public sealed class ParametersController(Payloads payloads) : ControllerBase
 
     [HttpGet("/parameters/{one}/with-second/{two}")]
     public Echoed<ParametersTwo> Two(int one, int two) => new(payloads.Small, new(one, two));
+
+    [HttpGet("/parameters/{one}/{two}/{three}")]
+    public Echoed<ParametersThree> Three(int one, int two, int three) => new(payloads.Small, new(one, two, three));
 }

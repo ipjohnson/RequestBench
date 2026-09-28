@@ -130,7 +130,7 @@ Client section says.
   Razor components.
 - ASP.NET Core marks Razor components as unsupported under Native AOT: `AddRazorComponents` carries
   `RequiresUnreferencedCode`. The one component renders statically, and the native build answers
-  both template tests, so `Program.cs` suppresses the warning.
+  every template test, so `Program.cs` suppresses the warning.
 - A native build turns on the request delegate generator, which cannot see `ItemsPage`, because the
   Razor generator writes it. So the template handlers return the base `RazorComponentResult`.
 - `GetProperties` promises no order, and under Native AOT a property has no `MetadataToken` to sort

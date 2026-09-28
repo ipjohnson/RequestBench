@@ -16,4 +16,7 @@ public static class ParametersEndpoints
 
     [WolverineGet("/parameters/{one}/with-second/{two}")]
     public static Echoed<ParametersTwo> Two(int one, int two, Payloads p) => new(p.Small, new(one, two));
+
+    [WolverineGet("/parameters/{one}/{two}/{three}")]
+    public static Echoed<ParametersThree> Three(int one, int two, int three, Payloads p) => new(p.Small, new(one, two, three));
 }

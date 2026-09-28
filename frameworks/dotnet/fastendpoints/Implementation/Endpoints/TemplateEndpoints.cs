@@ -26,6 +26,14 @@ public sealed class TemplateMediumEndpoint(Payloads payloads) : EndpointWithoutR
     public override Task HandleAsync(CancellationToken ct) => Send.ResultAsync(Pages.Of(payloads.Medium));
 }
 
+// rb:handler template.large
+public sealed class TemplateLargeEndpoint(Payloads payloads) : EndpointWithoutRequest
+{
+    public override void Configure() => Get("/template/large");
+
+    public override Task HandleAsync(CancellationToken ct) => Send.ResultAsync(Pages.Of(payloads.Large));
+}
+
 // rb:wiring template.*
 internal static class Pages
 {

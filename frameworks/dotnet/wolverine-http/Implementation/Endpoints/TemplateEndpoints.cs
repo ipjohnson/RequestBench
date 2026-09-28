@@ -17,6 +17,9 @@ public static class TemplateEndpoints
     [WolverineGet("/template/medium")]
     public static RazorComponentResult<ItemsPage> Medium(Payloads p) => Page(p.Medium);
 
+    [WolverineGet("/template/large")]
+    public static RazorComponentResult<ItemsPage> Large(Payloads p) => Page(p.Large);
+
     // rb:wiring template.*
     private static RazorComponentResult<ItemsPage> Page(Payload payload) =>
         new(new Dictionary<string, object?> { [nameof(ItemsPage.Body)] = payload });

@@ -16,6 +16,8 @@ public sealed class TemplateRoutes : ICarterModule
         app.MapGet("/template/small", (Payloads p) => Page(p.Small));
 
         app.MapGet("/template/medium", (Payloads p) => Page(p.Medium));
+
+        app.MapGet("/template/large", (Payloads p) => Page(p.Large));
     }
 
     // rb:wiring template.*

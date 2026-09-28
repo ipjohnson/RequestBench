@@ -26,9 +26,13 @@ public static class BodyRoutes
 
         app.MapPost("/body/bind/medium", (OrderRequest order, HttpRequest request) => Bound.Of(order, request)).DisableValidation();
 
+        app.MapPost("/body/bind/large", (OrderRequest order, HttpRequest request) => Bound.Of(order, request)).DisableValidation();
+
         app.MapPost("/body/validate/small", (OrderRequest order, HttpRequest request) => Bound.Of(order, request));
 
         app.MapPost("/body/validate/medium", (OrderRequest order, HttpRequest request) => Bound.Of(order, request));
+
+        app.MapPost("/body/validate/large", (OrderRequest order, HttpRequest request) => Bound.Of(order, request));
 
         app.MapPost("/body/validate/first-error", (OrderRequest order, HttpRequest request) => Bound.Of(order, request))
            .DisableValidation()

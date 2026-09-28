@@ -92,8 +92,8 @@ app.UseStatusCodePages();
 // Ahead of the output cache, so a stored answer is kept as written and compressed for each
 // request that asks.
 app.UseResponseCompression();
-// static.file: ASP.NET Core's static-file feature, serving the payload directory.
-// rb:handler static.file
+// static: ASP.NET Core's static-file feature, serving the payload directory.
+// rb:handler static.large,static.medium,static.small
 // rb:wiring static.*
 app.UseStaticFiles(new StaticFileOptions
 {

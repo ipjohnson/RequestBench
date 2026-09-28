@@ -16,9 +16,13 @@ public sealed class BodyRoutes : ICarterModule
 
         app.MapPost("/body/bind/medium", (OrderRequest order, HttpRequest request) => Bound.Of(order, request));
 
+        app.MapPost("/body/bind/large", (OrderRequest order, HttpRequest request) => Bound.Of(order, request));
+
         app.MapPost<OrderRequest>("/body/validate/small", (OrderRequest order, HttpRequest request) => Bound.Of(order, request));
 
         app.MapPost<OrderRequest>("/body/validate/medium", (OrderRequest order, HttpRequest request) => Bound.Of(order, request));
+
+        app.MapPost<OrderRequest>("/body/validate/large", (OrderRequest order, HttpRequest request) => Bound.Of(order, request));
 
         app.MapPost<FirstErrorOrder>("/body/validate/first-error", (FirstErrorOrder order, HttpRequest request) => Bound.Of(order, request));
     }

@@ -29,3 +29,11 @@ public sealed class ParametersTwoEndpoint(Payloads payloads) : Endpoint<Paramete
 
     public override Task HandleAsync(ParametersTwo req, CancellationToken ct) => Send.OkAsync(new(payloads.Small, req), ct);
 }
+
+// rb:handler parameters.three
+public sealed class ParametersThreeEndpoint(Payloads payloads) : Endpoint<ParametersThree, Echoed<ParametersThree>>
+{
+    public override void Configure() => Get("/parameters/{one}/{two}/{three}");
+
+    public override Task HandleAsync(ParametersThree req, CancellationToken ct) => Send.OkAsync(new(payloads.Small, req), ct);
+}
