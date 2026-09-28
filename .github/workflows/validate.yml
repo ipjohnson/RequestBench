@@ -52,6 +52,10 @@ jobs:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
+      # For orchestrator/hosts.ts, which imports nothing, so no npm ci.
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
       - id: pick
         env:
           BASE: ${{ github.event.pull_request.base.sha }}
@@ -81,9 +85,12 @@ jobs:
           echo "frameworks=$json" >> "$GITHUB_OUTPUT"
           echo "Frameworks to validate: $(jq -c 'map(.id)' <<< "$json")"
 
-          # One validation for each host a framework's rb.json names.
+          # One validation for each host a framework implements: each host whose dir its rb.json
+          # has an entry for.
+          hosts=$(node --experimental-strip-types --disable-warning=ExperimentalWarning --input-type=module \
+            -e 'const { HOSTS } = await import("./orchestrator/hosts.ts"); console.log(JSON.stringify(Object.values(HOSTS)))')
           validations=$(jq -c '.[]' <<< "$json" | while IFS= read -r framework; do
-            jq -c --argjson f "$framework" '.hosts | keys[] | $f + {host: .}' "$(jq -r .dir <<< "$framework")/rb.json"
+            jq -c --argjson f "$framework" --argjson hosts "$hosts" '.hosts as $entries | $hosts[] | select(.dir as $d | $entries | has($d)) | $f + {host: .id}' "$(jq -r .dir <<< "$framework")/rb.json"
           done | jq -sc .)
           echo "validations=$validations" >> "$GITHUB_OUTPUT"
 

@@ -82,15 +82,17 @@ A host is where a framework is started and how it is reached. `orchestrator/host
 | --- | --- |
 | `container-h1` | The framework's image in a container, reached over HTTP/1.1. |
 | `container-h2` | The framework's image in a container, reached over HTTP/2 with prior knowledge and no TLS. The load holds 16 connections of 16 streams each, the 256 in flight container-h1 holds. A framework whose server speaks only HTTP/1.1 runs on another server here, and its README says which. |
-| `lambda-emulator` | The framework as a Lambda function on its language's AWS base image, fed API Gateway payload format 2.0 events through the Lambda Runtime API. See [The function](#the-function). |
+| `lambda-emulator-512`, `lambda-emulator-1024` | The framework as a Lambda function on its language's AWS base image, fed API Gateway payload format 2.0 events through the Lambda Runtime API, in a container limited to 512 MB or 1,024 MB. See [The function](#the-function). |
 
-Each host the framework implements has a directory named for it. The directory holds the host's
-`Dockerfile` and the code that starts the application on that host, such as `main.go`,
-`server.ts`, `server.py` or `main.rs` for container-h1. The application in `Implementation/` is
-the same on every host, and so are the dependencies: a dependency only one host needs, such as a
-Lambda adapter, goes in the framework's one manifest and lockfile. A run on one host hashes the
-framework's files without the other hosts' directories, so changing how one host starts the
-framework does not change its code on another.
+Each host the framework implements has a directory named for it, except the two Lambda hosts.
+They differ only in the memory the orchestrator gives the function, so both run from
+`lambda-emulator/` and its entry in rb.json. The directory holds the host's `Dockerfile` and the
+code that starts the application on that host, such as `main.go`, `server.ts`, `server.py` or
+`main.rs` for container-h1. The application in `Implementation/` is the same on every host, and so
+are the dependencies: a dependency only one host needs, such as a Lambda adapter, goes in the
+framework's one manifest and lockfile. A run on one host hashes the framework's files without the
+other hosts' directories, so changing how one host starts the framework does not change its code on
+another.
 
 Every host offers every test. A test the framework cannot answer on a host goes in that host's
 `unsupported` in rb.json, with the reason. The gate reports it as unsupported and never sends it,
@@ -125,7 +127,7 @@ handler, `docker stop` waits out its timeout.
 
 ## The function
 
-On lambda-emulator the framework runs as a Lambda function, in an image built from its language's
+On the Lambda hosts the framework runs as a Lambda function, in an image built from its language's
 AWS base image. The base image's entrypoint execs `/var/runtime/bootstrap`, and refuses to start
 without one argument, the handler, so the Dockerfile ends with a `CMD` of one word. The framework's
 own Lambda adapter turns each event into a request for the application, and each answer into a
@@ -137,11 +139,12 @@ it. The function is ready when its runtime asks for its first event. It gets the
 | Setting | Value |
 | --- | --- |
 | `AWS_LAMBDA_RUNTIME_API` | The traffic generator's address. On Linux the function shares the host's network, and it listens on nothing. |
-| `AWS_LAMBDA_FUNCTION_MEMORY_SIZE` | `1769`, the size at which Lambda gives a function one vCPU. Several runtimes size their heap from it. |
+| `AWS_LAMBDA_FUNCTION_MEMORY_SIZE` | The host's memory, `512` or `1024`. Several runtimes size their heap from it. |
 | The rest of Lambda's variables | The function's name, version, log group and log stream, its initialization type and region, as `FUNCTION_ENV` in `orchestrator/container.ts` lists them |
-| `RB_HOST` | `lambda-emulator` |
+| `RB_HOST` | `lambda-emulator-512` or `lambda-emulator-1024` |
 | `RB_PAYLOADS` | `/rb/payloads`, a read-only mount of `tests/payloads` |
 | CPUs | One: the first core `RB_SUT_CPUS` names, or a quota of 1 |
+| Memory | The host's memory, as `--memory` and an equal `--memory-swap`, so the function has no swap. The kernel kills a function that goes over, and the failure says so. |
 
 The traffic generator reads each answer as a Function URL's caller reads it, so an answer to HEAD
 has no body, whatever the function posted. An adapter that buffers the whole answer cannot stream
@@ -161,7 +164,7 @@ rb.json declares what the framework is and how to build, test and upgrade it.
 | `package` | The registry page of the package that was resolved. |
 | `docs` | Optional. The framework's documentation. |
 | `lockfile` | The tracked files that pin the resolved versions, or `null` if nothing is pinned. |
-| `hosts` | For each host the framework implements, the `dockerfile` in the host's directory, optional `buildArgs`, and optional `unsupported`, which names each test the framework cannot answer on that host with the reason. See [Hosts](#hosts). |
+| `hosts` | For each host directory the framework implements, `container-h1`, `container-h2` or `lambda-emulator` for both Lambda hosts, the `dockerfile` in it, optional `buildArgs`, and optional `unsupported`, which names each test the framework cannot answer on that host with the reason. See [Hosts](#hosts). |
 | `suite` | How to run the framework's own tests. `argv` is the command, and `paths` are the directories that hold the tests. `cwd` and `env` are optional. |
 | `upgrade` | A command that moves the pinned versions within their ranges, or `null` if they are moved by hand. |
 | `client` | Optional. How `Client/` is written. See [Client](#client). |

@@ -4,7 +4,7 @@
 # results branch under runs/<month>/. The exemplars each framework's gate captured go under
 # exemplars/, in place of the ones an earlier run left, and pages.yml publishes the site when this
 # finishes. A run started by hand can name one host, such as
-# `gh workflow run measure.yml -f host=lambda-emulator`.
+# `gh workflow run measure.yml -f host=lambda-emulator-512`.
 name: measure
 
 on:
@@ -13,7 +13,7 @@ on:
   workflow_dispatch:
     inputs:
       host:
-        description: The one host to measure, such as lambda-emulator. Empty measures every host.
+        description: The one host to measure, such as lambda-emulator-512. Empty measures every host.
         required: false
         default: ""
 
@@ -31,13 +31,20 @@ jobs:
       hosts: ${{ steps.pick.outputs.hosts }}
     steps:
       - uses: actions/checkout@v7
-      # Every host an rb.json names, so a host no framework implements yet gets no job, or the one
-      # host a run started by hand names.
+      # For orchestrator/hosts.ts, which imports nothing, so no npm ci.
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+      # Every host whose dir some rb.json has an entry for, so a host no framework implements yet
+      # gets no job, or the one host a run started by hand names.
       - id: pick
         env:
           HOST: ${{ inputs.host }}
         run: |
-          hosts=$(git ls-files -- ':(glob)frameworks/*/*/rb.json' | xargs -n1 jq -r '.hosts | keys[]' | sort -u | jq -Rnc '[inputs]')
+          dirs=$(git ls-files -- ':(glob)frameworks/*/*/rb.json' | xargs -n1 jq -r '.hosts | keys[]' | sort -u | jq -Rnc '[inputs]')
+          hosts=$(node --experimental-strip-types --disable-warning=ExperimentalWarning --input-type=module \
+            -e 'const { HOSTS } = await import("./orchestrator/hosts.ts"); console.log(JSON.stringify(Object.values(HOSTS)))' \
+            | jq -c --argjson dirs "$dirs" '[.[] | select(.dir as $d | $dirs | index($d)) | .id]')
           if [ -n "$HOST" ]; then
             hosts=$(jq -c --arg host "$HOST" 'map(select(. == $host))' <<< "$hosts")
             if [ "$hosts" = "[]" ]; then

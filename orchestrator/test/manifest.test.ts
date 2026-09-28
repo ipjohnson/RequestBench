@@ -2,6 +2,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
+import { entryOf, hostsOf } from "../hosts.ts";
 import { loadFrameworks, type LoadInput } from "../manifest.ts";
 
 const DIR = "frameworks/node/demo";
@@ -118,8 +119,18 @@ test("a client's document is tracked and under Client/, and the command is decla
 test("a host must be one the benchmark measures on", () => {
   const hosts = { "container-h1": { dockerfile: "Dockerfile" }, "lambda-rie": { dockerfile: "Dockerfile" } };
   assert.deepEqual(problemsOf({ ...GOOD, hosts }), [
-    `${MANIFEST}: hosts.lambda-rie is not a host, only container-h1, container-h2, lambda-emulator are`,
+    `${MANIFEST}: hosts.lambda-rie is not a host directory, only container-h1, container-h2, lambda-emulator are`,
   ]);
+});
+
+test("the lambda-emulator entry is both Lambda hosts' entry", () => {
+  const lambda = { dockerfile: "lambda-emulator/Dockerfile", unsupported: { "json.small": "The adapter buffers the answer." } };
+  const hosts = { "container-h1": { dockerfile: "Dockerfile" }, "lambda-emulator": lambda };
+  assert.deepEqual(problemsOf({ ...GOOD, hosts }, { tracked: new Set([...FILES, `${DIR}/lambda-emulator/Dockerfile`]) }), []);
+  assert.deepEqual(hostsOf(hosts), ["container-h1", "lambda-emulator-512", "lambda-emulator-1024"]);
+  assert.equal(entryOf(hosts, "lambda-emulator-512"), lambda);
+  assert.equal(entryOf(hosts, "lambda-emulator-1024"), lambda);
+  assert.equal(entryOf(hosts, "container-h2"), undefined);
 });
 
 test("a host's unsupported tests are named by id, each with a reason", () => {

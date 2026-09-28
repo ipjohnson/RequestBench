@@ -17,7 +17,7 @@ import { join } from "node:path";
 
 import { frameworkDir, frameworkId, type FrameworkKey } from "./bundle.ts";
 import { git } from "./git.ts";
-import type { HostId } from "./hosts.ts";
+import { HOSTS, type Host, type HostId } from "./hosts.ts";
 
 /** Inside the container every framework binds this, and nothing outside it has to know which. */
 export const PORT = 8080;
@@ -179,21 +179,19 @@ export function start(root: string, built: Built, f: FrameworkKey, host: HostId,
 export type Spoken = "http/1.1" | "h2c";
 
 /**
- * What Lambda puts in a function's environment. The Node, Java and .NET bootstraps size their heap
- * or their GC from the memory, and Lambda gives a function one vCPU at 1,769 MB. The Rust and Node
- * runtime clients refuse to start without some of the rest.
- */
-/**
  * Where the traffic generator serves the Runtime API. On Linux the function shares the host's
  * network and reaches it on loopback. Elsewhere Docker Desktop's host.docker.internal reaches the
  * host, so it listens on every address.
  */
 export const RUNTIME_API_BIND = process.platform === "linux" ? "127.0.0.1:0" : "0.0.0.0:0";
 
+/**
+ * What Lambda puts in a function's environment, apart from AWS_LAMBDA_FUNCTION_MEMORY_SIZE, which
+ * is the host's `memoryMb`. The Rust and Node runtime clients refuse to start without some of these.
+ */
 export const FUNCTION_ENV = {
   AWS_LAMBDA_FUNCTION_NAME: "rb",
   AWS_LAMBDA_FUNCTION_VERSION: "$LATEST",
-  AWS_LAMBDA_FUNCTION_MEMORY_SIZE: "1769",
   AWS_LAMBDA_LOG_GROUP_NAME: "/aws/lambda/rb",
   AWS_LAMBDA_LOG_STREAM_NAME: "rb",
   AWS_LAMBDA_INITIALIZATION_TYPE: "on-demand",
@@ -211,13 +209,15 @@ export interface RunningFunction {
 }
 
 /**
- * lambda-emulator: the function's image, whose base image execs the runtime's bootstrap because
- * AWS_LAMBDA_RUNTIME_API is set, pointed at the Runtime API the traffic generator serves on
+ * A lambda-emulator host: the function's image, whose base image execs the runtime's bootstrap
+ * because AWS_LAMBDA_RUNTIME_API is set, pointed at the Runtime API the traffic generator serves on
  * `apiPort`. On Linux it shares the host's network, so the runtime reaches the server over
  * loopback with no bridge or NAT on the path, and a function listens on nothing. It runs on one
- * core: the first of RB_SUT_CPUS, or a quota of one.
+ * core, the first of RB_SUT_CPUS or a quota of one, in the host's `memoryMb`.
  */
 export function startFunction(root: string, built: Built, f: FrameworkKey, host: HostId, apiPort: number, b: Budget = budget()): RunningFunction {
+  const { memoryMb }: Host = HOSTS[host];
+  if (memoryMb === undefined) throw new Error(`${host} gives a function no memory`);
   const name = `rb-${f.language}-${f.name}-${host}-${randomBytes(3).toString("hex")}`;
   const linux = process.platform === "linux";
   const core = b.cpuset?.split(",")[0]?.split("-")[0];
@@ -231,18 +231,33 @@ export function startFunction(root: string, built: Built, f: FrameworkKey, host:
     `AWS_LAMBDA_RUNTIME_API=${linux ? "127.0.0.1" : "host.docker.internal"}:${apiPort}`,
     ...Object.entries(FUNCTION_ENV).flatMap(([k, v]) => ["-e", `${k}=${v}`]),
     "-e",
+    `AWS_LAMBDA_FUNCTION_MEMORY_SIZE=${memoryMb}`,
+    "-e",
     `RB_HOST=${host}`,
     "-e",
     `RB_PAYLOADS=${PAYLOADS_IN_CONTAINER}`,
     "-v",
     `${join(root, "tests", "payloads")}:${PAYLOADS_IN_CONTAINER}:ro`,
     ...(core ? ["--cpuset-cpus", core] : ["--cpus", "1"]),
+    // A --memory-swap equal to --memory leaves the container no swap.
+    "--memory",
+    `${memoryMb}m`,
+    "--memory-swap",
+    `${memoryMb}m`,
     built.tag,
   ];
   const t0 = performance.now();
   docker(args);
   return { name, startMs: performance.now() - t0, ...handle(name) };
 }
+
+const oomKilled = (name: string): boolean => {
+  try {
+    return docker(["inspect", "-f", "{{.State.OOMKilled}}", name]) === "true";
+  } catch {
+    return false;
+  }
+};
 
 /** Asking after a container, reading its log and stopping it, by its name. */
 function handle(name: string): Pick<RunningFunction, "alive" | "logs" | "stop"> {
@@ -254,10 +269,12 @@ function handle(name: string): Pick<RunningFunction, "alive" | "logs" | "stop"> 
         return false;
       }
     },
-    // Both streams: most frameworks write why they would not start to stderr.
+    // Both streams: most frameworks write why they would not start to stderr. A process the kernel
+    // killed at the memory limit writes nothing about it, so Docker's record of that comes first.
     logs: (lines = 40) => {
       const r = spawnSync("docker", ["logs", "--tail", String(lines), name], { encoding: "utf8" });
-      return `${r.stdout ?? ""}${r.stderr ?? ""}`.trim();
+      const text = `${r.stdout ?? ""}${r.stderr ?? ""}`.trim();
+      return oomKilled(name) ? `the kernel killed it at its memory limit\n${text}`.trim() : text;
     },
     stop: () => {
       try {

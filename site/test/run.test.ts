@@ -1,7 +1,7 @@
 // The lists a summary does not write down: its rungs, its tests and its languages.
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
-import { codeKey, familyOf, languageName, machineOf, machinesFor, metaOf, pageSlug, rungsOf, testOrder, timeline } from "../src/lib/run.ts";
+import { codeKey, familyOf, hostOrder, languageName, machineOf, machinesFor, metaOf, pageSlug, rungsOf, testOrder, timeline } from "../src/lib/run.ts";
 import type { Framework, Run } from "../src/lib/types.ts";
 
 const framework = (id: string, rungs: string[], tests: string[]): Framework => {
@@ -137,7 +137,14 @@ describe("pageSlug and codeKey", () => {
   });
 
   test("every other host's carry the host", () => {
-    assert.equal(pageSlug("go", "chi", "lambda-emulator"), "go-chi@lambda-emulator");
+    assert.equal(pageSlug("go", "chi", "lambda-emulator-512"), "go-chi@lambda-emulator-512");
     assert.equal(codeKey("go:chi", "container-h2"), "go:chi@container-h2");
+  });
+});
+
+describe("hostOrder", () => {
+  test("lists the hosts as orchestrator/hosts.ts does, then any host it no longer has", () => {
+    const hosts = ["lambda-emulator-1024", "lambda-emulator", "container-h2", "lambda-emulator-512", "container-h1"];
+    assert.deepEqual(hosts.sort(hostOrder), ["container-h1", "container-h2", "lambda-emulator-512", "lambda-emulator-1024", "lambda-emulator"]);
   });
 });

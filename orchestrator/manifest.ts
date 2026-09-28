@@ -15,7 +15,7 @@ import type { Framework, Test } from "@rb/tests/kit";
 import { frameworkDir, frameworkId, type FrameworkKey } from "./bundle.ts";
 import { discover, tracked } from "./discover.ts";
 import { declarationOf } from "./exceptions.ts";
-import { HOSTS, isHostId } from "./hosts.ts";
+import { HOST_DIRS } from "./hosts.ts";
 import { NOTES_HEADING, notesOf } from "./notes.ts";
 
 /** A command run on the machine with the language's toolchain. argv, never a shell string. */
@@ -47,7 +47,7 @@ export const rbJsonSchema = z.strictObject({
   docs: z.url().optional(),
   /** Tracked files that pin what the framework resolved. null states that it pins nothing. */
   lockfile: z.array(z.string().min(1)).min(1).nullable(),
-  /** How the framework is built and started on each host it implements. */
+  /** How the framework is built and started on the hosts it implements, keyed by each host's `dir` in orchestrator/hosts.ts. */
   hosts: z
     .record(
       z.string(),
@@ -156,11 +156,11 @@ function check(f: FrameworkKey & { dir: string; id: string }, rb: RbJson, input:
     for (const line of notes?.stray ?? []) out.push(`${readme}:${line}: a line under ${NOTES_HEADING} that is not part of its list`);
   }
   for (const lock of rb.lockfile ?? []) path("lockfile", lock, true);
-  for (const [host, entry] of Object.entries(rb.hosts)) {
-    if (!isHostId(host)) out.push(`${at}: hosts.${host} is not a host, only ${Object.keys(HOSTS).join(", ")} are`);
-    path(`hosts.${host}.dockerfile`, entry.dockerfile, true);
+  for (const [dir, entry] of Object.entries(rb.hosts)) {
+    if (!HOST_DIRS.includes(dir)) out.push(`${at}: hosts.${dir} is not a host directory, only ${HOST_DIRS.join(", ")} are`);
+    path(`hosts.${dir}.dockerfile`, entry.dockerfile, true);
     for (const id of Object.keys(entry.unsupported ?? {})) {
-      if (input.tests[id] === undefined) out.push(`${at}: hosts.${host}.unsupported.${id} names no test`);
+      if (input.tests[id] === undefined) out.push(`${at}: hosts.${dir}.unsupported.${id} names no test`);
     }
   }
   if (rb.suite !== undefined) {

@@ -122,16 +122,19 @@ A host is where a framework is started and how it is reached, and each host is i
 `container-h1` is the framework's image in a container, reached over HTTP/1.1, with 256
 connections that each carry one request at a time. `container-h2` reaches the framework's image
 over HTTP/2 with prior knowledge and no TLS, with 16 connections that each carry 16 streams.
-`lambda-emulator` runs the framework as a Lambda function on its language's AWS base image, on one
-core. The Rust program serves the Lambda Runtime API in Lambda's place, and the function's own
-runtime client asks it for each event, an API Gateway payload format 2.0 request. Its load is a
-closed loop: each event goes out the moment the runtime asks, for 120 recorded seconds on `ci` that
-start with the first event the function answers. Nothing warms it, because a Lambda function's
-first event is live traffic. The requests that learn each answer are sent to the gate's function
-instead. Each test records the invoke phase, from the event's write to the runtime's next request
-for one, and the Telemetry API's three spans within it. The run also keeps the first invocation
-and each second's mean invoke phase on their own, so the cold start shows apart from the tail. Each
-framework's container on the other hosts gets 2 CPUs. These variables change where things run:
+`lambda-emulator-512` and `lambda-emulator-1024` run the framework as a Lambda function on its
+language's AWS base image, on one core, in a container limited to 512 MB or 1,024 MB with no swap.
+Both run the image built from the framework's `lambda-emulator/` directory, and the function's
+runtime is told its size in `AWS_LAMBDA_FUNCTION_MEMORY_SIZE`. The Rust program serves the Lambda
+Runtime API in Lambda's place, and the function's own runtime client asks it for each event, an API
+Gateway payload format 2.0 request. Their load is a closed loop: each event goes out the moment the
+runtime asks, for 120 recorded seconds on `ci` that start with the first event the function
+answers. Nothing warms it, because a Lambda function's first event is live traffic. The requests
+that learn each answer are sent to the gate's function instead. Each test records the invoke phase,
+from the event's write to the runtime's next request for one, and the Telemetry API's three spans
+within it. The run also keeps the first invocation and each second's mean invoke phase on their
+own, so the cold start shows apart from the tail. Each framework's container on the other hosts
+gets 2 CPUs. These variables change where things run:
 
 | Variable | Effect |
 | --- | --- |
