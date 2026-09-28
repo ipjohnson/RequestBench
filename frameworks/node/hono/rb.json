@@ -36,7 +36,7 @@
       "mentions": "zValidator"
     },
     "cache": {
-      "mechanism": "hono/cache on each route, over the part of the Web Cache API it calls, written for Node as a Map that holds settings.json's capacity for its TTL",
+      "mechanism": "hono/cache on each route, over the part of the Web Cache API it calls, written for Node as a Map that holds 64 entries for 30 seconds",
       "mentions": "hono/cache"
     },
     "compressed": {

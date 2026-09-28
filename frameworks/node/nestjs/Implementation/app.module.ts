@@ -27,22 +27,22 @@ import { TemplateController } from './template/template.controller.js';
 
 /**
  * The application: one controller per corpus family, and the modules some families use. It is a
- * dynamic module, because the payloads configure the cache store and the static files, and the
+ * dynamic module, because the payloads' directory gives the static files, and the
  * platform the host runs gives the multipart route's controller. The errors family has no controller:
  * its answers are the router's, the body parser's and the items controller's.
  */
 @Module({})
 export class AppModule {
   static register(payloads: Payloads, platform: Platform): DynamicModule {
-    const cache = payloads.settings.cache;
     return {
       module: AppModule,
       global: true,
       imports: [
         MiddlewareModule,
         // rb:wiring cache.*
-        // An in-memory store sized in entries and aged by settings.json, as Nest's caching guide sets one up.
-        CacheModule.register({ stores: [new Keyv({ store: new KeyvCacheableMemory({ ttl: cache.ttlSeconds * 1000, lruSize: cache.capacity }) })] }),
+        // An in-memory store of 64 entries, room for the cache family's 52 keys, as Nest's caching guide
+        // sets one up. The cache controller says how long an answer is kept.
+        CacheModule.register({ stores: [new Keyv({ store: new KeyvCacheableMemory({ lruSize: 64 }) })] }),
         // rb:handler static.large,static.medium,static.small
         // rb:wiring static.*
         // renderPath is where ServeStaticModule answers index.html for a single-page application. The

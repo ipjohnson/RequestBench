@@ -10,11 +10,9 @@ import { fresh } from "../serial.ts";
  * its absence on a preflight shows the middleware answered alone.
  */
 const cors: Routes = (app, p) => {
-  const { origin, method, header, maxAgeSeconds } = p.settings.cors;
-
   // rb:wiring cors.*
   // A string origin is written back only to that origin, and the answer carries Vary: Origin.
-  app.use("/cors/*", policy({ origin, allowMethods: [method], allowHeaders: [header], maxAge: maxAgeSeconds }));
+  app.use("/cors/*", policy({ origin: "https://shop.example.com", allowMethods: ["GET"], allowHeaders: ["x-rb-tenant"], maxAge: 600 }));
 
   app.get("/cors/small", (c) => fresh(c, p.small));
 };

@@ -7,19 +7,19 @@ let app: NestExpressApplication;
 beforeAll(async () => (app = await expressApp()));
 afterAll(() => app.close());
 
-const cors = expected.settings().cors;
+const allowedOrigin = 'https://shop.example.com';
 
 const preflight = (url: string, origin: string) =>
-  request(app.getHttpServer()).options(url).set({ origin, 'access-control-request-method': cors.method, 'access-control-request-headers': cors.header });
+  request(app.getHttpServer()).options(url).set({ origin, 'access-control-request-method': 'GET', 'access-control-request-headers': 'x-rb-tenant' });
 
 // rb:test cors.preflight
 test('cors.preflight: the cors middleware answers the preflight before any handler', async () => {
-  const response = await preflight('/cors/small', cors.origin);
+  const response = await preflight('/cors/small', allowedOrigin);
 
   expect(response.status).toBe(204);
-  expect(response.headers['access-control-allow-origin']).toBe(cors.origin);
-  expect(response.headers['access-control-allow-headers']).toBe(cors.header);
-  expect(response.headers['access-control-max-age']).toBe(String(cors.maxAgeSeconds));
+  expect(response.headers['access-control-allow-origin']).toBe(allowedOrigin);
+  expect(response.headers['access-control-allow-headers']).toBe('x-rb-tenant');
+  expect(response.headers['access-control-max-age']).toBe('600');
   expect(response.headers['x-rb-serial']).toBeUndefined();
 });
 
@@ -32,10 +32,10 @@ test('cors.disallowed: a preflight from another origin is not allowed', async ()
 
 // rb:test cors.request,cors.vary
 test('cors.request cors.vary: the request reaches the handler and varies on origin', async () => {
-  const response = await request(app.getHttpServer()).get('/cors/small').set({ origin: cors.origin, [cors.header]: run.tenant });
+  const response = await request(app.getHttpServer()).get('/cors/small').set({ origin: allowedOrigin, 'x-rb-tenant': run.tenant });
 
   expect(response.body).toEqual(expected.json('items.small.json'));
-  expect(response.headers['access-control-allow-origin']).toBe(cors.origin);
+  expect(response.headers['access-control-allow-origin']).toBe(allowedOrigin);
   expect(response.headers['vary']).toMatch(/\bOrigin\b/);
   expect(response.headers['x-rb-serial']).toBeDefined();
 });
@@ -43,7 +43,7 @@ test('cors.request cors.vary: the request reaches the handler and varies on orig
 // rb.json skips cors.scoped for this. When Nest can scope its CORS to a route, this fails and the skip can go.
 // rb:test cors.scoped
 test('cors.scoped: enableCors covers the whole application, so a route outside /cors gets the policy too', async () => {
-  const response = await request(app.getHttpServer()).get('/json/small').set('origin', cors.origin);
+  const response = await request(app.getHttpServer()).get('/json/small').set('origin', allowedOrigin);
 
-  expect(response.headers['access-control-allow-origin']).toBe(cors.origin);
+  expect(response.headers['access-control-allow-origin']).toBe(allowedOrigin);
 });

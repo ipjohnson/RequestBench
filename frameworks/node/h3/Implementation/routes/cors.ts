@@ -1,4 +1,4 @@
-import { handleCors, type CorsOptions, type HTTPMethod } from "h3";
+import { handleCors, type CorsOptions } from "h3";
 
 import type { Routes } from "../app.ts";
 import { fresh } from "../serial.ts";
@@ -11,12 +11,10 @@ import { fresh } from "../serial.ts";
  * preflight shows handleCors answered alone.
  */
 const cors: Routes = (app, p) => {
-  const { origin, method, header, maxAgeSeconds } = p.settings.cors;
-
   // rb:wiring cors.*
   // The origin as a list of one, which handleCors checks the request's origin against, adding
   // Vary: Origin.
-  const options: CorsOptions = { origin: [origin], methods: [method as HTTPMethod], allowHeaders: [header], maxAge: String(maxAgeSeconds) };
+  const options: CorsOptions = { origin: ["https://shop.example.com"], methods: ["GET"], allowHeaders: ["x-rb-tenant"], maxAge: "600" };
 
   // rb:handler cors.request,cors.preflight
   app.all("/cors/small", (event) => {

@@ -7,7 +7,6 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import compression from 'compression';
 
 import { uploads } from './forms/forms.controller.js';
-import type { Payloads } from './payloads.js';
 import type { Platform } from './platform.js';
 
 const require = createRequire(import.meta.url);
@@ -23,8 +22,7 @@ export const express: Platform = {
  * for Express. Express itself tags every answer with an ETag and answers a matching If-None-Match
  * with 304, which is on by default.
  */
-export function configureExpress(app: NestExpressApplication, payloads: Payloads): void {
-  const cors = payloads.settings.cors;
+export function configureExpress(app: NestExpressApplication): void {
   // rb:wiring compressed.*
   // gzip at zlib's fastest level, which the compression middleware takes as its level. Its threshold
   // stays 1 kB.
@@ -32,7 +30,7 @@ export function configureExpress(app: NestExpressApplication, payloads: Payloads
   // rb:wiring cors.*
   // The origin as a list of one. Given a string, the cors middleware writes it on every answer, whichever
   // origin asked. Given a list, it checks the request's origin.
-  app.enableCors({ origin: [cors.origin], methods: [cors.method], allowedHeaders: [cors.header], maxAge: cors.maxAgeSeconds });
+  app.enableCors({ origin: ['https://shop.example.com'], methods: ['GET'], allowedHeaders: ['x-rb-tenant'], maxAge: 600 });
   // rb:wiring template.*
   app.setBaseViewsDir(join(import.meta.dirname, 'views'));
   app.setViewEngine('hbs');

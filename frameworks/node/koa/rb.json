@@ -41,7 +41,7 @@
       "dependency": "koa-compress"
     },
     "cors": {
-      "mechanism": "@koa/cors as route middleware on an OPTIONS route and on the GET route, allowing settings.json's origin by a function",
+      "mechanism": "@koa/cors as route middleware on an OPTIONS route and on the GET route, allowing its one origin by a function",
       "dependency": "@koa/cors"
     },
     "errors": {

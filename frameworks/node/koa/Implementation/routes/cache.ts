@@ -19,16 +19,18 @@ declare module "koa" {
  * replayed answer repeats the serial it was stored with.
  */
 const cache: Routes = (router, { payloads: p }) => {
-  const { capacity, ttlSeconds, vary } = p.settings.cache;
-  const one = Object.keys(vary.one);
-  const many = Object.keys(vary.many);
+  // Room for the cache family's 52 keys, each kept 30 seconds.
+  const capacity = 64;
+  const ttlSeconds = 30;
+  const one = ["x-rb-tenant"];
+  const many = ["x-rb-channel", "x-rb-region", "x-rb-tenant"];
 
   // rb:wiring cache.*
   /**
    * koa-cash as route middleware on these routes alone. A handler calls ctx.cashed(): on a hit
    * koa-cash has set the stored answer and the handler returns at once, and on a miss the handler
    * answers and koa-cash stores what it answered once the handler has returned. The store is an
-   * lru-cache, as koa-cash's own example has it, holding settings.json's capacity in entries.
+   * lru-cache, as koa-cash's own example has it, holding 64 entries.
    *
    * koa-cash stores the body, its type, Last-Modified and ETag, and no other header. The serial each
    * answer was built with is kept beside it under the same key, and a replay writes it back.

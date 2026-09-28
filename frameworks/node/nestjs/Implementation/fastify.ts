@@ -10,7 +10,6 @@ import { FileInterceptor } from '@nestjs/platform-fastify/multipart';
 import Handlebars from 'handlebars';
 
 import { uploads } from './forms/forms.controller.js';
-import type { Payloads } from './payloads.js';
 import type { Platform } from './platform.js';
 
 const require = createRequire(import.meta.url);
@@ -26,8 +25,7 @@ export const fastify: Platform = {
  * for Fastify. Fastify tags no answer by itself, so @fastify/etag does that, for the whole
  * application, as Express does by default on the other hosts.
  */
-export async function configureFastify(app: NestFastifyApplication, payloads: Payloads): Promise<void> {
-  const cors = payloads.settings.cors;
+export async function configureFastify(app: NestFastifyApplication): Promise<void> {
   // rb:wiring compressed.*
   // gzip and deflate at zlib's fastest level. The plugin's threshold is 1 kB.
   await app.register(fastifyCompress, { encodings: ['gzip', 'deflate'], zlibOptions: { level: constants.Z_BEST_SPEED } });
@@ -36,7 +34,7 @@ export async function configureFastify(app: NestFastifyApplication, payloads: Pa
   // rb:wiring cors.*
   // The origin as a list of one. Given a string, @fastify/cors writes it on every answer, whichever
   // origin asked. Given a list, it checks the request's origin.
-  app.enableCors({ origin: [cors.origin], methods: [cors.method], allowedHeaders: [cors.header], maxAge: cors.maxAgeSeconds });
+  app.enableCors({ origin: ['https://shop.example.com'], methods: ['GET'], allowedHeaders: ['x-rb-tenant'], maxAge: 600 });
   // rb:wiring template.*
   // The plugin setViewEngine would register, registered here and waited for. The application's
   // setViewEngine returns before the adapter has imported the plugin, and drops the promise of its

@@ -31,7 +31,7 @@ test('etag.match_large: a matching If-None-Match is 304 with no body, after the 
 
 // rb:test etag.stale_large
 test('etag.stale_large: a tag that does not match is answered in full', async () => {
-  const response = await request(app.getHttpServer()).get('/etag/large').set('if-none-match', expected.settings().staleEtag);
+  const response = await request(app.getHttpServer()).get('/etag/large').set('if-none-match', '"0000000000000000"');
 
   expect(response.status).toBe(200);
   expect(response.body).toEqual(expected.json('items.large.json'));

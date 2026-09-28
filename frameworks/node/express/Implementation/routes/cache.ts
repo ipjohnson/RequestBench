@@ -18,17 +18,19 @@ interface Stored {
  * so a replayed answer repeats the serial it was stored with.
  */
 const cache: Routes = (app, p) => {
-  const { capacity, ttlSeconds, vary } = p.settings.cache;
-  const one = Object.keys(vary.one);
-  const many = Object.keys(vary.many);
+  // Room for the cache family's 52 keys, each kept 30 seconds.
+  const capacity = 64;
+  const ttlSeconds = 30;
+  const one = ["x-rb-tenant"];
+  const many = ["x-rb-channel", "x-rb-region", "x-rb-tenant"];
 
   // rb:wiring cache.*
   /**
    * Express ships no response cache, and apicache, the one written for Express, was last released
    * in 2021, three years before Express 5. The replay is middleware in each cache route's handler
    * list: it answers from the store before the handler runs, or wraps res.send, through which
-   * res.json writes, to store what the handler sent. The store holds settings.json's capacity in
-   * entries, and drops the oldest to make room.
+   * res.json writes, to store what the handler sent. The store holds 64 entries, and drops the
+   * oldest to make room.
    */
   const store = new Map<string, Stored>();
 

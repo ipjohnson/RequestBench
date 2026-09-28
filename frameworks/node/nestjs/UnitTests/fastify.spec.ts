@@ -9,7 +9,7 @@ let app: NestFastifyApplication;
 beforeAll(async () => (app = await fastifyApp()));
 afterAll(() => app.close());
 
-const cors = expected.settings().cors;
+const allowedOrigin = 'https://shop.example.com';
 
 // rb:test compressed.gzip_large
 test('compressed.gzip_large: on Fastify, @fastify/compress gzips a large body when asked', async () => {
@@ -51,15 +51,15 @@ test('etag.match_large: on Fastify, a matching If-None-Match is 304 with no body
 // rb:test cors.preflight,cors.disallowed
 test('cors.preflight cors.disallowed: on Fastify, @fastify/cors answers the preflight for the one origin it allows', async () => {
   const preflight = (origin: string) =>
-    request(app.getHttpServer()).options('/cors/small').set({ origin, 'access-control-request-method': cors.method, 'access-control-request-headers': cors.header });
+    request(app.getHttpServer()).options('/cors/small').set({ origin, 'access-control-request-method': 'GET', 'access-control-request-headers': 'x-rb-tenant' });
 
-  const allowed = await preflight(cors.origin);
+  const allowed = await preflight(allowedOrigin);
   const disallowed = await preflight('https://elsewhere.example.net');
 
   expect(allowed.status).toBe(204);
-  expect(allowed.headers['access-control-allow-origin']).toBe(cors.origin);
-  expect(allowed.headers['access-control-allow-headers']).toBe(cors.header);
-  expect(allowed.headers['access-control-max-age']).toBe(String(cors.maxAgeSeconds));
+  expect(allowed.headers['access-control-allow-origin']).toBe(allowedOrigin);
+  expect(allowed.headers['access-control-allow-headers']).toBe('x-rb-tenant');
+  expect(allowed.headers['access-control-max-age']).toBe('600');
   expect(allowed.headers['x-rb-serial']).toBeUndefined();
   expect(disallowed.headers['access-control-allow-origin']).toBeUndefined();
 });

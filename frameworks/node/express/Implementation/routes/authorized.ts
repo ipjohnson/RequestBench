@@ -4,8 +4,8 @@ import type { Routes } from "../app.ts";
 
 // rb:wiring authorized.*
 /**
- * The token check, as middleware in the route's handler list, which runs before the handler. A
- * token that is not settings.json's is refused with res.sendStatus(403), which writes the status's
+ * The token check, as middleware in the route's handler list, which runs before the handler. Any
+ * other token is refused with res.sendStatus(403), which writes the status's
  * name as a text/plain body.
  */
 function requireToken(token: string): RequestHandler {
@@ -19,7 +19,7 @@ function requireToken(token: string): RequestHandler {
 
 /** authorized: Express has no authorization of its own, so the check is middleware on the route. */
 const authorized: Routes = (app, p) => {
-  app.get("/authorized/small", requireToken(p.settings.token), (_request, response) => response.json(p.small));
+  app.get("/authorized/small", requireToken("5a7cc77ed0dcb825806b6f872026c317"), (_request, response) => response.json(p.small));
 };
 
 export default authorized;

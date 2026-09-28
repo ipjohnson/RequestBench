@@ -20,7 +20,7 @@ function requireToken(token: string): Middleware {
 
 /** authorized: Koa has no authorization of its own, and the Koa organisation publishes none for a bearer token, so the check is route middleware. */
 const authorized: Routes = (router, { payloads: p }) => {
-  router.get("/authorized/small", requireToken(p.settings.token), (ctx) => {
+  router.get("/authorized/small", requireToken("5a7cc77ed0dcb825806b6f872026c317"), (ctx) => {
     ctx.body = p.small;
   });
 };

@@ -39,14 +39,14 @@ const payloads = load(directory);
 /** The application as container-h1 creates it, on Nest's Express adapter. */
 export async function expressApp(): Promise<NestExpressApplication> {
   const app = await NestFactory.create<NestExpressApplication>(AppModule.register(payloads, express), { logger: false, abortOnError: false });
-  configureExpress(app, payloads);
+  configureExpress(app);
   return app.init();
 }
 
 /** The application as container-h2 creates it, on Nest's Fastify adapter, over HTTP/1.1, which supertest speaks. */
 export async function fastifyApp(): Promise<NestFastifyApplication> {
   const app = await NestFactory.create<NestFastifyApplication>(AppModule.register(payloads, fastify), new FastifyAdapter(), { logger: false, abortOnError: false });
-  await configureFastify(app, payloads);
+  await configureFastify(app);
   await app.init();
   await app.getHttpAdapter().getInstance().ready();
   return app;
@@ -88,7 +88,6 @@ export const expected = {
 
   json: (file: string): Record<string, unknown> => JSON.parse(readFileSync(join(directory, file), 'utf8')),
 
-  settings: () => expected.json('settings.json') as { token: string; wrongToken: string; staleEtag: string; cors: { origin: string; method: string; header: string; maxAgeSeconds: number } },
 
   /** A payload with an echo object beside its own fields, as a binding handler answers. */
   withEcho: (file: string, echo: Record<string, unknown>): Record<string, unknown> => ({ ...expected.json(file), echo }),
