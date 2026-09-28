@@ -31,15 +31,15 @@ func cacheRoutes(r chi.Router, p *Payloads) error {
 	byAll := stampede.Handler(slog.Default(), store, ttl, stampede.WithHTTPCacheKeyRequestHeaders(many))
 	// rb:end
 
-	r.With(byPath).Get("/cache/small", fresh(&p.Small))
+	r.With(byPath).Get("/cache/small/{key}", fresh(&p.Small))
 
-	r.With(byPath).Get("/cache/medium", fresh(&p.Medium))
+	r.With(byPath).Get("/cache/medium/{key}", fresh(&p.Medium))
 
-	r.With(byPath).Get("/cache/large", fresh(&p.Large))
+	r.With(byPath).Get("/cache/large/{key}", fresh(&p.Large))
 
-	r.With(byTenant, varied(one)).Get("/cache/vary/one", fresh(&p.Small))
+	r.With(byTenant, varied(one)).Get("/cache/vary/one/{key}", fresh(&p.Small))
 
-	r.With(byAll, varied(many)).Get("/cache/vary/many", fresh(&p.Small))
+	r.With(byAll, varied(many)).Get("/cache/vary/many/{key}", fresh(&p.Small))
 	return nil
 }
 

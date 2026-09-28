@@ -25,15 +25,15 @@ func cacheRoutes(app *fiber.App, p *Payloads) {
 		StoreResponseHeaders: true,
 	})
 
-	app.Get("/cache/small", replayed, fresh(&p.Small))
+	app.Get("/cache/small/:key", replayed, fresh(&p.Small))
 
-	app.Get("/cache/medium", replayed, fresh(&p.Medium))
+	app.Get("/cache/medium/:key", replayed, fresh(&p.Medium))
 
-	app.Get("/cache/large", replayed, fresh(&p.Large))
+	app.Get("/cache/large/:key", replayed, fresh(&p.Large))
 
-	app.Get("/cache/vary/one", replayed, varied(one), fresh(&p.Small))
+	app.Get("/cache/vary/one/:key", replayed, varied(one), fresh(&p.Small))
 
-	app.Get("/cache/vary/many", replayed, varied(many), fresh(&p.Small))
+	app.Get("/cache/vary/many/:key", replayed, varied(many), fresh(&p.Small))
 }
 
 // rb:wiring cache.*

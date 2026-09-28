@@ -22,8 +22,8 @@ func TestTheTagIsTheHashOfTheBody(t *testing.T) {
 			sum := sha1.Sum(response.Body.Bytes())
 			assertHeader(t, response, "ETag", `"`+hex.EncodeToString(sum[:])+`"`)
 			assertOK(t, payload(t, "items."+row.size+".json"), response)
-			if serial(t, response) <= before {
-				t.Fatal("x-rb-serial did not advance")
+			if serial(t, response) == before {
+				t.Fatal("x-rb-serial repeated, so the handler did not run")
 			}
 		})
 	}

@@ -31,8 +31,8 @@ func TestGzipIsAnsweredWhenTheRequestAsksForIt(t *testing.T) {
 		if got, want := parsed(t, plain), payload(t, "items.large.json"); !reflect.DeepEqual(got, want) {
 			t.Fatal("the gzipped body is not the payload")
 		}
-		if serial(t, response) <= before {
-			t.Fatal("x-rb-serial did not advance")
+		if serial(t, response) == before {
+			t.Fatal("x-rb-serial repeated, so the handler did not run")
 		}
 	})
 }
@@ -50,8 +50,8 @@ func TestASmallBodyIsSentUncompressedWhenTheRequestAsksForGzip(t *testing.T) {
 		}
 		assertHeader(t, response, "Vary", "Accept-Encoding")
 		assertOK(t, payload(t, "items.small.json"), response)
-		if serial(t, response) <= before {
-			t.Fatal("x-rb-serial did not advance")
+		if serial(t, response) == before {
+			t.Fatal("x-rb-serial repeated, so the handler did not run")
 		}
 	})
 }

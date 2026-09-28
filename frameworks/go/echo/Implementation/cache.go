@@ -20,15 +20,15 @@ func cacheRoutes(e *echo.Echo, p *Payloads) {
 	// rb:wiring cache.*
 	store := newStore(settings.Capacity, time.Duration(settings.TTLSeconds)*time.Second)
 
-	e.GET("/cache/small", fresh(&p.Small), replay(store, nil))
+	e.GET("/cache/small/:key", fresh(&p.Small), replay(store, nil))
 
-	e.GET("/cache/medium", fresh(&p.Medium), replay(store, nil))
+	e.GET("/cache/medium/:key", fresh(&p.Medium), replay(store, nil))
 
-	e.GET("/cache/large", fresh(&p.Large), replay(store, nil))
+	e.GET("/cache/large/:key", fresh(&p.Large), replay(store, nil))
 
-	e.GET("/cache/vary/one", fresh(&p.Small), replay(store, one), varied(one))
+	e.GET("/cache/vary/one/:key", fresh(&p.Small), replay(store, one), varied(one))
 
-	e.GET("/cache/vary/many", fresh(&p.Small), replay(store, many), varied(many))
+	e.GET("/cache/vary/many/:key", fresh(&p.Small), replay(store, many), varied(many))
 }
 
 // varied writes the Vary header, which tells a cache in front of the framework what the answer

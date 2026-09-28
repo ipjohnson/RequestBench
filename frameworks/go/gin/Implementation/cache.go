@@ -21,15 +21,15 @@ func cacheRoutes(r *gin.Engine, p *Payloads) {
 	// rb:wiring cache.*
 	store := newStore(settings.Capacity, time.Duration(settings.TTLSeconds)*time.Second)
 
-	r.GET("/cache/small", replay(store, nil), fresh(&p.Small))
+	r.GET("/cache/small/:key", replay(store, nil), fresh(&p.Small))
 
-	r.GET("/cache/medium", replay(store, nil), fresh(&p.Medium))
+	r.GET("/cache/medium/:key", replay(store, nil), fresh(&p.Medium))
 
-	r.GET("/cache/large", replay(store, nil), fresh(&p.Large))
+	r.GET("/cache/large/:key", replay(store, nil), fresh(&p.Large))
 
-	r.GET("/cache/vary/one", replay(store, one), varied(one), fresh(&p.Small))
+	r.GET("/cache/vary/one/:key", replay(store, one), varied(one), fresh(&p.Small))
 
-	r.GET("/cache/vary/many", replay(store, many), varied(many), fresh(&p.Small))
+	r.GET("/cache/vary/many/:key", replay(store, many), varied(many), fresh(&p.Small))
 }
 
 // varied writes the Vary header, which tells a cache in front of the framework what the answer

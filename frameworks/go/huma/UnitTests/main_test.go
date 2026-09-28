@@ -16,6 +16,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/danielgtaylor/huma/v2/humatest"
@@ -141,11 +142,19 @@ func assertNoHeader(t *testing.T, response *httptest.ResponseRecorder, name stri
 	}
 }
 
-func serial(t *testing.T, response *httptest.ResponseRecorder) uint64 {
+// serial is x-rb-serial, after checking it starts with the Unix time in milliseconds it was
+// written at.
+func serial(t *testing.T, response *httptest.ResponseRecorder) string {
 	t.Helper()
-	value, err := strconv.ParseUint(response.Header().Get("x-rb-serial"), 10, 64)
-	if err != nil {
-		t.Fatalf("x-rb-serial %q: %v", response.Header().Get("x-rb-serial"), err)
+	value := response.Header().Get("x-rb-serial")
+	stamp, count, _ := strings.Cut(value, "|")
+	ms, errStamp := strconv.ParseInt(stamp, 10, 64)
+	_, errCount := strconv.ParseUint(count, 10, 64)
+	if errStamp != nil || errCount != nil {
+		t.Fatalf("x-rb-serial %q is not <time stamp>|<count>", value)
+	}
+	if age := time.Since(time.UnixMilli(ms)); age < 0 || age > time.Minute {
+		t.Fatalf("x-rb-serial %q was written %v ago", value, age)
 	}
 	return value
 }
