@@ -377,14 +377,24 @@
         }
       }
     },
-    "/cache/small": {
+    "/cache/small/{key}": {
       "get": {
         "tags": [
           "Implementation.Endpoints.CacheEndpoints"
         ],
-        "summary": "GET_cache_small",
-        "description": "GET_cache_small",
-        "operationId": "GET_cache_small",
+        "summary": "GET_cache_small_key",
+        "description": "GET_cache_small_key",
+        "operationId": "GET_cache_small_key",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -407,14 +417,24 @@
         }
       }
     },
-    "/cache/medium": {
+    "/cache/medium/{key}": {
       "get": {
         "tags": [
           "Implementation.Endpoints.CacheEndpoints"
         ],
-        "summary": "GET_cache_medium",
-        "description": "GET_cache_medium",
-        "operationId": "GET_cache_medium",
+        "summary": "GET_cache_medium_key",
+        "description": "GET_cache_medium_key",
+        "operationId": "GET_cache_medium_key",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -437,14 +457,24 @@
         }
       }
     },
-    "/cache/large": {
+    "/cache/large/{key}": {
       "get": {
         "tags": [
           "Implementation.Endpoints.CacheEndpoints"
         ],
-        "summary": "GET_cache_large",
-        "description": "GET_cache_large",
-        "operationId": "GET_cache_large",
+        "summary": "GET_cache_large_key",
+        "description": "GET_cache_large_key",
+        "operationId": "GET_cache_large_key",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -467,14 +497,24 @@
         }
       }
     },
-    "/cache/vary/one": {
+    "/cache/vary/one/{key}": {
       "get": {
         "tags": [
           "Implementation.Endpoints.CacheEndpoints"
         ],
-        "summary": "GET_cache_vary_one",
-        "description": "GET_cache_vary_one",
-        "operationId": "GET_cache_vary_one",
+        "summary": "GET_cache_vary_one_key",
+        "description": "GET_cache_vary_one_key",
+        "operationId": "GET_cache_vary_one_key",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -497,14 +537,24 @@
         }
       }
     },
-    "/cache/vary/many": {
+    "/cache/vary/many/{key}": {
       "get": {
         "tags": [
           "Implementation.Endpoints.CacheEndpoints"
         ],
-        "summary": "GET_cache_vary_many",
-        "description": "GET_cache_vary_many",
-        "operationId": "GET_cache_vary_many",
+        "summary": "GET_cache_vary_many_key",
+        "description": "GET_cache_vary_many_key",
+        "operationId": "GET_cache_vary_many_key",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",

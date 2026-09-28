@@ -11,23 +11,23 @@ namespace Implementation.Endpoints;
 /// </summary>
 public static class CacheEndpoints
 {
-    [WolverineGet("/cache/small")]
+    [WolverineGet("/cache/small/{key}")]
     [OutputCache(PolicyName = Policies.Stored)]
     public static Payload Small(HttpResponse response, Payloads p) => Stored(response, p.Small);
 
-    [WolverineGet("/cache/medium")]
+    [WolverineGet("/cache/medium/{key}")]
     [OutputCache(PolicyName = Policies.Stored)]
     public static Payload Medium(HttpResponse response, Payloads p) => Stored(response, p.Medium);
 
-    [WolverineGet("/cache/large")]
+    [WolverineGet("/cache/large/{key}")]
     [OutputCache(PolicyName = Policies.Stored)]
     public static Payload Large(HttpResponse response, Payloads p) => Stored(response, p.Large);
 
-    [WolverineGet("/cache/vary/one")]
+    [WolverineGet("/cache/vary/one/{key}")]
     [OutputCache(PolicyName = Policies.VaryOne)]
     public static Payload VaryOne(HttpResponse response, Payloads p) => Stored(response, p.Small, p.Settings.Cache.Vary.One.Keys);
 
-    [WolverineGet("/cache/vary/many")]
+    [WolverineGet("/cache/vary/many/{key}")]
     [OutputCache(PolicyName = Policies.VaryMany)]
     public static Payload VaryMany(HttpResponse response, Payloads p) => Stored(response, p.Small, p.Settings.Cache.Vary.Many.Keys);
 

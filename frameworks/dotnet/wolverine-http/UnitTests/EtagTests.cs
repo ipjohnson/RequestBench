@@ -47,7 +47,7 @@ public sealed class EtagTests(WolverineApp app)
         IScenarioResult second = await app.Host.Scenario(s => s.Get.Url("/etag/small"));
 
         Assert.Equal(Answer.Header(first, "etag"), Answer.Header(second, "etag"));
-        Assert.True(Answer.Serial(second) > Answer.Serial(first));
+        Assert.NotEqual(Answer.Serial(first), Answer.Serial(second));
     }
 
     private Task<IScenarioResult> Conditional(string tag, HttpStatusCode status) => app.Host.Scenario(s =>

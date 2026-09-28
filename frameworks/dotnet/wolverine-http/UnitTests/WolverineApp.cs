@@ -86,7 +86,7 @@ public static partial class Expected
     private static partial Regex Boundary();
 }
 
-public static class Answer
+public static partial class Answer
 {
     public static JsonNode Json(IScenarioResult result) => JsonNode.Parse(result.ReadAsText())!;
 
@@ -99,7 +99,19 @@ public static class Answer
     public static string? Header(IScenarioResult result, string name) =>
         result.Context.Response.Headers.TryGetValue(name, out StringValues values) ? values.ToString() : null;
 
-    public static long Serial(IScenarioResult result) => long.Parse(Header(result, "x-rb-serial")!);
+    /// <summary>x-rb-serial, after checking it starts with the Unix time in milliseconds it was written at.</summary>
+    public static string Serial(IScenarioResult result)
+    {
+        string serial = Header(result, "x-rb-serial")!;
+        Match form = SerialForm().Match(serial);
+        Assert.True(form.Success, $"x-rb-serial {serial} is not <time stamp>|<count>");
+        DateTimeOffset written = DateTimeOffset.FromUnixTimeMilliseconds(long.Parse(form.Groups[1].Value));
+        Assert.InRange(written, DateTimeOffset.UtcNow.AddMinutes(-1), DateTimeOffset.UtcNow);
+        return serial;
+    }
+
+    [GeneratedRegex(@"^(\d+)\|\d+$")]
+    private static partial Regex SerialForm();
 
     /// <summary>The body as it was written, which for a gzipped answer is not text.</summary>
     public static byte[] Bytes(IScenarioResult result)
