@@ -17,7 +17,7 @@ where neither has one. The cache family is wired by hand.
 | `Implementation/` | The application: a library with one module per corpus family under `routes/`, each adding its routes to the App's ServiceConfig. |
 | `container-h1/` | How container-h1 starts it. `main.rs` is the server binary, and `Dockerfile` builds the image. |
 | `container-h2/` | How container-h2 starts it. `main.rs` is the server binary, on `HttpServer::bind_auto_h2c`, which answers HTTP/2 with prior knowledge beside HTTP/1.1, and `Dockerfile` builds the image. |
-| `lambda-emulator/` | How lambda-emulator starts it. `main.rs` is the function, which hands the App to lambda-web's `run_actix_on_lambda`, and `Dockerfile` builds it on the `provided.al2023` base image, where it runs as `/var/runtime/bootstrap`. |
+| `lambda-emulator/` | How lambda-emulator starts it. `main.rs` is the function, a copy of lambda-web's `run_actix_on_lambda` that streams the sse and stream answers, and `Dockerfile` builds it on the `provided.al2023` base image, where it runs as `/var/runtime/bootstrap`. |
 | `UnitTests/` | The suite, which drives the App in process with actix-web's test utilities. |
 | `client-exception/` | How the corpus reads actix-web's error bodies. |
 | `Cargo.toml` | One package: the library, each host's binary and the suite, each at its own path. |
@@ -132,19 +132,22 @@ App from the function `routes` returns.
 - The allocator is mimalloc, set as the global allocator in `main.rs`. A server of this shape
   allocates on every request, and the benchmark runs every Rust framework on the same allocator so
   that a difference between two of them is the framework.
-- On lambda-emulator the App answers behind lambda-web 0.2.1, the newest release, from January
-  2023. The actix project ships no Lambda adapter, and lambda-web's `actix4` feature is the one
-  written for actix-web. lambda-web pins lambda_runtime 0.7, where axum's function runs
-  lambda_runtime 1.4. It builds each request with actix-web's `test::TestRequest` and calls the
-  service of one App, where HttpServer builds an App per worker.
-- `run_actix_on_lambda` reads the whole answer into one proxy response, so the sse and stream tests
-  are listed as unsupported on lambda-emulator.
-- lambda-web posts every body in base64, text included. It keeps one value of each header, the
-  last the App wrote, except Set-Cookie, whose values go in the proxy response's cookies.
-- lambda-web's default feature, br, brotli-compresses a text answer the App did not compress when
-  the request accepts br. It is off, so every answer is the App's own.
-- lambda-web posts the row the HEAD route answers with, which the HTTP/1 codec leaves unwritten. A
-  Function URL's caller reads no body in an answer to HEAD, so nothing reads it.
+- On lambda-emulator the App answers behind a copy of `run_actix_on_lambda` from lambda-web 0.2.1,
+  the newest release, from January 2023. The actix project ships no Lambda adapter, and
+  lambda-web's `actix4` feature is the one written for actix-web. lambda-web pins lambda_runtime
+  0.7, which predates response streaming, so the copy runs on lambda_runtime 1.4, as axum's
+  function does, and reads API Gateway payload format 2.0 alone. It builds each request with actix-web's
+  `test::TestRequest` and calls the service of one App, where HttpServer builds an App per worker.
+- The copy sends the sse and stream routes' answers as a stream and every other answer whole, as
+  lambda-web's proxy response. actix-web's body is not `Send`, and lambda_runtime's stream has to
+  be, so a task on the function's thread reads the body into lambda_runtime's channel.
+- A whole answer's body goes out in base64, text included, as lambda-web posts it. The proxy
+  response keeps one value of each header, the last the App wrote, except Set-Cookie, whose values
+  go in its cookies.
+- lambda-web's br feature brotli-compresses a text answer the App did not compress when the request
+  accepts br. It was off, and the copy leaves it out, so every answer is the App's own.
+- The function posts the row the HEAD route answers with, which the HTTP/1 codec leaves unwritten.
+  A Function URL's caller reads no body in an answer to HEAD, so nothing reads it.
 - The function is built on the Lambda base image it runs on. Amazon Linux 2023's glibc is older
   than the one in the rust images, and a binary linked against a newer glibc may not start on it.
 

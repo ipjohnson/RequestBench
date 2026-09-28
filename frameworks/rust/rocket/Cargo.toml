@@ -37,15 +37,21 @@ name = "unit"
 path = "UnitTests/main.rs"
 
 [dependencies]
+# lambda-emulator's function writes every body in base64, as lambda-web does.
+base64 = { version = "0.22.1", optional = true }
 cached = "4.0.0"
 # The weak hasher, so an ETag comes from the crate the If-None-Match guard is built on.
 entity-tag = { version = "0.2.0", features = ["weak-hasher"] }
+# The status and header types of a streamed answer's prelude, in lambda-emulator's function.
+http = { version = "1.5.0", optional = true }
 httpdate = "1.0.3"
-# lambda-emulator's adapter, over lambda_runtime's runtime client. Its default feature, br,
-# brotli-compresses a text answer the application did not compress when the request accepts br.
-lambda-web = { version = "0.2.1", default-features = false, features = ["rocket05"], optional = true }
+# lambda-emulator's runtime client. main.rs is a copy of the dispatch of lambda-web, the adapter
+# written for Rocket 0.5, whose lambda_runtime 0.7 cannot stream.
+lambda_runtime = { version = "1.4.0", default-features = false, optional = true }
 # The allocator every Rust framework here runs on, in place of the system one.
 mimalloc = "0.1.52"
+# lambda-emulator's function encodes each event's path again, as lambda-web does.
+percent-encoding = { version = "2.3.2", optional = true }
 rocket = { version = "0.5.1", features = ["json"] }
 rocket_async_compression = "0.6.1"
 rocket_cors = "0.6.0"
@@ -53,6 +59,8 @@ rocket_dyn_templates = { version = "0.2.0", features = ["tera"] }
 rocket-etag-if-none-match = "0.5.0"
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.151"
+# lambda-emulator's function reads a streamed answer's body from Rocket as it is written.
+tokio-util = { version = "0.7.19", default-features = false, features = ["io"], optional = true }
 # The body family's rules, run by a data guard of this application's own, because Rocket validates
 # forms but not JSON.
 validator = { version = "0.21.0", features = ["derive"] }
@@ -68,4 +76,4 @@ codegen-units = 1
 
 [features]
 # lambda-emulator's function. Only its binary turns it on.
-lambda-emulator = ["dep:lambda-web"]
+lambda-emulator = ["dep:base64", "dep:http", "dep:lambda_runtime", "dep:percent-encoding", "dep:tokio-util"]
