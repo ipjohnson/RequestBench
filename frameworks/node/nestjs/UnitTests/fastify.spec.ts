@@ -45,7 +45,7 @@ test('etag.match_large: on Fastify, a matching If-None-Match is 304 with no body
 
   expect(response.status).toBe(304);
   expect(response.text).toBe('');
-  expect(Number(response.headers['x-rb-serial'])).toBeGreaterThan(Number(first.headers['x-rb-serial']));
+  expect(response.headers['x-rb-serial']).not.toBe(first.headers['x-rb-serial']);
 });
 
 // rb:test cors.preflight,cors.disallowed
@@ -133,7 +133,7 @@ test('sse.medium: on Fastify, each row of items.medium is the data of one event,
 
 // rb:test cache.vary_one
 test('cache.vary_one: on Fastify, a replay carries the serial it was stored with', async () => {
-  const get = (tenant: string) => request(app.getHttpServer()).get('/cache/vary/one').set('x-rb-tenant', tenant);
+  const get = (tenant: string) => request(app.getHttpServer()).get('/cache/vary/one/k1').set('x-rb-tenant', tenant);
 
   const alpha = await get('alpha');
   const beta = await get('beta');

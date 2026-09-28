@@ -818,10 +818,19 @@
         ]
       }
     },
-    "/cache/small": {
+    "/cache/small/{key}": {
       "get": {
         "operationId": "CacheController_small",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "key",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "",
@@ -839,10 +848,19 @@
         ]
       }
     },
-    "/cache/medium": {
+    "/cache/medium/{key}": {
       "get": {
         "operationId": "CacheController_medium",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "key",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "",
@@ -860,10 +878,19 @@
         ]
       }
     },
-    "/cache/large": {
+    "/cache/large/{key}": {
       "get": {
         "operationId": "CacheController_large",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "key",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "",
@@ -881,10 +908,19 @@
         ]
       }
     },
-    "/cache/vary/one": {
+    "/cache/vary/one/{key}": {
       "get": {
         "operationId": "CacheController_varyOne",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "key",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "",
@@ -902,10 +938,19 @@
         ]
       }
     },
-    "/cache/vary/many": {
+    "/cache/vary/many/{key}": {
       "get": {
         "operationId": "CacheController_varyMany",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "key",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "",

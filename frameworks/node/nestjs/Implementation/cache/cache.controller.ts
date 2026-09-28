@@ -1,4 +1,4 @@
-import { Controller, Get, Inject, UseInterceptors } from '@nestjs/common';
+import { Controller, Get, Inject, Param, UseInterceptors } from '@nestjs/common';
 
 import { PAYLOADS, type Payload, type Payloads } from '../payloads.js';
 import { serial } from '../serial.js';
@@ -24,34 +24,34 @@ export class CacheController {
   }
 
   // rb:handler cache.small
-  @Get('small')
-  small(): Answer {
+  @Get('small/:key')
+  small(@Param('key') key: string): Answer {
     return this.answer(this.payloads.small);
   }
 
   // rb:handler cache.medium
-  @Get('medium')
-  medium(): Answer {
+  @Get('medium/:key')
+  medium(@Param('key') key: string): Answer {
     return this.answer(this.payloads.medium);
   }
 
   // rb:handler cache.large
-  @Get('large')
-  large(): Answer {
+  @Get('large/:key')
+  large(@Param('key') key: string): Answer {
     return this.answer(this.payloads.large);
   }
 
   // rb:handler cache.vary_one
-  @Get('vary/one')
+  @Get('vary/one/:key')
   @VaryOn('one')
-  varyOne(): Answer {
+  varyOne(@Param('key') key: string): Answer {
     return this.answer(this.payloads.small, 'one');
   }
 
   // rb:handler cache.vary_many
-  @Get('vary/many')
+  @Get('vary/many/:key')
   @VaryOn('many')
-  varyMany(): Answer {
+  varyMany(@Param('key') key: string): Answer {
     return this.answer(this.payloads.small, 'many');
   }
 }

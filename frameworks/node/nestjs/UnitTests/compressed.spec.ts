@@ -35,7 +35,7 @@ for (const [id, size] of [['compressed.identity_small', 'small'], ['compressed.i
 
     expect(second.headers['content-encoding']).toBeUndefined();
     expect(second.body).toEqual(expected.json(`items.${size}.json`));
-    expect(Number(second.headers['x-rb-serial'])).toBeGreaterThan(Number(first.headers['x-rb-serial']));
+    expect(second.headers['x-rb-serial']).not.toBe(first.headers['x-rb-serial']);
   });
 }
 

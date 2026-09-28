@@ -729,8 +729,18 @@
         }
       }
     },
-    "/cache/small": {
+    "/cache/small/{key}": {
       "get": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "key",
+            "required": true
+          }
+        ],
         "responses": {
           "200": {
             "description": "Default Response",
@@ -776,8 +786,18 @@
         }
       }
     },
-    "/cache/medium": {
+    "/cache/medium/{key}": {
       "get": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "key",
+            "required": true
+          }
+        ],
         "responses": {
           "200": {
             "description": "Default Response",
@@ -823,8 +843,18 @@
         }
       }
     },
-    "/cache/large": {
+    "/cache/large/{key}": {
       "get": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "key",
+            "required": true
+          }
+        ],
         "responses": {
           "200": {
             "description": "Default Response",
@@ -870,8 +900,18 @@
         }
       }
     },
-    "/cache/vary/one": {
+    "/cache/vary/one/{key}": {
       "get": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "key",
+            "required": true
+          }
+        ],
         "responses": {
           "200": {
             "description": "Default Response",
@@ -917,8 +957,18 @@
         }
       }
     },
-    "/cache/vary/many": {
+    "/cache/vary/many/{key}": {
       "get": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "key",
+            "required": true
+          }
+        ],
         "responses": {
           "200": {
             "description": "Default Response",

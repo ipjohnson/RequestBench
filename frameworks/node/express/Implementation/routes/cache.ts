@@ -63,15 +63,15 @@ const cache: Routes = (app, p) => {
   };
   // rb:end
 
-  app.get("/cache/small", cached(), (_request, response) => stored(response, p.small));
+  app.get("/cache/small/:key", cached(), (_request, response) => stored(response, p.small));
 
-  app.get("/cache/medium", cached(), (_request, response) => stored(response, p.medium));
+  app.get("/cache/medium/:key", cached(), (_request, response) => stored(response, p.medium));
 
-  app.get("/cache/large", cached(), (_request, response) => stored(response, p.large));
+  app.get("/cache/large/:key", cached(), (_request, response) => stored(response, p.large));
 
-  app.get("/cache/vary/one", cached(one), (_request, response) => stored(response, p.small, one));
+  app.get("/cache/vary/one/:key", cached(one), (_request, response) => stored(response, p.small, one));
 
-  app.get("/cache/vary/many", cached(many), (_request, response) => stored(response, p.small, many));
+  app.get("/cache/vary/many/:key", cached(many), (_request, response) => stored(response, p.small, many));
 };
 
 /**

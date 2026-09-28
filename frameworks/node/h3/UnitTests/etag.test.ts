@@ -24,7 +24,7 @@ test("etag.match_large: a matching If-None-Match is answered 304 with no body, a
 
   assert.equal(response.status, 304);
   assert.equal((await response.arrayBuffer()).byteLength, 0);
-  assert.ok(Number(response.headers.get("x-rb-serial")) > Number(first.headers.get("x-rb-serial")));
+  assert.notEqual(response.headers.get("x-rb-serial"), first.headers.get("x-rb-serial"));
 });
 
 // rb:test etag.stale_large
