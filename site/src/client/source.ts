@@ -17,6 +17,7 @@
 import type { CodeEntry } from "../lib/bundleview.ts";
 import { Catalog } from "../lib/catalog.ts";
 import type { Boot } from "../lib/page-data.ts";
+import { hostOrder } from "../lib/run.ts";
 import type { Run, WireDoc } from "../lib/types.ts";
 import { fetchJson } from "./fetch-json.ts";
 
@@ -96,7 +97,7 @@ export class Data {
   }
 
   get hosts(): string[] {
-    return [...new Set(this.manifest.map((m) => m.host))].sort();
+    return [...new Set(this.manifest.map((m) => m.host))].sort(hostOrder);
   }
 
   loadedRuns(host: string): Run[] {

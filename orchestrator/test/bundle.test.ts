@@ -131,15 +131,16 @@ test("a bundle with no Dockerfile did not resolve", () => {
   git("checkout", "--", "frameworks/node/demo/Dockerfile");
 });
 
-test("a bundle is read for one host and leaves out the other hosts' directories", () => {
+test("a bundle is read for one host, leaves out the other hosts' directories, and is the same for hosts that share one", () => {
   put("frameworks/node/demo/container-h2/Dockerfile", "FROM node:26\n");
   put("frameworks/node/demo/lambda-emulator/handler.js", "export const handler = 1;\n");
   git("add", "-A");
   const inside = (b: { files: readonly { path: string }[] }, host: string) => b.files.some((f) => f.path.startsWith(`frameworks/node/demo/${host}/`));
   const h1 = frameworkBundle(repo, DEMO, "container-h1");
-  const lambda = frameworkBundle(repo, DEMO, "lambda-emulator");
+  const lambda = frameworkBundle(repo, DEMO, "lambda-emulator-512");
   assert.equal(inside(h1, "container-h2") || inside(h1, "lambda-emulator"), false);
   assert.equal(inside(lambda, "container-h2"), false);
+  assert.equal(frameworkBundle(repo, DEMO, "lambda-emulator-1024").codeHash, lambda.codeHash);
   assert.equal(rolesOf()["frameworks/node/demo/lambda-emulator/handler.js"], undefined);
   assert.equal(
     lambda.files.find((f) => f.path === "frameworks/node/demo/lambda-emulator/handler.js")?.role,
@@ -149,7 +150,7 @@ test("a bundle is read for one host and leaves out the other hosts' directories"
   put("frameworks/node/demo/lambda-emulator/handler.js", "export const handler = 2;\n");
   git("add", "-A");
   assert.equal(frameworkBundle(repo, DEMO, "container-h1").codeHash, h1.codeHash);
-  assert.notEqual(frameworkBundle(repo, DEMO, "lambda-emulator").codeHash, lambda.codeHash);
+  assert.notEqual(frameworkBundle(repo, DEMO, "lambda-emulator-512").codeHash, lambda.codeHash);
 
   git("rm", "-rq", "--cached", "frameworks/node/demo/container-h2", "frameworks/node/demo/lambda-emulator");
   rmSync(join(repo, "frameworks/node/demo/container-h2"), { recursive: true });

@@ -26,7 +26,7 @@
 import { createHash } from "node:crypto";
 
 import { blob, resolveCommit, tracked } from "./git.ts";
-import { HOST_IDS, type HostId } from "./hosts.ts";
+import { HOST_DIRS, HOSTS, type HostId } from "./hosts.ts";
 
 export const BUNDLE_VERSION = "bundle-v1";
 
@@ -191,8 +191,8 @@ function suitePathsAt(root: string, dir: string, at: string | undefined): string
   return Array.isArray(paths) ? paths.filter((p): p is string => typeof p === "string") : [];
 }
 
-/** The directories of every host but this one, relative to the framework's directory. */
-const otherHosts = (host: HostId): string[] => HOST_IDS.filter((h) => h !== host).map((h) => `${h}/`);
+/** Every host directory but this host's, relative to the framework's directory. */
+const otherHosts = (host: HostId): string[] => HOST_DIRS.filter((d) => d !== HOSTS[host].dir).map((d) => `${d}/`);
 
 export function frameworkBundle(root: string, f: FrameworkKey, host: HostId, at?: string): Bundle {
   const dir = frameworkDir(f);

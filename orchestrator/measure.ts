@@ -31,7 +31,7 @@ import { corpusVersion, payloadFiles, recordAll } from "./corpus.ts";
 import type { DeclaredFramework } from "./exceptions.ts";
 import { gate, writeExemplars, type Outcome } from "./gate.ts";
 import { repoSlug, resolveCommit } from "./git.ts";
-import { HOSTS, type Host, type HostId } from "./hosts.ts";
+import { entryOf, HOSTS, type Host, type HostId } from "./hosts.ts";
 import { live, liveOver, type Exchange } from "./live.ts";
 import type { MachineState } from "./machine.ts";
 import type { LoadedFramework } from "./manifest.ts";
@@ -209,7 +209,7 @@ export async function measure(o: MeasureOptions): Promise<RunFile> {
 
   for (const [i, f] of o.frameworks.entries()) {
     const bundle = frameworkBundle(o.root, f, o.host, o.at);
-    const unsupported = f.rb.hosts[o.host]?.unsupported;
+    const unsupported = entryOf(f.rb.hosts, o.host)?.unsupported;
     const base = {
       id: f.id,
       ordinal: i + 1,

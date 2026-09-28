@@ -264,7 +264,7 @@ const closed: ClosedResult = {
 
 test("a closed loop's one rung publishes the invoke phase, and each test carries the other spans beside it", () => {
   const chi = { id: "go:chi", ordinal: 1, bundleHash: "sha256:e", codeHash: "sha256:f", load: closed };
-  const f = summarize({ ...run, host: "lambda-emulator", frameworks: [chi] }).frameworks[0]!;
+  const f = summarize({ ...run, host: "lambda-emulator-512", frameworks: [chi] }).frameworks[0]!;
   assert.deepEqual(Object.keys(f.rungs), ["closed"]);
   const rung = f.rungs["closed"]!;
   assert.ok("closed" in rung);
@@ -289,6 +289,6 @@ test("a closed loop's test carries the windows of its invoke phase", () => {
   const tests = [{ ...spanRow("json.small", "json", 1, { 60: 80 }, { 40: 80 }), windows }];
   const windowed: ClosedResult = { ...closed, phases: [{ ...phase!, recorded: { ...phase!.recorded!, windowSeconds: 10, tests } }] };
   const chi = { id: "go:chi", ordinal: 1, bundleHash: "sha256:e", codeHash: "sha256:f", load: windowed };
-  const f = summarize({ ...run, host: "lambda-emulator", frameworks: [chi] }).frameworks[0]!;
+  const f = summarize({ ...run, host: "lambda-emulator-512", frameworks: [chi] }).frameworks[0]!;
   assert.deepEqual(f.tests["json.small"]!.rungs["closed"]!.windows, windows);
 });

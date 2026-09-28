@@ -11,6 +11,7 @@ import { fileURLToPath } from "node:url";
 import suite from "@rb/tests";
 import { isClosed, type ClosedPhase, type Load } from "../../traffic-generator/load.ts";
 import type { DeclaredFramework } from "../exceptions.ts";
+import type { HostId } from "../hosts.ts";
 import type { LoadedFramework, RbJson } from "../manifest.ts";
 import { measure, type Driver, type RunFile, type Started } from "../measure.ts";
 import { summarize } from "../summarize.ts";
@@ -125,7 +126,7 @@ async function run(
   driver: Driver,
   ids: Id[],
   edit: (f: DeclaredFramework) => DeclaredFramework = (f) => f,
-  host: "container-h1" | "container-h2" | "lambda-emulator" = "container-h1",
+  host: HostId = "container-h1",
 ): Promise<RunFile> {
   return measure({
     root: ROOT,
@@ -239,7 +240,7 @@ test("on container-h2 the boot, the gate, the load and /__meta all go over h2c",
 
 test("on lambda-emulator the runtime asks the Runtime API for every event: the gate's, the closed loop's and /__meta", async () => {
   asked.length = 0;
-  const result = await run(fakeDriver(reference), ["node:fastify"], (f) => f, "lambda-emulator");
+  const result = await run(fakeDriver(reference), ["node:fastify"], (f) => f, "lambda-emulator-512");
   const [fastify] = result.frameworks;
   assert.equal(fastify!.error, undefined);
   assert.equal(fastify!.gate?.measurable, true);
@@ -266,7 +267,7 @@ test("on lambda-emulator the runtime asks the Runtime API for every event: the g
 
 test("on lambda-emulator the gate's boot primes the load, so the measured function answers nothing before its first recorded event", async () => {
   asked.length = 0;
-  const result = await run(fakeDriver(reference), ["node:fastify"], (f) => f, "lambda-emulator");
+  const result = await run(fakeDriver(reference), ["node:fastify"], (f) => f, "lambda-emulator-512");
   const load = result.frameworks[0]!.load!;
   assert.ok(isClosed(load));
   const recorded = load.phases[0]!.recorded!;
@@ -280,7 +281,7 @@ test("on lambda-emulator the gate's boot primes the load, so the measured functi
 });
 
 test("a function that exits before its runtime asks for an event is reported with its log, and the run goes on", async () => {
-  const result = await run(fakeDriver((id) => (id === "dotnet:carter" ? "dead" : reference(id))), ["dotnet:carter", "node:fastify"], (f) => f, "lambda-emulator");
+  const result = await run(fakeDriver((id) => (id === "dotnet:carter" ? "dead" : reference(id))), ["dotnet:carter", "node:fastify"], (f) => f, "lambda-emulator-512");
   const [carter, fastify] = result.frameworks;
   assert.match(carter!.error ?? "", /the gate's boot failed: the function exited before its runtime asked for an event\nit would not start/);
   assert.equal(fastify!.error, undefined);

@@ -17,7 +17,7 @@ import * as container from "./container.ts";
 import { exceptionsOf, withExceptions } from "./exceptions.ts";
 import { FIXED_VALUES, gate, writeExemplars, type GateResult } from "./gate.ts";
 import { dirty, git, pushed, repoSlug, resolveCommit, tracked, unstaged } from "./git.ts";
-import { HOSTS, isHostId, type HostId } from "./hosts.ts";
+import { entryOf, HOSTS, hostsOf, isHostId, type HostId } from "./hosts.ts";
 import { closedPhasesOf, isLadderId, LADDERS, phasesOf, type Ladder } from "./ladder.ts";
 import { live, liveOver, type Exchange, type Live } from "./live.ts";
 import { cpuList, machineState } from "./machine.ts";
@@ -114,8 +114,8 @@ function list(args: string[]): number {
   const { values } = parse(args, { host: { type: "string" }, json: { type: "boolean" } });
   const host = values.host === undefined ? undefined : hostOf(values.host);
   const rows = frameworks([])
-    .filter((f) => host === undefined || Object.hasOwn(f.rb.hosts, host))
-    .map((f) => ({ id: f.id, language: f.language, name: f.name, hosts: Object.keys(f.rb.hosts) }));
+    .filter((f) => host === undefined || entryOf(f.rb.hosts, host) !== undefined)
+    .map((f) => ({ id: f.id, language: f.language, name: f.name, hosts: hostsOf(f.rb.hosts) }));
   if (values.json) console.log(JSON.stringify(rows));
   else for (const r of rows) console.log(`${r.id.padEnd(24)} ${r.hosts.join(", ")}`);
   return 0;
@@ -127,7 +127,7 @@ async function check(args: string[]): Promise<number> {
   const { endpoints, required } = await corpusEndpoints(suite);
   for (const f of loaded) {
     await exceptionsOf(ROOT, f).catch((error: Error) => problems.push(error.message));
-    const hosts = Object.keys(f.rb.hosts) as HostId[];
+    const hosts = hostsOf(f.rb.hosts);
     for (const host of hosts) problems.push(...frameworkProblems(frameworkBundle(ROOT, f, host)).map((p) => `${p} on ${host}`));
     const view = frameworkView(ROOT, f, undefined, endpoints, required, hosts[0]!);
     problems.push(...view.problems, ...failing(f.id, view.failures));
@@ -176,7 +176,7 @@ async function snippets(args: string[]): Promise<number> {
   let bad = 0;
 
   for (const f of chosen) {
-    const view = frameworkView(ROOT, f, at, endpoints, required, Object.keys(f.rb.hosts)[0] as HostId);
+    const view = frameworkView(ROOT, f, at, endpoints, required, hostsOf(f.rb.hosts)[0]!);
     const problems = [...view.problems, ...failing(f.id, view.failures)];
     bad += problems.length;
     const records = Object.values(view.snippets);
@@ -295,7 +295,7 @@ async function gateAt(
       exceptions,
       declared: f?.declared,
       skips: f?.rb.skips,
-      unsupported: f?.rb.hosts[host]?.unsupported,
+      unsupported: f === undefined ? undefined : entryOf(f.rb.hosts, host)?.unsupported,
       run: FIXED_VALUES,
       alive,
       exchanges: sink,
@@ -334,7 +334,7 @@ async function validate(args: string[]): Promise<number> {
 
   if (positionals.length !== 1) throw new UsageError("name one framework, or pass --at and --framework");
   const [f] = frameworks(positionals);
-  const entry = f!.rb.hosts[host];
+  const entry = entryOf(f!.rb.hosts, host);
   if (entry === undefined) throw new UsageError(`${f!.id} does not implement ${host}`);
   const at = atOf(values.commit);
   const exceptions = await exceptionsFor(f!.id);
@@ -398,7 +398,7 @@ async function measureCommand(args: string[]): Promise<number> {
   const host = hostOf(values.host);
   const ladder = ladderOf(values.ladder);
   const closed = HOSTS[host].protocol === "lambda-runtime-api";
-  const implementing = frameworks(positionals).filter((f) => Object.hasOwn(f.rb.hosts, host));
+  const implementing = frameworks(positionals).filter((f) => entryOf(f.rb.hosts, host) !== undefined);
   if (implementing.length === 0) throw new UsageError(`no framework with an rb.json that loads implements ${host}`);
   const chosen = await Promise.all(implementing.map((f) => withExceptions(ROOT, f)));
   const seconds = values.seconds === undefined ? undefined : Number(values.seconds);
@@ -421,7 +421,7 @@ async function measureCommand(args: string[]): Promise<number> {
   const built = new Map<string, container.Built>();
   const driver: Driver = {
     build: async (f) => {
-      const b = await container.build(ROOT, f, host, f.rb.hosts[host]!, at);
+      const b = await container.build(ROOT, f, host, entryOf(f.rb.hosts, host)!, at);
       built.set(f.id, b);
       return { imageId: b.imageId, imageBytes: b.imageBytes };
     },

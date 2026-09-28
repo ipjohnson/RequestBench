@@ -24,7 +24,7 @@ import { factorsOf, hostNotes, routesOf } from "./corpus.ts";
 import { withoutHist } from "./hist.ts";
 import { loadExemplars, loadRuns, staleExemplars } from "./load.ts";
 import type { PageData } from "./page-data.ts";
-import { codeKey, DEFAULT_HOST, hostOf, pageSlug, rungsOf } from "./run.ts";
+import { codeKey, DEFAULT_HOST, hostOf, hostOrder, pageSlug, rungsOf } from "./run.ts";
 import type { Framework, Route, Run, WireDoc } from "./types.ts";
 
 /**
@@ -95,8 +95,7 @@ export function site(): Site {
 }
 
 /** The default host first, whose pages keep the names they had before there were others. */
-const byHost = (a: Run, b: Run): number =>
-  Number(hostOf(b) === DEFAULT_HOST) - Number(hostOf(a) === DEFAULT_HOST) || (hostOf(a) < hostOf(b) ? -1 : 1);
+const byHost = (a: Run, b: Run): number => hostOrder(hostOf(a), hostOf(b));
 
 function read(): Site {
   const config = buildConfig();

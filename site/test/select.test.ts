@@ -103,7 +103,7 @@ describe("rateLabel", () => {
   });
 
   test("a closed loop offers no rate, and is named for the loop", () => {
-    const closed: Run = { runId: "r", host: "lambda-emulator", frameworks: [{ ...carter, rungs: { closed: { closed: true, achievedRps: 4725 } } }] };
+    const closed: Run = { runId: "r", host: "lambda-emulator-512", frameworks: [{ ...carter, rungs: { closed: { closed: true, achievedRps: 4725 } } }] };
     assert.equal(rateLabel(closed, "closed"), "closed loop");
   });
 });

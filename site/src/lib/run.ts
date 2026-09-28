@@ -3,12 +3,21 @@
 // `rb summarize` keys every statistic by name inside each framework and writes no list beside
 // them, so the lists are read off the frameworks. Both kinds of page need them, which is why
 // they are here rather than in the browser's select.ts.
+import { HOST_IDS } from "../../../orchestrator/hosts.ts";
 import type { FamilyRecord, Framework, Run, Rung } from "./types.ts";
 
 /** The host a run without one was measured on, which was the only host there was. */
 export const DEFAULT_HOST = "container-h1";
 
 export const hostOf = (run: Run): string => run.host || DEFAULT_HOST;
+
+const rankOf = (host: string): number => {
+  const i = (HOST_IDS as readonly string[]).indexOf(host);
+  return host === DEFAULT_HOST ? -1 : i === -1 ? HOST_IDS.length : i;
+};
+
+/** The default host first, then orchestrator/hosts.ts's order, then any host it no longer lists by name. */
+export const hostOrder = (a: string, b: string): number => rankOf(a) - rankOf(b) || (a < b ? -1 : a > b ? 1 : 0);
 
 /**
  * A framework page's name. The default host's pages keep the names they had before there were
