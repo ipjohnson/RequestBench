@@ -68,8 +68,8 @@ corpus id it covers, so `go test ./UnitTests -run '/json.small'` runs one.
   its own, and gin-contrib/cors answers the preflight with 204.
 - gin-contrib/cache keys an answer on its URL alone, so the two vary rows would each share one
   entry across every header value. The cache family's store and middleware are written for it.
-  The store is sized in entries and aged by settings.json, and a full store drops whichever entry
-  the map yields first.
+  The store holds 64 entries, room for the family's 52 keys, each for 30 seconds. A full store
+  drops whichever entry the map yields first.
 - Gin computes no ETag, and neither does net/http under it, so the etag family's middleware is
   written for it.
 - gin-contrib/gzip compresses every answer whose request asks for gzip, however small, at

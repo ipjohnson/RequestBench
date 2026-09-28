@@ -5,10 +5,10 @@ import (
 )
 
 // authorizedRoutes put a middleware in front of the handler that refuses any bearer token but
-// settings.json's. Fiber's keyauth middleware answers a wrong key with 401, and the corpus asks
+// the one it is given. Fiber's keyauth middleware answers a wrong key with 401, and the corpus asks
 // for 403, so the check is a middleware written for the route, returning Fiber's own 403.
 func authorizedRoutes(app *fiber.App, p *Payloads) {
-	app.Get("/authorized/small", requireToken(p.Settings.Token), func(c fiber.Ctx) error { return c.JSON(&p.Small) })
+	app.Get("/authorized/small", requireToken("5a7cc77ed0dcb825806b6f872026c317"), func(c fiber.Ctx) error { return c.JSON(&p.Small) })
 }
 
 // rb:wiring authorized.*

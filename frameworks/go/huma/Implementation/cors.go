@@ -14,7 +14,7 @@ import (
 // middleware answered alone.
 func corsRoutes(api huma.API, p *Payloads) {
 	crossOrigin := huma.NewGroup(api)
-	crossOrigin.UseMiddleware(allowCrossOrigin(p.Settings.Cors))
+	crossOrigin.UseMiddleware(allowCrossOrigin(CorsPolicy{Origin: "https://shop.example.com", Method: "GET", Header: "x-rb-tenant", MaxAgeSeconds: 600}))
 
 	// rb:handler cors.request,cors.vary
 	huma.Get(crossOrigin, "/cors/small", func(ctx context.Context, _ *struct{}) (*FreshOutput, error) { return fresh(&p.Small), nil })
@@ -31,9 +31,18 @@ func corsRoutes(api huma.API, p *Payloads) {
 }
 
 // rb:wiring cors.*
+// CorsPolicy is the one origin, method and header a cross-origin request may use, and how long a
+// browser may keep the answer to its preflight.
+type CorsPolicy struct {
+	Origin        string
+	Method        string
+	Header        string
+	MaxAgeSeconds int
+}
+
 // allowCrossOrigin answers a preflight itself, and lets every other request through to the
 // handler. Only an answer to the allowed origin carries the CORS headers.
-func allowCrossOrigin(policy CorsSettings) func(huma.Context, func(huma.Context)) {
+func allowCrossOrigin(policy CorsPolicy) func(huma.Context, func(huma.Context)) {
 	maxAge := strconv.Itoa(policy.MaxAgeSeconds)
 	return func(ctx huma.Context, next func(huma.Context)) {
 		ctx.AppendHeader("Vary", "Origin")

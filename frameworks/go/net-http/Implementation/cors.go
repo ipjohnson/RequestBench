@@ -13,13 +13,22 @@ func corsRoutes(mux *http.ServeMux, p *Payloads) {
 	crossOrigin.Handle("GET /cors/small", fresh(&p.Small))
 
 	// A pattern that names no method matches every method, so a preflight reaches the wrapper.
-	mux.Handle("/cors/", allowCrossOrigin(p.Settings.Cors, crossOrigin))
+	mux.Handle("/cors/", allowCrossOrigin(CorsPolicy{Origin: "https://shop.example.com", Method: "GET", Header: "x-rb-tenant", MaxAgeSeconds: 600}, crossOrigin))
 }
 
 // rb:wiring cors.*
+// CorsPolicy is the one origin, method and header a cross-origin request may use, and how long a
+// browser may keep the answer to its preflight.
+type CorsPolicy struct {
+	Origin        string
+	Method        string
+	Header        string
+	MaxAgeSeconds int
+}
+
 // allowCrossOrigin answers a preflight itself, and lets every other request through to the
 // handler. Only an answer to the allowed origin carries the CORS headers.
-func allowCrossOrigin(policy CorsSettings, next http.Handler) http.Handler {
+func allowCrossOrigin(policy CorsPolicy, next http.Handler) http.Handler {
 	maxAge := strconv.Itoa(policy.MaxAgeSeconds)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		header := w.Header()

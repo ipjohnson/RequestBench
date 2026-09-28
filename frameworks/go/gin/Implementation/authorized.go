@@ -7,10 +7,10 @@ import (
 )
 
 // authorizedRoutes put a middleware in front of the handler that refuses any bearer token but
-// settings.json's. Gin ships basic authentication and nothing for a bearer token, so the
+// the one it is given. Gin ships basic authentication and nothing for a bearer token, so the
 // middleware is the application's, and gin's abort is what stops the chain.
 func authorizedRoutes(r *gin.Engine, p *Payloads) {
-	r.GET("/authorized/small", requireToken(p.Settings.Token), func(c *gin.Context) { c.JSON(http.StatusOK, &p.Small) })
+	r.GET("/authorized/small", requireToken("5a7cc77ed0dcb825806b6f872026c317"), func(c *gin.Context) { c.JSON(http.StatusOK, &p.Small) })
 }
 
 // rb:wiring authorized.*

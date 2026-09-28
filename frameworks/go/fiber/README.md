@@ -84,9 +84,8 @@ corpus id it covers, so `go test ./UnitTests -run '/json.small'` runs one.
 - The cache middleware partitions every entry on the request's Accept, Accept-Encoding and
   Accept-Language by default, and on the request headers a stored answer's Vary names. The vary
   routes write Vary, and that is what keys them.
-- The cache is sized in bytes, 1 MB by default, so settings.json's capacity in entries has no
-  setting to go to. It keeps no body larger than the limit, and drops the entries nearest their
-  expiry to make room.
+- The cache is sized in bytes, 1 MB by default, which holds the family's 52 answers, about 551 KB.
+  It keeps no body larger than the limit, and drops the entries nearest their expiry to make room.
 - The cache honours a request's Cache-Control: `no-cache` skips a stored answer, and `max-age`,
   `min-fresh` and `only-if-cached` are read too. It shares no entry with a request that carries
   Authorization. Every answer it passes carries `Age` and `X-Cache`, `hit` or `miss`, and a hit

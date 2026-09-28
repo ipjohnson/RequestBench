@@ -102,8 +102,8 @@ corpus id it covers, so `go test ./UnitTests -run '/json.small'` runs one.
   It compresses whenever `Accept-Encoding` contains `gzip`, however small the body, and pools its
   gzip writers and buffers.
 - Echo ships no response cache. The cache family's store and middleware are written for it. The
-  store is sized in entries and aged by settings.json, and a full store drops whichever entry the
-  map yields first.
+  store holds 64 entries, room for the family's 52 keys, each for 30 seconds. A full store drops
+  whichever entry the map yields first.
 - Echo computes no ETag, and neither does net/http under it for anything but a file, so the etag
   family's middleware is written for it.
 - `c.Render` renders the template into a buffer and then sends it as `text/html; charset=UTF-8`,

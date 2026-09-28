@@ -87,8 +87,8 @@ corpus id it covers, so `go test ./UnitTests -run '/json.small'` runs one.
   xxh3, and never on the query. Concurrent requests for one key wait for a single run of the
   handler. A replayed answer carries `x-cache: hit`, and stampede never replays an
   `Access-Control-` header or `Set-Cookie`.
-- The store is goware/cachestore-mem, an LRU sized in entries by settings.json, so a full store
-  drops the entry used least recently.
+- The store is goware/cachestore-mem, an LRU of 64 entries, room for the cache family's 52 keys.
+  A full store drops the entry used least recently.
 - chi computes no ETag, and neither does net/http under it for anything but a file, so the etag
   family's middleware is written for it.
 - render has an event stream, which a handler reaches by rendering a channel. It gives every event

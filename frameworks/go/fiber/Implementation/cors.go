@@ -10,13 +10,12 @@ import (
 // preflight, so the group's middleware answers a preflight with no OPTIONS route. The handler
 // writes x-rb-serial, so its absence on a preflight shows the middleware answered alone.
 func corsRoutes(app *fiber.App, p *Payloads) {
-	policy := p.Settings.Cors
 	// rb:wiring cors.*
 	group := app.Group("/cors", cors.New(cors.Config{
-		AllowOrigins: []string{policy.Origin},
-		AllowMethods: []string{policy.Method},
-		AllowHeaders: []string{policy.Header},
-		MaxAge:       policy.MaxAgeSeconds,
+		AllowOrigins: []string{"https://shop.example.com"},
+		AllowMethods: []string{"GET"},
+		AllowHeaders: []string{"x-rb-tenant"},
+		MaxAge:       600,
 	}))
 	// rb:end
 

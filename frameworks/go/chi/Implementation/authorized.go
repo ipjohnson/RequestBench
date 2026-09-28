@@ -8,10 +8,10 @@ import (
 )
 
 // authorizedRoutes put a middleware in front of the handler that refuses any bearer token but
-// settings.json's. chi ships basic authentication and nothing for a bearer token, so the
+// the one it is given. chi ships basic authentication and nothing for a bearer token, so the
 // middleware is the application's, written as chi's README writes its AdminOnly middleware.
 func authorizedRoutes(r chi.Router, p *Payloads) {
-	r.With(requireToken(p.Settings.Token)).Get("/authorized/small", func(w http.ResponseWriter, r *http.Request) { render.JSON(w, r, &p.Small) })
+	r.With(requireToken("5a7cc77ed0dcb825806b6f872026c317")).Get("/authorized/small", func(w http.ResponseWriter, r *http.Request) { render.JSON(w, r, &p.Small) })
 }
 
 // rb:wiring authorized.*

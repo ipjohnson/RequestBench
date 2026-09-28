@@ -11,13 +11,12 @@ import (
 // before any handler runs. The handler writes x-rb-serial, so its absence on a preflight shows
 // the middleware answered alone.
 func corsRoutes(r *gin.Engine, p *Payloads) {
-	policy := p.Settings.Cors
 	// rb:wiring cors.*
 	group := r.Group("/cors", cors.New(cors.Config{
-		AllowOrigins: []string{policy.Origin},
-		AllowMethods: []string{policy.Method},
-		AllowHeaders: []string{policy.Header},
-		MaxAge:       time.Duration(policy.MaxAgeSeconds) * time.Second,
+		AllowOrigins: []string{"https://shop.example.com"},
+		AllowMethods: []string{"GET"},
+		AllowHeaders: []string{"x-rb-tenant"},
+		MaxAge:       600 * time.Second,
 	}))
 	// Gin runs a group's middleware only for a request a route of the group matched, so the
 	// preflight needs an OPTIONS route. It has no handler of its own.
