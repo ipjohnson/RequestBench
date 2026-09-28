@@ -2,12 +2,12 @@ use salvo::http::StatusCode;
 
 use crate::support::{bytes, get, header, normal, page, service, status};
 
-// rb:test template.small,template.medium
-/// template.small and template.medium: the page each payload renders, compared as the corpus
-/// compares it.
+// rb:test template.small,template.medium,template.large
+/// template.small, template.medium and template.large: the page each payload renders, compared as
+/// the corpus compares it.
 #[tokio::test]
 async fn each_payload_renders_its_page() {
-    for size in ["small", "medium"] {
+    for size in ["small", "medium", "large"] {
         let response = get(&service(), &format!("/template/{size}")).await;
 
         assert_eq!(status(&response), StatusCode::OK);

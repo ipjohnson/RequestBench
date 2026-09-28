@@ -32,4 +32,6 @@ func templateRoutes(app *fiber.App, p *Payloads) {
 	app.Get("/template/small", func(c fiber.Ctx) error { return c.Render("items", &p.Small) })
 
 	app.Get("/template/medium", func(c fiber.Ctx) error { return c.Render("items", &p.Medium) })
+
+	app.Get("/template/large", func(c fiber.Ctx) error { return c.Render("items", &p.Large) })
 }

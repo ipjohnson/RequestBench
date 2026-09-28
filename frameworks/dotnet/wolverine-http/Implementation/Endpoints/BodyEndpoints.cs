@@ -17,11 +17,17 @@ public static class BodyEndpoints
     [WolverinePost("/body/bind/medium")]
     public static Bound BindMedium(OrderRequest order, HttpRequest request) => Bound.Of(order, request);
 
+    [WolverinePost("/body/bind/large")]
+    public static Bound BindLarge(OrderRequest order, HttpRequest request) => Bound.Of(order, request);
+
     [WolverinePost("/body/validate/small")]
     public static Bound ValidateSmall(ValidatedOrder order, HttpRequest request) => Bound.Of(order, request);
 
     [WolverinePost("/body/validate/medium")]
     public static Bound ValidateMedium(ValidatedOrder order, HttpRequest request) => Bound.Of(order, request);
+
+    [WolverinePost("/body/validate/large")]
+    public static Bound ValidateLarge(ValidatedOrder order, HttpRequest request) => Bound.Of(order, request);
 
     [WolverinePost("/body/validate/first-error")]
     public static Bound ValidateFirstError(FirstErrorOrder order, HttpRequest request) => Bound.Of(order, request);

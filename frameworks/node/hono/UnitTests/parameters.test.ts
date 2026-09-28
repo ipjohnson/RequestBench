@@ -25,6 +25,13 @@ test("parameters.two: both captures are echoed as integers", async () => {
   assert.deepEqual(await response.json(), expected.withEcho("items.small.json", { one: run.one, two: run.two }));
 });
 
+// rb:test parameters.three
+test("parameters.three: all three captures are echoed as integers", async () => {
+  const response = await app.request(`/parameters/${run.one}/${run.two}/${run.three}`);
+
+  assert.deepEqual(await response.json(), expected.withEcho("items.small.json", { one: run.one, two: run.two, three: run.three }));
+});
+
 test("a capture that is not an integer is refused by the param schema", async () => {
   const response = await app.request("/parameters/four/segment/literal");
 

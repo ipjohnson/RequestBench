@@ -3,12 +3,14 @@ namespace UnitTests;
 [Collection(nameof(WolverineApp))]
 public sealed class TemplateTests(WolverineApp app)
 {
-    // rb:test template.small,template.medium
+    // rb:test template.small,template.medium,template.large
     [Theory]
     [Trait("corpus", "template.small")]
     [Trait("corpus", "template.medium")]
+    [Trait("corpus", "template.large")]
     [InlineData("small")]
     [InlineData("medium")]
+    [InlineData("large")]
     public async Task The_component_renders_the_payload_as_the_corpus_page(string size)
     {
         IScenarioResult result = await app.Host.Scenario(s =>

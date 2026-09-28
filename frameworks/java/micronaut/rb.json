@@ -19,6 +19,9 @@
       }
     }
   },
+  "optOut": {
+    "lambda-emulator-512": "At 512 MB the native function's request loop dies when Netty releases a direct buffer: Netty's Java 25 cleaner closes a shared Arena, which the native image refuses without -H:+SharedArenaSupport. It happens at the gate's first 40 KB order. Both measure runs of 2026-09-28 also lost the function in the closed loop, with nothing logged. lambda-emulator-1024 passes."
+  },
   "suite": { "argv": ["mvn", "-B", "test"], "paths": ["UnitTests"] },
   "upgrade": {
     "argv": ["mvn", "-B", "-N", "org.codehaus.mojo:versions-maven-plugin:2.22.0:update-parent", "-DallowMajorUpdates=false", "-DallowMinorUpdates=false", "-DgenerateBackupPoms=false"]
@@ -36,7 +39,9 @@
     "cors.preflight": "Micronaut's CorsFilter answers the preflight before the router runs, and no handler runs.",
     "errors.unmatched": "Micronaut's router finds no route for the path and answers 404 with its default error body.",
     "errors.wrong_method": "Micronaut's router answers a method the path has no route for with 405 and its default error body.",
-    "static.file": "Micronaut's static resource router serves the file from the payload directory application.properties maps to /static/**, and no handler runs."
+    "static.large": "Micronaut's static resource router serves the file from the payload directory application.properties maps to /static/**, and no handler runs.",
+    "static.medium": "Micronaut's static resource router serves the file from the payload directory application.properties maps to /static/**, and no handler runs.",
+    "static.small": "Micronaut's static resource router serves the file from the payload directory application.properties maps to /static/**, and no handler runs."
   },
   "mechanisms": {
     "authorized": {

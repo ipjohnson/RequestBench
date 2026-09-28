@@ -83,6 +83,14 @@ def bind_medium(request):
     return bound(order, request)
 
 
+# rb:handler body.bind_large
+@api_view(["POST"])
+def bind_large(request):
+    order = Order(data=request.data)
+    order.is_valid(raise_exception=True)
+    return bound(order, request)
+
+
 # rb:handler body.validate_small,body.rejected_all,errors.malformed
 @api_view(["POST"])
 def validate_small(request):
@@ -94,6 +102,14 @@ def validate_small(request):
 # rb:handler body.validate_medium
 @api_view(["POST"])
 def validate_medium(request):
+    order = CheckedOrder(data=request.data)
+    order.is_valid(raise_exception=True)
+    return bound(order, request)
+
+
+# rb:handler body.validate_large
+@api_view(["POST"])
+def validate_large(request):
     order = CheckedOrder(data=request.data)
     order.is_valid(raise_exception=True)
     return bound(order, request)

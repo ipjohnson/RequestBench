@@ -3,9 +3,9 @@ import pytest
 import expected
 
 
-# rb:test template.small,template.medium
-@pytest.mark.corpus("template.small", "template.medium")
-@pytest.mark.parametrize("size", ["small", "medium"])
+# rb:test template.small,template.medium,template.large
+@pytest.mark.corpus("template.small", "template.medium", "template.large")
+@pytest.mark.parametrize("size", ["small", "medium", "large"])
 def test_the_payload_is_rendered_by_the_template_html_renderer(client, size):
     response = client.get(f"/template/{size}")
 

@@ -14,7 +14,7 @@ use crate::Payloads;
 /// static: Rocket's FileServer over the payload directory, mounted at /static. It writes the
 /// file's type and length. It writes no modification time, so its answer gets one from the file.
 pub fn stage(rocket: Rocket<Build>, p: &Payloads) -> Rocket<Build> {
-    // rb:handler static.file
+    // rb:handler static.large,static.medium,static.small
     // rb:wiring static.*
     rocket.mount("/static", stamped(FileServer::from(&p.dir), &p.dir))
 }

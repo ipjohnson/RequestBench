@@ -41,9 +41,13 @@ func bodyRoutes(mux *http.ServeMux) {
 
 	mux.HandleFunc("POST /body/bind/medium", bind)
 
+	mux.HandleFunc("POST /body/bind/large", bind)
+
 	mux.HandleFunc("POST /body/validate/small", validated)
 
 	mux.HandleFunc("POST /body/validate/medium", validated)
+
+	mux.HandleFunc("POST /body/validate/large", validated)
 
 	mux.HandleFunc("POST /body/validate/first-error", validatedToFirstError)
 }

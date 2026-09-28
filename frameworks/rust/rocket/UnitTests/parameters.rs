@@ -14,8 +14,9 @@ fn the_static_route_answers_the_payload() {
     assert_eq!(json(response), expected("items.small.json"));
 }
 
-// rb:test parameters.one,parameters.two
-/// parameters.one and parameters.two: each capture bound as an integer and echoed.
+// rb:test parameters.one,parameters.two,parameters.three
+/// parameters.one, parameters.two and parameters.three: each capture bound as an integer and
+/// echoed.
 #[test]
 fn captures_are_bound_as_integers() {
     let client = client();
@@ -24,7 +25,9 @@ fn captures_are_bound_as_integers() {
     assert_eq!(json(one), with_echo("items.small.json", literal!({ "one": 4821 })));
 
     let two = get(&client, "/parameters/4821/with-second/7390", &[]);
+    let three = get(&client, "/parameters/4821/7390/1563", &[]);
     assert_eq!(json(two), with_echo("items.small.json", literal!({ "one": 4821, "two": 7390 })));
+    assert_eq!(json(three), with_echo("items.small.json", literal!({ "one": 4821, "two": 7390, "three": 1563 })));
 }
 
 #[test]

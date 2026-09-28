@@ -34,6 +34,8 @@ before(async () => {
   // One uvicorn worker, from the environment the suite runs in.
   server = spawn("uv", ["run", "--locked", "uvicorn", "--app-dir", "Implementation", "main:app", "--port", String(port)], {
     cwd: join(import.meta.dirname, ".."),
+    // The host module /__meta reads its adapter from, as the suite's pythonpath has it.
+    env: { ...process.env, PYTHONPATH: "container-h1" },
     stdio: "ignore",
   });
   for (let tries = 0; ; tries++) {

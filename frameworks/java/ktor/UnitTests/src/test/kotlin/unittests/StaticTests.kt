@@ -10,16 +10,20 @@ import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import org.junit.jupiter.api.Tag
-import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 
 class StaticTests {
-    // rb:test static.file
-    @Test
-    @Tag("static.file")
-    fun `the committed file is served byte for byte with its last modified`() = corpusTest {
-        val file = Expected.raw("items.large.json")
+    // rb:test static.small,static.medium,static.large
+    @ParameterizedTest
+    @Tag("static.small")
+    @Tag("static.medium")
+    @Tag("static.large")
+    @ValueSource(strings = ["items.small.json", "items.medium.json", "items.large.json"])
+    fun `the committed file is served byte for byte with its last modified`(name: String) = corpusTest {
+        val file = Expected.raw(name)
 
-        val response = client.get("/static/items.large.json")
+        val response = client.get("/static/$name")
 
         assertEquals(HttpStatusCode.OK, response.status)
         assertEquals(ContentType.Application.Json, response.contentType()?.withoutParameters())

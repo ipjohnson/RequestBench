@@ -11,11 +11,12 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 class TemplateTests extends JavalinApp {
 
-    // rb:test template.small,template.medium
+    // rb:test template.small,template.medium,template.large
     @ParameterizedTest
     @Tag("template.small")
     @Tag("template.medium")
-    @ValueSource(strings = {"small", "medium"})
+    @Tag("template.large")
+    @ValueSource(strings = {"small", "medium", "large"})
     void mustacheRendersThePayloadAsTheCorpusPage(String size) {
         JavalinTest.test(app(), (server, client) -> {
             Response response = client.get("/template/" + size);

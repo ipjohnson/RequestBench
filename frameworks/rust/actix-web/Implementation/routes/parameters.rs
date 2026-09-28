@@ -15,11 +15,20 @@ struct Two {
     two: i64,
 }
 
+#[derive(Deserialize, Serialize)]
+struct Three {
+    one: i64,
+    two: i64,
+    three: i64,
+}
+
 /// parameters: router captures, bound as integers into a struct by actix-web's Path extractor,
 /// which names each field after its capture. The router tries routes in the order they were
-/// registered, so the literal route comes first.
+/// registered, so each route comes before the captures that also match its path: the literal route
+/// first, and the three captures last.
 pub fn configure(cfg: &mut ServiceConfig, p: &'static Payloads) {
     cfg.route("/parameters/static/segment/literal", web::get().to(move || async move { web::Json(&p.small) }))
         .route("/parameters/{one}/segment/literal", web::get().to(move |one: web::Path<One>| async move { web::Json(Echoed::new(&p.small, one.into_inner())) }))
-        .route("/parameters/{one}/with-second/{two}", web::get().to(move |two: web::Path<Two>| async move { web::Json(Echoed::new(&p.small, two.into_inner())) }));
+        .route("/parameters/{one}/with-second/{two}", web::get().to(move |two: web::Path<Two>| async move { web::Json(Echoed::new(&p.small, two.into_inner())) }))
+        .route("/parameters/{one}/{two}/{three}", web::get().to(move |three: web::Path<Three>| async move { web::Json(Echoed::new(&p.small, three.into_inner())) }));
 }

@@ -11,6 +11,8 @@ import type { Routes } from "../app.ts";
 const one = z.object({ one: z.coerce.number().int() });
 
 const two = z.object({ one: z.coerce.number().int(), two: z.coerce.number().int() });
+
+const three = z.object({ one: z.coerce.number().int(), two: z.coerce.number().int(), three: z.coerce.number().int() });
 // rb:end
 
 /**
@@ -23,6 +25,8 @@ const parameters: Routes = (app, p) => {
   app.get("/parameters/:one/segment/literal", async (event) => ({ ...p.small, echo: await getValidatedRouterParams(event, one) }));
 
   app.get("/parameters/:one/with-second/:two", async (event) => ({ ...p.small, echo: await getValidatedRouterParams(event, two) }));
+
+  app.get("/parameters/:one/:two/:three", async (event) => ({ ...p.small, echo: await getValidatedRouterParams(event, three) }));
 };
 
 export default parameters;

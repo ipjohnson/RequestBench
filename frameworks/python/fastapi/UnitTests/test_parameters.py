@@ -28,6 +28,14 @@ def test_both_captures_are_echoed_as_ints(client):
     assert response.json() == expected.with_echo("items.small.json", {"one": RUN["one"], "two": RUN["two"]})
 
 
+# rb:test parameters.three
+@pytest.mark.corpus("parameters.three")
+def test_all_three_captures_are_echoed_as_ints(client):
+    response = client.get(f"/parameters/{RUN['one']}/{RUN['two']}/{RUN['three']}")
+
+    assert response.json() == expected.with_echo("items.small.json", {"one": RUN["one"], "two": RUN["two"], "three": RUN["three"]})
+
+
 def test_a_capture_that_is_not_an_int_is_refused(client):
     response = client.get("/parameters/four/segment/literal")
 

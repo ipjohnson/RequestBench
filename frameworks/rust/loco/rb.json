@@ -17,7 +17,9 @@
     "cors.preflight": "The layer Loco's Cors makes, on the cors routes, answers the preflight, and no handler runs.",
     "errors.unmatched": "axum's router answers a path no route matches with 404 and no body. Loco's fallback middleware, which would answer it with a page of its own, is off in production.",
     "errors.wrong_method": "axum's method router answers a method the path has no route for with 405, an Allow header and no body.",
-    "static.file": "Loco's static middleware serves the file from the payload directory config/production.yaml maps to /static, and no handler runs."
+    "static.large": "Loco's static middleware serves the file from the payload directory config/production.yaml maps to /static, and no handler runs.",
+    "static.medium": "Loco's static middleware serves the file from the payload directory config/production.yaml maps to /static, and no handler runs.",
+    "static.small": "Loco's static middleware serves the file from the payload directory config/production.yaml maps to /static, and no handler runs."
   },
   "mechanisms": {
     "authorized": {

@@ -6,6 +6,7 @@ from kiota_abstractions.request_adapter import RequestAdapter
 from typing import Any, Optional, TYPE_CHECKING, Union
 
 if TYPE_CHECKING:
+    from .large.large_request_builder import LargeRequestBuilder
     from .medium.medium_request_builder import MediumRequestBuilder
     from .small.small_request_builder import SmallRequestBuilder
 
@@ -21,6 +22,15 @@ class TemplateRequestBuilder(BaseRequestBuilder):
         Returns: None
         """
         super().__init__(request_adapter, "{+baseurl}/template", path_parameters)
+    
+    @property
+    def large(self) -> LargeRequestBuilder:
+        """
+        The large property
+        """
+        from .large.large_request_builder import LargeRequestBuilder
+
+        return LargeRequestBuilder(self.request_adapter, self.path_parameters)
     
     @property
     def medium(self) -> MediumRequestBuilder:

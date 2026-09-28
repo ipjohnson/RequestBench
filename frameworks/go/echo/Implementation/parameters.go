@@ -15,6 +15,12 @@ type ParametersTwo struct {
 	Two int `param:"two" json:"two"`
 }
 
+type ParametersThree struct {
+	One   int `param:"one" json:"one"`
+	Two   int `param:"two" json:"two"`
+	Three int `param:"three" json:"three"`
+}
+
 // parametersRoutes bind router captures with echo.BindPathValues, which converts each to the
 // integer its field declares. Echo's router tries a static segment before a capture, so the
 // static route wins its own path.
@@ -35,5 +41,13 @@ func parametersRoutes(e *echo.Echo, p *Payloads) {
 			return err
 		}
 		return c.JSON(http.StatusOK, Echoed[ParametersTwo]{&p.Small, captured})
+	})
+
+	e.GET("/parameters/:one/:two/:three", func(c *echo.Context) error {
+		var captured ParametersThree
+		if err := echo.BindPathValues(c, &captured); err != nil {
+			return err
+		}
+		return c.JSON(http.StatusOK, Echoed[ParametersThree]{&p.Small, captured})
 	})
 }

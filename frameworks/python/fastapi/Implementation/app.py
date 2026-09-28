@@ -40,7 +40,7 @@ def build(p: Payloads) -> FastAPI:
     # scopes one, so these two families are sub-applications with a middleware each.
     app.mount("/compressed", compressed.application(p))
     app.mount("/cors", cors.application(p))
-    # rb:handler static.file
+    # rb:handler static.large,static.medium,static.small
     # rb:wiring static.*
     app.mount("/static", StaticFiles(directory=p.directory))
     return app

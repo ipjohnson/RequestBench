@@ -2,7 +2,7 @@
   "name": "rb-litestar-client",
   "private": true,
   "type": "module",
-  "comment": "Litestar's client, written with the Node toolchain because Litestar's recommended path to a client is litestar-vite, which runs Hey API over the document Litestar exports and makes a TypeScript client. Hey API is pinned at the version litestar-vite 0.31.0 scaffolds. Its own package and lockfile, apart from the repository's and from Litestar's Python environment. generate writes openapi.json with the suite's uv environment, then runs Hey API. test starts the Implementation under uvicorn, so uv has to be on PATH.",
+  "comment": "Litestar's client, written with the Node toolchain because Litestar's recommended path to a client is litestar-vite, which runs Hey API over the document Litestar exports and makes a TypeScript client. Hey API is pinned at the version litestar-vite 0.31.0 scaffolds. Its own package and lockfile, apart from the repository's and from Litestar's Python environment. generate writes openapi.json with the suite's uv environment, then runs Hey API. test starts the Implementation under uvicorn, so uv has to be on PATH. typescript stays at 6, because Hey API writes the client through TypeScript's JavaScript API, which TypeScript 7 does not have.",
   "scripts": {
     "generate": "uv run --locked --directory .. python Client/document.py && openapi-ts",
     "test": "tsc -p tsconfig.json && node --experimental-strip-types --disable-warning=ExperimentalWarning --test client.test.ts",
@@ -11,6 +11,6 @@
   "devDependencies": {
     "@hey-api/openapi-ts": "0.99.0",
     "@types/node": "^26.6.2",
-    "typescript": "^7.0.2"
+    "typescript": "^6.0.3"
   }
 }

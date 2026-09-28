@@ -9,6 +9,8 @@ import { answers, echoed, integer, payload } from "../schemas.ts";
 const one = { type: "object", properties: { one: integer }, required: ["one"] } as const;
 
 const two = { type: "object", properties: { one: integer, two: integer }, required: ["one", "two"] } as const;
+
+const three = { type: "object", properties: { one: integer, two: integer, three: integer }, required: ["one", "two", "three"] } as const;
 // rb:end
 
 /**
@@ -24,6 +26,10 @@ const parameters: Routes = async (app, { payloads: p }) => {
 
   app.get<{ Params: { one: number; two: number } }>("/parameters/:one/with-second/:two", {
     schema: { params: two, response: { 200: echoed(two) } },
+  }, async (request) => ({ ...p.small, echo: request.params }));
+
+  app.get<{ Params: { one: number; two: number; three: number } }>("/parameters/:one/:two/:three", {
+    schema: { params: three, response: { 200: echoed(three) } },
   }, async (request) => ({ ...p.small, echo: request.params }));
 };
 

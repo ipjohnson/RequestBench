@@ -12,11 +12,12 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 class TemplateTests extends MicronautApp {
 
-    // rb:test template.small,template.medium
+    // rb:test template.small,template.medium,template.large
     @ParameterizedTest
     @Tag("template.small")
     @Tag("template.medium")
-    @ValueSource(strings = {"small", "medium"})
+    @Tag("template.large")
+    @ValueSource(strings = {"small", "medium", "large"})
     void thymeleafRendersThePayloadAsTheCorpusPage(String size) throws Exception {
         HttpResponse<byte[]> response = get("/template/" + size);
 

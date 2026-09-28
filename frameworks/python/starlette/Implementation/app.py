@@ -35,7 +35,7 @@ def build(p: Payloads) -> Starlette:
     families = (baseline, json, middleware, parameters, query, headers, body, authorized, items, cache, etag,
                 compressed, cors, forms, stream, sse, template, contract)
     routes = [route for family in families for route in family.routes(p)]
-    # rb:handler static.file
+    # rb:handler static.large,static.medium,static.small
     # rb:wiring static.*
     routes.append(Mount("/static", app=StaticFiles(directory=p.directory)))
     return Starlette(routes=routes)

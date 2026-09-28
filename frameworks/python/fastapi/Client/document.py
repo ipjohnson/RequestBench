@@ -16,6 +16,8 @@ if os.environ.get("PYTHONHASHSEED") != "0":
 
 CLIENT = Path(__file__).resolve().parent
 sys.path.insert(0, str(CLIENT.parent / "Implementation"))
+# The host module /__meta reads its adapter from, as the suite's pythonpath has it.
+sys.path.insert(0, str(CLIENT.parent / "container-h1"))
 
 from app import build  # noqa: E402
 from payloads import load  # noqa: E402

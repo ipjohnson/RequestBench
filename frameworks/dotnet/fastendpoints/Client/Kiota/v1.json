@@ -56,6 +56,36 @@
         ]
       }
     },
+    "/body/bind/large": {
+      "post": {
+        "tags": [
+          "Body"
+        ],
+        "operationId": "ImplementationEndpointsBindLargeEndpoint",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrderRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Bound"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/body/bind/medium": {
       "post": {
         "tags": [
@@ -127,6 +157,46 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/FirstErrorOrder"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Bound"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/body/validate/large": {
+      "post": {
+        "tags": [
+          "Body"
+        ],
+        "operationId": "ImplementationEndpointsValidateLargeEndpoint",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckedOrder"
               }
             }
           },
@@ -977,6 +1047,55 @@
         }
       }
     },
+    "/parameters/{one}/{two}/{three}": {
+      "get": {
+        "tags": [
+          "Parameters"
+        ],
+        "operationId": "ImplementationEndpointsParametersThreeEndpoint",
+        "parameters": [
+          {
+            "name": "one",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "two",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "three",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EchoedOfParametersThree"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/plaintext": {
       "get": {
         "tags": [
@@ -1137,6 +1256,19 @@
         }
       }
     },
+    "/template/large": {
+      "get": {
+        "tags": [
+          "Template"
+        ],
+        "operationId": "ImplementationEndpointsTemplateLargeEndpoint",
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
     "/template/medium": {
       "get": {
         "tags": [
@@ -1207,7 +1339,7 @@
             "type": "string"
           },
           "lines": {
-            "$ref": "#/components/schemas/ListOfOrderLine__op8CC1FB8E7CBB"
+            "$ref": "#/components/schemas/ListOfOrderLine__op49C4EA5E204E"
           }
         }
       },
@@ -1256,6 +1388,31 @@
               },
               {
                 "$ref": "#/components/schemas/ParametersOne"
+              }
+            ]
+          }
+        }
+      },
+      "EchoedOfParametersThree": {
+        "type": "object",
+        "properties": {
+          "size": {
+            "type": "string"
+          },
+          "count": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "items": {
+            "$ref": "#/components/schemas/IReadOnlyListOfItem"
+          },
+          "echo": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ParametersThree"
               }
             ]
           }
@@ -1382,7 +1539,7 @@
             "type": "string"
           },
           "lines": {
-            "$ref": "#/components/schemas/ListOfOrderLine__op8CC1FB8E7CBB"
+            "$ref": "#/components/schemas/ListOfOrderLine__op49C4EA5E204E"
           }
         }
       },
@@ -1463,7 +1620,7 @@
           "$ref": "#/components/schemas/OrderLine"
         }
       },
-      "ListOfOrderLine__op8CC1FB8E7CBB": {
+      "ListOfOrderLine__op49C4EA5E204E": {
         "const": null,
         "minItems": 1,
         "type": "array",
@@ -1548,6 +1705,23 @@
         "type": "object",
         "properties": {
           "one": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "ParametersThree": {
+        "type": "object",
+        "properties": {
+          "one": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "two": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "three": {
             "type": "integer",
             "format": "int32"
           }

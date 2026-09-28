@@ -27,4 +27,6 @@ func templateRoutes(mux *http.ServeMux, p *Payloads) {
 	mux.HandleFunc("GET /template/small", rendered(&p.Small))
 
 	mux.HandleFunc("GET /template/medium", rendered(&p.Medium))
+
+	mux.HandleFunc("GET /template/large", rendered(&p.Large))
 }

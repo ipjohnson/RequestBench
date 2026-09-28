@@ -12,7 +12,7 @@ public sealed record Echoed<T>(string Size, int Count, IReadOnlyList<Item> Items
 }
 
 // Request types are classes with setters, because FastEndpoints.Generator writes binding code
-// for those and leaves records and init-only properties to runtime compilation. The five below
+// for those and leaves records and init-only properties to runtime compilation. The six below
 // are also the echo their route answers with.
 
 public sealed class ParametersOne
@@ -25,6 +25,15 @@ public sealed class ParametersTwo
     public int One { get; set; }
 
     public int Two { get; set; }
+}
+
+public sealed class ParametersThree
+{
+    public int One { get; set; }
+
+    public int Two { get; set; }
+
+    public int Three { get; set; }
 }
 
 public sealed class QueryOne

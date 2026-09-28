@@ -128,6 +128,7 @@ export interface Recorded {
 export interface RunValues {
   readonly one: number;
   readonly two: number;
+  readonly three: number;
   readonly tenant: string;
   readonly requestId: string;
   readonly account: number;

@@ -16,6 +16,8 @@ from starlette.schemas import SchemaGenerator
 
 CLIENT = Path(__file__).resolve().parent
 sys.path.insert(0, str(CLIENT.parent / "Implementation"))
+# The host module /__meta reads its adapter from, as the suite's pythonpath has it.
+sys.path.insert(0, str(CLIENT.parent / "container-h1"))
 
 from app import build  # noqa: E402
 from payloads import load  # noqa: E402
@@ -66,6 +68,13 @@ schemas:
         required: [echo]
         properties:
           echo: {type: object, required: [one, two], properties: {one: {type: integer}, two: {type: integer}}}
+  EchoedThree:
+    allOf:
+      - {$ref: "#/components/schemas/Payload"}
+      - type: object
+        required: [echo]
+        properties:
+          echo: {type: object, required: [one, two, three], properties: {one: {type: integer}, two: {type: integer}, three: {type: integer}}}
   EchoedPage:
     allOf:
       - {$ref: "#/components/schemas/Payload"}

@@ -3,12 +3,13 @@ import pytest
 import expected
 
 
-# rb:test static.file
-@pytest.mark.corpus("static.file")
-async def test_the_committed_file_is_served_byte_for_byte(client):
-    file = expected.raw("items.large.json")
+# rb:test static.small,static.medium,static.large
+@pytest.mark.corpus("static.small", "static.medium", "static.large")
+@pytest.mark.parametrize("name", ["items.small.json", "items.medium.json", "items.large.json"])
+async def test_the_committed_file_is_served_byte_for_byte(client, name):
+    file = expected.raw(name)
 
-    response = await client.get("/static/items.large.json")
+    response = await client.get(f"/static/{name}")
 
     body = b"".join(response.streaming_content)
     assert response.status_code == 200

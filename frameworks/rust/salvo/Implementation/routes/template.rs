@@ -13,7 +13,7 @@ struct ItemsPage<'a> {
 }
 // rb:end
 
-// rb:handler template.small,template.medium
+// rb:handler template.small,template.medium,template.large
 /// The page a payload renders, written as text/html.
 #[derive(Clone, Copy)]
 struct Page(&'static Payload);
@@ -32,4 +32,5 @@ pub fn router(p: &'static Payloads) -> Router {
     Router::with_path("/template")
         .push(Router::with_path("small").get(Page(&p.small)))
         .push(Router::with_path("medium").get(Page(&p.medium)))
+        .push(Router::with_path("large").get(Page(&p.large)))
 }

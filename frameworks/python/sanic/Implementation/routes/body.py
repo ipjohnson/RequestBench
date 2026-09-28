@@ -127,6 +127,18 @@ def blueprint(p: Payloads) -> Blueprint:
         """
         return json(bound(body, request))
 
+    @routes.post("/body/bind/large")
+    @answers(Bound, "The order back, with its leaves and length")
+    @validate(json=Order)
+    async def bind_large(request, body: Order):
+        """Binds the order and checks no rule.
+
+        openapi:
+        ---
+        requestBody: {required: true, content: {application/json: {schema: {$ref: "#/components/schemas/Order"}}}}
+        """
+        return json(bound(body, request))
+
     @routes.post("/body/validate/small")
     @answers(Bound, "The order back, with its leaves and length")
     @refuses(400, "sanic-ext's refusal, naming every rule the order breaks")
@@ -145,6 +157,19 @@ def blueprint(p: Payloads) -> Blueprint:
     @refuses(400, "sanic-ext's refusal, naming every rule the order breaks")
     @validate(json=CheckedOrder)
     async def validate_medium(request, body: CheckedOrder):
+        """Binds the order and checks orderRequest's rules.
+
+        openapi:
+        ---
+        requestBody: {required: true, content: {application/json: {schema: {$ref: "#/components/schemas/CheckedOrder"}}}}
+        """
+        return json(bound(body, request))
+
+    @routes.post("/body/validate/large")
+    @answers(Bound, "The order back, with its leaves and length")
+    @refuses(400, "sanic-ext's refusal, naming every rule the order breaks")
+    @validate(json=CheckedOrder)
+    async def validate_large(request, body: CheckedOrder):
         """Binds the order and checks orderRequest's rules.
 
         openapi:

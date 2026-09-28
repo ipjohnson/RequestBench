@@ -46,4 +46,12 @@ public class TemplateRoutes {
     public TemplateInstance medium() {
         return Templates.page(p.medium());
     }
+
+    // rb:handler template.large
+    @GET
+    @Path("large")
+    @Produces(MediaType.TEXT_HTML)
+    public TemplateInstance large() {
+        return Templates.page(p.large());
+    }
 }

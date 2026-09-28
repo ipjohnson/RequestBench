@@ -16,9 +16,14 @@ fn medium(p: &State<Payloads>) -> Template {
     Template::render("items-page", context! { body: &p.medium })
 }
 
+#[get("/template/large")]
+fn large(p: &State<Payloads>) -> Template {
+    Template::render("items-page", context! { body: &p.large })
+}
+
 pub fn stage(rocket: Rocket<Build>, _: &Payloads) -> Rocket<Build> {
     rocket
-        .mount("/", routes![small, medium])
+        .mount("/", routes![small, medium, large])
         // rb:wiring template.*
         // The fairing reads every template in template_dir from disk when Rocket ignites.
         .attach(Template::fairing())

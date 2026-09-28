@@ -17,16 +17,19 @@ async fn the_literal_path_is_its_own_route() {
     .await;
 }
 
-// rb:test parameters.one,parameters.two
-/// parameters.one and parameters.two: each capture bound as an integer and echoed.
+// rb:test parameters.one,parameters.two,parameters.three
+/// parameters.one, parameters.two and parameters.three: each capture bound as an integer and
+/// echoed.
 #[tokio::test]
 async fn each_capture_is_an_integer() {
     request::<App, _, _>(|server, _| async move {
         let one = server.get("/parameters/4821/segment/literal").await;
         let two = server.get("/parameters/4821/with-second/7390").await;
+        let three = server.get("/parameters/4821/7390/1563").await;
 
         assert_eq!(one.json::<Value>(), with_echo("items.small.json", json!({ "one": 4821 })));
         assert_eq!(two.json::<Value>(), with_echo("items.small.json", json!({ "one": 4821, "two": 7390 })));
+        assert_eq!(three.json::<Value>(), with_echo("items.small.json", json!({ "one": 4821, "two": 7390, "three": 1563 })));
     })
     .await;
 }

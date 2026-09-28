@@ -43,7 +43,7 @@ export class AppModule {
         // rb:wiring cache.*
         // An in-memory store sized in entries and aged by settings.json, as Nest's caching guide sets one up.
         CacheModule.register({ stores: [new Keyv({ store: new KeyvCacheableMemory({ ttl: cache.ttlSeconds * 1000, lruSize: cache.capacity }) })] }),
-        // rb:handler static.file
+        // rb:handler static.large,static.medium,static.small
         // rb:wiring static.*
         // renderPath is where ServeStaticModule answers index.html for a single-page application. The
         // payload directory holds none, and no request asks for this path.

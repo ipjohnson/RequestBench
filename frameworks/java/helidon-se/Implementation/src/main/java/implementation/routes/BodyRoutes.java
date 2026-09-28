@@ -51,6 +51,8 @@ public final class BodyRoutes implements HttpFeature {
 
         routing.post("/body/bind/medium", (req, res) -> res.send(Bound.of(req.content().as(OrderRequest.class), req)));
 
+        routing.post("/body/bind/large", (req, res) -> res.send(Bound.of(req.content().as(OrderRequest.class), req)));
+
         routing.post("/body/validate/small", (req, res) -> {
             OrderRequest order = req.content().as(OrderRequest.class);
             validation.check(OrderRequest.class, order);
@@ -58,6 +60,12 @@ public final class BodyRoutes implements HttpFeature {
         });
 
         routing.post("/body/validate/medium", (req, res) -> {
+            OrderRequest order = req.content().as(OrderRequest.class);
+            validation.check(OrderRequest.class, order);
+            res.send(Bound.of(order, req));
+        });
+
+        routing.post("/body/validate/large", (req, res) -> {
             OrderRequest order = req.content().as(OrderRequest.class);
             validation.check(OrderRequest.class, order);
             res.send(Bound.of(order, req));

@@ -6,12 +6,14 @@ import { app, expected } from "./app.ts";
 const post = (url: string, payload: string | Buffer) =>
   app.inject({ method: "POST", url, headers: { "content-type": "application/json" }, payload });
 
-// rb:test body.bind_small,body.bind_medium,body.validate_small,body.validate_medium
+// rb:test body.bind_small,body.bind_medium,body.bind_large,body.validate_small,body.validate_medium,body.validate_large
 for (const [id, url, file] of [
   ["body.bind_small", "/body/bind/small", "order.small.json"],
   ["body.bind_medium", "/body/bind/medium", "order.medium.json"],
+  ["body.bind_large", "/body/bind/large", "order.large.json"],
   ["body.validate_small", "/body/validate/small", "order.small.json"],
   ["body.validate_medium", "/body/validate/medium", "order.medium.json"],
+  ["body.validate_large", "/body/validate/large", "order.large.json"],
 ] as const) {
   test(`${id}: an order is answered with its leaves, its length and itself`, async () => {
     const body = expected.bytes(file);

@@ -15,7 +15,7 @@ public final class StaticRoutes {
     private StaticRoutes() {}
 
     public static void register(Router router, Payloads p) {
-        // rb:handler static.file
+        // rb:handler static.large,static.medium,static.small
         // rb:wiring static.*
         router.route("/static/*").handler(StaticHandler.create(FileSystemAccess.ROOT, p.directory()));
     }

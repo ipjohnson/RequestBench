@@ -194,6 +194,36 @@
         "title": "EchoedSearch",
         "type": "object"
       },
+      "EchoedThree": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "echo": {
+            "$ref": "#/components/schemas/Three"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Item"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "size": {
+            "title": "Size",
+            "type": "string"
+          }
+        },
+        "required": [
+          "size",
+          "count",
+          "items",
+          "echo"
+        ],
+        "title": "EchoedThree",
+        "type": "object"
+      },
       "EchoedTwo": {
         "properties": {
           "count": {
@@ -512,6 +542,29 @@
         "title": "Search",
         "type": "object"
       },
+      "Three": {
+        "properties": {
+          "one": {
+            "title": "One",
+            "type": "integer"
+          },
+          "three": {
+            "title": "Three",
+            "type": "integer"
+          },
+          "two": {
+            "title": "Two",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "one",
+          "two",
+          "three"
+        ],
+        "title": "Three",
+        "type": "object"
+      },
       "Two": {
         "properties": {
           "one": {
@@ -704,6 +757,37 @@
         ]
       }
     },
+    "/body/bind/large": {
+      "post": {
+        "operationId": "post~body.bind_large",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Order"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Bound"
+                }
+              }
+            },
+            "description": "The order back, with its leaves and length"
+          }
+        },
+        "summary": "Binds the order and checks no rule.",
+        "tags": [
+          "body"
+        ]
+      }
+    },
     "/body/bind/medium": {
       "post": {
         "operationId": "post~body.bind_medium",
@@ -802,6 +886,47 @@
           }
         },
         "summary": "Checks orderRequest's rules one field at a time and stops at the first that fails.",
+        "tags": [
+          "body"
+        ]
+      }
+    },
+    "/body/validate/large": {
+      "post": {
+        "operationId": "post~body.validate_large",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckedOrder"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Bound"
+                }
+              }
+            },
+            "description": "The order back, with its leaves and length"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Refusal"
+                }
+              }
+            },
+            "description": "sanic-ext's refusal, naming every rule the order breaks"
+          }
+        },
+        "summary": "Binds the order and checks orderRequest's rules.",
         "tags": [
           "body"
         ]
@@ -1707,6 +1832,56 @@
         ]
       }
     },
+    "/parameters/{one}/{two}/{three}": {
+      "get": {
+        "operationId": "get~parameters.three",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "one",
+            "required": true,
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "two",
+            "required": true,
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "three",
+            "required": true,
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EchoedThree"
+                }
+              }
+            },
+            "description": "items.small, with the three captures"
+          }
+        },
+        "summary": "Three",
+        "tags": [
+          "parameters"
+        ]
+      }
+    },
     "/plaintext": {
       "get": {
         "operationId": "get~baseline.plaintext",
@@ -1910,6 +2085,27 @@
         "summary": "Lines",
         "tags": [
           "stream"
+        ]
+      }
+    },
+    "/template/large": {
+      "get": {
+        "operationId": "get~template.large",
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "items.large as a page"
+          }
+        },
+        "summary": "Large",
+        "tags": [
+          "template"
         ]
       }
     },

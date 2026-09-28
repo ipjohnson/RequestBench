@@ -71,9 +71,13 @@ func bodyRoutes(r *gin.Engine) {
 
 	r.POST("/body/bind/medium", bind)
 
+	r.POST("/body/bind/large", bind)
+
 	r.POST("/body/validate/small", validate)
 
 	r.POST("/body/validate/medium", validate)
+
+	r.POST("/body/validate/large", validate)
 
 	r.POST("/body/validate/first-error", validateToFirstError)
 }

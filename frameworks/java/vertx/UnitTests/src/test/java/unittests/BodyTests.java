@@ -16,17 +16,21 @@ import org.junit.jupiter.params.provider.CsvSource;
 
 class BodyTests extends VertxApp {
 
-    // rb:test body.bind_small,body.bind_medium,body.validate_small,body.validate_medium
+    // rb:test body.bind_small,body.bind_medium,body.bind_large,body.validate_small,body.validate_medium,body.validate_large
     @ParameterizedTest
     @Tag("body.bind_small")
     @Tag("body.bind_medium")
+    @Tag("body.bind_large")
     @Tag("body.validate_small")
     @Tag("body.validate_medium")
+    @Tag("body.validate_large")
     @CsvSource({
         "/body/bind/small, order.small.json",
         "/body/bind/medium, order.medium.json",
+        "/body/bind/large, order.large.json",
         "/body/validate/small, order.small.json",
         "/body/validate/medium, order.medium.json",
+        "/body/validate/large, order.large.json",
     })
     void anOrderIsAnsweredWithItsLeavesItsLengthAndItself(String path, String file) throws Exception {
         byte[] body = Expected.bytes(file);

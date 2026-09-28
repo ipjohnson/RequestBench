@@ -11,11 +11,12 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 
 class TemplateTests {
-    // rb:test template.small,template.medium
+    // rb:test template.small,template.medium,template.large
     @ParameterizedTest
     @Tag("template.small")
     @Tag("template.medium")
-    @ValueSource(strings = ["small", "medium"])
+    @Tag("template.large")
+    @ValueSource(strings = ["small", "medium", "large"])
     fun `the payload is rendered by the thymeleaf template`(size: String) = corpusTest {
         val response = client.get("/template/$size")
 

@@ -159,6 +159,11 @@ fn bind_medium(received: Received, order: Json<Order>) -> Json<Bound> {
     Bound::of(order.into_inner(), received)
 }
 
+#[post("/body/bind/large", data = "<order>")]
+fn bind_large(received: Received, order: Json<Order>) -> Json<Bound> {
+    Bound::of(order.into_inner(), received)
+}
+
 #[post("/body/validate/small", data = "<order>")]
 fn validate_small(received: Received, order: Validated<Order>) -> Json<Bound> {
     Bound::of(order.0, received)
@@ -169,6 +174,11 @@ fn validate_medium(received: Received, order: Validated<Order>) -> Json<Bound> {
     Bound::of(order.0, received)
 }
 
+#[post("/body/validate/large", data = "<order>")]
+fn validate_large(received: Received, order: Validated<Order>) -> Json<Bound> {
+    Bound::of(order.0, received)
+}
+
 #[post("/body/validate/first-error", data = "<order>")]
 fn validate_first(received: Received, order: Validated<FirstRule>) -> Json<Bound> {
     Bound::of(order.0.0, received)
@@ -176,7 +186,7 @@ fn validate_first(received: Received, order: Validated<FirstRule>) -> Json<Bound
 
 pub fn stage(rocket: Rocket<Build>, _: &Payloads) -> Rocket<Build> {
     rocket
-        .mount("/", routes![bind_small, bind_medium, validate_small, validate_medium, validate_first])
+        .mount("/", routes![bind_small, bind_medium, bind_large, validate_small, validate_medium, validate_large, validate_first])
         // rb:wiring body.*
         // The catcher for the 422 the Validated guard fails with, on the body routes alone.
         .register("/body", catchers![unprocessable])

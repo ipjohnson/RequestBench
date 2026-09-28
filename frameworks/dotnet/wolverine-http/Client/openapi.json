@@ -137,6 +137,46 @@
         }
       }
     },
+    "/body/bind/large": {
+      "post": {
+        "tags": [
+          "Implementation.Endpoints.BodyEndpoints"
+        ],
+        "summary": "POST_body_bind_large",
+        "description": "POST_body_bind_large",
+        "operationId": "POST_body_bind_large",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrderRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Bound"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": { }
+              }
+            }
+          }
+        }
+      }
+    },
     "/body/validate/small": {
       "post": {
         "tags": [
@@ -195,6 +235,56 @@
         "summary": "POST_body_validate_medium",
         "description": "POST_body_validate_medium",
         "operationId": "POST_body_validate_medium",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ValidatedOrder"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Bound"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": { }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/body/validate/large": {
+      "post": {
+        "tags": [
+          "Implementation.Endpoints.BodyEndpoints"
+        ],
+        "summary": "POST_body_validate_large",
+        "description": "POST_body_validate_large",
+        "operationId": "POST_body_validate_large",
         "requestBody": {
           "content": {
             "application/json": {
@@ -1564,6 +1654,77 @@
         }
       }
     },
+    "/parameters/{one}/{two}/{three}": {
+      "get": {
+        "tags": [
+          "Implementation.Endpoints.ParametersEndpoints"
+        ],
+        "summary": "GET_parameters_one_two_three",
+        "description": "GET_parameters_one_two_three",
+        "operationId": "GET_parameters_one_two_three",
+        "parameters": [
+          {
+            "name": "one",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
+            "name": "two",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
+            "name": "three",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EchoedOfParametersThree"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": { }
+              }
+            }
+          }
+        }
+      }
+    },
     "/query/one": {
       "get": {
         "tags": [
@@ -1827,6 +1988,36 @@
           }
         }
       }
+    },
+    "/template/large": {
+      "get": {
+        "tags": [
+          "Implementation.Endpoints.TemplateEndpoints"
+        ],
+        "summary": "GET_template_large",
+        "description": "GET_template_large",
+        "operationId": "GET_template_large",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RazorComponentResultOfItemsPage"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": { }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1919,6 +2110,38 @@
               },
               {
                 "$ref": "#/components/schemas/ParametersOne"
+              }
+            ]
+          }
+        }
+      },
+      "EchoedOfParametersThree": {
+        "type": "object",
+        "properties": {
+          "size": {
+            "type": "string"
+          },
+          "count": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Item"
+            }
+          },
+          "echo": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ParametersThree"
               }
             ]
           }
@@ -2292,6 +2515,40 @@
         "type": "object",
         "properties": {
           "one": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "ParametersThree": {
+        "required": [
+          "one",
+          "two",
+          "three"
+        ],
+        "type": "object",
+        "properties": {
+          "one": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "two": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "three": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
               "integer",

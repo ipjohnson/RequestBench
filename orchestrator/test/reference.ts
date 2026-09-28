@@ -39,6 +39,7 @@ export interface Contract {
 export const RUN: RunValues = {
   one: 4821,
   two: 7390,
+  three: 1563,
   tenant: "qwertyuiopas",
   requestId: "0123456789abcdef",
   account: 482913,
@@ -150,20 +151,21 @@ export function corpusReference(contract: Contract) {
     ["GET", /^\/parameters\/static\/segment\/literal$/, () => json(small)],
     ["GET", /^\/parameters\/(\d+)\/segment\/literal$/, (_, m) => echoed({ one: Number(m[1]) })],
     ["GET", /^\/parameters\/(\d+)\/with-second\/(\d+)$/, (_, m) => echoed({ one: Number(m[1]), two: Number(m[2]) })],
+    ["GET", /^\/parameters\/(\d+)\/(\d+)\/(\d+)$/, (_, m) => echoed({ one: Number(m[1]), two: Number(m[2]), three: Number(m[3]) })],
     ["GET", /^\/query\/one$/, (_, __, url) => echoed(bound(url.searchParams, ["page"]))],
     ["GET", /^\/query\/many$/, (_, __, url) =>
       echoed(bound(url.searchParams, ["page", "size", "status", "category", "sort", "q", "minPrice", "maxPrice"]))],
     ["GET", /^\/headers$/, () => json(small)],
     ["GET", /^\/headers\/bind$/, (req) =>
       echoed({ tenant: req.headers["x-rb-tenant"], requestId: req.headers["x-rb-request-id"], account: Number(req.headers["x-rb-account"]) })],
-    ["POST", /^\/body\/bind\/(?:small|medium)$/, (req) => ordered(req, "")],
-    ["POST", /^\/body\/validate\/(?:small|medium)$/, (req) => ordered(req, "body.rejected_all")],
+    ["POST", /^\/body\/bind\/(?:small|medium|large)$/, (req) => ordered(req, "")],
+    ["POST", /^\/body\/validate\/(?:small|medium|large)$/, (req) => ordered(req, "body.rejected_all")],
     ["POST", /^\/body\/validate\/first-error$/, (req) => ordered(req, "body.rejected_first")],
     ["GET", /^\/authorized\/small$/, (req) =>
       req.headers["authorization"] === `Bearer ${settings.value.token}` ? json(small) : own("authorized.denied")],
     ["GET", /^\/(?:cache|compressed|etag)\/(small|medium|large)$/, (_, m) => json(sized[m[1] as keyof typeof sized])],
     ["GET", /^\/cache\/vary\/(?:one|many)$/, () => json(small)],
-    ["GET", /^\/template\/(small|medium)$/, (_, m) => page(sized[m[1] as "small" | "medium"])],
+    ["GET", /^\/template\/(small|medium|large)$/, (_, m) => page(sized[m[1] as keyof typeof sized])],
 
     ["GET", /^\/items\/(\d+)$/, (_, m) => {
       const found = item(m[1]!);

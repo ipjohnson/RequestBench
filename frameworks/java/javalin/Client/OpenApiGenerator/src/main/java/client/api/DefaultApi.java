@@ -217,6 +217,133 @@ public class DefaultApi {
         return localVarCall;
     }
     /**
+     * Build call for bodyBindLargePost
+     * @param orderRequest  (required)
+     * @param _callback Callback for upload/download progress
+     * @return Call to execute
+     * @throws ApiException If fail to serialize the request body object
+     * @http.response.details
+     <table border="1">
+       <caption>Response Details</caption>
+        <tr><td> Status Code </td><td> Description </td><td> Response Headers </td></tr>
+        <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
+     </table>
+     */
+    public okhttp3.Call bodyBindLargePostCall(@jakarta.annotation.Nonnull OrderRequest orderRequest, final ApiCallback _callback) throws ApiException {
+        String basePath = null;
+        // Operation Servers
+        String[] localBasePaths = new String[] {  };
+
+        // Determine Base Path to Use
+        if (localCustomBaseUrl != null){
+            basePath = localCustomBaseUrl;
+        } else if ( localBasePaths.length > 0 ) {
+            basePath = localBasePaths[localHostIndex];
+        } else {
+            basePath = null;
+        }
+
+        Object localVarPostBody = orderRequest;
+
+        // create path and map variables
+        String localVarPath = "/body/bind/large";
+
+        List<Pair> localVarQueryParams = new ArrayList<Pair>();
+        List<Pair> localVarCollectionQueryParams = new ArrayList<Pair>();
+        Map<String, String> localVarHeaderParams = new HashMap<String, String>();
+        Map<String, String> localVarCookieParams = new HashMap<String, String>();
+        Map<String, Object> localVarFormParams = new HashMap<String, Object>();
+
+        final String[] localVarAccepts = {
+            "application/json"
+        };
+        final String localVarAccept = localVarApiClient.selectHeaderAccept(localVarAccepts);
+        if (localVarAccept != null) {
+            localVarHeaderParams.put("Accept", localVarAccept);
+        }
+
+        final String[] localVarContentTypes = {
+            "application/json"
+        };
+        final String localVarContentType = localVarApiClient.selectHeaderContentType(localVarContentTypes);
+        if (localVarContentType != null) {
+            localVarHeaderParams.put("Content-Type", localVarContentType);
+        }
+
+        String[] localVarAuthNames = new String[] {  };
+        return localVarApiClient.buildCall(basePath, localVarPath, "POST", localVarQueryParams, localVarCollectionQueryParams, localVarPostBody, localVarHeaderParams, localVarCookieParams, localVarFormParams, localVarAuthNames, _callback);
+    }
+
+    @SuppressWarnings("rawtypes")
+    private okhttp3.Call bodyBindLargePostValidateBeforeCall(@jakarta.annotation.Nonnull OrderRequest orderRequest, final ApiCallback _callback) throws ApiException {
+        // verify the required parameter 'orderRequest' is set
+        if (orderRequest == null) {
+            throw new ApiException("Missing the required parameter 'orderRequest' when calling bodyBindLargePost(Async)");
+        }
+
+        return bodyBindLargePostCall(orderRequest, _callback);
+
+    }
+
+    /**
+     * 
+     * 
+     * @param orderRequest  (required)
+     * @return Bound
+     * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
+     * @http.response.details
+     <table border="1">
+       <caption>Response Details</caption>
+        <tr><td> Status Code </td><td> Description </td><td> Response Headers </td></tr>
+        <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
+     </table>
+     */
+    public Bound bodyBindLargePost(@jakarta.annotation.Nonnull OrderRequest orderRequest) throws ApiException {
+        ApiResponse<Bound> localVarResp = bodyBindLargePostWithHttpInfo(orderRequest);
+        return localVarResp.getData();
+    }
+
+    /**
+     * 
+     * 
+     * @param orderRequest  (required)
+     * @return ApiResponse&lt;Bound&gt;
+     * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
+     * @http.response.details
+     <table border="1">
+       <caption>Response Details</caption>
+        <tr><td> Status Code </td><td> Description </td><td> Response Headers </td></tr>
+        <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
+     </table>
+     */
+    public ApiResponse<Bound> bodyBindLargePostWithHttpInfo(@jakarta.annotation.Nonnull OrderRequest orderRequest) throws ApiException {
+        okhttp3.Call localVarCall = bodyBindLargePostValidateBeforeCall(orderRequest, null);
+        Type localVarReturnType = new TypeToken<Bound>(){}.getType();
+        return localVarApiClient.execute(localVarCall, localVarReturnType);
+    }
+
+    /**
+     *  (asynchronously)
+     * 
+     * @param orderRequest  (required)
+     * @param _callback The callback to be executed when the API call finishes
+     * @return The request call
+     * @throws ApiException If fail to process the API call, e.g. serializing the request body object
+     * @http.response.details
+     <table border="1">
+       <caption>Response Details</caption>
+        <tr><td> Status Code </td><td> Description </td><td> Response Headers </td></tr>
+        <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
+     </table>
+     */
+    public okhttp3.Call bodyBindLargePostAsync(@jakarta.annotation.Nonnull OrderRequest orderRequest, final ApiCallback<Bound> _callback) throws ApiException {
+
+        okhttp3.Call localVarCall = bodyBindLargePostValidateBeforeCall(orderRequest, _callback);
+        Type localVarReturnType = new TypeToken<Bound>(){}.getType();
+        localVarApiClient.executeAsync(localVarCall, localVarReturnType, _callback);
+        return localVarCall;
+    }
+    /**
      * Build call for bodyBindMediumPost
      * @param orderRequest  (required)
      * @param _callback Callback for upload/download progress
@@ -597,6 +724,137 @@ public class DefaultApi {
     public okhttp3.Call bodyValidateFirstErrorPostAsync(@jakarta.annotation.Nonnull OrderRequest orderRequest, final ApiCallback<Bound> _callback) throws ApiException {
 
         okhttp3.Call localVarCall = bodyValidateFirstErrorPostValidateBeforeCall(orderRequest, _callback);
+        Type localVarReturnType = new TypeToken<Bound>(){}.getType();
+        localVarApiClient.executeAsync(localVarCall, localVarReturnType, _callback);
+        return localVarCall;
+    }
+    /**
+     * Build call for bodyValidateLargePost
+     * @param orderRequest  (required)
+     * @param _callback Callback for upload/download progress
+     * @return Call to execute
+     * @throws ApiException If fail to serialize the request body object
+     * @http.response.details
+     <table border="1">
+       <caption>Response Details</caption>
+        <tr><td> Status Code </td><td> Description </td><td> Response Headers </td></tr>
+        <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
+        <tr><td> 400 </td><td> Bad Request </td><td>  -  </td></tr>
+     </table>
+     */
+    public okhttp3.Call bodyValidateLargePostCall(@jakarta.annotation.Nonnull OrderRequest orderRequest, final ApiCallback _callback) throws ApiException {
+        String basePath = null;
+        // Operation Servers
+        String[] localBasePaths = new String[] {  };
+
+        // Determine Base Path to Use
+        if (localCustomBaseUrl != null){
+            basePath = localCustomBaseUrl;
+        } else if ( localBasePaths.length > 0 ) {
+            basePath = localBasePaths[localHostIndex];
+        } else {
+            basePath = null;
+        }
+
+        Object localVarPostBody = orderRequest;
+
+        // create path and map variables
+        String localVarPath = "/body/validate/large";
+
+        List<Pair> localVarQueryParams = new ArrayList<Pair>();
+        List<Pair> localVarCollectionQueryParams = new ArrayList<Pair>();
+        Map<String, String> localVarHeaderParams = new HashMap<String, String>();
+        Map<String, String> localVarCookieParams = new HashMap<String, String>();
+        Map<String, Object> localVarFormParams = new HashMap<String, Object>();
+
+        final String[] localVarAccepts = {
+            "application/json"
+        };
+        final String localVarAccept = localVarApiClient.selectHeaderAccept(localVarAccepts);
+        if (localVarAccept != null) {
+            localVarHeaderParams.put("Accept", localVarAccept);
+        }
+
+        final String[] localVarContentTypes = {
+            "application/json"
+        };
+        final String localVarContentType = localVarApiClient.selectHeaderContentType(localVarContentTypes);
+        if (localVarContentType != null) {
+            localVarHeaderParams.put("Content-Type", localVarContentType);
+        }
+
+        String[] localVarAuthNames = new String[] {  };
+        return localVarApiClient.buildCall(basePath, localVarPath, "POST", localVarQueryParams, localVarCollectionQueryParams, localVarPostBody, localVarHeaderParams, localVarCookieParams, localVarFormParams, localVarAuthNames, _callback);
+    }
+
+    @SuppressWarnings("rawtypes")
+    private okhttp3.Call bodyValidateLargePostValidateBeforeCall(@jakarta.annotation.Nonnull OrderRequest orderRequest, final ApiCallback _callback) throws ApiException {
+        // verify the required parameter 'orderRequest' is set
+        if (orderRequest == null) {
+            throw new ApiException("Missing the required parameter 'orderRequest' when calling bodyValidateLargePost(Async)");
+        }
+
+        return bodyValidateLargePostCall(orderRequest, _callback);
+
+    }
+
+    /**
+     * 
+     * 
+     * @param orderRequest  (required)
+     * @return Bound
+     * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
+     * @http.response.details
+     <table border="1">
+       <caption>Response Details</caption>
+        <tr><td> Status Code </td><td> Description </td><td> Response Headers </td></tr>
+        <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
+        <tr><td> 400 </td><td> Bad Request </td><td>  -  </td></tr>
+     </table>
+     */
+    public Bound bodyValidateLargePost(@jakarta.annotation.Nonnull OrderRequest orderRequest) throws ApiException {
+        ApiResponse<Bound> localVarResp = bodyValidateLargePostWithHttpInfo(orderRequest);
+        return localVarResp.getData();
+    }
+
+    /**
+     * 
+     * 
+     * @param orderRequest  (required)
+     * @return ApiResponse&lt;Bound&gt;
+     * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
+     * @http.response.details
+     <table border="1">
+       <caption>Response Details</caption>
+        <tr><td> Status Code </td><td> Description </td><td> Response Headers </td></tr>
+        <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
+        <tr><td> 400 </td><td> Bad Request </td><td>  -  </td></tr>
+     </table>
+     */
+    public ApiResponse<Bound> bodyValidateLargePostWithHttpInfo(@jakarta.annotation.Nonnull OrderRequest orderRequest) throws ApiException {
+        okhttp3.Call localVarCall = bodyValidateLargePostValidateBeforeCall(orderRequest, null);
+        Type localVarReturnType = new TypeToken<Bound>(){}.getType();
+        return localVarApiClient.execute(localVarCall, localVarReturnType);
+    }
+
+    /**
+     *  (asynchronously)
+     * 
+     * @param orderRequest  (required)
+     * @param _callback The callback to be executed when the API call finishes
+     * @return The request call
+     * @throws ApiException If fail to process the API call, e.g. serializing the request body object
+     * @http.response.details
+     <table border="1">
+       <caption>Response Details</caption>
+        <tr><td> Status Code </td><td> Description </td><td> Response Headers </td></tr>
+        <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
+        <tr><td> 400 </td><td> Bad Request </td><td>  -  </td></tr>
+     </table>
+     */
+    public okhttp3.Call bodyValidateLargePostAsync(@jakarta.annotation.Nonnull OrderRequest orderRequest, final ApiCallback<Bound> _callback) throws ApiException {
+
+        okhttp3.Call localVarCall = bodyValidateLargePostValidateBeforeCall(orderRequest, _callback);
         Type localVarReturnType = new TypeToken<Bound>(){}.getType();
         localVarApiClient.executeAsync(localVarCall, localVarReturnType, _callback);
         return localVarCall;
@@ -4545,6 +4803,153 @@ public class DefaultApi {
         return localVarCall;
     }
     /**
+     * Build call for parametersOneTwoThreeGet
+     * @param one  (required)
+     * @param two  (required)
+     * @param three  (required)
+     * @param _callback Callback for upload/download progress
+     * @return Call to execute
+     * @throws ApiException If fail to serialize the request body object
+     * @http.response.details
+     <table border="1">
+       <caption>Response Details</caption>
+        <tr><td> Status Code </td><td> Description </td><td> Response Headers </td></tr>
+        <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
+     </table>
+     */
+    public okhttp3.Call parametersOneTwoThreeGetCall(@jakarta.annotation.Nonnull Integer one, @jakarta.annotation.Nonnull Integer two, @jakarta.annotation.Nonnull Integer three, final ApiCallback _callback) throws ApiException {
+        String basePath = null;
+        // Operation Servers
+        String[] localBasePaths = new String[] {  };
+
+        // Determine Base Path to Use
+        if (localCustomBaseUrl != null){
+            basePath = localCustomBaseUrl;
+        } else if ( localBasePaths.length > 0 ) {
+            basePath = localBasePaths[localHostIndex];
+        } else {
+            basePath = null;
+        }
+
+        Object localVarPostBody = null;
+
+        // create path and map variables
+        String localVarPath = "/parameters/{one}/{two}/{three}"
+            .replace("{" + "one" + "}", localVarApiClient.escapeString(one.toString()))
+            .replace("{" + "two" + "}", localVarApiClient.escapeString(two.toString()))
+            .replace("{" + "three" + "}", localVarApiClient.escapeString(three.toString()));
+
+        List<Pair> localVarQueryParams = new ArrayList<Pair>();
+        List<Pair> localVarCollectionQueryParams = new ArrayList<Pair>();
+        Map<String, String> localVarHeaderParams = new HashMap<String, String>();
+        Map<String, String> localVarCookieParams = new HashMap<String, String>();
+        Map<String, Object> localVarFormParams = new HashMap<String, Object>();
+
+        final String[] localVarAccepts = {
+            "application/json"
+        };
+        final String localVarAccept = localVarApiClient.selectHeaderAccept(localVarAccepts);
+        if (localVarAccept != null) {
+            localVarHeaderParams.put("Accept", localVarAccept);
+        }
+
+        final String[] localVarContentTypes = {
+        };
+        final String localVarContentType = localVarApiClient.selectHeaderContentType(localVarContentTypes);
+        if (localVarContentType != null) {
+            localVarHeaderParams.put("Content-Type", localVarContentType);
+        }
+
+        String[] localVarAuthNames = new String[] {  };
+        return localVarApiClient.buildCall(basePath, localVarPath, "GET", localVarQueryParams, localVarCollectionQueryParams, localVarPostBody, localVarHeaderParams, localVarCookieParams, localVarFormParams, localVarAuthNames, _callback);
+    }
+
+    @SuppressWarnings("rawtypes")
+    private okhttp3.Call parametersOneTwoThreeGetValidateBeforeCall(@jakarta.annotation.Nonnull Integer one, @jakarta.annotation.Nonnull Integer two, @jakarta.annotation.Nonnull Integer three, final ApiCallback _callback) throws ApiException {
+        // verify the required parameter 'one' is set
+        if (one == null) {
+            throw new ApiException("Missing the required parameter 'one' when calling parametersOneTwoThreeGet(Async)");
+        }
+
+        // verify the required parameter 'two' is set
+        if (two == null) {
+            throw new ApiException("Missing the required parameter 'two' when calling parametersOneTwoThreeGet(Async)");
+        }
+
+        // verify the required parameter 'three' is set
+        if (three == null) {
+            throw new ApiException("Missing the required parameter 'three' when calling parametersOneTwoThreeGet(Async)");
+        }
+
+        return parametersOneTwoThreeGetCall(one, two, three, _callback);
+
+    }
+
+    /**
+     * 
+     * 
+     * @param one  (required)
+     * @param two  (required)
+     * @param three  (required)
+     * @return Echoed
+     * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
+     * @http.response.details
+     <table border="1">
+       <caption>Response Details</caption>
+        <tr><td> Status Code </td><td> Description </td><td> Response Headers </td></tr>
+        <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
+     </table>
+     */
+    public Echoed parametersOneTwoThreeGet(@jakarta.annotation.Nonnull Integer one, @jakarta.annotation.Nonnull Integer two, @jakarta.annotation.Nonnull Integer three) throws ApiException {
+        ApiResponse<Echoed> localVarResp = parametersOneTwoThreeGetWithHttpInfo(one, two, three);
+        return localVarResp.getData();
+    }
+
+    /**
+     * 
+     * 
+     * @param one  (required)
+     * @param two  (required)
+     * @param three  (required)
+     * @return ApiResponse&lt;Echoed&gt;
+     * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
+     * @http.response.details
+     <table border="1">
+       <caption>Response Details</caption>
+        <tr><td> Status Code </td><td> Description </td><td> Response Headers </td></tr>
+        <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
+     </table>
+     */
+    public ApiResponse<Echoed> parametersOneTwoThreeGetWithHttpInfo(@jakarta.annotation.Nonnull Integer one, @jakarta.annotation.Nonnull Integer two, @jakarta.annotation.Nonnull Integer three) throws ApiException {
+        okhttp3.Call localVarCall = parametersOneTwoThreeGetValidateBeforeCall(one, two, three, null);
+        Type localVarReturnType = new TypeToken<Echoed>(){}.getType();
+        return localVarApiClient.execute(localVarCall, localVarReturnType);
+    }
+
+    /**
+     *  (asynchronously)
+     * 
+     * @param one  (required)
+     * @param two  (required)
+     * @param three  (required)
+     * @param _callback The callback to be executed when the API call finishes
+     * @return The request call
+     * @throws ApiException If fail to process the API call, e.g. serializing the request body object
+     * @http.response.details
+     <table border="1">
+       <caption>Response Details</caption>
+        <tr><td> Status Code </td><td> Description </td><td> Response Headers </td></tr>
+        <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
+     </table>
+     */
+    public okhttp3.Call parametersOneTwoThreeGetAsync(@jakarta.annotation.Nonnull Integer one, @jakarta.annotation.Nonnull Integer two, @jakarta.annotation.Nonnull Integer three, final ApiCallback<Echoed> _callback) throws ApiException {
+
+        okhttp3.Call localVarCall = parametersOneTwoThreeGetValidateBeforeCall(one, two, three, _callback);
+        Type localVarReturnType = new TypeToken<Echoed>(){}.getType();
+        localVarApiClient.executeAsync(localVarCall, localVarReturnType, _callback);
+        return localVarCall;
+    }
+    /**
      * Build call for parametersOneWithSecondTwoGet
      * @param one  (required)
      * @param two  (required)
@@ -5497,6 +5902,123 @@ public class DefaultApi {
 
         okhttp3.Call localVarCall = streamItemsGetValidateBeforeCall(_callback);
         Type localVarReturnType = new TypeToken<Item>(){}.getType();
+        localVarApiClient.executeAsync(localVarCall, localVarReturnType, _callback);
+        return localVarCall;
+    }
+    /**
+     * Build call for templateLargeGet
+     * @param _callback Callback for upload/download progress
+     * @return Call to execute
+     * @throws ApiException If fail to serialize the request body object
+     * @http.response.details
+     <table border="1">
+       <caption>Response Details</caption>
+        <tr><td> Status Code </td><td> Description </td><td> Response Headers </td></tr>
+        <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
+     </table>
+     */
+    public okhttp3.Call templateLargeGetCall(final ApiCallback _callback) throws ApiException {
+        String basePath = null;
+        // Operation Servers
+        String[] localBasePaths = new String[] {  };
+
+        // Determine Base Path to Use
+        if (localCustomBaseUrl != null){
+            basePath = localCustomBaseUrl;
+        } else if ( localBasePaths.length > 0 ) {
+            basePath = localBasePaths[localHostIndex];
+        } else {
+            basePath = null;
+        }
+
+        Object localVarPostBody = null;
+
+        // create path and map variables
+        String localVarPath = "/template/large";
+
+        List<Pair> localVarQueryParams = new ArrayList<Pair>();
+        List<Pair> localVarCollectionQueryParams = new ArrayList<Pair>();
+        Map<String, String> localVarHeaderParams = new HashMap<String, String>();
+        Map<String, String> localVarCookieParams = new HashMap<String, String>();
+        Map<String, Object> localVarFormParams = new HashMap<String, Object>();
+
+        final String[] localVarAccepts = {
+            "text/html"
+        };
+        final String localVarAccept = localVarApiClient.selectHeaderAccept(localVarAccepts);
+        if (localVarAccept != null) {
+            localVarHeaderParams.put("Accept", localVarAccept);
+        }
+
+        final String[] localVarContentTypes = {
+        };
+        final String localVarContentType = localVarApiClient.selectHeaderContentType(localVarContentTypes);
+        if (localVarContentType != null) {
+            localVarHeaderParams.put("Content-Type", localVarContentType);
+        }
+
+        String[] localVarAuthNames = new String[] {  };
+        return localVarApiClient.buildCall(basePath, localVarPath, "GET", localVarQueryParams, localVarCollectionQueryParams, localVarPostBody, localVarHeaderParams, localVarCookieParams, localVarFormParams, localVarAuthNames, _callback);
+    }
+
+    @SuppressWarnings("rawtypes")
+    private okhttp3.Call templateLargeGetValidateBeforeCall(final ApiCallback _callback) throws ApiException {
+        return templateLargeGetCall(_callback);
+
+    }
+
+    /**
+     * 
+     * 
+     * @return String
+     * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
+     * @http.response.details
+     <table border="1">
+       <caption>Response Details</caption>
+        <tr><td> Status Code </td><td> Description </td><td> Response Headers </td></tr>
+        <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
+     </table>
+     */
+    public String templateLargeGet() throws ApiException {
+        ApiResponse<String> localVarResp = templateLargeGetWithHttpInfo();
+        return localVarResp.getData();
+    }
+
+    /**
+     * 
+     * 
+     * @return ApiResponse&lt;String&gt;
+     * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
+     * @http.response.details
+     <table border="1">
+       <caption>Response Details</caption>
+        <tr><td> Status Code </td><td> Description </td><td> Response Headers </td></tr>
+        <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
+     </table>
+     */
+    public ApiResponse<String> templateLargeGetWithHttpInfo() throws ApiException {
+        okhttp3.Call localVarCall = templateLargeGetValidateBeforeCall(null);
+        Type localVarReturnType = new TypeToken<String>(){}.getType();
+        return localVarApiClient.execute(localVarCall, localVarReturnType);
+    }
+
+    /**
+     *  (asynchronously)
+     * 
+     * @param _callback The callback to be executed when the API call finishes
+     * @return The request call
+     * @throws ApiException If fail to process the API call, e.g. serializing the request body object
+     * @http.response.details
+     <table border="1">
+       <caption>Response Details</caption>
+        <tr><td> Status Code </td><td> Description </td><td> Response Headers </td></tr>
+        <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
+     </table>
+     */
+    public okhttp3.Call templateLargeGetAsync(final ApiCallback<String> _callback) throws ApiException {
+
+        okhttp3.Call localVarCall = templateLargeGetValidateBeforeCall(_callback);
+        Type localVarReturnType = new TypeToken<String>(){}.getType();
         localVarApiClient.executeAsync(localVarCall, localVarReturnType, _callback);
         return localVarCall;
     }

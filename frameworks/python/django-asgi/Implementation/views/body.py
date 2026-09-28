@@ -79,6 +79,12 @@ async def bind_medium(request):
     return bound(parsed(request), request)
 
 
+# rb:handler body.bind_large
+@require_POST
+async def bind_large(request):
+    return bound(parsed(request), request)
+
+
 # rb:handler body.validate_small,body.rejected_all,errors.malformed
 @require_POST
 async def validate_small(request):
@@ -91,6 +97,15 @@ async def validate_small(request):
 # rb:handler body.validate_medium
 @require_POST
 async def validate_medium(request):
+    form = OrderForm(parsed(request))
+    if not form.is_valid():
+        return JsonResponse(form.errors, status=400)
+    return bound(form.cleaned_data, request)
+
+
+# rb:handler body.validate_large
+@require_POST
+async def validate_large(request):
     form = OrderForm(parsed(request))
     if not form.is_valid():
         return JsonResponse(form.errors, status=400)

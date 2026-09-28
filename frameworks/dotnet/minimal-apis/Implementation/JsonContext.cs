@@ -18,6 +18,7 @@ namespace Implementation;
 [JsonSerializable(typeof(Bound))]
 [JsonSerializable(typeof(Echoed<ParametersOne>))]
 [JsonSerializable(typeof(Echoed<ParametersTwo>))]
+[JsonSerializable(typeof(Echoed<ParametersThree>))]
 [JsonSerializable(typeof(Echoed<QueryOne>))]
 [JsonSerializable(typeof(Echoed<Search>))]
 [JsonSerializable(typeof(Echoed<HeadersBound>))]

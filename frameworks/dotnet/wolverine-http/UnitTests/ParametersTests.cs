@@ -33,6 +33,16 @@ public sealed class ParametersTests(WolverineApp app)
         Answer.Is(Expected.WithEcho("items.small.json", new() { ["one"] = 4821, ["two"] = 7390 }), result);
     }
 
+    // rb:test parameters.three
+    [Fact]
+    [Trait("corpus", "parameters.three")]
+    public async Task Three_captures_are_bound_and_echoed()
+    {
+        IScenarioResult result = await app.Host.Scenario(s => s.Get.Url("/parameters/4821/7390/1563"));
+
+        Answer.Is(Expected.WithEcho("items.small.json", new() { ["one"] = 4821, ["two"] = 7390, ["three"] = 1563 }), result);
+    }
+
     [Fact]
     public async Task A_capture_that_is_not_an_integer_is_answered_404_by_the_generated_handler()
     {

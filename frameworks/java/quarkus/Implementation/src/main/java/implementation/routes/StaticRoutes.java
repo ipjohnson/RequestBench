@@ -16,7 +16,7 @@ import jakarta.enterprise.event.Observes;
  */
 public class StaticRoutes {
 
-    // rb:handler static.file
+    // rb:handler static.large,static.medium,static.small
     // rb:wiring static.*
     void installRoute(@Observes StartupEvent startupEvent, Router router, Payloads p) {
         router.route()

@@ -22,6 +22,10 @@ const template: Routes = (router, { payloads: p, app }) => {
   router.get("/template/medium", async (ctx) => {
     await ctx.render("page", p.medium);
   });
+
+  router.get("/template/large", async (ctx) => {
+    await ctx.render("page", p.large);
+  });
 };
 
 export default template;

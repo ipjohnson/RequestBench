@@ -47,14 +47,17 @@ urlpatterns = [
     path("parameters/static/segment/literal", parameters.static),
     path("parameters/<int:one>/segment/literal", parameters.one),
     path("parameters/<int:one>/with-second/<int:two>", parameters.two),
+    path("parameters/<int:one>/<int:two>/<int:three>", parameters.three),
     path("query/one", query.one),
     path("query/many", query.many),
     path("headers", headers.unread),
     path("headers/bind", headers.bind),
     path("body/bind/small", body.bind_small),
     path("body/bind/medium", body.bind_medium),
+    path("body/bind/large", body.bind_large),
     path("body/validate/small", body.validate_small),
     path("body/validate/medium", body.validate_medium),
+    path("body/validate/large", body.validate_large),
     path("body/validate/first-error", body.validate_first_error),
     path("authorized/small", authorized.small),
     *router.urls,
@@ -74,10 +77,11 @@ urlpatterns = [
     path("sse/medium", sse.medium),
     path("template/small", template.small),
     path("template/medium", template.medium),
+    path("template/large", template.large),
     # DRF serves no files. serve is Django's static file view, which Django documents for
     # development. WhiteNoise, the usual answer in production, is a middleware that looks at every
     # request on every route.
-    # rb:handler static.file
+    # rb:handler static.large,static.medium,static.small
     # rb:wiring static.*
     path("static/<path:path>", serve, {"document_root": settings.PAYLOADS.directory}),
     path("health", contract.health),

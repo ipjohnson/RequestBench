@@ -25,4 +25,11 @@ export class TemplateController {
   medium(): Payload {
     return { ...this.payloads.medium };
   }
+
+  // rb:handler template.large
+  @Get('large')
+  @Render('items.hbs')
+  large(): Payload {
+    return { ...this.payloads.large };
+  }
 }

@@ -38,6 +38,16 @@ class ParametersTests extends JavalinApp {
             Answer.is(Expected.withEcho("items.small.json", echo), client.get("/parameters/4821/with-second/7390")));
     }
 
+    // rb:test parameters.three
+    @Test
+    @Tag("parameters.three")
+    void threeCapturesAreReadAsIntegers() {
+        ObjectNode echo = Expected.JSON.createObjectNode().put("one", 4821).put("two", 7390).put("three", 1563);
+
+        JavalinTest.test(app(), (server, client) ->
+            Answer.is(Expected.withEcho("items.small.json", echo), client.get("/parameters/4821/7390/1563")));
+    }
+
     @Test
     void aCaptureThatIsNotAnIntegerIsRefusedByTheValidator() {
         JavalinTest.test(app(), (server, client) -> {

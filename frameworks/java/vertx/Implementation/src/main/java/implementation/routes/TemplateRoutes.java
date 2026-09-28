@@ -25,6 +25,8 @@ public final class TemplateRoutes {
         router.get("/template/small").handler(ctx -> page(ctx, engine, p.small()));
 
         router.get("/template/medium").handler(ctx -> page(ctx, engine, p.medium()));
+
+        router.get("/template/large").handler(ctx -> page(ctx, engine, p.large()));
     }
 
     // rb:wiring template.*

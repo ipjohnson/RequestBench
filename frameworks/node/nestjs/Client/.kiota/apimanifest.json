@@ -43,6 +43,10 @@
         },
         {
           "method": "GET",
+          "uriTemplate": "parameters/{one}/{two}/{three}"
+        },
+        {
+          "method": "GET",
           "uriTemplate": "query/one"
         },
         {
@@ -67,11 +71,19 @@
         },
         {
           "method": "POST",
+          "uriTemplate": "body/bind/large"
+        },
+        {
+          "method": "POST",
           "uriTemplate": "body/validate/small"
         },
         {
           "method": "POST",
           "uriTemplate": "body/validate/medium"
+        },
+        {
+          "method": "POST",
+          "uriTemplate": "body/validate/large"
         },
         {
           "method": "POST",
@@ -167,6 +179,10 @@
         },
         {
           "method": "GET",
+          "uriTemplate": "template/large"
+        },
+        {
+          "method": "GET",
           "uriTemplate": "middleware/none"
         },
         {
@@ -179,7 +195,7 @@
         }
       ],
       "extensions": {
-        "x-ms-kiota-hash": "948EAF6ACDADBED195BF7B2EE483F44C3D9A9246C0CB6AE12E282A3A327AA0E0",
+        "x-ms-kiota-hash": "D313FF0A56FFA97BE7DC4AFFDB1A37523B2B4A2A9896F78CB2F4875072C25D0A",
         "x-ms-kiota-version": "1.35.0"
       }
     }

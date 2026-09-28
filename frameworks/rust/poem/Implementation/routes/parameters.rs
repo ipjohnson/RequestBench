@@ -17,6 +17,13 @@ struct Two {
     two: i64,
 }
 
+#[derive(Serialize)]
+struct Three {
+    one: i64,
+    two: i64,
+    three: i64,
+}
+
 // rb:handler parameters.one
 /// The capture bound as an integer by poem's Path extractor, which refuses anything else with 400.
 #[handler]
@@ -31,6 +38,13 @@ fn two_captures(Path((one, two)): Path<(i64, i64)>, Data(&p): Data<&Shared>) -> 
     Json(Echoed::new(&p.small, Two { one, two }))
 }
 
+// rb:handler parameters.three
+/// The three captures, in the order the route names them.
+#[handler]
+fn three_captures(Path((one, two, three)): Path<(i64, i64, i64)>, Data(&p): Data<&Shared>) -> Json<Echoed<'static, Three>> {
+    Json(Echoed::new(&p.small, Three { one, two, three }))
+}
+
 /// parameters: router captures, each bound as an integer by poem's Path extractor. The router
 /// prefers the literal segment of the static route.
 pub fn add(route: Route, p: &'static Payloads) -> Route {
@@ -38,4 +52,5 @@ pub fn add(route: Route, p: &'static Payloads) -> Route {
         .at("/parameters/static/segment/literal", get(make_sync(move |_| Json(&p.small))))
         .at("/parameters/:one/segment/literal", get(one_capture.data(p)))
         .at("/parameters/:one/with-second/:two", get(two_captures.data(p)))
+        .at("/parameters/:one/:two/:three", get(three_captures.data(p)))
 }

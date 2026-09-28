@@ -22,7 +22,7 @@ public final class StaticRoutes {
         this.p = p;
     }
 
-    // rb:handler static.file
+    // rb:handler static.large,static.medium,static.small
     // rb:wiring static.*
     public void register(JavalinConfig config) {
         Path directory = p.directory();

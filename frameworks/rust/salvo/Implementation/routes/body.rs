@@ -112,7 +112,7 @@ fn length(req: &Request) -> u64 {
     req.header(CONTENT_LENGTH).unwrap_or(0)
 }
 
-// rb:handler body.bind_small,body.bind_medium
+// rb:handler body.bind_small,body.bind_medium,body.bind_large
 /// The order parsed and bound, with no rule run.
 #[handler]
 async fn bind(req: &mut Request) -> ParseResult<Json<Bound>> {
@@ -120,7 +120,7 @@ async fn bind(req: &mut Request) -> ParseResult<Json<Bound>> {
     Ok(Json(Bound::of(req.parse_json().await?, bytes)))
 }
 
-// rb:handler body.validate_small,body.validate_medium,body.rejected_all,errors.malformed
+// rb:handler body.validate_small,body.validate_medium,body.validate_large,body.rejected_all,errors.malformed
 /// The order bound, then checked against every rule.
 #[handler]
 async fn validate(req: &mut Request) -> Result<Json<Bound>, Refused> {
@@ -147,7 +147,9 @@ pub fn router() -> Router {
     Router::with_path("/body")
         .push(Router::with_path("bind/small").post(bind))
         .push(Router::with_path("bind/medium").post(bind))
+        .push(Router::with_path("bind/large").post(bind))
         .push(Router::with_path("validate/small").post(validate))
         .push(Router::with_path("validate/medium").post(validate))
+        .push(Router::with_path("validate/large").post(validate))
         .push(Router::with_path("validate/first-error").post(first_error))
 }

@@ -104,6 +104,17 @@ def routes(p: Payloads) -> list[BaseRoute]:
         """
         return bound(request)
 
+    # rb:handler body.bind_large
+    @spec.validate(json=Order)
+    async def bind_large(request: Request) -> JSONResponse:
+        """
+        requestBody: {required: true, content: {application/json: {schema: {$ref: "#/components/schemas/Order"}}}}
+        responses:
+          200: {description: The order bound, content: {application/json: {schema: {$ref: "#/components/schemas/Bound"}}}}
+          422: {$ref: "#/components/responses/Refused"}
+        """
+        return bound(request)
+
     # rb:handler body.validate_small,body.rejected_all,errors.malformed
     @spec.validate(json=CheckedOrder)
     async def validate_small(request: Request) -> JSONResponse:
@@ -126,6 +137,17 @@ def routes(p: Payloads) -> list[BaseRoute]:
         """
         return bound(request)
 
+    # rb:handler body.validate_large
+    @spec.validate(json=CheckedOrder)
+    async def validate_large(request: Request) -> JSONResponse:
+        """
+        requestBody: {required: true, content: {application/json: {schema: {$ref: "#/components/schemas/CheckedOrder"}}}}
+        responses:
+          200: {description: The order bound and checked, content: {application/json: {schema: {$ref: "#/components/schemas/Bound"}}}}
+          422: {$ref: "#/components/responses/Refused"}
+        """
+        return bound(request)
+
     # rb:handler body.rejected_first
     @spec.validate(json=FirstFailure)
     async def validate_first_error(request: Request) -> JSONResponse:
@@ -140,7 +162,9 @@ def routes(p: Payloads) -> list[BaseRoute]:
     return [
         Route("/body/bind/small", bind_small, methods=["POST"]),
         Route("/body/bind/medium", bind_medium, methods=["POST"]),
+        Route("/body/bind/large", bind_large, methods=["POST"]),
         Route("/body/validate/small", validate_small, methods=["POST"]),
         Route("/body/validate/medium", validate_medium, methods=["POST"]),
+        Route("/body/validate/large", validate_large, methods=["POST"]),
         Route("/body/validate/first-error", validate_first_error, methods=["POST"]),
     ]

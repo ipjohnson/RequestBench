@@ -13,6 +13,8 @@ public sealed record ParametersOne(int One);
 
 public sealed record ParametersTwo(int One, int Two);
 
+public sealed record ParametersThree(int One, int Two, int Three);
+
 public sealed record QueryOne(int Page);
 
 /// <summary>query.many's eight values, which forms.urlencoded posts as a form.</summary>

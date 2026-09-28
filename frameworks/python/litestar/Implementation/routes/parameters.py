@@ -14,6 +14,12 @@ class Two(Camel):
     two: int
 
 
+class Three(Camel):
+    one: int
+    two: int
+    three: int
+
+
 def router(p: Payloads) -> Router:
     """parameters: path captures, each typed int in the path and declared FromPath, which Litestar converts."""
 
@@ -29,4 +35,8 @@ def router(p: Payloads) -> Router:
     async def two(one: FromPath[int], two: FromPath[int]) -> Echoed[Two]:
         return Echoed[Two].of(p.small, Two(one=one, two=two))
 
-    return Router(path="/", route_handlers=[static, one, two])
+    @get("/parameters/{one:int}/{two:int}/{three:int}")
+    async def three(one: FromPath[int], two: FromPath[int], three: FromPath[int]) -> Echoed[Three]:
+        return Echoed[Three].of(p.small, Three(one=one, two=two, three=three))
+
+    return Router(path="/", route_handlers=[static, one, two, three])

@@ -17,4 +17,8 @@ def blueprint(p: Payloads) -> Blueprint:
     def medium() -> str:
         return render_template("items.html", **p.medium)
 
+    @routes.get("/template/large")
+    def large() -> str:
+        return render_template("items.html", **p.large)
+
     return routes

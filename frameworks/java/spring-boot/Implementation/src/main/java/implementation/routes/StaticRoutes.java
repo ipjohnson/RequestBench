@@ -18,7 +18,7 @@ public class StaticRoutes implements WebMvcConfigurer {
         this.p = p;
     }
 
-    // rb:handler static.file
+    // rb:handler static.large,static.medium,static.small
     // rb:wiring static.*
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {

@@ -120,6 +120,12 @@ into `implementation-0.0.0.jar`, which the image runs. It keeps the plain jar as
   `APIGatewayV2HTTPEventFunction`, which hands it to Micronaut's router through Micronaut Servlet's
   request and response. Netty serves nothing. The adapter buffers the whole answer, so the sse and
   stream tests are listed as unsupported there.
+- rb.json opts out of lambda-emulator-512. At 512 MB the function's request loop stops at the first
+  direct buffer Netty's HTTP client releases: Netty's Java 25 cleaner closes a shared `Arena`, and
+  the native image answers `UnsupportedFeatureError: Support for Arena.ofShared is not active:
+  enable with -H:+SharedArenaSupport`. The gate sees it at the first 40 KB order. Both measure
+  runs of 2026-09-28 also lost the function 18 s and 38 s into the closed loop, with nothing
+  logged. lambda-emulator-1024 passes.
 - The compression is the Netty server's, so compressed.gzip_large's answer arrives uncompressed on
   lambda-emulator. The adapter's request reads a multipart body as a urlencoded form and finds no
   parts, so forms.multipart's `@Part tenant` is missing and Micronaut answers 400. Both tests are

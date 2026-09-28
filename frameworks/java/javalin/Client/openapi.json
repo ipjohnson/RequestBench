@@ -48,6 +48,32 @@
         }
       }
     },
+    "/body/bind/large" : {
+      "post" : {
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/OrderRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Bound"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/body/bind/medium" : {
       "post" : {
         "requestBody" : {
@@ -101,6 +127,35 @@
       }
     },
     "/body/validate/first-error" : {
+      "post" : {
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/OrderRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Bound"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Bad Request"
+          }
+        }
+      }
+    },
+    "/body/validate/large" : {
       "post" : {
         "requestBody" : {
           "content" : {
@@ -842,6 +897,47 @@
         }
       }
     },
+    "/parameters/{one}/{two}/{three}" : {
+      "get" : {
+        "parameters" : [ {
+          "name" : "one",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }, {
+          "name" : "two",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }, {
+          "name" : "three",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Echoed"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/plaintext" : {
       "get" : {
         "responses" : {
@@ -985,6 +1081,22 @@
               "application/x-ndjson" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/Item"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/template/large" : {
+      "get" : {
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "text/html" : {
+                "schema" : {
+                  "type" : "string"
                 }
               }
             }

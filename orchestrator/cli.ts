@@ -17,7 +17,7 @@ import * as container from "./container.ts";
 import { exceptionsOf, withExceptions } from "./exceptions.ts";
 import { FIXED_VALUES, gate, writeExemplars, type GateResult } from "./gate.ts";
 import { dirty, git, pushed, repoSlug, resolveCommit, tracked, unstaged } from "./git.ts";
-import { entryOf, HOSTS, hostsOf, isHostId, type HostId } from "./hosts.ts";
+import { entryOf, HOSTS, hostsOf, isHostId, runsOn, type HostId } from "./hosts.ts";
 import { closedPhasesOf, isLadderId, LADDERS, phasesOf, type Ladder } from "./ladder.ts";
 import { live, liveOver, type Exchange, type Live } from "./live.ts";
 import { cpuList, machineState } from "./machine.ts";
@@ -114,8 +114,8 @@ function list(args: string[]): number {
   const { values } = parse(args, { host: { type: "string" }, json: { type: "boolean" } });
   const host = values.host === undefined ? undefined : hostOf(values.host);
   const rows = frameworks([])
-    .filter((f) => host === undefined || entryOf(f.rb.hosts, host) !== undefined)
-    .map((f) => ({ id: f.id, language: f.language, name: f.name, hosts: hostsOf(f.rb.hosts) }));
+    .filter((f) => host === undefined || runsOn(f.rb, host))
+    .map((f) => ({ id: f.id, language: f.language, name: f.name, hosts: hostsOf(f.rb.hosts).filter((h) => runsOn(f.rb, h)) }));
   if (values.json) console.log(JSON.stringify(rows));
   else for (const r of rows) console.log(`${r.id.padEnd(24)} ${r.hosts.join(", ")}`);
   return 0;
@@ -336,6 +336,8 @@ async function validate(args: string[]): Promise<number> {
   const [f] = frameworks(positionals);
   const entry = entryOf(f!.rb.hosts, host);
   if (entry === undefined) throw new UsageError(`${f!.id} does not implement ${host}`);
+  const off = f!.rb.optOut?.[host];
+  if (off !== undefined) throw new UsageError(`${f!.id} opts out of ${host}: ${off}`);
   const at = atOf(values.commit);
   const exceptions = await exceptionsFor(f!.id);
   console.log(`build ${f!.id} for ${host}${at === undefined ? " from the working tree" : ` at ${at.slice(0, 12)}`}`);
@@ -398,8 +400,8 @@ async function measureCommand(args: string[]): Promise<number> {
   const host = hostOf(values.host);
   const ladder = ladderOf(values.ladder);
   const closed = HOSTS[host].protocol === "lambda-runtime-api";
-  const implementing = frameworks(positionals).filter((f) => entryOf(f.rb.hosts, host) !== undefined);
-  if (implementing.length === 0) throw new UsageError(`no framework with an rb.json that loads implements ${host}`);
+  const implementing = frameworks(positionals).filter((f) => runsOn(f.rb, host));
+  if (implementing.length === 0) throw new UsageError(`no framework with an rb.json that loads runs on ${host}`);
   const chosen = await Promise.all(implementing.map((f) => withExceptions(ROOT, f)));
   const seconds = values.seconds === undefined ? undefined : Number(values.seconds);
   if (seconds !== undefined && !(seconds > 0)) throw new UsageError(`--seconds has to be a positive number, not ${values.seconds}`);

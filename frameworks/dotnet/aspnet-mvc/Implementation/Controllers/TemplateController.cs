@@ -15,4 +15,7 @@ public sealed class TemplateController(Payloads payloads) : Controller
 
     [HttpGet("/template/medium")]
     public ViewResult Medium() => View("ItemsPage", payloads.Medium);
+
+    [HttpGet("/template/large")]
+    public ViewResult Large() => View("ItemsPage", payloads.Large);
 }

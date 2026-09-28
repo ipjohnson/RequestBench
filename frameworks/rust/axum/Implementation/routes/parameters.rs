@@ -17,6 +17,13 @@ struct Two {
     two: i64,
 }
 
+#[derive(Serialize)]
+struct Three {
+    one: i64,
+    two: i64,
+    three: i64,
+}
+
 /// parameters: router captures, each bound as an integer by axum's Path extractor. The router
 /// prefers the literal segment of the static route.
 pub fn router(p: &'static Payloads) -> Router {
@@ -27,5 +34,8 @@ pub fn router(p: &'static Payloads) -> Router {
         }))
         .route("/parameters/{one}/with-second/{two}", get(move |Path((one, two)): Path<(i64, i64)>| async move {
             Json(Echoed::new(&p.small, Two { one, two }))
+        }))
+        .route("/parameters/{one}/{two}/{three}", get(move |Path((one, two, three)): Path<(i64, i64, i64)>| async move {
+            Json(Echoed::new(&p.small, Three { one, two, three }))
         }))
 }

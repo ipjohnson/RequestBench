@@ -20,3 +20,10 @@ def small(request):
 @renderer_classes([TemplateHTMLRenderer])
 def medium(request):
     return Response(P.medium, template_name="items.html")
+
+
+# rb:handler template.large
+@api_view(["GET"])
+@renderer_classes([TemplateHTMLRenderer])
+def large(request):
+    return Response(P.large, template_name="items.html")

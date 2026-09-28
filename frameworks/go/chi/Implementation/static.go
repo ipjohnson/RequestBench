@@ -11,6 +11,6 @@ import (
 func staticRoutes(r chi.Router, p *Payloads) {
 	files := http.StripPrefix("/static", http.FileServer(http.Dir(p.Directory)))
 
-	// rb:handler static.file
+	// rb:handler static.large,static.medium,static.small
 	r.Get("/static/*", files.ServeHTTP)
 }

@@ -42,6 +42,11 @@ public class BodyRoutes {
         return Bound.of(order, order.lines().size(), request);
     }
 
+    @Post("/body/bind/large")
+    public Bound<OrderRequest> bindLarge(@Body OrderRequest order, HttpRequest<?> request) {
+        return Bound.of(order, order.lines().size(), request);
+    }
+
     @Post("/body/validate/small")
     public Bound<OrderRequest> validateSmall(@Valid @Body OrderRequest order, HttpRequest<?> request) {
         return Bound.of(order, order.lines().size(), request);
@@ -49,6 +54,11 @@ public class BodyRoutes {
 
     @Post("/body/validate/medium")
     public Bound<OrderRequest> validateMedium(@Valid @Body OrderRequest order, HttpRequest<?> request) {
+        return Bound.of(order, order.lines().size(), request);
+    }
+
+    @Post("/body/validate/large")
+    public Bound<OrderRequest> validateLarge(@Valid @Body OrderRequest order, HttpRequest<?> request) {
         return Bound.of(order, order.lines().size(), request);
     }
 

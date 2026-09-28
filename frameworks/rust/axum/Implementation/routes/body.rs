@@ -114,10 +114,14 @@ pub fn router() -> Router {
     Router::new()
         .route("/body/bind/small", post(|headers: HeaderMap, Json(order): Json<Order>| async move { Json(Bound::of(order, &headers)) }))
         .route("/body/bind/medium", post(|headers: HeaderMap, Json(order): Json<Order>| async move { Json(Bound::of(order, &headers)) }))
+        .route("/body/bind/large", post(|headers: HeaderMap, Json(order): Json<Order>| async move { Json(Bound::of(order, &headers)) }))
         .route("/body/validate/small", post(|headers: HeaderMap, ValidatedJson(order): ValidatedJson<Order>| async move {
             Json(Bound::of(order, &headers))
         }))
         .route("/body/validate/medium", post(|headers: HeaderMap, ValidatedJson(order): ValidatedJson<Order>| async move {
+            Json(Bound::of(order, &headers))
+        }))
+        .route("/body/validate/large", post(|headers: HeaderMap, ValidatedJson(order): ValidatedJson<Order>| async move {
             Json(Bound::of(order, &headers))
         }))
         .route("/body/validate/first-error", post(|headers: HeaderMap, Json(order): Json<Order>| async move {

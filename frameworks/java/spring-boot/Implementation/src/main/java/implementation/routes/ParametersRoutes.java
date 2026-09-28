@@ -18,6 +18,8 @@ public class ParametersRoutes {
 
     public record Two(int one, int two) {}
 
+    public record Three(int one, int two, int three) {}
+
     private final Payloads p;
 
     ParametersRoutes(Payloads p) {
@@ -37,5 +39,10 @@ public class ParametersRoutes {
     @GetMapping("/parameters/{one}/with-second/{two}")
     public Echoed<Two> two(@PathVariable int one, @PathVariable int two) {
         return Echoed.of(p.small(), new Two(one, two));
+    }
+
+    @GetMapping("/parameters/{one}/{two}/{three}")
+    public Echoed<Three> three(@PathVariable int one, @PathVariable int two, @PathVariable int three) {
+        return Echoed.of(p.small(), new Three(one, two, three));
     }
 }

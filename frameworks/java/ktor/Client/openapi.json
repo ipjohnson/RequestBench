@@ -267,6 +267,72 @@
                 }
             }
         },
+        "/parameters/{one}/{two}/{three}": {
+            "get": {
+                "summary": "",
+                "parameters": [
+                    {
+                        "name": "one",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "two",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "three",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "size",
+                                        "count",
+                                        "items",
+                                        "echo"
+                                    ],
+                                    "properties": {
+                                        "size": {
+                                            "type": "string"
+                                        },
+                                        "count": {
+                                            "type": "integer"
+                                        },
+                                        "items": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Item"
+                                            }
+                                        },
+                                        "echo": {
+                                            "$ref": "#/components/schemas/Three"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/query/one": {
             "get": {
                 "summary": "",
@@ -523,6 +589,32 @@
                 }
             }
         },
+        "/body/bind/large": {
+            "post": {
+                "summary": "",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Order"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Bound"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/body/validate/small": {
             "post": {
                 "summary": "",
@@ -550,6 +642,32 @@
             }
         },
         "/body/validate/medium": {
+            "post": {
+                "summary": "",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Order"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Bound"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/body/validate/large": {
             "post": {
                 "summary": "",
                 "requestBody": {
@@ -1185,6 +1303,24 @@
                 }
             }
         },
+        "/template/large": {
+            "get": {
+                "summary": "",
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "description": "Failed to resolve schema for ThymeleafContent. SerializationException: Serializer for class 'ThymeleafContent' is not found.\nPlease ensure that class is marked as '@Serializable' and that the serialization compiler plugin is applied.\n"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/static/{**}": {
             "get": {}
         },
@@ -1296,6 +1432,26 @@
                         "type": "integer"
                     },
                     "two": {
+                        "type": "integer"
+                    }
+                }
+            },
+            "Three": {
+                "type": "object",
+                "title": "Three",
+                "required": [
+                    "one",
+                    "two",
+                    "three"
+                ],
+                "properties": {
+                    "one": {
+                        "type": "integer"
+                    },
+                    "two": {
+                        "type": "integer"
+                    },
+                    "three": {
                         "type": "integer"
                     }
                 }

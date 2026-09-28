@@ -15,7 +15,7 @@ import type { Framework, Test } from "@rb/tests/kit";
 import { frameworkDir, frameworkId, type FrameworkKey } from "./bundle.ts";
 import { discover, tracked } from "./discover.ts";
 import { declarationOf } from "./exceptions.ts";
-import { HOST_DIRS } from "./hosts.ts";
+import { HOST_DIRS, HOST_IDS, HOSTS, hostsOf, isHostId, runsOn } from "./hosts.ts";
 import { NOTES_HEADING, notesOf } from "./notes.ts";
 
 /** A command run on the machine with the language's toolchain. argv, never a shell string. */
@@ -59,6 +59,11 @@ export const rbJsonSchema = z.strictObject({
       }),
     )
     .refine((hosts) => Object.keys(hosts).length > 0, "a framework implements at least one host"),
+  /**
+   * Hosts the framework is not validated or measured on although `hosts` has their directory, each
+   * with the reason, such as one of the two Lambda hosts that share lambda-emulator/.
+   */
+  optOut: z.record(z.string(), z.string().min(1)).optional(),
   /** The framework's own tests. `paths` are the directories holding them, which the bundle gives role test. */
   suite: z
     .strictObject({
@@ -163,6 +168,13 @@ function check(f: FrameworkKey & { dir: string; id: string }, rb: RbJson, input:
       if (input.tests[id] === undefined) out.push(`${at}: hosts.${dir}.unsupported.${id} names no test`);
     }
   }
+  for (const host of Object.keys(rb.optOut ?? {})) {
+    if (!isHostId(host)) out.push(`${at}: optOut.${host} is not a host, only ${HOST_IDS.join(", ")} are`);
+    else if (!Object.hasOwn(rb.hosts, HOSTS[host].dir)) {
+      out.push(`${at}: optOut.${host} needs no opting out, because hosts has no ${HOSTS[host].dir} entry`);
+    }
+  }
+  if (!hostsOf(rb.hosts).some((h) => runsOn(rb, h))) out.push(`${at}: optOut leaves no host the framework runs on`);
   if (rb.suite !== undefined) {
     for (const p of rb.suite.paths) path("suite.paths", p, false);
     if (rb.suite.cwd !== undefined) path("suite.cwd", rb.suite.cwd, false);

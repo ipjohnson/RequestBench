@@ -85,9 +85,13 @@ func bodyRoutes(app *fiber.App) {
 
 	app.Post("/body/bind/medium", bind)
 
+	app.Post("/body/bind/large", bind)
+
 	app.Post("/body/validate/small", validated)
 
 	app.Post("/body/validate/medium", validated)
+
+	app.Post("/body/validate/large", validated)
 
 	app.Post("/body/validate/first-error", validatedToFirstError)
 }

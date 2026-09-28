@@ -15,6 +15,13 @@ struct Two {
     two: i64,
 }
 
+#[derive(Serialize)]
+struct Three {
+    one: i64,
+    two: i64,
+    three: i64,
+}
+
 // parameters: path captures, each bound as an integer by axum's Path extractor, which refuses one
 // that is not with 400.
 
@@ -33,10 +40,16 @@ async fn two(Path((one, two)): Path<(i64, i64)>, SharedStore(p): SharedStore<&'s
     format::json(Echoed::new(&p.small, Two { one, two }))
 }
 
+// rb:handler parameters.three
+async fn three(Path((one, two, three)): Path<(i64, i64, i64)>, SharedStore(p): SharedStore<&'static Payloads>) -> Result<Response> {
+    format::json(Echoed::new(&p.small, Three { one, two, three }))
+}
+
 pub fn routes() -> Routes {
     Routes::new()
         .prefix("parameters")
         .add("/static/segment/literal", get(literal))
         .add("/{one}/segment/literal", get(one))
         .add("/{one}/with-second/{two}", get(two))
+        .add("/{one}/{two}/{three}", get(three))
 }

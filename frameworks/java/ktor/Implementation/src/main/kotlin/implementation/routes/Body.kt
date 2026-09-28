@@ -69,6 +69,7 @@ private fun ApplicationCall.bound(order: Order) = Bound(2 + 2 * order.lines.size
 fun Route.body() {
     post("/body/bind/small") { call.respond(call.bound(call.receive<Order>())) }
     post("/body/bind/medium") { call.respond(call.bound(call.receive<Order>())) }
+    post("/body/bind/large") { call.respond(call.bound(call.receive<Order>())) }
     // rb:handler body.validate_small,body.rejected_all,errors.malformed
     route("/body/validate/small") {
         install(RequestValidation, everyRule)
@@ -76,6 +77,11 @@ fun Route.body() {
     }
     // rb:handler body.validate_medium
     route("/body/validate/medium") {
+        install(RequestValidation, everyRule)
+        post { call.respond(call.bound(call.receive<Order>())) }
+    }
+    // rb:handler body.validate_large
+    route("/body/validate/large") {
         install(RequestValidation, everyRule)
         post { call.respond(call.bound(call.receive<Order>())) }
     }

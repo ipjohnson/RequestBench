@@ -26,6 +26,7 @@ object Expected {
     /** The values a run draws, fixed as orchestrator/test/reference.ts fixes them. */
     const val ONE = 4821
     const val TWO = 7390
+    const val THREE = 1563
     const val TENANT = "qwertyuiopas"
     const val REQUEST_ID = "0123456789abcdef"
     const val ACCOUNT = 482913

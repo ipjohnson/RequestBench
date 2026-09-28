@@ -96,8 +96,8 @@ App from the function `routes` returns.
   binds the order with actix-web's own `Json`, checks the fields one at a time, in the order the
   order declares them, each against its rule in a struct of its own, and refuses as the validate
   routes refuse.
-- The validate routes' extractor takes a body of up to 32 KiB, where actix-web's own `Json` on the
-  bind routes takes 2 MiB. The largest order the corpus sends is under 9 KB.
+- The validate routes' extractor reads the body with actix-web's `JsonBody` at its default limit,
+  2 MiB, which is what actix-web's own `Json` on the bind routes takes.
 - actix-web's `Path` extractor answers a capture that does not convert with 404, and its `Header`
   extractor answers a header that does not parse with 400.
 - actix-web-httpauth's bearer middleware refuses a request with no Authorization header itself,

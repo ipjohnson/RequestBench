@@ -85,12 +85,12 @@ jobs:
           echo "frameworks=$json" >> "$GITHUB_OUTPUT"
           echo "Frameworks to validate: $(jq -c 'map(.id)' <<< "$json")"
 
-          # One validation for each host a framework implements: each host whose dir its rb.json
-          # has an entry for.
+          # One validation for each host a framework runs on: each host whose dir its rb.json has
+          # an entry for, unless its optOut names the host.
           hosts=$(node --experimental-strip-types --disable-warning=ExperimentalWarning --input-type=module \
             -e 'const { HOSTS } = await import("./orchestrator/hosts.ts"); console.log(JSON.stringify(Object.values(HOSTS)))')
           validations=$(jq -c '.[]' <<< "$json" | while IFS= read -r framework; do
-            jq -c --argjson f "$framework" --argjson hosts "$hosts" '.hosts as $entries | $hosts[] | select(.dir as $d | $entries | has($d)) | $f + {host: .id}' "$(jq -r .dir <<< "$framework")/rb.json"
+            jq -c --argjson f "$framework" --argjson hosts "$hosts" '(.optOut // {}) as $off | .hosts as $entries | $hosts[] | select(.dir as $d | $entries | has($d)) | select(.id as $id | $off | has($id) | not) | $f + {host: .id}' "$(jq -r .dir <<< "$framework")/rb.json"
           done | jq -sc .)
           echo "validations=$validations" >> "$GITHUB_OUTPUT"
 

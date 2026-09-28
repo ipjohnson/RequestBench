@@ -3,7 +3,8 @@ import type { Routes } from "../app.ts";
 /**
  * parameters: router captures, each echoed back as an integer. Express's router captures a segment
  * as a string and converts nothing, so the handler converts it. The router tries routes in the order
- * they were registered, so the static path is registered before the capture that also matches it.
+ * they were registered, so each path is registered before the captures that also match it, and the
+ * three captures, which match every path here, come last.
  */
 const parameters: Routes = (app, p) => {
   app.get("/parameters/static/segment/literal", (_request, response) => response.json(p.small));
@@ -13,6 +14,11 @@ const parameters: Routes = (app, p) => {
 
   app.get("/parameters/:one/with-second/:two", (request, response) =>
     response.json({ ...p.small, echo: { one: Number(request.params.one), two: Number(request.params.two) } }));
+
+  app.get("/parameters/:one/:two/:three", (request, response) => {
+    const { one, two, three } = request.params;
+    response.json({ ...p.small, echo: { one: Number(one), two: Number(two), three: Number(three) } });
+  });
 };
 
 export default parameters;

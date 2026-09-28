@@ -142,7 +142,7 @@ Each test the corpus measures carries `[Trait("corpus", "<id>")]`, so `--filter-
   native build answers every test the host offers with them.
 - ASP.NET Core marks Razor components as unsupported under Native AOT: `AddRazorComponents` carries
   `RequiresUnreferencedCode`. The one component renders statically, and the native build answers
-  both template tests, so `Program.cs` suppresses the warning.
+  every template test, so `Program.cs` suppresses the warning.
 - `POST /items` hands `CreatedAtAsync` its route values as a `RouteValueDictionary`. Link
   generation reads an anonymous object's properties by reflection, which a native build does not
   keep, so the answer would go out with no `Location` header.

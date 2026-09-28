@@ -8,16 +8,20 @@ namespace UnitTests;
 
 public sealed class BodyTests(App app) : TestBase<App>
 {
-    // rb:test body.bind_small,body.bind_medium,body.validate_small,body.validate_medium
+    // rb:test body.bind_small,body.bind_medium,body.bind_large,body.validate_small,body.validate_medium,body.validate_large
     [Theory]
     [Trait("corpus", "body.bind_small")]
     [Trait("corpus", "body.bind_medium")]
+    [Trait("corpus", "body.bind_large")]
     [Trait("corpus", "body.validate_small")]
     [Trait("corpus", "body.validate_medium")]
+    [Trait("corpus", "body.validate_large")]
     [InlineData("/body/bind/small", "order.small.json")]
     [InlineData("/body/bind/medium", "order.medium.json")]
+    [InlineData("/body/bind/large", "order.large.json")]
     [InlineData("/body/validate/small", "order.small.json")]
     [InlineData("/body/validate/medium", "order.medium.json")]
+    [InlineData("/body/validate/large", "order.large.json")]
     public async Task An_order_is_answered_with_its_leaves_its_length_and_itself(string path, string file)
     {
         byte[] body = Expected.Bytes(file);

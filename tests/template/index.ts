@@ -1,4 +1,5 @@
 import { family } from "#kit";
+import large from "./large.ts";
 import medium from "./medium.ts";
 import small from "./small.ts";
 
@@ -11,5 +12,5 @@ export default family({
     "partly the engine's work, so a ranking that carried these rows would be " +
     "measuring one engine against another.",
 
-  tests: [medium, small],
+  tests: [large, medium, small],
 });

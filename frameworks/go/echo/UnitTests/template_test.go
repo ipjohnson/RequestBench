@@ -6,11 +6,12 @@ import (
 	"testing"
 )
 
-// rb:test template.small,template.medium
+// rb:test template.small,template.medium,template.large
 func TestThePageIsRendered(t *testing.T) {
 	for _, row := range []struct{ id, path, file string }{
 		{"template.small", "/template/small", "items.small.json"},
 		{"template.medium", "/template/medium", "items.medium.json"},
+		{"template.large", "/template/large", "items.large.json"},
 	} {
 		t.Run(row.id, func(t *testing.T) {
 			response := get(t, row.path)

@@ -5,6 +5,8 @@
 // @ts-ignore
 import { FirstErrorRequestBuilderRequestsMetadata, type FirstErrorRequestBuilder } from './firstError/index.js';
 // @ts-ignore
+import { LargeRequestBuilderRequestsMetadata, type LargeRequestBuilder } from './large/index.js';
+// @ts-ignore
 import { MediumRequestBuilderRequestsMetadata, type MediumRequestBuilder } from './medium/index.js';
 // @ts-ignore
 import { SmallRequestBuilderRequestsMetadata, type SmallRequestBuilder } from './small/index.js';
@@ -19,6 +21,10 @@ export interface ValidateRequestBuilder extends BaseRequestBuilder<ValidateReque
      * The firstError property
      */
     get firstError(): FirstErrorRequestBuilder;
+    /**
+     * The large property
+     */
+    get large(): LargeRequestBuilder;
     /**
      * The medium property
      */
@@ -38,6 +44,9 @@ export const ValidateRequestBuilderUriTemplate = "{+baseurl}/body/validate";
 export const ValidateRequestBuilderNavigationMetadata: Record<Exclude<keyof ValidateRequestBuilder, KeysToExcludeForNavigationMetadata>, NavigationMetadata> = {
     firstError: {
         requestsMetadata: FirstErrorRequestBuilderRequestsMetadata,
+    },
+    large: {
+        requestsMetadata: LargeRequestBuilderRequestsMetadata,
     },
     medium: {
         requestsMetadata: MediumRequestBuilderRequestsMetadata,

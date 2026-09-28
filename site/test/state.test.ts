@@ -42,7 +42,7 @@ describe("a row's framework page", () => {
   test("a custom profile's picks and weights ride in the link", () => {
     const st = initialState("container-h1", langs);
     st.q = "custom";
-    st.pick = { entries: ["json", "static.file"], weights: { json: 2, template: 0 } };
+    st.pick = { entries: ["json", "static.large"], weights: { json: 2, template: 0 } };
     const round = initialState("container-h1", langs);
     readHash(round, writeHash(st, langs));
     assert.deepEqual(round, st);

@@ -39,8 +39,22 @@ def routes(p: Payloads) -> list[BaseRoute]:
         captured = request.path_params
         return JSONResponse({**p.small, "echo": {"one": captured["one"], "two": captured["two"]}})
 
+    # rb:handler parameters.three
+    async def three(request: Request) -> JSONResponse:
+        """
+        parameters:
+          - {name: one, in: path, required: true, schema: {type: integer}}
+          - {name: two, in: path, required: true, schema: {type: integer}}
+          - {name: three, in: path, required: true, schema: {type: integer}}
+        responses:
+          200: {description: items.small and the three captures, content: {application/json: {schema: {$ref: "#/components/schemas/EchoedThree"}}}}
+        """
+        captured = request.path_params
+        return JSONResponse({**p.small, "echo": {"one": captured["one"], "two": captured["two"], "three": captured["three"]}})
+
     return [
         Route("/parameters/static/segment/literal", static),
         Route("/parameters/{one:int}/segment/literal", one),
         Route("/parameters/{one:int}/with-second/{two:int}", two),
+        Route("/parameters/{one:int}/{two:int}/{three:int}", three),
     ]

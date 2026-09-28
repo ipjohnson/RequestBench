@@ -25,5 +25,6 @@ fn page(body: &Payload) -> HttpResponse {
 /// template: actix-web has no view layer, and askama is the engine axum's own examples render with.
 pub fn configure(cfg: &mut ServiceConfig, p: &'static Payloads) {
     cfg.route("/template/small", web::get().to(move || async move { page(&p.small) }))
-        .route("/template/medium", web::get().to(move || async move { page(&p.medium) }));
+        .route("/template/medium", web::get().to(move || async move { page(&p.medium) }))
+        .route("/template/large", web::get().to(move || async move { page(&p.large) }));
 }

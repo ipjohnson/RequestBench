@@ -1,6 +1,7 @@
 package client.kiota.body.validate;
 
 import client.kiota.body.validate.firsterror.FirstErrorRequestBuilder;
+import client.kiota.body.validate.large.LargeRequestBuilder;
 import client.kiota.body.validate.medium.MediumRequestBuilder;
 import client.kiota.body.validate.small.SmallRequestBuilder;
 import com.microsoft.kiota.BaseRequestBuilder;
@@ -19,6 +20,14 @@ public class ValidateRequestBuilder extends BaseRequestBuilder {
     @jakarta.annotation.Nonnull
     public FirstErrorRequestBuilder firstError() {
         return new FirstErrorRequestBuilder(pathParameters, requestAdapter);
+    }
+    /**
+     * The large property
+     * @return a {@link LargeRequestBuilder}
+     */
+    @jakarta.annotation.Nonnull
+    public LargeRequestBuilder large() {
+        return new LargeRequestBuilder(pathParameters, requestAdapter);
     }
     /**
      * The medium property

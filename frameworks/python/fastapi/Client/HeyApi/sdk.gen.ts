@@ -2,7 +2,7 @@
 
 import { client } from './client.gen.ts';
 import { type Client, type ClientMeta, formDataBodySerializer, type Options as Options2, type RequestResult, type ServerSentEventsResult, type TDataShape, urlSearchParamsBodySerializer } from './client/index.ts';
-import type { BindHeadersBindGetData, BindHeadersBindGetErrors, BindHeadersBindGetResponses, BindMediumBodyBindMediumPostData, BindMediumBodyBindMediumPostErrors, BindMediumBodyBindMediumPostResponses, BindSmallBodyBindSmallPostData, BindSmallBodyBindSmallPostErrors, BindSmallBodyBindSmallPostResponses, CreateItemsPostData, CreateItemsPostErrors, CreateItemsPostResponses, DeleteItemsIdDeleteData, DeleteItemsIdDeleteErrors, DeleteItemsIdDeleteResponses, FourMiddlewareFourGetData, FourMiddlewareFourGetResponses, HealthHealthGetData, HealthHealthGetResponses, LargeCacheLargeGetData, LargeCacheLargeGetResponses, LargeEtagLargeGetData, LargeEtagLargeGetResponses, LargeJsonLargeGetData, LargeJsonLargeGetResponses, LinesStreamItemsGetData, LinesStreamItemsGetResponses, ManyQueryManyGetData, ManyQueryManyGetErrors, ManyQueryManyGetResponses, MediumCacheMediumGetData, MediumCacheMediumGetResponses, MediumJsonMediumGetData, MediumJsonMediumGetResponses, MediumSseMediumGetData, MediumSseMediumGetResponses, MediumTemplateMediumGetData, MediumTemplateMediumGetResponses, MetaMetaGetData, MetaMetaGetResponses, MultipartFormsMultipartPostData, MultipartFormsMultipartPostErrors, MultipartFormsMultipartPostResponses, NoneMiddlewareNoneGetData, NoneMiddlewareNoneGetResponses, OneParametersOneSegmentLiteralGetData, OneParametersOneSegmentLiteralGetErrors, OneParametersOneSegmentLiteralGetResponses, OneQueryOneGetData, OneQueryOneGetErrors, OneQueryOneGetResponses, PlaintextPlaintextGetData, PlaintextPlaintextGetResponses, ReadItemsIdGet2Data, ReadItemsIdGet2Errors, ReadItemsIdGet2Responses, ReadItemsIdGetData, ReadItemsIdGetErrors, ReadItemsIdGetResponses, ReplaceItemsIdPutData, ReplaceItemsIdPutErrors, ReplaceItemsIdPutResponses, SixteenMiddlewareSixteenGetData, SixteenMiddlewareSixteenGetResponses, SmallAuthorizedSmallGetData, SmallAuthorizedSmallGetResponses, SmallCacheSmallGetData, SmallCacheSmallGetResponses, SmallEtagSmallGetData, SmallEtagSmallGetResponses, SmallJsonSmallGetData, SmallJsonSmallGetResponses, SmallTemplateSmallGetData, SmallTemplateSmallGetResponses, StaticParametersStaticSegmentLiteralGetData, StaticParametersStaticSegmentLiteralGetResponses, TwoParametersOneWithSecondTwoGetData, TwoParametersOneWithSecondTwoGetErrors, TwoParametersOneWithSecondTwoGetResponses, UnreadHeadersGetData, UnreadHeadersGetResponses, UpdateItemsIdPatchData, UpdateItemsIdPatchErrors, UpdateItemsIdPatchResponses, UrlencodedFormsUrlencodedPostData, UrlencodedFormsUrlencodedPostErrors, UrlencodedFormsUrlencodedPostResponses, ValidateFirstErrorBodyValidateFirstErrorPostData, ValidateFirstErrorBodyValidateFirstErrorPostErrors, ValidateFirstErrorBodyValidateFirstErrorPostResponses, ValidateMediumBodyValidateMediumPostData, ValidateMediumBodyValidateMediumPostErrors, ValidateMediumBodyValidateMediumPostResponses, ValidateSmallBodyValidateSmallPostData, ValidateSmallBodyValidateSmallPostErrors, ValidateSmallBodyValidateSmallPostResponses, VaryManyCacheVaryManyGetData, VaryManyCacheVaryManyGetResponses, VaryOneCacheVaryOneGetData, VaryOneCacheVaryOneGetResponses } from './types.gen.ts';
+import type { BindHeadersBindGetData, BindHeadersBindGetErrors, BindHeadersBindGetResponses, BindLargeBodyBindLargePostData, BindLargeBodyBindLargePostErrors, BindLargeBodyBindLargePostResponses, BindMediumBodyBindMediumPostData, BindMediumBodyBindMediumPostErrors, BindMediumBodyBindMediumPostResponses, BindSmallBodyBindSmallPostData, BindSmallBodyBindSmallPostErrors, BindSmallBodyBindSmallPostResponses, CreateItemsPostData, CreateItemsPostErrors, CreateItemsPostResponses, DeleteItemsIdDeleteData, DeleteItemsIdDeleteErrors, DeleteItemsIdDeleteResponses, FourMiddlewareFourGetData, FourMiddlewareFourGetResponses, HealthHealthGetData, HealthHealthGetResponses, LargeCacheLargeGetData, LargeCacheLargeGetResponses, LargeEtagLargeGetData, LargeEtagLargeGetResponses, LargeJsonLargeGetData, LargeJsonLargeGetResponses, LargeTemplateLargeGetData, LargeTemplateLargeGetResponses, LinesStreamItemsGetData, LinesStreamItemsGetResponses, ManyQueryManyGetData, ManyQueryManyGetErrors, ManyQueryManyGetResponses, MediumCacheMediumGetData, MediumCacheMediumGetResponses, MediumJsonMediumGetData, MediumJsonMediumGetResponses, MediumSseMediumGetData, MediumSseMediumGetResponses, MediumTemplateMediumGetData, MediumTemplateMediumGetResponses, MetaMetaGetData, MetaMetaGetResponses, MultipartFormsMultipartPostData, MultipartFormsMultipartPostErrors, MultipartFormsMultipartPostResponses, NoneMiddlewareNoneGetData, NoneMiddlewareNoneGetResponses, OneParametersOneSegmentLiteralGetData, OneParametersOneSegmentLiteralGetErrors, OneParametersOneSegmentLiteralGetResponses, OneQueryOneGetData, OneQueryOneGetErrors, OneQueryOneGetResponses, PlaintextPlaintextGetData, PlaintextPlaintextGetResponses, ReadItemsIdGet2Data, ReadItemsIdGet2Errors, ReadItemsIdGet2Responses, ReadItemsIdGetData, ReadItemsIdGetErrors, ReadItemsIdGetResponses, ReplaceItemsIdPutData, ReplaceItemsIdPutErrors, ReplaceItemsIdPutResponses, SixteenMiddlewareSixteenGetData, SixteenMiddlewareSixteenGetResponses, SmallAuthorizedSmallGetData, SmallAuthorizedSmallGetResponses, SmallCacheSmallGetData, SmallCacheSmallGetResponses, SmallEtagSmallGetData, SmallEtagSmallGetResponses, SmallJsonSmallGetData, SmallJsonSmallGetResponses, SmallTemplateSmallGetData, SmallTemplateSmallGetResponses, StaticParametersStaticSegmentLiteralGetData, StaticParametersStaticSegmentLiteralGetResponses, ThreeParametersOneTwoThreeGetData, ThreeParametersOneTwoThreeGetErrors, ThreeParametersOneTwoThreeGetResponses, TwoParametersOneWithSecondTwoGetData, TwoParametersOneWithSecondTwoGetErrors, TwoParametersOneWithSecondTwoGetResponses, UnreadHeadersGetData, UnreadHeadersGetResponses, UpdateItemsIdPatchData, UpdateItemsIdPatchErrors, UpdateItemsIdPatchResponses, UrlencodedFormsUrlencodedPostData, UrlencodedFormsUrlencodedPostErrors, UrlencodedFormsUrlencodedPostResponses, ValidateFirstErrorBodyValidateFirstErrorPostData, ValidateFirstErrorBodyValidateFirstErrorPostErrors, ValidateFirstErrorBodyValidateFirstErrorPostResponses, ValidateLargeBodyValidateLargePostData, ValidateLargeBodyValidateLargePostErrors, ValidateLargeBodyValidateLargePostResponses, ValidateMediumBodyValidateMediumPostData, ValidateMediumBodyValidateMediumPostErrors, ValidateMediumBodyValidateMediumPostResponses, ValidateSmallBodyValidateSmallPostData, ValidateSmallBodyValidateSmallPostErrors, ValidateSmallBodyValidateSmallPostResponses, VaryManyCacheVaryManyGetData, VaryManyCacheVaryManyGetResponses, VaryOneCacheVaryOneGetData, VaryOneCacheVaryOneGetResponses } from './types.gen.ts';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -69,6 +69,11 @@ export const oneParametersOneSegmentLiteralGet = <ThrowOnError extends boolean =
 export const twoParametersOneWithSecondTwoGet = <ThrowOnError extends boolean = false>(options: Options<TwoParametersOneWithSecondTwoGetData, ThrowOnError>): RequestResult<TwoParametersOneWithSecondTwoGetResponses, TwoParametersOneWithSecondTwoGetErrors, ThrowOnError> => (options.client ?? client).get<TwoParametersOneWithSecondTwoGetResponses, TwoParametersOneWithSecondTwoGetErrors, ThrowOnError>({ url: '/parameters/{one}/with-second/{two}', ...options });
 
 /**
+ * Three
+ */
+export const threeParametersOneTwoThreeGet = <ThrowOnError extends boolean = false>(options: Options<ThreeParametersOneTwoThreeGetData, ThrowOnError>): RequestResult<ThreeParametersOneTwoThreeGetResponses, ThreeParametersOneTwoThreeGetErrors, ThrowOnError> => (options.client ?? client).get<ThreeParametersOneTwoThreeGetResponses, ThreeParametersOneTwoThreeGetErrors, ThrowOnError>({ url: '/parameters/{one}/{two}/{three}', ...options });
+
+/**
  * One
  */
 export const oneQueryOneGet = <ThrowOnError extends boolean = false>(options: Options<OneQueryOneGetData, ThrowOnError>): RequestResult<OneQueryOneGetResponses, OneQueryOneGetErrors, ThrowOnError> => (options.client ?? client).get<OneQueryOneGetResponses, OneQueryOneGetErrors, ThrowOnError>({ url: '/query/one', ...options });
@@ -113,6 +118,18 @@ export const bindMediumBodyBindMediumPost = <ThrowOnError extends boolean = fals
 });
 
 /**
+ * Bind Large
+ */
+export const bindLargeBodyBindLargePost = <ThrowOnError extends boolean = false>(options: Options<BindLargeBodyBindLargePostData, ThrowOnError>): RequestResult<BindLargeBodyBindLargePostResponses, BindLargeBodyBindLargePostErrors, ThrowOnError> => (options.client ?? client).post<BindLargeBodyBindLargePostResponses, BindLargeBodyBindLargePostErrors, ThrowOnError>({
+    url: '/body/bind/large',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
  * Validate Small
  */
 export const validateSmallBodyValidateSmallPost = <ThrowOnError extends boolean = false>(options: Options<ValidateSmallBodyValidateSmallPostData, ThrowOnError>): RequestResult<ValidateSmallBodyValidateSmallPostResponses, ValidateSmallBodyValidateSmallPostErrors, ThrowOnError> => (options.client ?? client).post<ValidateSmallBodyValidateSmallPostResponses, ValidateSmallBodyValidateSmallPostErrors, ThrowOnError>({
@@ -129,6 +146,18 @@ export const validateSmallBodyValidateSmallPost = <ThrowOnError extends boolean 
  */
 export const validateMediumBodyValidateMediumPost = <ThrowOnError extends boolean = false>(options: Options<ValidateMediumBodyValidateMediumPostData, ThrowOnError>): RequestResult<ValidateMediumBodyValidateMediumPostResponses, ValidateMediumBodyValidateMediumPostErrors, ThrowOnError> => (options.client ?? client).post<ValidateMediumBodyValidateMediumPostResponses, ValidateMediumBodyValidateMediumPostErrors, ThrowOnError>({
     url: '/body/validate/medium',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Validate Large
+ */
+export const validateLargeBodyValidateLargePost = <ThrowOnError extends boolean = false>(options: Options<ValidateLargeBodyValidateLargePostData, ThrowOnError>): RequestResult<ValidateLargeBodyValidateLargePostResponses, ValidateLargeBodyValidateLargePostErrors, ThrowOnError> => (options.client ?? client).post<ValidateLargeBodyValidateLargePostResponses, ValidateLargeBodyValidateLargePostErrors, ThrowOnError>({
+    url: '/body/validate/large',
     ...options,
     headers: {
         'Content-Type': 'application/json',
@@ -288,6 +317,11 @@ export const smallTemplateSmallGet = <ThrowOnError extends boolean = false>(opti
  * Medium
  */
 export const mediumTemplateMediumGet = <ThrowOnError extends boolean = false>(options?: Options<MediumTemplateMediumGetData, ThrowOnError>): RequestResult<MediumTemplateMediumGetResponses, unknown, ThrowOnError> => (options?.client ?? client).get<MediumTemplateMediumGetResponses, unknown, ThrowOnError>({ url: '/template/medium', ...options });
+
+/**
+ * Large
+ */
+export const largeTemplateLargeGet = <ThrowOnError extends boolean = false>(options?: Options<LargeTemplateLargeGetData, ThrowOnError>): RequestResult<LargeTemplateLargeGetResponses, unknown, ThrowOnError> => (options?.client ?? client).get<LargeTemplateLargeGetResponses, unknown, ThrowOnError>({ url: '/template/large', ...options });
 
 /**
  * Health

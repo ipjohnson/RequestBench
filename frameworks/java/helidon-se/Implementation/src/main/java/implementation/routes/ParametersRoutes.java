@@ -9,9 +9,9 @@ import io.helidon.webserver.http.ServerRequest;
 
 /**
  * parameters: router captures, each read by name from the matched path's parameters and converted
- * by Helidon's mapper to the integer asInt asks for. The literal route is registered first,
- * because Helidon tries routes in the order they were registered and the capture matches its path
- * too.
+ * by Helidon's mapper to the integer asInt asks for. Helidon tries routes in the order they were
+ * registered, so each route comes before any capture that would also match its path: the literal
+ * route first, and the three captures last.
  */
 public final class ParametersRoutes implements HttpFeature {
 
@@ -20,6 +20,9 @@ public final class ParametersRoutes implements HttpFeature {
 
     @Json.Entity
     public record Two(int one, int two) {}
+
+    @Json.Entity
+    public record Three(int one, int two, int three) {}
 
     private final Payloads p;
 
@@ -35,6 +38,9 @@ public final class ParametersRoutes implements HttpFeature {
 
         routing.get("/parameters/{one}/with-second/{two}", (req, res) ->
                 res.send(Echoed.of(p.small(), new Two(capture(req, "one"), capture(req, "two")))));
+
+        routing.get("/parameters/{one}/{two}/{three}", (req, res) ->
+                res.send(Echoed.of(p.small(), new Three(capture(req, "one"), capture(req, "two"), capture(req, "three")))));
     }
 
     private static int capture(ServerRequest req, String name) {

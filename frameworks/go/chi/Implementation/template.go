@@ -30,4 +30,6 @@ func templateRoutes(r chi.Router, p *Payloads) {
 	r.Get("/template/small", rendered(&p.Small))
 
 	r.Get("/template/medium", rendered(&p.Medium))
+
+	r.Get("/template/large", rendered(&p.Large))
 }

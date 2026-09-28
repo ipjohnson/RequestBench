@@ -152,6 +152,25 @@ export type EchoedSearch = {
 };
 
 /**
+ * Echoed[Three]
+ */
+export type EchoedThree = {
+    /**
+     * Size
+     */
+    size: string;
+    /**
+     * Count
+     */
+    count: number;
+    /**
+     * Items
+     */
+    items: Array<Item>;
+    echo: Three;
+};
+
+/**
  * Echoed[Two]
  */
 export type EchoedTwo = {
@@ -378,6 +397,24 @@ export type Search = {
      * Maxprice
      */
     maxPrice: number;
+};
+
+/**
+ * Three
+ */
+export type Three = {
+    /**
+     * One
+     */
+    one: number;
+    /**
+     * Two
+     */
+    two: number;
+    /**
+     * Three
+     */
+    three: number;
 };
 
 /**
@@ -652,6 +689,44 @@ export type TwoParametersOneWithSecondTwoGetResponses = {
 
 export type TwoParametersOneWithSecondTwoGetResponse = TwoParametersOneWithSecondTwoGetResponses[keyof TwoParametersOneWithSecondTwoGetResponses];
 
+export type ThreeParametersOneTwoThreeGetData = {
+    body?: never;
+    path: {
+        /**
+         * One
+         */
+        one: number;
+        /**
+         * Two
+         */
+        two: number;
+        /**
+         * Three
+         */
+        three: number;
+    };
+    query?: never;
+    url: '/parameters/{one}/{two}/{three}';
+};
+
+export type ThreeParametersOneTwoThreeGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ThreeParametersOneTwoThreeGetError = ThreeParametersOneTwoThreeGetErrors[keyof ThreeParametersOneTwoThreeGetErrors];
+
+export type ThreeParametersOneTwoThreeGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: EchoedThree;
+};
+
+export type ThreeParametersOneTwoThreeGetResponse = ThreeParametersOneTwoThreeGetResponses[keyof ThreeParametersOneTwoThreeGetResponses];
+
 export type OneQueryOneGetData = {
     body?: never;
     path?: never;
@@ -845,6 +920,31 @@ export type BindMediumBodyBindMediumPostResponses = {
 
 export type BindMediumBodyBindMediumPostResponse = BindMediumBodyBindMediumPostResponses[keyof BindMediumBodyBindMediumPostResponses];
 
+export type BindLargeBodyBindLargePostData = {
+    body: Order;
+    path?: never;
+    query?: never;
+    url: '/body/bind/large';
+};
+
+export type BindLargeBodyBindLargePostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type BindLargeBodyBindLargePostError = BindLargeBodyBindLargePostErrors[keyof BindLargeBodyBindLargePostErrors];
+
+export type BindLargeBodyBindLargePostResponses = {
+    /**
+     * Successful Response
+     */
+    200: Bound;
+};
+
+export type BindLargeBodyBindLargePostResponse = BindLargeBodyBindLargePostResponses[keyof BindLargeBodyBindLargePostResponses];
+
 export type ValidateSmallBodyValidateSmallPostData = {
     body: CheckedOrder;
     path?: never;
@@ -894,6 +994,31 @@ export type ValidateMediumBodyValidateMediumPostResponses = {
 };
 
 export type ValidateMediumBodyValidateMediumPostResponse = ValidateMediumBodyValidateMediumPostResponses[keyof ValidateMediumBodyValidateMediumPostResponses];
+
+export type ValidateLargeBodyValidateLargePostData = {
+    body: CheckedOrder;
+    path?: never;
+    query?: never;
+    url: '/body/validate/large';
+};
+
+export type ValidateLargeBodyValidateLargePostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ValidateLargeBodyValidateLargePostError = ValidateLargeBodyValidateLargePostErrors[keyof ValidateLargeBodyValidateLargePostErrors];
+
+export type ValidateLargeBodyValidateLargePostResponses = {
+    /**
+     * Successful Response
+     */
+    200: Bound;
+};
+
+export type ValidateLargeBodyValidateLargePostResponse = ValidateLargeBodyValidateLargePostResponses[keyof ValidateLargeBodyValidateLargePostResponses];
 
 export type ValidateFirstErrorBodyValidateFirstErrorPostData = {
     body: Order;
@@ -1334,6 +1459,22 @@ export type MediumTemplateMediumGetResponses = {
 };
 
 export type MediumTemplateMediumGetResponse = MediumTemplateMediumGetResponses[keyof MediumTemplateMediumGetResponses];
+
+export type LargeTemplateLargeGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/template/large';
+};
+
+export type LargeTemplateLargeGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: string;
+};
+
+export type LargeTemplateLargeGetResponse = LargeTemplateLargeGetResponses[keyof LargeTemplateLargeGetResponses];
 
 export type HealthHealthGetData = {
     body?: never;

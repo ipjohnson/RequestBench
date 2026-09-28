@@ -17,6 +17,12 @@ type ParametersTwo struct {
 	Two int `json:"two"`
 }
 
+type ParametersThree struct {
+	One   int `json:"one"`
+	Two   int `json:"two"`
+	Three int `json:"three"`
+}
+
 // parametersRoutes read router captures with chi.URLParam, which hands each back as a string,
 // and convert them with strconv. chi's tree tries a static segment before a capture, so the
 // static route wins its own path.
@@ -44,5 +50,24 @@ func parametersRoutes(r chi.Router, p *Payloads) {
 			return
 		}
 		render.JSON(w, r, Echoed[ParametersTwo]{&p.Small, ParametersTwo{One: one, Two: two}})
+	})
+
+	r.Get("/parameters/{one}/{two}/{three}", func(w http.ResponseWriter, r *http.Request) {
+		one, err := strconv.Atoi(chi.URLParam(r, "one"))
+		if err != nil {
+			refuse(w, r, err)
+			return
+		}
+		two, err := strconv.Atoi(chi.URLParam(r, "two"))
+		if err != nil {
+			refuse(w, r, err)
+			return
+		}
+		three, err := strconv.Atoi(chi.URLParam(r, "three"))
+		if err != nil {
+			refuse(w, r, err)
+			return
+		}
+		render.JSON(w, r, Echoed[ParametersThree]{&p.Small, ParametersThree{One: one, Two: two, Three: three}})
 	})
 }

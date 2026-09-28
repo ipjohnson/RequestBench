@@ -13,5 +13,7 @@ public static class ParametersRoutes
         app.MapGet("/parameters/{one}/segment/literal", (int one, Payloads p) => new Echoed<ParametersOne>(p.Small, new(one)));
 
         app.MapGet("/parameters/{one}/with-second/{two}", (int one, int two, Payloads p) => new Echoed<ParametersTwo>(p.Small, new(one, two)));
+
+        app.MapGet("/parameters/{one}/{two}/{three}", (int one, int two, int three, Payloads p) => new Echoed<ParametersThree>(p.Small, new(one, two, three)));
     }
 }

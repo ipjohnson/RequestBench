@@ -80,12 +80,12 @@ impl Bound {
     }
 }
 
-// rb:handler body.bind_small,body.bind_medium
+// rb:handler body.bind_small,body.bind_medium,body.bind_large
 async fn bind(headers: HeaderMap, Json(order): Json<Order>) -> Result<Response> {
     format::json(Bound::of(order, &headers))
 }
 
-// rb:handler body.validate_small,body.validate_medium,body.rejected_all,errors.malformed
+// rb:handler body.validate_small,body.validate_medium,body.validate_large,body.rejected_all,errors.malformed
 async fn validate(headers: HeaderMap, JsonValidateWithMessage(order): JsonValidateWithMessage<Order>) -> Result<Response> {
     format::json(Bound::of(order, &headers))
 }
@@ -103,7 +103,9 @@ pub fn routes() -> Routes {
         .prefix("body")
         .add("/bind/small", post(bind))
         .add("/bind/medium", post(bind))
+        .add("/bind/large", post(bind))
         .add("/validate/small", post(validate))
         .add("/validate/medium", post(validate))
+        .add("/validate/large", post(validate))
         .add("/validate/first-error", post(first_error))
 }

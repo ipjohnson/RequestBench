@@ -3,9 +3,9 @@ import pytest
 import expected
 
 
-# rb:test template.small,template.medium
-@pytest.mark.corpus("template.small", "template.medium")
-@pytest.mark.parametrize("size", ["small", "medium"])
+# rb:test template.small,template.medium,template.large
+@pytest.mark.corpus("template.small", "template.medium", "template.large")
+@pytest.mark.parametrize("size", ["small", "medium", "large"])
 async def test_the_payload_is_rendered_by_the_django_template(client, size):
     response = await client.get(f"/template/{size}")
 

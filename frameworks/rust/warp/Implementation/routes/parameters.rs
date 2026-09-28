@@ -15,6 +15,13 @@ struct Two {
     two: i64,
 }
 
+#[derive(Serialize)]
+struct Three {
+    one: i64,
+    two: i64,
+    three: i64,
+}
+
 /// parameters: path captures, each converted to an integer by warp's path filter with FromStr. A
 /// segment that does not convert is a route that does not match, so "static" never reaches the
 /// capture beside it.
@@ -25,5 +32,7 @@ pub fn routes(p: &'static Payloads) -> Routes {
     let one = warp::path!("parameters" / i64 / "segment" / "literal").and(warp::get()).map(move |one| warp::reply::json(&Echoed::new(&p.small, One { one })));
     // rb:handler parameters.two
     let two = warp::path!("parameters" / i64 / "with-second" / i64).and(warp::get()).map(move |one, two| warp::reply::json(&Echoed::new(&p.small, Two { one, two })));
-    answer(fixed.or(one).unify().or(two).unify()).boxed()
+    // rb:handler parameters.three
+    let three = warp::path!("parameters" / i64 / i64 / i64).and(warp::get()).map(move |one, two, three| warp::reply::json(&Echoed::new(&p.small, Three { one, two, three })));
+    answer(fixed.or(one).unify().or(two).unify().or(three).unify()).boxed()
 }

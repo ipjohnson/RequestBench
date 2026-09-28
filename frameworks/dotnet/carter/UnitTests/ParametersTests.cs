@@ -32,6 +32,16 @@ public sealed class ParametersTests(CarterApp app) : IClassFixture<CarterApp>
         await Answer.Is(Expected.WithEcho("items.small.json", new() { ["one"] = 4821, ["two"] = 7390 }), response);
     }
 
+    // rb:test parameters.three
+    [Fact]
+    [Trait("corpus", "parameters.three")]
+    public async Task Three_captures_are_bound_and_echoed()
+    {
+        using HttpResponseMessage response = await app.CreateClient().GetAsync("/parameters/4821/7390/1563");
+
+        await Answer.Is(Expected.WithEcho("items.small.json", new() { ["one"] = 4821, ["two"] = 7390, ["three"] = 1563 }), response);
+    }
+
     [Fact]
     public async Task A_capture_that_is_not_an_integer_is_refused_by_the_binder()
     {

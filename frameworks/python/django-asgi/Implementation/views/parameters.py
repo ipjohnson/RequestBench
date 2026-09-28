@@ -24,3 +24,9 @@ async def one(request, one: int):
 @require_GET
 async def two(request, one: int, two: int):
     return JsonResponse(echoed(P.small, {"one": one, "two": two}))
+
+
+# rb:handler parameters.three
+@require_GET
+async def three(request, one: int, two: int, three: int):
+    return JsonResponse(echoed(P.small, {"one": one, "two": two, "three": three}))

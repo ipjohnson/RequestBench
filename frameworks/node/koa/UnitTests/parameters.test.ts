@@ -24,3 +24,10 @@ test("parameters.two: both captures are echoed as numbers", async () => {
 
   assert.deepEqual(response.body, expected.withEcho("items.small.json", { one: run.one, two: run.two }));
 });
+
+// rb:test parameters.three
+test("parameters.three: all three captures are echoed as numbers", async () => {
+  const response = await client.get(`/parameters/${run.one}/${run.two}/${run.three}`);
+
+  assert.deepEqual(response.body, expected.withEcho("items.small.json", { one: run.one, two: run.two, three: run.three }));
+});

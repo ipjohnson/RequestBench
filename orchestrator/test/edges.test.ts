@@ -16,7 +16,7 @@ test("every chain in the corpus ends at a root, and every factor is varied", () 
   const measured = Object.entries(corpus.tests).filter((e): e is [string, PerformanceTest] => e[1].kind === "performance");
   const roots = measured.filter(([, t]) => t.base === undefined).map(([id]) => id).sort();
   assert.deepEqual(roots, ["baseline.plaintext", "body.bind_small", "errors.unmatched", "headers.few", "json.small"]);
-  assert.equal(measured.length - roots.length, 51);
+  assert.equal(measured.length - roots.length, 57);
   const varied = new Set(measured.map(([, t]) => t.varies).filter((v) => v !== undefined));
   assert.deepEqual([...varied].sort(), Object.keys(corpus.factors).sort());
 });

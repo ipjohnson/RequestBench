@@ -34,12 +34,16 @@ const body: Routes = (app) => {
 
   app.post("/body/bind/medium", async (c) => bound(c, await c.req.json<Order>()));
 
+  app.post("/body/bind/large", async (c) => bound(c, await c.req.json<Order>()));
+
   // rb:wiring body.*
   const validated = zValidator("json", order);
 
   app.post("/body/validate/small", validated, (c) => bound(c, c.req.valid("json")));
 
   app.post("/body/validate/medium", validated, (c) => bound(c, c.req.valid("json")));
+
+  app.post("/body/validate/large", validated, (c) => bound(c, c.req.valid("json")));
 
   // rb:wiring body.*
   // zod has no setting that stops at the first failure, so this route runs the validator one field

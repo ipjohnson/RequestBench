@@ -32,9 +32,18 @@ def routes(p: Payloads) -> list[BaseRoute]:
         """
         return page(request, p.medium)
 
+    # rb:handler template.large
+    async def large(request: Request) -> Response:
+        """
+        responses:
+          200: {description: items.large rendered, content: {text/html: {schema: {type: string}}}}
+        """
+        return page(request, p.large)
+
     return [
         Route("/template/small", small),
         Route("/template/medium", medium),
+        Route("/template/large", large),
     ]
 
 

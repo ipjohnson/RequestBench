@@ -2,7 +2,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { entryOf, hostsOf } from "../hosts.ts";
+import { entryOf, hostsOf, runsOn } from "../hosts.ts";
 import { loadFrameworks, type LoadInput } from "../manifest.ts";
 
 const DIR = "frameworks/node/demo";
@@ -131,6 +131,24 @@ test("the lambda-emulator entry is both Lambda hosts' entry", () => {
   assert.equal(entryOf(hosts, "lambda-emulator-512"), lambda);
   assert.equal(entryOf(hosts, "lambda-emulator-1024"), lambda);
   assert.equal(entryOf(hosts, "container-h2"), undefined);
+});
+
+test("a framework opts out of a host its directory serves, with the reason", () => {
+  const hosts = { "container-h1": { dockerfile: "Dockerfile" }, "lambda-emulator": { dockerfile: "lambda-emulator/Dockerfile" } };
+  const tracked = new Set([...FILES, `${DIR}/lambda-emulator/Dockerfile`]);
+  const optOut = { "lambda-emulator-512": "The function stops answering at 512 MB." };
+  assert.deepEqual(problemsOf({ ...GOOD, hosts, optOut }, { tracked }), []);
+  assert.deepEqual(
+    hostsOf(hosts).filter((h) => runsOn({ hosts, optOut }, h)),
+    ["container-h1", "lambda-emulator-1024"],
+  );
+  assert.deepEqual(problemsOf({ ...GOOD, hosts, optOut: { "lambda-rie": "Gone." } }, { tracked }), [
+    `${MANIFEST}: optOut.lambda-rie is not a host, only container-h1, container-h2, lambda-emulator-512, lambda-emulator-1024 are`,
+  ]);
+  assert.deepEqual(problemsOf({ ...GOOD, hosts, optOut: { "container-h2": "No h2c." } }, { tracked }), [
+    `${MANIFEST}: optOut.container-h2 needs no opting out, because hosts has no container-h2 entry`,
+  ]);
+  assert.deepEqual(problemsOf({ ...GOOD, optOut: { "container-h1": "Never." } }), [`${MANIFEST}: optOut leaves no host the framework runs on`]);
 });
 
 test("a host's unsupported tests are named by id, each with a reason", () => {
