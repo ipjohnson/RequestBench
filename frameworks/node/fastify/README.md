@@ -14,7 +14,7 @@ routes registered inside it and to no others. Every family here is a plugin of i
 | `Implementation/` | The application, in TypeScript. `app.ts` builds it, and `routes/` holds one plugin per corpus family. |
 | `container-h1/` | How container-h1 starts it. `server.ts` loads the payloads and listens, and `Dockerfile` builds the image. |
 | `container-h2/` | How container-h2 starts it. `server.ts` builds the application on a Fastify instance with the `http2` option, which answers HTTP/2 with prior knowledge, and `Dockerfile` builds the image. |
-| `lambda-emulator/` | How lambda-emulator starts it. `handler.mjs` exports the handler the Lambda runtime hands each event, the application behind @fastify/aws-lambda, and `Dockerfile` builds the function on the `nodejs:26-preview` base image. The runtime imports a handler's module only as `.js`, `.mjs` or `.cjs`, so `handler.mjs` is JavaScript, and Node strips the types of the application it imports. |
+| `lambda-emulator/` | How lambda-emulator starts it. `handler.mjs` exports the handler the Lambda runtime hands each event, the application behind @fastify/aws-lambda in its `payloadAsStream` mode, and `Dockerfile` builds the function on the `nodejs:26-preview` base image. The runtime imports a handler's module only as `.js`, `.mjs` or `.cjs`, so `handler.mjs` is JavaScript, and Node strips the types of the application it imports. |
 | `UnitTests/` | node:test tests of the wiring, sending each request through Fastify's `inject()`. |
 | `Client/` | The OpenAPI document @fastify/swagger writes from the route schemas, and the Kiota client generated from it. |
 | `client-exception/` | How the corpus reads Fastify's error bodies. |
@@ -80,8 +80,14 @@ listening. `PORT` defaults to 8080.
   The function on lambda-emulator runs on one core.
 - On lambda-emulator the application answers behind @fastify/aws-lambda 6.4, the Fastify
   organisation's adapter. It hands each event to Fastify's `inject()`, as the suite does, and no
-  server runs. It buffers the whole answer into one proxy response, so the sse and stream tests are
-  listed as unsupported there. Its `payloadAsStream` option would stream every answer.
+  server runs. With its `payloadAsStream` option it hands back the answer's head and its body as a
+  stream, and the handler writes both to the runtime's response stream, as the adapter's README
+  shows. The handler is wrapped in the Node runtime's `awslambda.streamifyResponse`, and the
+  runtime streams every answer of such a handler, so every answer goes out as a Lambda response
+  stream.
+- With `payloadAsStream`, @fastify/aws-lambda takes the answer's body only when some of it is
+  written by the time `inject()` reports the head, and otherwise sends an empty body. Every answer
+  the corpus asks for has its first bytes written by then.
 - @fastify/aws-lambda builds the query from the event's `queryStringParameters` rather than its
   `rawQueryString`, and splits a value at its commas. On lambda-emulator `?q=a,b` reaches a route as
   an array. No corpus value holds a comma.
