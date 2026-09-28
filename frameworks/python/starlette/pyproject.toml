@@ -16,7 +16,7 @@ dependencies = [
   "sse-starlette~=3.4",
   "starlette~=1.7",
   # uvloop and httptools, which uvicorn picks when they are installed, come with standard.
-  "uvicorn[standard]~=0.53.0",
+  "uvicorn[standard]~=0.54.0",
 ]
 
 [dependency-groups]
