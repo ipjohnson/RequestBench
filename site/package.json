@@ -11,7 +11,7 @@
     "typecheck": "astro check"
   },
   "dependencies": {
-    "astro": "^7.3.3",
+    "astro": "^7.3.5",
     "zod": "^4.6.5"
   },
   "devDependencies": {
