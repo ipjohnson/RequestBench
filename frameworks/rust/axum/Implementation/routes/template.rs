@@ -25,4 +25,5 @@ pub fn router(p: &'static Payloads) -> Router {
     Router::new()
         .route("/template/small", get(move || async move { page(&p.small) }))
         .route("/template/medium", get(move || async move { page(&p.medium) }))
+        .route("/template/large", get(move || async move { page(&p.large) }))
 }

@@ -2,12 +2,12 @@ use warp::http::StatusCode;
 
 use crate::support::{app, get, header, normal, page};
 
-// rb:test template.small,template.medium
-/// template.small and template.medium: the page each payload renders, compared as the corpus
-/// compares it.
+// rb:test template.small,template.medium,template.large
+/// template.small, template.medium and template.large: the page each payload renders, compared as
+/// the corpus compares it.
 #[tokio::test]
 async fn each_payload_renders_its_page() {
-    for size in ["small", "medium"] {
+    for size in ["small", "medium", "large"] {
         let response = get(&app(), &format!("/template/{size}")).await;
 
         assert_eq!(response.status(), StatusCode::OK);

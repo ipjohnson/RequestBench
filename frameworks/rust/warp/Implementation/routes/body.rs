@@ -97,11 +97,30 @@ pub fn routes() -> Routes {
     let bind_small = warp::path!("body" / "bind" / "small").and(warp::post()).and(length()).and(warp::body::json()).map(Bound::of);
     // rb:handler body.bind_medium
     let bind_medium = warp::path!("body" / "bind" / "medium").and(warp::post()).and(length()).and(warp::body::json()).map(Bound::of);
+    // rb:handler body.bind_large
+    let bind_large = warp::path!("body" / "bind" / "large").and(warp::post()).and(length()).and(warp::body::json()).map(Bound::of);
     // rb:handler body.validate_small,body.rejected_all,errors.malformed
     let validate_small = warp::path!("body" / "validate" / "small").and(warp::post()).and(length()).and(warp::body::json().and_then(checked)).map(Bound::of);
     // rb:handler body.validate_medium
     let validate_medium = warp::path!("body" / "validate" / "medium").and(warp::post()).and(length()).and(warp::body::json().and_then(checked)).map(Bound::of);
+    // rb:handler body.validate_large
+    let validate_large = warp::path!("body" / "validate" / "large").and(warp::post()).and(length()).and(warp::body::json().and_then(checked)).map(Bound::of);
     // rb:handler body.rejected_first
     let first_error = warp::path!("body" / "validate" / "first-error").and(warp::post()).and(length()).and(warp::body::json().and_then(checked_to_first)).map(Bound::of);
-    answer(bind_small.or(bind_medium).unify().or(validate_small).unify().or(validate_medium).unify().or(first_error).unify()).boxed()
+    answer(
+        bind_small
+            .or(bind_medium)
+            .unify()
+            .or(bind_large)
+            .unify()
+            .or(validate_small)
+            .unify()
+            .or(validate_medium)
+            .unify()
+            .or(validate_large)
+            .unify()
+            .or(first_error)
+            .unify(),
+    )
+    .boxed()
 }

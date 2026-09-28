@@ -134,7 +134,9 @@ pub fn add(route: Route, _: &'static Payloads) -> Route {
     route
         .at("/body/bind/small", post(bind))
         .at("/body/bind/medium", post(bind))
+        .at("/body/bind/large", post(bind))
         .at("/body/validate/small", post(validate))
         .at("/body/validate/medium", post(validate))
+        .at("/body/validate/large", post(validate))
         .at("/body/validate/first-error", post(first_error))
 }

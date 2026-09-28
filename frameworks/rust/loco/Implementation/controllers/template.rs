@@ -15,6 +15,11 @@ async fn medium(ViewEngine(v): ViewEngine<TeraView>, SharedStore(p): SharedStore
     format::render().view(&v, "items.html", data!({ "body": &p.medium }))
 }
 
+// rb:handler template.large
+async fn large(ViewEngine(v): ViewEngine<TeraView>, SharedStore(p): SharedStore<&'static Payloads>) -> Result<Response> {
+    format::render().view(&v, "items.html", data!({ "body": &p.large }))
+}
+
 pub fn routes() -> Routes {
-    Routes::new().prefix("template").add("/small", get(small)).add("/medium", get(medium))
+    Routes::new().prefix("template").add("/small", get(small)).add("/medium", get(medium)).add("/large", get(large))
 }

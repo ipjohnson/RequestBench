@@ -12,17 +12,20 @@ async fn the_static_route_answers_the_payload() {
     assert_eq!(json(response).await, expected("items.small.json"));
 }
 
-// rb:test parameters.one,parameters.two
-/// parameters.one and parameters.two: each capture bound as an integer and echoed.
+// rb:test parameters.one,parameters.two,parameters.three
+/// parameters.one, parameters.two and parameters.three: each capture bound as an integer and
+/// echoed.
 #[actix_web::test]
 async fn captures_are_bound_as_integers() {
     let app = app().await;
 
     let one = app.get("/parameters/4821/segment/literal").await;
     let two = app.get("/parameters/4821/with-second/7390").await;
+    let three = app.get("/parameters/4821/7390/1563").await;
 
     assert_eq!(json(one).await, with_echo("items.small.json", literal!({ "one": 4821 })));
     assert_eq!(json(two).await, with_echo("items.small.json", literal!({ "one": 4821, "two": 7390 })));
+    assert_eq!(json(three).await, with_echo("items.small.json", literal!({ "one": 4821, "two": 7390, "three": 1563 })));
 }
 
 #[actix_web::test]

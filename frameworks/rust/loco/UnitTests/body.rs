@@ -12,17 +12,19 @@ fn named(refusal: &Value) -> Vec<String> {
     out
 }
 
-// rb:test body.bind_small,body.bind_medium,body.validate_small,body.validate_medium
-/// body.bind_small, body.bind_medium, body.validate_small and body.validate_medium: an order is
-/// answered with its leaves, its length and itself.
+// rb:test body.bind_small,body.bind_medium,body.bind_large,body.validate_small,body.validate_medium,body.validate_large
+/// body.bind_small, body.bind_medium, body.bind_large, body.validate_small, body.validate_medium
+/// and body.validate_large: an order is answered with its leaves, its length and itself.
 #[tokio::test]
 async fn an_order_is_answered_with_its_leaves_its_length_and_itself() {
     request::<App, _, _>(|server, _| async move {
         for (path, name) in [
             ("/body/bind/small", "order.small.json"),
             ("/body/bind/medium", "order.medium.json"),
+            ("/body/bind/large", "order.large.json"),
             ("/body/validate/small", "order.small.json"),
             ("/body/validate/medium", "order.medium.json"),
+            ("/body/validate/large", "order.large.json"),
         ] {
             let body = file(name);
             let order: Value = serde_json::from_slice(&body).unwrap();

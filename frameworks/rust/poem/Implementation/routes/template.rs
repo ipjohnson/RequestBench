@@ -31,7 +31,9 @@ fn page(tera: &Tera, body: &Payload) -> Result<Html<String>> {
 pub fn add(route: Route, p: &'static Payloads) -> Route {
     let small = Arc::new(templates());
     let medium = small.clone();
+    let large = small.clone();
     route
         .at("/template/small", get(make_sync(move |_| page(&small, &p.small))))
         .at("/template/medium", get(make_sync(move |_| page(&medium, &p.medium))))
+        .at("/template/large", get(make_sync(move |_| page(&large, &p.large))))
 }

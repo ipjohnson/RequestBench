@@ -46,8 +46,8 @@ fn malformed(error: JsonPayloadError) -> actix_web::Error {
 }
 
 /// A JSON body that has passed its rules. actix-web validates nothing itself, so this extractor
-/// parses the body with actix-web's JsonBody, up to 32 KiB, and runs validator's rules before the
-/// handler sees it.
+/// parses the body with actix-web's JsonBody, at its default limit, and runs validator's rules
+/// before the handler sees it.
 struct Valid<T>(T);
 
 impl<T: DeserializeOwned + Validate + 'static> FromRequest for Valid<T> {
@@ -55,7 +55,7 @@ impl<T: DeserializeOwned + Validate + 'static> FromRequest for Valid<T> {
     type Future = LocalBoxFuture<'static, Result<Self, actix_web::Error>>;
 
     fn from_request(request: &HttpRequest, payload: &mut Payload) -> Self::Future {
-        let body = JsonBody::<T>::new(request, payload, None, false).limit(32 * 1024);
+        let body = JsonBody::<T>::new(request, payload, None, false);
         Box::pin(async move {
             let value = body.await.map_err(malformed)?;
             value.validate().map_err(refusal)?;
@@ -120,8 +120,10 @@ impl Bound {
 pub fn configure(cfg: &mut ServiceConfig) {
     cfg.route("/body/bind/small", web::post().to(|request: HttpRequest, order: web::Json<Order>| async move { Bound::of(order.into_inner(), &request) }))
         .route("/body/bind/medium", web::post().to(|request: HttpRequest, order: web::Json<Order>| async move { Bound::of(order.into_inner(), &request) }))
+        .route("/body/bind/large", web::post().to(|request: HttpRequest, order: web::Json<Order>| async move { Bound::of(order.into_inner(), &request) }))
         .route("/body/validate/small", web::post().to(|request: HttpRequest, order: Valid<Order>| async move { Bound::of(order.0, &request) }))
         .route("/body/validate/medium", web::post().to(|request: HttpRequest, order: Valid<Order>| async move { Bound::of(order.0, &request) }))
+        .route("/body/validate/large", web::post().to(|request: HttpRequest, order: Valid<Order>| async move { Bound::of(order.0, &request) }))
         .route("/body/validate/first-error", web::post().to(|request: HttpRequest, order: web::Json<Order>| async move {
             stop_at_first(&order).map(|()| Bound::of(order.into_inner(), &request))
         }));

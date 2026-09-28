@@ -26,5 +26,7 @@ pub fn routes(p: &'static Payloads) -> Routes {
     let small = warp::path!("template" / "small").and(warp::get()).map(move || page(&p.small));
     // rb:handler template.medium
     let medium = warp::path!("template" / "medium").and(warp::get()).map(move || page(&p.medium));
-    answer(small.or(medium).unify()).boxed()
+    // rb:handler template.large
+    let large = warp::path!("template" / "large").and(warp::get()).map(move || page(&p.large));
+    answer(small.or(medium).unify().or(large).unify()).boxed()
 }
