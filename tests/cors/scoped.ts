@@ -1,8 +1,8 @@
 import { validationTest } from "#kit";
-import { settings } from "#payloads";
+import { CORS } from "#models/configuration";
 
 const path = "/json/small";
-const cors = settings.value.cors;
+const cors = CORS;
 
 export default validationTest({
   id: { family: "cors", name: "scoped" },

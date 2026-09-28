@@ -1,8 +1,9 @@
 import { performanceTest } from "#kit";
-import { items, settings } from "#payloads";
+import { items } from "#payloads";
 
 const path = "/cache/vary/one/{draw.key}";
-const vary = settings.value.cache.vary.one;
+/** Two tenants, so a store that ignores the header holds one entry where two keys were sent. */
+const tenants = ["alpha", "beta"];
 
 export default performanceTest({
   id: { family: "cache", name: "vary_one" },
@@ -18,7 +19,7 @@ export default performanceTest({
   request: (c) =>
     c
       .get(`/cache/vary/one/${c.draw.key()}`)
-      .header("x-rb-tenant", c.draw.choice(vary["x-rb-tenant"]))
+      .header("x-rb-tenant", c.draw.choice(tenants))
       .okWith(items.small)
       .replayed(),
 });

@@ -1,8 +1,11 @@
 import { performanceTest } from "#kit";
-import { items, settings } from "#payloads";
+import { items } from "#payloads";
 
 const path = "/cache/vary/many/{draw.key}";
-const vary = settings.value.cache.vary.many;
+/** Two values of each header, so a store that ignores one holds half the entries it was sent. */
+const channels = ["web", "app"];
+const regions = ["eu", "us"];
+const tenants = ["alpha", "beta"];
 
 export default performanceTest({
   id: { family: "cache", name: "vary_many" },
@@ -19,9 +22,9 @@ export default performanceTest({
   request: (c) =>
     c
       .get(`/cache/vary/many/${c.draw.key()}`)
-      .header("x-rb-channel", c.draw.choice(vary["x-rb-channel"]))
-      .header("x-rb-region", c.draw.choice(vary["x-rb-region"]))
-      .header("x-rb-tenant", c.draw.choice(vary["x-rb-tenant"]))
+      .header("x-rb-channel", c.draw.choice(channels))
+      .header("x-rb-region", c.draw.choice(regions))
+      .header("x-rb-tenant", c.draw.choice(tenants))
       .okWith(items.small)
       .replayed(),
 });

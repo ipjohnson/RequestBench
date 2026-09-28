@@ -120,9 +120,25 @@ A payload's format decides how a response is compared with it:
 | `text` | Byte for byte. |
 | `html` | Text with whitespace removed at element boundaries and collapsed inside text. |
 
-`settings.json` holds the values a framework configures itself from, such as the bearer token, the
-cache's capacity and vary values, and the CORS policy. It also holds values only the tests send,
-such as a wrong token and an ETag no framework computes.
+### Configuration
+
+A framework configures its response cache, its CORS policy and the bearer token it accepts where
+that framework usually does: on the route, in its own configuration, or as a default with per-route
+overrides. Nothing in this repository hands the values to it. The tests rely on these, which
+`models/configuration.ts` and the cache tests hold:
+
+| Value | |
+| --- | --- |
+| Bearer token | `5a7cc77ed0dcb825806b6f872026c317` |
+| CORS origin | `https://shop.example.com` |
+| CORS method | `GET` |
+| CORS header | `x-rb-tenant` |
+| CORS max age | 600 seconds |
+| `cache.vary_one` keys on | `x-rb-tenant` |
+| `cache.vary_many` keys on | `x-rb-channel`, `x-rb-region` and `x-rb-tenant` |
+| Cache lifetime | 30 seconds |
+
+A new framework copies its configuration from an existing framework in the same language.
 
 ### Base and factors
 
@@ -239,8 +255,8 @@ compare across every framework at one size, and across the sizes as a set.
 ### authorized
 
 `authorized` measures the framework's own authorization mechanism checking a bearer token before
-the handler runs. The token is an opaque string from `settings.json`, so no cryptography is
-measured. The family covers a token that is accepted and one that is refused with 403. The refused
+the handler runs. The token is an opaque string, which Configuration above states, so no
+cryptography is measured. The family covers a token that is accepted and one that is refused with 403. The refused
 token differs from the accepted one only in its last character, so the check has to compare the
 whole string. Its numbers compare across every framework.
 
@@ -266,7 +282,7 @@ lives 30 seconds. Each test asserts that the response was replayed rather than p
 handler. Under load the traffic generator counts how often each test's handler ran, from the
 `x-rb-serial` values it had not seen before, and how old the oldest answer it was sent was. One
 store that expires on time runs the handler once per key every 30 seconds, about twice per key in a
-60-second rung. `settings.json` gives the cache's capacity, its lifetime and the header values.
+60-second rung. A framework's store holds all 52 keys, so none is evicted.
 Several frameworks have no response cache of their own and use a package chosen for them, so the
 numbers compare across cache stores rather than across frameworks.
 
@@ -281,8 +297,8 @@ numbers compare across every framework.
 
 ### cors
 
-`cors` measures the framework's own CORS feature. Each framework attaches one policy, read from
-`settings.json`, to the `/cors` routes and nowhere else. The policy names one origin, one method,
+`cors` measures the framework's own CORS feature. Each framework attaches one policy, which
+Configuration above states, to the `/cors` routes and nowhere else. The policy names one origin, one method,
 one custom header and a max age. It names its origin rather than `*`, because `*` compares nothing
 and an API that sends credentials cannot use it. The performance tests measure the preflight,
 which the CORS feature answers before any handler runs, and the real cross-origin request, which

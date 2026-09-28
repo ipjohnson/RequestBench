@@ -1,8 +1,8 @@
 import { performanceTest } from "#kit";
-import { settings } from "#payloads";
+import { CORS } from "#models/configuration";
 
 const path = "/cors/small";
-const cors = settings.value.cors;
+const cors = CORS;
 
 /** The header among any others the framework lists, in any case. */
 const LISTS = new RegExp(`(^|,)\\s*${cors.header}\\s*(,|$)`, "i");

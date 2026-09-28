@@ -9,7 +9,7 @@ export default family({
   name: "cors",
   about:
     "The framework's own CORS feature, attached to /cors with the one policy " +
-    "every framework configures from settings.json: a preflight the feature " +
+    "every framework configures itself: a preflight the feature " +
     "answers alone, and the real request it lets through.",
   comparable:
     "Across every framework. The policy names its origin, because with * the " +
