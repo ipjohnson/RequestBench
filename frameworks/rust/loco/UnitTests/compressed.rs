@@ -34,7 +34,7 @@ async fn identity_is_answered_as_it_is() {
 
             assert_eq!(second.maybe_header("content-encoding"), None, "{size}");
             assert_eq!(second.json::<Value>(), expected(&format!("items.{size}.json")), "{size}");
-            assert!(serial(&second) > serial(&first), "{size}");
+            assert_ne!(serial(&first), serial(&second), "{size}");
         }
     })
     .await;

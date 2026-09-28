@@ -13,9 +13,9 @@ use warp::{Filter, Rejection, Reply};
 use crate::payloads::CacheSettings;
 use crate::{Payloads, Routes, serial};
 
-/// The values of the request headers a route varies on. Each route has a store of its own, so the
-/// path is not part of the key.
-type Key = Vec<Option<HeaderValue>>;
+/// The key in the path and the values of the request headers a route varies on. Each route has a
+/// store of its own, so the rest of the path is not part of the key.
+type Key = (String, Vec<Option<HeaderValue>>);
 
 /// cache: the handler skipped and a stored answer written back. The handler writes x-rb-serial, so
 /// a replayed answer repeats the serial it was stored with. A vary route's key adds its headers.
@@ -26,17 +26,17 @@ pub fn routes(p: &'static Payloads) -> Routes {
     let (vary_one, vary_many) = (listed(&on_one), listed(&on_many));
 
     // rb:handler cache.small
-    let small = stored(settings, &[], warp::path!("cache" / "small").and(warp::get()), move || serial::fresh(warp::reply::json(&p.small)));
+    let small = stored(settings, &[], warp::path!("cache" / "small" / String).and(warp::get()), move || serial::fresh(warp::reply::json(&p.small)));
     // rb:handler cache.medium
-    let medium = stored(settings, &[], warp::path!("cache" / "medium").and(warp::get()), move || serial::fresh(warp::reply::json(&p.medium)));
+    let medium = stored(settings, &[], warp::path!("cache" / "medium" / String).and(warp::get()), move || serial::fresh(warp::reply::json(&p.medium)));
     // rb:handler cache.large
-    let large = stored(settings, &[], warp::path!("cache" / "large").and(warp::get()), move || serial::fresh(warp::reply::json(&p.large)));
+    let large = stored(settings, &[], warp::path!("cache" / "large" / String).and(warp::get()), move || serial::fresh(warp::reply::json(&p.large)));
     // The Vary header tells a cache in front of the framework what the answer depends on. The
     // store keys on the route's own list, not on this header.
     // rb:handler cache.vary_one
-    let one = stored(settings, &on_one, warp::path!("cache" / "vary" / "one").and(warp::get()), move || warp::reply::with_header(serial::fresh(warp::reply::json(&p.small)), VARY, vary_one.clone()));
+    let one = stored(settings, &on_one, warp::path!("cache" / "vary" / "one" / String).and(warp::get()), move || warp::reply::with_header(serial::fresh(warp::reply::json(&p.small)), VARY, vary_one.clone()));
     // rb:handler cache.vary_many
-    let many = stored(settings, &on_many, warp::path!("cache" / "vary" / "many").and(warp::get()), move || warp::reply::with_header(serial::fresh(warp::reply::json(&p.small)), VARY, vary_many.clone()));
+    let many = stored(settings, &on_many, warp::path!("cache" / "vary" / "many" / String).and(warp::get()), move || warp::reply::with_header(serial::fresh(warp::reply::json(&p.small)), VARY, vary_many.clone()));
     small.or(medium).unify().or(large).unify().or(one).unify().or(many).unify().boxed()
 }
 
@@ -55,15 +55,16 @@ struct Stored {
 /// runs, and stores a 2xx the handler answers.
 fn stored<P, H, R>(settings: &CacheSettings, on: &[&'static str], route: P, handler: H) -> Routes
 where
-    P: Filter<Extract = (), Error = Rejection> + Clone + Send + Sync + 'static,
+    P: Filter<Extract = (String,), Error = Rejection> + Clone + Send + Sync + 'static,
     H: Fn() -> R + Clone + Send + Sync + 'static,
     R: Reply,
 {
     let store = Arc::new(Mutex::new(LruTtlCache::<Key, Stored>::new(settings.capacity, Duration::from_secs(settings.ttl_seconds))));
     route
-        .and(key(on))
-        .and_then(move |key: Key| {
+        .and(varied_on(on))
+        .and_then(move |segment: String, headers: Vec<Option<HeaderValue>>| {
             let (store, handler) = (store.clone(), handler.clone());
+            let key: Key = (segment, headers);
             async move {
                 if let Some(hit) = store.lock().expect("no thread panicked holding the store").cache_get(&key).cloned() {
                     return Ok::<_, Rejection>(replayed(hit));
@@ -85,7 +86,7 @@ where
 
 /// The values of the headers a route varies on, in the order settings.json lists them. A route
 /// that varies on none reads no header.
-fn key(on: &[&'static str]) -> BoxedFilter<(Key,)> {
+fn varied_on(on: &[&'static str]) -> BoxedFilter<(Vec<Option<HeaderValue>>,)> {
     if on.is_empty() {
         return warp::any().map(Vec::new).boxed();
     }

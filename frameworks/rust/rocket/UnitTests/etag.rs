@@ -14,7 +14,7 @@ fn the_answer_carries_its_hash() {
         let first = get(&client, &path, &[]);
         let second = get(&client, &path, &[]);
 
-        assert!(serial(&second) > serial(&first));
+        assert_ne!(serial(&first), serial(&second));
         assert_eq!(header(&first, "etag"), header(&second, "etag"));
         assert!(header(&second, "etag").unwrap().starts_with("W/\""));
         assert_eq!(header(&second, "content-type").as_deref(), Some("application/json"));

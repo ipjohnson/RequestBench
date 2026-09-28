@@ -46,7 +46,7 @@ async fn identity_is_left_alone_and_the_handler_runs_each_time() {
         let second = get_with(&app, &path, &[("accept-encoding", "identity")]).await;
 
         assert_eq!(header(&second, "content-encoding"), None);
-        assert!(serial(&second) > serial(&first));
+        assert_ne!(serial(&first), serial(&second));
         assert_eq!(decoded(second).await, expected(&format!("items.{size}.json")));
     }
 }

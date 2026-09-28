@@ -1,5 +1,6 @@
 use std::io::Read;
 use std::path::PathBuf;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use axum::http::header::CONTENT_LENGTH;
 use loco_rs::TestServer;
@@ -36,8 +37,19 @@ pub async fn post_json(server: &TestServer, path: &str, body: Vec<u8>) -> axum_t
     server.post(path).content_type("application/json").add_header(CONTENT_LENGTH, body.len()).bytes(body.into()).await
 }
 
-pub fn serial(response: &axum_test::TestResponse) -> u64 {
-    response.header("x-rb-serial").to_str().expect("x-rb-serial is text").parse().expect("x-rb-serial is a number")
+pub fn serial(response: &axum_test::TestResponse) -> String {
+    checked(response.header("x-rb-serial").to_str().expect("x-rb-serial is text"))
+}
+
+/// A serial, after checking it is the Unix time in milliseconds from the last minute, a bar and a
+/// count.
+fn checked(serial: &str) -> String {
+    let (stamp, count) = serial.split_once('|').unwrap_or_else(|| panic!("x-rb-serial {serial} is not <time stamp>|<count>"));
+    let stamp: u128 = stamp.parse().expect("x-rb-serial starts with a number");
+    count.parse::<u64>().expect("x-rb-serial ends with a count");
+    let now = SystemTime::now().duration_since(UNIX_EPOCH).expect("the clock is past 1970").as_millis();
+    assert!(now >= stamp && now - stamp < 60_000, "x-rb-serial {serial} was not written in the last minute");
+    serial.to_owned()
 }
 
 pub fn gunzip(bytes: &[u8]) -> Vec<u8> {

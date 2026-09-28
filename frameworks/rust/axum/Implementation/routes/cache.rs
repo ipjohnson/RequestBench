@@ -29,13 +29,13 @@ pub fn router(p: &'static Payloads) -> Router {
     let vary_many = listed(&many);
 
     Router::new()
-        .route("/cache/small", get(move || async move { (serial::fresh(), Json(&p.small)) }).layer(from_fn_with_state(store(settings, vec![]), replay)))
-        .route("/cache/medium", get(move || async move { (serial::fresh(), Json(&p.medium)) }).layer(from_fn_with_state(store(settings, vec![]), replay)))
-        .route("/cache/large", get(move || async move { (serial::fresh(), Json(&p.large)) }).layer(from_fn_with_state(store(settings, vec![]), replay)))
+        .route("/cache/small/{key}", get(move || async move { (serial::fresh(), Json(&p.small)) }).layer(from_fn_with_state(store(settings, vec![]), replay)))
+        .route("/cache/medium/{key}", get(move || async move { (serial::fresh(), Json(&p.medium)) }).layer(from_fn_with_state(store(settings, vec![]), replay)))
+        .route("/cache/large/{key}", get(move || async move { (serial::fresh(), Json(&p.large)) }).layer(from_fn_with_state(store(settings, vec![]), replay)))
         // The Vary header tells a cache in front of the framework what the answer depends on. The
         // store keys on the route's own list, not on this header.
-        .route("/cache/vary/one", get(move || async move { (serial::fresh(), [(VARY, vary_one)], Json(&p.small)) }).layer(from_fn_with_state(store(settings, one), replay)))
-        .route("/cache/vary/many", get(move || async move { (serial::fresh(), [(VARY, vary_many)], Json(&p.small)) }).layer(from_fn_with_state(store(settings, many), replay)))
+        .route("/cache/vary/one/{key}", get(move || async move { (serial::fresh(), [(VARY, vary_one)], Json(&p.small)) }).layer(from_fn_with_state(store(settings, one), replay)))
+        .route("/cache/vary/many/{key}", get(move || async move { (serial::fresh(), [(VARY, vary_many)], Json(&p.small)) }).layer(from_fn_with_state(store(settings, many), replay)))
 }
 
 // rb:wiring cache.*

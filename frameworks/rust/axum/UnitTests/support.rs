@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 use std::sync::OnceLock;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use axum::Router;
 use axum::body::{Body, Bytes};
@@ -85,8 +86,19 @@ pub fn header<'a>(response: &'a Response<Body>, name: &str) -> Option<&'a str> {
     response.headers().get(name).map(|value| value.to_str().expect("the header is text"))
 }
 
-pub fn serial(response: &Response<Body>) -> u64 {
-    header(response, "x-rb-serial").expect("the handler wrote x-rb-serial").parse().expect("x-rb-serial is a number")
+pub fn serial(response: &Response<Body>) -> String {
+    checked(header(response, "x-rb-serial").expect("the handler wrote x-rb-serial"))
+}
+
+/// A serial, after checking it is the Unix time in milliseconds from the last minute, a bar and a
+/// count.
+fn checked(serial: &str) -> String {
+    let (stamp, count) = serial.split_once('|').unwrap_or_else(|| panic!("x-rb-serial {serial} is not <time stamp>|<count>"));
+    let stamp: u128 = stamp.parse().expect("x-rb-serial starts with a number");
+    count.parse::<u64>().expect("x-rb-serial ends with a count");
+    let now = SystemTime::now().duration_since(UNIX_EPOCH).expect("the clock is past 1970").as_millis();
+    assert!(now >= stamp && now - stamp < 60_000, "x-rb-serial {serial} was not written in the last minute");
+    serial.to_owned()
 }
 
 /// The page the template rows render, as tests/payloads/index.ts writes it.

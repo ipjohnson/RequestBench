@@ -5,16 +5,18 @@ use crate::support::{expected, get, get_with, header, json, serial, service, sta
 // rb:test cache.small,cache.medium,cache.large
 /// cache.small, cache.medium and cache.large: a second request is the stored answer, serial and all.
 #[tokio::test]
-async fn a_second_request_is_the_stored_answer() {
+async fn a_second_request_for_a_key_is_its_stored_answer() {
     for size in ["small", "medium", "large"] {
         let service = service();
-        let path = format!("/cache/{size}");
+        let path = format!("/cache/{size}/k1");
 
         let first = get(&service, &path).await;
         let second = get(&service, &path).await;
+        let other = get(&service, &format!("/cache/{size}/k2")).await;
 
         assert_eq!(status(&second), StatusCode::OK);
         assert_eq!(serial(&first), serial(&second), "{path}");
+        assert_ne!(serial(&first), serial(&other), "{path}");
         assert_eq!(json(second).await, expected(&format!("items.{size}.json")));
     }
 }
@@ -25,10 +27,10 @@ async fn a_second_request_is_the_stored_answer() {
 async fn one_vary_header_keys_the_store() {
     let service = service();
 
-    let alpha = serial(&get_with(&service, "/cache/vary/one", &[("x-rb-tenant", "alpha")]).await);
-    let beta = serial(&get_with(&service, "/cache/vary/one", &[("x-rb-tenant", "beta")]).await);
+    let alpha = serial(&get_with(&service, "/cache/vary/one/k1", &[("x-rb-tenant", "alpha")]).await);
+    let beta = serial(&get_with(&service, "/cache/vary/one/k1", &[("x-rb-tenant", "beta")]).await);
 
-    assert_eq!(alpha, serial(&get_with(&service, "/cache/vary/one", &[("x-rb-tenant", "alpha")]).await));
+    assert_eq!(alpha, serial(&get_with(&service, "/cache/vary/one/k1", &[("x-rb-tenant", "alpha")]).await));
     assert_ne!(alpha, beta);
 }
 
@@ -40,10 +42,10 @@ async fn each_of_three_vary_headers_keys_the_store() {
     let web_eu_alpha = [("x-rb-channel", "web"), ("x-rb-region", "eu"), ("x-rb-tenant", "alpha")];
     let web_eu_beta = [("x-rb-channel", "web"), ("x-rb-region", "eu"), ("x-rb-tenant", "beta")];
 
-    let first = serial(&get_with(&service, "/cache/vary/many", &web_eu_alpha).await);
+    let first = serial(&get_with(&service, "/cache/vary/many/k1", &web_eu_alpha).await);
 
-    assert_eq!(first, serial(&get_with(&service, "/cache/vary/many", &web_eu_alpha).await));
-    assert_ne!(first, serial(&get_with(&service, "/cache/vary/many", &web_eu_beta).await));
+    assert_eq!(first, serial(&get_with(&service, "/cache/vary/many/k1", &web_eu_alpha).await));
+    assert_ne!(first, serial(&get_with(&service, "/cache/vary/many/k1", &web_eu_beta).await));
 }
 
 /// A stored answer and a replayed one both say what they vary on, because the hoop that writes Vary
@@ -52,8 +54,8 @@ async fn each_of_three_vary_headers_keys_the_store() {
 async fn the_answer_says_what_it_varies_on_whether_stored_or_replayed() {
     let service = service();
 
-    let stored = get(&service, "/cache/vary/many").await;
-    let replayed = get(&service, "/cache/vary/many").await;
+    let stored = get(&service, "/cache/vary/many/k1").await;
+    let replayed = get(&service, "/cache/vary/many/k1").await;
 
     assert_eq!(serial(&stored), serial(&replayed));
     for response in [&stored, &replayed] {

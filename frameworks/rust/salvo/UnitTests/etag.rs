@@ -14,7 +14,7 @@ async fn the_answer_carries_its_hash() {
         let first = get(&service, &path).await;
         let second = get(&service, &path).await;
 
-        assert!(serial(&second) > serial(&first));
+        assert_ne!(serial(&first), serial(&second));
         assert_eq!(header(&first, "etag"), header(&second, "etag"));
         assert!(header(&second, "etag").unwrap().starts_with('"'));
         assert_eq!(json(second).await, expected(&format!("items.{size}.json")));

@@ -5,16 +5,18 @@ use crate::support::{app, expected, get, get_with, header, json, serial};
 // rb:test cache.small,cache.medium,cache.large
 /// cache.small, cache.medium and cache.large: a second request is the stored answer, serial and all.
 #[tokio::test]
-async fn a_second_request_is_the_stored_answer() {
+async fn a_second_request_for_a_key_is_its_stored_answer() {
     for size in ["small", "medium", "large"] {
         let app = app();
-        let path = format!("/cache/{size}");
+        let path = format!("/cache/{size}/k1");
 
         let first = get(&app, &path).await;
         let second = get(&app, &path).await;
+        let other = get(&app, &format!("/cache/{size}/k2")).await;
 
         assert_eq!(second.status(), StatusCode::OK);
         assert_eq!(serial(&first), serial(&second), "{path}");
+        assert_ne!(serial(&first), serial(&other), "{path}");
         assert_eq!(json(&second), expected(&format!("items.{size}.json")));
     }
 }
@@ -25,10 +27,10 @@ async fn a_second_request_is_the_stored_answer() {
 async fn one_vary_header_keys_the_store() {
     let app = app();
 
-    let alpha = serial(&get_with(&app, "/cache/vary/one", &[("x-rb-tenant", "alpha")]).await);
-    let beta = serial(&get_with(&app, "/cache/vary/one", &[("x-rb-tenant", "beta")]).await);
+    let alpha = serial(&get_with(&app, "/cache/vary/one/k1", &[("x-rb-tenant", "alpha")]).await);
+    let beta = serial(&get_with(&app, "/cache/vary/one/k1", &[("x-rb-tenant", "beta")]).await);
 
-    assert_eq!(alpha, serial(&get_with(&app, "/cache/vary/one", &[("x-rb-tenant", "alpha")]).await));
+    assert_eq!(alpha, serial(&get_with(&app, "/cache/vary/one/k1", &[("x-rb-tenant", "alpha")]).await));
     assert_ne!(alpha, beta);
 }
 
@@ -40,15 +42,15 @@ async fn each_of_three_vary_headers_keys_the_store() {
     let web_eu_alpha = [("x-rb-channel", "web"), ("x-rb-region", "eu"), ("x-rb-tenant", "alpha")];
     let web_eu_beta = [("x-rb-channel", "web"), ("x-rb-region", "eu"), ("x-rb-tenant", "beta")];
 
-    let first = serial(&get_with(&app, "/cache/vary/many", &web_eu_alpha).await);
+    let first = serial(&get_with(&app, "/cache/vary/many/k1", &web_eu_alpha).await);
 
-    assert_eq!(first, serial(&get_with(&app, "/cache/vary/many", &web_eu_alpha).await));
-    assert_ne!(first, serial(&get_with(&app, "/cache/vary/many", &web_eu_beta).await));
+    assert_eq!(first, serial(&get_with(&app, "/cache/vary/many/k1", &web_eu_alpha).await));
+    assert_ne!(first, serial(&get_with(&app, "/cache/vary/many/k1", &web_eu_beta).await));
 }
 
 #[tokio::test]
 async fn the_answer_says_what_it_varies_on() {
-    let response = get(&app(), "/cache/vary/many").await;
+    let response = get(&app(), "/cache/vary/many/k1").await;
 
     assert_eq!(header(&response, "vary"), Some("x-rb-channel, x-rb-region, x-rb-tenant"));
 }
