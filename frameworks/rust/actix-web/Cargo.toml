@@ -43,7 +43,7 @@ actix-middleware-etag = "0.5.0"
 actix-multipart = "0.8.4"
 actix-web = "4.15.0"
 actix-web-httpauth = "0.8.3"
-actix-web-lab = "0.27.0"
+actix-web-lab = "0.28.0"
 askama = "0.16.1"
 # lambda-emulator's function writes every body in base64, as lambda-web does.
 base64 = { version = "0.22.1", optional = true }
