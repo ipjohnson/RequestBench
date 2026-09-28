@@ -13,7 +13,7 @@ import io.javalin.openapi.OpenApiResponse;
 
 /**
  * authorized: a beforeMatched handler on /authorized/*, the hook Javalin's documentation manages
- * access with. A request whose Authorization header is not the bearer token settings.json names is
+ * access with. A request whose Authorization header is not the one bearer token it names is
  * refused with ForbiddenResponse, which Javalin answers with 403 before the route runs.
  */
 public final class AuthorizedRoutes {
@@ -25,7 +25,7 @@ public final class AuthorizedRoutes {
     }
 
     public void register(JavalinConfig config) {
-        String bearer = "Bearer " + p.settings().token();
+        String bearer = "Bearer 5a7cc77ed0dcb825806b6f872026c317";
         // rb:handler authorized.denied
         // rb:wiring authorized.*
         config.routes.beforeMatched("/authorized/*", ctx -> {

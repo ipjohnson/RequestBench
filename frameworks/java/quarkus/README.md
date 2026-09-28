@@ -53,14 +53,14 @@ copies it.
 | middleware | No-op `@ServerRequestFilter` methods, four or sixteen, each bound to its route by a `@NameBinding` annotation. | Quarkus REST |
 | parameters, query, headers | `@RestPath`, `@RestQuery` and `@RestHeader` parameters, and query.many's eight values bound into a record as a `@BeanParam`. | Quarkus REST |
 | body | Jackson binds the order record. `@Valid` runs its Bean Validation constraints through Hibernate Validator, and Quarkus refuses a body that breaks one with its violation report. | quarkus-hibernate-validator |
-| authorized | A permission in `application.properties` puts `/authorized/*` under `BearerTokenPolicy`, an `HttpSecurityPolicy` that permits settings.json's bearer token and denies any other. | quarkus-security |
+| authorized | A permission in `application.properties` puts `/authorized/*` under `BearerTokenPolicy`, an `HttpSecurityPolicy` that permits one bearer token and denies any other. | quarkus-security |
 | cache | `@CacheResult` on each resource method, over the extension's Caffeine caches, which `application.properties` sizes and ages. | quarkus-cache |
 | compressed | Quarkus's HTTP compression, on for the whole server, at gzip's fastest level. | Quarkus, over Vert.x |
 | etag | Jakarta REST's `Request.evaluatePreconditions` answers a matching `If-None-Match` with 304. The handler hashes the serialised body with SHA-1 for the tag. | Jakarta REST, and the hash by hand |
 | template | Qute, with a type-safe `@CheckedTemplate`. | quarkus-rest-qute |
 | items | One resource method per HTTP method on `/items/{id}`. Jakarta REST answers HEAD with the GET method. | Quarkus REST |
 | errors | Quarkus REST's 405, Jackson's 400 and the items handlers' `NotFoundException`, all with no body, and the Vert.x router's 404 page. | Quarkus REST and Vert.x |
-| cors | Quarkus's CORS filter, configured from settings.json through the `HttpSecurity` event. | Quarkus |
+| cors | Quarkus's CORS filter, configured by `quarkus.http.cors` in `application.properties`. | Quarkus |
 | forms | `@RestForm` binds the urlencoded fields into a record, and the multipart file part arrives as a `FileUpload`. | Quarkus REST |
 | stream | A `Multi` of the rows from a method that produces `application/x-ndjson`, written a line per row. | Quarkus REST |
 | sse | A `Multi` of the rows from a method that produces `text/event-stream`, sent as one event per row. | Quarkus REST |
@@ -84,8 +84,7 @@ copies it.
 - Quarkus's CORS filter is one filter for the whole server, run before routing, and nothing
   narrows it to `/cors`. A request with no `Origin` passes it after one header lookup, so the other
   rows pay little, but the allowed origin gets the policy from every route, and `cors.scoped` is
-  skipped. The policy comes from settings.json, so it is set through the `HttpSecurity` event,
-  which Quarkus marks experimental, where `quarkus.http.cors.*` would copy it by hand.
+  skipped.
 - Quarkus's compression is one switch for the whole server. It marks every answer
   `Content-Encoding: identity` and takes the mark off an answer whose type is in
   `quarkus.http.compress-media-types`, and Vert.x's compressor sits in every connection. An answer
@@ -100,7 +99,7 @@ copies it.
   the I/O thread refuses, and for a `Uni` it stores the item. What it stores is the whole answer,
   so a replay carries the `x-rb-serial` it was written with.
 - The extension's Caffeine caches have no expiry and no size limit of their own.
-  `application.properties` gives every cache settings.json's capacity and lifetime.
+  `application.properties` gives every cache a capacity of 64 and a lifetime of 30 seconds.
 - `quarkus.http.static-dir` reads its directory while the application is built and packages every
   file in it, which would copy the payloads into the build. The `/static/*` route is the Router
   observer Quarkus's HTTP reference shows, with Vert.x's `StaticHandler` over `RB_PAYLOADS`.
@@ -121,11 +120,10 @@ copies it.
   unsupported there.
 - The virtual connection has no compressor, so compressed.gzip_large's answer arrives
   uncompressed, and the test is listed as unsupported there.
-- The native build changed the application in two places. `Settings` is annotated
-  `@RegisterForReflection`, because only `Payloads` reads it, and Quarkus REST registers the types
-  its resource methods take and return. `application.properties` names
+- The native build changed the application in one place. `application.properties` names
   `META-INF/vertx/vertx-version.txt` in `quarkus.native.resources.includes`, because `/__meta` reads
-  the Vert.x version from it.
+  the Vert.x version from it. Quarkus REST registers the types its resource methods take and
+  return for reflection.
 - `bootstrap` starts the executable with `-Drb.adapter`, the adapter `/__meta` names, as the
   bootstrap example Quarkus writes beside `function.zip` passes system properties. A native image
   reads them from its command line and keeps none it was built with. `/__meta` adds `native image`

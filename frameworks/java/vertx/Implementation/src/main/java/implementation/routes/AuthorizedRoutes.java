@@ -18,8 +18,8 @@ import io.vertx.ext.web.handler.SimpleAuthenticationHandler;
 /**
  * authorized: Vert.x Web's authentication and authorization handlers, on /authorized alone.
  * SimpleAuthenticationHandler makes the bearer token the user, because vertx-auth has no provider
- * for an opaque token. AuthorizationHandler then requires a permission that only settings.json's
- * token is granted, and fails any other user with 403.
+ * for an opaque token. AuthorizationHandler then requires a permission that only one token is
+ * granted, and fails any other user with 403.
  */
 public final class AuthorizedRoutes {
 
@@ -28,14 +28,12 @@ public final class AuthorizedRoutes {
     private AuthorizedRoutes() {}
 
     public static void register(Router router, Vertx vertx, Payloads p) {
-        String token = p.settings().getString("token");
-
         // rb:wiring authorized.*
         // Vert.x Web logs a failure that no failure handler takes as an unhandled exception, once
         // per denied request. The route's failures go to Vert.x Web's ErrorHandler instead.
         router.route("/authorized/*")
                 .handler(SimpleAuthenticationHandler.create().authenticate(AuthorizedRoutes::bearer))
-                .handler(AuthorizationHandler.create(READ).addAuthorizationProvider(new SettingsToken(token)))
+                .handler(AuthorizationHandler.create(READ).addAuthorizationProvider(new OneToken("5a7cc77ed0dcb825806b6f872026c317")))
                 .failureHandler(ErrorHandler.create(vertx));
         // rb:end
 
@@ -52,12 +50,12 @@ public final class AuthorizedRoutes {
         return Future.succeededFuture(User.fromToken(authorization.substring("Bearer ".length())));
     }
 
-    /** Grants READ to the user whose token is settings.json's, and nothing to any other. */
-    private record SettingsToken(String token) implements AuthorizationProvider {
+    /** Grants READ to the user whose token is the one given, and nothing to any other. */
+    private record OneToken(String token) implements AuthorizationProvider {
 
         @Override
         public String getId() {
-            return "settings.json";
+            return "one-token";
         }
 
         @Override

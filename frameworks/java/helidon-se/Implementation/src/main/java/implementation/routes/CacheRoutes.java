@@ -2,6 +2,7 @@ package implementation.routes;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
@@ -22,7 +23,7 @@ import io.helidon.webserver.http.ServerResponse;
  * cache: Helidon SE has no response cache, so the store and the replay are written for this
  * family. The first request for a key builds the answer and stores its body with the x-rb-serial
  * it was written with, and every later one is answered from the store without building anything
- * until settings.json's TTL has passed.
+ * until 30 seconds have passed.
  */
 public final class CacheRoutes implements HttpFeature {
 
@@ -38,7 +39,7 @@ public final class CacheRoutes implements HttpFeature {
     /** One store for the process, keyed by the path and the values of the headers the route varies on. */
     private final Map<String, Stored> store = new ConcurrentHashMap<>();
 
-    private final long ttlNanos;
+    private final long ttlNanos = TimeUnit.SECONDS.toNanos(30);
 
     record Stored(String serial, byte[] body, long expires) {}
 
@@ -47,17 +48,16 @@ public final class CacheRoutes implements HttpFeature {
 
         static final Vary NONE = new Vary(List.of(), null);
 
-        static Vary on(Map<String, List<String>> values) {
-            return new Vary(values.keySet().stream().map(HeaderNames::create).toList(), String.join(", ", values.keySet()));
+        static Vary on(String... names) {
+            return new Vary(Stream.of(names).map(HeaderNames::create).toList(), String.join(", ", names));
         }
     }
     // rb:end
 
     public CacheRoutes(Payloads p) {
         this.p = p;
-        this.one = Vary.on(p.settings().cache().vary().one());
-        this.many = Vary.on(p.settings().cache().vary().many());
-        this.ttlNanos = TimeUnit.SECONDS.toNanos(p.settings().cache().ttlSeconds());
+        this.one = Vary.on("x-rb-tenant");
+        this.many = Vary.on("x-rb-channel", "x-rb-region", "x-rb-tenant");
     }
 
     @Override

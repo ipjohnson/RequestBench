@@ -12,7 +12,7 @@ import org.springframework.security.web.util.matcher.RequestHeaderRequestMatcher
 
 /**
  * authorized: Spring Security, on /authorized alone. A request whose Authorization header is not
- * the bearer token settings.json names is denied. With no way to sign in configured, Spring
+ * the one bearer token the rule names is denied. With no way to sign in configured, Spring
  * Security answers the denial through its Http403ForbiddenEntryPoint, which is a 403.
  */
 @Configuration
@@ -20,8 +20,8 @@ public class AuthorizedSecurity {
 
     // rb:wiring authorized.*
     @Bean
-    SecurityFilterChain authorized(HttpSecurity http, Payloads p) throws Exception {
-        String bearer = "Bearer " + p.settings().token();
+    SecurityFilterChain authorized(HttpSecurity http) throws Exception {
+        String bearer = "Bearer 5a7cc77ed0dcb825806b6f872026c317";
         return http
                 .securityMatcher("/authorized/**")
                 .authorizeHttpRequests(requests -> requests

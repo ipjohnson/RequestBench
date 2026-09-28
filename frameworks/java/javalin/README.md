@@ -46,7 +46,7 @@ beside the plain jar under the `exec` classifier, because UnitTests compiles aga
 | middleware | No-op before handlers, four or sixteen, each registered for its one path. | Javalin |
 | parameters, query, headers | `ctx.pathParamAsClass`, `ctx.queryParamAsClass` and `ctx.headerAsClass`, whose `Validator` converts each value with Javalin's converter for its type. query.many reads its eight values into a record. | Javalin |
 | body | `ctx.bodyAsClass` reads the order on the bind routes. The validate routes read it through `ctx.bodyValidator`, with orderRequest's rules as checks, and Javalin answers a failed check with 400. | Javalin |
-| authorized | A `beforeMatched` handler on `/authorized/*` throws `ForbiddenResponse` for any token but settings.json's, and Javalin answers it with 403. | Javalin |
+| authorized | A `beforeMatched` handler on `/authorized/*` throws `ForbiddenResponse` for any token but the one it names, and Javalin answers it with 403. | Javalin |
 | cache | A before handler on `/cache/*` replays a stored answer and skips the route, and an after handler stores what the route answered. | by hand |
 | compressed | Javalin's compression, which covers the whole application, set to gzip's fastest level. | Javalin |
 | etag | Javalin's `ETagGenerator`, called by an after handler on `/etag/*`. Javalin's writer answers a matching `If-None-Match` with 304. | Javalin |
@@ -95,11 +95,11 @@ beside the plain jar under the `exec` classifier, because UnitTests compiles aga
 - Javalin's router matches the method and the path together, and `prefer405over404` is off by
   default. So a method a path has no route for gets 404, as a path with no route does.
 - The CORS plugin has no list of methods or headers. It answers a preflight from an allowed origin
-  with the method and the headers the preflight asked for, so settings.json's method and header
-  are not applied. No route answers a preflight, so the plugin's after handler turns the router's
+  with the method and the headers the preflight asked for, so the policy's method and header are
+  not applied. No route answers a preflight, so the plugin's after handler turns the router's
   404 into 200 with an empty body.
-- The cache's store is a map sized in entries and aged by settings.json, one per process. A full
-  store drops one entry to take another, whichever the map yields first.
+- The cache's store is a map of 64 entries, room for the family's 52 keys, each kept 30 seconds,
+  one per process. A full store drops one entry to take another, whichever the map yields first.
 - Javalin's static-file handler streams a file with no length, which Jetty sends chunked once it
   passes its 32 KB buffer, and it never sends Last-Modified. With `precompressMaxSize` set,
   Javalin reads a file into memory the first time it is asked for, gzipped too for a client that

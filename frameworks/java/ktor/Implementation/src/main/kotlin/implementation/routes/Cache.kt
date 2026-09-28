@@ -78,9 +78,10 @@ val ResponseCache = createRouteScopedPlugin("ResponseCache", ::ResponseCacheConf
  */
 fun Route.cache(p: Payloads) {
     // rb:wiring cache.*
-    val store = Store(p.settings.cache.capacity, p.settings.cache.ttlSeconds.seconds)
-    val one = p.settings.cache.vary.one.keys.toList()
-    val many = p.settings.cache.vary.many.keys.toList()
+    // Room for the cache family's 52 keys, each kept 30 seconds.
+    val store = Store(64, 30.seconds)
+    val one = listOf("x-rb-tenant")
+    val many = listOf("x-rb-channel", "x-rb-region", "x-rb-tenant")
     // rb:end
 
     // rb:handler cache.small

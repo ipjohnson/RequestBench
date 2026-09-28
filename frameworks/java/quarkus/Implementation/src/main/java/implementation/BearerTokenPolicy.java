@@ -9,25 +9,21 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 /**
  * authorized: the policy the permission on /authorized/* names in application.properties. It
- * permits a request whose Authorization header is the bearer token settings.json names and denies
- * any other. With no authentication mechanism installed, Quarkus answers the denial with the 403
+ * permits a request whose Authorization header is the one bearer token it names and denies any
+ * other. With no authentication mechanism installed, Quarkus answers the denial with the 403
  * its fallback mechanism sends as the challenge. A request with no token is refused the same way.
  */
 // rb:wiring authorized.*
 @ApplicationScoped
 public class BearerTokenPolicy implements HttpSecurityPolicy {
 
-    private final String bearer;
-
-    BearerTokenPolicy(Payloads p) {
-        this.bearer = "Bearer " + p.settings().token();
-    }
+    private static final String BEARER = "Bearer 5a7cc77ed0dcb825806b6f872026c317";
 
     /** The identity is never asked for, so a permitted request is not authenticated at all. */
     @Override
     public Uni<CheckResult> checkPermission(RoutingContext request, Uni<SecurityIdentity> identity,
                                             AuthorizationRequestContext context) {
-        return bearer.equals(request.request().getHeader(HttpHeaders.AUTHORIZATION)) ? CheckResult.permit() : CheckResult.deny();
+        return BEARER.equals(request.request().getHeader(HttpHeaders.AUTHORIZATION)) ? CheckResult.permit() : CheckResult.deny();
     }
 
     @Override

@@ -38,7 +38,7 @@
   },
   "mechanisms": {
     "authorized": {
-      "mechanism": "Quarkus's HTTP security: a permission in application.properties that puts /authorized/* under a named HttpSecurityPolicy, which permits settings.json's bearer token and denies any other. With no authentication mechanism installed, Quarkus answers the denial with 403",
+      "mechanism": "Quarkus's HTTP security: a permission in application.properties that puts /authorized/* under a named HttpSecurityPolicy, which permits one bearer token and denies any other. With no authentication mechanism installed, Quarkus answers the denial with 403",
       "dependency": "quarkus-security",
       "mentions": "HttpSecurityPolicy"
     },
@@ -58,8 +58,8 @@
       "mentions": "quarkus.http.enable-compression"
     },
     "cors": {
-      "mechanism": "Quarkus's CORS filter, configured from settings.json through the HttpSecurity event, on every path because the filter cannot be narrowed",
-      "mentions": "CORS"
+      "mechanism": "Quarkus's CORS filter, configured by quarkus.http.cors in application.properties, on every path because the filter cannot be narrowed",
+      "mentions": "quarkus.http.cors"
     },
     "errors": {
       "builtin": "Quarkus REST answers a method the path lacks with 405 and a body Jackson cannot read with 400, neither with a body, and Vert.x's router answers a path no resource matches with its 404 page. The items handlers throw NotFoundException for a missing row, which Quarkus REST answers with 404 and no body."

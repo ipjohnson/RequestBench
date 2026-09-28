@@ -16,14 +16,14 @@ import org.reactivestreams.Publisher;
 
 /**
  * authorized: micronaut-security, whose filter application.properties scopes to /authorized.
- * BearerTokenReader reads the Authorization header's bearer token, SettingsToken validates it, and
+ * BearerTokenReader reads the Authorization header's bearer token, OneToken validates it, and
  * @Secured asks for the role the validation grants.
  */
 @Controller
 @Secured(AuthorizedRoutes.ROLE)
 public class AuthorizedRoutes {
 
-    static final String ROLE = "settings-token";
+    static final String ROLE = "token";
 
     private final Payloads p;
 
@@ -38,23 +38,19 @@ public class AuthorizedRoutes {
 
     // rb:wiring authorized.*
     /**
-     * Every bearer token authenticates, and settings.json's token alone carries the role. A token
+     * Every bearer token authenticates, and the one token named here alone carries the role. A token
      * one character off is an authenticated request that @Secured refuses, which
      * micronaut-security answers with 403. A request with no token is anonymous, which it answers
      * with 401.
      */
     @Singleton
-    static final class SettingsToken implements TokenValidator<HttpRequest<?>> {
+    static final class OneToken implements TokenValidator<HttpRequest<?>> {
 
-        private final String token;
-
-        SettingsToken(Payloads p) {
-            this.token = p.settings().token();
-        }
+        private static final String TOKEN = "5a7cc77ed0dcb825806b6f872026c317";
 
         @Override
         public Publisher<Authentication> validateToken(String token, HttpRequest<?> request) {
-            List<String> roles = this.token.equals(token) ? List.of(ROLE) : List.of();
+            List<String> roles = TOKEN.equals(token) ? List.of(ROLE) : List.of();
             return Publishers.just(Authentication.build("bearer", roles));
         }
     }

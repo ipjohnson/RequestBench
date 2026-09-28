@@ -28,12 +28,11 @@ public final class CacheRoutes {
     private CacheRoutes() {}
 
     public static void register(Router router, Vertx vertx, Payloads p) {
-        JsonObject settings = p.settings().getJsonObject("cache");
-        List<String> one = List.copyOf(settings.getJsonObject("vary").getJsonObject("one").fieldNames());
-        List<String> many = List.copyOf(settings.getJsonObject("vary").getJsonObject("many").fieldNames());
+        List<String> one = List.of("x-rb-tenant");
+        List<String> many = List.of("x-rb-channel", "x-rb-region", "x-rb-tenant");
         // rb:wiring cache.*
-        Store store = new Store(vertx.sharedData().getLocalMap("cache"), settings.getInteger("capacity"),
-                settings.getInteger("ttlSeconds") * 1000L);
+        // Room for the cache family's 52 keys, each kept 30 seconds.
+        Store store = new Store(vertx.sharedData().getLocalMap("cache"), 64, 30_000L);
         // rb:end
 
         router.get("/cache/small/:key").handler(store.replay(List.of())).handler(ctx -> store.keep(ctx, p.small(), List.of()));
@@ -61,7 +60,7 @@ public final class CacheRoutes {
     }
 
     /**
-     * Sized in entries and aged by settings.json. A full store drops one entry to take another,
+     * Sized in entries and aged by what register gives it. A full store drops one entry to take another,
      * whichever the map's key set yields first.
      */
     private record Store(LocalMap<String, Stored> entries, int capacity, long ttlMillis) {

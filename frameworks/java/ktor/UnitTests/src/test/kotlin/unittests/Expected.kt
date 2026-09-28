@@ -46,8 +46,6 @@ object Expected {
 
     fun json(file: String): JsonElement = Json.parseToJsonElement(raw(file).decodeToString())
 
-    val settings: JsonObject get() = json("settings.json").jsonObject
-
     /** A payload with an echo object beside its own fields, as a binding handler answers. */
     fun withEcho(file: String, echo: JsonObject) = JsonObject(json(file).jsonObject + ("echo" to echo))
 

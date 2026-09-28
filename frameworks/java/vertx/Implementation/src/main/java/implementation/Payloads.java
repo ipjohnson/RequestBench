@@ -25,8 +25,6 @@ public final class Payloads {
 
     private final JsonObject large;
 
-    private final JsonObject settings;
-
     private final Map<Integer, JsonObject> rows = new HashMap<>();
 
     private Payloads(Path directory) throws IOException {
@@ -34,7 +32,6 @@ public final class Payloads {
         this.small = read("items.small.json");
         this.medium = read("items.medium.json");
         this.large = read("items.large.json");
-        this.settings = read("settings.json");
         JsonArray items = large.getJsonArray("items");
         for (int i = 0; i < items.size(); i++) {
             JsonObject row = items.getJsonObject(i);
@@ -60,11 +57,6 @@ public final class Payloads {
 
     public JsonObject large() {
         return large;
-    }
-
-    /** The values the framework configures itself from, as settings.json holds them. */
-    public JsonObject settings() {
-        return settings;
     }
 
     /** The row of items.large with this id, or null when there is none. */

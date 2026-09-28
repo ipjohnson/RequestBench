@@ -11,12 +11,12 @@ import org.junit.jupiter.api.Test;
 @QuarkusTest
 class AuthorizedTests {
 
-    private static final String TOKEN = Expected.settings().get("token").asText();
+    private static final String TOKEN = "5a7cc77ed0dcb825806b6f872026c317";
 
     // rb:test authorized.allowed
     @Test
     @Tag("authorized.allowed")
-    void theSettingsTokenIsLetThrough() {
+    void theTokenIsLetThrough() {
         Response response = get("/authorized/small", "authorization", "Bearer " + TOKEN);
 
         assertEquals(200, response.statusCode());
@@ -27,7 +27,7 @@ class AuthorizedTests {
     @Test
     @Tag("authorized.denied")
     void aTokenOneCharacterOffIsForbiddenWithNoBody() {
-        Response response = get("/authorized/small", "authorization", "Bearer " + Expected.settings().get("wrongToken").asText());
+        Response response = get("/authorized/small", "authorization", "Bearer 5a7cc77ed0dcb825806b6f872026c310");
 
         assertEquals(403, response.statusCode());
         assertEquals(0, response.asByteArray().length);

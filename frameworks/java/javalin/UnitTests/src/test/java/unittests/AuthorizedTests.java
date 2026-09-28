@@ -9,14 +9,14 @@ import org.junit.jupiter.api.Test;
 
 class AuthorizedTests extends JavalinApp {
 
-    private static final String TOKEN = Expected.settings().get("token").asText();
+    private static final String TOKEN = "5a7cc77ed0dcb825806b6f872026c317";
 
-    private static final String WRONG_TOKEN = Expected.settings().get("wrongToken").asText();
+    private static final String WRONG_TOKEN = "5a7cc77ed0dcb825806b6f872026c310";
 
     // rb:test authorized.allowed
     @Test
     @Tag("authorized.allowed")
-    void theSettingsTokenIsLetThrough() {
+    void theTokenIsLetThrough() {
         JavalinTest.test(app(), (server, client) -> {
             Response response = client.get("/authorized/small", request -> request.header("authorization", "Bearer " + TOKEN));
 

@@ -22,14 +22,8 @@ public class CacheRoutes {
 
     private final Payloads p;
 
-    private final String varyOne;
-
-    private final String varyMany;
-
     CacheRoutes(Payloads p) {
         this.p = p;
-        this.varyOne = String.join(", ", p.settings().cache().vary().one().keySet());
-        this.varyMany = String.join(", ", p.settings().cache().vary().many().keySet());
     }
 
     // rb:handler cache.small
@@ -61,7 +55,7 @@ public class CacheRoutes {
     @Path("vary/one/{key}")
     @CacheResult(cacheName = "cache.vary_one")
     public Uni<RestResponse<Payload>> varyOne(@RestPath String key, @RestHeader("x-rb-tenant") String tenant) {
-        return stored(p.small(), varyOne);
+        return stored(p.small(), "x-rb-tenant");
     }
 
     // rb:handler cache.vary_many
@@ -72,7 +66,7 @@ public class CacheRoutes {
                                                @RestHeader("x-rb-channel") String channel,
                                                @RestHeader("x-rb-region") String region,
                                                @RestHeader("x-rb-tenant") String tenant) {
-        return stored(p.small(), varyMany);
+        return stored(p.small(), "x-rb-channel, x-rb-region, x-rb-tenant");
     }
 
     // rb:wiring cache.*

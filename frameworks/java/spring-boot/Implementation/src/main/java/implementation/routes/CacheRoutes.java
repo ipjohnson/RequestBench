@@ -22,14 +22,8 @@ public class CacheRoutes {
 
     private final Payloads p;
 
-    private final String varyOne;
-
-    private final String varyMany;
-
     CacheRoutes(Payloads p) {
         this.p = p;
-        this.varyOne = String.join(", ", p.settings().cache().vary().one().keySet());
-        this.varyMany = String.join(", ", p.settings().cache().vary().many().keySet());
     }
 
     @GetMapping("/cache/small/{key}")
@@ -53,7 +47,7 @@ public class CacheRoutes {
     @GetMapping("/cache/vary/one/{key}")
     @Cacheable("cache.vary_one")
     public ResponseEntity<Payload> varyOne(@PathVariable String key, @RequestHeader(name = "x-rb-tenant", required = false) String tenant) {
-        return stored(p.small(), varyOne);
+        return stored(p.small(), "x-rb-tenant");
     }
 
     @GetMapping("/cache/vary/many/{key}")
@@ -62,7 +56,7 @@ public class CacheRoutes {
                                             @RequestHeader(name = "x-rb-channel", required = false) String channel,
                                             @RequestHeader(name = "x-rb-region", required = false) String region,
                                             @RequestHeader(name = "x-rb-tenant", required = false) String tenant) {
-        return stored(p.small(), varyMany);
+        return stored(p.small(), "x-rb-channel, x-rb-region, x-rb-tenant");
     }
 
     /**

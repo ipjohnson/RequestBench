@@ -10,7 +10,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
-import kotlinx.serialization.json.jsonPrimitive
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -47,7 +46,7 @@ class EtagTests {
     @Test
     @Tag("etag.stale_large")
     fun `a tag that does not match is answered in full`() = corpusTest {
-        val response = client.get("/etag/large") { header(HttpHeaders.IfNoneMatch, Expected.settings["staleEtag"]!!.jsonPrimitive.content) }
+        val response = client.get("/etag/large") { header(HttpHeaders.IfNoneMatch, "\"0000000000000000\"") }
 
         assertEquals(HttpStatusCode.OK, response.status)
         assertEquals(Expected.json("items.large.json"), response.json())

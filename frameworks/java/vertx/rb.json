@@ -26,7 +26,7 @@
   },
   "mechanisms": {
     "authorized": {
-      "mechanism": "Vert.x Web's SimpleAuthenticationHandler and AuthorizationHandler on /authorized/*. The bearer token becomes the user, and an AuthorizationProvider grants the permission the route requires to settings.json's token alone, so any other token is refused with 403. Vert.x Web's ErrorHandler writes the route's failures",
+      "mechanism": "Vert.x Web's SimpleAuthenticationHandler and AuthorizationHandler on /authorized/*. The bearer token becomes the user, and an AuthorizationProvider grants the permission the route requires to one token alone, so any other token is refused with 403. Vert.x Web's ErrorHandler writes the route's failures",
       "dependency": "vertx-auth-common",
       "mentions": "AuthorizationHandler"
     },

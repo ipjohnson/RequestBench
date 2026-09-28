@@ -44,10 +44,6 @@ final class Expected {
         return parse(bytes(file));
     }
 
-    static JsonNode settings() {
-        return json("settings.json");
-    }
-
     /** An object of these names and values, each value a JsonNode, a string, a number or a boolean. */
     static JsonNode object(Object... pairs) {
         Map<String, JsonNode> fields = new LinkedHashMap<>();

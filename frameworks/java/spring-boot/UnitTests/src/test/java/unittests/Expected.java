@@ -35,10 +35,6 @@ final class Expected {
         return JSON.readTree(bytes(file));
     }
 
-    static JsonNode settings() {
-        return json("settings.json");
-    }
-
     /** A payload with an echo object beside its own fields, as a binding handler answers. */
     static JsonNode withEcho(String file, ObjectNode echo) {
         ObjectNode payload = (ObjectNode) json(file);

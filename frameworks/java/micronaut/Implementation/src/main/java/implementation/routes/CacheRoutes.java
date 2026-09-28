@@ -1,15 +1,9 @@
 package implementation.routes;
 
-import java.time.Duration;
-
 import implementation.Payload;
 import implementation.Payloads;
 import implementation.Serial;
-import implementation.Settings;
-import io.micronaut.cache.CacheConfiguration;
 import io.micronaut.cache.annotation.Cacheable;
-import io.micronaut.cache.caffeine.DefaultCacheConfiguration;
-import io.micronaut.context.annotation.Factory;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpResponse;
@@ -17,8 +11,6 @@ import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
 import io.micronaut.http.annotation.Header;
-import io.micronaut.runtime.ApplicationConfiguration;
-import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 
 /**
@@ -36,14 +28,8 @@ public class CacheRoutes {
 
     private final Answers answers;
 
-    private final String varyOne;
-
-    private final String varyMany;
-
-    CacheRoutes(Answers answers, Payloads p) {
+    CacheRoutes(Answers answers) {
         this.answers = answers;
-        this.varyOne = String.join(", ", p.settings().cache().vary().one().keySet());
-        this.varyMany = String.join(", ", p.settings().cache().vary().many().keySet());
     }
 
     @Get("/cache/small/{key}")
@@ -63,7 +49,7 @@ public class CacheRoutes {
 
     @Get("/cache/vary/one/{key}")
     public HttpResponse<Payload> varyOne(String key, @Header("x-rb-tenant") @Nullable String tenant) {
-        return replay(answers.varyOne(key, tenant), varyOne);
+        return replay(answers.varyOne(key, tenant), "x-rb-tenant");
     }
 
     @Get("/cache/vary/many/{key}")
@@ -71,7 +57,7 @@ public class CacheRoutes {
                                           @Header("x-rb-channel") @Nullable String channel,
                                           @Header("x-rb-region") @Nullable String region,
                                           @Header("x-rb-tenant") @Nullable String tenant) {
-        return replay(answers.varyMany(key, channel, region, tenant), varyMany);
+        return replay(answers.varyMany(key, channel, region, tenant), "x-rb-channel, x-rb-region, x-rb-tenant");
     }
 
     /**
@@ -126,58 +112,5 @@ public class CacheRoutes {
         }
     }
 
-    /**
-     * One Caffeine cache per route, sized and aged by settings.json. Without these, micronaut-cache
-     * creates each cache the first time a method names it, with no size limit and no expiry.
-     */
-    @Factory
-    static final class Caches {
-
-        private final ApplicationConfiguration application;
-
-        private final Settings.Cache settings;
-
-        Caches(ApplicationConfiguration application, Payloads p) {
-            this.application = application;
-            this.settings = p.settings().cache();
-        }
-
-        @Singleton
-        @Named("cache-small")
-        CacheConfiguration small() {
-            return sized("cache-small");
-        }
-
-        @Singleton
-        @Named("cache-medium")
-        CacheConfiguration medium() {
-            return sized("cache-medium");
-        }
-
-        @Singleton
-        @Named("cache-large")
-        CacheConfiguration large() {
-            return sized("cache-large");
-        }
-
-        @Singleton
-        @Named("cache-vary-one")
-        CacheConfiguration varyOne() {
-            return sized("cache-vary-one");
-        }
-
-        @Singleton
-        @Named("cache-vary-many")
-        CacheConfiguration varyMany() {
-            return sized("cache-vary-many");
-        }
-
-        private CacheConfiguration sized(String name) {
-            DefaultCacheConfiguration cache = new DefaultCacheConfiguration(name, application);
-            cache.setMaximumSize((long) settings.capacity());
-            cache.setExpireAfterWrite(Duration.ofSeconds(settings.ttlSeconds()));
-            return cache;
-        }
-    }
     // rb:end
 }

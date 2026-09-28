@@ -24,8 +24,6 @@ public final class Payloads {
 
     private final Payload large;
 
-    private final Settings settings;
-
     private final Map<Integer, Item> rows;
 
     private Payloads(Path directory, JsonBinding json) throws IOException {
@@ -33,7 +31,6 @@ public final class Payloads {
         this.small = json.deserialize(Files.readAllBytes(directory.resolve("items.small.json")), Payload.class);
         this.medium = json.deserialize(Files.readAllBytes(directory.resolve("items.medium.json")), Payload.class);
         this.large = json.deserialize(Files.readAllBytes(directory.resolve("items.large.json")), Payload.class);
-        this.settings = json.deserialize(Files.readAllBytes(directory.resolve("settings.json")), Settings.class);
         this.rows = large.items().stream().collect(Collectors.toUnmodifiableMap(Item::id, Function.identity()));
     }
 
@@ -55,10 +52,6 @@ public final class Payloads {
 
     public Payload large() {
         return large;
-    }
-
-    public Settings settings() {
-        return settings;
     }
 
     /** The row of items.large with this id, or null when there is none. */
