@@ -16,7 +16,7 @@ COPY lambda-emulator/ lambda-emulator/
 RUN cargo build --release --locked --bin lambda --features lambda-emulator
 
 # The base image's entrypoint execs /var/runtime/bootstrap. It refuses to start without one argument,
-# the handler, which poem-lambda does not read.
+# the handler, which the function does not read.
 FROM public.ecr.aws/lambda/provided:al2023@sha256:a4c93088e111b6c5c319548a0ac7685c7f28e91f30cb1fa7d4a9fbd0ad091f10
 COPY --from=build /src/target/release/lambda /var/runtime/bootstrap
 CMD ["rb"]

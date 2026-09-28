@@ -1270,16 +1270,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "poem-lambda"
-version = "5.1.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a4c65f5a741468be8778a182ceb2ef806b066bcd18b886f39d8d904852d0d43e"
-dependencies = [
- "lambda_http",
- "poem",
-]
-
-[[package]]
 name = "potential_utf"
 version = "0.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1368,9 +1358,9 @@ dependencies = [
  "cached",
  "flate2",
  "futures-util",
+ "lambda_http",
  "mimalloc",
  "poem",
- "poem-lambda",
  "serde",
  "serde_json",
  "sha1 0.11.0",
