@@ -35,7 +35,7 @@ public sealed class EtagTests(WolverineApp app)
     [Trait("corpus", "etag.stale_large")]
     public async Task A_validator_it_never_issued_is_answered_in_full()
     {
-        IScenarioResult result = await Conditional((string)Expected.Settings["staleEtag"]!, HttpStatusCode.OK);
+        IScenarioResult result = await Conditional("\"0000000000000000\"", HttpStatusCode.OK);
 
         Answer.Is(Expected.Json("items.large.json"), result);
     }

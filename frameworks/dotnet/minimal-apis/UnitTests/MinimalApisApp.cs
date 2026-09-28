@@ -23,8 +23,6 @@ public static partial class Expected
 {
     public static string Directory { get; } = Find();
 
-    public static JsonNode Settings { get; } = Json("settings.json");
-
     public static byte[] Bytes(string file) => File.ReadAllBytes(Path.Combine(Directory, file));
 
     public static JsonNode Json(string file) => JsonNode.Parse(Bytes(file))!;

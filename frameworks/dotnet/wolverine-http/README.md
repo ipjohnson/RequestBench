@@ -83,7 +83,7 @@ this Mac, against about 280 ms through `app.Run()`, because it finds its command
 | parameters, query, headers | Method parameters: a route parameter by its name, a simple parameter from the query string value of the same name, and `[FromHeader]` naming a header. | Wolverine |
 | body | Wolverine reads the order from the body. Its FluentValidation middleware runs the validator for the request type in the generated handler and answers 400 with the failed rules. | Wolverine |
 | authorized | `[Authorize]` with a policy that compares a claim, which Wolverine copies onto the route. ASP.NET Core has no scheme for an opaque token, so `BearerToken` reads the header into that claim. | ASP.NET Core, and a scheme by hand |
-| cache | Output caching, `[OutputCache]` naming a policy on each endpoint. The vary policies also vary by the headers the row sends. | ASP.NET Core |
+| cache | Output caching, `[OutputCache]` on each endpoint, with `Duration` and, on a vary row, `VaryByHeaderNames`. | ASP.NET Core |
 | compressed | Response compression on the whole application, gzip at its fastest level. | ASP.NET Core |
 | etag | A resource writer policy writes the answer of the two `[Tagged]` endpoints in place of Wolverine's JSON write. It hashes the serialised body with SHA-1 and hands both to `Results.Bytes`, which answers 304 when `If-None-Match` names the tag. | Wolverine's extension point, the hash by hand, the 304 ASP.NET Core's |
 | template | A Razor component rendered with `RazorComponentResult`, which Wolverine executes as it executes any `IResult`. | ASP.NET Core |
@@ -115,8 +115,7 @@ this Mac, against about 280 ms through `app.Run()`, because it finds its command
   predicate instead, which always sends it.
 - Wolverine's docs set up neither `AddProblemDetails` nor `UseStatusCodePages`, so the
   Implementation adds neither. A 401, 403, 404 or 405 has no body.
-- settings.json sizes the cache in entries, and output caching sizes it in bytes. Its default of
-  100 MB holds every key the cache family stores.
+- Output caching sizes its store in bytes. Its default of 100 MB holds the cache family's 52 keys.
 - On container-h2, where Kestrel speaks HTTP/2, `Program.cs` sends the body of an answer to HEAD
   to `Stream.Null` ahead of every other middleware. Over HTTP/2 Kestrel sends that body when it is
   written through the response PipeWriter, as a JSON result is, and HTTP/2 allows no content in an

@@ -13,7 +13,6 @@ namespace Implementation;
 /// </summary>
 [JsonSourceGenerationOptions(JsonSerializerDefaults.Web)]
 [JsonSerializable(typeof(Payload))]
-[JsonSerializable(typeof(Settings))]
 [JsonSerializable(typeof(Item))]
 [JsonSerializable(typeof(NewItem))]
 [JsonSerializable(typeof(ReplacedItem))]

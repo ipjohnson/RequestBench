@@ -15,7 +15,7 @@ public sealed class CacheSmallEndpoint(Payloads payloads) : EndpointWithoutReque
     public override void Configure()
     {
         Get("/cache/small/{key}");
-        Options(b => b.CacheOutput());
+        Options(b => b.CacheOutput(policy => policy.Expire(TimeSpan.FromSeconds(30))));
     }
 
     public override Task HandleAsync(CancellationToken ct)
@@ -31,7 +31,7 @@ public sealed class CacheMediumEndpoint(Payloads payloads) : EndpointWithoutRequ
     public override void Configure()
     {
         Get("/cache/medium/{key}");
-        Options(b => b.CacheOutput());
+        Options(b => b.CacheOutput(policy => policy.Expire(TimeSpan.FromSeconds(30))));
     }
 
     public override Task HandleAsync(CancellationToken ct)
@@ -47,7 +47,7 @@ public sealed class CacheLargeEndpoint(Payloads payloads) : EndpointWithoutReque
     public override void Configure()
     {
         Get("/cache/large/{key}");
-        Options(b => b.CacheOutput());
+        Options(b => b.CacheOutput(policy => policy.Expire(TimeSpan.FromSeconds(30))));
     }
 
     public override Task HandleAsync(CancellationToken ct)
@@ -63,7 +63,7 @@ public sealed class CacheVaryOneEndpoint(Payloads payloads) : EndpointWithoutReq
     public override void Configure()
     {
         Get("/cache/vary/one/{key}");
-        Options(b => b.CacheOutput(policy => policy.SetVaryByHeader([.. payloads.Settings.Cache.Vary.One.Keys])));
+        Options(b => b.CacheOutput(policy => policy.Expire(TimeSpan.FromSeconds(30)).SetVaryByHeader("x-rb-tenant")));
     }
 
     // The Vary header tells a cache in front of the framework what the answer depends on.
@@ -71,7 +71,7 @@ public sealed class CacheVaryOneEndpoint(Payloads payloads) : EndpointWithoutReq
     public override Task HandleAsync(CancellationToken ct)
     {
         Serial.Write(HttpContext.Response);
-        HttpContext.Response.Headers.Vary = string.Join(", ", payloads.Settings.Cache.Vary.One.Keys);
+        HttpContext.Response.Headers.Vary = "x-rb-tenant";
         return Send.OkAsync(payloads.Small, ct);
     }
 }
@@ -82,13 +82,13 @@ public sealed class CacheVaryManyEndpoint(Payloads payloads) : EndpointWithoutRe
     public override void Configure()
     {
         Get("/cache/vary/many/{key}");
-        Options(b => b.CacheOutput(policy => policy.SetVaryByHeader([.. payloads.Settings.Cache.Vary.Many.Keys])));
+        Options(b => b.CacheOutput(policy => policy.Expire(TimeSpan.FromSeconds(30)).SetVaryByHeader("x-rb-channel", "x-rb-region", "x-rb-tenant")));
     }
 
     public override Task HandleAsync(CancellationToken ct)
     {
         Serial.Write(HttpContext.Response);
-        HttpContext.Response.Headers.Vary = string.Join(", ", payloads.Settings.Cache.Vary.Many.Keys);
+        HttpContext.Response.Headers.Vary = "x-rb-channel, x-rb-region, x-rb-tenant";
         return Send.OkAsync(payloads.Small, ct);
     }
 }

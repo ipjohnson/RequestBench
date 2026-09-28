@@ -48,7 +48,7 @@ Client section says.
 | parameters, query, headers | Model binding: action parameters, `[FromHeader]` naming a header, and a record for query.many's eight values. | MVC |
 | body | MVC binds the order from JSON. `[ApiController]` runs its DataAnnotations and answers a failure with 400. The first-error route checks one property at a time in a filter. | MVC, and the first-error route by hand |
 | authorized | `[Authorize]` with a policy that compares a claim. ASP.NET Core has no scheme for an opaque token, so `BearerToken` reads the header into that claim. | ASP.NET Core, and a scheme by hand |
-| cache | `[OutputCache]` on each action, with a named policy for each vary row that calls `SetVaryByHeader`. | ASP.NET Core |
+| cache | `[OutputCache]` on each action, with `Duration` and, on a vary row, `VaryByHeaderNames`. | ASP.NET Core |
 | compressed | Response compression on the whole application, gzip at its fastest level. | ASP.NET Core |
 | etag | A result filter hashes the serialised answer with SHA-1. `FileContentResult` sets `ETag` and answers 304 when `If-None-Match` names it. | by hand, and MVC |
 | template | A Razor view rendered with `View()`. | MVC |
@@ -91,8 +91,7 @@ Client section says.
   `[AutoValidateAntiforgeryToken]` asks for one, and neither is applied.
 - The view is `ItemsPage.cshtml`, because a view named `Items` reads as the `/items` route to the
   snippet finder.
-- settings.json sizes the cache in entries, and output caching sizes it in bytes. Its default of
-  100 MB holds every key the cache family stores.
+- Output caching sizes its store in bytes. Its default of 100 MB holds the cache family's 52 keys.
 - On container-h2, where Kestrel speaks HTTP/2, `Program.cs` sends the body of an answer to HEAD
   to `Stream.Null` ahead of every other middleware. Over HTTP/2 Kestrel sends that body when it is
   written through the response PipeWriter, as a JSON result is, and HTTP/2 allows no content in an

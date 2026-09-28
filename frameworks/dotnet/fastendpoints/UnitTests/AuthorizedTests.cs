@@ -5,9 +5,9 @@ public sealed class AuthorizedTests(App app) : TestBase<App>
     // rb:test authorized.allowed
     [Fact]
     [Trait("corpus", "authorized.allowed")]
-    public async Task The_settings_token_is_let_through()
+    public async Task The_token_is_let_through()
     {
-        using HttpResponseMessage response = await AskAsync($"Bearer {(string)Expected.Settings["token"]!}");
+        using HttpResponseMessage response = await AskAsync("Bearer 5a7cc77ed0dcb825806b6f872026c317");
 
         await Answer.IsAsync(Expected.Json("items.small.json"), response);
     }
@@ -17,7 +17,7 @@ public sealed class AuthorizedTests(App app) : TestBase<App>
     [Trait("corpus", "authorized.denied")]
     public async Task A_token_one_character_off_is_forbidden_with_no_body()
     {
-        using HttpResponseMessage response = await AskAsync($"Bearer {(string)Expected.Settings["wrongToken"]!}");
+        using HttpResponseMessage response = await AskAsync("Bearer 5a7cc77ed0dcb825806b6f872026c310");
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
         Assert.Empty(await Answer.BytesAsync(response));
