@@ -1,6 +1,6 @@
 # Django
 
-Django 6.1.1 over ASGI on CPython 3.14, served by uvicorn 0.53.0 with two worker processes,
+Django 6.1.1 over ASGI on CPython 3.14, served by uvicorn 0.54.0 with two worker processes,
 answering the RequestBench corpus. The contract every route follows is
 [`frameworks/openapi.json`](../../openapi.json).
 
