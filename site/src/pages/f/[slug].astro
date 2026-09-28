@@ -159,6 +159,22 @@ const peerGroups = [...new Set(peers.map((p) => p.language))]
   ]);
 const hasBase = order.some((id) => againstOf(id));
 const comparable = peers.length > 0 || hasBase;
+// What Compare with offers, as combobox.ts groups them: the base under this framework's name, then
+// the other frameworks by language, each with the wire capture its sizes are read from.
+const compareGroups = [
+  ...(hasBase
+    ? [{ label: name, choices: [{ value: "base", title: `Each test's base: the same request to ${name} with one factor taken away` }] }]
+    : []),
+  ...peerGroups.map(([lang, ps]) => ({
+    label: lang,
+    choices: ps.map((p) => ({
+      value: p.id,
+      label: p.name,
+      title: `${p.name} ${p.version}, measured in the same run on the same machine`,
+      ...(p.wire ? { wire: p.wire } : {}),
+    })),
+  })),
+];
 
 const famRungs = (fam: string, ids: string[]) =>
   rates.map((r) => ({
@@ -326,32 +342,11 @@ const unsupported = Object.entries(t.unsupported ?? {}).sort(([a], [b]) => (a < 
                     vs
                   </span>
                   <span class="cmpchips" role="group" aria-labelledby="cmp-label" />
-                  <select class="cmpadd" aria-label="Compare with">
-                    <option value="">add&hellip;</option>
-                    {hasBase && (
-                      <option
-                        value="base"
-                        data-name="base"
-                        title={`Each test's base: the same request to ${name} with one factor taken away`}
-                      >
-                        base
-                      </option>
-                    )}
-                    {peerGroups.map(([lang, ps]) => (
-                      <optgroup label={lang}>
-                        {ps.map((p) => (
-                          <option
-                            value={p.id}
-                            data-name={p.name}
-                            data-wire={p.wire || undefined}
-                            title={`${p.name} ${p.version}, measured in the same run on the same machine`}
-                          >
-                            {p.name}
-                          </option>
-                        ))}
-                      </optgroup>
-                    ))}
-                  </select>
+                  <div class="combo cmpadd" data-choices={JSON.stringify(compareGroups)}>
+                    <input type="text" aria-label="Compare with" placeholder="add…" autocomplete="off" spellcheck="false" />
+                    <button type="button" class="comboclear" aria-label="Clear" hidden>&times;</button>
+                    <div class="combolist" aria-label="What to compare with" hidden></div>
+                  </div>
                   <span class="cmpstatus" role="status" />
                 </div>
               )}
