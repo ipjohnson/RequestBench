@@ -19,13 +19,14 @@ class CacheTests extends JavalinApp {
     @Tag("cache.medium")
     @Tag("cache.large")
     @ValueSource(strings = {"small", "medium", "large"})
-    void aSecondRequestIsTheStoredAnswer(String size) {
+    void aSecondRequestForAKeyIsItsStoredAnswer(String size) {
         JavalinTest.test(app(), (server, client) -> {
-            long first = Answer.serial(client.get("/cache/" + size));
-            Response second = client.get("/cache/" + size);
+            String first = Answer.serial(client.get("/cache/" + size + "/k1"));
+            Response second = client.get("/cache/" + size + "/k1");
 
             Answer.is(Expected.json("items." + size + ".json"), second);
             assertEquals(first, Answer.serial(second));
+            assertNotEquals(first, Answer.serial(client.get("/cache/" + size + "/k2")));
         });
     }
 
@@ -34,10 +35,10 @@ class CacheTests extends JavalinApp {
     @Tag("cache.vary_one")
     void oneHeaderKeysTheStore() {
         JavalinTest.test(app(), (server, client) -> {
-            long alpha = get(client, "/cache/vary/one", "x-rb-tenant", "alpha");
-            long beta = get(client, "/cache/vary/one", "x-rb-tenant", "beta");
+            String alpha = get(client, "/cache/vary/one/k1", "x-rb-tenant", "alpha");
+            String beta = get(client, "/cache/vary/one/k1", "x-rb-tenant", "beta");
 
-            assertEquals(alpha, get(client, "/cache/vary/one", "x-rb-tenant", "alpha"));
+            assertEquals(alpha, get(client, "/cache/vary/one/k1", "x-rb-tenant", "alpha"));
             assertNotEquals(alpha, beta);
         });
     }
@@ -50,23 +51,23 @@ class CacheTests extends JavalinApp {
         String[] webEuBeta = {"x-rb-channel", "web", "x-rb-region", "eu", "x-rb-tenant", "beta"};
 
         JavalinTest.test(app(), (server, client) -> {
-            long first = get(client, "/cache/vary/many", webEuAlpha);
+            String first = get(client, "/cache/vary/many/k1", webEuAlpha);
 
-            assertEquals(first, get(client, "/cache/vary/many", webEuAlpha));
-            assertNotEquals(first, get(client, "/cache/vary/many", webEuBeta));
+            assertEquals(first, get(client, "/cache/vary/many/k1", webEuAlpha));
+            assertNotEquals(first, get(client, "/cache/vary/many/k1", webEuBeta));
         });
     }
 
     @Test
     void theAnswerAndItsReplaySayWhatTheyVaryOn() {
         JavalinTest.test(app(), (server, client) -> {
-            assertEquals("x-rb-channel, x-rb-region, x-rb-tenant", Answer.header(client.get("/cache/vary/many"), "vary"));
-            assertEquals("x-rb-channel, x-rb-region, x-rb-tenant", Answer.header(client.get("/cache/vary/many"), "vary"));
+            assertEquals("x-rb-channel, x-rb-region, x-rb-tenant", Answer.header(client.get("/cache/vary/many/k1"), "vary"));
+            assertEquals("x-rb-channel, x-rb-region, x-rb-tenant", Answer.header(client.get("/cache/vary/many/k1"), "vary"));
         });
     }
 
     /** The serial of the answer to a GET with each pair of strings as a header. */
-    private static long get(HttpClient client, String path, String... headers) {
+    private static String get(HttpClient client, String path, String... headers) {
         return Answer.serial(client.get(path, request -> {
             for (int i = 0; i < headers.length; i += 2) {
                 request.header(headers[i], headers[i + 1]);

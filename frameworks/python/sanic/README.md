@@ -43,10 +43,10 @@ processes. Sanic starts each worker as a new process, and hands it an `AppLoader
 written as 2 rather than read from the machine, because under a CPU quota Python counts every core
 the host has, and so does Sanic's fast mode.
 
-Each worker keeps its own state. The `x-rb-serial` counter and the cache family's store are both
-per worker, so two workers answering one path can carry different serials. A connection stays with
-the worker that accepted it, and the gate sends each test's two requests on one connection, so
-`fresh()` and `replayed()` hold. Under load each worker fills its own store.
+Each worker keeps its own state. The `x-rb-serial` counter and the cache family's store are both per
+worker, and the serial carries the worker's process id, so no two workers write one value. A
+connection stays with the worker that accepted it, and the gate sends each test's two requests on
+one connection, so `replayed()` holds. Under load each worker fills its own store.
 
 ## How each family is wired
 
@@ -87,7 +87,7 @@ the worker that accepted it, and the gate sends each test's two requests on one 
   policy names no origin, so every other route runs the hook and leaves the answer alone.
 - sanic-ext adds an OPTIONS route beside every route, which answers 204 with `Allow`, and a HEAD
   route beside every GET route. Both are routes of the application rather than of the blueprint,
-  so a blueprint's middleware does not run for them: `HEAD /cache/small` is never replayed and
+  so a blueprint's middleware does not run for them: `HEAD /cache/small/k1` is never replayed and
   `HEAD /middleware/sixteen` runs no layer.
 - sanic-ext's validation guide leads with dataclasses, which state a field's type and no rule, such
   as a minimum. sanic-ext validates a Pydantic model too, and Pydantic states orderRequest's rules.

@@ -27,15 +27,15 @@ const cache: Routes = (app, p) => {
     defineCachedHandler(handler, { storage, maxAge: ttlSeconds, varies, toResponse });
   // rb:end
 
-  app.get("/cache/small", cached((event) => fresh(event, p.small)));
+  app.get("/cache/small/:key", cached((event) => fresh(event, p.small)));
 
-  app.get("/cache/medium", cached((event) => fresh(event, p.medium)));
+  app.get("/cache/medium/:key", cached((event) => fresh(event, p.medium)));
 
-  app.get("/cache/large", cached((event) => fresh(event, p.large)));
+  app.get("/cache/large/:key", cached((event) => fresh(event, p.large)));
 
-  app.get("/cache/vary/one", cached((event) => fresh(event, p.small), Object.keys(vary.one)));
+  app.get("/cache/vary/one/:key", cached((event) => fresh(event, p.small), Object.keys(vary.one)));
 
-  app.get("/cache/vary/many", cached((event) => fresh(event, p.small), Object.keys(vary.many)));
+  app.get("/cache/vary/many/:key", cached((event) => fresh(event, p.small), Object.keys(vary.many)));
 };
 
 export default cache;

@@ -755,8 +755,16 @@
         "tags" : [ "Body Routes" ]
       }
     },
-    "/cache/large" : {
+    "/cache/large/{key}" : {
       "get" : {
+        "parameters" : [ {
+          "name" : "key",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -773,8 +781,16 @@
         "tags" : [ "Cache Routes" ]
       }
     },
-    "/cache/medium" : {
+    "/cache/medium/{key}" : {
       "get" : {
+        "parameters" : [ {
+          "name" : "key",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -791,8 +807,16 @@
         "tags" : [ "Cache Routes" ]
       }
     },
-    "/cache/small" : {
+    "/cache/small/{key}" : {
       "get" : {
+        "parameters" : [ {
+          "name" : "key",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -809,9 +833,16 @@
         "tags" : [ "Cache Routes" ]
       }
     },
-    "/cache/vary/many" : {
+    "/cache/vary/many/{key}" : {
       "get" : {
         "parameters" : [ {
+          "name" : "key",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
           "name" : "x-rb-channel",
           "in" : "header",
           "schema" : {
@@ -846,13 +877,19 @@
         "tags" : [ "Cache Routes" ]
       }
     },
-    "/cache/vary/one" : {
+    "/cache/vary/one/{key}" : {
       "get" : {
         "parameters" : [ {
+          "name" : "key",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
           "name" : "x-rb-tenant",
           "in" : "header",
           "schema" : {
-            "default" : "",
             "type" : "string"
           }
         } ],

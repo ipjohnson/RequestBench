@@ -57,31 +57,31 @@ def blueprint(p: Payloads) -> Blueprint:
             store[key] = Stored(response.body, response.status, dict(response.headers), response.content_type)
     # rb:end
 
-    @routes.get("/cache/small", ctx_vary=())
+    @routes.get("/cache/small/<key:str>", ctx_vary=())
     @answers(Payload, "items.small")
-    async def small(request):
+    async def small(request, key: str):
         return json(p.small, headers=fresh())
 
-    @routes.get("/cache/medium", ctx_vary=())
+    @routes.get("/cache/medium/<key:str>", ctx_vary=())
     @answers(Payload, "items.medium")
-    async def medium(request):
+    async def medium(request, key: str):
         return json(p.medium, headers=fresh())
 
-    @routes.get("/cache/large", ctx_vary=())
+    @routes.get("/cache/large/<key:str>", ctx_vary=())
     @answers(Payload, "items.large")
-    async def large(request):
+    async def large(request, key: str):
         return json(p.large, headers=fresh())
 
     # The Vary header tells a cache in front of the framework what the answer depends on. The store
     # keys on the route's ctx, not on this header.
-    @routes.get("/cache/vary/one", ctx_vary=one)
+    @routes.get("/cache/vary/one/<key:str>", ctx_vary=one)
     @answers(Payload, "items.small")
-    async def vary_one(request):
+    async def vary_one(request, key: str):
         return json(p.small, headers={**fresh(), "vary": ", ".join(one)})
 
-    @routes.get("/cache/vary/many", ctx_vary=many)
+    @routes.get("/cache/vary/many/<key:str>", ctx_vary=many)
     @answers(Payload, "items.small")
-    async def vary_many(request):
+    async def vary_many(request, key: str):
         return json(p.small, headers={**fresh(), "vary": ", ".join(many)})
 
     return routes

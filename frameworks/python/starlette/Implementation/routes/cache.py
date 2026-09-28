@@ -51,6 +51,8 @@ def routes(p: Payloads) -> list[BaseRoute]:
     @replayed()
     async def small(request: Request) -> Response:
         """
+        parameters:
+          - {name: key, in: path, required: true, schema: {type: string}}
         responses:
           200: {description: items.small from the store after the first request, content: {application/json: {schema: {$ref: "#/components/schemas/Payload"}}}}
         """
@@ -60,6 +62,8 @@ def routes(p: Payloads) -> list[BaseRoute]:
     @replayed()
     async def medium(request: Request) -> Response:
         """
+        parameters:
+          - {name: key, in: path, required: true, schema: {type: string}}
         responses:
           200: {description: items.medium from the store after the first request, content: {application/json: {schema: {$ref: "#/components/schemas/Payload"}}}}
         """
@@ -69,6 +73,8 @@ def routes(p: Payloads) -> list[BaseRoute]:
     @replayed()
     async def large(request: Request) -> Response:
         """
+        parameters:
+          - {name: key, in: path, required: true, schema: {type: string}}
         responses:
           200: {description: items.large from the store after the first request, content: {application/json: {schema: {$ref: "#/components/schemas/Payload"}}}}
         """
@@ -81,6 +87,7 @@ def routes(p: Payloads) -> list[BaseRoute]:
     async def vary_one(request: Request) -> Response:
         """
         parameters:
+          - {name: key, in: path, required: true, schema: {type: string}}
           - {name: x-rb-tenant, in: header, schema: {type: string}}
         responses:
           200: {description: items.small stored per tenant, content: {application/json: {schema: {$ref: "#/components/schemas/Payload"}}}}
@@ -94,6 +101,7 @@ def routes(p: Payloads) -> list[BaseRoute]:
     async def vary_many(request: Request) -> Response:
         """
         parameters:
+          - {name: key, in: path, required: true, schema: {type: string}}
           - {name: x-rb-channel, in: header, schema: {type: string}}
           - {name: x-rb-region, in: header, schema: {type: string}}
           - {name: x-rb-tenant, in: header, schema: {type: string}}
@@ -105,9 +113,9 @@ def routes(p: Payloads) -> list[BaseRoute]:
         return response
 
     return [
-        Route("/cache/small", small),
-        Route("/cache/medium", medium),
-        Route("/cache/large", large),
-        Route("/cache/vary/one", vary_one),
-        Route("/cache/vary/many", vary_many),
+        Route("/cache/small/{key}", small),
+        Route("/cache/medium/{key}", medium),
+        Route("/cache/large/{key}", large),
+        Route("/cache/vary/one/{key}", vary_one),
+        Route("/cache/vary/many/{key}", vary_many),
     ]

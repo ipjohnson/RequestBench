@@ -1025,85 +1025,170 @@ export type ItemsCreateResponses = {
 
 export type ItemsCreateResponse = ItemsCreateResponses[keyof ItemsCreateResponses];
 
-export type CacheSmallSmallData = {
+export type CacheSmallKeySmallData = {
     body?: never;
-    path?: never;
+    path: {
+        key: string;
+    };
     query?: never;
-    url: '/cache/small';
+    url: '/cache/small/{key}';
 };
 
-export type CacheSmallSmallResponses = {
+export type CacheSmallKeySmallErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?: null | {
+            [key: string]: unknown;
+        } | Array<unknown>;
+    };
+};
+
+export type CacheSmallKeySmallError = CacheSmallKeySmallErrors[keyof CacheSmallKeySmallErrors];
+
+export type CacheSmallKeySmallResponses = {
     /**
      * Request fulfilled, document follows
      */
     200: Payload;
 };
 
-export type CacheSmallSmallResponse = CacheSmallSmallResponses[keyof CacheSmallSmallResponses];
+export type CacheSmallKeySmallResponse = CacheSmallKeySmallResponses[keyof CacheSmallKeySmallResponses];
 
-export type CacheMediumMediumData = {
+export type CacheMediumKeyMediumData = {
     body?: never;
-    path?: never;
+    path: {
+        key: string;
+    };
     query?: never;
-    url: '/cache/medium';
+    url: '/cache/medium/{key}';
 };
 
-export type CacheMediumMediumResponses = {
+export type CacheMediumKeyMediumErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?: null | {
+            [key: string]: unknown;
+        } | Array<unknown>;
+    };
+};
+
+export type CacheMediumKeyMediumError = CacheMediumKeyMediumErrors[keyof CacheMediumKeyMediumErrors];
+
+export type CacheMediumKeyMediumResponses = {
     /**
      * Request fulfilled, document follows
      */
     200: Payload;
 };
 
-export type CacheMediumMediumResponse = CacheMediumMediumResponses[keyof CacheMediumMediumResponses];
+export type CacheMediumKeyMediumResponse = CacheMediumKeyMediumResponses[keyof CacheMediumKeyMediumResponses];
 
-export type CacheLargeLargeData = {
+export type CacheLargeKeyLargeData = {
     body?: never;
-    path?: never;
+    path: {
+        key: string;
+    };
     query?: never;
-    url: '/cache/large';
+    url: '/cache/large/{key}';
 };
 
-export type CacheLargeLargeResponses = {
+export type CacheLargeKeyLargeErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?: null | {
+            [key: string]: unknown;
+        } | Array<unknown>;
+    };
+};
+
+export type CacheLargeKeyLargeError = CacheLargeKeyLargeErrors[keyof CacheLargeKeyLargeErrors];
+
+export type CacheLargeKeyLargeResponses = {
     /**
      * Request fulfilled, document follows
      */
     200: Payload;
 };
 
-export type CacheLargeLargeResponse = CacheLargeLargeResponses[keyof CacheLargeLargeResponses];
+export type CacheLargeKeyLargeResponse = CacheLargeKeyLargeResponses[keyof CacheLargeKeyLargeResponses];
 
-export type CacheVaryOneVaryOneData = {
+export type CacheVaryOneKeyVaryOneData = {
     body?: never;
-    path?: never;
+    path: {
+        key: string;
+    };
     query?: never;
-    url: '/cache/vary/one';
+    url: '/cache/vary/one/{key}';
 };
 
-export type CacheVaryOneVaryOneResponses = {
+export type CacheVaryOneKeyVaryOneErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?: null | {
+            [key: string]: unknown;
+        } | Array<unknown>;
+    };
+};
+
+export type CacheVaryOneKeyVaryOneError = CacheVaryOneKeyVaryOneErrors[keyof CacheVaryOneKeyVaryOneErrors];
+
+export type CacheVaryOneKeyVaryOneResponses = {
     /**
      * Request fulfilled, document follows
      */
     200: Payload;
 };
 
-export type CacheVaryOneVaryOneResponse = CacheVaryOneVaryOneResponses[keyof CacheVaryOneVaryOneResponses];
+export type CacheVaryOneKeyVaryOneResponse = CacheVaryOneKeyVaryOneResponses[keyof CacheVaryOneKeyVaryOneResponses];
 
-export type CacheVaryManyVaryManyData = {
+export type CacheVaryManyKeyVaryManyData = {
     body?: never;
-    path?: never;
+    path: {
+        key: string;
+    };
     query?: never;
-    url: '/cache/vary/many';
+    url: '/cache/vary/many/{key}';
 };
 
-export type CacheVaryManyVaryManyResponses = {
+export type CacheVaryManyKeyVaryManyErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?: null | {
+            [key: string]: unknown;
+        } | Array<unknown>;
+    };
+};
+
+export type CacheVaryManyKeyVaryManyError = CacheVaryManyKeyVaryManyErrors[keyof CacheVaryManyKeyVaryManyErrors];
+
+export type CacheVaryManyKeyVaryManyResponses = {
     /**
      * Request fulfilled, document follows
      */
     200: Payload;
 };
 
-export type CacheVaryManyVaryManyResponse = CacheVaryManyVaryManyResponses[keyof CacheVaryManyVaryManyResponses];
+export type CacheVaryManyKeyVaryManyResponse = CacheVaryManyKeyVaryManyResponses[keyof CacheVaryManyKeyVaryManyResponses];
 
 export type CompressedSmallSmallData = {
     body?: never;

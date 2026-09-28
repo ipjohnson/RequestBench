@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { Draw, RunValues } from "#kit";
+import { CACHE_KEYS } from "#models/cache";
 import { CATEGORIES } from "#models/item";
 import { LARGE } from "#models/payload";
 
@@ -110,5 +111,6 @@ export function drawFrom(random: () => number): Draw {
   return {
     choice: <T>(values: readonly T[]): T => values[pick(random, values.length)] as T,
     item: () => 1 + pick(random, LARGE),
+    key: () => CACHE_KEYS[pick(random, CACHE_KEYS.length)]!,
   };
 }

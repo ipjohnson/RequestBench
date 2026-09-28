@@ -100,11 +100,11 @@ pub fn configure(cfg: &mut ServiceConfig, p: &'static Payloads, stores: &Stores)
     // keys on the route's own list, not on this header.
     let (vary_one, vary_many) = (listed(&one.on), listed(&many.on));
 
-    cfg.service(web::resource("/cache/small").route(web::get().to(move || async move { HttpResponse::Ok().insert_header(serial::fresh()).json(&p.small) })).wrap(from_fn(move |request, next| replay(small.clone(), request, next))))
-        .service(web::resource("/cache/medium").route(web::get().to(move || async move { HttpResponse::Ok().insert_header(serial::fresh()).json(&p.medium) })).wrap(from_fn(move |request, next| replay(medium.clone(), request, next))))
-        .service(web::resource("/cache/large").route(web::get().to(move || async move { HttpResponse::Ok().insert_header(serial::fresh()).json(&p.large) })).wrap(from_fn(move |request, next| replay(large.clone(), request, next))))
-        .service(web::resource("/cache/vary/one").route(web::get().to(move || { let vary = vary_one.clone(); async move { HttpResponse::Ok().insert_header(serial::fresh()).insert_header((VARY, vary)).json(&p.small) } })).wrap(from_fn(move |request, next| replay(one.clone(), request, next))))
-        .service(web::resource("/cache/vary/many").route(web::get().to(move || { let vary = vary_many.clone(); async move { HttpResponse::Ok().insert_header(serial::fresh()).insert_header((VARY, vary)).json(&p.small) } })).wrap(from_fn(move |request, next| replay(many.clone(), request, next))));
+    cfg.service(web::resource("/cache/small/{key}").route(web::get().to(move || async move { HttpResponse::Ok().insert_header(serial::fresh()).json(&p.small) })).wrap(from_fn(move |request, next| replay(small.clone(), request, next))))
+        .service(web::resource("/cache/medium/{key}").route(web::get().to(move || async move { HttpResponse::Ok().insert_header(serial::fresh()).json(&p.medium) })).wrap(from_fn(move |request, next| replay(medium.clone(), request, next))))
+        .service(web::resource("/cache/large/{key}").route(web::get().to(move || async move { HttpResponse::Ok().insert_header(serial::fresh()).json(&p.large) })).wrap(from_fn(move |request, next| replay(large.clone(), request, next))))
+        .service(web::resource("/cache/vary/one/{key}").route(web::get().to(move || { let vary = vary_one.clone(); async move { HttpResponse::Ok().insert_header(serial::fresh()).insert_header((VARY, vary)).json(&p.small) } })).wrap(from_fn(move |request, next| replay(one.clone(), request, next))))
+        .service(web::resource("/cache/vary/many/{key}").route(web::get().to(move || { let vary = vary_many.clone(); async move { HttpResponse::Ok().insert_header(serial::fresh()).insert_header((VARY, vary)).json(&p.small) } })).wrap(from_fn(move |request, next| replay(many.clone(), request, next))));
 }
 
 fn names<'a>(keys: impl Iterator<Item = &'a String>) -> Vec<HeaderName> {

@@ -12,23 +12,23 @@ namespace Implementation.Controllers;
 [ApiController]
 public sealed class CacheController(Payloads payloads) : ControllerBase
 {
-    [HttpGet("/cache/small")]
+    [HttpGet("/cache/small/{key}")]
     [OutputCache]
     public Payload Small() => Stored(payloads.Small);
 
-    [HttpGet("/cache/medium")]
+    [HttpGet("/cache/medium/{key}")]
     [OutputCache]
     public Payload Medium() => Stored(payloads.Medium);
 
-    [HttpGet("/cache/large")]
+    [HttpGet("/cache/large/{key}")]
     [OutputCache]
     public Payload Large() => Stored(payloads.Large);
 
-    [HttpGet("/cache/vary/one")]
+    [HttpGet("/cache/vary/one/{key}")]
     [OutputCache(PolicyName = Policies.VaryOne)]
     public Payload VaryOne() => Stored(payloads.Small, payloads.Settings.Cache.Vary.One.Keys);
 
-    [HttpGet("/cache/vary/many")]
+    [HttpGet("/cache/vary/many/{key}")]
     [OutputCache(PolicyName = Policies.VaryMany)]
     public Payload VaryMany() => Stored(payloads.Small, payloads.Settings.Cache.Vary.Many.Keys);
 

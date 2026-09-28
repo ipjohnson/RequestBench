@@ -17,7 +17,7 @@ import org.springframework.cache.annotation.EnableCaching;
 @SpringBootApplication(exclude = {SecurityFilterAutoConfiguration.class, UserDetailsServiceAutoConfiguration.class})
 // rb:end
 // rb:wiring cache.*
-// Spring's cache abstraction, over Boot's default provider, a ConcurrentMapCacheManager.
+// Spring's cache abstraction, over Caffeine, which application.properties sizes and ages.
 @EnableCaching
 // rb:end
 public class Application {

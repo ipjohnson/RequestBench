@@ -389,10 +389,20 @@
         }
       }
     },
-    "/cache/small": {
+    "/cache/small/{key}": {
       "get": {
         "tags": [
           "Cache"
+        ],
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "responses": {
           "200": {
@@ -418,10 +428,20 @@
         }
       }
     },
-    "/cache/medium": {
+    "/cache/medium/{key}": {
       "get": {
         "tags": [
           "Cache"
+        ],
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "responses": {
           "200": {
@@ -447,10 +467,20 @@
         }
       }
     },
-    "/cache/large": {
+    "/cache/large/{key}": {
       "get": {
         "tags": [
           "Cache"
+        ],
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "responses": {
           "200": {
@@ -476,10 +506,20 @@
         }
       }
     },
-    "/cache/vary/one": {
+    "/cache/vary/one/{key}": {
       "get": {
         "tags": [
           "Cache"
+        ],
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "responses": {
           "200": {
@@ -505,10 +545,20 @@
         }
       }
     },
-    "/cache/vary/many": {
+    "/cache/vary/many/{key}": {
       "get": {
         "tags": [
           "Cache"
+        ],
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "responses": {
           "200": {

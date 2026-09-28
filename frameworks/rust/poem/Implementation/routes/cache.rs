@@ -22,13 +22,13 @@ pub fn add(route: Route, p: &'static Payloads) -> Route {
     let vary_many = listed(&many);
 
     route
-        .at("/cache/small", get(make_sync(move |_| serial::fresh(Json(&p.small)))).with(Stored::new(settings, vec![])))
-        .at("/cache/medium", get(make_sync(move |_| serial::fresh(Json(&p.medium)))).with(Stored::new(settings, vec![])))
-        .at("/cache/large", get(make_sync(move |_| serial::fresh(Json(&p.large)))).with(Stored::new(settings, vec![])))
+        .at("/cache/small/:key", get(make_sync(move |_| serial::fresh(Json(&p.small)))).with(Stored::new(settings, vec![])))
+        .at("/cache/medium/:key", get(make_sync(move |_| serial::fresh(Json(&p.medium)))).with(Stored::new(settings, vec![])))
+        .at("/cache/large/:key", get(make_sync(move |_| serial::fresh(Json(&p.large)))).with(Stored::new(settings, vec![])))
         // The Vary header tells a cache in front of the framework what the answer depends on. The
         // store keys on the route's own list, not on this header.
-        .at("/cache/vary/one", get(make_sync(move |_| serial::fresh(Json(&p.small)).with_header(VARY, vary_one.clone()))).with(Stored::new(settings, one)))
-        .at("/cache/vary/many", get(make_sync(move |_| serial::fresh(Json(&p.small)).with_header(VARY, vary_many.clone()))).with(Stored::new(settings, many)))
+        .at("/cache/vary/one/:key", get(make_sync(move |_| serial::fresh(Json(&p.small)).with_header(VARY, vary_one.clone()))).with(Stored::new(settings, one)))
+        .at("/cache/vary/many/:key", get(make_sync(move |_| serial::fresh(Json(&p.small)).with_header(VARY, vary_many.clone()))).with(Stored::new(settings, many)))
 }
 
 // rb:wiring cache.*

@@ -19,7 +19,7 @@ public sealed class CompressedTests(WolverineApp app)
         Assert.Equal("gzip", Answer.Header(second, "content-encoding"));
         await using GZipStream unzipped = new(new MemoryStream(Answer.Bytes(second)), CompressionMode.Decompress);
         Assert.True(JsonNode.DeepEquals(Expected.Json($"items.{size}.json"), await JsonNode.ParseAsync(unzipped)));
-        Assert.True(Answer.Serial(second) > Answer.Serial(first));
+        Assert.NotEqual(Answer.Serial(first), Answer.Serial(second));
     }
 
     // rb:test compressed.identity_small,compressed.identity_large

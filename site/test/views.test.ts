@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 import { deltaFor, type Chain } from "../src/lib/delta.ts";
 import type { Framework, Route } from "../src/lib/types.ts";
-import { baseCell, basePop, cmpCell, deltaCell, peerPop, THIN_PAIR, unfinished } from "../src/lib/views.ts";
+import { baseCell, basePop, cacheLine, cmpCell, deltaCell, peerPop, THIN_PAIR, unfinished } from "../src/lib/views.ts";
 
 const routes: Record<string, Route> = {
   "json.small": { m: "GET", p: "/json/small" },
@@ -157,5 +157,21 @@ describe("unfinished", () => {
   test("a rate it completed, or one no summary said anything about, needs no reason", () => {
     assert.equal(unfinished("carter", { completed: true }), null);
     assert.equal(unfinished("carter", undefined), null);
+  });
+});
+
+describe("cacheLine", () => {
+  test("says how often the handler ran beside one store that expires on time, and the oldest answer", () => {
+    const cache = { keys: 4, handlerRuns: 9, oldestMs: 29_840, lifetimeSeconds: 30, oneStore: 8 };
+    assert.equal(
+      cacheLine(cache),
+      "The handler ran 9 times for 4 keys, where one store that keeps each answer 30 seconds would run it 8 times. " +
+        "The oldest answer was 29.8 seconds old.",
+    );
+  });
+
+  test("a short run's share of a lifetime reads to a tenth, and no answer leaves no oldest", () => {
+    const cache = { keys: 4, handlerRuns: 1, oldestMs: null, lifetimeSeconds: 30, oneStore: 4 / 3 };
+    assert.equal(cacheLine(cache), "The handler ran 1 time for 4 keys, where one store that keeps each answer 30 seconds would run it 1.3 times.");
   });
 });

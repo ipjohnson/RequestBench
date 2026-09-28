@@ -1236,85 +1236,155 @@ export type CreateItemsPostResponses = {
 
 export type CreateItemsPostResponse = CreateItemsPostResponses[keyof CreateItemsPostResponses];
 
-export type SmallCacheSmallGetData = {
+export type SmallCacheSmallKeyGetData = {
     body?: never;
-    path?: never;
+    path: {
+        /**
+         * Key
+         */
+        key: string;
+    };
     query?: never;
-    url: '/cache/small';
+    url: '/cache/small/{key}';
 };
 
-export type SmallCacheSmallGetResponses = {
+export type SmallCacheSmallKeyGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type SmallCacheSmallKeyGetError = SmallCacheSmallKeyGetErrors[keyof SmallCacheSmallKeyGetErrors];
+
+export type SmallCacheSmallKeyGetResponses = {
     /**
      * Successful Response
      */
     200: Payload;
 };
 
-export type SmallCacheSmallGetResponse = SmallCacheSmallGetResponses[keyof SmallCacheSmallGetResponses];
+export type SmallCacheSmallKeyGetResponse = SmallCacheSmallKeyGetResponses[keyof SmallCacheSmallKeyGetResponses];
 
-export type MediumCacheMediumGetData = {
+export type MediumCacheMediumKeyGetData = {
     body?: never;
-    path?: never;
+    path: {
+        /**
+         * Key
+         */
+        key: string;
+    };
     query?: never;
-    url: '/cache/medium';
+    url: '/cache/medium/{key}';
 };
 
-export type MediumCacheMediumGetResponses = {
+export type MediumCacheMediumKeyGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type MediumCacheMediumKeyGetError = MediumCacheMediumKeyGetErrors[keyof MediumCacheMediumKeyGetErrors];
+
+export type MediumCacheMediumKeyGetResponses = {
     /**
      * Successful Response
      */
     200: Payload;
 };
 
-export type MediumCacheMediumGetResponse = MediumCacheMediumGetResponses[keyof MediumCacheMediumGetResponses];
+export type MediumCacheMediumKeyGetResponse = MediumCacheMediumKeyGetResponses[keyof MediumCacheMediumKeyGetResponses];
 
-export type LargeCacheLargeGetData = {
+export type LargeCacheLargeKeyGetData = {
     body?: never;
-    path?: never;
+    path: {
+        /**
+         * Key
+         */
+        key: string;
+    };
     query?: never;
-    url: '/cache/large';
+    url: '/cache/large/{key}';
 };
 
-export type LargeCacheLargeGetResponses = {
+export type LargeCacheLargeKeyGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type LargeCacheLargeKeyGetError = LargeCacheLargeKeyGetErrors[keyof LargeCacheLargeKeyGetErrors];
+
+export type LargeCacheLargeKeyGetResponses = {
     /**
      * Successful Response
      */
     200: Payload;
 };
 
-export type LargeCacheLargeGetResponse = LargeCacheLargeGetResponses[keyof LargeCacheLargeGetResponses];
+export type LargeCacheLargeKeyGetResponse = LargeCacheLargeKeyGetResponses[keyof LargeCacheLargeKeyGetResponses];
 
-export type VaryOneCacheVaryOneGetData = {
+export type VaryOneCacheVaryOneKeyGetData = {
     body?: never;
-    path?: never;
+    path: {
+        /**
+         * Key
+         */
+        key: string;
+    };
     query?: never;
-    url: '/cache/vary/one';
+    url: '/cache/vary/one/{key}';
 };
 
-export type VaryOneCacheVaryOneGetResponses = {
+export type VaryOneCacheVaryOneKeyGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type VaryOneCacheVaryOneKeyGetError = VaryOneCacheVaryOneKeyGetErrors[keyof VaryOneCacheVaryOneKeyGetErrors];
+
+export type VaryOneCacheVaryOneKeyGetResponses = {
     /**
      * Successful Response
      */
     200: Payload;
 };
 
-export type VaryOneCacheVaryOneGetResponse = VaryOneCacheVaryOneGetResponses[keyof VaryOneCacheVaryOneGetResponses];
+export type VaryOneCacheVaryOneKeyGetResponse = VaryOneCacheVaryOneKeyGetResponses[keyof VaryOneCacheVaryOneKeyGetResponses];
 
-export type VaryManyCacheVaryManyGetData = {
+export type VaryManyCacheVaryManyKeyGetData = {
     body?: never;
-    path?: never;
+    path: {
+        /**
+         * Key
+         */
+        key: string;
+    };
     query?: never;
-    url: '/cache/vary/many';
+    url: '/cache/vary/many/{key}';
 };
 
-export type VaryManyCacheVaryManyGetResponses = {
+export type VaryManyCacheVaryManyKeyGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type VaryManyCacheVaryManyKeyGetError = VaryManyCacheVaryManyKeyGetErrors[keyof VaryManyCacheVaryManyKeyGetErrors];
+
+export type VaryManyCacheVaryManyKeyGetResponses = {
     /**
      * Successful Response
      */
     200: Payload;
 };
 
-export type VaryManyCacheVaryManyGetResponse = VaryManyCacheVaryManyGetResponses[keyof VaryManyCacheVaryManyGetResponses];
+export type VaryManyCacheVaryManyKeyGetResponse = VaryManyCacheVaryManyKeyGetResponses[keyof VaryManyCacheVaryManyKeyGetResponses];
 
 export type SmallEtagSmallGetData = {
     body?: never;

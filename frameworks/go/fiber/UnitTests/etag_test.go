@@ -30,8 +30,8 @@ func TestTheTagIsTheBodysLengthAndChecksum(t *testing.T) {
 			if !equalJSON(t, body, payload(t, "items."+row.size+".json")) {
 				t.Fatal("the body is not the payload")
 			}
-			if serial(t, response) <= before {
-				t.Fatal("x-rb-serial did not advance")
+			if serial(t, response) == before {
+				t.Fatal("x-rb-serial repeated, so the handler did not run")
 			}
 		})
 	}

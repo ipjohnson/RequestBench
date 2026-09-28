@@ -11,19 +11,20 @@ public static class CacheRoutes
     {
         VarySettings vary = app.ServiceProvider.GetRequiredService<Payloads>().Settings.Cache.Vary;
 
-        app.MapGet("/cache/small", (HttpResponse response, Payloads p) => Stored(response, p.Small)).CacheOutput().DisableValidation();
+        // Each handler binds the key, which is how the OpenAPI document learns the route has one.
+        app.MapGet("/cache/small/{key}", (string key, HttpResponse response, Payloads p) => Stored(response, p.Small)).CacheOutput().DisableValidation();
 
-        app.MapGet("/cache/medium", (HttpResponse response, Payloads p) => Stored(response, p.Medium)).CacheOutput().DisableValidation();
+        app.MapGet("/cache/medium/{key}", (string key, HttpResponse response, Payloads p) => Stored(response, p.Medium)).CacheOutput().DisableValidation();
 
-        app.MapGet("/cache/large", (HttpResponse response, Payloads p) => Stored(response, p.Large)).CacheOutput().DisableValidation();
+        app.MapGet("/cache/large/{key}", (string key, HttpResponse response, Payloads p) => Stored(response, p.Large)).CacheOutput().DisableValidation();
 
         string[] one = [.. vary.One.Keys];
-        app.MapGet("/cache/vary/one", (HttpResponse response, Payloads p) => Stored(response, p.Small, one))
+        app.MapGet("/cache/vary/one/{key}", (string key, HttpResponse response, Payloads p) => Stored(response, p.Small, one))
            .CacheOutput(policy => policy.SetVaryByHeader(one))
            .DisableValidation();
 
         string[] many = [.. vary.Many.Keys];
-        app.MapGet("/cache/vary/many", (HttpResponse response, Payloads p) => Stored(response, p.Small, many))
+        app.MapGet("/cache/vary/many/{key}", (string key, HttpResponse response, Payloads p) => Stored(response, p.Small, many))
            .CacheOutput(policy => policy.SetVaryByHeader(many))
            .DisableValidation();
     }

@@ -1,8 +1,8 @@
 package unittests;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -27,7 +27,7 @@ class CompressedTests extends VertxApp {
 
         assertEquals("gzip", Answer.header(second, "content-encoding"));
         assertEquals(Expected.json("items.large.json"), unzipped(second));
-        assertTrue(Answer.serial(second) > Answer.serial(first));
+        assertNotEquals(Answer.serial(first), Answer.serial(second));
     }
 
     // rb:test compressed.gzip_small

@@ -71,7 +71,7 @@ function validated(body: string): Answer {
 
 const ROUTES: readonly Route[] = [
   [
-    /^GET \/(plaintext|(json|cache|compressed|middleware|template)\/\w+|cache\/vary\/(one|many)|parameters\/static\/segment\/literal)$/,
+    /^GET \/(plaintext|(json|compressed|middleware|template)\/\w+|cache\/(small|medium|large|vary\/one|vary\/many)\/k\d|parameters\/static\/segment\/literal)$/,
     () => 200,
   ],
   [/^GET \/authorized\/small$/, (_, req) => (req.headers.authorization === `Bearer ${token}` ? 200 : 403)],
@@ -221,6 +221,38 @@ test("every performance test answers the status it declares", async () => {
     assert.deepEqual([t.windows.length, t.windows[0][0]], [1, t.count], t.id);
     assert.ok(t.windows[0][1] > 0 && t.windows[0][1] <= t.windows[0][2] && t.windows[0][2] <= t.windows[0][3], t.id);
   }
+});
+
+test("a store that keeps every answer runs the handler once per key, before the recording", async () => {
+  // Each key is filled the first time it is asked, 45 seconds ago by its serial, and never again.
+  const filled = new Map<string, string>();
+  answering = stub((route) => {
+    const key = /^GET \/cache\/small\/(k\d)$/.exec(route)?.[1];
+    if (key === undefined) return undefined;
+    let serial = filled.get(key);
+    if (serial === undefined) filled.set(key, (serial = `${Date.now() - 45_000}|${key}`));
+    return [200, { "x-rb-serial": serial }];
+  });
+  delay = 0;
+  const { code, result, stdout } = await generate(load([{ name: "regular", rps: 200, settle: 1, seconds: 1 }], { only: ["cache.small", "json.small"] }));
+  assert.equal(code, 0, stdout);
+  const tests = result.phases[0].recorded.tests;
+  const cache = tests.find((t: { id: string }) => t.id === "cache.small").cache;
+  assert.deepEqual([cache.keys, cache.handlerRuns], [4, 0]);
+  assert.ok(cache.oldestMs >= 45_000, String(cache.oldestMs));
+  assert.equal(tests.find((t: { id: string }) => t.id === "json.small").cache, undefined);
+});
+
+test("an answer the handler wrote is a run of it, however often its value comes back", async () => {
+  // No store: every answer carries a serial of its own.
+  let runs = 0;
+  answering = stub((route) => (/^GET \/cache\/small\//.test(route) ? [200, { "x-rb-serial": `${Date.now()}|${++runs}` }] : undefined));
+  delay = 0;
+  const { code, result, stdout } = await generate(load([{ name: "regular", rps: 200, seconds: 1 }], { only: ["cache.small"] }));
+  assert.equal(code, 0, stdout);
+  const [small] = result.phases[0].recorded.tests;
+  assert.deepEqual([small.cache.keys, small.cache.handlerRuns], [4, small.count]);
+  assert.ok(small.cache.oldestMs < 1_000, String(small.cache.oldestMs));
 });
 
 test("a wrong status is counted against the test that received it and still timed", async () => {

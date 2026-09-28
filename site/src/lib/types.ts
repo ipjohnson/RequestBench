@@ -65,6 +65,16 @@ export const TestRung = z.looseObject({
   bins: z.array(z.number()).optional(),
   /** Each window of the recording, in order, laid out as the summary's `windowGrid` says. */
   windows: z.array(z.array(z.number())).optional(),
+  /** A cache test's store: how often the handler ran, and how often one store that expires on time would run it. */
+  cache: z
+    .object({
+      keys: z.number(),
+      handlerRuns: z.number(),
+      oldestMs: z.number().nullable(),
+      lifetimeSeconds: z.number(),
+      oneStore: z.number(),
+    })
+    .optional(),
 });
 export type TestRung = z.infer<typeof TestRung>;
 

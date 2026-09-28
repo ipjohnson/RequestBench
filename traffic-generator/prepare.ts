@@ -25,6 +25,7 @@ import type {
   RunValues,
 } from "@rb/tests/kit";
 import { idOf } from "@rb/tests/kit";
+import { CACHE_KEYS } from "@rb/tests/models/cache";
 import { LARGE } from "@rb/tests/models/payload";
 import type { Exchanged, Pipe, WireRequest } from "./pipe.ts";
 
@@ -48,6 +49,11 @@ export interface Prepared {
    * time or a trace id, so nothing is compared but its status.
    */
   readonly bodyBytes: number | undefined;
+  /**
+   * Whether the test asserts a replay, so the load reads each answer's x-rb-serial and counts the
+   * values it has not seen before: how often the framework's cache ran the handler.
+   */
+  readonly serials: boolean;
 }
 
 /** One test's requests, in the order the report lists the tests. */
@@ -55,6 +61,9 @@ export interface Compiled {
   readonly id: string;
   readonly instances: readonly Prepared[];
 }
+
+/** Whether the load counts a test's x-rb-serial values, because the test asserts a replay. */
+export const serialsOf = (test: Compiled): boolean => test.instances.some((i) => i.serials);
 
 export interface PrepareOptions {
   /** The Rust program, already reaching the framework. */
@@ -138,6 +147,7 @@ function sweep(index: number, count: number, sizes: readonly number[] | undefine
   return {
     draw: {
       item: () => 1 + pick(LARGE),
+      key: () => CACHE_KEYS[pick(CACHE_KEYS.length)]!,
       choice: <T>(values: readonly T[]): T => values[pick(values.length)] as T,
     },
     sizes: seen,
@@ -254,6 +264,7 @@ class PreparingCall<T = void> implements Call<T> {
   readonly #headers: [string, string][] = [];
   #body: Buffer | undefined;
   #expected: readonly number[] = [];
+  #replayed = false;
   #answer: Promise<Answer> | undefined;
 
   constructor(client: PreparingClient, method: Method, path: string, body?: Json) {
@@ -343,6 +354,7 @@ class PreparingCall<T = void> implements Call<T> {
   }
 
   replayed(): Call<T> {
+    this.#replayed = true;
     return this;
   }
 
@@ -427,6 +439,7 @@ class PreparingCall<T = void> implements Call<T> {
           target: `${this.#method} ${target}`,
           accepted: this.#expected,
           bodyBytes: answer.status >= 200 && answer.status < 300 ? answer.bodyBytes : undefined,
+          serials: this.#replayed,
           status: answer.status,
         },
         this.#priming,

@@ -8,6 +8,7 @@ import io.ktor.http.HttpHeaders
 import io.ktor.server.testing.ApplicationTestBuilder
 import java.util.zip.GZIPInputStream
 import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.serialization.json.Json
@@ -55,7 +56,7 @@ class CompressedTests {
 
         assertTrue(second.headers[HttpHeaders.ContentEncoding] in setOf(null, "identity"))
         assertEquals(Expected.json("items.$size.json"), second.json())
-        assertTrue(second.headers["x-rb-serial"]!!.toLong() > first.headers["x-rb-serial"]!!.toLong())
+        assertNotEquals(first.serial(), second.serial())
     }
 
     @Test

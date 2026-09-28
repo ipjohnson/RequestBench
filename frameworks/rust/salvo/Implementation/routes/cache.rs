@@ -17,13 +17,13 @@ pub fn router(p: &'static Payloads) -> Router {
     let many = names(settings.vary.many.keys());
 
     Router::with_path("/cache")
-        .push(Router::with_path("small").hoop(stored(settings, RequestIssuer::default())).get(Stamped(&p.small)))
-        .push(Router::with_path("medium").hoop(stored(settings, RequestIssuer::default())).get(Stamped(&p.medium)))
-        .push(Router::with_path("large").hoop(stored(settings, RequestIssuer::default())).get(Stamped(&p.large)))
+        .push(Router::with_path("small/{key}").hoop(stored(settings, RequestIssuer::default())).get(Stamped(&p.small)))
+        .push(Router::with_path("medium/{key}").hoop(stored(settings, RequestIssuer::default())).get(Stamped(&p.medium)))
+        .push(Router::with_path("large/{key}").hoop(stored(settings, RequestIssuer::default())).get(Stamped(&p.large)))
         // Varies is hooped outside the cache, so it writes Vary after the cache has stored or
         // replayed the answer.
-        .push(Router::with_path("vary/one").hoop(Varies(listed(&one))).hoop(stored(settings, KeyedBy(one))).get(Stamped(&p.small)))
-        .push(Router::with_path("vary/many").hoop(Varies(listed(&many))).hoop(stored(settings, KeyedBy(many))).get(Stamped(&p.small)))
+        .push(Router::with_path("vary/one/{key}").hoop(Varies(listed(&one))).hoop(stored(settings, KeyedBy(one))).get(Stamped(&p.small)))
+        .push(Router::with_path("vary/many/{key}").hoop(Varies(listed(&many))).hoop(stored(settings, KeyedBy(many))).get(Stamped(&p.small)))
 }
 
 // rb:wiring cache.*

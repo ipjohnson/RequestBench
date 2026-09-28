@@ -32,7 +32,7 @@
       "mentions": "io.helidon.validation"
     },
     "cache": {
-      "mechanism": "A store and a replay written for the family, because Helidon SE has no response cache. The first request for a key stores the answer's body with its x-rb-serial, keyed by the path and the route's vary headers, and later ones are answered from the store"
+      "mechanism": "A store and a replay written for the family, because Helidon SE has no response cache. The first request for a key stores the answer's body with its x-rb-serial, keyed by the path and the route's vary headers, and later ones are answered from the store until settings.json's TTL has passed"
     },
     "compressed": {
       "mechanism": "Helidon's content encoding on the server's listener, which covers every route, with gzip alone at the fastest level. GzipEncoding has no setting for the level, so a ContentEncoding of the port's wraps it and deflates at Deflater.BEST_SPEED",

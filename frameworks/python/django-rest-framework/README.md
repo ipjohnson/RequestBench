@@ -53,9 +53,9 @@ it, and hands each request to a thread of its pool. gunicorn documents 2 to 4 th
 four is the low end of that range for the container's two cores.
 
 Each worker keeps its own state. The `x-rb-serial` counter and the cache family's LocMemCache are
-both per worker, so two workers answering one path can carry different serials. A connection stays
-with the worker that accepted it, and the gate sends each test's two requests on one connection, so
-`fresh()` and `replayed()` hold. Under load each worker fills its own store.
+both per worker, and the serial carries the worker's process id, so no two workers write one value.
+A connection stays with the worker that accepted it, and the gate sends each test's two requests on
+one connection, so `replayed()` holds. Under load each worker fills its own store.
 
 ## Settings
 
@@ -124,7 +124,7 @@ in the same place.
   to the container's output, on container-h1 and on container-h2.
 - A cache hit still runs DRF's view around `cache_page`: the request wrapper, the content
   negotiation, the permission check and the `Allow` header. `cache_page` also writes `Expires` and
-  `Cache-Control: max-age=3600` on every answer it stores.
+  `Cache-Control: max-age=30` on every answer it stores.
 - `gzip_page` compresses at level 6, which Django hard-codes, so the compressed rows run at level 6
   rather than the fastest level most frameworks here use. As a mitigation for BREACH, it also writes
   a file name of a random length, under 100 bytes, into each gzip header, so a compressed answer's

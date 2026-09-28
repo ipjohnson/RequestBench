@@ -84,29 +84,29 @@ fun Route.cache(p: Payloads) {
     // rb:end
 
     // rb:handler cache.small
-    route("/cache/small") {
+    route("/cache/small/{key}") {
         install(ResponseCache) { this.store = store }
         get { call.fresh(); call.respond(p.small) }
     }
     // rb:handler cache.medium
-    route("/cache/medium") {
+    route("/cache/medium/{key}") {
         install(ResponseCache) { this.store = store }
         get { call.fresh(); call.respond(p.medium) }
     }
     // rb:handler cache.large
-    route("/cache/large") {
+    route("/cache/large/{key}") {
         install(ResponseCache) { this.store = store }
         get { call.fresh(); call.respond(p.large) }
     }
     // The Vary header tells a cache in front of the framework what the answer depends on. The store
     // keys on the route's own list.
     // rb:handler cache.vary_one
-    route("/cache/vary/one") {
+    route("/cache/vary/one/{key}") {
         install(ResponseCache) { this.store = store; varyOn = one }
         get { call.fresh(); call.response.header(HttpHeaders.Vary, one.joinToString(", ")); call.respond(p.small) }
     }
     // rb:handler cache.vary_many
-    route("/cache/vary/many") {
+    route("/cache/vary/many/{key}") {
         install(ResponseCache) { this.store = store; varyOn = many }
         get { call.fresh(); call.response.header(HttpHeaders.Vary, many.joinToString(", ")); call.respond(p.small) }
     }

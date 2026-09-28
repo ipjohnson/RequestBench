@@ -18,7 +18,7 @@ public sealed class CompressedTests(MinimalApisApp app) : IClassFixture<MinimalA
         Assert.Equal(["gzip"], second.Content.Headers.ContentEncoding);
         await using GZipStream unzipped = new(await second.Content.ReadAsStreamAsync(), CompressionMode.Decompress);
         Assert.True(JsonNode.DeepEquals(Expected.Json($"items.{size}.json"), await JsonNode.ParseAsync(unzipped)));
-        Assert.True(Answer.Serial(second) > Answer.Serial(first));
+        Assert.NotEqual(Answer.Serial(first), Answer.Serial(second));
     }
 
     // rb:test compressed.identity_small,compressed.identity_large

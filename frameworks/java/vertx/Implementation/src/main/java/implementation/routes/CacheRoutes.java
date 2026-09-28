@@ -36,15 +36,15 @@ public final class CacheRoutes {
                 settings.getInteger("ttlSeconds") * 1000L);
         // rb:end
 
-        router.get("/cache/small").handler(store.replay(List.of())).handler(ctx -> store.keep(ctx, p.small(), List.of()));
+        router.get("/cache/small/:key").handler(store.replay(List.of())).handler(ctx -> store.keep(ctx, p.small(), List.of()));
 
-        router.get("/cache/medium").handler(store.replay(List.of())).handler(ctx -> store.keep(ctx, p.medium(), List.of()));
+        router.get("/cache/medium/:key").handler(store.replay(List.of())).handler(ctx -> store.keep(ctx, p.medium(), List.of()));
 
-        router.get("/cache/large").handler(store.replay(List.of())).handler(ctx -> store.keep(ctx, p.large(), List.of()));
+        router.get("/cache/large/:key").handler(store.replay(List.of())).handler(ctx -> store.keep(ctx, p.large(), List.of()));
 
-        router.get("/cache/vary/one").handler(store.replay(one)).handler(ctx -> store.keep(ctx, p.small(), one));
+        router.get("/cache/vary/one/:key").handler(store.replay(one)).handler(ctx -> store.keep(ctx, p.small(), one));
 
-        router.get("/cache/vary/many").handler(store.replay(many)).handler(ctx -> store.keep(ctx, p.small(), many));
+        router.get("/cache/vary/many/:key").handler(store.replay(many)).handler(ctx -> store.keep(ctx, p.small(), many));
     }
 
     // rb:wiring cache.*

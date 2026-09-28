@@ -3,8 +3,8 @@
   "wrongToken": "5a7cc77ed0dcb825806b6f872026c310",
   "staleEtag": "\"0000000000000000\"",
   "cache": {
-    "capacity": 20,
-    "ttlSeconds": 3600,
+    "capacity": 64,
+    "ttlSeconds": 30,
     "vary": {
       "one": {
         "x-rb-tenant": [

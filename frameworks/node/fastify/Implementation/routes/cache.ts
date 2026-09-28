@@ -2,7 +2,7 @@ import type { FastifyReply, FastifyRequest } from "fastify";
 
 import type { Routes } from "../app.ts";
 import type { Payload } from "../payloads.ts";
-import { answers, payload } from "../schemas.ts";
+import { payload, string } from "../schemas.ts";
 import { fresh } from "../serial.ts";
 
 declare module "fastify" {
@@ -18,6 +18,11 @@ interface Stored {
   readonly body: string;
   readonly expires: number;
 }
+
+/** The key a cache route's answer is stored under, and the body it answers 200 with. */
+const keyed = {
+  schema: { params: { type: "object", properties: { key: string }, required: ["key"] }, response: { 200: payload } },
+} as const;
 
 /**
  * cache: the handler skipped and a stored answer written back. The handler writes x-rb-serial,
@@ -69,15 +74,15 @@ const cache: Routes = async (app, { payloads: p }) => {
   });
   // rb:end
 
-  app.get("/cache/small", answers(payload), async (_request, reply) => stored(reply, p.small));
+  app.get("/cache/small/:key", keyed, async (_request, reply) => stored(reply, p.small));
 
-  app.get("/cache/medium", answers(payload), async (_request, reply) => stored(reply, p.medium));
+  app.get("/cache/medium/:key", keyed, async (_request, reply) => stored(reply, p.medium));
 
-  app.get("/cache/large", answers(payload), async (_request, reply) => stored(reply, p.large));
+  app.get("/cache/large/:key", keyed, async (_request, reply) => stored(reply, p.large));
 
-  app.get("/cache/vary/one", { ...answers(payload), config: { vary: one } }, async (_request, reply) => stored(reply, p.small, one));
+  app.get("/cache/vary/one/:key", { ...keyed, config: { vary: one } }, async (_request, reply) => stored(reply, p.small, one));
 
-  app.get("/cache/vary/many", { ...answers(payload), config: { vary: many } }, async (_request, reply) => stored(reply, p.small, many));
+  app.get("/cache/vary/many/:key", { ...keyed, config: { vary: many } }, async (_request, reply) => stored(reply, p.small, many));
 };
 
 /**

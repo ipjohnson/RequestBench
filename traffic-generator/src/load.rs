@@ -30,7 +30,7 @@ use crate::cycle::Cycle;
 use crate::h2c::{self, Template};
 use crate::http1::{Read, Reader};
 use crate::request::Protocol;
-use crate::tally::Tally;
+use crate::tally::{Tally, epoch_ms};
 
 /// A request as its protocol sends it, built before the load began.
 pub enum Wire {
@@ -53,6 +53,8 @@ pub struct Instance {
 
 pub struct Test {
     pub instances: Vec<Instance>,
+    /// Whether its answers' x-rb-serial values are counted, as a cache test's are.
+    pub serials: bool,
 }
 
 /// One phase, counted in instances across every thread.
@@ -92,7 +94,7 @@ enum ToWorker {
 enum FromWorker {
     Ready,
     Settled { dropped: u64 },
-    Done(Report),
+    Done(Box<Report>),
     Failed(String),
 }
 
@@ -205,7 +207,7 @@ impl Load {
                         }
                     }
                 }
-                FromWorker::Done(report) => reports[i] = Some(report),
+                FromWorker::Done(report) => reports[i] = Some(*report),
                 FromWorker::Failed(why) => return Err(why),
                 FromWorker::Ready => {}
             }
@@ -240,7 +242,7 @@ async fn worker(job: Job, mut rx: mpsc::UnboundedReceiver<ToWorker>, tx: mpsc::U
     let _ = tx.send((index, FromWorker::Ready));
     while let Some(ToWorker::Phase { schedule, start, stop }) = rx.recv().await {
         let message = match state.phase(schedule, start, &stop, &tx).await {
-            Ok(report) => FromWorker::Done(report),
+            Ok(report) => FromWorker::Done(Box::new(report)),
             Err(why) => FromWorker::Failed(why),
         };
         let _ = tx.send((index, message));
@@ -476,9 +478,10 @@ impl State {
     }
 
     fn send(self: &Rc<Self>, conn: &Rc<Conn>, pending: Pending) {
-        let instance = &self.job.tests[pending.test].instances[pending.instance];
+        let test = &self.job.tests[pending.test];
+        let instance = &test.instances[pending.instance];
         let Wire::Http1(bytes) = &instance.wire else { unreachable!("an h2c request on an HTTP/1.1 connection") };
-        conn.reader.borrow_mut().begin(instance.head, false);
+        conn.reader.borrow_mut().begin(instance.head, false, test.serials);
         conn.pending.set(Some(pending));
         match conn.stream.try_write(bytes) {
             Ok(n) if n == bytes.len() => {}
@@ -506,7 +509,7 @@ impl State {
                 let pending = conn.pending.take();
                 if !conn.reader.borrow().ends() && !conn.gone.get() {
                     self.free.borrow_mut().push_back(conn.clone());
-                    return self.answered(pending, answer.status, answer.body_bytes, Instant::now());
+                    return self.answered(pending, answer.status, answer.body_bytes, answer.serial.as_deref(), Instant::now());
                 }
                 // The answer closed its connection. Its replacement is opened now and the answer
                 // is counted once the replacement is up, so the handshake is charged to the test
@@ -515,14 +518,14 @@ impl State {
                 // instance that needs a connection opens one.
                 self.retire(conn);
                 if self.stopped.get() {
-                    return self.answered(pending, answer.status, answer.body_bytes, Instant::now());
+                    return self.answered(pending, answer.status, answer.body_bytes, answer.serial.as_deref(), Instant::now());
                 }
                 let state = self.clone();
                 tokio::task::spawn_local(async move {
                     if let Ok(replacement) = state.connect().await {
                         state.free.borrow_mut().push_back(replacement);
                     }
-                    state.answered(pending, answer.status, answer.body_bytes, Instant::now());
+                    state.answered(pending, answer.status, answer.body_bytes, answer.serial.as_deref(), Instant::now());
                 });
             }
             Read::Failed(why) => {
@@ -533,7 +536,7 @@ impl State {
         }
     }
 
-    fn answered(&self, pending: Option<Pending>, status: u16, body_bytes: u64, end: Instant) {
+    fn answered(&self, pending: Option<Pending>, status: u16, body_bytes: u64, serial: Option<&str>, end: Instant) {
         self.inflight.set(self.inflight.get().saturating_sub(1));
         let Some(p) = pending.filter(|p| p.phase == self.number.get()) else { return };
         let mut phase = self.phase.borrow_mut();
@@ -552,6 +555,9 @@ impl State {
             // load. A framework that starts answering something else is not serving what is being
             // measured.
             tally.mismatched(|| format!("{} answered {body_bytes} bytes, expected {expected}", request.label));
+        }
+        if let Some(serial) = serial {
+            tally.serials.add(serial, epoch_ms());
         }
         tally.time(end.duration_since(p.due).as_nanos() as f64 / 1000.0, window);
     }
@@ -604,13 +610,14 @@ impl State {
                 },
             };
             let tests = state.job.tests.clone();
-            let Wire::H2c(template) = &tests[pending.test].instances[pending.instance].wire else {
+            let test = &tests[pending.test];
+            let Wire::H2c(template) = &test.instances[pending.instance].wire else {
                 unreachable!("an HTTP/1.1 request on an h2c connection")
             };
-            let fetched = h2c::fetch(&conn.send, template, false).await;
+            let fetched = h2c::fetch(&conn.send, template, false, test.serials).await;
             conn.inflight.set(conn.inflight.get() - 1);
             match fetched {
-                Ok(answer) => state.answered(Some(pending), answer.status, answer.body_bytes, Instant::now()),
+                Ok(answer) => state.answered(Some(pending), answer.status, answer.body_bytes, answer.serial.as_deref(), Instant::now()),
                 Err(why) => state.failed(Some(pending), &why),
             }
         });
@@ -796,6 +803,7 @@ mod tests {
                 accepted: vec![200],
                 body_bytes: None,
             }],
+            serials: false,
         }]
     }
 
@@ -840,6 +848,7 @@ mod tests {
                 accepted: vec![200],
                 body_bytes: Some(39),
             }],
+            serials: false,
         }];
         let shape = Shape { workers: 2, connections: 4, streams: 4 };
         let mut load = Load::open("127.0.0.1".into(), port, Protocol::H2c, tests, one(), shape).await.unwrap();

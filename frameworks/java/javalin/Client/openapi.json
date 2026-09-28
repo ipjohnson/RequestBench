@@ -242,8 +242,16 @@
         }
       }
     },
-    "/cache/large" : {
+    "/cache/large/{key}" : {
       "get" : {
+        "parameters" : [ {
+          "name" : "key",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -258,8 +266,16 @@
         }
       }
     },
-    "/cache/medium" : {
+    "/cache/medium/{key}" : {
       "get" : {
+        "parameters" : [ {
+          "name" : "key",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -274,8 +290,16 @@
         }
       }
     },
-    "/cache/small" : {
+    "/cache/small/{key}" : {
       "get" : {
+        "parameters" : [ {
+          "name" : "key",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -290,7 +314,7 @@
         }
       }
     },
-    "/cache/vary/many" : {
+    "/cache/vary/many/{key}" : {
       "get" : {
         "parameters" : [ {
           "name" : "x-rb-channel",
@@ -310,6 +334,13 @@
           "schema" : {
             "type" : "string"
           }
+        }, {
+          "name" : "key",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
         } ],
         "responses" : {
           "200" : {
@@ -325,11 +356,18 @@
         }
       }
     },
-    "/cache/vary/one" : {
+    "/cache/vary/one/{key}" : {
       "get" : {
         "parameters" : [ {
           "name" : "x-rb-tenant",
           "in" : "header",
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "key",
+          "in" : "path",
+          "required" : true,
           "schema" : {
             "type" : "string"
           }

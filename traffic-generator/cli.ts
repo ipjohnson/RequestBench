@@ -25,11 +25,13 @@ import { idOf } from "@rb/tests/kit";
 import type { PerformanceTest } from "@rb/tests/kit";
 import { drawRunValues } from "@rb/tests/models/parameters";
 import { BUCKETS, addInto, countOf, percentile, windowOf } from "./histogram.ts";
-import { PrepareError, prepare, type Compiled, type Statuses } from "./prepare.ts";
+import { PrepareError, prepare, serialsOf, type Compiled, type Statuses } from "./prepare.ts";
 import {
   WINDOW_SECONDS,
   addressOf,
+  cacheSummary,
   loadSchema,
+  type CacheSummary,
   type LoadResult,
   type Percentiles,
   type Phase,
@@ -132,6 +134,7 @@ function recordedSummary(
   from: number,
   last: number,
   tallies: readonly Tally[],
+  caches: readonly (CacheSummary | undefined)[],
 ): RecordedSummary {
   const overall = new Uint32Array(BUCKETS);
   for (const tally of tallies) addInto(overall, tally.hist);
@@ -165,12 +168,18 @@ function recordedSummary(
         ...(t.firstError === undefined ? {} : { firstError: t.firstError }),
         histB64: base64(t.hist),
         windows: t.windows.map(windowOf),
+        ...(caches[i] === undefined ? {} : { cache: caches[i] }),
       };
     }),
   };
 }
 
-async function runPhase(o: Options, pipe: Pipe, phase: Phase): Promise<PhaseResult> {
+/**
+ * One phase. `compiled` says which tests count their x-rb-serial values, and how many keys each
+ * asks for. `seen` holds every value the load has read, so a value is a run of the handler in the
+ * phase it first arrives in.
+ */
+async function runPhase(o: Options, pipe: Pipe, phase: Phase, compiled: readonly Compiled[], seen: Set<string>): Promise<PhaseResult> {
   // One phase, counted in instances across every thread.
   const schedule = {
     rps: phase.rps,
@@ -189,13 +198,24 @@ async function runPhase(o: Options, pipe: Pipe, phase: Phase): Promise<PhaseResu
     windowSeconds: WINDOW_SECONDS,
   });
   const { aborted, unfinished } = report;
+  for (const s of report.settle.serials) seen.add(s);
   // The recorded instances carry on the settle's schedule, so the first of them is due where it ends.
   const from = report.start + Math.round((schedule.settle * 1e9) / phase.rps);
   const settle = phase.settle === undefined ? {} : { settle: settleSummary(phase.settle, schedule.settle, tallyOf(report.settle)) };
   const recorded =
     phase.seconds === undefined || aborted
       ? {}
-      : { recorded: recordedSummary(o.tests, phase.seconds, schedule.total, from, report.last, report.tests.map(tallyOf)) };
+      : {
+          recorded: recordedSummary(
+            o.tests,
+            phase.seconds,
+            schedule.total,
+            from,
+            report.last,
+            report.tests.map(tallyOf),
+            compiled.map((test, i) => (serialsOf(test) ? cacheSummary(report.tests[i]!, test.instances.length, seen) : undefined)),
+          ),
+        };
   return { name: phase.name, rps: phase.rps, status: aborted ? "aborted" : "done", ...settle, ...recorded, unfinished };
 }
 
@@ -272,14 +292,16 @@ async function main(args: string[]): Promise<number> {
     // Every thread and connection is opened before the first phase, and kept for every phase after it.
     const tests = compiled.map((test) => ({
       instances: test.instances.map((i) => ({ request: i.request, label: i.target, accepted: i.accepted, bodyBytes: i.bodyBytes ?? null })),
+      serials: serialsOf(test),
     }));
     const { workers, connections, streams } = o.load;
     await pipe.open(tests, order, { workers, connections, streams });
+    const seen = new Set<string>();
     for (const phase of o.load.phases) {
       const ended = phases.some((p) => p.status !== "done");
       const result: PhaseResult = ended
         ? { name: phase.name, rps: phase.rps, status: "notRun" }
-        : await runPhase(o, pipe, phase);
+        : await runPhase(o, pipe, phase, compiled, seen);
       phases.push(result);
       print(phase, result);
       if (o.out !== undefined) write(o.out, { load: o.load, testsLive: o.tests.length, phases });

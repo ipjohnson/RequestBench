@@ -1,6 +1,7 @@
 use std::time::Duration;
 
 use axum::body::Body;
+use axum::extract::Path;
 use axum::http::HeaderMap;
 use axum::http::header::{CONTENT_TYPE, VARY};
 use loco_rs::prelude::*;
@@ -15,7 +16,7 @@ use crate::serial::{self, SERIAL};
 /// cache holds each value as JSON text, so a replay reads the answer back out of that.
 #[derive(Deserialize, Serialize)]
 struct Stored {
-    serial: u64,
+    serial: String,
     body: String,
 }
 
@@ -31,7 +32,7 @@ async fn replay(ctx: &AppContext, p: &Payloads, key: &str, vary: Option<&str>, p
             stored
         }
     };
-    let mut answer = format::render().header(SERIAL, stored.serial);
+    let mut answer = format::render().header(SERIAL, &stored.serial);
     // The Vary header tells a cache in front of the framework what the answer depends on. The
     // store keys on the route's own list.
     if let Some(vary) = vary {
@@ -41,7 +42,7 @@ async fn replay(ctx: &AppContext, p: &Payloads, key: &str, vary: Option<&str>, p
 }
 
 /// The path and the values of the headers a vary route is keyed on, in settings.json's order.
-fn key<'a>(path: &str, names: impl Iterator<Item = &'a String>, headers: &HeaderMap) -> String {
+fn keyed_on<'a>(path: &str, names: impl Iterator<Item = &'a String>, headers: &HeaderMap) -> String {
     names.fold(path.to_owned(), |key, name| {
         let value = headers.get(name).and_then(|value| value.to_str().ok()).unwrap_or_default();
         format!("{key}|{value}")
@@ -58,38 +59,38 @@ fn listed<'a>(names: impl Iterator<Item = &'a String>) -> String {
 // replayed answer repeats the serial it was stored with. A vary route's key adds its headers.
 
 // rb:handler cache.small
-async fn small(State(ctx): State<AppContext>, SharedStore(p): SharedStore<&'static Payloads>) -> Result<Response> {
-    replay(&ctx, p, "/cache/small", None, &p.small).await
+async fn small(State(ctx): State<AppContext>, SharedStore(p): SharedStore<&'static Payloads>, Path(key): Path<String>) -> Result<Response> {
+    replay(&ctx, p, &format!("/cache/small/{key}"), None, &p.small).await
 }
 
 // rb:handler cache.medium
-async fn medium(State(ctx): State<AppContext>, SharedStore(p): SharedStore<&'static Payloads>) -> Result<Response> {
-    replay(&ctx, p, "/cache/medium", None, &p.medium).await
+async fn medium(State(ctx): State<AppContext>, SharedStore(p): SharedStore<&'static Payloads>, Path(key): Path<String>) -> Result<Response> {
+    replay(&ctx, p, &format!("/cache/medium/{key}"), None, &p.medium).await
 }
 
 // rb:handler cache.large
-async fn large(State(ctx): State<AppContext>, SharedStore(p): SharedStore<&'static Payloads>) -> Result<Response> {
-    replay(&ctx, p, "/cache/large", None, &p.large).await
+async fn large(State(ctx): State<AppContext>, SharedStore(p): SharedStore<&'static Payloads>, Path(key): Path<String>) -> Result<Response> {
+    replay(&ctx, p, &format!("/cache/large/{key}"), None, &p.large).await
 }
 
 // rb:handler cache.vary_one
-async fn vary_one(State(ctx): State<AppContext>, SharedStore(p): SharedStore<&'static Payloads>, headers: HeaderMap) -> Result<Response> {
+async fn vary_one(State(ctx): State<AppContext>, SharedStore(p): SharedStore<&'static Payloads>, Path(key): Path<String>, headers: HeaderMap) -> Result<Response> {
     let on = &p.settings.cache.vary.one;
-    replay(&ctx, p, &key("/cache/vary/one", on.keys(), &headers), Some(&listed(on.keys())), &p.small).await
+    replay(&ctx, p, &keyed_on(&format!("/cache/vary/one/{key}"), on.keys(), &headers), Some(&listed(on.keys())), &p.small).await
 }
 
 // rb:handler cache.vary_many
-async fn vary_many(State(ctx): State<AppContext>, SharedStore(p): SharedStore<&'static Payloads>, headers: HeaderMap) -> Result<Response> {
+async fn vary_many(State(ctx): State<AppContext>, SharedStore(p): SharedStore<&'static Payloads>, Path(key): Path<String>, headers: HeaderMap) -> Result<Response> {
     let on = &p.settings.cache.vary.many;
-    replay(&ctx, p, &key("/cache/vary/many", on.keys(), &headers), Some(&listed(on.keys())), &p.small).await
+    replay(&ctx, p, &keyed_on(&format!("/cache/vary/many/{key}"), on.keys(), &headers), Some(&listed(on.keys())), &p.small).await
 }
 
 pub fn routes() -> Routes {
     Routes::new()
         .prefix("cache")
-        .add("/small", get(small))
-        .add("/medium", get(medium))
-        .add("/large", get(large))
-        .add("/vary/one", get(vary_one))
-        .add("/vary/many", get(vary_many))
+        .add("/small/{key}", get(small))
+        .add("/medium/{key}", get(medium))
+        .add("/large/{key}", get(large))
+        .add("/vary/one/{key}", get(vary_one))
+        .add("/vary/many/{key}", get(vary_many))
 }

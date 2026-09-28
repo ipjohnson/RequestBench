@@ -113,9 +113,8 @@ Helidon's service registry.
 - Helidon closes the connection after it refuses a body Helidon JSON Binding cannot read, because
   the binding's `HttpException` does not ask to keep it, so errors.malformed pays for a reconnect
   each time under load.
-- The cache store keeps every key for the life of the process, so settings.json's capacity and TTL
-  are not applied. The cache family stores 13 keys, and the ladder's load lasts about four minutes,
-  well inside the hour the TTL gives.
+- The cache store holds every key it is asked for, so settings.json's capacity is not applied. The
+  cache family stores 52 keys. An answer is built again once settings.json's TTL has passed.
 - Helidon's test extension gives the suite's server builder the features Helidon's service registry
   holds, a `CorsFeature` that allows every origin among them. `Main.setup` sets the server's feature
   list whole, which replaces them.

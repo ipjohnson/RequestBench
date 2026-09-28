@@ -81,7 +81,7 @@ impl Exchanger {
     async fn once(&self, mut stream: TcpStream, bytes: &[u8], head: bool) -> Result<(Answer, Option<TcpStream>), Cut> {
         stream.write_all(bytes).await.map_err(|e| Cut::Before(e.to_string()))?;
         let mut reader = Reader::new();
-        reader.begin(head, true);
+        reader.begin(head, true, false);
         let mut buf = vec![0u8; 64 * 1024];
         let mut arrived = 0;
         let cut = |arrived: usize, why: String| if arrived == 0 { Cut::Before(why) } else { Cut::After(why) };
@@ -117,7 +117,7 @@ impl Exchanger {
                 send
             }
         };
-        let answer = h2c::fetch(&send, &template, true).await?;
+        let answer = h2c::fetch(&send, &template, true, false).await?;
         let headers: Vec<(String, String)> = answer
             .headers
             .unwrap_or_default()

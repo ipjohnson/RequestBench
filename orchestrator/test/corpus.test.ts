@@ -15,7 +15,7 @@ import { describe, test } from "node:test";
 import suite from "@rb/tests";
 import type { Test } from "@rb/tests/kit";
 import { recorder } from "../record.ts";
-import { validator, type Failure, type Response, type Transport } from "../validate.ts";
+import { serialOf, validator, type Failure, type Response, type Transport } from "../validate.ts";
 import { CONTRACTS } from "./contracts.ts";
 import { mistakesFor, type Mistake } from "./mutations.ts";
 import { corpusReference, DRAW, REFUSALS, RUN, type Contract } from "./reference.ts";
@@ -102,3 +102,17 @@ for (const [id, t] of Object.entries(suite.tests)) {
     }
   });
 }
+
+test("x-rb-serial is the Unix time in milliseconds, a bar and a unique part", () => {
+  const now = 1_790_000_000_000;
+  assert.deepEqual(serialOf("1790000000123|42", now), { ok: true, value: "1790000000123|42", ms: 1_790_000_000_123 });
+  assert.equal(serialOf("1790000000123|7163-9", now).ok, true);
+  assert.deepEqual(serialOf(undefined, now), { ok: false, why: "no x-rb-serial" });
+  // A bare counter, as a handler wrote it before the time stamp.
+  assert.equal(serialOf("42", now).ok, false);
+  assert.equal(serialOf("1790000000123|", now).ok, false);
+  assert.equal(serialOf("1790000000123|4 2", now).ok, false);
+  // Seconds and microseconds are a thousand times off, which is past the skew allowed.
+  assert.equal(serialOf("1790000000|42", now).ok, false);
+  assert.equal(serialOf("1790000000123000|42", now).ok, false);
+});

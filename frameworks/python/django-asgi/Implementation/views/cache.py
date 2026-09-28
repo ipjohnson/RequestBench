@@ -21,21 +21,21 @@ MANY = tuple(P.settings["cache"]["vary"]["many"])
 # rb:handler cache.small
 @require_GET
 @cache_page(TTL)
-async def small(request):
+async def small(request, key):
     return fresh(JsonResponse(P.small))
 
 
 # rb:handler cache.medium
 @require_GET
 @cache_page(TTL)
-async def medium(request):
+async def medium(request, key):
     return fresh(JsonResponse(P.medium))
 
 
 # rb:handler cache.large
 @require_GET
 @cache_page(TTL)
-async def large(request):
+async def large(request, key):
     return fresh(JsonResponse(P.large))
 
 
@@ -45,7 +45,7 @@ async def large(request):
 @require_GET
 @cache_page(TTL)
 @vary_on_headers(*ONE)
-async def vary_one(request):
+async def vary_one(request, key):
     return fresh(JsonResponse(P.small))
 
 
@@ -53,5 +53,5 @@ async def vary_one(request):
 @require_GET
 @cache_page(TTL)
 @vary_on_headers(*MANY)
-async def vary_many(request):
+async def vary_many(request, key):
     return fresh(JsonResponse(P.small))

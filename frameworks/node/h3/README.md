@@ -69,7 +69,7 @@ listening. `PORT` defaults to 8080.
   which h3 runs for that route alone.
 - h3's own response cache is its `cache` route rule, and route rules run as one `app.use()`
   middleware. The cache routes wrap their handlers in ocache's `defineCachedHandler` instead,
-  which the rule is built on. It adds `x-cache`, a weak `etag` and `cache-control: max-age=3600`
+  which the rule is built on. It adds `x-cache`, a weak `etag` and `cache-control: max-age=30`
   to each answer, and replays it as a standard `Response`, which srvx sends chunked.
 - ocache stores what the handler returns, and h3's `toResponse` turns that into the `Response`
   with the headers the handler staged. That is how `x-rb-serial` is stored and replayed.

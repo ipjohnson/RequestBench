@@ -13,6 +13,8 @@ pub struct Answer {
     /// The body with the chunk framing off and any content coding still on.
     pub body_bytes: u64,
     pub kept: Option<Kept>,
+    /// The answer's x-rb-serial, when the reader was asked for it.
+    pub serial: Option<String>,
 }
 
 /// What an exchange hands back beyond the status: the answer as the framework wrote it.
@@ -56,6 +58,9 @@ pub struct Reader {
     bytes: u64,
     head_request: bool,
     kept: Option<Kept>,
+    /// Whether to read the answer's x-rb-serial, and what it was.
+    wants_serial: bool,
+    serial: Option<String>,
     /// The answer said the connection ends with it.
     ends: bool,
 }
@@ -77,12 +82,14 @@ impl Reader {
             bytes: 0,
             head_request: false,
             kept: None,
+            wants_serial: false,
+            serial: None,
             ends: false,
         }
     }
 
     /// Readies the reader for the answer to the request just sent.
-    pub fn begin(&mut self, head_request: bool, keep: bool) {
+    pub fn begin(&mut self, head_request: bool, keep: bool, serial: bool) {
         self.stage = Stage::Head;
         self.pending.clear();
         self.status = 0;
@@ -91,6 +98,8 @@ impl Reader {
         self.bytes = 0;
         self.head_request = head_request;
         self.kept = keep.then(Kept::default);
+        self.wants_serial = serial;
+        self.serial = None;
         self.ends = false;
     }
 
@@ -215,6 +224,7 @@ impl Reader {
                 "content-length" => length = value.parse().ok(),
                 "transfer-encoding" => chunked |= value.to_ascii_lowercase().contains("chunked"),
                 "connection" => self.ends |= value.to_ascii_lowercase().contains("close"),
+                "x-rb-serial" if self.wants_serial => self.serial = Some(value.to_string()),
                 _ => {}
             }
         }
@@ -240,7 +250,7 @@ impl Reader {
 
     fn finish(&mut self) -> Answer {
         self.stage = Stage::Idle;
-        Answer { status: self.status, body_bytes: self.bytes, kept: self.kept.take() }
+        Answer { status: self.status, body_bytes: self.bytes, kept: self.kept.take(), serial: self.serial.take() }
     }
 
     fn fail(&mut self, why: String) -> Read {
@@ -270,7 +280,7 @@ mod tests {
 
     fn read_all(head: bool, keep: bool, parts: &[&[u8]]) -> (Read, bool) {
         let mut r = Reader::new();
-        r.begin(head, keep);
+        r.begin(head, keep, false);
         for part in parts {
             match r.feed(part) {
                 Read::More => {}
@@ -285,6 +295,16 @@ mod tests {
             Read::Done(a) => a,
             other => panic!("expected an answer, got {other:?}"),
         }
+    }
+
+    #[test]
+    fn the_serial_is_read_only_when_asked_for() {
+        let answer: &[u8] = b"HTTP/1.1 200 OK\r\nX-Rb-Serial: 1790000000000|7\r\nContent-Length: 2\r\n\r\nhi";
+        let mut r = Reader::new();
+        r.begin(false, false, true);
+        assert_eq!(done(r.feed(answer)).serial.as_deref(), Some("1790000000000|7"));
+        r.begin(false, false, false);
+        assert_eq!(done(r.feed(answer)).serial, None);
     }
 
     #[test]

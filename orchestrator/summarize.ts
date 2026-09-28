@@ -12,10 +12,12 @@
 // lambda-emulator's closed loop has one rung and nothing to drop. Its latency is the invoke
 // phase, and each test carries the other spans beside it.
 import type { Heft } from "@rb/tests/kit";
+import { CACHE_LIFETIME_SECONDS } from "@rb/tests/models/cache";
 import { BUCKETS, GROWTH, LOG_GROWTH, addInto, pct } from "../traffic-generator/histogram.ts";
 import {
   WINDOW_SECONDS,
   isClosed,
+  type CacheSummary,
   type ClosedRecordedSummary,
   type ClosedResult,
   type LoadResult,
@@ -120,6 +122,22 @@ export interface ClosedRungSummary {
   readonly perSecond?: ClosedRecordedSummary["perSecond"];
 }
 
+/**
+ * A cache test's store at a rung: how often the handler ran, read from x-rb-serial, beside
+ * `oneStore`, how often one store that keeps each answer `lifetimeSeconds` would run it, which is
+ * its keys times the recorded seconds over the lifetime.
+ */
+export interface CacheRung extends CacheSummary {
+  readonly lifetimeSeconds: number;
+  readonly oneStore: number;
+}
+
+export const cacheRung = (cache: CacheSummary, seconds: number): CacheRung => ({
+  ...cache,
+  lifetimeSeconds: CACHE_LIFETIME_SECONDS,
+  oneStore: (cache.keys * seconds) / CACHE_LIFETIME_SECONDS,
+});
+
 export interface TestRung extends ReturnType<typeof stats> {
   readonly count: number;
   readonly errors: number;
@@ -128,6 +146,8 @@ export interface TestRung extends ReturnType<typeof stats> {
   readonly hist: Hist;
   /** Each window of the recording on WINDOW_GRID, in order. Absent from a run the generator did not window. */
   readonly windows?: readonly Window[];
+  /** For a cache test, how often its handler ran. Absent from a run the generator did not count. */
+  readonly cache?: CacheRung;
 }
 
 /** The spans a closed-loop test publishes beside its invoke phase, which is its TestRung. */
@@ -244,6 +264,7 @@ function openRungs(load: LoadResult | undefined) {
           bins: rebin(h),
           hist: trim(h),
           ...(t.windows === undefined ? {} : { windows: t.windows }),
+          ...(t.cache === undefined ? {} : { cache: cacheRung(t.cache, r.seconds) }),
         };
         (tests[t.id] ??= { family: t.family, heft: t.heft, rungs: {} }).rungs[phase.name] = rung;
       }
@@ -292,6 +313,7 @@ function closedRungs(load: ClosedResult) {
         hist: trim(h),
         spans,
         ...(t.windows === undefined ? {} : { windows: t.windows }),
+        ...(t.cache === undefined ? {} : { cache: cacheRung(t.cache, r.seconds) }),
       };
       (tests[t.id] ??= { family: t.family, heft: t.heft, rungs: {} }).rungs[phase.name] = rung;
     }

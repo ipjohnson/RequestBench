@@ -166,7 +166,7 @@ test("each test carries what it sends and what it checks, with every drawn value
   const large = call("compressed.gzip_large");
   assert.deepEqual(large.checks, [
     { name: "content-encoding", rule: "is `gzip`" },
-    { name: "x-rb-serial", rule: "advances, so the handler ran" },
+    { name: "x-rb-serial", rule: "is new, so the handler ran" },
   ]);
   assert.deepEqual([large.expect?.truncated, large.expect?.text.length], [true, 700]);
   assert.equal(large.expect?.bytes, Buffer.byteLength(JSON.stringify(items.large.value)));

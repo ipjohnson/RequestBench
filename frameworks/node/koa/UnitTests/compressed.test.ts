@@ -31,7 +31,7 @@ for (const [id, size] of [["compressed.identity_small", "small"], ["compressed.i
 
     assert.equal(second.headers["content-encoding"], undefined);
     assert.deepEqual(second.body, expected.json(`items.${size}.json`));
-    assert.ok(Number(second.headers["x-rb-serial"]) > Number(first.headers["x-rb-serial"]));
+    assert.notEqual(second.headers["x-rb-serial"], first.headers["x-rb-serial"]);
   });
 }
 

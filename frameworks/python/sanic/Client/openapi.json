@@ -1014,9 +1014,19 @@
         ]
       }
     },
-    "/cache/large": {
+    "/cache/large/{key}": {
       "get": {
         "operationId": "get~cache.large",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
@@ -1035,9 +1045,19 @@
         ]
       }
     },
-    "/cache/medium": {
+    "/cache/medium/{key}": {
       "get": {
         "operationId": "get~cache.medium",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
@@ -1056,9 +1076,19 @@
         ]
       }
     },
-    "/cache/small": {
+    "/cache/small/{key}": {
       "get": {
         "operationId": "get~cache.small",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
@@ -1077,9 +1107,19 @@
         ]
       }
     },
-    "/cache/vary/many": {
+    "/cache/vary/many/{key}": {
       "get": {
         "operationId": "get~cache.vary_many",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
@@ -1098,9 +1138,19 @@
         ]
       }
     },
-    "/cache/vary/one": {
+    "/cache/vary/one/{key}": {
       "get": {
         "operationId": "get~cache.vary_one",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
@@ -2180,9 +2230,6 @@
       "name": "items"
     },
     {
-      "name": "cache"
-    },
-    {
       "name": "compressed"
     },
     {
@@ -2214,6 +2261,9 @@
     },
     {
       "name": "middleware_sixteen"
+    },
+    {
+      "name": "cache"
     }
   ]
 }

@@ -1,9 +1,9 @@
 package unittests;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.javalin.testtools.JavalinTest;
 import io.javalin.testtools.Response;
@@ -26,7 +26,7 @@ class EtagTests extends JavalinApp {
 
             assertNotNull(Answer.header(second, "etag"));
             Answer.is(Expected.json("items." + size + ".json"), second);
-            assertTrue(Answer.serial(second) > Answer.serial(first));
+            assertNotEquals(Answer.serial(first), Answer.serial(second));
         });
     }
 

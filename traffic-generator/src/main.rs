@@ -107,6 +107,9 @@ struct CompiledInstance {
 #[derive(Deserialize)]
 struct CompiledTest {
     instances: Vec<CompiledInstance>,
+    /// Whether its answers' x-rb-serial values are counted, as a cache test's are.
+    #[serde(default)]
+    serials: bool,
 }
 
 #[derive(Deserialize)]
@@ -310,6 +313,7 @@ fn events(command: Value) -> Result<(Vec<Vec<lambda::Instance>>, Cycle), String>
                 accepted: i.accepted,
                 body_bytes: i.body_bytes,
                 head: i.request.is_head(),
+                serials: test.serials,
             });
         }
         tests.push(instances);
@@ -342,7 +346,7 @@ async fn open(host: &str, port: u16, protocol: Protocol, authority: &str, comman
         if instances.is_empty() {
             return Err("a test with no instance".into());
         }
-        tests.push(Test { instances });
+        tests.push(Test { instances, serials: test.serials });
     }
     let cycle = Cycle::new(&open.order, tests.len())?;
     let shape = Shape { workers: open.workers, connections: open.connections, streams: open.streams };

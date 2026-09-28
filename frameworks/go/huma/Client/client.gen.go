@@ -516,30 +516,30 @@ type ClientInterface interface {
 	// Corresponds with POST /body/validate/small (the `PostBodyValidateSmall` operationId).
 	PostBodyValidateSmall(ctx context.Context, body PostBodyValidateSmallJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetCacheLarge Get cache large
+	// GetCacheLargeByKey Get cache large by key
 	//
-	// Corresponds with GET /cache/large (the `GetCacheLarge` operationId).
-	GetCacheLarge(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// Corresponds with GET /cache/large/{key} (the `GetCacheLargeByKey` operationId).
+	GetCacheLargeByKey(ctx context.Context, key string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetCacheMedium Get cache medium
+	// GetCacheMediumByKey Get cache medium by key
 	//
-	// Corresponds with GET /cache/medium (the `GetCacheMedium` operationId).
-	GetCacheMedium(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// Corresponds with GET /cache/medium/{key} (the `GetCacheMediumByKey` operationId).
+	GetCacheMediumByKey(ctx context.Context, key string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetCacheSmall Get cache small
+	// GetCacheSmallByKey Get cache small by key
 	//
-	// Corresponds with GET /cache/small (the `GetCacheSmall` operationId).
-	GetCacheSmall(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// Corresponds with GET /cache/small/{key} (the `GetCacheSmallByKey` operationId).
+	GetCacheSmallByKey(ctx context.Context, key string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetCacheVaryMany Get cache vary many
+	// GetCacheVaryManyByKey Get cache vary many by key
 	//
-	// Corresponds with GET /cache/vary/many (the `GetCacheVaryMany` operationId).
-	GetCacheVaryMany(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// Corresponds with GET /cache/vary/many/{key} (the `GetCacheVaryManyByKey` operationId).
+	GetCacheVaryManyByKey(ctx context.Context, key string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetCacheVaryOne Get cache vary one
+	// GetCacheVaryOneByKey Get cache vary one by key
 	//
-	// Corresponds with GET /cache/vary/one (the `GetCacheVaryOne` operationId).
-	GetCacheVaryOne(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// Corresponds with GET /cache/vary/one/{key} (the `GetCacheVaryOneByKey` operationId).
+	GetCacheVaryOneByKey(ctx context.Context, key string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetCompressedLarge Get compressed large
 	//
@@ -991,11 +991,11 @@ func (c *Client) PostBodyValidateSmall(ctx context.Context, body PostBodyValidat
 	return c.Client.Do(req)
 }
 
-// GetCacheLarge Get cache large
+// GetCacheLargeByKey Get cache large by key
 //
-// Corresponds with GET /cache/large (the `GetCacheLarge` operationId).
-func (c *Client) GetCacheLarge(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetCacheLargeRequest(c.Server)
+// Corresponds with GET /cache/large/{key} (the `GetCacheLargeByKey` operationId).
+func (c *Client) GetCacheLargeByKey(ctx context.Context, key string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetCacheLargeByKeyRequest(c.Server, key)
 	if err != nil {
 		return nil, err
 	}
@@ -1006,11 +1006,11 @@ func (c *Client) GetCacheLarge(ctx context.Context, reqEditors ...RequestEditorF
 	return c.Client.Do(req)
 }
 
-// GetCacheMedium Get cache medium
+// GetCacheMediumByKey Get cache medium by key
 //
-// Corresponds with GET /cache/medium (the `GetCacheMedium` operationId).
-func (c *Client) GetCacheMedium(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetCacheMediumRequest(c.Server)
+// Corresponds with GET /cache/medium/{key} (the `GetCacheMediumByKey` operationId).
+func (c *Client) GetCacheMediumByKey(ctx context.Context, key string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetCacheMediumByKeyRequest(c.Server, key)
 	if err != nil {
 		return nil, err
 	}
@@ -1021,11 +1021,11 @@ func (c *Client) GetCacheMedium(ctx context.Context, reqEditors ...RequestEditor
 	return c.Client.Do(req)
 }
 
-// GetCacheSmall Get cache small
+// GetCacheSmallByKey Get cache small by key
 //
-// Corresponds with GET /cache/small (the `GetCacheSmall` operationId).
-func (c *Client) GetCacheSmall(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetCacheSmallRequest(c.Server)
+// Corresponds with GET /cache/small/{key} (the `GetCacheSmallByKey` operationId).
+func (c *Client) GetCacheSmallByKey(ctx context.Context, key string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetCacheSmallByKeyRequest(c.Server, key)
 	if err != nil {
 		return nil, err
 	}
@@ -1036,11 +1036,11 @@ func (c *Client) GetCacheSmall(ctx context.Context, reqEditors ...RequestEditorF
 	return c.Client.Do(req)
 }
 
-// GetCacheVaryMany Get cache vary many
+// GetCacheVaryManyByKey Get cache vary many by key
 //
-// Corresponds with GET /cache/vary/many (the `GetCacheVaryMany` operationId).
-func (c *Client) GetCacheVaryMany(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetCacheVaryManyRequest(c.Server)
+// Corresponds with GET /cache/vary/many/{key} (the `GetCacheVaryManyByKey` operationId).
+func (c *Client) GetCacheVaryManyByKey(ctx context.Context, key string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetCacheVaryManyByKeyRequest(c.Server, key)
 	if err != nil {
 		return nil, err
 	}
@@ -1051,11 +1051,11 @@ func (c *Client) GetCacheVaryMany(ctx context.Context, reqEditors ...RequestEdit
 	return c.Client.Do(req)
 }
 
-// GetCacheVaryOne Get cache vary one
+// GetCacheVaryOneByKey Get cache vary one by key
 //
-// Corresponds with GET /cache/vary/one (the `GetCacheVaryOne` operationId).
-func (c *Client) GetCacheVaryOne(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetCacheVaryOneRequest(c.Server)
+// Corresponds with GET /cache/vary/one/{key} (the `GetCacheVaryOneByKey` operationId).
+func (c *Client) GetCacheVaryOneByKey(ctx context.Context, key string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetCacheVaryOneByKeyRequest(c.Server, key)
 	if err != nil {
 		return nil, err
 	}
@@ -1929,16 +1929,23 @@ func NewPostBodyValidateSmallRequestWithBody(server string, contentType string, 
 	return req, nil
 }
 
-// NewGetCacheLargeRequest constructs an http.Request for the GetCacheLarge method
-func NewGetCacheLargeRequest(server string) (*http.Request, error) {
+// NewGetCacheLargeByKeyRequest constructs an http.Request for the GetCacheLargeByKey method
+func NewGetCacheLargeByKeyRequest(server string, key string) (*http.Request, error) {
 	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "key", key, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
 
 	serverURL, err := url.Parse(server)
 	if err != nil {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/cache/large")
+	operationPath := fmt.Sprintf("/cache/large/%s", pathParam0)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1956,16 +1963,23 @@ func NewGetCacheLargeRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
-// NewGetCacheMediumRequest constructs an http.Request for the GetCacheMedium method
-func NewGetCacheMediumRequest(server string) (*http.Request, error) {
+// NewGetCacheMediumByKeyRequest constructs an http.Request for the GetCacheMediumByKey method
+func NewGetCacheMediumByKeyRequest(server string, key string) (*http.Request, error) {
 	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "key", key, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
 
 	serverURL, err := url.Parse(server)
 	if err != nil {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/cache/medium")
+	operationPath := fmt.Sprintf("/cache/medium/%s", pathParam0)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1983,16 +1997,23 @@ func NewGetCacheMediumRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
-// NewGetCacheSmallRequest constructs an http.Request for the GetCacheSmall method
-func NewGetCacheSmallRequest(server string) (*http.Request, error) {
+// NewGetCacheSmallByKeyRequest constructs an http.Request for the GetCacheSmallByKey method
+func NewGetCacheSmallByKeyRequest(server string, key string) (*http.Request, error) {
 	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "key", key, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
 
 	serverURL, err := url.Parse(server)
 	if err != nil {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/cache/small")
+	operationPath := fmt.Sprintf("/cache/small/%s", pathParam0)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -2010,16 +2031,23 @@ func NewGetCacheSmallRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
-// NewGetCacheVaryManyRequest constructs an http.Request for the GetCacheVaryMany method
-func NewGetCacheVaryManyRequest(server string) (*http.Request, error) {
+// NewGetCacheVaryManyByKeyRequest constructs an http.Request for the GetCacheVaryManyByKey method
+func NewGetCacheVaryManyByKeyRequest(server string, key string) (*http.Request, error) {
 	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "key", key, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
 
 	serverURL, err := url.Parse(server)
 	if err != nil {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/cache/vary/many")
+	operationPath := fmt.Sprintf("/cache/vary/many/%s", pathParam0)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -2037,16 +2065,23 @@ func NewGetCacheVaryManyRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
-// NewGetCacheVaryOneRequest constructs an http.Request for the GetCacheVaryOne method
-func NewGetCacheVaryOneRequest(server string) (*http.Request, error) {
+// NewGetCacheVaryOneByKeyRequest constructs an http.Request for the GetCacheVaryOneByKey method
+func NewGetCacheVaryOneByKeyRequest(server string, key string) (*http.Request, error) {
 	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "key", key, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
 
 	serverURL, err := url.Parse(server)
 	if err != nil {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/cache/vary/one")
+	operationPath := fmt.Sprintf("/cache/vary/one/%s", pathParam0)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -3472,40 +3507,40 @@ type ClientWithResponsesInterface interface {
 	// Corresponds with POST /body/validate/small (the `PostBodyValidateSmall` operationId).
 	PostBodyValidateSmallWithResponse(ctx context.Context, body PostBodyValidateSmallJSONRequestBody, reqEditors ...RequestEditorFn) (*PostBodyValidateSmallResponse, error)
 
-	// GetCacheLargeWithResponse Get cache large
+	// GetCacheLargeByKeyWithResponse Get cache large by key
 	//
 	// Returns a wrapper object for the known response body format(s).
 	//
-	// Corresponds with GET /cache/large (the `GetCacheLarge` operationId).
-	GetCacheLargeWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetCacheLargeResponse, error)
+	// Corresponds with GET /cache/large/{key} (the `GetCacheLargeByKey` operationId).
+	GetCacheLargeByKeyWithResponse(ctx context.Context, key string, reqEditors ...RequestEditorFn) (*GetCacheLargeByKeyResponse, error)
 
-	// GetCacheMediumWithResponse Get cache medium
+	// GetCacheMediumByKeyWithResponse Get cache medium by key
 	//
 	// Returns a wrapper object for the known response body format(s).
 	//
-	// Corresponds with GET /cache/medium (the `GetCacheMedium` operationId).
-	GetCacheMediumWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetCacheMediumResponse, error)
+	// Corresponds with GET /cache/medium/{key} (the `GetCacheMediumByKey` operationId).
+	GetCacheMediumByKeyWithResponse(ctx context.Context, key string, reqEditors ...RequestEditorFn) (*GetCacheMediumByKeyResponse, error)
 
-	// GetCacheSmallWithResponse Get cache small
+	// GetCacheSmallByKeyWithResponse Get cache small by key
 	//
 	// Returns a wrapper object for the known response body format(s).
 	//
-	// Corresponds with GET /cache/small (the `GetCacheSmall` operationId).
-	GetCacheSmallWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetCacheSmallResponse, error)
+	// Corresponds with GET /cache/small/{key} (the `GetCacheSmallByKey` operationId).
+	GetCacheSmallByKeyWithResponse(ctx context.Context, key string, reqEditors ...RequestEditorFn) (*GetCacheSmallByKeyResponse, error)
 
-	// GetCacheVaryManyWithResponse Get cache vary many
+	// GetCacheVaryManyByKeyWithResponse Get cache vary many by key
 	//
 	// Returns a wrapper object for the known response body format(s).
 	//
-	// Corresponds with GET /cache/vary/many (the `GetCacheVaryMany` operationId).
-	GetCacheVaryManyWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetCacheVaryManyResponse, error)
+	// Corresponds with GET /cache/vary/many/{key} (the `GetCacheVaryManyByKey` operationId).
+	GetCacheVaryManyByKeyWithResponse(ctx context.Context, key string, reqEditors ...RequestEditorFn) (*GetCacheVaryManyByKeyResponse, error)
 
-	// GetCacheVaryOneWithResponse Get cache vary one
+	// GetCacheVaryOneByKeyWithResponse Get cache vary one by key
 	//
 	// Returns a wrapper object for the known response body format(s).
 	//
-	// Corresponds with GET /cache/vary/one (the `GetCacheVaryOne` operationId).
-	GetCacheVaryOneWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetCacheVaryOneResponse, error)
+	// Corresponds with GET /cache/vary/one/{key} (the `GetCacheVaryOneByKey` operationId).
+	GetCacheVaryOneByKeyWithResponse(ctx context.Context, key string, reqEditors ...RequestEditorFn) (*GetCacheVaryOneByKeyResponse, error)
 
 	// GetCompressedLargeWithResponse Get compressed large
 	//
@@ -4142,12 +4177,12 @@ func (r PostBodyValidateSmallResponse) ContentType() string {
 	return ""
 }
 
-// GetCacheLargeResponse200Headers the declared response headers of an HTTP 200 response for GetCacheLarge
-type GetCacheLargeResponse200Headers struct {
+// GetCacheLargeByKeyResponse200Headers the declared response headers of an HTTP 200 response for GetCacheLargeByKey
+type GetCacheLargeByKeyResponse200Headers struct {
 	XRbSerial *string
 }
 
-type GetCacheLargeResponse struct {
+type GetCacheLargeByKeyResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	// JSON200 the response for an HTTP 200 `application/json` response
@@ -4155,26 +4190,26 @@ type GetCacheLargeResponse struct {
 	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
 	ApplicationproblemJSONDefault *ErrorModel
 	// Headers200 the parsed response headers for an HTTP 200 response
-	Headers200 *GetCacheLargeResponse200Headers
+	Headers200 *GetCacheLargeByKeyResponse200Headers
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
-func (r GetCacheLargeResponse) GetJSON200() *Payload {
+func (r GetCacheLargeByKeyResponse) GetJSON200() *Payload {
 	return r.JSON200
 }
 
 // GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
-func (r GetCacheLargeResponse) GetApplicationproblemJSONDefault() *ErrorModel {
+func (r GetCacheLargeByKeyResponse) GetApplicationproblemJSONDefault() *ErrorModel {
 	return r.ApplicationproblemJSONDefault
 }
 
 // GetBody returns the raw response body bytes
-func (r GetCacheLargeResponse) GetBody() []byte {
+func (r GetCacheLargeByKeyResponse) GetBody() []byte {
 	return r.Body
 }
 
 // Status returns HTTPResponse.Status
-func (r GetCacheLargeResponse) Status() string {
+func (r GetCacheLargeByKeyResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -4182,7 +4217,7 @@ func (r GetCacheLargeResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetCacheLargeResponse) StatusCode() int {
+func (r GetCacheLargeByKeyResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -4190,19 +4225,19 @@ func (r GetCacheLargeResponse) StatusCode() int {
 }
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
-func (r GetCacheLargeResponse) ContentType() string {
+func (r GetCacheLargeByKeyResponse) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
 	return ""
 }
 
-// GetCacheMediumResponse200Headers the declared response headers of an HTTP 200 response for GetCacheMedium
-type GetCacheMediumResponse200Headers struct {
+// GetCacheMediumByKeyResponse200Headers the declared response headers of an HTTP 200 response for GetCacheMediumByKey
+type GetCacheMediumByKeyResponse200Headers struct {
 	XRbSerial *string
 }
 
-type GetCacheMediumResponse struct {
+type GetCacheMediumByKeyResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	// JSON200 the response for an HTTP 200 `application/json` response
@@ -4210,26 +4245,26 @@ type GetCacheMediumResponse struct {
 	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
 	ApplicationproblemJSONDefault *ErrorModel
 	// Headers200 the parsed response headers for an HTTP 200 response
-	Headers200 *GetCacheMediumResponse200Headers
+	Headers200 *GetCacheMediumByKeyResponse200Headers
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
-func (r GetCacheMediumResponse) GetJSON200() *Payload {
+func (r GetCacheMediumByKeyResponse) GetJSON200() *Payload {
 	return r.JSON200
 }
 
 // GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
-func (r GetCacheMediumResponse) GetApplicationproblemJSONDefault() *ErrorModel {
+func (r GetCacheMediumByKeyResponse) GetApplicationproblemJSONDefault() *ErrorModel {
 	return r.ApplicationproblemJSONDefault
 }
 
 // GetBody returns the raw response body bytes
-func (r GetCacheMediumResponse) GetBody() []byte {
+func (r GetCacheMediumByKeyResponse) GetBody() []byte {
 	return r.Body
 }
 
 // Status returns HTTPResponse.Status
-func (r GetCacheMediumResponse) Status() string {
+func (r GetCacheMediumByKeyResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -4237,7 +4272,7 @@ func (r GetCacheMediumResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetCacheMediumResponse) StatusCode() int {
+func (r GetCacheMediumByKeyResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -4245,19 +4280,19 @@ func (r GetCacheMediumResponse) StatusCode() int {
 }
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
-func (r GetCacheMediumResponse) ContentType() string {
+func (r GetCacheMediumByKeyResponse) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
 	return ""
 }
 
-// GetCacheSmallResponse200Headers the declared response headers of an HTTP 200 response for GetCacheSmall
-type GetCacheSmallResponse200Headers struct {
+// GetCacheSmallByKeyResponse200Headers the declared response headers of an HTTP 200 response for GetCacheSmallByKey
+type GetCacheSmallByKeyResponse200Headers struct {
 	XRbSerial *string
 }
 
-type GetCacheSmallResponse struct {
+type GetCacheSmallByKeyResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	// JSON200 the response for an HTTP 200 `application/json` response
@@ -4265,26 +4300,26 @@ type GetCacheSmallResponse struct {
 	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
 	ApplicationproblemJSONDefault *ErrorModel
 	// Headers200 the parsed response headers for an HTTP 200 response
-	Headers200 *GetCacheSmallResponse200Headers
+	Headers200 *GetCacheSmallByKeyResponse200Headers
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
-func (r GetCacheSmallResponse) GetJSON200() *Payload {
+func (r GetCacheSmallByKeyResponse) GetJSON200() *Payload {
 	return r.JSON200
 }
 
 // GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
-func (r GetCacheSmallResponse) GetApplicationproblemJSONDefault() *ErrorModel {
+func (r GetCacheSmallByKeyResponse) GetApplicationproblemJSONDefault() *ErrorModel {
 	return r.ApplicationproblemJSONDefault
 }
 
 // GetBody returns the raw response body bytes
-func (r GetCacheSmallResponse) GetBody() []byte {
+func (r GetCacheSmallByKeyResponse) GetBody() []byte {
 	return r.Body
 }
 
 // Status returns HTTPResponse.Status
-func (r GetCacheSmallResponse) Status() string {
+func (r GetCacheSmallByKeyResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -4292,7 +4327,7 @@ func (r GetCacheSmallResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetCacheSmallResponse) StatusCode() int {
+func (r GetCacheSmallByKeyResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -4300,20 +4335,20 @@ func (r GetCacheSmallResponse) StatusCode() int {
 }
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
-func (r GetCacheSmallResponse) ContentType() string {
+func (r GetCacheSmallByKeyResponse) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
 	return ""
 }
 
-// GetCacheVaryManyResponse200Headers the declared response headers of an HTTP 200 response for GetCacheVaryMany
-type GetCacheVaryManyResponse200Headers struct {
+// GetCacheVaryManyByKeyResponse200Headers the declared response headers of an HTTP 200 response for GetCacheVaryManyByKey
+type GetCacheVaryManyByKeyResponse200Headers struct {
 	Vary      *string
 	XRbSerial *string
 }
 
-type GetCacheVaryManyResponse struct {
+type GetCacheVaryManyByKeyResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	// JSON200 the response for an HTTP 200 `application/json` response
@@ -4321,26 +4356,26 @@ type GetCacheVaryManyResponse struct {
 	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
 	ApplicationproblemJSONDefault *ErrorModel
 	// Headers200 the parsed response headers for an HTTP 200 response
-	Headers200 *GetCacheVaryManyResponse200Headers
+	Headers200 *GetCacheVaryManyByKeyResponse200Headers
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
-func (r GetCacheVaryManyResponse) GetJSON200() *Payload {
+func (r GetCacheVaryManyByKeyResponse) GetJSON200() *Payload {
 	return r.JSON200
 }
 
 // GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
-func (r GetCacheVaryManyResponse) GetApplicationproblemJSONDefault() *ErrorModel {
+func (r GetCacheVaryManyByKeyResponse) GetApplicationproblemJSONDefault() *ErrorModel {
 	return r.ApplicationproblemJSONDefault
 }
 
 // GetBody returns the raw response body bytes
-func (r GetCacheVaryManyResponse) GetBody() []byte {
+func (r GetCacheVaryManyByKeyResponse) GetBody() []byte {
 	return r.Body
 }
 
 // Status returns HTTPResponse.Status
-func (r GetCacheVaryManyResponse) Status() string {
+func (r GetCacheVaryManyByKeyResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -4348,7 +4383,7 @@ func (r GetCacheVaryManyResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetCacheVaryManyResponse) StatusCode() int {
+func (r GetCacheVaryManyByKeyResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -4356,20 +4391,20 @@ func (r GetCacheVaryManyResponse) StatusCode() int {
 }
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
-func (r GetCacheVaryManyResponse) ContentType() string {
+func (r GetCacheVaryManyByKeyResponse) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
 	return ""
 }
 
-// GetCacheVaryOneResponse200Headers the declared response headers of an HTTP 200 response for GetCacheVaryOne
-type GetCacheVaryOneResponse200Headers struct {
+// GetCacheVaryOneByKeyResponse200Headers the declared response headers of an HTTP 200 response for GetCacheVaryOneByKey
+type GetCacheVaryOneByKeyResponse200Headers struct {
 	Vary      *string
 	XRbSerial *string
 }
 
-type GetCacheVaryOneResponse struct {
+type GetCacheVaryOneByKeyResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	// JSON200 the response for an HTTP 200 `application/json` response
@@ -4377,26 +4412,26 @@ type GetCacheVaryOneResponse struct {
 	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
 	ApplicationproblemJSONDefault *ErrorModel
 	// Headers200 the parsed response headers for an HTTP 200 response
-	Headers200 *GetCacheVaryOneResponse200Headers
+	Headers200 *GetCacheVaryOneByKeyResponse200Headers
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
-func (r GetCacheVaryOneResponse) GetJSON200() *Payload {
+func (r GetCacheVaryOneByKeyResponse) GetJSON200() *Payload {
 	return r.JSON200
 }
 
 // GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
-func (r GetCacheVaryOneResponse) GetApplicationproblemJSONDefault() *ErrorModel {
+func (r GetCacheVaryOneByKeyResponse) GetApplicationproblemJSONDefault() *ErrorModel {
 	return r.ApplicationproblemJSONDefault
 }
 
 // GetBody returns the raw response body bytes
-func (r GetCacheVaryOneResponse) GetBody() []byte {
+func (r GetCacheVaryOneByKeyResponse) GetBody() []byte {
 	return r.Body
 }
 
 // Status returns HTTPResponse.Status
-func (r GetCacheVaryOneResponse) Status() string {
+func (r GetCacheVaryOneByKeyResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -4404,7 +4439,7 @@ func (r GetCacheVaryOneResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetCacheVaryOneResponse) StatusCode() int {
+func (r GetCacheVaryOneByKeyResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -4412,7 +4447,7 @@ func (r GetCacheVaryOneResponse) StatusCode() int {
 }
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
-func (r GetCacheVaryOneResponse) ContentType() string {
+func (r GetCacheVaryOneByKeyResponse) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -6203,69 +6238,69 @@ func (c *ClientWithResponses) PostBodyValidateSmallWithResponse(ctx context.Cont
 	return ParsePostBodyValidateSmallResponse(rsp)
 }
 
-// GetCacheLargeWithResponse Get cache large
+// GetCacheLargeByKeyWithResponse Get cache large by key
 //
 // Returns a wrapper object for the known response body format(s).
 //
-// Corresponds with GET /cache/large (the `GetCacheLarge` operationId).
-func (c *ClientWithResponses) GetCacheLargeWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetCacheLargeResponse, error) {
-	rsp, err := c.GetCacheLarge(ctx, reqEditors...)
+// Corresponds with GET /cache/large/{key} (the `GetCacheLargeByKey` operationId).
+func (c *ClientWithResponses) GetCacheLargeByKeyWithResponse(ctx context.Context, key string, reqEditors ...RequestEditorFn) (*GetCacheLargeByKeyResponse, error) {
+	rsp, err := c.GetCacheLargeByKey(ctx, key, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetCacheLargeResponse(rsp)
+	return ParseGetCacheLargeByKeyResponse(rsp)
 }
 
-// GetCacheMediumWithResponse Get cache medium
+// GetCacheMediumByKeyWithResponse Get cache medium by key
 //
 // Returns a wrapper object for the known response body format(s).
 //
-// Corresponds with GET /cache/medium (the `GetCacheMedium` operationId).
-func (c *ClientWithResponses) GetCacheMediumWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetCacheMediumResponse, error) {
-	rsp, err := c.GetCacheMedium(ctx, reqEditors...)
+// Corresponds with GET /cache/medium/{key} (the `GetCacheMediumByKey` operationId).
+func (c *ClientWithResponses) GetCacheMediumByKeyWithResponse(ctx context.Context, key string, reqEditors ...RequestEditorFn) (*GetCacheMediumByKeyResponse, error) {
+	rsp, err := c.GetCacheMediumByKey(ctx, key, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetCacheMediumResponse(rsp)
+	return ParseGetCacheMediumByKeyResponse(rsp)
 }
 
-// GetCacheSmallWithResponse Get cache small
+// GetCacheSmallByKeyWithResponse Get cache small by key
 //
 // Returns a wrapper object for the known response body format(s).
 //
-// Corresponds with GET /cache/small (the `GetCacheSmall` operationId).
-func (c *ClientWithResponses) GetCacheSmallWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetCacheSmallResponse, error) {
-	rsp, err := c.GetCacheSmall(ctx, reqEditors...)
+// Corresponds with GET /cache/small/{key} (the `GetCacheSmallByKey` operationId).
+func (c *ClientWithResponses) GetCacheSmallByKeyWithResponse(ctx context.Context, key string, reqEditors ...RequestEditorFn) (*GetCacheSmallByKeyResponse, error) {
+	rsp, err := c.GetCacheSmallByKey(ctx, key, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetCacheSmallResponse(rsp)
+	return ParseGetCacheSmallByKeyResponse(rsp)
 }
 
-// GetCacheVaryManyWithResponse Get cache vary many
+// GetCacheVaryManyByKeyWithResponse Get cache vary many by key
 //
 // Returns a wrapper object for the known response body format(s).
 //
-// Corresponds with GET /cache/vary/many (the `GetCacheVaryMany` operationId).
-func (c *ClientWithResponses) GetCacheVaryManyWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetCacheVaryManyResponse, error) {
-	rsp, err := c.GetCacheVaryMany(ctx, reqEditors...)
+// Corresponds with GET /cache/vary/many/{key} (the `GetCacheVaryManyByKey` operationId).
+func (c *ClientWithResponses) GetCacheVaryManyByKeyWithResponse(ctx context.Context, key string, reqEditors ...RequestEditorFn) (*GetCacheVaryManyByKeyResponse, error) {
+	rsp, err := c.GetCacheVaryManyByKey(ctx, key, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetCacheVaryManyResponse(rsp)
+	return ParseGetCacheVaryManyByKeyResponse(rsp)
 }
 
-// GetCacheVaryOneWithResponse Get cache vary one
+// GetCacheVaryOneByKeyWithResponse Get cache vary one by key
 //
 // Returns a wrapper object for the known response body format(s).
 //
-// Corresponds with GET /cache/vary/one (the `GetCacheVaryOne` operationId).
-func (c *ClientWithResponses) GetCacheVaryOneWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetCacheVaryOneResponse, error) {
-	rsp, err := c.GetCacheVaryOne(ctx, reqEditors...)
+// Corresponds with GET /cache/vary/one/{key} (the `GetCacheVaryOneByKey` operationId).
+func (c *ClientWithResponses) GetCacheVaryOneByKeyWithResponse(ctx context.Context, key string, reqEditors ...RequestEditorFn) (*GetCacheVaryOneByKeyResponse, error) {
+	rsp, err := c.GetCacheVaryOneByKey(ctx, key, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetCacheVaryOneResponse(rsp)
+	return ParseGetCacheVaryOneByKeyResponse(rsp)
 }
 
 // GetCompressedLargeWithResponse Get compressed large
@@ -6998,15 +7033,15 @@ func ParsePostBodyValidateSmallResponse(rsp *http.Response) (*PostBodyValidateSm
 	return response, nil
 }
 
-// ParseGetCacheLargeResponse parses an HTTP response from a GetCacheLargeWithResponse call
-func ParseGetCacheLargeResponse(rsp *http.Response) (*GetCacheLargeResponse, error) {
+// ParseGetCacheLargeByKeyResponse parses an HTTP response from a GetCacheLargeByKeyWithResponse call
+func ParseGetCacheLargeByKeyResponse(rsp *http.Response) (*GetCacheLargeByKeyResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetCacheLargeResponse{
+	response := &GetCacheLargeByKeyResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -7030,7 +7065,7 @@ func ParseGetCacheLargeResponse(rsp *http.Response) (*GetCacheLargeResponse, err
 
 	switch {
 	case rsp.StatusCode == 200:
-		var headers GetCacheLargeResponse200Headers
+		var headers GetCacheLargeByKeyResponse200Headers
 		if values := rsp.Header.Values("x-rb-serial"); len(values) > 0 {
 			var value string
 			if err := runtime.BindStyledParameterWithOptions("simple", "x-rb-serial", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
@@ -7044,15 +7079,15 @@ func ParseGetCacheLargeResponse(rsp *http.Response) (*GetCacheLargeResponse, err
 	return response, nil
 }
 
-// ParseGetCacheMediumResponse parses an HTTP response from a GetCacheMediumWithResponse call
-func ParseGetCacheMediumResponse(rsp *http.Response) (*GetCacheMediumResponse, error) {
+// ParseGetCacheMediumByKeyResponse parses an HTTP response from a GetCacheMediumByKeyWithResponse call
+func ParseGetCacheMediumByKeyResponse(rsp *http.Response) (*GetCacheMediumByKeyResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetCacheMediumResponse{
+	response := &GetCacheMediumByKeyResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -7076,7 +7111,7 @@ func ParseGetCacheMediumResponse(rsp *http.Response) (*GetCacheMediumResponse, e
 
 	switch {
 	case rsp.StatusCode == 200:
-		var headers GetCacheMediumResponse200Headers
+		var headers GetCacheMediumByKeyResponse200Headers
 		if values := rsp.Header.Values("x-rb-serial"); len(values) > 0 {
 			var value string
 			if err := runtime.BindStyledParameterWithOptions("simple", "x-rb-serial", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
@@ -7090,15 +7125,15 @@ func ParseGetCacheMediumResponse(rsp *http.Response) (*GetCacheMediumResponse, e
 	return response, nil
 }
 
-// ParseGetCacheSmallResponse parses an HTTP response from a GetCacheSmallWithResponse call
-func ParseGetCacheSmallResponse(rsp *http.Response) (*GetCacheSmallResponse, error) {
+// ParseGetCacheSmallByKeyResponse parses an HTTP response from a GetCacheSmallByKeyWithResponse call
+func ParseGetCacheSmallByKeyResponse(rsp *http.Response) (*GetCacheSmallByKeyResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetCacheSmallResponse{
+	response := &GetCacheSmallByKeyResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -7122,7 +7157,7 @@ func ParseGetCacheSmallResponse(rsp *http.Response) (*GetCacheSmallResponse, err
 
 	switch {
 	case rsp.StatusCode == 200:
-		var headers GetCacheSmallResponse200Headers
+		var headers GetCacheSmallByKeyResponse200Headers
 		if values := rsp.Header.Values("x-rb-serial"); len(values) > 0 {
 			var value string
 			if err := runtime.BindStyledParameterWithOptions("simple", "x-rb-serial", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
@@ -7136,15 +7171,15 @@ func ParseGetCacheSmallResponse(rsp *http.Response) (*GetCacheSmallResponse, err
 	return response, nil
 }
 
-// ParseGetCacheVaryManyResponse parses an HTTP response from a GetCacheVaryManyWithResponse call
-func ParseGetCacheVaryManyResponse(rsp *http.Response) (*GetCacheVaryManyResponse, error) {
+// ParseGetCacheVaryManyByKeyResponse parses an HTTP response from a GetCacheVaryManyByKeyWithResponse call
+func ParseGetCacheVaryManyByKeyResponse(rsp *http.Response) (*GetCacheVaryManyByKeyResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetCacheVaryManyResponse{
+	response := &GetCacheVaryManyByKeyResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -7168,7 +7203,7 @@ func ParseGetCacheVaryManyResponse(rsp *http.Response) (*GetCacheVaryManyRespons
 
 	switch {
 	case rsp.StatusCode == 200:
-		var headers GetCacheVaryManyResponse200Headers
+		var headers GetCacheVaryManyByKeyResponse200Headers
 		if values := rsp.Header.Values("Vary"); len(values) > 0 {
 			var value string
 			if err := runtime.BindStyledParameterWithOptions("simple", "Vary", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
@@ -7189,15 +7224,15 @@ func ParseGetCacheVaryManyResponse(rsp *http.Response) (*GetCacheVaryManyRespons
 	return response, nil
 }
 
-// ParseGetCacheVaryOneResponse parses an HTTP response from a GetCacheVaryOneWithResponse call
-func ParseGetCacheVaryOneResponse(rsp *http.Response) (*GetCacheVaryOneResponse, error) {
+// ParseGetCacheVaryOneByKeyResponse parses an HTTP response from a GetCacheVaryOneByKeyWithResponse call
+func ParseGetCacheVaryOneByKeyResponse(rsp *http.Response) (*GetCacheVaryOneByKeyResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetCacheVaryOneResponse{
+	response := &GetCacheVaryOneByKeyResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -7221,7 +7256,7 @@ func ParseGetCacheVaryOneResponse(rsp *http.Response) (*GetCacheVaryOneResponse,
 
 	switch {
 	case rsp.StatusCode == 200:
-		var headers GetCacheVaryOneResponse200Headers
+		var headers GetCacheVaryOneByKeyResponse200Headers
 		if values := rsp.Header.Values("Vary"); len(values) > 0 {
 			var value string
 			if err := runtime.BindStyledParameterWithOptions("simple", "Vary", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {

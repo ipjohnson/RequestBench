@@ -48,10 +48,10 @@ uvicorn is the first server Litestar's deployment documentation lists, and the o
 `litestar run` command starts. With more than one worker, `litestar run` starts uvicorn as a child
 process of its own, so the image starts uvicorn itself, as PID 1.
 
-Each worker keeps its own state. The `x-rb-serial` counter and the cache family's store are both
-per worker, so two workers answering one path can carry different serials. A connection stays with
-the worker that accepted it, and the gate sends each test's two requests on one connection, so
-`fresh()` and `replayed()` hold. Under load each worker fills its own store.
+Each worker keeps its own state. The `x-rb-serial` counter and the cache family's store are both per
+worker, and the serial carries the worker's process id, so no two workers write one value. A
+connection stays with the worker that accepted it, and the gate sends each test's two requests on
+one connection, so `replayed()` holds. Under load each worker fills its own store.
 
 ## How each family is wired
 

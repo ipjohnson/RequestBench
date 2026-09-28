@@ -241,9 +241,17 @@
         "tags" : [ "body-routes" ]
       }
     },
-    "/cache/large" : {
+    "/cache/large/{key}" : {
       "get" : {
         "operationId" : "large_3",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "key",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
         "responses" : {
           "200" : {
             "content" : {
@@ -259,9 +267,17 @@
         "tags" : [ "cache-routes" ]
       }
     },
-    "/cache/medium" : {
+    "/cache/medium/{key}" : {
       "get" : {
         "operationId" : "medium_2",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "key",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
         "responses" : {
           "200" : {
             "content" : {
@@ -277,9 +293,17 @@
         "tags" : [ "cache-routes" ]
       }
     },
-    "/cache/small" : {
+    "/cache/small/{key}" : {
       "get" : {
         "operationId" : "small_4",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "key",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
         "responses" : {
           "200" : {
             "content" : {
@@ -295,10 +319,17 @@
         "tags" : [ "cache-routes" ]
       }
     },
-    "/cache/vary/many" : {
+    "/cache/vary/many/{key}" : {
       "get" : {
         "operationId" : "varyMany",
         "parameters" : [ {
+          "in" : "path",
+          "name" : "key",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
           "in" : "header",
           "name" : "x-rb-channel",
           "required" : false,
@@ -335,10 +366,17 @@
         "tags" : [ "cache-routes" ]
       }
     },
-    "/cache/vary/one" : {
+    "/cache/vary/one/{key}" : {
       "get" : {
         "operationId" : "varyOne",
         "parameters" : [ {
+          "in" : "path",
+          "name" : "key",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
           "in" : "header",
           "name" : "x-rb-tenant",
           "required" : false,

@@ -26,7 +26,7 @@ test('etag.match_large: a matching If-None-Match is 304 with no body, after the 
 
   expect(response.status).toBe(304);
   expect(response.text).toBe('');
-  expect(Number(response.headers['x-rb-serial'])).toBeGreaterThan(Number(first.headers['x-rb-serial']));
+  expect(response.headers['x-rb-serial']).not.toBe(first.headers['x-rb-serial']);
 });
 
 // rb:test etag.stale_large

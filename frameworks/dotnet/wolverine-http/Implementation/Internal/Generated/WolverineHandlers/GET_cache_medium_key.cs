@@ -8,14 +8,14 @@ using Wolverine.Http;
 
 namespace Internal.Generated.WolverineHandlers
 {
-    // START: GET_cache_vary_one
+    // START: GET_cache_medium_key
     [global::System.CodeDom.Compiler.GeneratedCode("JasperFx", "1.0.0")]
-    public sealed class GET_cache_vary_one : Wolverine.Http.HttpHandler
+    public sealed class GET_cache_medium_key : Wolverine.Http.HttpHandler
     {
         private readonly Wolverine.Http.WolverineHttpOptions _wolverineHttpOptions;
         private readonly Implementation.Payloads _payloads;
 
-        public GET_cache_vary_one(Wolverine.Http.WolverineHttpOptions wolverineHttpOptions, Implementation.Payloads payloads) : base(wolverineHttpOptions)
+        public GET_cache_medium_key(Wolverine.Http.WolverineHttpOptions wolverineHttpOptions, Implementation.Payloads payloads) : base(wolverineHttpOptions)
         {
             _wolverineHttpOptions = wolverineHttpOptions;
             _payloads = payloads;
@@ -28,7 +28,7 @@ namespace Internal.Generated.WolverineHandlers
             System.Diagnostics.Activity.Current?.SetTag("handler.type", "Implementation.Endpoints.CacheEndpoints");
             
             // The actual HTTP request handler execution
-            var payload_response = Implementation.Endpoints.CacheEndpoints.VaryOne(httpContext.Response, _payloads);
+            var payload_response = Implementation.Endpoints.CacheEndpoints.Medium(httpContext.Response, _payloads);
 
             // Writing the response body to JSON because this was the first 'return variable' in the method signature
             await WriteJsonAsync(httpContext, payload_response, 404);
@@ -36,7 +36,7 @@ namespace Internal.Generated.WolverineHandlers
 
     }
 
-    // END: GET_cache_vary_one
+    // END: GET_cache_medium_key
     
     
 }

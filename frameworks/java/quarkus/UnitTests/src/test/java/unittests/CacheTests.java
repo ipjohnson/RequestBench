@@ -20,22 +20,23 @@ class CacheTests {
     @Tag("cache.medium")
     @Tag("cache.large")
     @ValueSource(strings = {"small", "medium", "large"})
-    void aSecondRequestIsTheStoredAnswer(String size) {
-        long first = Answer.serial(get("/cache/" + size));
-        Response second = get("/cache/" + size);
+    void aSecondRequestForAKeyIsItsStoredAnswer(String size) {
+        String first = Answer.serial(get("/cache/" + size + "/k1"));
+        Response second = get("/cache/" + size + "/k1");
 
         Answer.is(Expected.json("items." + size + ".json"), second);
         assertEquals(first, Answer.serial(second));
+        assertNotEquals(first, Answer.serial(get("/cache/" + size + "/k2")));
     }
 
     // rb:test cache.vary_one
     @Test
     @Tag("cache.vary_one")
     void oneVaryHeaderKeysTheStore() {
-        long alpha = Answer.serial(get("/cache/vary/one", "x-rb-tenant", "alpha"));
-        long beta = Answer.serial(get("/cache/vary/one", "x-rb-tenant", "beta"));
+        String alpha = Answer.serial(get("/cache/vary/one/k1", "x-rb-tenant", "alpha"));
+        String beta = Answer.serial(get("/cache/vary/one/k1", "x-rb-tenant", "beta"));
 
-        assertEquals(alpha, Answer.serial(get("/cache/vary/one", "x-rb-tenant", "alpha")));
+        assertEquals(alpha, Answer.serial(get("/cache/vary/one/k1", "x-rb-tenant", "alpha")));
         assertNotEquals(alpha, beta);
     }
 
@@ -46,22 +47,22 @@ class CacheTests {
         String[] webEuAlpha = {"x-rb-channel", "web", "x-rb-region", "eu", "x-rb-tenant", "alpha"};
         String[] webEuBeta = {"x-rb-channel", "web", "x-rb-region", "eu", "x-rb-tenant", "beta"};
 
-        long first = Answer.serial(get("/cache/vary/many", webEuAlpha));
+        String first = Answer.serial(get("/cache/vary/many/k1", webEuAlpha));
 
-        assertEquals(first, Answer.serial(get("/cache/vary/many", webEuAlpha)));
-        assertNotEquals(first, Answer.serial(get("/cache/vary/many", webEuBeta)));
+        assertEquals(first, Answer.serial(get("/cache/vary/many/k1", webEuAlpha)));
+        assertNotEquals(first, Answer.serial(get("/cache/vary/many/k1", webEuBeta)));
     }
 
     @Test
     void theAnswerSaysWhatItVariesOn() {
-        assertEquals("x-rb-channel, x-rb-region, x-rb-tenant", get("/cache/vary/many").header("vary"));
+        assertEquals("x-rb-channel, x-rb-region, x-rb-tenant", get("/cache/vary/many/k1").header("vary"));
     }
 
     @Test
     void aRequestWithoutTheVaryHeaderIsAKeyOfItsOwn() {
-        long none = Answer.serial(get("/cache/vary/one"));
+        String none = Answer.serial(get("/cache/vary/one/k1"));
 
-        assertEquals(none, Answer.serial(get("/cache/vary/one")));
-        assertNotEquals(none, Answer.serial(get("/cache/vary/one", "x-rb-tenant", "gamma")));
+        assertEquals(none, Answer.serial(get("/cache/vary/one/k1")));
+        assertNotEquals(none, Answer.serial(get("/cache/vary/one/k1", "x-rb-tenant", "gamma")));
     }
 }

@@ -20,6 +20,11 @@ type VariedOutput struct {
 	Body   *Payload
 }
 
+// CacheKey is the key a cache operation's answer is stored under.
+type CacheKey struct {
+	Key string `path:"key"`
+}
+
 // cacheRoutes put the cache operations in a group whose middleware replays a stored answer and
 // skips the handler. Huma has no response cache, so the store and the middleware are written for
 // it. The handler writes x-rb-serial, so a replayed answer repeats the serial it was stored with.
@@ -33,23 +38,23 @@ func cacheRoutes(api huma.API, p *Payloads) {
 	byPath := huma.NewGroup(api)
 	byPath.UseMiddleware(replay(store, nil))
 
-	huma.Get(byPath, "/cache/small", func(ctx context.Context, _ *struct{}) (*FreshOutput, error) { return fresh(&p.Small), nil })
+	huma.Get(byPath, "/cache/small/{key}", func(ctx context.Context, _ *CacheKey) (*FreshOutput, error) { return fresh(&p.Small), nil })
 
-	huma.Get(byPath, "/cache/medium", func(ctx context.Context, _ *struct{}) (*FreshOutput, error) { return fresh(&p.Medium), nil })
+	huma.Get(byPath, "/cache/medium/{key}", func(ctx context.Context, _ *CacheKey) (*FreshOutput, error) { return fresh(&p.Medium), nil })
 
-	huma.Get(byPath, "/cache/large", func(ctx context.Context, _ *struct{}) (*FreshOutput, error) { return fresh(&p.Large), nil })
+	huma.Get(byPath, "/cache/large/{key}", func(ctx context.Context, _ *CacheKey) (*FreshOutput, error) { return fresh(&p.Large), nil })
 
 	byTenant := huma.NewGroup(api)
 	byTenant.UseMiddleware(replay(store, one))
 
-	huma.Get(byTenant, "/cache/vary/one", func(ctx context.Context, _ *struct{}) (*VariedOutput, error) {
+	huma.Get(byTenant, "/cache/vary/one/{key}", func(ctx context.Context, _ *CacheKey) (*VariedOutput, error) {
 		return &VariedOutput{Vary: strings.Join(one, ", "), Serial: nextSerial(), Body: &p.Small}, nil
 	})
 
 	byAll := huma.NewGroup(api)
 	byAll.UseMiddleware(replay(store, many))
 
-	huma.Get(byAll, "/cache/vary/many", func(ctx context.Context, _ *struct{}) (*VariedOutput, error) {
+	huma.Get(byAll, "/cache/vary/many/{key}", func(ctx context.Context, _ *CacheKey) (*VariedOutput, error) {
 		return &VariedOutput{Vary: strings.Join(many, ", "), Serial: nextSerial(), Body: &p.Small}, nil
 	})
 }

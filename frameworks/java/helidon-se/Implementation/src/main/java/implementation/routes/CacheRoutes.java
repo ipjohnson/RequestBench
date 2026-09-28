@@ -3,6 +3,7 @@ package implementation.routes;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 import implementation.Payload;
@@ -20,7 +21,8 @@ import io.helidon.webserver.http.ServerResponse;
 /**
  * cache: Helidon SE has no response cache, so the store and the replay are written for this
  * family. The first request for a key builds the answer and stores its body with the x-rb-serial
- * it was written with, and every later one is answered from the store without building anything.
+ * it was written with, and every later one is answered from the store without building anything
+ * until settings.json's TTL has passed.
  */
 public final class CacheRoutes implements HttpFeature {
 
@@ -36,7 +38,9 @@ public final class CacheRoutes implements HttpFeature {
     /** One store for the process, keyed by the path and the values of the headers the route varies on. */
     private final Map<String, Stored> store = new ConcurrentHashMap<>();
 
-    record Stored(String serial, byte[] body) {}
+    private final long ttlNanos;
+
+    record Stored(String serial, byte[] body, long expires) {}
 
     /** The headers a route varies on, and the Vary header that names them. */
     record Vary(List<HeaderName> names, String header) {
@@ -53,32 +57,39 @@ public final class CacheRoutes implements HttpFeature {
         this.p = p;
         this.one = Vary.on(p.settings().cache().vary().one());
         this.many = Vary.on(p.settings().cache().vary().many());
+        this.ttlNanos = TimeUnit.SECONDS.toNanos(p.settings().cache().ttlSeconds());
     }
 
     @Override
     public void setup(HttpRouting.Builder routing) {
-        routing.get("/cache/small", (req, res) -> replay(req, res, Vary.NONE, p::small));
+        routing.get("/cache/small/{key}", (req, res) -> replay(req, res, Vary.NONE, p::small));
 
-        routing.get("/cache/medium", (req, res) -> replay(req, res, Vary.NONE, p::medium));
+        routing.get("/cache/medium/{key}", (req, res) -> replay(req, res, Vary.NONE, p::medium));
 
-        routing.get("/cache/large", (req, res) -> replay(req, res, Vary.NONE, p::large));
+        routing.get("/cache/large/{key}", (req, res) -> replay(req, res, Vary.NONE, p::large));
 
-        routing.get("/cache/vary/one", (req, res) -> replay(req, res, one, p::small));
+        routing.get("/cache/vary/one/{key}", (req, res) -> replay(req, res, one, p::small));
 
-        routing.get("/cache/vary/many", (req, res) -> replay(req, res, many, p::small));
+        routing.get("/cache/vary/many/{key}", (req, res) -> replay(req, res, many, p::small));
     }
 
     // rb:wiring cache.*
     /**
-     * The stored answer for this request's key, built and stored first when there is none. The Vary
-     * header tells a cache in front of the framework what the answer depends on.
+     * The stored answer for this request's key, built and stored first when there is none or it has
+     * expired. The Vary header tells a cache in front of the framework what the answer depends on.
      */
     private void replay(ServerRequest req, ServerResponse res, Vary vary, Supplier<Payload> payload) {
         StringBuilder key = new StringBuilder(req.path().path());
         for (HeaderName name : vary.names()) {
             key.append('\n').append(req.headers().value(name).orElse(""));
         }
-        Stored answer = store.computeIfAbsent(key.toString(), k -> new Stored(Serial.next(), json.serializeToBytes(payload.get(), Payload.class)));
+        String k = key.toString();
+        long now = System.nanoTime();
+        Stored answer = store.get(k);
+        if (answer == null || answer.expires() - now <= 0) {
+            answer = store.compute(k, (same, old) -> old != null && old.expires() - now > 0 ? old
+                    : new Stored(Serial.next(), json.serializeToBytes(payload.get(), Payload.class), now + ttlNanos));
+        }
         res.header(Serial.HEADER, answer.serial());
         if (vary.header() != null) {
             res.header(HeaderNames.VARY, vary.header());

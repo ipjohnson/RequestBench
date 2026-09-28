@@ -11,6 +11,7 @@ import { dirname, join } from "node:path";
 import { gunzipSync } from "node:zlib";
 
 import type { Draw, Exceptions, Framework, RunValues, Suite, Test } from "@rb/tests/kit";
+import { CACHE_KEYS } from "@rb/tests/models/cache";
 import type { LambdaFraming } from "../traffic-generator/pipe.ts";
 import type { Exchange } from "./live.ts";
 import { validator, type Transport } from "./validate.ts";
@@ -39,6 +40,7 @@ export interface GateResult {
 export const FIXED_DRAW: Draw = {
   choice: <T>(values: readonly T[]) => values[0] as T,
   item: () => 17,
+  key: () => CACHE_KEYS[0],
 };
 
 /** Values of the shape a run draws, for a gate that is not part of a run. */

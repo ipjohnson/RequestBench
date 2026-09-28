@@ -27,37 +27,38 @@ def blueprint(p: Payloads) -> Blueprint:
     def install(state: BlueprintSetupState) -> None:
         cache.init_app(state.app)
 
-    def keyed_on(names: tuple[str, ...]) -> Callable[[], str]:
+    def keyed_on(names: tuple[str, ...]) -> Callable[..., str]:
         """The key a vary row is stored under: its path, and the request headers it varies on.
-        Flask-Caching keys the other rows on the path alone."""
-        return lambda: "|".join([request.path, *(request.headers.get(name, "") for name in names)])
+        Flask-Caching keys the other rows on the path alone. It calls this with the view's
+        arguments, and the path holds the one argument there is."""
+        return lambda **_: "|".join([request.path, *(request.headers.get(name, "") for name in names)])
     # rb:end
 
-    @routes.get("/cache/small")
+    @routes.get("/cache/small/<key>")
     @cache.cached()
-    def small() -> Response:
+    def small(key: str) -> Response:
         return fresh(jsonify(p.small))
 
-    @routes.get("/cache/medium")
+    @routes.get("/cache/medium/<key>")
     @cache.cached()
-    def medium() -> Response:
+    def medium(key: str) -> Response:
         return fresh(jsonify(p.medium))
 
-    @routes.get("/cache/large")
+    @routes.get("/cache/large/<key>")
     @cache.cached()
-    def large() -> Response:
+    def large(key: str) -> Response:
         return fresh(jsonify(p.large))
 
     # The Vary header tells a cache in front of the framework what the answer depends on. The store
     # keys on the route's own list, not on this header.
-    @routes.get("/cache/vary/one")
+    @routes.get("/cache/vary/one/<key>")
     @cache.cached(make_cache_key=keyed_on(one))
-    def vary_one() -> Response:
+    def vary_one(key: str) -> Response:
         return varying(p.small, one)
 
-    @routes.get("/cache/vary/many")
+    @routes.get("/cache/vary/many/<key>")
     @cache.cached(make_cache_key=keyed_on(many))
-    def vary_many() -> Response:
+    def vary_many(key: str) -> Response:
         return varying(p.small, many)
 
     return routes

@@ -9,7 +9,8 @@ export default family({
   name: "cache",
   about:
     "The framework's response cache: the handler skipped and a stored answer " +
-    "replayed, keyed by path and by request header.",
+    "replayed, keyed by a path segment and by request header, and kept for 30 " +
+    "seconds.",
   comparable:
     "Across stores rather than across frameworks. Several frameworks ship no " +
     "response cache and run a package chosen for them, so a ranking that " +

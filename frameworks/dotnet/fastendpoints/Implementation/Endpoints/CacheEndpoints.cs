@@ -14,7 +14,7 @@ public sealed class CacheSmallEndpoint(Payloads payloads) : EndpointWithoutReque
 {
     public override void Configure()
     {
-        Get("/cache/small");
+        Get("/cache/small/{key}");
         Options(b => b.CacheOutput());
     }
 
@@ -30,7 +30,7 @@ public sealed class CacheMediumEndpoint(Payloads payloads) : EndpointWithoutRequ
 {
     public override void Configure()
     {
-        Get("/cache/medium");
+        Get("/cache/medium/{key}");
         Options(b => b.CacheOutput());
     }
 
@@ -46,7 +46,7 @@ public sealed class CacheLargeEndpoint(Payloads payloads) : EndpointWithoutReque
 {
     public override void Configure()
     {
-        Get("/cache/large");
+        Get("/cache/large/{key}");
         Options(b => b.CacheOutput());
     }
 
@@ -62,7 +62,7 @@ public sealed class CacheVaryOneEndpoint(Payloads payloads) : EndpointWithoutReq
 {
     public override void Configure()
     {
-        Get("/cache/vary/one");
+        Get("/cache/vary/one/{key}");
         Options(b => b.CacheOutput(policy => policy.SetVaryByHeader([.. payloads.Settings.Cache.Vary.One.Keys])));
     }
 
@@ -81,7 +81,7 @@ public sealed class CacheVaryManyEndpoint(Payloads payloads) : EndpointWithoutRe
 {
     public override void Configure()
     {
-        Get("/cache/vary/many");
+        Get("/cache/vary/many/{key}");
         Options(b => b.CacheOutput(policy => policy.SetVaryByHeader([.. payloads.Settings.Cache.Vary.Many.Keys])));
     }
 

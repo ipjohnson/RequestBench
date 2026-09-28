@@ -76,7 +76,7 @@ public static partial class Expected
     private static partial Regex Boundary();
 }
 
-public static class Answer
+public static partial class Answer
 {
     public static async Task<JsonNode> Json(HttpResponseMessage response) =>
         JsonNode.Parse(await response.Content.ReadAsStringAsync())!;
@@ -92,5 +92,17 @@ public static class Answer
         : response.Content.Headers.TryGetValues(name, out values) ? string.Join(", ", values)
         : null;
 
-    public static long Serial(HttpResponseMessage response) => long.Parse(Header(response, "x-rb-serial")!);
+    /// <summary>x-rb-serial, after checking it starts with the Unix time in milliseconds it was written at.</summary>
+    public static string Serial(HttpResponseMessage response)
+    {
+        string serial = Header(response, "x-rb-serial")!;
+        Match form = SerialForm().Match(serial);
+        Assert.True(form.Success, $"x-rb-serial {serial} is not <time stamp>|<count>");
+        DateTimeOffset written = DateTimeOffset.FromUnixTimeMilliseconds(long.Parse(form.Groups[1].Value));
+        Assert.InRange(written, DateTimeOffset.UtcNow.AddMinutes(-1), DateTimeOffset.UtcNow);
+        return serial;
+    }
+
+    [GeneratedRegex(@"^(\d+)\|\d+$")]
+    private static partial Regex SerialForm();
 }

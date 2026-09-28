@@ -1,8 +1,8 @@
 package unittests;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static unittests.Http.get;
 
 import java.io.ByteArrayInputStream;
@@ -32,7 +32,7 @@ class CompressedTests {
         try (GZIPInputStream unzipped = new GZIPInputStream(new ByteArrayInputStream(second.asByteArray()))) {
             assertEquals(Expected.json("items." + size + ".json"), Expected.JSON.readTree(unzipped));
         }
-        assertTrue(Answer.serial(second) > Answer.serial(first));
+        assertNotEquals(Answer.serial(first), Answer.serial(second));
     }
 
     // rb:test compressed.identity_small,compressed.identity_large

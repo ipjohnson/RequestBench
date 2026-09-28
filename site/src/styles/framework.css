@@ -69,6 +69,8 @@ a.epfamname[aria-current="true"] { background: var(--tealsoft); border-left-colo
    rather than wrapping samples onto a row by itself. */
 .eppane .fields { margin-bottom: 4px; background: var(--surface); border: none;
                   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
+/* What a cache test's store did at the rate, under its numbers. */
+.cachenote { margin: 6px 0 10px; font-size: 13px; color: var(--ink2); }
 .eppane .frow { outline: 1px solid var(--rule); }
 .eppane .fv { white-space: nowrap; }
 /* On a pane a thin percentile is blurred until it is hovered or focused, so it is read on

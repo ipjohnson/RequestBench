@@ -67,16 +67,16 @@ const cache: Routes = (app, p) => {
   const stored = (on?: string[]) => replay({ cacheName: "rb", wait: true, ...(on === undefined ? {} : { vary: on }) });
   // rb:end
 
-  app.get("/cache/small", stored(), (c) => fresh(c, p.small));
+  app.get("/cache/small/:key", stored(), (c) => fresh(c, p.small));
 
-  app.get("/cache/medium", stored(), (c) => fresh(c, p.medium));
+  app.get("/cache/medium/:key", stored(), (c) => fresh(c, p.medium));
 
-  app.get("/cache/large", stored(), (c) => fresh(c, p.large));
+  app.get("/cache/large/:key", stored(), (c) => fresh(c, p.large));
 
   // hono/cache writes the Vary header itself, from the headers the route names.
-  app.get("/cache/vary/one", stored(Object.keys(vary.one)), (c) => fresh(c, p.small));
+  app.get("/cache/vary/one/:key", stored(Object.keys(vary.one)), (c) => fresh(c, p.small));
 
-  app.get("/cache/vary/many", stored(Object.keys(vary.many)), (c) => fresh(c, p.small));
+  app.get("/cache/vary/many/:key", stored(Object.keys(vary.many)), (c) => fresh(c, p.small));
 };
 
 export default cache;

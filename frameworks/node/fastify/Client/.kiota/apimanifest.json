@@ -51,23 +51,23 @@
         },
         {
           "method": "GET",
-          "uriTemplate": "cache/small"
+          "uriTemplate": "cache/small/{key}"
         },
         {
           "method": "GET",
-          "uriTemplate": "cache/medium"
+          "uriTemplate": "cache/medium/{key}"
         },
         {
           "method": "GET",
-          "uriTemplate": "cache/large"
+          "uriTemplate": "cache/large/{key}"
         },
         {
           "method": "GET",
-          "uriTemplate": "cache/vary/one"
+          "uriTemplate": "cache/vary/one/{key}"
         },
         {
           "method": "GET",
-          "uriTemplate": "cache/vary/many"
+          "uriTemplate": "cache/vary/many/{key}"
         },
         {
           "method": "GET",
@@ -195,7 +195,7 @@
         }
       ],
       "extensions": {
-        "x-ms-kiota-hash": "AD906DE1A7E1A777FD060F1E172216EE2F3ED17E0970B7804E8FE5CAD3D1E39A",
+        "x-ms-kiota-hash": "F7DB194B1F162DA35FA71CEAA1EF129D744FF2156DEA88C27317DC9FE35174DA",
         "x-ms-kiota-version": "1.35.0"
       }
     }

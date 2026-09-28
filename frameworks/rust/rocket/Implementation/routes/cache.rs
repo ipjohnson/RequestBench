@@ -27,27 +27,27 @@ fn varied<'a, R>(inner: R, on: impl Iterator<Item = &'a String>) -> Varied<R> {
 
 /// cache: the handler skipped and a stored answer written back. The handler writes x-rb-serial,
 /// so a replayed answer repeats the serial it was stored with. A vary route's key adds its headers.
-#[get("/cache/small")]
+#[get("/cache/small/<_>")]
 fn small(p: &State<Payloads>) -> Fresh<Json<&Payload>> {
     Fresh::new(Json(&p.small))
 }
 
-#[get("/cache/medium")]
+#[get("/cache/medium/<_>")]
 fn medium(p: &State<Payloads>) -> Fresh<Json<&Payload>> {
     Fresh::new(Json(&p.medium))
 }
 
-#[get("/cache/large")]
+#[get("/cache/large/<_>")]
 fn large(p: &State<Payloads>) -> Fresh<Json<&Payload>> {
     Fresh::new(Json(&p.large))
 }
 
-#[get("/cache/vary/one")]
+#[get("/cache/vary/one/<_>")]
 fn vary_one(p: &State<Payloads>) -> Fresh<Varied<Json<&Payload>>> {
     Fresh::new(varied(Json(&p.small), p.settings.cache.vary.one.keys()))
 }
 
-#[get("/cache/vary/many")]
+#[get("/cache/vary/many/<_>")]
 fn vary_many(p: &State<Payloads>) -> Fresh<Varied<Json<&Payload>>> {
     Fresh::new(varied(Json(&p.small), p.settings.cache.vary.many.keys()))
 }

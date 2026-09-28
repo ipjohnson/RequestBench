@@ -248,11 +248,20 @@ function mismatch(a: Answer, payload: Payload, options: BodyOptions, run: RunVal
   }
 }
 
-function serial(a: Answer): number | string {
-  const v = a.headers["x-rb-serial"];
-  if (v === undefined) return "no x-rb-serial";
-  if (!/^\d+$/.test(v)) return `x-rb-serial ${JSON.stringify(v)} is not a number`;
-  return Number(v);
+/** How far a serial's time stamp may be from this clock, which still tells milliseconds from seconds or microseconds. */
+const SERIAL_SKEW_MS = 60 * 60 * 1000;
+
+/**
+ * x-rb-serial as a handler writes it: the Unix time in milliseconds it ran at, a bar, and a part
+ * no other run of a handler serving the port writes. The value is compared whole.
+ */
+export function serialOf(v: string | undefined, now = Date.now()): { ok: true; value: string; ms: number } | { ok: false; why: string } {
+  if (v === undefined) return { ok: false, why: "no x-rb-serial" };
+  const m = /^(\d+)\|[^|\s]+$/.exec(v);
+  if (m === null) return { ok: false, why: `x-rb-serial ${JSON.stringify(v)} is not <time stamp>|<unique part>` };
+  const ms = Number(m[1]);
+  if (Math.abs(ms - now) > SERIAL_SKEW_MS) return { ok: false, why: `x-rb-serial ${JSON.stringify(v)} does not start with the Unix time in milliseconds` };
+  return { ok: true, value: v, ms };
 }
 
 export function validator(d: {
@@ -263,10 +272,10 @@ export function validator(d: {
 }): Session {
   const failures: Failure[] = [];
   const primed = new Map<string, Promise<unknown>>();
-  /** The last serial a handler wrote on a route that must run it every time. */
-  let lastFresh: number | null = null;
+  /** Every serial an answer has carried, so a route that must run its handler is seen to. */
+  const serials = new Set<string>();
   /** The serial each cache key answered with the first time it was asked. */
-  const firstStored = new Map<string, number>();
+  const firstStored = new Map<string, string>();
   let built = 0;
   let sent = 0;
 
@@ -365,22 +374,23 @@ export function validator(d: {
 
       fresh: () =>
         check("fresh", (a) => {
-          const s = serial(a);
-          if (typeof s === "string") return `${s} (the response must prove the handler ran)`;
-          const before = lastFresh;
-          lastFresh = s;
-          return before !== null && s <= before ? `x-rb-serial did not advance (${s} after ${before})` : null;
+          const s = serialOf(a.headers["x-rb-serial"]);
+          if (!s.ok) return `${s.why} (the response must prove the handler ran)`;
+          const seen = serials.has(s.value);
+          serials.add(s.value);
+          return seen ? `x-rb-serial ${s.value} was answered before, so the handler did not run` : null;
         }),
       replayed: () =>
         check("replayed", (a) => {
-          const s = serial(a);
-          if (typeof s === "string") return `${s} (the response must say which run of the handler produced it)`;
+          const s = serialOf(a.headers["x-rb-serial"]);
+          if (!s.ok) return `${s.why} (the response must say which run of the handler produced it)`;
+          serials.add(s.value);
           const first = firstStored.get(a.cacheKey);
           if (first === undefined) {
-            firstStored.set(a.cacheKey, s);
+            firstStored.set(a.cacheKey, s.value);
             return null;
           }
-          return s === first ? null : `x-rb-serial ${s} where the stored response carries ${first}, so nothing was replayed`;
+          return s.value === first ? null : `x-rb-serial ${s.value} where the stored response carries ${first}, so nothing was replayed`;
         }),
 
       etag: () =>

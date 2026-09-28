@@ -134,6 +134,30 @@ export interface SettleSummary {
   readonly firstError?: string;
 }
 
+/** How a cache test's store answered in a phase, read from each answer's x-rb-serial. */
+export interface CacheSummary {
+  /** The keys the test's instances ask for, each an entry of its own in the store. */
+  readonly keys: number;
+  /** The x-rb-serial values the recording carried that no earlier answer did: each a run of the handler. */
+  readonly handlerRuns: number;
+  /** How old the oldest recorded answer was when it arrived, in milliseconds, by its x-rb-serial's time stamp. */
+  readonly oldestMs: number | null;
+}
+
+/**
+ * A cache test's summary for a phase. `seen` holds every x-rb-serial value the load has read,
+ * the settle's included, and takes this recording's.
+ */
+export function cacheSummary(t: { readonly serials: readonly string[]; readonly oldestMs: number | null }, keys: number, seen: Set<string>): CacheSummary {
+  let handlerRuns = 0;
+  for (const s of t.serials) {
+    if (seen.has(s)) continue;
+    seen.add(s);
+    handlerRuns++;
+  }
+  return { keys, handlerRuns, oldestMs: t.oldestMs };
+}
+
 export interface TestSummary extends Percentiles {
   readonly id: string;
   readonly family: string;
@@ -149,6 +173,8 @@ export interface TestSummary extends Percentiles {
   readonly histB64: string;
   /** Each window of the recording, in order, by when its instances were scheduled. */
   readonly windows?: readonly Window[];
+  /** For a cache test, how often its handler ran. */
+  readonly cache?: CacheSummary;
 }
 
 export interface RecordedSummary {
@@ -229,6 +255,8 @@ export interface ClosedTestSummary {
   readonly runtimeOverhead: SpanSummary;
   /** The invoke phase in each window of the recording, in order, by when its event went out. */
   readonly windows?: readonly Window[];
+  /** For a cache test, how often its handler ran. */
+  readonly cache?: CacheSummary;
 }
 
 export interface ClosedRecordedSummary {

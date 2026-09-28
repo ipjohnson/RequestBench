@@ -306,12 +306,22 @@
         }
       }
     },
-    "/cache/large": {
+    "/cache/large/{key}": {
       "get": {
         "tags": [
           "Cache"
         ],
         "operationId": "ImplementationEndpointsCacheLargeEndpoint",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -326,12 +336,22 @@
         }
       }
     },
-    "/cache/medium": {
+    "/cache/medium/{key}": {
       "get": {
         "tags": [
           "Cache"
         ],
         "operationId": "ImplementationEndpointsCacheMediumEndpoint",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -346,12 +366,22 @@
         }
       }
     },
-    "/cache/small": {
+    "/cache/small/{key}": {
       "get": {
         "tags": [
           "Cache"
         ],
         "operationId": "ImplementationEndpointsCacheSmallEndpoint",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -366,12 +396,22 @@
         }
       }
     },
-    "/cache/vary/many": {
+    "/cache/vary/many/{key}": {
       "get": {
         "tags": [
           "Cache"
         ],
         "operationId": "ImplementationEndpointsCacheVaryManyEndpoint",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -386,12 +426,22 @@
         }
       }
     },
-    "/cache/vary/one": {
+    "/cache/vary/one/{key}": {
       "get": {
         "tags": [
           "Cache"
         ],
         "operationId": "ImplementationEndpointsCacheVaryOneEndpoint",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success",

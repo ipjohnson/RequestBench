@@ -5,17 +5,17 @@ import implementation.Payloads;
 import implementation.Serial;
 import io.quarkus.cache.CacheResult;
 import io.smallrye.mutiny.Uni;
-import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.core.HttpHeaders;
 import org.jboss.resteasy.reactive.RestHeader;
+import org.jboss.resteasy.reactive.RestPath;
 import org.jboss.resteasy.reactive.RestResponse;
 
 /**
  * cache: Quarkus's cache, which stores what a @CacheResult method returned and returns it again
- * without running the method. A route's cache is keyed by the method's arguments, and the vary
- * routes take their headers as arguments for that reason.
+ * without running the method. A route's cache is keyed by the method's arguments, which are the key
+ * in the path and, on the vary routes, the headers.
  */
 @Path("/cache")
 public class CacheRoutes {
@@ -34,43 +34,42 @@ public class CacheRoutes {
 
     // rb:handler cache.small
     @GET
-    @Path("small")
+    @Path("small/{key}")
     @CacheResult(cacheName = "cache.small")
-    public Uni<RestResponse<Payload>> small() {
+    public Uni<RestResponse<Payload>> small(@RestPath String key) {
         return stored(p.small(), null);
     }
 
     // rb:handler cache.medium
     @GET
-    @Path("medium")
+    @Path("medium/{key}")
     @CacheResult(cacheName = "cache.medium")
-    public Uni<RestResponse<Payload>> medium() {
+    public Uni<RestResponse<Payload>> medium(@RestPath String key) {
         return stored(p.medium(), null);
     }
 
     // rb:handler cache.large
     @GET
-    @Path("large")
+    @Path("large/{key}")
     @CacheResult(cacheName = "cache.large")
-    public Uni<RestResponse<Payload>> large() {
+    public Uni<RestResponse<Payload>> large(@RestPath String key) {
         return stored(p.large(), null);
     }
 
-    // A lone argument is the key itself, and the cache takes no null key, so a request with no
-    // x-rb-tenant is keyed as empty.
     // rb:handler cache.vary_one
     @GET
-    @Path("vary/one")
+    @Path("vary/one/{key}")
     @CacheResult(cacheName = "cache.vary_one")
-    public Uni<RestResponse<Payload>> varyOne(@RestHeader("x-rb-tenant") @DefaultValue("") String tenant) {
+    public Uni<RestResponse<Payload>> varyOne(@RestPath String key, @RestHeader("x-rb-tenant") String tenant) {
         return stored(p.small(), varyOne);
     }
 
     // rb:handler cache.vary_many
     @GET
-    @Path("vary/many")
+    @Path("vary/many/{key}")
     @CacheResult(cacheName = "cache.vary_many")
-    public Uni<RestResponse<Payload>> varyMany(@RestHeader("x-rb-channel") String channel,
+    public Uni<RestResponse<Payload>> varyMany(@RestPath String key,
+                                               @RestHeader("x-rb-channel") String channel,
                                                @RestHeader("x-rb-region") String region,
                                                @RestHeader("x-rb-tenant") String tenant) {
         return stored(p.small(), varyMany);

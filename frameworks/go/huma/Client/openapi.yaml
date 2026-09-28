@@ -692,9 +692,15 @@ paths:
                 $ref: "#/components/schemas/ErrorModel"
           description: Error
       summary: Post body validate small
-  /cache/large:
+  /cache/large/{key}:
     get:
-      operationId: get-cache-large
+      operationId: get-cache-large-by-key
+      parameters:
+        - in: path
+          name: key
+          required: true
+          schema:
+            type: string
       responses:
         "200":
           content:
@@ -712,10 +718,16 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorModel"
           description: Error
-      summary: Get cache large
-  /cache/medium:
+      summary: Get cache large by key
+  /cache/medium/{key}:
     get:
-      operationId: get-cache-medium
+      operationId: get-cache-medium-by-key
+      parameters:
+        - in: path
+          name: key
+          required: true
+          schema:
+            type: string
       responses:
         "200":
           content:
@@ -733,10 +745,16 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorModel"
           description: Error
-      summary: Get cache medium
-  /cache/small:
+      summary: Get cache medium by key
+  /cache/small/{key}:
     get:
-      operationId: get-cache-small
+      operationId: get-cache-small-by-key
+      parameters:
+        - in: path
+          name: key
+          required: true
+          schema:
+            type: string
       responses:
         "200":
           content:
@@ -754,10 +772,16 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorModel"
           description: Error
-      summary: Get cache small
-  /cache/vary/many:
+      summary: Get cache small by key
+  /cache/vary/many/{key}:
     get:
-      operationId: get-cache-vary-many
+      operationId: get-cache-vary-many-by-key
+      parameters:
+        - in: path
+          name: key
+          required: true
+          schema:
+            type: string
       responses:
         "200":
           content:
@@ -778,10 +802,16 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorModel"
           description: Error
-      summary: Get cache vary many
-  /cache/vary/one:
+      summary: Get cache vary many by key
+  /cache/vary/one/{key}:
     get:
-      operationId: get-cache-vary-one
+      operationId: get-cache-vary-one-by-key
+      parameters:
+        - in: path
+          name: key
+          required: true
+          schema:
+            type: string
       responses:
         "200":
           content:
@@ -802,7 +832,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorModel"
           description: Error
-      summary: Get cache vary one
+      summary: Get cache vary one by key
   /compressed/large:
     get:
       operationId: get-compressed-large

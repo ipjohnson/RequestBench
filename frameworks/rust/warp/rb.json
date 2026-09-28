@@ -38,7 +38,7 @@
       "mentions": "Validate"
     },
     "cache": {
-      "mechanism": "A store in front of each cache route's handler, written here because warp ships none, over cached's LruTtlCache, the store axum-response-cache uses, keyed by the headers the route varies on",
+      "mechanism": "A store in front of each cache route's handler, written here because warp ships none, over cached's LruTtlCache, the store axum-response-cache uses, keyed by the key in the path and the headers the route varies on",
       "dependency": "cached",
       "mentions": "LruTtlCache"
     },

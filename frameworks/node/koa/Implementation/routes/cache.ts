@@ -58,15 +58,15 @@ const cache: Routes = (router, { payloads: p }) => {
   const byPath = cashed();
   // rb:end
 
-  router.get("/cache/small", byPath, (ctx) => stored(ctx, p.small));
+  router.get("/cache/small/:key", byPath, (ctx) => stored(ctx, p.small));
 
-  router.get("/cache/medium", byPath, (ctx) => stored(ctx, p.medium));
+  router.get("/cache/medium/:key", byPath, (ctx) => stored(ctx, p.medium));
 
-  router.get("/cache/large", byPath, (ctx) => stored(ctx, p.large));
+  router.get("/cache/large/:key", byPath, (ctx) => stored(ctx, p.large));
 
-  router.get("/cache/vary/one", cashed(one), (ctx) => stored(ctx, p.small, one));
+  router.get("/cache/vary/one/:key", cashed(one), (ctx) => stored(ctx, p.small, one));
 
-  router.get("/cache/vary/many", cashed(many), (ctx) => stored(ctx, p.small, many));
+  router.get("/cache/vary/many/:key", cashed(many), (ctx) => stored(ctx, p.small, many));
 };
 
 export default cache;

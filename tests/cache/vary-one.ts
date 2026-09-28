@@ -1,7 +1,7 @@
 import { performanceTest } from "#kit";
 import { items, settings } from "#payloads";
 
-const path = "/cache/vary/one";
+const path = "/cache/vary/one/{draw.key}";
 const vary = settings.value.cache.vary.one;
 
 export default performanceTest({
@@ -13,11 +13,11 @@ export default performanceTest({
   about:
     "The stored answer keyed by a request header as well as by the path. One " +
     "header with two values, picked per instance, so a store that ignores the " +
-    "vary header holds one entry where the plan sent two keys.",
+    "vary header holds four entries where the plan sent eight keys.",
 
   request: (c) =>
     c
-      .get(path)
+      .get(`/cache/vary/one/${c.draw.key()}`)
       .header("x-rb-tenant", c.draw.choice(vary["x-rb-tenant"]))
       .okWith(items.small)
       .replayed(),

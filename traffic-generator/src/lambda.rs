@@ -20,7 +20,7 @@ use std::cell::{Cell, RefCell};
 use std::collections::VecDeque;
 use std::rc::Rc;
 use std::sync::LazyLock;
-use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
+use std::time::{Duration, Instant};
 
 use base64::Engine;
 use serde_json::{Value, json};
@@ -34,6 +34,7 @@ use crate::cycle::Cycle;
 use crate::histogram::{BUCKETS, bucket_of};
 use crate::inbound::{Inbound, RequestReader};
 use crate::request::Request;
+use crate::tally::{Serials, epoch_ms};
 
 const NEXT: &str = "/2018-06-01/runtime/invocation/next";
 const INVOCATION: &str = "/2018-06-01/runtime/invocation/";
@@ -57,10 +58,6 @@ static NOT_FOUND: LazyLock<Vec<u8>> =
 
 fn reply(status: &str, body: &str) -> Vec<u8> {
     format!("HTTP/1.1 {status}\r\nContent-Type: application/json\r\nContent-Length: {}\r\n\r\n{body}", body.len()).into_bytes()
-}
-
-fn epoch_ms() -> u64 {
-    SystemTime::now().duration_since(UNIX_EPOCH).map_or(0, |d| d.as_millis() as u64)
 }
 
 /// An event as its whole `/next` answer: the status line, the `Lambda-Runtime-*` headers and the
@@ -109,6 +106,8 @@ pub struct Instance {
     /// What this request's 2xx body measured at priming, which every answer has to measure again.
     pub body_bytes: Option<u64>,
     pub head: bool,
+    /// Whether its answers' x-rb-serial values are counted, as a cache test's are.
+    pub serials: bool,
 }
 
 /// One test's invocations: its spans on the histogram layout histogram.ts reads, and what went wrong.
@@ -127,6 +126,7 @@ pub struct Spans {
     overhead: Vec<u32>,
     first_error: Option<String>,
     first_mismatch: Option<String>,
+    serials: Serials,
 }
 
 impl Spans {
@@ -149,6 +149,7 @@ impl Spans {
             overhead: hist(),
             first_error: None,
             first_mismatch: None,
+            serials: Serials::default(),
         }
     }
 
@@ -190,6 +191,7 @@ impl Spans {
                 *into += n;
             }
         }
+        let (serials, oldest_ms) = self.serials.json();
         json!({
             "count": self.count,
             "errors": self.errors,
@@ -202,6 +204,8 @@ impl Spans {
             "responseLatency": b64(&self.latency),
             "responseDuration": b64(&self.duration),
             "runtimeOverhead": b64(&self.overhead),
+            "serials": serials,
+            "oldestMs": oldest_ms,
         })
     }
 }
@@ -500,18 +504,25 @@ impl Env {
         let answered = if answer.streamed { apigw::streamed(&answer.body) } else { apigw::answered(&answer.body) };
         let tests = self.tests.borrow();
         let request = &tests[test][instance];
-        match answered {
+        let a = match answered {
             Err(why) => return spans.error(&why),
-            Ok(a) if !request.accepted.contains(&a.status) => spans.mismatched(|| {
+            Ok(a) => a,
+        };
+        if !request.accepted.contains(&a.status) {
+            spans.mismatched(|| {
                 let accepted: Vec<String> = request.accepted.iter().map(u16::to_string).collect();
                 format!("{} answered {}, expected {}", request.label, a.status, accepted.join(" or "))
-            }),
-            Ok(a) => {
-                let read = if request.head { 0 } else { a.body.len() as u64 };
-                if let Some(expected) = request.body_bytes.filter(|&b| b != read) {
-                    spans.mismatched(|| format!("{} answered {read} bytes, expected {expected}", request.label));
-                }
+            });
+        } else {
+            let read = if request.head { 0 } else { a.body.len() as u64 };
+            if let Some(expected) = request.body_bytes.filter(|&b| b != read) {
+                spans.mismatched(|| format!("{} answered {read} bytes, expected {expected}", request.label));
             }
+        }
+        if request.serials
+            && let Some((_, serial)) = a.headers.iter().find(|(name, _)| name.eq_ignore_ascii_case("x-rb-serial"))
+        {
+            spans.serials.add(serial, epoch_ms());
         }
         spans.time(t0, answer.t1, answer.t2, t3, window);
         if recorded {
@@ -703,7 +714,8 @@ mod tests {
     }
 
     /// A runtime client on a thread of its own that asks for each event and answers it with the
-    /// event's path in JSON, over one keep-alive connection, until the server goes.
+    /// event's path in JSON, and in an x-rb-serial as if one store had answered every request for
+    /// the path, over one keep-alive connection, until the server goes.
     fn runtime(port: u16) {
         std::thread::spawn(move || {
             let mut s = std::net::TcpStream::connect(("127.0.0.1", port)).unwrap();
@@ -717,7 +729,9 @@ mod tests {
                 let id = head.lines().find_map(|l| l.strip_prefix("Lambda-Runtime-Aws-Request-Id: ")).unwrap().to_string();
                 let event: Value = serde_json::from_slice(&event).unwrap();
                 let body = json!({ "path": event["rawPath"], "length": event["body"].as_str().map_or(0, str::len) }).to_string();
-                let answer = json!({ "statusCode": 200, "headers": { "content-type": "application/json" }, "body": body }).to_string();
+                let serial = format!("1790000000000|{}", event["rawPath"].as_str().unwrap());
+                let headers = json!({ "content-type": "application/json", "x-rb-serial": serial });
+                let answer = json!({ "statusCode": 200, "headers": headers, "body": body }).to_string();
                 let post = format!(
                     "POST /2018-06-01/runtime/invocation/{id}/response HTTP/1.1\r\nHost: api\r\nContent-Length: {}\r\n\r\n{answer}",
                     answer.len()
@@ -764,14 +778,15 @@ mod tests {
                 let (env, port) = listen("127.0.0.1:0").await.unwrap();
                 runtime(port);
                 env.init(Duration::from_secs(5)).await.unwrap();
-                let instance = |path: &str| Instance {
+                let instance = |path: &str, serials: bool| Instance {
                     answer: NextAnswer::new(&apigw::event(&get(path), None)),
                     label: format!("GET {path}"),
                     accepted: vec![200],
                     body_bytes: Some(format!(r#"{{"length":0,"path":"{path}"}}"#).len() as u64),
                     head: false,
+                    serials,
                 };
-                env.load(vec![vec![instance("/a")], vec![instance("/bb")]], Cycle::new(&[0, 1], 2).unwrap());
+                env.load(vec![vec![instance("/a", true)], vec![instance("/bb", false)]], Cycle::new(&[0, 1], 2).unwrap());
                 let report = env.phase(Duration::ZERO, Duration::from_millis(300), Duration::from_millis(100), |_| 0).await.unwrap();
                 // With no settle the first recorded invocation is the first event the runtime answered.
                 let first = &report["firstInvocation"];
@@ -797,6 +812,10 @@ mod tests {
                     assert_eq!(windows.len(), 3);
                     assert_eq!(windows.iter().map(timed).sum::<u64>(), test["count"].as_u64().unwrap());
                 }
+                // Only the test that counts serials reads them, and every answer carried the one value.
+                assert_eq!(report["tests"][0]["serials"], json!(["1790000000000|/a"]));
+                assert!(report["tests"][0]["oldestMs"].as_u64().unwrap() > 0);
+                assert_eq!((&report["tests"][1]["serials"], &report["tests"][1]["oldestMs"]), (&json!([]), &Value::Null));
                 // After the phase the runtime waits in /next, and an exchange goes straight to it.
                 let answer = env.exchange(&get("/after"), Duration::from_secs(5)).await.unwrap();
                 assert_eq!(answer["status"], 200);
