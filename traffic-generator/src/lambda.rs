@@ -455,7 +455,7 @@ impl Env {
     }
 
     fn answer(&self, conn: &Rc<Conn>, number: u64, inbound: Inbound, now: Instant, error: Option<String>) {
-        let streamed = inbound.header("lambda-runtime-function-response-mode") == Some("streaming");
+        let streamed = inbound.streamed();
         let mut current = self.current.borrow_mut();
         match current.as_mut() {
             Some(Current::Exchange { number: n, done }) if *n == number && done.is_some() => {

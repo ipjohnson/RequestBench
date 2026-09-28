@@ -18,7 +18,7 @@ Echo's own, a slot Echo's guide fills, or written for the family where Echo has 
 | `Implementation/views/` | The template, compiled into the binary. |
 | `container-h1/` | How container-h1 starts it. `main.go` is the main package that loads the payloads and serves over HTTP/1.1, and `Dockerfile` builds the image. |
 | `container-h2/` | How container-h2 starts it. `main.go` serves over HTTP/2 with prior knowledge through echo's `StartConfig`, whose `BeforeServeFunc` sets net/http's `Server.Protocols`, and `Dockerfile` builds the image. |
-| `lambda-emulator/` | How lambda-emulator starts it. `main.go` hands the instance to aws-lambda-go-api-proxy's `httpadapter`, which aws-lambda-go's runtime client gives each event, and `Dockerfile` builds the function on the `provided.al2023` base image. |
+| `lambda-emulator/` | How lambda-emulator starts it. `main.go` hands the instance to aws-lambda-go-api-proxy's `httpadapter`, and the sse and stream routes to aws-lambda-go's `lambdaurl`, and aws-lambda-go's runtime client gives each event to one of the two. `Dockerfile` builds the function on the `provided.al2023` base image. |
 | `UnitTests/` | go test tests of the wiring, sending each request to the instance served by `net/http/httptest`. |
 | `client-exception/` | How the corpus reads Echo's error bodies. |
 | `go.mod` | The module, and every module version the build selects. |
@@ -120,9 +120,12 @@ corpus id it covers, so `go test ./UnitTests -run '/json.small'` runs one.
   only an echo v4 instance. It hands each request to the instance's `ServeHTTP`, and httpadapter
   does the same for any `http.Handler`, which a v5 instance is.
 - httpadapter buffers the whole answer into one proxy response, and its response writer cannot
-  flush. Echo's `Response.Flush` panics on a writer that cannot flush, and `middleware.Recover()`
-  catches the panic, so the sse and stream handlers stop at their first flush. Both tests are
-  listed as unsupported on lambda-emulator.
+  flush. So `main.go` sends the sse and stream routes through aws-lambda-go's `lambdaurl.Wrap`
+  instead, which streams the answer, and every other request through httpadapter. aws-lambda-go
+  streams any answer that is an `io.Reader` and no JSON, as lambdaurl's is. lambdaurl's writer has
+  no `Flush` either. Echo's `Response.Flush` panics on such a writer, and `middleware.Recover()`
+  would stop the handlers at their first flush, so `main.go` gives it a `Flush` that does nothing.
+  Each write already goes straight to the runtime client.
 - httpadapter posts whatever a handler writes for HEAD. A Function URL's caller reads no body in an
   answer to HEAD, so nothing reads it.
 - The function is built with `-tags lambda.norpc`, as AWS builds a Go function for

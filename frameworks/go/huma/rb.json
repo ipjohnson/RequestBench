@@ -9,13 +9,7 @@
   "hosts": {
     "container-h1": { "dockerfile": "container-h1/Dockerfile" },
     "container-h2": { "dockerfile": "container-h2/Dockerfile" },
-    "lambda-emulator": {
-      "dockerfile": "lambda-emulator/Dockerfile",
-      "unsupported": {
-        "sse.medium": "aws-lambda-go-api-proxy's httpadapter buffers the whole answer, so the events would arrive as one body. Its response writer cannot flush either, and Huma's sse package cannot flush through it.",
-        "stream.ndjson": "aws-lambda-go-api-proxy's httpadapter buffers the whole answer, so the rows would arrive as one body. Its response writer cannot flush either."
-      }
-    }
+    "lambda-emulator": { "dockerfile": "lambda-emulator/Dockerfile" }
   },
   "suite": { "argv": ["go", "test", "./..."], "paths": ["UnitTests"] },
   "upgrade": { "argv": ["go", "get", "-u", "./...", "tool"] },

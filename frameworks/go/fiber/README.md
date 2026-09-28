@@ -17,7 +17,7 @@ written for the family where Fiber has none.
 | `Implementation/` | The application, the Go package `implementation`. `router.go` builds the app, and a function in a file named for each family registers that family's routes. |
 | `Implementation/views/` | The template, compiled into the binary. |
 | `container-h1/` | How container-h1 starts it. `main.go` is the main package that loads the payloads and serves over HTTP/1.1, and `Dockerfile` builds the image. |
-| `lambda-emulator/` | How lambda-emulator starts it. `main.go` hands the app to Fiber's `adaptor.FiberApp`, a net/http handler, and that to aws-lambda-go-api-proxy's `httpadapter`, which aws-lambda-go's runtime client gives each event. `Dockerfile` builds the function on the `provided.al2023` base image. |
+| `lambda-emulator/` | How lambda-emulator starts it. `main.go` hands the app to Fiber's `adaptor.FiberApp`, a net/http handler, and that to aws-lambda-go-api-proxy's `httpadapter`, and the sse and stream routes to aws-lambda-go's `lambdaurl`, and aws-lambda-go's runtime client gives each event to one of the two. `Dockerfile` builds the function on the `provided.al2023` base image. |
 | `UnitTests/` | go test tests of the wiring, sending each request over HTTP to the app served on a loopback port. |
 | `client-exception/` | How the corpus reads Fiber's error bodies. |
 | `go.mod` | The module, and every module version the build selects. |
@@ -120,9 +120,13 @@ corpus id it covers, so `go test ./UnitTests -run '/json.small'` runs one.
   runs an app on Lambda through `adaptor.FiberApp` too, behind carlmjohnson/gateway. gateway reads
   only API Gateway payload format 1.0, and a Function URL sends 2.0.
 - httpadapter buffers the whole answer into one proxy response, and its response writer cannot
-  flush. `adaptor.FiberApp` streams a body only into a writer that can flush, so it reads the sse
-  and stream bodies whole into the one answer. Both tests are listed as unsupported on
-  lambda-emulator.
+  flush. So `main.go` sends the sse and stream routes through aws-lambda-go's `lambdaurl.Wrap`
+  instead, which streams the answer, and every other request through httpadapter, both over
+  `adaptor.FiberApp`. aws-lambda-go streams any answer that is an `io.Reader` and no JSON, as
+  lambdaurl's is. `adaptor.FiberApp` streams a body only into a writer that can flush, and
+  lambdaurl's has no `Flush`, so `main.go` gives it one that does nothing. Each write already goes
+  straight to the runtime client. lambdaurl builds its request with `http.NewRequest`, which leaves
+  `RequestURI` empty, and the adaptor reads the path from it, so `main.go` sets it.
 - `adaptor.FiberApp` copies every header fasthttp holds into the answer. A 204 on lambda-emulator
   carries fasthttp's default `Content-Type: text/plain; charset=utf-8`, which fasthttp's server
   leaves off an answer with no body. A streamed answer carries `Transfer-Encoding: chunked` in its
