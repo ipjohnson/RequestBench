@@ -46,7 +46,7 @@ actix-web-httpauth = "0.8.3"
 actix-web-lab = "0.28.0"
 askama = "0.16.1"
 # lambda-emulator's function writes every body in base64, as lambda-web does.
-base64 = { version = "0.22.1", optional = true }
+base64 = { version = "0.23.1", optional = true }
 # The store axum-response-cache keeps its answers in, for the cache middleware written here.
 cached = { version = "4.0.0", default-features = false, features = ["ahash", "time_stores"] }
 futures-util = "0.3.34"

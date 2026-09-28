@@ -1671,7 +1671,7 @@ dependencies = [
  "actix-web-httpauth",
  "actix-web-lab",
  "askama",
- "base64 0.22.1",
+ "base64 0.23.1",
  "cached",
  "flate2",
  "futures-util",
