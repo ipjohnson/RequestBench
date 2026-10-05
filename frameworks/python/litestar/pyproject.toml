@@ -10,7 +10,7 @@ dependencies = [
   "jinja2~=3.1",
   "litestar~=2.24",
   # Litestar's own serializer, which the models are written in.
-  "msgspec~=0.21.1",
+  "msgspec~=0.22.0",
   # The server litestar[standard] installs. uvloop and httptools, which uvicorn picks when they are
   # installed, come with standard.
   "uvicorn[standard]~=0.54.0",

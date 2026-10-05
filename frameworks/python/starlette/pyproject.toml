@@ -13,7 +13,7 @@ dependencies = [
   # Starlette validates nothing. SpecTree is the request validation its third-party packages page
   # lists, and it validates with Pydantic.
   "spectree[pydantic]~=3.0",
-  "sse-starlette~=3.4",
+  "sse-starlette~=3.5",
   "starlette~=1.7",
   # uvloop and httptools, which uvicorn picks when they are installed, come with standard.
   "uvicorn[standard]~=0.54.0",
