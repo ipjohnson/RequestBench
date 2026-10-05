@@ -22,9 +22,9 @@
       },
       "Microsoft.AspNetCore.App.Internal.Assets": {
         "type": "Direct",
-        "requested": "[10.0.12, )",
-        "resolved": "10.0.12",
-        "contentHash": "+sIBo9AMBZH46qHWHQdfzcGMt+RuBaPYrUMOAM9VjA7MQ9QtIez3lq1C3E05+Yroa94KKt3DSWaxmCI4H28a9Q=="
+        "requested": "[10.0.11, )",
+        "resolved": "10.0.11",
+        "contentHash": "tYYYBZsuF2DSz1I3hcfB8qC4nNekIKufkYZOJ2R28fNK3PkS7fJao/mIX5H84NH94UACZQ4dhvt8GDlkrJFwLg=="
       },
       "Microsoft.AspNetCore.OpenApi": {
         "type": "Direct",
@@ -43,23 +43,23 @@
       },
       "WolverineFx.Http": {
         "type": "Direct",
-        "requested": "[6.41.0, )",
-        "resolved": "6.41.0",
-        "contentHash": "551qF6A64biSGdytH8otCJJU/xTPNKNJw4hI9h6IwGRfAjKbsT/zuCmgqy/yTwZIvwQzEhodzNr6IeKgIgQRXA==",
+        "requested": "[6.46.0, )",
+        "resolved": "6.46.0",
+        "contentHash": "XcbnbtCvfPsFYV1Md5J0j+o7+GN8xAeQ8cUDsmbPQfHGFFHucWXf4NwN2G420nDCNQFcPFlav7IFuBpidAY0mQ==",
         "dependencies": {
           "Asp.Versioning.Abstractions": "[10.0.0, 11.0.0)",
-          "JasperFx.SourceGenerator": "2.74.0",
-          "WolverineFx": "6.41.0"
+          "JasperFx.SourceGenerator": "2.80.2",
+          "WolverineFx": "6.46.0"
         }
       },
       "WolverineFx.Http.FluentValidation": {
         "type": "Direct",
-        "requested": "[6.41.0, )",
-        "resolved": "6.41.0",
-        "contentHash": "H8xb3311E/y8b10v7XHeNz3/mJ0nSGNMOP88f6XvYb9M0nBoPXr12TX15x7CDW4u/fZiq4KDf8Xr7QVbkokSiQ==",
+        "requested": "[6.46.0, )",
+        "resolved": "6.46.0",
+        "contentHash": "z4bzbEXX4uQ6HQblbNfLZl4UE1ZihBGZN2UkkFhChjqPEMzIIItUaN4roieFO6/bYx67+P93uLShSCG7pefb1A==",
         "dependencies": {
-          "WolverineFx.FluentValidation": "6.41.0",
-          "WolverineFx.Http": "6.41.0"
+          "WolverineFx.FluentValidation": "6.46.0",
+          "WolverineFx.Http": "6.46.0"
         }
       },
       "Amazon.Lambda.APIGatewayEvents": {
@@ -136,8 +136,8 @@
       },
       "JasperFx": {
         "type": "Transitive",
-        "resolved": "2.74.0",
-        "contentHash": "HAQNeLQ+sz5k2lUPZSTbIqY07cKOkX10PgMwkYZG0ldDjt7q9cTcUS+5KMb+mdUGEEpm2EBPIfPOB/jhfGFVsw==",
+        "resolved": "2.80.2",
+        "contentHash": "8eaoSq0ktzgELdAjmwOAc8Ju5mX8XBR8gqYEIdT0ifW6KW2+X7fpsb7riikF0d+cU6TUj0CIjugRoMuy+5CkAQ==",
         "dependencies": {
           "FastExpressionCompiler": "5.4.1",
           "ImTools": "4.0.0",
@@ -148,16 +148,16 @@
       },
       "JasperFx.Events": {
         "type": "Transitive",
-        "resolved": "2.74.0",
-        "contentHash": "q/sf/Hokbuv6FaoIewt0yf5gdU43vhln8yYF5WHF3mHIeNnaIj34MTMD/5j+QC2it4KolKH7rPP2uDkSasS8UQ==",
+        "resolved": "2.80.2",
+        "contentHash": "DZ1UBRuS+PBJoy1rr3J6Nr6piJZ8MGKI3okghVivb/spMyy25CP4tMP9uykndb2jo2pBkP4Q6FpASzhzak8u1g==",
         "dependencies": {
-          "JasperFx": "2.74.0"
+          "JasperFx": "2.80.2"
         }
       },
       "JasperFx.SourceGenerator": {
         "type": "Transitive",
-        "resolved": "2.74.0",
-        "contentHash": "NbvpPmtnJoiP74nxDnxa+jmEh+KUezt260SBZKRzVGM2qaeqNfodVu1AgG+AptX4lK22ihAtME0ui6M0QSTz0w=="
+        "resolved": "2.80.2",
+        "contentHash": "Eyvpmia6/fQPYCOblM/PwDPSxvZu0JDbaiVY9/wxmeziqsCdiI3aRDN4/NY9MQZInetpKtKAjr0AEpNyHmY/CQ=="
       },
       "Microsoft.Bcl.TimeProvider": {
         "type": "Transitive",
@@ -199,23 +199,23 @@
       },
       "WolverineFx": {
         "type": "Transitive",
-        "resolved": "6.41.0",
-        "contentHash": "mVlx3qnfK78W5f2fpQHNDKX6lG0Z2UZ936mTTH4ExHjeYsBi3TP9bzYDbjhN58/xCEQrgijCgqISB+BgYFbTYQ==",
+        "resolved": "6.46.0",
+        "contentHash": "tu7oBOjq3bZxWXd8jpLhotGKilb13FFyeVIH2MFEdOdte208rwF+jZeiWcq0w4Ec1wJ8xWN0RLXryg+ofZCEjA==",
         "dependencies": {
           "Cronos": "0.11.0",
-          "JasperFx": "2.74.0",
-          "JasperFx.Events": "2.74.0",
-          "JasperFx.SourceGenerator": "2.74.0",
+          "JasperFx": "2.80.2",
+          "JasperFx.Events": "2.80.2",
+          "JasperFx.SourceGenerator": "2.80.2",
           "NewId": "4.0.1"
         }
       },
       "WolverineFx.FluentValidation": {
         "type": "Transitive",
-        "resolved": "6.41.0",
-        "contentHash": "+qg428/V/HaHbcSJpJJeKj0ECQkbxuQFUZYDtlfj5h3FKPgm1I+y9ImzsoB2ZZVe9lSqsAyPLpUY74JIFfaB9A==",
+        "resolved": "6.46.0",
+        "contentHash": "rCynmth2q0cjAsE9Lys1yymuYB3cDTm8OAGuOFr7uZwzey3Y30B7cHDWeST79WdhAU2OUHR43zvUOyyHV+RBXQ==",
         "dependencies": {
           "FluentValidation": "12.0.0",
-          "WolverineFx": "6.41.0"
+          "WolverineFx": "6.46.0"
         }
       }
     }
