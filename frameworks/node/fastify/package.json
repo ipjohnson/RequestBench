@@ -27,7 +27,7 @@
   "devDependencies": {
     "@fastify/swagger": "^9.9.0",
     "@microsoft/kiota": "1.35.0",
-    "@microsoft/kiota-bundle": "^1.0.0-preview.106",
+    "@microsoft/kiota-bundle": "^1.0.0-preview.109",
     "@types/ejs": "^3.1.5",
     "@types/node": "^26.6.2",
     "typescript": "^7.0.2"
