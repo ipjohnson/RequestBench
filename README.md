@@ -151,7 +151,8 @@ over the whole corpus at full length. The site shows only recorded runs unless i
 
 [`measure.yml`](.github/workflows/measure.yml) measures every framework each night on the `ci`
 ladder, one GitHub-hosted runner for each host a framework implements, with the framework on cores
-0 and 1 and the generator on cores 2 and 3. It adds each run's summary to the `results` branch,
+0 and 1 and the generator on cores 2 and 3. A second nightly run measures every host, one after
+another, on the self-hosted runner labelled `baremetal`. It adds each run's summary to the `results` branch,
 under `runs/`, and the exemplars its gates captured under `exemplars/`.
 [`pages.yml`](.github/workflows/pages.yml) then publishes the site from them.
 
