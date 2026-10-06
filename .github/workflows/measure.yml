@@ -202,7 +202,7 @@ jobs:
             git diff --cached --quiet || git commit -m "Record the exemplars of ${runs[*]}"
           fi
           # The other runner's run can push to results while this one records.
-          for attempt in 1 2 3; do
+          for _ in 1 2 3; do
             git push origin HEAD:results && exit 0
             git pull --rebase origin results
           done
