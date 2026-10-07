@@ -36,7 +36,7 @@
   },
   "devDependencies": {
     "@microsoft/kiota": "1.35.0",
-    "@microsoft/kiota-bundle": "^1.0.0-preview.108",
+    "@microsoft/kiota-bundle": "^1.0.0-preview.109",
     "@nestjs/cli": "^12.0.7",
     "@nestjs/swagger": "^12.0.2",
     "@types/compression": "^1.8.1",
