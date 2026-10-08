@@ -32,10 +32,10 @@
     "@types/koa__multer": "^2.0.8",
     "@types/koa-cash": "^4.1.4",
     "@types/koa-conditional-get": "^2.0.4",
-    "@types/multer": "^2.2.0",
-    "@types/node": "^26.6.2",
+    "@types/multer": "^2.3.0",
+    "@types/node": "^26.6.4",
     "@types/supertest": "^7.2.1",
-    "supertest": "^7.3.0",
+    "supertest": "^7.3.1",
     "typescript": "^7.0.2"
   }
 }
