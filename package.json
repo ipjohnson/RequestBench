@@ -16,7 +16,7 @@
     "site": "node --experimental-strip-types --disable-warning=ExperimentalWarning site/tools/build.ts"
   },
   "devDependencies": {
-    "@types/node": "^26.6.2",
+    "@types/node": "^26.6.4",
     "typescript": "^6.0.3"
   }
 }
