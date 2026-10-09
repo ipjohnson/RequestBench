@@ -6,12 +6,17 @@
 # built on it. Each major update comes on its own, one pull request per directory. global.json is
 # not updated, because it names only the lowest SDK a build accepts, and the SDK comes from the
 # framework's image.
+#
+# Each ecosystem runs on its own day so their pull requests do not all queue validate.yml jobs at
+# once. npm has Monday alone, because an update to the root package.json validates every framework.
+# nuget and gomod share Sunday, because they cover the fewest frameworks.
 version: 2
 updates:
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
+      day: wednesday
     groups:
       actions:
         patterns: ["*"]
@@ -21,6 +26,7 @@ updates:
       - /frameworks/*/*
     schedule:
       interval: weekly
+      day: tuesday
     open-pull-requests-limit: 10
     groups:
       base-images:
@@ -34,6 +40,7 @@ updates:
       - /frameworks/python/*/Client
     schedule:
       interval: weekly
+      day: monday
     open-pull-requests-limit: 10
     groups:
       minor-and-patch:
@@ -44,6 +51,7 @@ updates:
       - /frameworks/dotnet/*
     schedule:
       interval: weekly
+      day: sunday
     open-pull-requests-limit: 10
     groups:
       minor-and-patch:
@@ -54,6 +62,7 @@ updates:
       - /frameworks/java/*
     schedule:
       interval: weekly
+      day: thursday
     open-pull-requests-limit: 10
     groups:
       minor-and-patch:
@@ -64,6 +73,7 @@ updates:
       - /frameworks/rust/*
     schedule:
       interval: weekly
+      day: friday
     open-pull-requests-limit: 10
     groups:
       minor-and-patch:
@@ -74,6 +84,7 @@ updates:
       - /frameworks/go/*
     schedule:
       interval: weekly
+      day: sunday
     open-pull-requests-limit: 10
     groups:
       minor-and-patch:
@@ -84,6 +95,7 @@ updates:
       - /frameworks/python/*
     schedule:
       interval: weekly
+      day: saturday
     open-pull-requests-limit: 10
     groups:
       minor-and-patch:
