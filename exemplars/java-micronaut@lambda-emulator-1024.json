@@ -22,12 +22,12 @@
             "123"
           ],
           [
-            "content-type",
-            "application/json"
-          ],
-          [
             "date",
             "<varies>"
+          ],
+          [
+            "content-type",
+            "application/json"
           ]
         ],
         "headerBytes": 304,
@@ -87,12 +87,12 @@
             "13"
           ],
           [
-            "content-type",
-            "text/plain"
-          ],
-          [
             "date",
             "<varies>"
+          ],
+          [
+            "content-type",
+            "text/plain"
           ]
         ],
         "headerBytes": 268,
@@ -123,12 +123,12 @@
             "39791"
           ],
           [
-            "content-type",
-            "application/json"
-          ],
-          [
             "date",
             "<varies>"
+          ],
+          [
+            "content-type",
+            "application/json"
           ]
         ],
         "headerBytes": 6700,
@@ -159,12 +159,12 @@
             "8414"
           ],
           [
-            "content-type",
-            "application/json"
-          ],
-          [
             "date",
             "<varies>"
+          ],
+          [
+            "content-type",
+            "application/json"
           ]
         ],
         "headerBytes": 1642,
@@ -195,12 +195,12 @@
             "97"
           ],
           [
-            "content-type",
-            "application/json"
-          ],
-          [
             "date",
             "<varies>"
+          ],
+          [
+            "content-type",
+            "application/json"
           ]
         ],
         "headerBytes": 298,
@@ -303,12 +303,12 @@
             "39791"
           ],
           [
-            "content-type",
-            "application/json"
-          ],
-          [
             "date",
             "<varies>"
+          ],
+          [
+            "content-type",
+            "application/json"
           ]
         ],
         "headerBytes": 6700,
@@ -339,12 +339,12 @@
             "8414"
           ],
           [
-            "content-type",
-            "application/json"
-          ],
-          [
             "date",
             "<varies>"
+          ],
+          [
+            "content-type",
+            "application/json"
           ]
         ],
         "headerBytes": 1642,
@@ -375,12 +375,12 @@
             "97"
           ],
           [
-            "content-type",
-            "application/json"
-          ],
-          [
             "date",
             "<varies>"
+          ],
+          [
+            "content-type",
+            "application/json"
           ]
         ],
         "headerBytes": 298,
@@ -405,16 +405,16 @@
             "128510"
           ],
           [
-            "content-type",
-            "application/json"
-          ],
-          [
             "date",
             "<varies>"
           ],
           [
+            "content-type",
+            "application/json"
+          ],
+          [
             "x-rb-serial",
-            "1791428153326|1"
+            "1791515138064|1"
           ]
         ],
         "headerBytes": 20312,
@@ -439,16 +439,16 @@
             "7953"
           ],
           [
-            "content-type",
-            "application/json"
-          ],
-          [
             "date",
             "<varies>"
           ],
           [
+            "content-type",
+            "application/json"
+          ],
+          [
             "x-rb-serial",
-            "1791428153333|2"
+            "1791515138076|2"
           ]
         ],
         "headerBytes": 1604,
@@ -473,16 +473,16 @@
             "123"
           ],
           [
-            "content-type",
-            "application/json"
-          ],
-          [
             "date",
             "<varies>"
           ],
           [
+            "content-type",
+            "application/json"
+          ],
+          [
             "x-rb-serial",
-            "1791428153334|3"
+            "1791515138078|3"
           ]
         ],
         "headerBytes": 370,
@@ -520,6 +520,10 @@
             "123"
           ],
           [
+            "date",
+            "<varies>"
+          ],
+          [
             "vary",
             "x-rb-channel, x-rb-region, x-rb-tenant"
           ],
@@ -528,12 +532,8 @@
             "application/json"
           ],
           [
-            "date",
-            "<varies>"
-          ],
-          [
             "x-rb-serial",
-            "1791428153335|4"
+            "1791515138080|4"
           ]
         ],
         "headerBytes": 468,
@@ -563,6 +563,10 @@
             "123"
           ],
           [
+            "date",
+            "<varies>"
+          ],
+          [
             "vary",
             "x-rb-tenant"
           ],
@@ -571,12 +575,8 @@
             "application/json"
           ],
           [
-            "date",
-            "<varies>"
-          ],
-          [
             "x-rb-serial",
-            "1791428153335|5"
+            "1791515138081|5"
           ]
         ],
         "headerBytes": 414,
@@ -610,16 +610,16 @@
             "123"
           ],
           [
-            "content-type",
-            "application/json"
-          ],
-          [
             "date",
             "<varies>"
           ],
           [
+            "content-type",
+            "application/json"
+          ],
+          [
             "x-rb-serial",
-            "1791428153336|6"
+            "1791515138082|6"
           ]
         ],
         "headerBytes": 370,
@@ -653,16 +653,16 @@
             "128510"
           ],
           [
-            "content-type",
-            "application/json"
-          ],
-          [
             "date",
             "<varies>"
           ],
           [
+            "content-type",
+            "application/json"
+          ],
+          [
             "x-rb-serial",
-            "1791428153337|8"
+            "1791515138084|8"
           ]
         ],
         "headerBytes": 20312,
@@ -696,16 +696,16 @@
             "123"
           ],
           [
-            "content-type",
-            "application/json"
-          ],
-          [
             "date",
             "<varies>"
           ],
           [
+            "content-type",
+            "application/json"
+          ],
+          [
             "x-rb-serial",
-            "1791428153343|10"
+            "1791515138095|10"
           ]
         ],
         "headerBytes": 372,
@@ -747,12 +747,12 @@
             "application/json"
           ],
           [
-            "allow",
-            "HEAD,GET"
-          ],
-          [
             "date",
             "<varies>"
+          ],
+          [
+            "allow",
+            "HEAD,GET"
           ]
         ],
         "headerBytes": 344,
@@ -824,7 +824,7 @@
           ],
           [
             "x-rb-tenant",
-            "fjudmufldirz"
+            "wqehlzenpami"
           ]
         ],
         "bodyBytes": 0
@@ -841,6 +841,10 @@
             "123"
           ],
           [
+            "date",
+            "<varies>"
+          ],
+          [
             "vary",
             "Origin"
           ],
@@ -849,12 +853,8 @@
             "application/json"
           ],
           [
-            "date",
-            "<varies>"
-          ],
-          [
             "x-rb-serial",
-            "1791428153345|12"
+            "1791515138098|12"
           ]
         ],
         "headerBytes": 522,
@@ -875,7 +875,7 @@
           ],
           [
             "x-rb-tenant",
-            "fjudmufldirz"
+            "wqehlzenpami"
           ]
         ],
         "bodyBytes": 0
@@ -892,6 +892,10 @@
             "123"
           ],
           [
+            "date",
+            "<varies>"
+          ],
+          [
             "vary",
             "Origin"
           ],
@@ -900,12 +904,8 @@
             "application/json"
           ],
           [
-            "date",
-            "<varies>"
-          ],
-          [
             "x-rb-serial",
-            "1791428153478|23"
+            "1791515138340|23"
           ]
         ],
         "headerBytes": 522,
@@ -1030,12 +1030,12 @@
             "application/json"
           ],
           [
-            "allow",
-            "HEAD,DELETE,PUT,PATCH,GET"
-          ],
-          [
             "date",
             "<varies>"
+          ],
+          [
+            "allow",
+            "HEAD,DELETE,PUT,PATCH,GET"
           ]
         ],
         "headerBytes": 378,
@@ -1060,6 +1060,10 @@
             "128510"
           ],
           [
+            "date",
+            "<varies>"
+          ],
+          [
             "etag",
             "\"a69ddaf5e59b98817df3b4d78459b8c0670f44fb\""
           ],
@@ -1068,12 +1072,8 @@
             "application/json"
           ],
           [
-            "date",
-            "<varies>"
-          ],
-          [
             "x-rb-serial",
-            "1791428153348|14"
+            "1791515138105|14"
           ]
         ],
         "headerBytes": 20424,
@@ -1099,16 +1099,16 @@
         "status": 304,
         "headers": [
           [
-            "etag",
-            "\"a69ddaf5e59b98817df3b4d78459b8c0670f44fb\""
-          ],
-          [
             "date",
             "<varies>"
           ],
           [
+            "etag",
+            "\"a69ddaf5e59b98817df3b4d78459b8c0670f44fb\""
+          ],
+          [
             "x-rb-serial",
-            "1791428153358|17"
+            "1791515138123|17"
           ]
         ],
         "headerBytes": 332,
@@ -1133,6 +1133,10 @@
             "123"
           ],
           [
+            "date",
+            "<varies>"
+          ],
+          [
             "etag",
             "\"54d88e27589cfa133c812bdd37b28a41872c2b47\""
           ],
@@ -1141,12 +1145,8 @@
             "application/json"
           ],
           [
-            "date",
-            "<varies>"
-          ],
-          [
             "x-rb-serial",
-            "1791428153360|19"
+            "1791515138127|19"
           ]
         ],
         "headerBytes": 482,
@@ -1176,6 +1176,10 @@
             "128510"
           ],
           [
+            "date",
+            "<varies>"
+          ],
+          [
             "etag",
             "\"a69ddaf5e59b98817df3b4d78459b8c0670f44fb\""
           ],
@@ -1184,12 +1188,8 @@
             "application/json"
           ],
           [
-            "date",
-            "<varies>"
-          ],
-          [
             "x-rb-serial",
-            "1791428153361|21"
+            "1791515138128|21"
           ]
         ],
         "headerBytes": 20424,
@@ -1209,29 +1209,29 @@
             "application/x-www-form-urlencoded"
           ]
         ],
-        "bodyBytes": 103,
-        "body": "page=968&size=33&status=shipped&category=garden&sort=created&q=vppnh+mrujx&minPrice=7140&maxPrice=24250"
+        "bodyBytes": 105,
+        "body": "page=990&size=10&status=cancelled&category=garden&sort=created&q=buzcx+yozqz&minPrice=1043&maxPrice=59578"
       },
       "response": {
         "status": 200,
         "headers": [
           [
             "content-length",
-            "260"
-          ],
-          [
-            "content-type",
-            "application/json"
+            "262"
           ],
           [
             "date",
             "<varies>"
+          ],
+          [
+            "content-type",
+            "application/json"
           ]
         ],
         "headerBytes": 330,
         "framing": "proxy",
-        "bodyBytes": 260,
-        "body": "{\"size\":\"small\",\"count\":1,\"items\":[{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"priceCents\":18928,\"inStock\":true}],\"echo\":{\"page\":968,\"size\":33,\"status\":\"shipped\",\"category\":\"garden\",\"sort\":\"created\",\"q\":\"vppnh mrujx\",\"minPrice\":7140,\"maxPrice\":24250}}",
+        "bodyBytes": 262,
+        "body": "{\"size\":\"small\",\"count\":1,\"items\":[{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"priceCents\":18928,\"inStock\":true}],\"echo\":{\"page\":990,\"size\":10,\"status\":\"cancelled\",\"category\":\"garden\",\"sort\":\"created\",\"q\":\"buzcx yozqz\",\"minPrice\":1043,\"maxPrice\":59578}}",
         "truncated": false
       }
     },
@@ -1242,15 +1242,15 @@
         "headers": [
           [
             "x-rb-tenant",
-            "fjudmufldirz"
+            "wqehlzenpami"
           ],
           [
             "x-rb-request-id",
-            "46023c5861e3ebec"
+            "cf8958254429a7a2"
           ],
           [
             "x-rb-account",
-            "945770"
+            "951611"
           ]
         ],
         "bodyBytes": 0
@@ -1263,18 +1263,18 @@
             "204"
           ],
           [
-            "content-type",
-            "application/json"
-          ],
-          [
             "date",
             "<varies>"
+          ],
+          [
+            "content-type",
+            "application/json"
           ]
         ],
         "headerBytes": 316,
         "framing": "proxy",
         "bodyBytes": 204,
-        "body": "{\"size\":\"small\",\"count\":1,\"items\":[{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"priceCents\":18928,\"inStock\":true}],\"echo\":{\"tenant\":\"fjudmufldirz\",\"requestId\":\"46023c5861e3ebec\",\"account\":945770}}",
+        "body": "{\"size\":\"small\",\"count\":1,\"items\":[{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"priceCents\":18928,\"inStock\":true}],\"echo\":{\"tenant\":\"wqehlzenpami\",\"requestId\":\"cf8958254429a7a2\",\"account\":951611}}",
         "truncated": false
       }
     },
@@ -1285,15 +1285,15 @@
         "headers": [
           [
             "x-rb-tenant",
-            "fjudmufldirz"
+            "wqehlzenpami"
           ],
           [
             "x-rb-request-id",
-            "46023c5861e3ebec"
+            "cf8958254429a7a2"
           ],
           [
             "x-rb-account",
-            "945770"
+            "951611"
           ],
           [
             "x-rb-user-agent",
@@ -1406,18 +1406,18 @@
             "204"
           ],
           [
-            "content-type",
-            "application/json"
-          ],
-          [
             "date",
             "<varies>"
+          ],
+          [
+            "content-type",
+            "application/json"
           ]
         ],
         "headerBytes": 316,
         "framing": "proxy",
         "bodyBytes": 204,
-        "body": "{\"size\":\"small\",\"count\":1,\"items\":[{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"priceCents\":18928,\"inStock\":true}],\"echo\":{\"tenant\":\"fjudmufldirz\",\"requestId\":\"46023c5861e3ebec\",\"account\":945770}}",
+        "body": "{\"size\":\"small\",\"count\":1,\"items\":[{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"priceCents\":18928,\"inStock\":true}],\"echo\":{\"tenant\":\"wqehlzenpami\",\"requestId\":\"cf8958254429a7a2\",\"account\":951611}}",
         "truncated": false
       }
     },
@@ -1428,15 +1428,15 @@
         "headers": [
           [
             "x-rb-tenant",
-            "fjudmufldirz"
+            "wqehlzenpami"
           ],
           [
             "x-rb-request-id",
-            "46023c5861e3ebec"
+            "cf8958254429a7a2"
           ],
           [
             "x-rb-account",
-            "945770"
+            "951611"
           ]
         ],
         "bodyBytes": 0
@@ -1449,12 +1449,12 @@
             "123"
           ],
           [
-            "content-type",
-            "application/json"
-          ],
-          [
             "date",
             "<varies>"
+          ],
+          [
+            "content-type",
+            "application/json"
           ]
         ],
         "headerBytes": 304,
@@ -1471,15 +1471,15 @@
         "headers": [
           [
             "x-rb-tenant",
-            "fjudmufldirz"
+            "wqehlzenpami"
           ],
           [
             "x-rb-request-id",
-            "46023c5861e3ebec"
+            "cf8958254429a7a2"
           ],
           [
             "x-rb-account",
-            "945770"
+            "951611"
           ],
           [
             "x-rb-user-agent",
@@ -1592,12 +1592,12 @@
             "123"
           ],
           [
-            "content-type",
-            "application/json"
-          ],
-          [
             "date",
             "<varies>"
+          ],
+          [
+            "content-type",
+            "application/json"
           ]
         ],
         "headerBytes": 304,
@@ -1628,12 +1628,12 @@
             "91"
           ],
           [
-            "content-type",
-            "application/json"
-          ],
-          [
             "date",
             "<varies>"
+          ],
+          [
+            "content-type",
+            "application/json"
           ],
           [
             "location",
@@ -1680,12 +1680,12 @@
         "status": 200,
         "headers": [
           [
-            "content-type",
-            "application/json"
-          ],
-          [
             "date",
             "<varies>"
+          ],
+          [
+            "content-type",
+            "application/json"
           ]
         ],
         "headerBytes": 224,
@@ -1710,12 +1710,12 @@
             "88"
           ],
           [
-            "content-type",
-            "application/json"
-          ],
-          [
             "date",
             "<varies>"
+          ],
+          [
+            "content-type",
+            "application/json"
           ]
         ],
         "headerBytes": 294,
@@ -1746,12 +1746,12 @@
             "89"
           ],
           [
-            "content-type",
-            "application/json"
-          ],
-          [
             "date",
             "<varies>"
+          ],
+          [
+            "content-type",
+            "application/json"
           ]
         ],
         "headerBytes": 294,
@@ -1782,12 +1782,12 @@
             "88"
           ],
           [
-            "content-type",
-            "application/json"
-          ],
-          [
             "date",
             "<varies>"
+          ],
+          [
+            "content-type",
+            "application/json"
           ]
         ],
         "headerBytes": 294,
@@ -1812,12 +1812,12 @@
             "128510"
           ],
           [
-            "content-type",
-            "application/json"
-          ],
-          [
             "date",
             "<varies>"
+          ],
+          [
+            "content-type",
+            "application/json"
           ]
         ],
         "headerBytes": 20246,
@@ -1842,12 +1842,12 @@
             "7953"
           ],
           [
-            "content-type",
-            "application/json"
-          ],
-          [
             "date",
             "<varies>"
+          ],
+          [
+            "content-type",
+            "application/json"
           ]
         ],
         "headerBytes": 1538,
@@ -1872,12 +1872,12 @@
             "123"
           ],
           [
-            "content-type",
-            "application/json"
-          ],
-          [
             "date",
             "<varies>"
+          ],
+          [
+            "content-type",
+            "application/json"
           ]
         ],
         "headerBytes": 304,
@@ -1902,12 +1902,12 @@
             "123"
           ],
           [
-            "content-type",
-            "application/json"
-          ],
-          [
             "date",
             "<varies>"
+          ],
+          [
+            "content-type",
+            "application/json"
           ]
         ],
         "headerBytes": 304,
@@ -1932,12 +1932,12 @@
             "123"
           ],
           [
-            "content-type",
-            "application/json"
-          ],
-          [
             "date",
             "<varies>"
+          ],
+          [
+            "content-type",
+            "application/json"
           ]
         ],
         "headerBytes": 304,
@@ -1962,12 +1962,12 @@
             "123"
           ],
           [
-            "content-type",
-            "application/json"
-          ],
-          [
             "date",
             "<varies>"
+          ],
+          [
+            "content-type",
+            "application/json"
           ]
         ],
         "headerBytes": 304,
@@ -1980,7 +1980,7 @@
     "parameters.one": {
       "request": {
         "method": "GET",
-        "target": "/parameters/9043/segment/literal",
+        "target": "/parameters/2361/segment/literal",
         "headers": [],
         "bodyBytes": 0
       },
@@ -1992,18 +1992,18 @@
             "143"
           ],
           [
-            "content-type",
-            "application/json"
-          ],
-          [
             "date",
             "<varies>"
+          ],
+          [
+            "content-type",
+            "application/json"
           ]
         ],
         "headerBytes": 308,
         "framing": "proxy",
         "bodyBytes": 143,
-        "body": "{\"size\":\"small\",\"count\":1,\"items\":[{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"priceCents\":18928,\"inStock\":true}],\"echo\":{\"one\":9043}}",
+        "body": "{\"size\":\"small\",\"count\":1,\"items\":[{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"priceCents\":18928,\"inStock\":true}],\"echo\":{\"one\":2361}}",
         "truncated": false
       }
     },
@@ -2022,12 +2022,12 @@
             "123"
           ],
           [
-            "content-type",
-            "application/json"
-          ],
-          [
             "date",
             "<varies>"
+          ],
+          [
+            "content-type",
+            "application/json"
           ]
         ],
         "headerBytes": 304,
@@ -2040,7 +2040,7 @@
     "parameters.three": {
       "request": {
         "method": "GET",
-        "target": "/parameters/9043/4822/3341",
+        "target": "/parameters/2361/8277/3725",
         "headers": [],
         "bodyBytes": 0
       },
@@ -2052,25 +2052,25 @@
             "167"
           ],
           [
-            "content-type",
-            "application/json"
-          ],
-          [
             "date",
             "<varies>"
+          ],
+          [
+            "content-type",
+            "application/json"
           ]
         ],
         "headerBytes": 312,
         "framing": "proxy",
         "bodyBytes": 167,
-        "body": "{\"size\":\"small\",\"count\":1,\"items\":[{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"priceCents\":18928,\"inStock\":true}],\"echo\":{\"one\":9043,\"two\":4822,\"three\":3341}}",
+        "body": "{\"size\":\"small\",\"count\":1,\"items\":[{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"priceCents\":18928,\"inStock\":true}],\"echo\":{\"one\":2361,\"two\":8277,\"three\":3725}}",
         "truncated": false
       }
     },
     "parameters.two": {
       "request": {
         "method": "GET",
-        "target": "/parameters/9043/with-second/4822",
+        "target": "/parameters/2361/with-second/8277",
         "headers": [],
         "bodyBytes": 0
       },
@@ -2082,25 +2082,25 @@
             "154"
           ],
           [
-            "content-type",
-            "application/json"
-          ],
-          [
             "date",
             "<varies>"
+          ],
+          [
+            "content-type",
+            "application/json"
           ]
         ],
         "headerBytes": 310,
         "framing": "proxy",
         "bodyBytes": 154,
-        "body": "{\"size\":\"small\",\"count\":1,\"items\":[{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"priceCents\":18928,\"inStock\":true}],\"echo\":{\"one\":9043,\"two\":4822}}",
+        "body": "{\"size\":\"small\",\"count\":1,\"items\":[{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"priceCents\":18928,\"inStock\":true}],\"echo\":{\"one\":2361,\"two\":8277}}",
         "truncated": false
       }
     },
     "query.many": {
       "request": {
         "method": "GET",
-        "target": "/query/many?page=968&size=33&status=shipped&category=garden&sort=created&q=vppnh%20mrujx&minPrice=7140&maxPrice=24250",
+        "target": "/query/many?page=990&size=10&status=cancelled&category=garden&sort=created&q=buzcx%20yozqz&minPrice=1043&maxPrice=59578",
         "headers": [],
         "bodyBytes": 0
       },
@@ -2109,28 +2109,28 @@
         "headers": [
           [
             "content-length",
-            "260"
-          ],
-          [
-            "content-type",
-            "application/json"
+            "262"
           ],
           [
             "date",
             "<varies>"
+          ],
+          [
+            "content-type",
+            "application/json"
           ]
         ],
         "headerBytes": 330,
         "framing": "proxy",
-        "bodyBytes": 260,
-        "body": "{\"size\":\"small\",\"count\":1,\"items\":[{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"priceCents\":18928,\"inStock\":true}],\"echo\":{\"page\":968,\"size\":33,\"status\":\"shipped\",\"category\":\"garden\",\"sort\":\"created\",\"q\":\"vppnh mrujx\",\"minPrice\":7140,\"maxPrice\":24250}}",
+        "bodyBytes": 262,
+        "body": "{\"size\":\"small\",\"count\":1,\"items\":[{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"priceCents\":18928,\"inStock\":true}],\"echo\":{\"page\":990,\"size\":10,\"status\":\"cancelled\",\"category\":\"garden\",\"sort\":\"created\",\"q\":\"buzcx yozqz\",\"minPrice\":1043,\"maxPrice\":59578}}",
         "truncated": false
       }
     },
     "query.one": {
       "request": {
         "method": "GET",
-        "target": "/query/one?page=968",
+        "target": "/query/one?page=990",
         "headers": [],
         "bodyBytes": 0
       },
@@ -2142,18 +2142,18 @@
             "143"
           ],
           [
-            "content-type",
-            "application/json"
-          ],
-          [
             "date",
             "<varies>"
+          ],
+          [
+            "content-type",
+            "application/json"
           ]
         ],
         "headerBytes": 308,
         "framing": "proxy",
         "bodyBytes": 143,
-        "body": "{\"size\":\"small\",\"count\":1,\"items\":[{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"priceCents\":18928,\"inStock\":true}],\"echo\":{\"page\":968}}",
+        "body": "{\"size\":\"small\",\"count\":1,\"items\":[{\"id\":1,\"name\":\"slate-lamp-6647\",\"category\":\"tools\",\"priceCents\":18928,\"inStock\":true}],\"echo\":{\"page\":990}}",
         "truncated": false
       }
     },
@@ -2185,12 +2185,12 @@
             "129937"
           ],
           [
-            "content-type",
-            "application/json"
-          ],
-          [
             "date",
             "<varies>"
+          ],
+          [
+            "content-type",
+            "application/json"
           ],
           [
             "expires",
@@ -2236,12 +2236,12 @@
             "8044"
           ],
           [
-            "content-type",
-            "application/json"
-          ],
-          [
             "date",
             "<varies>"
+          ],
+          [
+            "content-type",
+            "application/json"
           ],
           [
             "expires",
@@ -2287,12 +2287,12 @@
             "126"
           ],
           [
-            "content-type",
-            "application/json"
-          ],
-          [
             "date",
             "<varies>"
+          ],
+          [
+            "content-type",
+            "application/json"
           ],
           [
             "expires",
@@ -2325,12 +2325,12 @@
             "226670"
           ],
           [
-            "content-type",
-            "text/html"
-          ],
-          [
             "date",
             "<varies>"
+          ],
+          [
+            "content-type",
+            "text/html"
           ]
         ],
         "headerBytes": 10264,
@@ -2355,12 +2355,12 @@
             "14321"
           ],
           [
-            "content-type",
-            "text/html"
-          ],
-          [
             "date",
             "<varies>"
+          ],
+          [
+            "content-type",
+            "text/html"
           ]
         ],
         "headerBytes": 910,
@@ -2385,12 +2385,12 @@
             "449"
           ],
           [
-            "content-type",
-            "text/html"
-          ],
-          [
             "date",
             "<varies>"
+          ],
+          [
+            "content-type",
+            "text/html"
           ]
         ],
         "headerBytes": 290,
