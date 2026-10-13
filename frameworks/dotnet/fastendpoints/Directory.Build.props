@@ -10,4 +10,13 @@
          the build to it, so the version /__meta reports keeps describing the binary. -->
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
   </PropertyGroup>
+  <!-- FastEndpoints.OpenApi.Kiota 8.3.0 pins Microsoft.OpenApi.Kiota.Builder at exactly 1.29.1.
+       Both advisories are fixed in 1.35.0, and neither is reachable here. GHSA-rm89-rhwj-9j92 is
+       in the Java and PHP generators, and this build generates only a C# client.
+       GHSA-6gw6-rv2g-25mg is in API plugin manifests, and this build writes none. Remove these once
+       FastEndpoints depends on Kiota.Builder 1.35.0 or later. -->
+  <ItemGroup>
+    <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-rm89-rhwj-9j92" />
+    <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-6gw6-rv2g-25mg" />
+  </ItemGroup>
 </Project>
