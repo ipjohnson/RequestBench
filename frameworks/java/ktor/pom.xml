@@ -24,7 +24,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <kotlin.compiler.jvmTarget>25</kotlin.compiler.jvmTarget>
 
-    <kotlin.version>2.4.20</kotlin.version>
+    <kotlin.version>2.4.21</kotlin.version>
     <ktor.version>3.6.0</ktor.version>
     <logback.version>1.6.5</logback.version>
     <junit.version>6.1.3</junit.version>
