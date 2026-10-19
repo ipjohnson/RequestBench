@@ -10,7 +10,7 @@ dependencies = [
   "cachetools~=7.2",
   # sanic-ext's templating renders with Jinja2 when it is installed.
   "jinja2~=3.1",
-  "pydantic~=2.13",
+  "pydantic~=2.14",
   # uvloop, httptools and ujson, which Sanic uses when they are installed, are its own dependencies.
   "sanic~=25.12",
   "sanic-ext~=25.12",

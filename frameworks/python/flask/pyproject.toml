@@ -12,7 +12,7 @@ dependencies = [
   "flask-cors~=6.0",
   "flask-pydantic~=0.14.0",
   "gunicorn~=26.2",
-  "pydantic~=2.13",
+  "pydantic~=2.14",
 ]
 
 [dependency-groups]

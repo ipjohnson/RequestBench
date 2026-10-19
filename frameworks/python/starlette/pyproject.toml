@@ -8,13 +8,13 @@ requires-python = ">=3.14"
 dependencies = [
   "cachetools~=7.2",
   "jinja2~=3.1",
-  "pydantic~=2.13",
+  "pydantic~=2.14",
   "python-multipart~=0.0.32",
   # Starlette validates nothing. SpecTree is the request validation its third-party packages page
   # lists, and it validates with Pydantic.
   "spectree[pydantic]~=3.0",
   "sse-starlette~=3.5",
-  "starlette~=1.7",
+  "starlette~=1.8",
   # uvloop and httptools, which uvicorn picks when they are installed, come with standard.
   "uvicorn[standard]~=0.54.0",
 ]
