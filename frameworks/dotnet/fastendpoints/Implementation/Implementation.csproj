@@ -19,7 +19,7 @@
     <PackageReference Include="FastEndpoints.OpenApi" Version="8.3.0" />
     <PackageReference Include="FastEndpoints.OpenApi.Kiota" Version="8.3.0" />
     <!-- Named for its version, which FastEndpoints.OpenApi asks for a patch lower. -->
-    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.12" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.14" />
     <!-- FastEndpoints.OpenApi.Kiota pins Kiota.Builder 1.29.1, which asks for this bundle at 1.20.1
          or later. NuGet's audit refuses 1.20.1 for GHSA-7j59-v9qr-6fq9, fixed in 1.22.0, so the
          newest release of that major is named here. -->
