@@ -7,9 +7,9 @@ version = "0"
 requires-python = ">=3.14"
 dependencies = [
   "cachetools~=7.2",
-  "fastapi~=0.142.2",
+  "fastapi~=0.162.0",
   "jinja2~=3.1",
-  "pydantic~=2.13",
+  "pydantic~=2.14",
   "python-multipart~=0.0.32",
   # uvloop and httptools, which uvicorn picks when they are installed, come with standard.
   "uvicorn[standard]~=0.54.0",
@@ -17,7 +17,7 @@ dependencies = [
 
 [dependency-groups]
 # Starlette's TestClient sends through httpx2.
-dev = ["httpx2~=2.13", "pytest~=9.1"]
+dev = ["httpx2~=2.16", "pytest~=9.1"]
 # Mangum, which turns each Lambda event into a request for the application on lambda-emulator.
 # Only that host's image installs the group.
 lambda-emulator = ["mangum~=0.22.0"]
