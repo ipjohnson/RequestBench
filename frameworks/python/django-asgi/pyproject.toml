@@ -14,7 +14,7 @@ dependencies = [
 
 [dependency-groups]
 # pytest-asyncio runs the async tests, which send through Django's AsyncClient.
-dev = ["pytest~=9.1", "pytest-asyncio~=1.4"]
+dev = ["pytest~=9.2", "pytest-asyncio~=1.4"]
 # Mangum, which turns each Lambda event into a request for the application on lambda-emulator.
 # Only that host's image installs the group.
 lambda-emulator = ["mangum~=0.22.0"]
