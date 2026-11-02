@@ -8,15 +8,15 @@ requires-python = ">=3.14"
 dependencies = [
   "flask~=3.1",
   "flask-caching~=2.5",
-  "flask-compress~=1.25",
+  "flask-compress~=1.26",
   "flask-cors~=6.0",
   "flask-pydantic~=0.14.0",
   "gunicorn~=26.2",
-  "pydantic~=2.13",
+  "pydantic~=2.14",
 ]
 
 [dependency-groups]
-dev = ["pytest~=9.1"]
+dev = ["pytest~=9.2"]
 # apig-wsgi, which turns each Lambda event into a WSGI request for the application on
 # lambda-emulator. Only that host's image installs the group.
 lambda-emulator = ["apig-wsgi~=2.20"]
