@@ -4,7 +4,7 @@
     <ProjectReference Include="../Implementation/Implementation.csproj" ReferenceOutputAssembly="false" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.Kiota.Bundle" Version="2.1.2" />
+    <PackageReference Include="Microsoft.Kiota.Bundle" Version="2.1.6" />
   </ItemGroup>
   <!-- Kiota/ can be rewritten by that build after this project's items were read, so they are read
        again before compiling. -->
