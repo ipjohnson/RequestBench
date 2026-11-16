@@ -11,7 +11,7 @@
          nothing outside Lambda, so every host builds with it. -->
     <PackageReference Include="Amazon.Lambda.AspNetCoreServer.Hosting" Version="2.2.1" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.12" />
-    <PackageReference Include="Microsoft.Extensions.ApiDescription.Server" Version="10.0.12">
+    <PackageReference Include="Microsoft.Extensions.ApiDescription.Server" Version="11.0.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
